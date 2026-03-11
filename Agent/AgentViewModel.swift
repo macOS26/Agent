@@ -88,11 +88,16 @@ final class AgentViewModel {
         runningTask?.cancel()
         runningTask = nil
         helperService.cancel()
+        helperService.onOutput = nil
         appendLog("Cancelled by user.")
+        flushLog()
         isRunning = false
     }
 
     func clearLog() {
+        logBuffer = ""
+        logFlushTask?.cancel()
+        logFlushTask = nil
         activityLog = ""
     }
 
@@ -227,6 +232,49 @@ final class AgentViewModel {
         return pngData.base64EncodedString()
     }
 
+    // MARK: - Log Buffering
+
+    private static let timestampFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "HH:mm:ss"
+        return f
+    }()
+
+    private var logBuffer = ""
+    private var logFlushTask: Task<Void, Never>?
+
+    private func appendLog(_ message: String) {
+        let timestamp = Self.timestampFormatter.string(from: Date())
+        logBuffer += "[\(timestamp)] \(message)\n"
+        scheduleLogFlush()
+    }
+
+    private func appendRawOutput(_ text: String) {
+        guard !text.isEmpty else { return }
+        logBuffer += text
+        if !text.hasSuffix("\n") {
+            logBuffer += "\n"
+        }
+        scheduleLogFlush()
+    }
+
+    private func scheduleLogFlush() {
+        guard logFlushTask == nil else { return }
+        logFlushTask = Task {
+            try? await Task.sleep(for: .milliseconds(100))
+            flushLog()
+        }
+    }
+
+    private func flushLog() {
+        logFlushTask?.cancel()
+        logFlushTask = nil
+        if !logBuffer.isEmpty {
+            activityLog += logBuffer
+            logBuffer = ""
+        }
+    }
+
     // MARK: - Task Execution Loop
 
     private func executeTask(_ prompt: String) async {
@@ -234,10 +282,11 @@ final class AgentViewModel {
         isCancelled = false
 
         if !activityLog.isEmpty {
-            activityLog += "\n"
+            logBuffer += "\n"
         }
         appendLog("--- New Task ---")
         appendLog("Task: \(prompt)")
+        flushLog()
 
         let historyContext = history.contextForPrompt()
         let claude = ClaudeService(apiKey: apiKey, model: selectedModel, historyContext: historyContext)
@@ -295,6 +344,7 @@ final class AgentViewModel {
                             let summary = input["summary"] as? String ?? "Done"
                             completionSummary = summary
                             appendLog("Completed: \(summary)")
+                            flushLog()
                             history.add(TaskRecord(prompt: prompt, summary: summary, commandsRun: commandsRun))
                             isRunning = false
                             return
@@ -304,15 +354,17 @@ final class AgentViewModel {
                             let command = input["command"] as? String ?? ""
                             commandsRun.append(command)
                             appendLog("$ \(command)")
+                            flushLog()
+
+                            // Stream output live via onOutput handler
+                            helperService.onOutput = { [weak self] chunk in
+                                self?.logBuffer += chunk
+                                self?.scheduleLogFlush()
+                            }
 
                             let result = await helperService.execute(command: command)
-
-                            if !result.output.isEmpty {
-                                activityLog += result.output
-                                if !result.output.hasSuffix("\n") {
-                                    activityLog += "\n"
-                                }
-                            }
+                            helperService.onOutput = nil
+                            flushLog()
 
                             if result.status != 0 {
                                 appendLog("exit code: \(result.status)")
@@ -367,13 +419,7 @@ final class AgentViewModel {
             history.add(TaskRecord(prompt: prompt, summary: "(incomplete)", commandsRun: commandsRun))
         }
 
+        flushLog()
         isRunning = false
-    }
-
-    private func appendLog(_ message: String) {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm:ss"
-        let timestamp = formatter.string(from: Date())
-        activityLog += "[\(timestamp)] \(message)\n"
     }
 }
