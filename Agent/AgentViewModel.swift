@@ -515,7 +515,6 @@ final class AgentViewModel {
 
     private func executeTask(_ prompt: String) async {
         isRunning = true
-        isCancelled = false
         userWasActive = false
         rootWasActive = false
 
@@ -567,7 +566,7 @@ final class AgentViewModel {
         var iterations = 0
         let maxIterations = 50
 
-        while !isCancelled && iterations < maxIterations {
+        while !Task.isCancelled && iterations < maxIterations {
             iterations += 1
 
             do {
@@ -581,7 +580,7 @@ final class AgentViewModel {
                     throw AgentError.noAPIKey
                 }
                 isThinking = false
-                guard !isCancelled else { break }
+                guard !Task.isCancelled else { break }
 
                 var toolResults: [[String: Any]] = []
                 var hasToolUse = false
@@ -638,7 +637,7 @@ final class AgentViewModel {
                             flushLog()
 
                             // Don't log results if task was cancelled
-                            guard !isCancelled else { break }
+                            guard !Task.isCancelled else { break }
 
                             if result.status != 0 {
                                 appendLog("exit code: \(result.status)")
@@ -682,14 +681,14 @@ final class AgentViewModel {
                 }
 
             } catch {
-                if !isCancelled {
+                if !Task.isCancelled {
                     appendLog("Error: \(error.localizedDescription)")
                 }
                 break
             }
         }
 
-        guard !isCancelled else { return }
+        guard !Task.isCancelled else { return }
 
         if iterations >= maxIterations {
             appendLog("Reached maximum iterations (\(maxIterations))")
