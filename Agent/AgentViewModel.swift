@@ -58,7 +58,14 @@ final class AgentViewModel {
     }
 
     var ollamaModel: String = UserDefaults.standard.string(forKey: "ollamaModel") ?? "" {
-        didSet { UserDefaults.standard.set(ollamaModel, forKey: "ollamaModel") }
+        didSet {
+            UserDefaults.standard.set(ollamaModel, forKey: "ollamaModel")
+            if !ollamaModel.isEmpty && oldValue != ollamaModel {
+                let vision = selectedOllamaSupportsVision ? " (vision)" : ""
+                appendLog("Switched to: \(ollamaModel)\(vision)")
+                flushLog()
+            }
+        }
     }
 
     struct OllamaModelInfo: Identifiable {
@@ -437,15 +444,18 @@ final class AgentViewModel {
         }
         appendLog("--- New Task ---")
         appendLog("Task: \(prompt)")
-        flushLog()
 
         let historyContext = history.contextForPrompt()
         let provider = selectedProvider
+        let modelName = provider == .claude ? selectedModel : ollamaModel
+        let isVision = provider == .ollama && selectedOllamaSupportsVision
+        appendLog("Model: \(provider.displayName) / \(modelName)\(isVision ? " (vision)" : "")")
+        flushLog()
 
         let claude: ClaudeService? = provider == .claude
             ? ClaudeService(apiKey: apiKey, model: selectedModel, historyContext: historyContext) : nil
         let ollama: OllamaService? = provider == .ollama
-            ? OllamaService(apiKey: ollamaAPIKey, model: ollamaModel, endpoint: ollamaEndpoint, supportsVision: selectedOllamaSupportsVision, historyContext: historyContext) : nil
+            ? OllamaService(apiKey: ollamaAPIKey, model: ollamaModel, endpoint: ollamaEndpoint, supportsVision: isVision, historyContext: historyContext) : nil
 
         var messages: [[String: Any]]
 
