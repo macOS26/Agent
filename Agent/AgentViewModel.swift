@@ -420,6 +420,10 @@ final class AgentViewModel {
 
     private var logBuffer = ""
     private var logFlushTask: Task<Void, Never>?
+    private var streamOutputCount = 0
+    private var streamTruncated = false
+    private static let maxStreamDisplay = 20_000
+    private static let maxLogSize = 60_000
 
     private func appendLog(_ message: String) {
         let timestamp = Self.timestampFormatter.string(from: Date())
@@ -429,6 +433,16 @@ final class AgentViewModel {
 
     private func appendRawOutput(_ text: String) {
         guard !text.isEmpty else { return }
+        streamOutputCount += text.count
+        // Cap streaming display to prevent UI from choking
+        if streamOutputCount > Self.maxStreamDisplay {
+            if !streamTruncated {
+                streamTruncated = true
+                logBuffer += "...(output truncated for display)...\n"
+                scheduleLogFlush()
+            }
+            return
+        }
         logBuffer += text
         if !text.hasSuffix("\n") {
             logBuffer += "\n"
@@ -436,10 +450,15 @@ final class AgentViewModel {
         scheduleLogFlush()
     }
 
+    private func resetStreamCounters() {
+        streamOutputCount = 0
+        streamTruncated = false
+    }
+
     private func scheduleLogFlush() {
         guard logFlushTask == nil else { return }
         logFlushTask = Task {
-            try? await Task.sleep(for: .milliseconds(100))
+            try? await Task.sleep(for: .milliseconds(150))
             flushLog()
         }
     }
@@ -450,6 +469,11 @@ final class AgentViewModel {
         if !logBuffer.isEmpty {
             activityLog += logBuffer
             logBuffer = ""
+            // Cap total log size to prevent layout thrashing
+            if activityLog.count > Self.maxLogSize {
+                let trimPoint = activityLog.index(activityLog.endIndex, offsetBy: -Self.maxLogSize)
+                activityLog = "...(earlier output trimmed)...\n" + String(activityLog[trimPoint...])
+            }
         }
     }
 
@@ -554,11 +578,11 @@ final class AgentViewModel {
                             flushLog()
 
                             let result: (status: Int32, output: String)
+                            resetStreamCounters()
                             if isPrivileged {
                                 rootServiceActive = true
                                 helperService.onOutput = { [weak self] chunk in
-                                    self?.logBuffer += chunk
-                                    self?.scheduleLogFlush()
+                                    self?.appendRawOutput(chunk)
                                 }
                                 result = await helperService.execute(command: command)
                                 helperService.onOutput = nil
@@ -566,8 +590,7 @@ final class AgentViewModel {
                             } else {
                                 userServiceActive = true
                                 userService.onOutput = { [weak self] chunk in
-                                    self?.logBuffer += chunk
-                                    self?.scheduleLogFlush()
+                                    self?.appendRawOutput(chunk)
                                 }
                                 result = await userService.execute(command: command)
                                 userService.onOutput = nil

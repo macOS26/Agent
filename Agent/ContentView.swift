@@ -217,7 +217,6 @@ struct ContentView: View {
 }
 
 /// Stoplight: Green+pulse = running, Yellow = between modes, Red = stopped
-/// Stoplight: Green+pulse = running, Yellow = between modes, Red = stopped
 struct StatusDot: View {
     let isReady: Bool
     let isActive: Bool
@@ -240,24 +239,23 @@ struct StatusDot: View {
                 PulseRing()
             }
         }
-        .animation(.easeInOut(duration: 0.3), value: dotColor)
+        .frame(width: 20, height: 20) // Fixed frame prevents layout shift
     }
 }
 
 struct PulseRing: View {
-    @State private var scale: CGFloat = 1.0
-    @State private var opacity: Double = 1.0
+    @State private var animating = false
 
     var body: some View {
         Circle()
             .stroke(Color.green.opacity(0.6), lineWidth: 2)
-            .frame(width: 14, height: 14)
-            .scaleEffect(scale)
-            .opacity(opacity)
+            .frame(width: 12, height: 12)
+            .scaleEffect(animating ? 2.5 : 1.0)
+            .opacity(animating ? 0 : 0.8)
             .onAppear {
-                withAnimation(.easeOut(duration: 0.9).repeatForever(autoreverses: false)) {
-                    scale = 2.0
-                    opacity = 0
+                animating = false
+                withAnimation(.easeOut(duration: 1.0).repeatForever(autoreverses: false)) {
+                    animating = true
                 }
             }
     }
