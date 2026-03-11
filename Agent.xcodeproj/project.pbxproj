@@ -15,10 +15,16 @@
 		AA10000000000000000035 /* HelperProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000001F /* HelperProtocol.swift */; };
 		AA10000000000000000036 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000020 /* Models.swift */; };
 		AA10000000000000000037 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000021 /* Assets.xcassets */; };
+		AA10000000000000000038 /* UserService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000025 /* UserService.swift */; };
+		AA10000000000000000039 /* UserProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000026 /* UserProtocol.swift */; };
 		BB10000000000000000030 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001A /* main.swift */; };
 		BB10000000000000000031 /* HelperProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001B /* HelperProtocol.swift */; };
 		BB10000000000000000032 /* com.agent.helper.plist in Copy Daemon Plist */ = {isa = PBXBuildFile; fileRef = AA10000000000000000023 /* com.agent.helper.plist */; };
 		BB10000000000000000033 /* AgentHelper in Copy Helper */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001C /* AgentHelper */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		CC10000000000000000030 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1000000000000000001A /* main.swift */; };
+		CC10000000000000000031 /* UserProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1000000000000000001B /* UserProtocol.swift */; };
+		CC10000000000000000032 /* com.agent.user.plist in Copy Agent Plist */ = {isa = PBXBuildFile; fileRef = AA10000000000000000027 /* com.agent.user.plist */; };
+		CC10000000000000000033 /* AgentUser in Copy User Agent */ = {isa = PBXBuildFile; fileRef = CC1000000000000000001C /* AgentUser */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -28,6 +34,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = BB10000000000000000060;
 			remoteInfo = AgentHelper;
+		};
+		CC10000000000000000070 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AA10000000000000000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CC10000000000000000060;
+			remoteInfo = AgentUser;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -54,6 +67,28 @@
 			name = "Copy Daemon Plist";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CC10000000000000000051 /* Copy User Agent */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 6;
+			files = (
+				CC10000000000000000033 /* AgentUser in Copy User Agent */,
+			);
+			name = "Copy User Agent";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CC10000000000000000052 /* Copy Agent Plist */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = Contents/Library/LaunchAgents;
+			dstSubfolderSpec = 1;
+			files = (
+				CC10000000000000000032 /* com.agent.user.plist in Copy Agent Plist */,
+			);
+			name = "Copy Agent Plist";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -68,9 +103,15 @@
 		AA10000000000000000022 /* Agent.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Agent.entitlements; sourceTree = "<group>"; };
 		AA10000000000000000023 /* com.agent.helper.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = com.agent.helper.plist; sourceTree = "<group>"; };
 		AA10000000000000000024 /* Agent.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Agent.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA10000000000000000025 /* UserService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserService.swift; sourceTree = "<group>"; };
+		AA10000000000000000026 /* UserProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProtocol.swift; sourceTree = "<group>"; };
+		AA10000000000000000027 /* com.agent.user.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = com.agent.user.plist; sourceTree = "<group>"; };
 		BB1000000000000000001A /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		BB1000000000000000001B /* HelperProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperProtocol.swift; sourceTree = "<group>"; };
 		BB1000000000000000001C /* AgentHelper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = AgentHelper; sourceTree = BUILT_PRODUCTS_DIR; };
+		CC1000000000000000001A /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		CC1000000000000000001B /* UserProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProtocol.swift; sourceTree = "<group>"; };
+		CC1000000000000000001C /* AgentUser */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = AgentUser; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -88,6 +129,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CC10000000000000000053 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -96,6 +144,7 @@
 			children = (
 				AA10000000000000000041 /* Agent */,
 				BB10000000000000000040 /* AgentHelper */,
+				CC10000000000000000040 /* AgentUser */,
 				AA10000000000000000042 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -107,12 +156,15 @@
 				AA1000000000000000001B /* ContentView.swift */,
 				AA1000000000000000001C /* AgentViewModel.swift */,
 				AA1000000000000000001D /* HelperService.swift */,
+				AA10000000000000000025 /* UserService.swift */,
 				AA1000000000000000001E /* ClaudeService.swift */,
 				AA1000000000000000001F /* HelperProtocol.swift */,
+				AA10000000000000000026 /* UserProtocol.swift */,
 				AA10000000000000000020 /* Models.swift */,
 				AA10000000000000000021 /* Assets.xcassets */,
 				AA10000000000000000022 /* Agent.entitlements */,
 				BB10000000000000000041 /* LaunchDaemons */,
+				CC10000000000000000041 /* LaunchAgents */,
 			);
 			path = Agent;
 			sourceTree = "<group>";
@@ -122,6 +174,7 @@
 			children = (
 				AA10000000000000000024 /* Agent.app */,
 				BB1000000000000000001C /* AgentHelper */,
+				CC1000000000000000001C /* AgentUser */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -143,6 +196,23 @@
 			path = LaunchDaemons;
 			sourceTree = "<group>";
 		};
+		CC10000000000000000040 /* AgentUser */ = {
+			isa = PBXGroup;
+			children = (
+				CC1000000000000000001A /* main.swift */,
+				CC1000000000000000001B /* UserProtocol.swift */,
+			);
+			path = AgentUser;
+			sourceTree = "<group>";
+		};
+		CC10000000000000000041 /* LaunchAgents */ = {
+			isa = PBXGroup;
+			children = (
+				AA10000000000000000027 /* com.agent.user.plist */,
+			);
+			path = LaunchAgents;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -155,11 +225,14 @@
 				AA10000000000000000052 /* Frameworks */,
 				BB10000000000000000051 /* Copy Helper */,
 				BB10000000000000000052 /* Copy Daemon Plist */,
+				CC10000000000000000051 /* Copy User Agent */,
+				CC10000000000000000052 /* Copy Agent Plist */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				BB10000000000000000071 /* PBXTargetDependency */,
+				CC10000000000000000071 /* PBXTargetDependency */,
 			);
 			name = Agent;
 			productName = Agent;
@@ -180,6 +253,22 @@
 			name = AgentHelper;
 			productName = AgentHelper;
 			productReference = BB1000000000000000001C /* AgentHelper */;
+			productType = "com.apple.product-type.tool";
+		};
+		CC10000000000000000060 /* AgentUser */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CC10000000000000000090 /* Build configuration list for PBXNativeTarget "AgentUser" */;
+			buildPhases = (
+				CC10000000000000000050 /* Sources */,
+				CC10000000000000000053 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = AgentUser;
+			productName = AgentUser;
+			productReference = CC1000000000000000001C /* AgentUser */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -207,6 +296,7 @@
 			targets = (
 				AA10000000000000000060 /* Agent */,
 				BB10000000000000000060 /* AgentHelper */,
+				CC10000000000000000060 /* AgentUser */,
 			);
 		};
 /* End PBXProject section */
@@ -231,8 +321,10 @@
 				AA10000000000000000031 /* ContentView.swift in Sources */,
 				AA10000000000000000032 /* AgentViewModel.swift in Sources */,
 				AA10000000000000000033 /* HelperService.swift in Sources */,
+				AA10000000000000000038 /* UserService.swift in Sources */,
 				AA10000000000000000034 /* ClaudeService.swift in Sources */,
 				AA10000000000000000035 /* HelperProtocol.swift in Sources */,
+				AA10000000000000000039 /* UserProtocol.swift in Sources */,
 				AA10000000000000000036 /* Models.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -246,6 +338,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CC10000000000000000050 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CC10000000000000000030 /* main.swift in Sources */,
+				CC10000000000000000031 /* UserProtocol.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -253,6 +354,11 @@
 			isa = PBXTargetDependency;
 			target = BB10000000000000000060 /* AgentHelper */;
 			targetProxy = BB10000000000000000070 /* PBXContainerItemProxy */;
+		};
+		CC10000000000000000071 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CC10000000000000000060 /* AgentUser */;
+			targetProxy = CC10000000000000000070 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -467,6 +573,36 @@
 			};
 			name = Release;
 		};
+		CC10000000000000000080 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.agent.user;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		CC10000000000000000081 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.agent.user;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -493,6 +629,15 @@
 			buildConfigurations = (
 				BB10000000000000000080 /* Debug */,
 				BB10000000000000000081 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CC10000000000000000090 /* Build configuration list for PBXNativeTarget "AgentUser" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CC10000000000000000080 /* Debug */,
+				CC10000000000000000081 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

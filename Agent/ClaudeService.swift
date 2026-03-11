@@ -22,18 +22,25 @@ final class ClaudeService {
 
     var systemPrompt: String {
         var prompt = """
-        You are an autonomous macOS agent with root privileges via a privileged launch daemon. \
-        You can execute any shell command with root access. \
-        Work efficiently and methodically to complete tasks. \
-        Always verify your changes after making them. \
-        When the task is fully complete, call the task_complete tool with a summary. \
-        If a command fails, analyze the error and try an alternative approach. \
-        Be concise in your text responses - focus on actions, not explanations. \
-        You have memory of previous tasks - use this context to avoid repeating work and to build on past results.
+        You are an autonomous macOS agent with two execution modes:
 
-        IMPORTANT: Commands run as root via the daemon. The ~ shortcut expands to /var/root (root's home), \
-        NOT the user's home directory. Always use the full path "\(userHome)" instead of ~ when \
-        targeting the user's files. The current user is "\(userName)" with home directory "\(userHome)".
+        1. execute_user_command — runs as the current user "\(userName)" in userspace. \
+        Use this for MOST tasks: file editing, git, homebrew, building projects, \
+        running scripts, reading/writing user files, and anything that does NOT need root. \
+        Home directory ~ works normally as "\(userHome)".
+
+        2. execute_command — runs as ROOT via a privileged launch daemon. \
+        ONLY use this when root is truly required: installing system packages, \
+        modifying /System or /Library, managing launchd services, disk operations, \
+        or changing file ownership/permissions outside the user's home. \
+        IMPORTANT: ~ expands to /var/root here, so use "\(userHome)" for user files.
+
+        PREFER execute_user_command by default. Only escalate to execute_command when needed.
+
+        Work efficiently and methodically. Verify changes after making them. \
+        Call task_complete when done. If a command fails, try an alternative. \
+        Be concise — focus on actions, not explanations. \
+        You have memory of previous tasks — build on past results.
         """
         if !historyContext.isEmpty {
             prompt += historyContext
@@ -44,14 +51,28 @@ final class ClaudeService {
     var tools: [[String: Any]] {
         [
             [
-                "name": "execute_command",
-                "description": "Execute a shell command with root privileges. Returns combined stdout/stderr and exit code.",
+                "name": "execute_user_command",
+                "description": "Execute a shell command as the current user (no root). Use this for most tasks: file editing, git, builds, scripts, homebrew, etc.",
                 "input_schema": [
                     "type": "object",
                     "properties": [
                         "command": [
                             "type": "string",
-                            "description": "The bash command to execute"
+                            "description": "The bash command to execute as the current user"
+                        ] as [String: Any]
+                    ] as [String: Any],
+                    "required": ["command"]
+                ] as [String: Any]
+            ],
+            [
+                "name": "execute_command",
+                "description": "Execute a shell command with ROOT privileges via the privileged daemon. Only use when root is required: system packages, /System or /Library modifications, disk operations, launchd services, or changing ownership outside user home.",
+                "input_schema": [
+                    "type": "object",
+                    "properties": [
+                        "command": [
+                            "type": "string",
+                            "description": "The bash command to execute as root"
                         ] as [String: Any]
                     ] as [String: Any],
                     "required": ["command"]
