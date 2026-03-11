@@ -171,17 +171,16 @@ struct ContentView: View {
         .frame(minWidth: 700, minHeight: 500)
         .onAppear {
             NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-                // Intercept Cmd+V
+                // Intercept Cmd+V for image paste
                 if event.modifierFlags.contains(.command),
-                   event.charactersIgnoringModifiers == "v",
-                   !viewModel.isRunning {
+                   event.charactersIgnoringModifiers == "v" {
                     if viewModel.pasteImageFromClipboard() {
                         return nil
                     }
                 }
 
                 // Up/Down arrow for prompt history
-                if !viewModel.isRunning {
+                if true {
                     if event.keyCode == 126 { // Up arrow
                         viewModel.navigatePromptHistory(direction: -1)
                         return nil
