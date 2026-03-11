@@ -17,6 +17,7 @@
 		AA10000000000000000037 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000021 /* Assets.xcassets */; };
 		AA10000000000000000038 /* UserService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000025 /* UserService.swift */; };
 		AA10000000000000000039 /* UserProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000026 /* UserProtocol.swift */; };
+		AA1000000000000000003A /* OllamaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000028 /* OllamaService.swift */; };
 		BB10000000000000000030 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001A /* main.swift */; };
 		BB10000000000000000031 /* HelperProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001B /* HelperProtocol.swift */; };
 		BB10000000000000000032 /* com.agent.helper.plist in Copy Daemon Plist */ = {isa = PBXBuildFile; fileRef = AA10000000000000000023 /* com.agent.helper.plist */; };
@@ -106,6 +107,7 @@
 		AA10000000000000000025 /* UserService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserService.swift; sourceTree = "<group>"; };
 		AA10000000000000000026 /* UserProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProtocol.swift; sourceTree = "<group>"; };
 		AA10000000000000000027 /* com.agent.user.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = com.agent.user.plist; sourceTree = "<group>"; };
+		AA10000000000000000028 /* OllamaService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaService.swift; sourceTree = "<group>"; };
 		BB1000000000000000001A /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		BB1000000000000000001B /* HelperProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperProtocol.swift; sourceTree = "<group>"; };
 		BB1000000000000000001C /* AgentHelper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = AgentHelper; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -158,6 +160,7 @@
 				AA1000000000000000001D /* HelperService.swift */,
 				AA10000000000000000025 /* UserService.swift */,
 				AA1000000000000000001E /* ClaudeService.swift */,
+				AA10000000000000000028 /* OllamaService.swift */,
 				AA1000000000000000001F /* HelperProtocol.swift */,
 				AA10000000000000000026 /* UserProtocol.swift */,
 				AA10000000000000000020 /* Models.swift */,
@@ -325,6 +328,7 @@
 				AA10000000000000000034 /* ClaudeService.swift in Sources */,
 				AA10000000000000000035 /* HelperProtocol.swift in Sources */,
 				AA10000000000000000039 /* UserProtocol.swift in Sources */,
+				AA1000000000000000003A /* OllamaService.swift in Sources */,
 				AA10000000000000000036 /* Models.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

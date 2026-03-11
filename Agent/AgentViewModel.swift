@@ -1,18 +1,48 @@
 @preconcurrency import Foundation
 import AppKit
 
+enum APIProvider: String, CaseIterable {
+    case claude = "claude"
+    case ollama = "ollama"
+
+    var displayName: String {
+        switch self {
+        case .claude: "Claude"
+        case .ollama: "Ollama"
+        }
+    }
+}
+
 @MainActor @Observable
 final class AgentViewModel {
     var taskInput = ""
     var activityLog = ""
     var isRunning = false
 
+    var selectedProvider: APIProvider = APIProvider(rawValue: UserDefaults.standard.string(forKey: "agentProvider") ?? "claude") ?? .claude {
+        didSet { UserDefaults.standard.set(selectedProvider.rawValue, forKey: "agentProvider") }
+    }
+
+    // Claude settings
     var apiKey: String = UserDefaults.standard.string(forKey: "agentAPIKey") ?? "" {
         didSet { UserDefaults.standard.set(apiKey, forKey: "agentAPIKey") }
     }
 
     var selectedModel: String = UserDefaults.standard.string(forKey: "agentModel") ?? "claude-sonnet-4-20250514" {
         didSet { UserDefaults.standard.set(selectedModel, forKey: "agentModel") }
+    }
+
+    // Ollama settings
+    var ollamaAPIKey: String = UserDefaults.standard.string(forKey: "ollamaAPIKey") ?? "" {
+        didSet { UserDefaults.standard.set(ollamaAPIKey, forKey: "ollamaAPIKey") }
+    }
+
+    var ollamaEndpoint: String = UserDefaults.standard.string(forKey: "ollamaEndpoint") ?? "http://localhost:11434/v1/chat/completions" {
+        didSet { UserDefaults.standard.set(ollamaEndpoint, forKey: "ollamaEndpoint") }
+    }
+
+    var ollamaModel: String = UserDefaults.standard.string(forKey: "ollamaModel") ?? "llama3.1" {
+        didSet { UserDefaults.standard.set(ollamaModel, forKey: "ollamaModel") }
     }
 
     var attachedImages: [NSImage] = []
@@ -298,7 +328,12 @@ final class AgentViewModel {
         flushLog()
 
         let historyContext = history.contextForPrompt()
-        let claude = ClaudeService(apiKey: apiKey, model: selectedModel, historyContext: historyContext)
+        let provider = selectedProvider
+
+        let claude: ClaudeService? = provider == .claude
+            ? ClaudeService(apiKey: apiKey, model: selectedModel, historyContext: historyContext) : nil
+        let ollama: OllamaService? = provider == .ollama
+            ? OllamaService(apiKey: ollamaAPIKey, model: ollamaModel, endpoint: ollamaEndpoint, historyContext: historyContext) : nil
 
         var messages: [[String: Any]]
 
@@ -333,7 +368,14 @@ final class AgentViewModel {
             iterations += 1
 
             do {
-                let response = try await claude.send(messages: messages)
+                let response: (content: [[String: Any]], stopReason: String)
+                if let claude {
+                    response = try await claude.send(messages: messages)
+                } else if let ollama {
+                    response = try await ollama.send(messages: messages)
+                } else {
+                    throw AgentError.noAPIKey
+                }
 
                 var toolResults: [[String: Any]] = []
                 var hasToolUse = false
