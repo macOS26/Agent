@@ -172,7 +172,7 @@ struct ContentView: View {
                     Button("Run") { viewModel.run() }
                         .buttonStyle(.borderedProminent)
                         .controlSize(.regular)
-                        .disabled(viewModel.taskInput.isEmpty || viewModel.apiKey.isEmpty)
+                        .disabled(viewModel.taskInput.isEmpty || (viewModel.selectedProvider == .claude && viewModel.apiKey.isEmpty))
                 }
             }
             .padding()
@@ -272,18 +272,38 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Section("Anthropic API") {
-                SecureField("API Key", text: $viewModel.apiKey)
-                    .frame(width: 300)
+            Section("Provider") {
+                Picker("Provider", selection: $viewModel.selectedProvider) {
+                    ForEach(APIProvider.allCases, id: \.self) { provider in
+                        Text(provider.displayName).tag(provider)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
 
-                Picker("Model", selection: $viewModel.selectedModel) {
-                    Text("Claude Sonnet 4").tag("claude-sonnet-4-20250514")
-                    Text("Claude Opus 4").tag("claude-opus-4-20250514")
-                    Text("Claude Haiku 3.5").tag("claude-haiku-3-5-20241022")
+            if viewModel.selectedProvider == .claude {
+                Section("Claude API") {
+                    SecureField("API Key", text: $viewModel.apiKey)
+                        .frame(width: 300)
+
+                    Picker("Model", selection: $viewModel.selectedModel) {
+                        Text("Claude Sonnet 4").tag("claude-sonnet-4-20250514")
+                        Text("Claude Opus 4").tag("claude-opus-4-20250514")
+                        Text("Claude Haiku 3.5").tag("claude-haiku-3-5-20241022")
+                    }
+                }
+            } else {
+                Section("Ollama API") {
+                    TextField("Endpoint", text: $viewModel.ollamaEndpoint)
+                        .frame(width: 300)
+                    SecureField("API Key (optional for local)", text: $viewModel.ollamaAPIKey)
+                        .frame(width: 300)
+                    TextField("Model", text: $viewModel.ollamaModel)
+                        .frame(width: 300)
                 }
             }
         }
         .padding()
-        .frame(width: 400)
+        .frame(width: 420)
     }
 }
