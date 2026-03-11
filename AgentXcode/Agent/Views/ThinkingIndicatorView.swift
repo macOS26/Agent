@@ -1,0 +1,424 @@
+import SwiftUI
+
+/// Collapsible thinking indicator shown in the activity log area while the LLM is processing.
+/// Shows real-time model info, token counts, and message stats when expanded.
+struct ThinkingIndicatorView: View {
+    @Environment(\.colorScheme) private var colorScheme
+    @Bindable var viewModel: AgentViewModel
+    var tab: ScriptTab?
+
+    private var isExpanded: Bool {
+        get { tab?.thinkingExpanded ?? viewModel.thinkingExpanded }
+        nonmutating set {
+            if let tab { tab.thinkingExpanded = newValue }
+            else { viewModel.thinkingExpanded = newValue }
+        }
+    }
+    private var showStreamText: Bool {
+        get { tab?.thinkingOutputExpanded ?? viewModel.thinkingOutputExpanded }
+        nonmutating set {
+            if let tab { tab.thinkingOutputExpanded = newValue }
+            else { viewModel.thinkingOutputExpanded = newValue }
+        }
+    }
+    @State private var outputHeight: CGFloat = 40
+    @State private var dots = ""
+    @State private var elapsed: TimeInterval = 0
+    @State private var tick = 0
+    private let refreshTimer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
+
+    private var isActive: Bool {
+        if let tab {
+            return tab.isLLMRunning || tab.isLLMThinking || tab.isRunning
+        }
+        return viewModel.isRunning || viewModel.isThinking
+    }
+
+    /// True when this tab is running a script and LLM has never been used
+    private var isScriptOnly: Bool {
+        guard let tab else { return false }
+        return tab.isRunning && !tab.isMainTab
+            && !tab.isLLMRunning && !tab.isLLMThinking
+            && tab.llmMessages.isEmpty && tab.rawLLMOutput.isEmpty
+    }
+
+    /// True when the tab's script is executing (LLM was used before but isn't active now)
+    private var isExecuting: Bool {
+        guard let tab else { return false }
+        return tab.isRunning && !tab.isLLMRunning && !tab.isLLMThinking
+    }
+
+    private var streamText: String {
+        if let tab {
+            return tab.rawLLMOutput
+        }
+        return viewModel.rawLLMOutput
+    }
+
+    private var modelName: String {
+        if let tab {
+            let (provider, model) = viewModel.resolvedLLMConfig(for: tab)
+            return "\(provider.displayName) / \(model)"
+        }
+        let p = viewModel.selectedProvider
+        return "\(p.displayName) / \(viewModel.globalModelForProvider(p))"
+    }
+
+    private var messageCount: Int {
+        if let tab {
+            return tab.llmMessages.count
+        }
+        return 0
+    }
+
+    static func fmtTokens(_ count: Int) -> String {
+        if count >= 1_000_000 { return String(format: "%.1fM", Double(count) / 1_000_000) }
+        if count >= 1_000 { return String(format: "%.1fK", Double(count) / 1_000) }
+        return "\(count)"
+    }
+
+    static func formatElapsed(_ t: TimeInterval) -> String {
+        let s = Int(t)
+        if s < 60 { return "\(s)s" }
+        let m = s / 60
+        let sec = s % 60
+        if m < 60 { return "\(m)m \(sec)s" }
+        let h = m / 60
+        let min = m % 60
+        return "\(h)h \(min)m \(sec)s"
+    }
+
+    private var inputTokens: Int { tab?.tabInputTokens ?? viewModel.taskInputTokens }
+    private var outputTokens: Int { tab?.tabOutputTokens ?? viewModel.taskOutputTokens }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isExpanded.toggle()
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(.secondary)
+                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
+
+                    if isActive {
+                        ProgressView()
+                            .controlSize(.mini)
+                    } else {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.caption)
+                            .foregroundStyle(.green)
+                    }
+
+                    Text("(\(Self.formatElapsed(elapsed)))")
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(.secondary)
+
+                    if isActive {
+                        if isScriptOnly {
+                            ShimmerText("Running\(dots)", color: .green)
+                        } else if isExecuting {
+                            ShimmerText("Executing\(dots)", color: .green)
+                        } else {
+                            ShimmerText("Thinking\(dots)", color: .green)
+                        }
+                    } else {
+                        Text("Done")
+                            .font(.caption.bold())
+                            .foregroundStyle(.green)
+                    }
+
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            if isExpanded {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 8) {
+                        // LLM Output toggle
+                        HStack(spacing: 3) {
+                            Image(systemName: showStreamText ? "chevron.down" : "chevron.right")
+                                .font(.system(size: 8, weight: .bold))
+                            Text("LLM Output").font(.caption)
+                        }
+                        .foregroundStyle(.secondary)
+
+                        // Model name
+                        HStack(spacing: 3) {
+                            Image(systemName: "brain").font(.caption)
+                            Text(modelName).font(.caption).lineLimit(1)
+                        }
+                        .foregroundStyle(.secondary)
+
+                        // Message count
+                        if messageCount > 0 {
+                            HStack(spacing: 3) {
+                                Image(systemName: "bubble.left.and.bubble.right").font(.caption)
+                                Text("\(messageCount)").font(.caption)
+                            }
+                            .foregroundStyle(.secondary)
+                        }
+
+                        // Tokens (↑ input / ↓ output)
+                        if inputTokens > 0 || outputTokens > 0 {
+                            HStack(spacing: 2) {
+                                Text("↑").font(.caption).foregroundStyle(.blue)
+                                Text(Self.fmtTokens(inputTokens)).font(.caption).foregroundStyle(.secondary)
+                                Text("↓").font(.caption).foregroundStyle(.green)
+                                Text(Self.fmtTokens(outputTokens)).font(.caption).foregroundStyle(.secondary)
+                            }
+                        }
+
+                        // Status — show executing alongside LLM status
+                        if isExecuting {
+                            HStack(spacing: 3) {
+                                Image(systemName: "terminal").font(.caption)
+                                Text("Executing").font(.caption)
+                            }
+                            .foregroundStyle(.green)
+                        } else if viewModel.rootServiceActive {
+                            HStack(spacing: 3) {
+                                Image(systemName: "lock.shield").font(.caption)
+                                Text("Root").font(.caption)
+                            }
+                            .foregroundStyle(.orange)
+                        } else if viewModel.userServiceActive {
+                            HStack(spacing: 3) {
+                                Image(systemName: "terminal").font(.caption)
+                                Text("Executing").font(.caption)
+                            }
+                            .foregroundStyle(.green)
+                        } else {
+                            HStack(spacing: 3) {
+                                Image(systemName: "ellipsis.circle").font(.caption)
+                                Text("Waiting").font(.caption)
+                            }
+                            .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+                    }
+                    .padding(.horizontal, 12)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            showStreamText.toggle()
+                        }
+                    }
+
+                    if showStreamText {
+                        LLMOutputBox(
+                            text: streamText,
+                            height: $outputHeight,
+                            showDismiss: true,
+                            dismissEnabled: !isActive,
+                            onDismiss: {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    showStreamText = false
+                                }
+                            }
+                        )
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 5)
+                .transition(.opacity)
+            }
+        }
+        .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+        .onAppear {
+            if let tab, tab.lastElapsed > 0, elapsed == 0 {
+                elapsed = tab.lastElapsed
+            }
+        }
+        .onChange(of: tab?.isLLMRunning) { _, newValue in
+            guard let tab, !tab.isMainTab else { return }
+            if newValue == true {
+                // Auto-expand both chevrons when LLM starts on a script tab
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isExpanded = true
+                    showStreamText = true
+                    tab.thinkingDismissed = false
+                }
+            } else if tab.isRunning && !tab.rawLLMOutput.isEmpty {
+                // LLM finished but script still running — keep indicator visible and expanded
+                tab.thinkingDismissed = false
+                isExpanded = true
+                showStreamText = true
+            }
+        }
+        .onReceive(refreshTimer) { _ in
+            guard isActive else { return }
+            elapsed += 0.1
+            tick += 1
+            if tick % 5 == 0 {
+                switch dots.count {
+                case 0: dots = "."
+                case 1: dots = ".."
+                case 2: dots = "..."
+                default: dots = ""
+                }
+            }
+        }
+    }
+}
+
+/// Resizable LLM output box — neo-retro terminal look, adapts to dark/light mode.
+private struct LLMOutputBox: View {
+    @Environment(\.colorScheme) private var colorScheme
+    let text: String
+    @Binding var height: CGFloat
+    var showDismiss: Bool = false
+    var dismissEnabled: Bool = true
+    var onDismiss: (() -> Void)?
+
+    private var termBg: Color {
+        colorScheme == .dark
+            ? Color(red: 0.05, green: 0.08, blue: 0.05)
+            : Color(red: 0.93, green: 0.97, blue: 0.93)
+    }
+    private var termText: Color {
+        colorScheme == .dark
+            ? Color(red: 0.2, green: 0.9, blue: 0.3)
+            : Color(red: 0.05, green: 0.35, blue: 0.1)
+    }
+    private var termDim: Color {
+        colorScheme == .dark
+            ? Color(red: 0.15, green: 0.4, blue: 0.2)
+            : Color(red: 0.3, green: 0.6, blue: 0.35)
+    }
+    private var termBorder: Color {
+        colorScheme == .dark
+            ? Color(red: 0.15, green: 0.4, blue: 0.2).opacity(0.5)
+            : Color(red: 0.3, green: 0.6, blue: 0.35).opacity(0.4)
+    }
+    private var handleBg: Color {
+        colorScheme == .dark
+            ? Color(red: 0.15, green: 0.2, blue: 0.15)
+            : Color(red: 0.85, green: 0.92, blue: 0.85)
+    }
+
+    private let maxHeight: CGFloat = 300
+
+    /// Convert URLs in text to clickable underlined links, keeping the rest in termText color.
+    private static func linkify(_ text: String, color: Color) -> AttributedString {
+        var result = AttributedString(text)
+        result.foregroundColor = color
+
+        let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
+        let nsText = text as NSString
+        let matches = detector?.matches(in: text, range: NSRange(location: 0, length: nsText.length)) ?? []
+
+        for match in matches.reversed() {
+            guard let url = match.url,
+                  let range = Range(match.range, in: result) else { continue }
+            result[range].link = url
+            result[range].underlineStyle = .single
+        }
+        return result
+    }
+
+    var body: some View {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        VStack(spacing: 0) {
+            ZStack(alignment: .bottomTrailing) {
+                if !trimmed.isEmpty {
+                    ScrollView(.vertical, showsIndicators: true) {
+                        Text(Self.linkify(trimmed, color: termText))
+                            .font(.system(size: 11, design: .monospaced))
+                            .environment(\.openURL, OpenURLAction { url in
+                                NSWorkspace.shared.open(url)
+                                return .handled
+                            })
+                            .onHover { hovering in
+                                if hovering {
+                                    NSCursor.pointingHand.push()
+                                } else {
+                                    NSCursor.pop()
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .textSelection(.enabled)
+                            .padding(10)
+                            .background(GeometryReader { geo in
+                                Color.clear.preference(key: ContentHeightKey.self, value: geo.size.height)
+                            })
+                    }
+                    .frame(height: min(height, maxHeight))
+                    .scrollIndicators(.visible)
+                    .onPreferenceChange(ContentHeightKey.self) { newHeight in
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            height = max(40, newHeight)
+                        }
+                    }
+                } else {
+                    HStack(spacing: 0) {
+                        Text("> ")
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundColor(termText)
+                        Text("awaiting output...")
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundColor(termDim)
+                        Spacer()
+                    }
+                    .padding(5)
+                    .frame(maxWidth: .infinity, minHeight: 40, alignment: .topLeading)
+                }
+
+                // Dismiss button — overlaid bottom right, no extra space
+                if showDismiss {
+                    Button {
+                        onDismiss?()
+                    } label: {
+                        Text("Dismiss")
+                            .font(.system(size: 11, design: .monospaced).bold())
+                            .foregroundColor(dismissEnabled ? termText : termDim)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(termBg)
+                            .overlay(RoundedRectangle(cornerRadius: 4).stroke(termBorder, lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!dismissEnabled)
+                    .padding(8)
+                }
+            }
+
+            // Drag handle
+            Rectangle()
+                .fill(handleBg)
+                .frame(height: 6)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(termDim)
+                        .frame(width: 40, height: 3)
+                )
+                .onHover { inside in
+                    if inside { NSCursor.resizeUpDown.push() } else { NSCursor.pop() }
+                }
+                .gesture(
+                    DragGesture()
+                        .onChanged { value in
+                            height = max(40, height + value.translation.height)
+                        }
+                )
+        }
+        .background(termBg)
+        .cornerRadius(6)
+        .overlay(RoundedRectangle(cornerRadius: 6).stroke(termBorder, lineWidth: 1))
+    }
+}
+
+private struct ContentHeightKey: PreferenceKey {
+    nonisolated(unsafe) static var defaultValue: CGFloat = 40
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
+}

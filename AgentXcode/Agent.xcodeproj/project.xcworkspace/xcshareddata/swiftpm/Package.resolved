@@ -1,0 +1,51 @@
+{
+  "originHash" : "c964d062526c231aa3853adb10ebe42a9ef383559298bffdb1517854da1d3ca9",
+  "pins" : [
+    {
+      "identity" : "agenteventbridges",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/macOS26/AgentEventBridges.git",
+      "state" : {
+        "revision" : "324a9871e32efbecc7eb1cac28fcade76f4bee67",
+        "version" : "1.0.6"
+      }
+    },
+    {
+      "identity" : "agentmcp",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/macOS26/AgentMCP",
+      "state" : {
+        "revision" : "e839164f4396a5240de78dec4063cacc547a03ea",
+        "version" : "1.0.1"
+      }
+    },
+    {
+      "identity" : "d1f-swift-multi-line-diff",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/CodeFreezeAI/D1F-swift-multi-line-diff.git",
+      "state" : {
+        "revision" : "696849afadd73e2fbecb64a2f2e1272d17ea298c",
+        "version" : "2.0.2"
+      }
+    },
+    {
+      "identity" : "swift-syntax",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-syntax.git",
+      "state" : {
+        "revision" : "2b59c0c741e9184ab057fd22950b491076d42e91",
+        "version" : "603.0.0"
+      }
+    },
+    {
+      "identity" : "xcf-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/CodeFreezeAI/xcf-swift.git",
+      "state" : {
+        "revision" : "00e15e828cbb974c9555d74dac40cbd94df24463",
+        "version" : "1.0.1"
+      }
+    }
+  ],
+  "version" : 3
+}

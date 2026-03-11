@@ -1,0 +1,553 @@
+import SwiftUI
+
+struct SettingsView: View {
+    @Bindable var viewModel: AgentViewModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Provider toggle
+            VStack(alignment: .leading, spacing: 12) {
+                Text("LLM Provider")
+                    .font(.headline)
+                
+                Text("Configure your AI provider and API keys.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                
+                Picker("AI", selection: $viewModel.selectedProvider) {
+                    ForEach(APIProvider.selectableProviders, id: \.self) { provider in
+                        Text(provider.displayName).tag(provider)
+                    }
+                }
+                .labelsHidden()
+                
+                Text("Ollama Pro is preferred")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Divider()
+            
+            if viewModel.selectedProvider == .claude {
+                // Claude settings
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Claude API")
+                        .font(.headline)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("API Key").font(.caption).foregroundStyle(.secondary)
+                        LockedSecureField(text: $viewModel.apiKey, placeholder: "sk-ant-...", lockKey: "lock.claudeAPIKey")
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Model").font(.caption).foregroundStyle(.secondary)
+                        Picker("Model", selection: $viewModel.selectedModel) {
+                            ForEach(viewModel.availableClaudeModels) { model in
+                                Text(model.formattedDisplayName).tag(model.id)
+                            }
+                        }
+                        .labelsHidden()
+                    }
+                }
+            } else if viewModel.selectedProvider == .openAI {
+                // OpenAI settings
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("OpenAI API")
+                        .font(.headline)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("API Key").font(.caption).foregroundStyle(.secondary)
+                        LockedSecureField(text: $viewModel.openAIAPIKey, placeholder: "sk-...", lockKey: "lock.openAIAPIKey")
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Model").font(.caption).foregroundStyle(.secondary)
+                        HStack {
+                            if viewModel.openAIModels.isEmpty {
+                                TextField("Model name", text: $viewModel.openAIModel)
+                                    .textFieldStyle(.roundedBorder)
+                            } else {
+                                Picker("Model", selection: $viewModel.openAIModel) {
+                                    ForEach(viewModel.openAIModels) { model in
+                                        Text(model.name).tag(model.id)
+                                    }
+                                }
+                                .labelsHidden()
+                            }
+
+                            Button {
+                                viewModel.fetchOpenAIModels()
+                            } label: {
+                                if viewModel.isFetchingOpenAIModels {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(viewModel.isFetchingOpenAIModels)
+                            .help("Fetch available models")
+                        }
+                    }
+                }
+            } else if viewModel.selectedProvider == .deepSeek {
+                // DeepSeek settings
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("DeepSeek API")
+                        .font(.headline)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("API Key").font(.caption).foregroundStyle(.secondary)
+                        LockedSecureField(text: $viewModel.deepSeekAPIKey, placeholder: "sk-...", lockKey: "lock.deepSeekAPIKey")
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Model").font(.caption).foregroundStyle(.secondary)
+                        HStack {
+                            if viewModel.deepSeekModels.isEmpty {
+                                TextField("Model name", text: $viewModel.deepSeekModel)
+                                    .textFieldStyle(.roundedBorder)
+                            } else {
+                                Picker("Model", selection: $viewModel.deepSeekModel) {
+                                    ForEach(viewModel.deepSeekModels) { model in
+                                        Text(model.name).tag(model.id)
+                                    }
+                                }
+                                .labelsHidden()
+                            }
+
+                            Button {
+                                viewModel.fetchDeepSeekModels()
+                            } label: {
+                                if viewModel.isFetchingDeepSeekModels {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(viewModel.isFetchingDeepSeekModels)
+                            .help("Fetch available models")
+                        }
+                    }
+                }
+            } else if viewModel.selectedProvider == .huggingFace {
+                // Hugging Face settings
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Hugging Face Inference")
+                        .font(.headline)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("API Key").font(.caption).foregroundStyle(.secondary)
+                        LockedSecureField(text: $viewModel.huggingFaceAPIKey, placeholder: "hf_...", lockKey: "lock.huggingFaceAPIKey")
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Model").font(.caption).foregroundStyle(.secondary)
+                        HStack {
+                            if viewModel.huggingFaceModels.isEmpty {
+                                TextField("Model name", text: $viewModel.huggingFaceModel)
+                                    .textFieldStyle(.roundedBorder)
+                            } else {
+                                Picker("Model", selection: $viewModel.huggingFaceModel) {
+                                    ForEach(viewModel.huggingFaceModels) { model in
+                                        Text(model.name).tag(model.id)
+                                    }
+                                }
+                                .labelsHidden()
+                            }
+
+                            Button {
+                                viewModel.fetchHuggingFaceModels()
+                            } label: {
+                                if viewModel.isFetchingHuggingFaceModels {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(viewModel.isFetchingHuggingFaceModels)
+                            .help("Fetch available models")
+                        }
+                    }
+                }
+            } else if viewModel.selectedProvider == .zAI {
+                // Z.ai (ZhipuAI GLM) settings
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Z.ai API")
+                        .font(.headline)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("API Key").font(.caption).foregroundStyle(.secondary)
+                        LockedSecureField(text: $viewModel.zAIAPIKey, placeholder: "Z.ai API key", lockKey: "lock.zAIAPIKey")
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Model").font(.caption).foregroundStyle(.secondary)
+                        HStack {
+                            if viewModel.zAIModels.isEmpty {
+                                TextField("Model name", text: $viewModel.zAIModel)
+                                    .textFieldStyle(.roundedBorder)
+                            } else {
+                                Picker("Model", selection: $viewModel.zAIModel) {
+                                    ForEach(viewModel.zAIModels) { model in
+                                        Text(model.name).tag(model.id)
+                                    }
+                                }
+                                .labelsHidden()
+                            }
+
+                            Button {
+                                viewModel.fetchZAIModels()
+                            } label: {
+                                if viewModel.isFetchingZAIModels {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(viewModel.isFetchingZAIModels)
+                            .help("Fetch available models")
+                        }
+                    }
+                }
+            } else if viewModel.selectedProvider == .ollama {
+                // Cloud Ollama settings
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Ollama Cloud")
+                        .font(.headline)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("API Key").font(.caption).foregroundStyle(.secondary)
+                        LockedSecureField(text: $viewModel.ollamaAPIKey, placeholder: "Required for cloud", lockKey: "lock.ollamaAPIKey")
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Model").font(.caption).foregroundStyle(.secondary)
+                        HStack {
+                            if viewModel.ollamaModels.isEmpty {
+                                TextField("Model name", text: $viewModel.ollamaModel)
+                                    .textFieldStyle(.roundedBorder)
+                            } else {
+                                Picker("Model", selection: $viewModel.ollamaModel) {
+                                    ForEach(viewModel.ollamaModels) { model in
+                                        HStack(spacing: 4) {
+                                            Text(model.name)
+                                            if model.supportsVision {
+                                                Image(systemName: "eye")
+                                                    .foregroundStyle(.blue)
+                                                    .font(.caption2)
+                                            }
+                                        }
+                                        .tag(model.name)
+                                    }
+                                }
+                                .labelsHidden()
+                            }
+
+                            Button {
+                                viewModel.fetchOllamaModels()
+                            } label: {
+                                if viewModel.isFetchingModels {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(viewModel.isFetchingModels)
+                            .help("Fetch available models")
+                        }
+                    }
+                }
+            } else if viewModel.selectedProvider == .lmStudio {
+                // LM Studio settings
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("LM Studio")
+                        .font(.headline)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("API Protocol").font(.caption).foregroundStyle(.secondary)
+                        Picker("Protocol", selection: $viewModel.lmStudioProtocol) {
+                            ForEach(LMStudioProtocol.allCases, id: \.self) { proto in
+                                Text(proto.displayName).tag(proto)
+                            }
+                        }
+                        .labelsHidden()
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("API Key (optional)").font(.caption).foregroundStyle(.secondary)
+                        SecureField("Leave blank if not required", text: $viewModel.lmStudioAPIKey)
+                            .textFieldStyle(.roundedBorder)
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Endpoint").font(.caption).foregroundStyle(.secondary)
+                        TextField(viewModel.lmStudioProtocol.defaultEndpoint, text: $viewModel.lmStudioEndpoint)
+                            .textFieldStyle(.roundedBorder)
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Model").font(.caption).foregroundStyle(.secondary)
+                        HStack {
+                            if viewModel.lmStudioModels.isEmpty {
+                                TextField("Model name", text: $viewModel.lmStudioModel)
+                                    .textFieldStyle(.roundedBorder)
+                            } else {
+                                Picker("Model", selection: $viewModel.lmStudioModel) {
+                                    ForEach(viewModel.lmStudioModels) { model in
+                                        Text(model.name).tag(model.id)
+                                    }
+                                }
+                                .labelsHidden()
+                            }
+
+                            Button {
+                                viewModel.fetchLMStudioModels()
+                            } label: {
+                                if viewModel.isFetchingLMStudioModels {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(viewModel.isFetchingLMStudioModels)
+                            .help("Fetch available models")
+                        }
+                    }
+                }
+            } else if viewModel.selectedProvider == .vLLM {
+                // vLLM settings
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("vLLM")
+                        .font(.headline)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Endpoint").font(.caption).foregroundStyle(.secondary)
+                        TextField("http://localhost:8000/v1/chat/completions", text: $viewModel.vLLMEndpoint)
+                            .textFieldStyle(.roundedBorder)
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("API Key (optional)").font(.caption).foregroundStyle(.secondary)
+                        LockedSecureField(text: $viewModel.vLLMAPIKey, placeholder: "Optional", lockKey: "lock.vLLMAPIKey")
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Model").font(.caption).foregroundStyle(.secondary)
+                        HStack {
+                            if viewModel.vLLMModels.isEmpty {
+                                TextField("Model name", text: $viewModel.vLLMModel)
+                                    .textFieldStyle(.roundedBorder)
+                            } else {
+                                Picker("Model", selection: $viewModel.vLLMModel) {
+                                    ForEach(viewModel.vLLMModels) { model in
+                                        Text(model.name).tag(model.id)
+                                    }
+                                }
+                                .labelsHidden()
+                            }
+
+                            Button {
+                                viewModel.fetchVLLMModels()
+                            } label: {
+                                if viewModel.isFetchingVLLMModels {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(viewModel.isFetchingVLLMModels)
+                            .help("Fetch available models")
+                        }
+                    }
+                }
+            } else {
+                // Local Ollama settings
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Local Ollama")
+                        .font(.headline)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Endpoint").font(.caption).foregroundStyle(.secondary)
+                        TextField("http://localhost:11434/api/chat", text: $viewModel.localOllamaEndpoint)
+                            .textFieldStyle(.roundedBorder)
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Model").font(.caption).foregroundStyle(.secondary)
+                        HStack {
+                            if viewModel.localOllamaModels.isEmpty {
+                                TextField("Model name", text: $viewModel.localOllamaModel)
+                                    .textFieldStyle(.roundedBorder)
+                            } else {
+                                Picker("Model", selection: $viewModel.localOllamaModel) {
+                                    ForEach(viewModel.localOllamaModels) { model in
+                                        HStack(spacing: 4) {
+                                            Text(model.name)
+                                            if model.supportsVision {
+                                                Image(systemName: "eye")
+                                                    .foregroundStyle(.blue)
+                                                    .font(.caption2)
+                                            }
+                                        }
+                                        .tag(model.name)
+                                    }
+                                }
+                                .labelsHidden()
+                            }
+
+                            Button {
+                                viewModel.fetchLocalOllamaModels()
+                            } label: {
+                                if viewModel.isFetchingLocalModels {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(viewModel.isFetchingLocalModels)
+                            .help("Fetch available local models")
+                        }
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Context Window").font(.caption).foregroundStyle(.secondary)
+                        HStack {
+                            TextField("0 = auto", text: Binding(
+                                get: { viewModel.localOllamaContextSize == 0 ? "" : "\(viewModel.localOllamaContextSize)" },
+                                set: { viewModel.localOllamaContextSize = Int($0) ?? 0 }
+                            ))
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 100)
+
+                            Text(viewModel.localOllamaContextSize == 0 ? "Model default" : "\(viewModel.localOllamaContextSize / 1024)K tokens")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
+
+            // Max Output Tokens — for providers that support it
+            if viewModel.selectedProvider != .localOllama && viewModel.selectedProvider != .foundationModel {
+                Divider()
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Max Output Tokens").font(.caption).foregroundStyle(.secondary)
+                    HStack {
+                        TextField(viewModel.selectedProvider == .claude ? "16384" : "0 = default", text: Binding(
+                            get: { viewModel.maxTokens == 0 ? "" : "\(viewModel.maxTokens)" },
+                            set: { viewModel.maxTokens = Int($0) ?? 0 }
+                        ))
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 100)
+
+                        Text(viewModel.maxTokens == 0 ? (viewModel.selectedProvider == .claude ? "Defaults to 16384" : "Provider default") : "\(viewModel.maxTokens) tokens")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+
+            // Web Search (Tavily) — available for all providers
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Web Search")
+                    .font(.headline)
+                Text("Tavily provides web search for all LLM providers.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Tavily API Key").font(.caption).foregroundStyle(.secondary)
+                    LockedSecureField(text: $viewModel.tavilyAPIKey, placeholder: "tvly-...", lockKey: "lock.tavilyAPIKey")
+                }
+            }
+
+            // System Prompts Editor
+            Button("Edit System Prompts...") {
+                SystemPromptWindow.shared.show()
+            }
+
+        }
+        .padding(16)
+        .padding(.bottom, 15)
+        .frame(width: 360)
+        .onAppear {
+            refreshModelsForCurrentProvider()
+        }
+    }
+
+    private func refreshModelsForCurrentProvider() {
+        switch viewModel.selectedProvider {
+        case .openAI: viewModel.fetchOpenAIModels()
+        case .deepSeek: viewModel.fetchDeepSeekModels()
+        case .huggingFace: viewModel.fetchHuggingFaceModels()
+        case .ollama: viewModel.fetchOllamaModels()
+        case .localOllama: viewModel.fetchLocalOllamaModels()
+        case .vLLM: viewModel.fetchVLLMModels()
+        case .lmStudio: viewModel.fetchLMStudioModels()
+        case .zAI: viewModel.fetchZAIModels()
+        case .claude: Task { await viewModel.fetchClaudeModels() }
+        case .foundationModel: break
+        }
+    }
+}
+
+// MARK: - Locked Secure Field
+
+/// A SecureField with a lock/unlock button. When locked, the field is disabled.
+/// Lock state persists in UserDefaults via the lockKey.
+struct LockedSecureField: View {
+    @Binding var text: String
+    let placeholder: String
+    let lockKey: String
+    @State private var isLocked: Bool
+
+    init(text: Binding<String>, placeholder: String, lockKey: String) {
+        self._text = text
+        self.placeholder = placeholder
+        self.lockKey = lockKey
+        _isLocked = State(initialValue: UserDefaults.standard.bool(forKey: lockKey))
+    }
+
+    var body: some View {
+        HStack(spacing: 4) {
+            SecureField(placeholder, text: $text)
+                .textFieldStyle(.roundedBorder)
+                .disabled(isLocked)
+                .opacity(isLocked ? 0.6 : 1)
+
+            Button {
+                isLocked.toggle()
+                UserDefaults.standard.set(isLocked, forKey: lockKey)
+            } label: {
+                Image(systemName: isLocked ? "lock.fill" : "lock.open")
+                    .foregroundStyle(isLocked ? .orange : .secondary)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .help(isLocked ? "Unlock to edit" : "Lock to protect")
+        }
+    }
+}

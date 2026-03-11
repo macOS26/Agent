@@ -1,0 +1,6 @@
+.build/
+.swiftpm/
+.claude/
+*.dmg
+*.app
+AgentXcode/build/
