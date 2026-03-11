@@ -5,8 +5,8 @@ final class ClaudeService {
     let apiKey: String
     let model: String
 
-    private let baseURL = URL(string: "https://api.anthropic.com/v1/messages")!
-    private let apiVersion = "2023-06-01"
+    private static let baseURL = URL(string: "https://api.anthropic.com/v1/messages")!
+    private static let apiVersion = "2023-06-01"
 
     let historyContext: String
     let userHome: String
@@ -85,12 +85,26 @@ final class ClaudeService {
             "messages": messages
         ]
 
-        var request = URLRequest(url: baseURL)
+        // Serialize on main actor, then offload network I/O + response parsing
+        let bodyData = try JSONSerialization.data(withJSONObject: body)
+        return try await Self.performRequest(
+            bodyData: bodyData,
+            apiKey: apiKey,
+            apiVersion: Self.apiVersion,
+            url: Self.baseURL
+        )
+    }
+
+    /// Network I/O and response parsing off the main thread
+    nonisolated private static func performRequest(
+        bodyData: Data, apiKey: String, apiVersion: String, url: URL
+    ) async throws -> (content: [[String: Any]], stopReason: String) {
+        var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
         request.setValue(apiVersion, forHTTPHeaderField: "anthropic-version")
         request.setValue("application/json", forHTTPHeaderField: "content-type")
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        request.httpBody = bodyData
         request.timeoutInterval = 120
 
         let (data, response) = try await URLSession.shared.data(for: request)

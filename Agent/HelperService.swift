@@ -18,7 +18,7 @@ final class HelperService {
     nonisolated static let helperID = "com.agent.helper"
     nonisolated let instanceID = UUID().uuidString
 
-    var onOutput: (@Sendable (String) -> Void)?
+    var onOutput: (@MainActor @Sendable (String) -> Void)?
 
     nonisolated init() {}
 

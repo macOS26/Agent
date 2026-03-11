@@ -65,6 +65,7 @@ final class HelperCommandHandler: NSObject, HelperToolProtocol, @unchecked Senda
             ctx.outputLock.lock()
             ctx.output += chunk
             ctx.outputLock.unlock()
+            ctx.proxy?.progressUpdate(chunk)
         }
 
         ctx.outputLock.lock()
