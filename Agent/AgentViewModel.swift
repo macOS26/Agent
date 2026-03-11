@@ -239,7 +239,7 @@ final class AgentViewModel {
 
         // Stop any running task before starting a new one
         if isRunning {
-            stop()
+            stop(silent: true)
         }
 
         promptHistory.append(task)
@@ -286,7 +286,7 @@ final class AgentViewModel {
         taskInput = promptHistory[historyIndex]
     }
 
-    func stop() {
+    func stop(silent: Bool = false) {
         isCancelled = true
         runningTask?.cancel()
         runningTask = nil
@@ -294,7 +294,9 @@ final class AgentViewModel {
         helperService.onOutput = nil
         userService.cancel()
         userService.onOutput = nil
-        appendLog("Cancelled by user.")
+        if !silent {
+            appendLog("Cancelled by user.")
+        }
         flushLog()
         isRunning = false
         isThinking = false
@@ -633,6 +635,9 @@ final class AgentViewModel {
                                 userServiceActive = false
                             }
                             flushLog()
+
+                            // Don't log results if task was cancelled
+                            guard !isCancelled else { break }
 
                             if result.status != 0 {
                                 appendLog("exit code: \(result.status)")
