@@ -157,14 +157,13 @@ final class OllamaService {
                             let callId = block["id"] as? String ?? UUID().uuidString
                             let name = block["name"] as? String ?? ""
                             let input = block["input"] as? [String: Any] ?? [:]
-                            let args = (try? JSONSerialization.data(withJSONObject: input))
-                                .flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
+                            // Ollama native API expects arguments as a dict, not a JSON string
                             toolCalls.append([
                                 "id": callId,
                                 "type": "function",
                                 "function": [
                                     "name": name,
-                                    "arguments": args
+                                    "arguments": input
                                 ] as [String: Any]
                             ])
                         }
