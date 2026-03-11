@@ -131,16 +131,25 @@ final class OllamaService {
                             ])
                         }
                     } else {
-                        // Content blocks (text + images) — extract text
+                        // Content blocks (text + images)
                         var text = ""
+                        var images: [String] = []
                         for block in blocks {
                             if block["type"] as? String == "text",
                                let t = block["text"] as? String {
                                 text += t
+                            } else if block["type"] as? String == "image",
+                                      let source = block["source"] as? [String: Any],
+                                      let base64 = source["data"] as? String {
+                                images.append(base64)
                             }
                         }
                         if !text.isEmpty {
-                            chatMessages.append(["role": "user", "content": text])
+                            var msg: [String: Any] = ["role": "user", "content": text]
+                            if !images.isEmpty {
+                                msg["images"] = images
+                            }
+                            chatMessages.append(msg)
                         }
                     }
                 }

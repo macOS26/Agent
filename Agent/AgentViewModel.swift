@@ -61,8 +61,18 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(ollamaModel, forKey: "ollamaModel") }
     }
 
-    var ollamaModels: [String] = []
+    struct OllamaModelInfo: Identifiable {
+        let id: String // same as name
+        let name: String
+        let supportsVision: Bool
+    }
+
+    var ollamaModels: [OllamaModelInfo] = []
     var isFetchingModels = false
+
+    var selectedOllamaSupportsVision: Bool {
+        ollamaModels.first(where: { $0.name == ollamaModel })?.supportsVision ?? false
+    }
 
     func fetchOllamaModels() {
         let endpoint = ollamaEndpoint
@@ -74,8 +84,9 @@ final class AgentViewModel {
                 let models = try await Self.fetchModels(endpoint: endpoint, apiKey: apiKey)
                 ollamaModels = models
                 // Auto-select first model if current selection is empty or not in list
-                if ollamaModel.isEmpty || (!models.isEmpty && !models.contains(ollamaModel)) {
-                    ollamaModel = models.first ?? ""
+                let names = models.map(\.name)
+                if ollamaModel.isEmpty || (!names.isEmpty && !names.contains(ollamaModel)) {
+                    ollamaModel = names.first ?? ""
                 }
             } catch {
                 appendLog("Failed to fetch models: \(error.localizedDescription)")
@@ -83,7 +94,23 @@ final class AgentViewModel {
         }
     }
 
-    private nonisolated static func fetchModels(endpoint: String, apiKey: String) async throws -> [String] {
+    private nonisolated static func isVisionModel(name: String, families: [String]) -> Bool {
+        let lowerName = name.lowercased()
+        let namePatterns = ["-vl", "vision", "llava", "moondream", "minicpm-v", "bakllava"]
+        for pattern in namePatterns {
+            if lowerName.contains(pattern) { return true }
+        }
+        let visionFamilies: Set<String> = [
+            "gemma3", "gemma2", "llava", "bakllava", "moondream",
+            "minicpm-v", "llava-llama3", "llava-phi3"
+        ]
+        for family in families {
+            if visionFamilies.contains(family.lowercased()) { return true }
+        }
+        return false
+    }
+
+    private nonisolated static func fetchModels(endpoint: String, apiKey: String) async throws -> [OllamaModelInfo] {
         // Derive tags URL from chat endpoint (e.g. https://ollama.com/api/chat -> https://ollama.com/api/tags)
         guard let chatURL = URL(string: endpoint),
               let baseURL = URL(string: chatURL.deletingLastPathComponent().absoluteString + "tags") else {
@@ -111,7 +138,18 @@ final class AgentViewModel {
             throw AgentError.invalidResponse
         }
 
-        return models.compactMap { $0["name"] as? String }.sorted()
+        return models.compactMap { model -> OllamaModelInfo? in
+            guard let name = model["name"] as? String else { return nil }
+            let details = model["details"] as? [String: Any]
+            let family = details?["family"] as? String ?? ""
+            let families = details?["families"] as? [String] ?? []
+            let allFamilies = families + (family.isEmpty ? [] : [family])
+            return OllamaModelInfo(
+                id: name,
+                name: name,
+                supportsVision: isVisionModel(name: name, families: allFamilies)
+            )
+        }.sorted { $0.name < $1.name }
     }
 
     var attachedImages: [NSImage] = []
