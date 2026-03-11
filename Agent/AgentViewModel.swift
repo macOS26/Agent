@@ -96,13 +96,18 @@ final class AgentViewModel {
 
     private nonisolated static func isVisionModel(name: String, families: [String]) -> Bool {
         let lowerName = name.lowercased()
-        let namePatterns = ["-vl", "vision", "llava", "moondream", "minicpm-v", "bakllava"]
+        // Name patterns that indicate vision support
+        let namePatterns = [
+            "-vl", "vision", "llava", "moondream", "minicpm-v", "bakllava",
+            "gemma3", "gemini", "glm-4", "glm-5"
+        ]
         for pattern in namePatterns {
             if lowerName.contains(pattern) { return true }
         }
+        // Family metadata from API
         let visionFamilies: Set<String> = [
-            "gemma3", "gemma2", "llava", "bakllava", "moondream",
-            "minicpm-v", "llava-llama3", "llava-phi3"
+            "gemma", "gemma2", "gemma3", "llava", "bakllava", "moondream",
+            "minicpm-v", "llava-llama3", "llava-phi3", "gemini"
         ]
         for family in families {
             if visionFamilies.contains(family.lowercased()) { return true }
