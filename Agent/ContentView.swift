@@ -298,8 +298,35 @@ struct SettingsView: View {
                         .frame(width: 300)
                     SecureField("API Key (optional for local)", text: $viewModel.ollamaAPIKey)
                         .frame(width: 300)
-                    TextField("Model", text: $viewModel.ollamaModel)
-                        .frame(width: 300)
+
+                    HStack {
+                        if viewModel.ollamaModels.isEmpty {
+                            TextField("Model", text: $viewModel.ollamaModel)
+                                .frame(width: 220)
+                        } else {
+                            Picker("Model", selection: $viewModel.ollamaModel) {
+                                ForEach(viewModel.ollamaModels, id: \.self) { model in
+                                    Text(model).tag(model)
+                                }
+                            }
+                            .frame(width: 220)
+                        }
+
+                        Button {
+                            viewModel.fetchOllamaModels()
+                        } label: {
+                            if viewModel.isFetchingModels {
+                                ProgressView()
+                                    .controlSize(.small)
+                            } else {
+                                Image(systemName: "arrow.clockwise")
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .disabled(viewModel.isFetchingModels)
+                        .help("Fetch available models")
+                    }
                 }
             }
         }
