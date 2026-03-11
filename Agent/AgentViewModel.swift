@@ -445,7 +445,7 @@ final class AgentViewModel {
         let claude: ClaudeService? = provider == .claude
             ? ClaudeService(apiKey: apiKey, model: selectedModel, historyContext: historyContext) : nil
         let ollama: OllamaService? = provider == .ollama
-            ? OllamaService(apiKey: ollamaAPIKey, model: ollamaModel, endpoint: ollamaEndpoint, historyContext: historyContext) : nil
+            ? OllamaService(apiKey: ollamaAPIKey, model: ollamaModel, endpoint: ollamaEndpoint, supportsVision: selectedOllamaSupportsVision, historyContext: historyContext) : nil
 
         var messages: [[String: Any]]
 

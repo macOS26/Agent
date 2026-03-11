@@ -5,15 +5,17 @@ final class OllamaService {
     let apiKey: String
     let model: String
     let baseURL: URL
+    let supportsVision: Bool
 
     let historyContext: String
     let userHome: String
     let userName: String
 
-    init(apiKey: String, model: String, endpoint: String, historyContext: String = "") {
+    init(apiKey: String, model: String, endpoint: String, supportsVision: Bool = false, historyContext: String = "") {
         self.apiKey = apiKey
         self.model = model
         self.baseURL = URL(string: endpoint)!
+        self.supportsVision = supportsVision
         self.historyContext = historyContext
         self.userHome = FileManager.default.homeDirectoryForCurrentUser.path
         self.userName = NSUserName()
@@ -41,6 +43,13 @@ final class OllamaService {
         Be concise — focus on actions, not explanations. \
         You have memory of previous tasks — build on past results.
         """
+        if supportsVision {
+            prompt += """
+
+            \nYou have VISION capabilities. When images are attached to a message, \
+            you can see and analyze them. Describe what you see when asked about images.
+            """
+        }
         if !historyContext.isEmpty {
             prompt += historyContext
         }
@@ -144,8 +153,8 @@ final class OllamaService {
                                 images.append(base64)
                             }
                         }
-                        if !text.isEmpty {
-                            var msg: [String: Any] = ["role": "user", "content": text]
+                        if !text.isEmpty || !images.isEmpty {
+                            var msg: [String: Any] = ["role": "user", "content": text.isEmpty ? "Describe the attached image(s)." : text]
                             if !images.isEmpty {
                                 msg["images"] = images
                             }
