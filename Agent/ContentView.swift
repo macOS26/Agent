@@ -55,13 +55,6 @@ struct ContentView: View {
                     }
                 }
 
-                if viewModel.isRunning {
-                    Button("Cancel") { viewModel.stop() }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.red)
-                        .controlSize(.small)
-                        .keyboardShortcut(.escape, modifiers: [])
-                }
 
                 Button { showHistory.toggle() } label: {
                     Image(systemName: "clock.arrow.circlepath")
@@ -153,6 +146,17 @@ struct ContentView: View {
 
             // Input — always enabled so user can override a running task
             HStack {
+                if viewModel.isRunning {
+                    Button { viewModel.stop() } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.red)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.regular)
+                    .help("Cancel running task")
+                    .keyboardShortcut(.escape, modifiers: [])
+                }
+
                 Button { viewModel.captureScreenshot() } label: {
                     Image(systemName: "camera")
                 }
