@@ -37,7 +37,7 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(ollamaAPIKey, forKey: "ollamaAPIKey") }
     }
 
-    var ollamaEndpoint: String = UserDefaults.standard.string(forKey: "ollamaEndpoint") ?? "http://localhost:11434/v1/chat/completions" {
+    var ollamaEndpoint: String = UserDefaults.standard.string(forKey: "ollamaEndpoint") ?? "https://ollama.com/api/chat" {
         didSet { UserDefaults.standard.set(ollamaEndpoint, forKey: "ollamaEndpoint") }
     }
 

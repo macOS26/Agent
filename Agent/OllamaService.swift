@@ -178,14 +178,12 @@ final class OllamaService {
             }
         }
 
-        var body: [String: Any] = [
+        let body: [String: Any] = [
             "model": model,
             "messages": chatMessages,
-            "tools": tools
+            "tools": tools,
+            "stream": false
         ]
-
-        // Only set max_tokens if not empty (some providers don't accept it)
-        body["max_tokens"] = 8192
 
         let bodyData = try JSONSerialization.data(withJSONObject: body)
         return try await Self.performRequest(
@@ -195,7 +193,7 @@ final class OllamaService {
         )
     }
 
-    /// Network I/O off main thread. Parses OpenAI response into Claude-compatible format.
+    /// Network I/O off main thread. Parses Ollama native response into Claude-compatible format.
     nonisolated private static func performRequest(
         bodyData: Data, apiKey: String, url: URL
     ) async throws -> (content: [[String: Any]], stopReason: String) {
@@ -219,16 +217,18 @@ final class OllamaService {
             throw AgentError.apiError(statusCode: httpResponse.statusCode, message: errorBody)
         }
 
-        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let choices = json["choices"] as? [[String: Any]],
-              let firstChoice = choices.first,
-              let message = firstChoice["message"] as? [String: Any] else {
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw AgentError.invalidResponse
         }
 
-        let finishReason = firstChoice["finish_reason"] as? String ?? "stop"
+        // Ollama native format: { "message": {...}, "done": true }
+        guard let message = json["message"] as? [String: Any] else {
+            throw AgentError.invalidResponse
+        }
 
-        // Convert OpenAI response to Claude-compatible content blocks
+        let done = json["done"] as? Bool ?? true
+
+        // Convert to Claude-compatible content blocks
         var contentBlocks: [[String: Any]] = []
 
         if let text = message["content"] as? String, !text.isEmpty {
@@ -238,13 +238,20 @@ final class OllamaService {
         if let toolCalls = message["tool_calls"] as? [[String: Any]] {
             for call in toolCalls {
                 guard let function = call["function"] as? [String: Any],
-                      let name = function["name"] as? String,
-                      let argsString = function["arguments"] as? String else { continue }
+                      let name = function["name"] as? String else { continue }
 
                 let callId = call["id"] as? String ?? UUID().uuidString
-                let input = (try? JSONSerialization.jsonObject(
-                    with: Data(argsString.utf8)
-                ) as? [String: Any]) ?? [:]
+
+                // Ollama native: arguments is a dict, not a JSON string
+                let input: [String: Any]
+                if let args = function["arguments"] as? [String: Any] {
+                    input = args
+                } else if let argsString = function["arguments"] as? String,
+                          let parsed = try? JSONSerialization.jsonObject(with: Data(argsString.utf8)) as? [String: Any] {
+                    input = parsed
+                } else {
+                    input = [:]
+                }
 
                 contentBlocks.append([
                     "type": "tool_use",
@@ -255,19 +262,13 @@ final class OllamaService {
             }
         }
 
-        // If no content at all, add empty text
         if contentBlocks.isEmpty {
             contentBlocks.append(["type": "text", "text": "(no response)"])
         }
 
-        // Map finish_reason to Claude stop_reason
-        let stopReason: String
-        switch finishReason {
-        case "tool_calls": stopReason = "tool_use"
-        case "stop": stopReason = "end_turn"
-        case "length": stopReason = "max_tokens"
-        default: stopReason = finishReason
-        }
+        // Determine stop reason from tool calls presence
+        let hasToolCalls = message["tool_calls"] != nil
+        let stopReason = hasToolCalls ? "tool_use" : (done ? "end_turn" : "end_turn")
 
         return (contentBlocks, stopReason)
     }
