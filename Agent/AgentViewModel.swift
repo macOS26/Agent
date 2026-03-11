@@ -23,12 +23,16 @@ final class AgentViewModel {
     @ObservationIgnored
     private static let _migrate: Void = {
         let defaults = UserDefaults.standard
-        guard !defaults.bool(forKey: "agentMigrationV1") else { return }
+        guard !defaults.bool(forKey: "agentMigrationV2") else { return }
         if let stored = defaults.string(forKey: "ollamaEndpoint"),
            stored == "http://localhost:11434/v1/chat/completions" {
             defaults.set("https://ollama.com/api/chat", forKey: "ollamaEndpoint")
         }
-        defaults.set(true, forKey: "agentMigrationV1")
+        // Clear stale default model so user fetches from cloud
+        if let model = defaults.string(forKey: "ollamaModel"), model == "llama3.1" {
+            defaults.set("", forKey: "ollamaModel")
+        }
+        defaults.set(true, forKey: "agentMigrationV2")
     }()
 
     var selectedProvider: APIProvider = { _ = AgentViewModel._migrate; return APIProvider(rawValue: UserDefaults.standard.string(forKey: "agentProvider") ?? "claude") ?? .claude }() {
@@ -53,8 +57,61 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(ollamaEndpoint, forKey: "ollamaEndpoint") }
     }
 
-    var ollamaModel: String = UserDefaults.standard.string(forKey: "ollamaModel") ?? "llama3.1" {
+    var ollamaModel: String = UserDefaults.standard.string(forKey: "ollamaModel") ?? "" {
         didSet { UserDefaults.standard.set(ollamaModel, forKey: "ollamaModel") }
+    }
+
+    var ollamaModels: [String] = []
+    var isFetchingModels = false
+
+    func fetchOllamaModels() {
+        let endpoint = ollamaEndpoint
+        let apiKey = ollamaAPIKey
+        isFetchingModels = true
+        Task {
+            defer { isFetchingModels = false }
+            do {
+                let models = try await Self.fetchModels(endpoint: endpoint, apiKey: apiKey)
+                ollamaModels = models
+                // Auto-select first model if current selection is empty or not in list
+                if ollamaModel.isEmpty || (!models.isEmpty && !models.contains(ollamaModel)) {
+                    ollamaModel = models.first ?? ""
+                }
+            } catch {
+                appendLog("Failed to fetch models: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private nonisolated static func fetchModels(endpoint: String, apiKey: String) async throws -> [String] {
+        // Derive tags URL from chat endpoint (e.g. https://ollama.com/api/chat -> https://ollama.com/api/tags)
+        guard let chatURL = URL(string: endpoint),
+              let baseURL = URL(string: chatURL.deletingLastPathComponent().absoluteString + "tags") else {
+            throw AgentError.invalidResponse
+        }
+
+        var request = URLRequest(url: baseURL)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "content-type")
+        if !apiKey.isEmpty {
+            request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        }
+        request.timeoutInterval = 15
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
+            throw AgentError.apiError(statusCode: (response as? HTTPURLResponse)?.statusCode ?? 0, message: errorBody)
+        }
+
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let models = json["models"] as? [[String: Any]] else {
+            throw AgentError.invalidResponse
+        }
+
+        return models.compactMap { $0["name"] as? String }.sorted()
     }
 
     var attachedImages: [NSImage] = []
