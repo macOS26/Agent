@@ -11,19 +11,17 @@ struct ContentView: View {
             HStack {
                 HStack(spacing: 6) {
                     StatusDot(
-                        isReady: viewModel.agentReady,
                         isActive: viewModel.userServiceActive,
-                        isBusy: viewModel.isRunning,
-                        otherActive: viewModel.rootServiceActive
+                        wasActive: viewModel.userWasActive,
+                        isBusy: viewModel.isRunning
                     )
                     Text("User")
                         .font(.caption)
-                    .foregroundStyle(.secondary)
+                        .foregroundStyle(.secondary)
                     StatusDot(
-                        isReady: viewModel.daemonReady,
                         isActive: viewModel.rootServiceActive,
-                        isBusy: viewModel.isRunning,
-                        otherActive: viewModel.userServiceActive
+                        wasActive: viewModel.rootWasActive,
+                        isBusy: viewModel.isRunning
                     )
                     Text("Root")
                         .font(.caption)
@@ -216,16 +214,15 @@ struct ContentView: View {
     }
 }
 
-/// Stoplight: Green+pulse = running, Yellow = between modes, Red = stopped
+/// Stoplight: Green = running, Yellow = was green + cooling down, Red = not running
 struct StatusDot: View {
-    let isReady: Bool
     let isActive: Bool
+    let wasActive: Bool
     let isBusy: Bool
-    let otherActive: Bool
 
     var dotColor: Color {
         if isActive { return .green }
-        if isBusy && otherActive { return .yellow }
+        if wasActive && isBusy { return .yellow }
         return .red
     }
 

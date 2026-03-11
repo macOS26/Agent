@@ -21,6 +21,8 @@ final class AgentViewModel {
     var isThinking = false
     var userServiceActive = false
     var rootServiceActive = false
+    var userWasActive = false
+    var rootWasActive = false
 
     // One-time migration for stale defaults — runs before property defaults are evaluated
     @ObservationIgnored
@@ -298,6 +300,8 @@ final class AgentViewModel {
         isThinking = false
         userServiceActive = false
         rootServiceActive = false
+        userWasActive = false
+        rootWasActive = false
     }
 
     func clearLog() {
@@ -510,6 +514,8 @@ final class AgentViewModel {
     private func executeTask(_ prompt: String) async {
         isRunning = true
         isCancelled = false
+        userWasActive = false
+        rootWasActive = false
 
         if !activityLog.isEmpty {
             logBuffer += "\n"
@@ -609,6 +615,7 @@ final class AgentViewModel {
                             resetStreamCounters()
                             if isPrivileged {
                                 rootServiceActive = true
+                                rootWasActive = true
                                 helperService.onOutput = { [weak self] chunk in
                                     self?.appendRawOutput(chunk)
                                 }
@@ -617,6 +624,7 @@ final class AgentViewModel {
                                 rootServiceActive = false
                             } else {
                                 userServiceActive = true
+                                userWasActive = true
                                 userService.onOutput = { [weak self] chunk in
                                     self?.appendRawOutput(chunk)
                                 }
@@ -687,5 +695,7 @@ final class AgentViewModel {
         isThinking = false
         userServiceActive = false
         rootServiceActive = false
+        userWasActive = false
+        rootWasActive = false
     }
 }
