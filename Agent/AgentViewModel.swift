@@ -98,8 +98,8 @@ final class AgentViewModel {
         let lowerName = name.lowercased()
         // Name patterns that indicate vision support
         let namePatterns = [
-            "-vl", "vision", "llava", "moondream", "minicpm-v", "bakllava",
-            "gemma3", "gemini", "glm-4", "glm-5"
+            "-vl", "-v:", "vision", "llava", "moondream", "minicpm-v", "bakllava",
+            "gemma3", "gemini"
         ]
         for pattern in namePatterns {
             if lowerName.contains(pattern) { return true }
