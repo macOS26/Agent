@@ -19,7 +19,19 @@ final class AgentViewModel {
     var activityLog = ""
     var isRunning = false
 
-    var selectedProvider: APIProvider = APIProvider(rawValue: UserDefaults.standard.string(forKey: "agentProvider") ?? "claude") ?? .claude {
+    // One-time migration for stale defaults — runs before property defaults are evaluated
+    @ObservationIgnored
+    private static let _migrate: Void = {
+        let defaults = UserDefaults.standard
+        guard !defaults.bool(forKey: "agentMigrationV1") else { return }
+        if let stored = defaults.string(forKey: "ollamaEndpoint"),
+           stored == "http://localhost:11434/v1/chat/completions" {
+            defaults.set("https://ollama.com/api/chat", forKey: "ollamaEndpoint")
+        }
+        defaults.set(true, forKey: "agentMigrationV1")
+    }()
+
+    var selectedProvider: APIProvider = { _ = AgentViewModel._migrate; return APIProvider(rawValue: UserDefaults.standard.string(forKey: "agentProvider") ?? "claude") ?? .claude }() {
         didSet { UserDefaults.standard.set(selectedProvider.rawValue, forKey: "agentProvider") }
     }
 
