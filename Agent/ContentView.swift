@@ -18,7 +18,7 @@ struct ContentView: View {
                     )
                     Text("User")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                    .foregroundStyle(.secondary)
                     StatusDot(
                         isReady: viewModel.daemonReady,
                         isActive: viewModel.rootServiceActive,
@@ -239,7 +239,7 @@ struct StatusDot: View {
                 PulseRing()
             }
         }
-        .frame(width: 20, height: 20) // Fixed frame prevents layout shift
+        .frame(width: 12, height: 12) // Fixed frame prevents layout shift
     }
 }
 
