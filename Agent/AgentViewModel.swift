@@ -18,6 +18,9 @@ final class AgentViewModel {
     var taskInput = ""
     var activityLog = ""
     var isRunning = false
+    var isThinking = false
+    var userServiceActive = false
+    var rootServiceActive = false
 
     // One-time migration for stale defaults — runs before property defaults are evaluated
     @ObservationIgnored
@@ -264,6 +267,9 @@ final class AgentViewModel {
         appendLog("Cancelled by user.")
         flushLog()
         isRunning = false
+        isThinking = false
+        userServiceActive = false
+        rootServiceActive = false
     }
 
     func clearLog() {
@@ -505,6 +511,7 @@ final class AgentViewModel {
             iterations += 1
 
             do {
+                isThinking = true
                 let response: (content: [[String: Any]], stopReason: String)
                 if let claude {
                     response = try await claude.send(messages: messages)
@@ -513,6 +520,7 @@ final class AgentViewModel {
                 } else {
                     throw AgentError.noAPIKey
                 }
+                isThinking = false
 
                 var toolResults: [[String: Any]] = []
                 var hasToolUse = false
@@ -547,19 +555,23 @@ final class AgentViewModel {
 
                             let result: (status: Int32, output: String)
                             if isPrivileged {
+                                rootServiceActive = true
                                 helperService.onOutput = { [weak self] chunk in
                                     self?.logBuffer += chunk
                                     self?.scheduleLogFlush()
                                 }
                                 result = await helperService.execute(command: command)
                                 helperService.onOutput = nil
+                                rootServiceActive = false
                             } else {
+                                userServiceActive = true
                                 userService.onOutput = { [weak self] chunk in
                                     self?.logBuffer += chunk
                                     self?.scheduleLogFlush()
                                 }
                                 result = await userService.execute(command: command)
                                 userService.onOutput = nil
+                                userServiceActive = false
                             }
                             flushLog()
 
@@ -621,5 +633,8 @@ final class AgentViewModel {
 
         flushLog()
         isRunning = false
+        isThinking = false
+        userServiceActive = false
+        rootServiceActive = false
     }
 }

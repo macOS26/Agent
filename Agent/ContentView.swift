@@ -11,14 +11,18 @@ struct ContentView: View {
             HStack {
                 HStack(spacing: 6) {
                     Circle()
-                        .fill(viewModel.agentReady ? .green : .red)
+                        .fill(viewModel.userServiceActive ? .yellow : (viewModel.agentReady ? .green : .red))
                         .frame(width: 8, height: 8)
+                        .opacity(viewModel.userServiceActive ? 1 : 0.8)
+                        .animation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true), value: viewModel.userServiceActive)
                     Text("User")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Circle()
-                        .fill(viewModel.daemonReady ? .green : .red)
+                        .fill(viewModel.rootServiceActive ? .yellow : (viewModel.daemonReady ? .green : .red))
                         .frame(width: 8, height: 8)
+                        .opacity(viewModel.rootServiceActive ? 1 : 0.8)
+                        .animation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true), value: viewModel.rootServiceActive)
                     Text("Root")
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -33,15 +37,25 @@ struct ContentView: View {
 
                 Spacer()
 
-                if viewModel.isRunning {
+                if viewModel.isThinking {
                     HStack(spacing: 4) {
                         ProgressView()
                             .controlSize(.small)
-                        Text("Running...")
+                        Text("Thinking...")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
+                } else if viewModel.isRunning {
+                    HStack(spacing: 4) {
+                        ProgressView()
+                            .controlSize(.small)
+                        Text(viewModel.userServiceActive || viewModel.rootServiceActive ? "Executing..." : "Running...")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
 
+                if viewModel.isRunning {
                     Button("Cancel") { viewModel.stop() }
                         .buttonStyle(.borderedProminent)
                         .tint(.red)
