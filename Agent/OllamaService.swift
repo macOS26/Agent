@@ -181,7 +181,11 @@ final class OllamaService {
             "model": model,
             "messages": chatMessages,
             "tools": tools,
-            "stream": false
+            "stream": false,
+            "options": [
+                "num_predict": 8192,
+                "num_ctx": 16384
+            ] as [String: Any]
         ]
 
         let bodyData = try JSONSerialization.data(withJSONObject: body)
