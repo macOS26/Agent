@@ -104,15 +104,11 @@ final class AgentViewModel {
     private nonisolated static func isVisionModel(name: String, families: [String]) -> Bool {
         let lowerName = name.lowercased()
         // Name patterns that indicate vision support
+        // Only models with confirmed vision support
         let namePatterns = [
             "-vl", "-v:", "vision", "llava", "moondream", "minicpm-v", "bakllava",
-            "gemma3", "gemini", "glm-4.6", "granite-3.2-vision"
+            "gemma3", "gemini", "granite-3.2-vision"
         ]
-        // Exact model prefixes (match name before ":" tag separator)
-        let exactPrefixes = ["kimi-k2:1t"]
-        for prefix in exactPrefixes {
-            if lowerName.hasPrefix(prefix) { return true }
-        }
         for pattern in namePatterns {
             if lowerName.contains(pattern) { return true }
         }
