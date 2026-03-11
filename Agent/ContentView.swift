@@ -176,11 +176,21 @@ struct ContentView: View {
                    event.charactersIgnoringModifiers == "v",
                    !viewModel.isRunning {
                     if viewModel.pasteImageFromClipboard() {
-                        // Image found and attached - consume the event
                         return nil
                     }
                 }
-                // Not an image paste - let it through for normal text paste
+
+                // Up/Down arrow for prompt history
+                if !viewModel.isRunning {
+                    if event.keyCode == 126 { // Up arrow
+                        viewModel.navigatePromptHistory(direction: -1)
+                        return nil
+                    } else if event.keyCode == 125 { // Down arrow
+                        viewModel.navigatePromptHistory(direction: 1)
+                        return nil
+                    }
+                }
+
                 return event
             }
         }

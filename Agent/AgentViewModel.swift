@@ -18,6 +18,10 @@ final class AgentViewModel {
     var attachedImages: [NSImage] = []
     private var attachedImagesBase64: [String] = []
 
+    private var promptHistory: [String] = UserDefaults.standard.stringArray(forKey: "agentPromptHistory") ?? []
+    private var historyIndex = -1
+    private var savedInput = ""
+
     let helperService = HelperService()
     let history = TaskHistory.shared
     private var isCancelled = false
@@ -34,11 +38,49 @@ final class AgentViewModel {
     func run() {
         let task = taskInput.trimmingCharacters(in: .whitespaces)
         guard !task.isEmpty else { return }
+
+        promptHistory.append(task)
+        UserDefaults.standard.set(promptHistory, forKey: "agentPromptHistory")
+        historyIndex = -1
+        savedInput = ""
         taskInput = ""
 
         runningTask = Task {
             await executeTask(task)
         }
+    }
+
+    /// Navigate prompt history. direction: -1 = older (up arrow), 1 = newer (down arrow)
+    func navigatePromptHistory(direction: Int) {
+        guard !promptHistory.isEmpty else { return }
+
+        if historyIndex == -1 {
+            // Starting to browse — save current input
+            savedInput = taskInput
+            if direction == -1 {
+                historyIndex = promptHistory.count - 1
+            } else {
+                return // already at the beginning, nothing newer
+            }
+        } else {
+            historyIndex += direction
+        }
+
+        if historyIndex < 0 {
+            // Went past the oldest — restore saved input
+            historyIndex = -1
+            taskInput = savedInput
+            return
+        }
+
+        if historyIndex >= promptHistory.count {
+            // Back to current input
+            historyIndex = -1
+            taskInput = savedInput
+            return
+        }
+
+        taskInput = promptHistory[historyIndex]
     }
 
     func stop() {
