@@ -581,6 +581,7 @@ final class AgentViewModel {
                     throw AgentError.noAPIKey
                 }
                 isThinking = false
+                guard !isCancelled else { break }
 
                 var toolResults: [[String: Any]] = []
                 var hasToolUse = false
@@ -681,10 +682,14 @@ final class AgentViewModel {
                 }
 
             } catch {
-                appendLog("Error: \(error.localizedDescription)")
+                if !isCancelled {
+                    appendLog("Error: \(error.localizedDescription)")
+                }
                 break
             }
         }
+
+        guard !isCancelled else { return }
 
         if iterations >= maxIterations {
             appendLog("Reached maximum iterations (\(maxIterations))")
