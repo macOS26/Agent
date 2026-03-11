@@ -200,6 +200,11 @@ final class AgentViewModel {
         let task = taskInput.trimmingCharacters(in: .whitespaces)
         guard !task.isEmpty else { return }
 
+        // Stop any running task before starting a new one
+        if isRunning {
+            stop()
+        }
+
         promptHistory.append(task)
         UserDefaults.standard.set(promptHistory, forKey: "agentPromptHistory")
         historyIndex = -1
