@@ -217,49 +217,47 @@ struct ContentView: View {
 }
 
 /// Stoplight: Green+pulse = running, Yellow = between modes, Red = stopped
+/// Stoplight: Green+pulse = running, Yellow = between modes, Red = stopped
 struct StatusDot: View {
     let isReady: Bool
-    let isActive: Bool  // command executing on this service
-    let isBusy: Bool    // any task running
-
-    @State private var pulse = false
-
-    let otherActive: Bool  // the OTHER service is running
+    let isActive: Bool
+    let isBusy: Bool
+    let otherActive: Bool
 
     var dotColor: Color {
-        if isActive { return .green }           // this service running
-        if isBusy && !otherActive { return .yellow } // warming up or cooling down
-        return .red                              // stopped or other service is running
+        if isActive { return .green }
+        if isBusy && !otherActive { return .yellow }
+        return .red
     }
 
     var body: some View {
-        Circle()
-            .fill(dotColor)
-            .frame(width: 8, height: 8)
-            .overlay(
-                Group {
-                    if isActive {
-                        Circle()
-                            .stroke(Color.green.opacity(0.6), lineWidth: 2)
-                            .frame(width: 14, height: 14)
-                            .scaleEffect(pulse ? 1.5 : 1.0)
-                            .opacity(pulse ? 0 : 1)
-                    }
-                }
-            )
-            .animation(.easeInOut(duration: 0.3), value: dotColor)
-            .onChange(of: isActive) {
-                if isActive {
-                    withAnimation(.easeOut(duration: 0.8).repeatForever(autoreverses: false)) {
-                        pulse = true
-                    }
-                } else {
-                    withAnimation(.default) { pulse = false }
-                }
+        ZStack {
+            Circle()
+                .fill(dotColor)
+                .frame(width: 8, height: 8)
+
+            if isActive {
+                PulseRing()
             }
-            .onChange(of: isBusy) {
-                if !isBusy {
-                    withAnimation(.default) { pulse = false }
+        }
+        .animation(.easeInOut(duration: 0.3), value: dotColor)
+    }
+}
+
+struct PulseRing: View {
+    @State private var scale: CGFloat = 1.0
+    @State private var opacity: Double = 1.0
+
+    var body: some View {
+        Circle()
+            .stroke(Color.green.opacity(0.6), lineWidth: 2)
+            .frame(width: 14, height: 14)
+            .scaleEffect(scale)
+            .opacity(opacity)
+            .onAppear {
+                withAnimation(.easeOut(duration: 0.9).repeatForever(autoreverses: false)) {
+                    scale = 2.0
+                    opacity = 0
                 }
             }
     }
