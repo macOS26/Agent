@@ -231,7 +231,7 @@ struct StatusDot: View {
                 .fill(dotColor)
                 .frame(width: 8, height: 8)
 
-            if isActive {
+            if dotColor == .green {
                 PulseRing()
             }
         }
