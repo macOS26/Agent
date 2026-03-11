@@ -233,9 +233,41 @@ final class OllamaService {
 
         // Convert to Claude-compatible content blocks
         var contentBlocks: [[String: Any]] = []
+        var parsedToolFromText = false
 
         if let text = message["content"] as? String, !text.isEmpty {
-            contentBlocks.append(["type": "text", "text": text])
+            // Check if model wrote a tool call as plain text (common with Ollama models)
+            let toolNames = ["execute_user_command", "execute_command", "task_complete"]
+            var extractedTool = false
+
+            for toolName in toolNames {
+                guard let nameRange = text.range(of: toolName) else { continue }
+                // Look for JSON after the tool name
+                let afterName = String(text[nameRange.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
+                guard afterName.hasPrefix("{"),
+                      let jsonData = afterName.data(using: .utf8),
+                      let parsed = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else { continue }
+
+                // Extract text before the tool call
+                let beforeText = String(text[..<nameRange.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+                if !beforeText.isEmpty {
+                    contentBlocks.append(["type": "text", "text": beforeText])
+                }
+
+                contentBlocks.append([
+                    "type": "tool_use",
+                    "id": UUID().uuidString,
+                    "name": toolName,
+                    "input": parsed
+                ])
+                extractedTool = true
+                parsedToolFromText = true
+                break
+            }
+
+            if !extractedTool {
+                contentBlocks.append(["type": "text", "text": text])
+            }
         }
 
         if let toolCalls = message["tool_calls"] as? [[String: Any]] {
@@ -270,7 +302,7 @@ final class OllamaService {
         }
 
         // Determine stop reason from tool calls presence
-        let hasToolCalls = message["tool_calls"] != nil
+        let hasToolCalls = message["tool_calls"] != nil || parsedToolFromText
         let stopReason = hasToolCalls ? "tool_use" : (done ? "end_turn" : "end_turn")
 
         return (contentBlocks, stopReason)
