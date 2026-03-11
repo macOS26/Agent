@@ -23,15 +23,22 @@ final class AgentViewModel {
     private var savedInput = ""
 
     let helperService = HelperService()
+    let userService = UserService()
     let history = TaskHistory.shared
     private var isCancelled = false
     private var runningTask: Task<Void, Never>?
 
     var daemonReady: Bool { helperService.helperReady }
+    var agentReady: Bool { userService.userReady }
     var hasAttachments: Bool { !attachedImages.isEmpty }
 
     func registerDaemon() {
         let msg = helperService.registerHelper()
+        appendLog(msg)
+    }
+
+    func registerAgent() {
+        let msg = userService.registerUser()
         appendLog(msg)
     }
 
@@ -89,6 +96,8 @@ final class AgentViewModel {
         runningTask = nil
         helperService.cancel()
         helperService.onOutput = nil
+        userService.cancel()
+        userService.onOutput = nil
         appendLog("Cancelled by user.")
         flushLog()
         isRunning = false
@@ -350,20 +359,29 @@ final class AgentViewModel {
                             return
                         }
 
-                        if name == "execute_command" {
+                        if name == "execute_command" || name == "execute_user_command" {
                             let command = input["command"] as? String ?? ""
+                            let isPrivileged = (name == "execute_command")
                             commandsRun.append(command)
-                            appendLog("$ \(command)")
+                            appendLog("\(isPrivileged ? "#" : "$") \(command)")
                             flushLog()
 
-                            // Stream output live via onOutput handler
-                            helperService.onOutput = { [weak self] chunk in
-                                self?.logBuffer += chunk
-                                self?.scheduleLogFlush()
+                            let result: (status: Int32, output: String)
+                            if isPrivileged {
+                                helperService.onOutput = { [weak self] chunk in
+                                    self?.logBuffer += chunk
+                                    self?.scheduleLogFlush()
+                                }
+                                result = await helperService.execute(command: command)
+                                helperService.onOutput = nil
+                            } else {
+                                userService.onOutput = { [weak self] chunk in
+                                    self?.logBuffer += chunk
+                                    self?.scheduleLogFlush()
+                                }
+                                result = await userService.execute(command: command)
+                                userService.onOutput = nil
                             }
-
-                            let result = await helperService.execute(command: command)
-                            helperService.onOutput = nil
                             flushLog()
 
                             if result.status != 0 {

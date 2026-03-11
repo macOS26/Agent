@@ -11,16 +11,25 @@ struct ContentView: View {
             HStack {
                 HStack(spacing: 6) {
                     Circle()
+                        .fill(viewModel.agentReady ? .green : .red)
+                        .frame(width: 8, height: 8)
+                    Text("User")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Circle()
                         .fill(viewModel.daemonReady ? .green : .red)
                         .frame(width: 8, height: 8)
-                    Text(viewModel.daemonReady ? "Daemon Active" : "Daemon Inactive")
+                    Text("Root")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
-                Button("Register") { viewModel.registerDaemon() }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
+                Button("Register") {
+                    viewModel.registerAgent()
+                    viewModel.registerDaemon()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
 
                 Spacer()
 
