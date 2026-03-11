@@ -10,19 +10,19 @@ struct ContentView: View {
             // Header
             HStack {
                 HStack(spacing: 6) {
-                    Circle()
-                        .fill(viewModel.userServiceActive ? .yellow : (viewModel.agentReady ? .green : .red))
-                        .frame(width: 8, height: 8)
-                        .opacity(viewModel.userServiceActive ? 1 : 0.8)
-                        .animation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true), value: viewModel.userServiceActive)
+                    StatusDot(
+                        isReady: viewModel.agentReady,
+                        isActive: viewModel.userServiceActive,
+                        isBusy: viewModel.isRunning
+                    )
                     Text("User")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Circle()
-                        .fill(viewModel.rootServiceActive ? .yellow : (viewModel.daemonReady ? .green : .red))
-                        .frame(width: 8, height: 8)
-                        .opacity(viewModel.rootServiceActive ? 1 : 0.8)
-                        .animation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true), value: viewModel.rootServiceActive)
+                    StatusDot(
+                        isReady: viewModel.daemonReady,
+                        isActive: viewModel.rootServiceActive,
+                        isBusy: viewModel.isRunning
+                    )
                     Text("Root")
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -211,6 +211,46 @@ struct ContentView: View {
                 return event
             }
         }
+    }
+}
+
+struct StatusDot: View {
+    let isReady: Bool
+    let isActive: Bool  // command executing on this service
+    let isBusy: Bool    // any task running
+
+    @State private var pulse = false
+
+    var dotColor: Color {
+        if isActive { return .orange }
+        if isBusy { return .yellow }
+        return isReady ? .green : .red
+    }
+
+    var body: some View {
+        Circle()
+            .fill(dotColor)
+            .frame(width: isActive ? 10 : 8, height: isActive ? 10 : 8)
+            .overlay(
+                Circle()
+                    .stroke(dotColor.opacity(0.5), lineWidth: isActive ? 2 : 0)
+                    .frame(width: 14, height: 14)
+                    .scaleEffect(pulse ? 1.3 : 1.0)
+                    .opacity(pulse ? 0 : 1)
+            )
+            .animation(.easeInOut(duration: 0.3), value: dotColor)
+            .onChange(of: isActive) {
+                if isActive {
+                    withAnimation(.easeOut(duration: 0.8).repeatForever(autoreverses: false)) {
+                        pulse = true
+                    }
+                } else {
+                    pulse = false
+                }
+            }
+            .onChange(of: isBusy) {
+                if !isBusy { pulse = false }
+            }
     }
 }
 
