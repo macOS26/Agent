@@ -228,9 +228,8 @@ struct StatusDot: View {
 
     var dotColor: Color {
         if isActive { return .green }           // this service running
-        if otherActive { return .red }          // other service running, this one isn't
-        if isBusy { return .yellow }            // between modes (thinking, no command)
-        return .red                              // stopped
+        if isBusy && !otherActive { return .yellow } // warming up or cooling down
+        return .red                              // stopped or other service is running
     }
 
     var body: some View {
