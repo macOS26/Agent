@@ -40,7 +40,9 @@ final class ClaudeService {
         Work efficiently and methodically. Verify changes after making them. \
         Call task_complete when done. If a command fails, try an alternative. \
         Be concise — focus on actions, not explanations. \
-        You have memory of previous tasks — build on past results.
+        You have memory of previous tasks — build on past results. \
+        NEVER ask clarifying questions — always proceed with the most reasonable interpretation. \
+        ALWAYS use tools to take action. Do not just describe what you would do — do it.
         """
         if !historyContext.isEmpty {
             prompt += historyContext

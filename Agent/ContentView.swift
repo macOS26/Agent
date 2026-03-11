@@ -137,14 +137,13 @@ struct ContentView: View {
                 }
             }
 
-            // Input
+            // Input — always enabled so user can override a running task
             HStack {
                 Button { viewModel.captureScreenshot() } label: {
                     Image(systemName: "camera")
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.regular)
-                .disabled(viewModel.isRunning)
                 .help("Take a screenshot to attach")
 
                 Button { viewModel.pasteImageFromClipboard() } label: {
@@ -152,28 +151,20 @@ struct ContentView: View {
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.regular)
-                .disabled(viewModel.isRunning)
                 .help("Paste image from clipboard")
 
                 TextField("Enter task...", text: $viewModel.taskInput)
                     .textFieldStyle(.roundedBorder)
                     .onSubmit {
-                        if !viewModel.isRunning && !viewModel.taskInput.isEmpty {
+                        if !viewModel.taskInput.isEmpty {
                             viewModel.run()
                         }
                     }
 
-                if viewModel.isRunning {
-                    Button("Stop") { viewModel.stop() }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.red)
-                        .controlSize(.regular)
-                } else {
-                    Button("Run") { viewModel.run() }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.regular)
-                        .disabled(viewModel.taskInput.isEmpty || (viewModel.selectedProvider == .claude && viewModel.apiKey.isEmpty))
-                }
+                Button("Run") { viewModel.run() }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.regular)
+                    .disabled(viewModel.taskInput.isEmpty || (viewModel.selectedProvider == .claude && viewModel.apiKey.isEmpty))
             }
             .padding()
         }
