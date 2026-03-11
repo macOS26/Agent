@@ -93,53 +93,93 @@ final class AgentViewModel {
         attachedImagesBase64.removeAll()
     }
 
-    /// Try all pasteboard formats to grab an image
+    /// Try all pasteboard formats to grab an image.
+    /// Returns true if image data was found (encoding happens async in background).
     @discardableResult
     func pasteImageFromClipboard() -> Bool {
         let pb = NSPasteboard.general
 
-        var nsImage: NSImage?
+        var rawData: Data?
 
-        // Try reading as NSImage first
-        if let images = pb.readObjects(forClasses: [NSImage.self]) as? [NSImage], let img = images.first {
-            nsImage = img
-        }
-
-        // Try raw image data types
-        if nsImage == nil {
-            for type in [NSPasteboard.PasteboardType.png,
-                         NSPasteboard.PasteboardType.tiff,
-                         NSPasteboard.PasteboardType(rawValue: "public.jpeg")] {
-                if let data = pb.data(forType: type), let img = NSImage(data: data) {
-                    nsImage = img
-                    break
-                }
+        // Try raw data types first (avoids full NSImage deserialization overhead)
+        for type in [NSPasteboard.PasteboardType.png,
+                     NSPasteboard.PasteboardType.tiff,
+                     NSPasteboard.PasteboardType(rawValue: "public.jpeg")] {
+            if let data = pb.data(forType: type) {
+                rawData = data
+                break
             }
         }
 
+        // Try NSImage as fallback
+        if rawData == nil,
+           let images = pb.readObjects(forClasses: [NSImage.self]) as? [NSImage],
+           let img = images.first,
+           let tiff = img.tiffRepresentation {
+            rawData = tiff
+        }
+
         // Try file URLs (e.g. screenshot file copied from Finder)
-        if nsImage == nil,
+        if rawData == nil,
            let urls = pb.readObjects(forClasses: [NSURL.self]) as? [URL] {
             for url in urls {
                 let ext = url.pathExtension.lowercased()
                 if ["png", "jpg", "jpeg", "tiff", "bmp", "gif"].contains(ext),
-                   let img = NSImage(contentsOf: url) {
-                    nsImage = img
+                   let data = try? Data(contentsOf: url) {
+                    rawData = data
                     break
                 }
             }
         }
 
-        guard let image = nsImage,
-              let tiffData = image.tiffRepresentation,
-              let bitmap = NSBitmapImageRep(data: tiffData),
-              let pngData = bitmap.representation(using: .png, properties: [:]) else {
-            return false
+        guard let imageData = rawData else { return false }
+
+        // Encode on a background thread to avoid blocking the main thread
+        Task {
+            let base64 = await Self.encodeImageToBase64(imageData)
+            guard let base64 else { return }
+            if let image = NSImage(data: imageData) {
+                attachedImages.append(image)
+                attachedImagesBase64.append(base64)
+            }
         }
 
-        attachedImages.append(image)
-        attachedImagesBase64.append(pngData.base64EncodedString())
         return true
+    }
+
+    /// Encode image data to a base64 PNG string off the main thread.
+    /// Downscales images larger than 2048px to prevent memory issues.
+    private static nonisolated func encodeImageToBase64(_ data: Data) async -> String? {
+        guard let bitmap = NSBitmapImageRep(data: data) else { return nil }
+
+        let maxDim = 2048
+        let w = bitmap.pixelsWide
+        let h = bitmap.pixelsHigh
+
+        if w > maxDim || h > maxDim {
+            let scale = min(Double(maxDim) / Double(w), Double(maxDim) / Double(h))
+            let newW = Int(Double(w) * scale)
+            let newH = Int(Double(h) * scale)
+
+            guard let cgImage = bitmap.cgImage,
+                  let ctx = CGContext(
+                      data: nil, width: newW, height: newH,
+                      bitsPerComponent: 8, bytesPerRow: 0,
+                      space: CGColorSpaceCreateDeviceRGB(),
+                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+                  ) else { return nil }
+
+            ctx.interpolationQuality = .high
+            ctx.draw(cgImage, in: CGRect(x: 0, y: 0, width: newW, height: newH))
+
+            guard let resizedCG = ctx.makeImage() else { return nil }
+            let resizedBitmap = NSBitmapImageRep(cgImage: resizedCG)
+            guard let pngData = resizedBitmap.representation(using: .png, properties: [:]) else { return nil }
+            return pngData.base64EncodedString()
+        }
+
+        guard let pngData = bitmap.representation(using: .png, properties: [:]) else { return nil }
+        return pngData.base64EncodedString()
     }
 
     // MARK: - Task Execution Loop
