@@ -188,10 +188,38 @@ final class AgentViewModel {
     let history = TaskHistory.shared
     private var isCancelled = false
     private var runningTask: Task<Void, Never>?
+    @ObservationIgnored private var terminationObserver: Any?
 
     var daemonReady: Bool { helperService.helperReady }
     var agentReady: Bool { userService.userReady }
     var hasAttachments: Bool { !attachedImages.isEmpty }
+
+    init() {
+        // Cancel any orphaned processes from a previous app session
+        let defaults = UserDefaults.standard
+        if let oldHelperID = defaults.string(forKey: "lastHelperInstanceID") {
+            HelperService.cancelProcess(instanceID: oldHelperID)
+        }
+        if let oldUserID = defaults.string(forKey: "lastUserInstanceID") {
+            UserService.cancelProcess(instanceID: oldUserID)
+        }
+        // Persist current instanceIDs so next launch can clean up
+        defaults.set(helperService.instanceID, forKey: "lastHelperInstanceID")
+        defaults.set(userService.instanceID, forKey: "lastUserInstanceID")
+
+        // Cancel running processes on app quit
+        let helperID = helperService.instanceID
+        let userID = userService.instanceID
+        terminationObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.willTerminateNotification,
+            object: nil, queue: .main
+        ) { _ in
+            HelperService.cancelProcess(instanceID: helperID)
+            UserService.cancelProcess(instanceID: userID)
+            UserDefaults.standard.removeObject(forKey: "lastHelperInstanceID")
+            UserDefaults.standard.removeObject(forKey: "lastUserInstanceID")
+        }
+    }
 
     func registerDaemon() {
         let msg = helperService.registerHelper()

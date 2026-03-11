@@ -80,8 +80,12 @@ final class UserService {
     }
 
     func cancel() {
+        Self.cancelProcess(instanceID: instanceID)
+    }
+
+    nonisolated static func cancelProcess(instanceID: String) {
         Task.detached {
-            await self.cancelViaXPC()
+            await cancelViaXPC(instanceID: instanceID)
         }
     }
 
@@ -111,15 +115,15 @@ final class UserService {
         }
     }
 
-    nonisolated private func cancelViaXPC() async {
+    nonisolated private static func cancelViaXPC(instanceID: String) async {
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            let connection = NSXPCConnection(machServiceName: UserService.userID, options: [])
+            let connection = NSXPCConnection(machServiceName: userID, options: [])
             connection.remoteObjectInterface = NSXPCInterface(with: UserToolProtocol.self)
             connection.resume()
             let proxy = connection.remoteObjectProxyWithErrorHandler { _ in
                 continuation.resume()
             } as! UserToolProtocol
-            proxy.cancelOperation(instanceID: self.instanceID) {
+            proxy.cancelOperation(instanceID: instanceID) {
                 connection.invalidate()
                 continuation.resume()
             }
