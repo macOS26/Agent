@@ -214,43 +214,23 @@ struct ContentView: View {
     }
 }
 
+/// Stoplight rules: Green = running, Yellow = standby, Red = stopped
 struct StatusDot: View {
     let isReady: Bool
     let isActive: Bool  // command executing on this service
     let isBusy: Bool    // any task running
 
-    @State private var pulse = false
-
     var dotColor: Color {
-        if isActive { return .orange }
-        if isBusy { return .yellow }
-        return isReady ? .green : .red
+        if isActive { return .green }  // running
+        if isBusy { return .yellow }   // standby (task active but not on this service)
+        return .red                     // stopped
     }
 
     var body: some View {
         Circle()
             .fill(dotColor)
-            .frame(width: isActive ? 10 : 8, height: isActive ? 10 : 8)
-            .overlay(
-                Circle()
-                    .stroke(dotColor.opacity(0.5), lineWidth: isActive ? 2 : 0)
-                    .frame(width: 14, height: 14)
-                    .scaleEffect(pulse ? 1.3 : 1.0)
-                    .opacity(pulse ? 0 : 1)
-            )
+            .frame(width: 8, height: 8)
             .animation(.easeInOut(duration: 0.3), value: dotColor)
-            .onChange(of: isActive) {
-                if isActive {
-                    withAnimation(.easeOut(duration: 0.8).repeatForever(autoreverses: false)) {
-                        pulse = true
-                    }
-                } else {
-                    pulse = false
-                }
-            }
-            .onChange(of: isBusy) {
-                if !isBusy { pulse = false }
-            }
     }
 }
 
