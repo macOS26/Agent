@@ -99,7 +99,7 @@ final class AgentViewModel {
         // Name patterns that indicate vision support
         let namePatterns = [
             "-vl", "-v:", "vision", "llava", "moondream", "minicpm-v", "bakllava",
-            "gemma3", "gemini"
+            "gemma3", "gemini", "kimi-k2", "glm-4.6", "granite-3.2-vision"
         ]
         for pattern in namePatterns {
             if lowerName.contains(pattern) { return true }
