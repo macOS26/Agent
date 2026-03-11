@@ -225,7 +225,7 @@ struct StatusDot: View {
 
     var dotColor: Color {
         if isActive { return .green }
-        if isBusy && !otherActive { return .yellow }
+        if isBusy && otherActive { return .yellow }
         return .red
     }
 
