@@ -32,6 +32,12 @@ struct ContentView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
+
+                    Button("Cancel") { viewModel.stop() }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.red)
+                        .controlSize(.small)
+                        .keyboardShortcut(.escape, modifiers: [])
                 }
 
                 Button { showHistory.toggle() } label: {

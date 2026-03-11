@@ -21,6 +21,7 @@ final class AgentViewModel {
     let helperService = HelperService()
     let history = TaskHistory.shared
     private var isCancelled = false
+    private var runningTask: Task<Void, Never>?
 
     var daemonReady: Bool { helperService.helperReady }
     var hasAttachments: Bool { !attachedImages.isEmpty }
@@ -35,13 +36,15 @@ final class AgentViewModel {
         guard !task.isEmpty else { return }
         taskInput = ""
 
-        Task {
+        runningTask = Task {
             await executeTask(task)
         }
     }
 
     func stop() {
         isCancelled = true
+        runningTask?.cancel()
+        runningTask = nil
         helperService.cancel()
         appendLog("Cancelled by user.")
         isRunning = false
