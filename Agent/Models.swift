@@ -32,8 +32,8 @@ struct TaskRecord: Codable, Identifiable {
     }
 }
 
-@MainActor
-final class TaskHistory: Observable {
+@MainActor @Observable
+final class TaskHistory {
     static let shared = TaskHistory()
 
     private(set) var records: [TaskRecord] = []
