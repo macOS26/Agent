@@ -525,12 +525,28 @@ final class AgentViewModel {
 
                 if hasToolUse && !toolResults.isEmpty {
                     messages.append(["role": "user", "content": toolResults])
-                } else {
-                    break
-                }
+                } else if !hasToolUse {
+                    // Model responded with text only (no tool call).
+                    // If it looks like it's mid-task, prompt it to continue.
+                    // Only break if this is clearly a final response (no pending work).
+                    let lastText = response.content
+                        .compactMap { $0["text"] as? String }
+                        .joined()
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
 
-                if response.stopReason == "end_turn" && !hasToolUse {
-                    break
+                    let looksIncomplete = lastText.hasSuffix(":") ||
+                        lastText.hasSuffix("...") ||
+                        lastText.lowercased().contains("now i'll") ||
+                        lastText.lowercased().contains("let me") ||
+                        lastText.lowercased().contains("i'll now") ||
+                        lastText.lowercased().contains("next,") ||
+                        lastText.lowercased().contains("next step")
+
+                    if looksIncomplete {
+                        messages.append(["role": "user", "content": "Continue. Use the tools to proceed."])
+                    } else {
+                        break
+                    }
                 }
 
             } catch {
