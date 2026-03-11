@@ -233,11 +233,15 @@ struct StatusDot: View {
             .fill(dotColor)
             .frame(width: 8, height: 8)
             .overlay(
-                Circle()
-                    .stroke(dotColor.opacity(0.6), lineWidth: 2)
-                    .frame(width: 14, height: 14)
-                    .scaleEffect(pulse ? 1.5 : 1.0)
-                    .opacity(pulse ? 0 : 1)
+                Group {
+                    if isActive {
+                        Circle()
+                            .stroke(Color.green.opacity(0.6), lineWidth: 2)
+                            .frame(width: 14, height: 14)
+                            .scaleEffect(pulse ? 1.5 : 1.0)
+                            .opacity(pulse ? 0 : 1)
+                    }
+                }
             )
             .animation(.easeInOut(duration: 0.3), value: dotColor)
             .onChange(of: isActive) {
