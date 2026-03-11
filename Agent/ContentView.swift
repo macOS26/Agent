@@ -305,11 +305,19 @@ struct SettingsView: View {
                                 .frame(width: 220)
                         } else {
                             Picker("Model", selection: $viewModel.ollamaModel) {
-                                ForEach(viewModel.ollamaModels, id: \.self) { model in
-                                    Text(model).tag(model)
+                                ForEach(viewModel.ollamaModels) { model in
+                                    HStack(spacing: 4) {
+                                        Text(model.name)
+                                        if model.supportsVision {
+                                            Image(systemName: "eye")
+                                                .foregroundStyle(.blue)
+                                                .font(.caption2)
+                                        }
+                                    }
+                                    .tag(model.name)
                                 }
                             }
-                            .frame(width: 220)
+                            .frame(width: 260)
                         }
 
                         Button {
