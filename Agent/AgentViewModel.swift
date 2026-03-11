@@ -101,44 +101,23 @@ final class AgentViewModel {
         }
     }
 
-    private nonisolated static func isVisionModel(name: String, families: [String]) -> Bool {
-        let lowerName = name.lowercased()
-        // Name patterns that indicate vision support
-        // Only models with confirmed vision support
-        let namePatterns = [
-            "-vl", "-v:", "vision", "llava", "moondream", "minicpm-v", "bakllava",
-            "gemma3", "gemini", "glm-4.6", "granite-3.2-vision"
-        ]
-        for pattern in namePatterns {
-            if lowerName.contains(pattern) { return true }
-        }
-        // Family metadata from API
-        let visionFamilies: Set<String> = [
-            "gemma", "gemma2", "gemma3", "llava", "bakllava", "moondream",
-            "minicpm-v", "llava-llama3", "llava-phi3", "gemini"
-        ]
-        for family in families {
-            if visionFamilies.contains(family.lowercased()) { return true }
-        }
-        return false
-    }
-
     private nonisolated static func fetchModels(endpoint: String, apiKey: String) async throws -> [OllamaModelInfo] {
-        // Derive tags URL from chat endpoint (e.g. https://ollama.com/api/chat -> https://ollama.com/api/tags)
-        guard let chatURL = URL(string: endpoint),
-              let baseURL = URL(string: chatURL.deletingLastPathComponent().absoluteString + "tags") else {
-            throw AgentError.invalidResponse
-        }
+        guard let chatURL = URL(string: endpoint) else { throw AgentError.invalidResponse }
+        let baseDir = chatURL.deletingLastPathComponent().absoluteString
 
-        var request = URLRequest(url: baseURL)
-        request.httpMethod = "GET"
-        request.setValue("application/json", forHTTPHeaderField: "content-type")
+        guard let tagsURL = URL(string: baseDir + "tags") else { throw AgentError.invalidResponse }
+        guard let showURL = URL(string: baseDir + "show") else { throw AgentError.invalidResponse }
+
+        // 1. Fetch model list
+        var tagsRequest = URLRequest(url: tagsURL)
+        tagsRequest.httpMethod = "GET"
+        tagsRequest.setValue("application/json", forHTTPHeaderField: "content-type")
         if !apiKey.isEmpty {
-            request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+            tagsRequest.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         }
-        request.timeoutInterval = 15
+        tagsRequest.timeoutInterval = 15
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: tagsRequest)
 
         guard let httpResponse = response as? HTTPURLResponse,
               httpResponse.statusCode == 200 else {
@@ -151,18 +130,47 @@ final class AgentViewModel {
             throw AgentError.invalidResponse
         }
 
-        return models.compactMap { model -> OllamaModelInfo? in
-            guard let name = model["name"] as? String else { return nil }
-            let details = model["details"] as? [String: Any]
-            let family = details?["family"] as? String ?? ""
-            let families = details?["families"] as? [String] ?? []
-            let allFamilies = families + (family.isEmpty ? [] : [family])
-            return OllamaModelInfo(
-                id: name,
-                name: name,
-                supportsVision: isVisionModel(name: name, families: allFamilies)
-            )
-        }.sorted { $0.name < $1.name }
+        let names = models.compactMap { $0["name"] as? String }.sorted()
+
+        // 2. Check capabilities for each model via /api/show (in parallel)
+        return await withTaskGroup(of: OllamaModelInfo?.self) { group in
+            for name in names {
+                group.addTask {
+                    let hasVision = await Self.checkVision(model: name, showURL: showURL, apiKey: apiKey)
+                    return OllamaModelInfo(id: name, name: name, supportsVision: hasVision)
+                }
+            }
+            var results: [OllamaModelInfo] = []
+            for await info in group {
+                if let info { results.append(info) }
+            }
+            return results.sorted { $0.name < $1.name }
+        }
+    }
+
+    /// Check if a model has "vision" in its capabilities via /api/show
+    private nonisolated static func checkVision(model: String, showURL: URL, apiKey: String) async -> Bool {
+        do {
+            let body = try JSONSerialization.data(withJSONObject: ["model": model])
+            var request = URLRequest(url: showURL)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "content-type")
+            if !apiKey.isEmpty {
+                request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+            }
+            request.httpBody = body
+            request.timeoutInterval = 10
+
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200,
+                  let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let capabilities = json["capabilities"] as? [String] else {
+                return false
+            }
+            return capabilities.contains("vision")
+        } catch {
+            return false
+        }
     }
 
     var attachedImages: [NSImage] = []
