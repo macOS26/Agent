@@ -13,7 +13,8 @@ struct ContentView: View {
                     StatusDot(
                         isReady: viewModel.agentReady,
                         isActive: viewModel.userServiceActive,
-                        isBusy: viewModel.isRunning
+                        isBusy: viewModel.isRunning,
+                        otherActive: viewModel.rootServiceActive
                     )
                     Text("User")
                         .font(.caption)
@@ -21,7 +22,8 @@ struct ContentView: View {
                     StatusDot(
                         isReady: viewModel.daemonReady,
                         isActive: viewModel.rootServiceActive,
-                        isBusy: viewModel.isRunning
+                        isBusy: viewModel.isRunning,
+                        otherActive: viewModel.userServiceActive
                     )
                     Text("Root")
                         .font(.caption)
@@ -222,10 +224,13 @@ struct StatusDot: View {
 
     @State private var pulse = false
 
+    let otherActive: Bool  // the OTHER service is running
+
     var dotColor: Color {
-        if isActive { return .green }   // running
-        if isBusy { return .yellow }    // between modes
-        return .red                      // stopped
+        if isActive { return .green }           // this service running
+        if otherActive { return .red }          // other service running, this one isn't
+        if isBusy { return .yellow }            // between modes (thinking, no command)
+        return .red                              // stopped
     }
 
     var body: some View {
