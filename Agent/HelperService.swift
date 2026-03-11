@@ -83,8 +83,12 @@ final class HelperService {
     }
 
     func cancel() {
+        Self.cancelProcess(instanceID: instanceID)
+    }
+
+    nonisolated static func cancelProcess(instanceID: String) {
         Task.detached {
-            await self.cancelViaXPC()
+            await cancelViaXPC(instanceID: instanceID)
         }
     }
 
@@ -113,15 +117,15 @@ final class HelperService {
         }
     }
 
-    nonisolated private func cancelViaXPC() async {
+    nonisolated private static func cancelViaXPC(instanceID: String) async {
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            let connection = NSXPCConnection(machServiceName: HelperService.helperID, options: .privileged)
+            let connection = NSXPCConnection(machServiceName: helperID, options: .privileged)
             connection.remoteObjectInterface = NSXPCInterface(with: HelperToolProtocol.self)
             connection.resume()
             let proxy = connection.remoteObjectProxyWithErrorHandler { _ in
                 continuation.resume()
             } as! HelperToolProtocol
-            proxy.cancelOperation(instanceID: self.instanceID) {
+            proxy.cancelOperation(instanceID: instanceID) {
                 connection.invalidate()
                 continuation.resume()
             }
