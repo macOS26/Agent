@@ -159,6 +159,7 @@ final class OllamaService {
                             var msg: [String: Any] = ["role": "user", "content": text.isEmpty ? "Describe the attached image(s)." : text]
                             if !images.isEmpty {
                                 msg["images"] = images
+                                print("[OllamaService] Sending \(images.count) image(s), sizes: \(images.map(\.count))")
                             }
                             chatMessages.append(msg)
                         }
