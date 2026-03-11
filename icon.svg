@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle with gradient -->
+  <defs>
+    <radialGradient id="bgGradient" cx="0.3" cy="0.3" r="0.8">
+      <stop offset="0%" style="stop-color:#4A90E2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2C5AA0;stop-opacity:1" />
+    </radialGradient>
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00D4FF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0099CC;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="nodeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#E8F4FD;stop-opacity:0.8" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Main background circle -->
+  <circle cx="256" cy="256" r="240" fill="url(#bgGradient)" stroke="none"/>
+  
+  <!-- Neural network nodes -->
+  <!-- Top layer -->
+  <circle cx="180" cy="150" r="12" fill="url(#nodeGradient)" stroke="#00D4FF" stroke-width="2"/>
+  <circle cx="256" cy="120" r="12" fill="url(#nodeGradient)" stroke="#00D4FF" stroke-width="2"/>
+  <circle cx="332" cy="150" r="12" fill="url(#nodeGradient)" stroke="#00D4FF" stroke-width="2"/>
+  
+  <!-- Middle layer -->
+  <circle cx="140" cy="220" r="14" fill="url(#nodeGradient)" stroke="#00D4FF" stroke-width="2"/>
+  <circle cx="256" cy="200" r="16" fill="url(#accentGradient)" stroke="#FFFFFF" stroke-width="3"/>
+  <circle cx="372" cy="220" r="14" fill="url(#nodeGradient)" stroke="#00D4FF" stroke-width="2"/>
+  
+  <!-- Bottom middle layer -->
+  <circle cx="180" cy="290" r="13" fill="url(#nodeGradient)" stroke="#00D4FF" stroke-width="2"/>
+  <circle cx="332" cy="290" r="13" fill="url(#nodeGradient)" stroke="#00D4FF" stroke-width="2"/>
+  
+  <!-- Bottom layer -->
+  <circle cx="200" cy="360" r="11" fill="url(#nodeGradient)" stroke="#00D4FF" stroke-width="2"/>
+  <circle cx="256" cy="380" r="11" fill="url(#nodeGradient)" stroke="#00D4FF" stroke-width="2"/>
+  <circle cx="312" cy="360" r="11" fill="url(#nodeGradient)" stroke="#00D4FF" stroke-width="2"/>
+  
+  <!-- Neural network connections -->
+  <g stroke="#FFFFFF" stroke-width="2" fill="none" opacity="0.6">
+    <!-- From top layer to middle -->
+    <line x1="180" y1="150" x2="140" y2="220"/>
+    <line x1="180" y1="150" x2="256" y2="200"/>
+    <line x1="256" y1="120" x2="140" y2="220"/>
+    <line x1="256" y1="120" x2="256" y2="200"/>
+    <line x1="256" y1="120" x2="372" y2="220"/>
+    <line x1="332" y1="150" x2="256" y2="200"/>
+    <line x1="332" y1="150" x2="372" y2="220"/>
+    
+    <!-- From middle to bottom middle -->
+    <line x1="140" y1="220" x2="180" y2="290"/>
+    <line x1="256" y1="200" x2="180" y2="290"/>
+    <line x1="256" y1="200" x2="332" y2="290"/>
+    <line x1="372" y1="220" x2="332" y2="290"/>
+    
+    <!-- From bottom middle to bottom -->
+    <line x1="180" y1="290" x2="200" y2="360"/>
+    <line x1="180" y1="290" x2="256" y2="380"/>
+    <line x1="332" y1="290" x2="256" y2="380"/>
+    <line x1="332" y1="290" x2="312" y2="360"/>
+  </g>
+  
+  <!-- Central brain/processor icon -->
+  <g transform="translate(256, 256)">
+    <!-- Outer ring -->
+    <circle r="45" fill="none" stroke="url(#accentGradient)" stroke-width="4" opacity="0.8"/>
+    <!-- Inner core -->
+    <circle r="25" fill="url(#accentGradient)" opacity="0.9"/>
+    <!-- Processing indicators -->
+    <circle r="8" fill="#FFFFFF" opacity="0.9"/>
+    <!-- Activity dots -->
+    <circle cx="0" cy="-15" r="3" fill="#FFFFFF" opacity="0.7">
+      <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="13" cy="7" r="3" fill="#FFFFFF" opacity="0.7">
+      <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" begin="0.6s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="-13" cy="7" r="3" fill="#FFFFFF" opacity="0.7">
+      <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" begin="1.2s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+  
+  <!-- Subtle outer glow effect -->
+  <circle cx="256" cy="256" r="248" fill="none" stroke="url(#accentGradient)" stroke-width="2" opacity="0.3"/>
+</svg>

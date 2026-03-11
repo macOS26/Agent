@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /Users/toddbruss/Agent -type f -name \"*.swift\" -o -name \"*.xcodeproj\" -o -name \"Package.swift\" -o -name \"*.pbxproj\" 2>/dev/null | head -50)",
+      "Bash(git init:*)",
+      "mcp__xcf-server__build_project",
+      "Bash(git commit:*)",
+      "Bash(codesign -dvv ~/Library/Developer/Xcode/DerivedData/Agent-gjckhkwkatcsjdeflkkfncrbdrpv/Build/Products/Debug/Agent.app 2>&1 | head -15)",
+      "Bash(codesign -dvv ~/Library/Developer/Xcode/DerivedData/Agent-gjckhkwkatcsjdeflkkfncrbdrpv/Build/Products/Debug/Agent.app/Contents/MacOS/AgentHelper 2>&1 | head -10)",
+      "Bash(git add:*)",
+      "Bash(open /Users/toddbruss/Agent/Agent/Assets.xcassets/AgentIcon.svg)",
+      "Bash(open /Users/toddbruss/Agent/Agent/Assets.xcassets/)",
+      "Bash(open -R /Users/toddbruss/Agent/Agent/Assets.xcassets/)",
+      "Bash(xcodebuild clean:*)",
+      "mcp__xcf-server__show_current_project",
+      "mcp__xcf-server__list_projects",
+      "mcp__xcf-server__select_project",
+      "Bash(mkdir -p ~/Documents/Github/Agent && rsync -av --exclude '.git' /Users/toddbruss/Agent/ ~/Documents/Github/Agent/)"
+    ]
+  }
+}
