@@ -60,9 +60,33 @@ final class ClaudeService {
         still allowed but ScriptingBridge should be tried first. \
         Do NOT include shebang lines (#!/usr/bin/env swift) — scripts are compiled via swift build.
 
+        PACKAGE LAYOUT — ~/Documents/Agent/agents/:
+        Package.swift defines all targets. The layout is FLAT (one .swift file per target):
+        - Bridge files: Sources/XCFScriptingBridges/{BridgeName}.swift (e.g. MailBridge.swift)
+        - Script files: Sources/Scripts/{ScriptName}.swift (e.g. CheckMail.swift)
+        - Common:       Sources/XCFScriptingBridges/ScriptingBridgeCommon.swift
+
+        Package.swift structure:
+        ```
+        let bridgeNames = ["MailBridge", "FinderBridge", ...]
+        let scriptTargets: [(String, [Target.Dependency])] = [
+            ("CheckMail", ["MailBridge"]),
+            ("Hello", []),
+        ]
+        ```
+        Each bridge target depends on ScriptingBridgeCommon. Each script target lists its bridge dependencies.
+
+        UPDATING Package.swift — you MUST update it when adding scripts or bridges:
+        - To add a new script: 1) Write Sources/Scripts/MyScript.swift, \
+        2) Add ("MyScript", ["MailBridge"]) to the scriptTargets array in Package.swift.
+        - To add a new bridge: 1) Write Sources/XCFScriptingBridges/AppNameBridge.swift, \
+        2) Add "AppNameBridge" to the bridgeNames array in Package.swift.
+        - To remove a script or bridge: delete the .swift file AND remove its entry from Package.swift.
+        Always keep Package.swift in sync with the files on disk or swift build will fail.
+
         Before writing a ScriptingBridge script, ALWAYS read the bridge file first to learn \
         the available protocols, properties, and methods:
-        `cat ~/Documents/Agent/agents/Sources/ScriptingBridges/MailBridge/Mail.swift`
+        `cat ~/Documents/Agent/agents/Sources/XCFScriptingBridges/MailBridge.swift`
 
         App bridge reference (import → protocol → bundle identifier):
         import AutomatorBridge → AutomatorApplication → com.apple.Automator
@@ -124,10 +148,10 @@ final class ClaudeService {
         - Element arrays: `app.accounts?()` returns SBElementArray, iterate with `.object(at: i) as? Type`
         - Properties are @objc optional: always use `?.` and `??` for defaults
         - Methods like moveTo, delete: `object.moveTo?(target as? SBObject)`
-        - For apps not yet in ScriptingBridges, generate a new bridge file using the generate_bridge script:
-          1. Run: `run_agent_script generate_bridge` with arguments: `/Applications/AppName.app ~/Documents/Agent/agents/Sources/ScriptingBridges`
-          2. Remove duplicate SBObjectProtocol/SBApplicationProtocol from the output (they are in Common.swift)
-          3. Remove standalone `import` lines (Common.swift has @_exported imports)
+        - For apps not yet in the package, generate a new bridge file using the GenerateBridge script:
+          1. Run: `run_agent_script GenerateBridge` with arguments: `/Applications/AppName.app`
+          2. The generated file lands in Sources/XCFScriptingBridges/
+          3. Add the new bridge name to bridgeNames in Package.swift
           The script handles the full sdef → sdp → Swift conversion pipeline automatically.
 
         You can also control Xcode directly via built-in tools:

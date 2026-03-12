@@ -53,7 +53,31 @@ Agent controls Xcode directly through Apple's ScriptingBridge framework — the 
 The full ScriptingBridge protocol layer (`XcodeScriptingBridge.swift`) exposes Xcode's workspace documents, schemes, run destinations, build configurations, projects, and devices — all as native Swift types.
 
 ### Swift Agent Scripts
-Agent includes a built-in Swift scripting system. Scripts live in `~/Documents/Agent/agents/` as a Swift Package with per-script executable targets under `Sources/`.
+Agent includes a built-in Swift scripting system. Scripts live in `~/Documents/Agent/agents/` as a Swift Package with a flat file layout:
+
+```
+~/Documents/Agent/agents/
+├── Package.swift
+└── Sources/
+    ├── Scripts/           ← one .swift file per script
+    │   ├── CheckMail.swift
+    │   ├── Hello.swift
+    │   ├── ListNotes.swift
+    │   └── ...
+    └── XCFScriptingBridges/  ← one .swift file per app bridge
+        ├── ScriptingBridgeCommon.swift
+        ├── MailBridge.swift
+        ├── FinderBridge.swift
+        ├── CalendarBridge.swift
+        └── ...
+```
+
+**Package.swift** ties everything together. It declares two key arrays:
+
+- `bridgeNames` — lists every bridge target (e.g. `"MailBridge"`, `"FinderBridge"`). Each becomes a `.target` that depends on `ScriptingBridgeCommon` and maps to a single `.swift` file in `Sources/XCFScriptingBridges/`.
+- `scriptTargets` — lists every script as a `(name, [dependencies])` tuple (e.g. `("CheckMail", ["MailBridge"])`). Each becomes an `.executableTarget` mapping to a single `.swift` file in `Sources/Scripts/`.
+
+When the AI creates a new script, it writes the `.swift` file **and** adds the corresponding entry to `scriptTargets` in Package.swift. When generating a new bridge, it writes the bridge `.swift` file and adds the name to `bridgeNames`. This keeps Package.swift in sync with the files on disk — `swift build` fails if they diverge.
 
 The AI can create, read, update, delete, compile, and run these scripts autonomously using dedicated tools:
 
@@ -65,13 +89,15 @@ The AI can create, read, update, delete, compile, and run these scripts autonomo
 - `delete_agent_script` — remove a script
 
 ### ScriptingBridges Library
-Agent ships with a bundled `ScriptingBridges` library — pre-generated Swift protocol definitions for 19 macOS applications, created from each app's scripting dictionary using the [Swift-Scripting](https://github.com/SuperBox64/Swift-Scripting) toolchain. On first launch, these are installed to the agents Swift Package so any script can `import ScriptingBridges` and get type-safe access to:
+Agent ships with pre-generated Swift protocol definitions for 40+ macOS applications, created from each app's scripting dictionary using the [Swift-Scripting](https://github.com/SuperBox64/Swift-Scripting) toolchain. These bridge files live in `Sources/XCFScriptingBridges/` and give scripts type-safe access to:
 
-Automator, Calendar, Contacts, Finder, Image Events, Mail, Messages, Music, Notes, Numbers, Pages, Photos, Reminders, Script Editor, Shortcuts, System Events, Terminal, TV, and Xcode.
+Adobe Illustrator, Automator, Bluetooth File Exchange, Calendar, Console, Contacts, Database Events, Developer Tools, Final Cut Pro, Finder, Firefox, Folder Actions Setup, Google Chrome, Image Events, Instruments, Keynote, Logic Pro, Mail, Messages, Microsoft Edge, Music, Notes, Numbers, Numbers (Creator Studio), Pages, Pages (Creator Studio), Photos, Pixelmator Pro, Preview, QuickTime Player, Reminders, Safari, Screen Sharing, Script Editor, Shortcuts, Simulator, System Events, System Information, System Settings, Terminal, TextEdit, TV, UTM, VoiceOver, and Xcode.
+
+Each bridge is its own Swift module. Scripts import only what they need (e.g. `import MailBridge`), keeping builds fast and isolated. The common types (`SBObjectProtocol`, `SBApplicationProtocol`, `AEKeyword`) live in `ScriptingBridgeCommon`, which every bridge re-exports via `@_exported import`.
 
 ScriptingBridge is the preferred approach for app automation — it calls the same Apple Event interface as AppleScript but natively from Swift, without spawning a subprocess. AppleScript via `osascript` is still available as a fallback.
 
-This means the AI can write Swift programs that automate Mac applications, compile them with `swift build`, and run them — all within a single task.
+To add a bridge for a new app, the AI runs the built-in `GenerateBridge` script with the app path, then adds the new bridge name to `bridgeNames` in Package.swift.
 
 ### Vision: Screenshot and Clipboard Support
 Attach screenshots or paste images directly into Agent. Images are encoded as base64 PNG and sent as vision content blocks. The AI can see what's on your screen and act on it.
@@ -97,12 +123,16 @@ Agent.app (SwiftUI)
   |-- OllamaService          Ollama native API (OpenAI-compatible)
   |-- ScriptService          Swift Package manager for agent scripts
   |-- XcodeService           ScriptingBridge automation for Xcode
-  |-- XcodeScriptingBridge   Full SB protocol definitions for Xcode
-  |-- ScriptingBridges/      Bundled bridge protocols for 19 macOS apps
   |-- DependencyChecker      Xcode CLT detection + install trigger
   |
   |-- UserService (XPC) --> com.agent.user    (LaunchAgent, runs as user)
   |-- HelperService (XPC) --> com.agent.helper (LaunchDaemon, runs as root)
+
+~/Documents/Agent/agents/   (Swift Package — scripts + bridges)
+  |
+  |-- Package.swift          Declares all bridge and script targets
+  |-- Sources/Scripts/       One .swift file per executable script
+  |-- Sources/XCFScriptingBridges/  One .swift file per app bridge + Common
 ```
 
 ## Requirements
