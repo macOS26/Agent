@@ -472,6 +472,17 @@ struct SettingsView: View {
                     }
                 }
             }
+            Divider()
+
+            // History settings
+            VStack(alignment: .leading, spacing: 6) {
+                Text("History")
+                    .font(.headline)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Summarize after").font(.caption).foregroundStyle(.secondary)
+                    Stepper("\(viewModel.maxHistoryBeforeSummary) tasks", value: $viewModel.maxHistoryBeforeSummary, in: 5...50)
+                }
+            }
         }
         .padding(20)
         .frame(width: 360)

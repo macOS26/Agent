@@ -67,6 +67,10 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(ollamaEndpoint, forKey: "ollamaEndpoint") }
     }
 
+    var maxHistoryBeforeSummary: Int = UserDefaults.standard.object(forKey: "agentMaxHistory") as? Int ?? 10 {
+        didSet { UserDefaults.standard.set(maxHistoryBeforeSummary, forKey: "agentMaxHistory") }
+    }
+
     var ollamaModel: String = UserDefaults.standard.string(forKey: "ollamaModel") ?? "" {
         didSet {
             UserDefaults.standard.set(ollamaModel, forKey: "ollamaModel")
@@ -623,7 +627,7 @@ final class AgentViewModel {
                             completionSummary = summary
                             appendLog("Completed: \(summary)")
                             flushLog()
-                            history.add(TaskRecord(prompt: prompt, summary: summary, commandsRun: commandsRun))
+                            history.add(TaskRecord(prompt: prompt, summary: summary, commandsRun: commandsRun), maxBeforeSummary: maxHistoryBeforeSummary)
                             isRunning = false
                             return
                         }
@@ -833,7 +837,7 @@ final class AgentViewModel {
 
         // Save partial history if task didn't call task_complete
         if completionSummary.isEmpty && !commandsRun.isEmpty {
-            history.add(TaskRecord(prompt: prompt, summary: "(incomplete)", commandsRun: commandsRun))
+            history.add(TaskRecord(prompt: prompt, summary: "(incomplete)", commandsRun: commandsRun), maxBeforeSummary: maxHistoryBeforeSummary)
         }
 
         flushLog()
