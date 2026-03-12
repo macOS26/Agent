@@ -76,7 +76,21 @@
       "Bash(ls -la Sources/ScriptingBridges/*.swift)",
       "Bash(sort -k2)",
       "Bash(cd /Users/toddbruss/Documents/Agent/agents\nswift build --product generate_bridge 2>&1 | tail -1)",
-      "Bash(ls /tmp/*.sdef /tmp/*.h 2>/dev/null | head -20)"
+      "Bash(ls /tmp/*.sdef /tmp/*.h 2>/dev/null | head -20)",
+      "Bash(ls -1 /Users/toddbruss/Documents/GitHub/Agent/icon.*)",
+      "Bash(mkdir -p ~/Documents/icons && mv /Users/toddbruss/Documents/GitHub/Agent/icon.inkpen /Users/toddbruss/Documents/GitHub/Agent/icon.pdf /Users/toddbruss/Documents/GitHub/Agent/icon.svg ~/Documents/icons/)",
+      "Bash(cd ~/Documents/Agent/agents && mv Sources/ScriptingBridges Sources/ZcriptingBridges)",
+      "Bash(cd ~/Documents/Agent/agents && mv Sources/ZcriptingBridges Sources/Z-ScriptingBridges)",
+      "Bash(cd ~/Documents/Agent/agents/Sources && mv check_mail CheckMail && mv generate_bridge GenerateBridge && mv hello Hello && mv list_notes ListNotes && mv list_reminders ListReminders && mv now_playing NowPlaying && mv organize_emails OrganizeEmails && mv organize_other_subcategories OrganizeOtherSubcategories && mv organize_other_subcategories_backup OrganizeOtherSubcategoriesBackup && mv running_apps RunningApps && mv scan_other_for_subcategories ScanOtherForSubcategories && mv test_generate_bridge TestGenerateBridge && mv today_events TodayEvents)",
+      "Bash(for d:*)",
+      "Bash(do echo:*)",
+      "Read(//Users/toddbruss/Documents/Agent/agents/Sources/$d/**)",
+      "Bash(done)",
+      "Bash(cd ~/Documents/Agent/agents/Sources && mv CheckMail/CheckMail.swift Scripts/ && mv GenerateBridge/GenerateBridge.swift Scripts/ && mv Hello/Hello.swift Scripts/ && mv ListNotes/ListNotes.swift Scripts/ && mv ListReminders/ListReminders.swift Scripts/ && mv NowPlaying/NowPlaying.swift Scripts/ && mv OrganizeEmails/OrganizeEmails.swift Scripts/ && mv OrganizeOtherSubcategories/OrganizeOtherSubcategories.swift Scripts/ && mv RunningApps/RunningApps.swift Scripts/ && mv ScanOtherForSubcategories/ScanOtherForSubcategories.swift Scripts/ && mv TestGenerateBridge/TestGenerateBridge.swift Scripts/ && mv TodayEvents/TodayEvents.swift Scripts/)",
+      "Bash(cd ~/Documents/Agent/agents/Sources/XCFScriptingBridges && for d in */; do mv \"$d\"*.swift . 2>/dev/null; done && rm -rf */  && ls *.swift | sort)",
+      "Bash(find /Users/toddbruss/Documents/GitHub/Agent -path \"*ExampleScripts*\" -type f 2>/dev/null | head -30)",
+      "Bash(xcodebuild -project Agent.xcodeproj -target Agent -showBuildSettings 2>&1 | grep -i \"resource\\\\|bundle\\\\|copy\" | head -20)",
+      "Bash(git rm:*)"
     ]
   }
 }
