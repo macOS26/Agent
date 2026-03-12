@@ -36,7 +36,8 @@
       "Bash(cd ~/Documents/Agent/agents && swift build --product check_mail 2>&1 | tail -10)",
       "Bash(plutil -lint Agent.xcodeproj/project.pbxproj)",
       "Bash(cp -R ~/Documents/Agent/agents/Sources/ScriptingBridges /Users/toddbruss/Documents/GitHub/Agent/Agent/ScriptingBridges)",
-      "Bash(cd ~/Documents/Agent/agents && swift build --target ScriptingBridges 2>&1 | grep \"error:\" | head -10)"
+      "Bash(cd ~/Documents/Agent/agents && swift build --target ScriptingBridges 2>&1 | grep \"error:\" | head -10)",
+      "Bash(grep -h \"protocol.*Application:\" Agent/ScriptingBridges/*.swift | sed 's/@objc public protocol //' | sed 's/:.*//')"
     ]
   }
 }
