@@ -16,7 +16,7 @@ enum APIProvider: String, CaseIterable {
 @MainActor @Observable
 final class AgentViewModel {
     var taskInput = ""
-    var activityLog = ""
+    var activityLog = UserDefaults.standard.string(forKey: "agentActivityLog") ?? ""
     var isRunning = false
     var isThinking = false
     var userServiceActive = false
@@ -321,6 +321,7 @@ final class AgentViewModel {
         logFlushTask?.cancel()
         logFlushTask = nil
         activityLog = ""
+        UserDefaults.standard.removeObject(forKey: "agentActivityLog")
     }
 
     // MARK: - Screenshot
@@ -518,6 +519,7 @@ final class AgentViewModel {
                 let trimPoint = activityLog.index(activityLog.endIndex, offsetBy: -Self.maxLogSize)
                 activityLog = "...(earlier output trimmed)...\n" + String(activityLog[trimPoint...])
             }
+            UserDefaults.standard.set(activityLog, forKey: "agentActivityLog")
         }
     }
 
