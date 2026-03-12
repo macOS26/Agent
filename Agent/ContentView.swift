@@ -196,6 +196,8 @@ struct ContentView: View {
                         Image("AgentIcon")
                             .resizable()
                             .aspectRatio(contentMode: .fit)
+                            .shadow(color: .blue.opacity(0.6), radius: 40)
+                            .shadow(color: .blue.opacity(0.3), radius: 80)
                             .padding(40)
                     }
                     .opacity(splashOpacity)
