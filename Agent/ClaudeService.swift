@@ -62,7 +62,7 @@ final class ClaudeService {
 
         Before writing a ScriptingBridge script, ALWAYS read the bridge file first to learn \
         the available protocols, properties, and methods:
-        `cat ~/Documents/Agent/agents/Sources/MailBridge/Mail.swift`
+        `cat ~/Documents/Agent/agents/Sources/Bridges/MailBridge/Mail.swift`
 
         App bridge reference (import → protocol → bundle identifier):
         import AutomatorBridge → AutomatorApplication → com.apple.Automator
