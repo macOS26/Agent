@@ -85,8 +85,63 @@ The AI can create, read, update, delete, compile, and run these scripts autonomo
 - `create_agent_script` — write a new script
 - `read_agent_script` — read source code
 - `update_agent_script` — modify an existing script
-- `run_agent_script` — compile with `swift build` and execute
+- `run_agent_script` — compile with `swift build --product <name>` and execute
 - `delete_agent_script` — remove a script
+
+### Dynamic ScriptingBridge Queries
+
+Agent includes a `scripting_bridge_query` tool that lets the AI query any scriptable Mac app **instantly — with zero compilation**. It uses Objective-C dynamic dispatch (`value(forKey:)`, `perform(_:with:)`) to walk an app's ScriptingBridge object graph at runtime, bypassing the need to compile Swift code entirely.
+
+The tool takes a `bundle_id` and a chain of operations:
+
+| Operation | Description | Example |
+|-----------|-------------|---------|
+| `get` | Access a property via `value(forKey:)` | `{action: "get", key: "currentTrack"}` |
+| `iterate` | Read properties from each item in an array | `{action: "iterate", properties: ["name", "artist"], limit: 10}` |
+| `index` | Pick one item from an array by position | `{action: "index", index: 0}` |
+| `call` | Invoke a method on the current object | `{action: "call", method: "playpause"}` |
+| `filter` | Apply an NSPredicate to filter an array | `{action: "filter", predicate: "name contains 'inbox'"}` |
+
+**Examples:**
+```
+# What's currently playing in Music?
+bundle_id: "com.apple.Music"
+operations: [
+  {action: "get", key: "currentTrack"},
+  {action: "iterate", properties: ["name", "artist", "album"]}
+]
+
+# List Safari windows
+bundle_id: "com.apple.Safari"
+operations: [
+  {action: "get", key: "windows"},
+  {action: "iterate", properties: ["name"], limit: 10}
+]
+
+# First 5 notes
+bundle_id: "com.apple.Notes"
+operations: [
+  {action: "get", key: "notes"},
+  {action: "iterate", properties: ["name"], limit: 5}
+]
+```
+
+Write operations (`delete`, `close`, `move`, `quit`, etc.) are blocked by default. The AI must explicitly set `allow_writes: true` to permit them.
+
+Under the hood, this is the same Apple Event interface that compiled ScriptingBridge scripts use — just accessed dynamically through `NSObject` instead of through generated Swift protocol types.
+
+### Execution Priority
+
+The AI is taught to choose the fastest approach for each task:
+
+| Priority | Method | When to use |
+|----------|--------|-------------|
+| 1. `scripting_bridge_query` | Zero compilation. Instant. | Reading app data (mail, notes, music, calendar, etc.) |
+| 2. Run existing binary | `~/Documents/Agent/agents/.build/debug/ScriptName` | Script was already compiled and source hasn't changed |
+| 3. `run_agent_script` | Compiles with `swift build --product <name>` | First build or after editing a script's source |
+| 4. Never bare `swift build` | — | Compiles all 45+ bridges and all scripts. Extremely slow. |
+
+After the first compilation, SPM caches compiled modules so incremental builds only recompile changed files. The `--product` flag ensures only the target script and its bridge dependencies are built — not the entire package.
 
 ### ScriptingBridges Library
 Agent ships with pre-generated Swift protocol definitions for 40+ macOS applications, created from each app's scripting dictionary using the [Swift-Scripting](https://github.com/SuperBox64/Swift-Scripting) toolchain. These bridge files live in `Sources/XCFScriptingBridges/` and give scripts type-safe access to:
