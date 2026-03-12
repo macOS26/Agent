@@ -23,6 +23,9 @@ final class AgentViewModel {
     var rootServiceActive = false
     var userWasActive = false
     var rootWasActive = false
+    var rootEnabled: Bool = UserDefaults.standard.object(forKey: "agentRootEnabled") as? Bool ?? true {
+        didSet { UserDefaults.standard.set(rootEnabled, forKey: "agentRootEnabled") }
+    }
 
     // One-time migration for stale defaults — runs before property defaults are evaluated
     @ObservationIgnored
@@ -253,6 +256,13 @@ final class AgentViewModel {
     func run() {
         let task = taskInput.trimmingCharacters(in: .whitespaces)
         guard !task.isEmpty else { return }
+
+        // Handle /clear command
+        if task.lowercased() == "/clear" {
+            taskInput = ""
+            clearLog()
+            return
+        }
 
         // Stop any running task before starting a new one
         if isRunning {
@@ -634,7 +644,7 @@ final class AgentViewModel {
 
                         if name == "execute_command" || name == "execute_user_command" {
                             let command = input["command"] as? String ?? ""
-                            let isPrivileged = (name == "execute_command")
+                            let isPrivileged = (name == "execute_command") && rootEnabled
                             commandsRun.append(command)
                             appendLog("\(isPrivileged ? "#" : "$") \(command)")
                             flushLog()

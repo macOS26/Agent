@@ -1,5 +1,5 @@
 import Foundation
-import ScriptingBridges
+import MusicBridge
 
 // Now Playing — shows current track info from Music.app
 

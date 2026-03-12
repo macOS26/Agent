@@ -1,5 +1,5 @@
 import Foundation
-import ScriptingBridges
+import CalendarBridge
 
 // Today's Events — lists calendar events for today using predicate filtering
 

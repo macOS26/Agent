@@ -1,5 +1,5 @@
 import Foundation
-import ScriptingBridges
+import MailBridge
 
 // Check Mail — shows unread count per account and inbox summary
 

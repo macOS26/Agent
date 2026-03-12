@@ -1,5 +1,5 @@
 import Foundation
-import ScriptingBridges
+import RemindersBridge
 
 // List Reminders — shows incomplete reminders grouped by list
 
