@@ -33,6 +33,7 @@ struct ContentView: View {
                     Toggle("Root", isOn: $viewModel.rootEnabled)
                         .toggleStyle(.switch)
                         .controlSize(.mini)
+                        .tint(.green)
                         .font(.caption)
                         .foregroundStyle(viewModel.rootEnabled ? .secondary : .tertiary)
                 }
