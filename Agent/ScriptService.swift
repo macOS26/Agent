@@ -7,6 +7,8 @@ final class ScriptService {
         return home.appendingPathComponent("Documents/Agent/agents")
     }()
 
+    private var sourcesDir: URL { Self.agentsDir.appendingPathComponent("Sources") }
+
     struct ScriptInfo {
         let name: String
         let path: String
@@ -14,55 +16,88 @@ final class ScriptService {
         let size: Int
     }
 
-    /// Ensure the agents directory exists
-    private func ensureDirectory() {
+    /// Ensure the package directory structure exists and Package.swift is present
+    private func ensurePackage() {
         let fm = FileManager.default
-        if !fm.fileExists(atPath: Self.agentsDir.path) {
-            try? fm.createDirectory(at: Self.agentsDir, withIntermediateDirectories: true)
+        if !fm.fileExists(atPath: sourcesDir.path) {
+            try? fm.createDirectory(at: sourcesDir, withIntermediateDirectories: true)
         }
+        regeneratePackageSwift()
     }
 
-    /// List all .swift scripts in ~/Documents/Agent/agents/
-    func listScripts() -> [ScriptInfo] {
-        ensureDirectory()
+    /// Regenerate Package.swift based on existing script directories under Sources/
+    private func regeneratePackageSwift() {
         let fm = FileManager.default
-        guard let files = try? fm.contentsOfDirectory(atPath: Self.agentsDir.path) else {
-            return []
+        let sourcesPath = sourcesDir.path
+        let dirs = (try? fm.contentsOfDirectory(atPath: sourcesPath))?.filter { name in
+            var isDir: ObjCBool = false
+            return fm.fileExists(atPath: sourcesPath + "/" + name, isDirectory: &isDir) && isDir.boolValue
+        }.sorted() ?? []
+
+        let targets = dirs.map { name in
+            "        .executableTarget(name: \"\(name)\", path: \"Sources/\(name)\")"
+        }.joined(separator: ",\n")
+
+        let packageSwift = """
+        // swift-tools-version: 6.0
+        import PackageDescription
+
+        let package = Package(
+            name: "AgentScripts",
+            platforms: [.macOS(.v15)],
+            targets: [
+        \(targets)
+            ]
+        )
+        """
+
+        let packagePath = Self.agentsDir.appendingPathComponent("Package.swift")
+        try? packageSwift.write(to: packagePath, atomically: true, encoding: .utf8)
+    }
+
+    /// List all scripts (each is a directory under Sources/ containing main.swift)
+    func listScripts() -> [ScriptInfo] {
+        ensurePackage()
+        let fm = FileManager.default
+        let sourcesPath = sourcesDir.path
+        guard let dirs = try? fm.contentsOfDirectory(atPath: sourcesPath) else { return [] }
+
+        return dirs.sorted().compactMap { dirName in
+            let mainPath = sourcesPath + "/" + dirName + "/main.swift"
+            guard let attrs = try? fm.attributesOfItem(atPath: mainPath) else { return nil }
+            return ScriptInfo(
+                name: dirName,
+                path: mainPath,
+                modifiedDate: attrs[.modificationDate] as? Date ?? Date(),
+                size: attrs[.size] as? Int ?? 0
+            )
         }
-        return files
-            .filter { $0.hasSuffix(".swift") }
-            .sorted()
-            .compactMap { filename in
-                let path = Self.agentsDir.appendingPathComponent(filename).path
-                guard let attrs = try? fm.attributesOfItem(atPath: path) else { return nil }
-                return ScriptInfo(
-                    name: filename,
-                    path: path,
-                    modifiedDate: attrs[.modificationDate] as? Date ?? Date(),
-                    size: attrs[.size] as? Int ?? 0
-                )
-            }
     }
 
     /// Read a script's source code
     func readScript(name: String) -> String? {
-        let filename = name.hasSuffix(".swift") ? name : name + ".swift"
-        let path = Self.agentsDir.appendingPathComponent(filename)
-        return try? String(contentsOf: path, encoding: .utf8)
+        let scriptName = name.replacingOccurrences(of: ".swift", with: "")
+        let mainPath = sourcesDir.appendingPathComponent(scriptName).appendingPathComponent("main.swift")
+        return try? String(contentsOf: mainPath, encoding: .utf8)
     }
 
-    /// Create a new script
+    /// Create a new script as Sources/{name}/main.swift
     func createScript(name: String, content: String) -> String {
-        ensureDirectory()
-        let filename = name.hasSuffix(".swift") ? name : name + ".swift"
-        let path = Self.agentsDir.appendingPathComponent(filename)
+        ensurePackage()
+        let scriptName = name.replacingOccurrences(of: ".swift", with: "")
+        let scriptDir = sourcesDir.appendingPathComponent(scriptName)
+        let mainFile = scriptDir.appendingPathComponent("main.swift")
         let fm = FileManager.default
-        if fm.fileExists(atPath: path.path) {
-            return "Error: script '\(filename)' already exists. Use update_agent_script to modify it."
+
+        if fm.fileExists(atPath: mainFile.path) {
+            return "Error: script '\(scriptName)' already exists. Use update_agent_script to modify it."
         }
+
         do {
-            try content.write(to: path, atomically: true, encoding: .utf8)
-            return "Created \(filename) (\(content.count) bytes)"
+            try fm.createDirectory(at: scriptDir, withIntermediateDirectories: true)
+            try content.write(to: mainFile, atomically: true, encoding: .utf8)
+            regeneratePackageSwift()
+            return "Created \(scriptName) (\(content.count) bytes)"
         } catch {
             return "Error creating script: \(error.localizedDescription)"
         }
@@ -70,54 +105,51 @@ final class ScriptService {
 
     /// Update an existing script
     func updateScript(name: String, content: String) -> String {
-        let filename = name.hasSuffix(".swift") ? name : name + ".swift"
-        let path = Self.agentsDir.appendingPathComponent(filename)
+        let scriptName = name.replacingOccurrences(of: ".swift", with: "")
+        let mainFile = sourcesDir.appendingPathComponent(scriptName).appendingPathComponent("main.swift")
         let fm = FileManager.default
-        if !fm.fileExists(atPath: path.path) {
-            return "Error: script '\(filename)' not found. Use create_agent_script to create it."
+
+        if !fm.fileExists(atPath: mainFile.path) {
+            return "Error: script '\(scriptName)' not found. Use create_agent_script to create it."
         }
+
         do {
-            try content.write(to: path, atomically: true, encoding: .utf8)
-            return "Updated \(filename) (\(content.count) bytes)"
+            try content.write(to: mainFile, atomically: true, encoding: .utf8)
+            return "Updated \(scriptName) (\(content.count) bytes)"
         } catch {
             return "Error updating script: \(error.localizedDescription)"
         }
     }
 
-    /// Delete a script
+    /// Delete a script (removes its entire Sources/{name}/ directory)
     func deleteScript(name: String) -> String {
-        let filename = name.hasSuffix(".swift") ? name : name + ".swift"
-        let path = Self.agentsDir.appendingPathComponent(filename)
+        let scriptName = name.replacingOccurrences(of: ".swift", with: "")
+        let scriptDir = sourcesDir.appendingPathComponent(scriptName)
         let fm = FileManager.default
-        if !fm.fileExists(atPath: path.path) {
-            return "Error: script '\(filename)' not found."
+
+        if !fm.fileExists(atPath: scriptDir.path) {
+            return "Error: script '\(scriptName)' not found."
         }
+
         do {
-            try fm.removeItem(at: path)
-            return "Deleted \(filename)"
+            try fm.removeItem(at: scriptDir)
+            regeneratePackageSwift()
+            return "Deleted \(scriptName)"
         } catch {
             return "Error deleting script: \(error.localizedDescription)"
         }
     }
 
-    /// Build the swiftc compile-and-run command for a script
+    /// Build the swift build + run command for a script
     func compileAndRunCommand(name: String, arguments: String = "") -> String? {
-        let filename = name.hasSuffix(".swift") ? name : name + ".swift"
-        let scriptPath = Self.agentsDir.appendingPathComponent(filename).path
+        let scriptName = name.replacingOccurrences(of: ".swift", with: "")
+        let mainFile = sourcesDir.appendingPathComponent(scriptName).appendingPathComponent("main.swift")
         let fm = FileManager.default
-        guard fm.fileExists(atPath: scriptPath) else { return nil }
+        guard fm.fileExists(atPath: mainFile.path) else { return nil }
 
-        // Read source to detect framework imports
-        let source = (try? String(contentsOfFile: scriptPath, encoding: .utf8)) ?? ""
-        var frameworks: [String] = []
-        if source.contains("import ScriptingBridge") { frameworks.append("-framework ScriptingBridge") }
-        if source.contains("import AppKit") { frameworks.append("-framework AppKit") }
-        if source.contains("import WebKit") { frameworks.append("-framework WebKit") }
+        let agentsPath = Self.agentsDir.path
+        let args = arguments.isEmpty ? "" : " \(arguments)"
 
-        let uuid = UUID().uuidString.prefix(8)
-        let binary = "/tmp/agent_script_\(uuid)"
-        let frameworkFlags = frameworks.isEmpty ? "" : " " + frameworks.joined(separator: " ")
-
-        return "swiftc\(frameworkFlags) -o \(binary) '\(scriptPath)' 2>&1 && '\(binary)' \(arguments) 2>&1; EXIT=$?; rm -f '\(binary)'; exit $EXIT"
+        return "cd '\(agentsPath)' && swift build --product '\(scriptName)' 2>&1 && .build/debug/'\(scriptName)'\(args) 2>&1"
     }
 }

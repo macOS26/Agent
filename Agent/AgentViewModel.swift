@@ -232,6 +232,12 @@ final class AgentViewModel {
         if selectedProvider == .ollama {
             fetchOllamaModels()
         }
+
+        // Check for Xcode Command Line Tools
+        if !FileManager.default.fileExists(atPath: "/usr/bin/clang") {
+            appendLog("Warning: Xcode Command Line Tools not installed. Run: xcode-select --install")
+            flushLog()
+        }
     }
 
     func registerDaemon() {
