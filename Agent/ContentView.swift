@@ -193,7 +193,7 @@ struct ContentView: View {
             if showSplash {
                 Color(.windowBackgroundColor)
                     .overlay {
-                        VStack(spacing: 0) {
+                        ZStack {
                             Image("AgentIcon")
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
@@ -212,7 +212,7 @@ struct ContentView: View {
                                 )
                                 .shadow(color: .blue.opacity(0.8), radius: 12)
                                 .shadow(color: .blue.opacity(0.4), radius: 24)
-                                .padding(.top, -30)
+                                .offset(y: 40)
                         }
                     }
                     .opacity(splashOpacity)
