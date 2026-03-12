@@ -109,6 +109,14 @@ final class ScriptService {
         return try? String(contentsOf: mainPath, encoding: .utf8)
     }
 
+    private static let shebang = "#!/usr/bin/env swift"
+
+    /// Ensure content starts with a shebang line
+    private func ensureShebang(_ content: String) -> String {
+        if content.hasPrefix(Self.shebang) { return content }
+        return Self.shebang + "\n" + content
+    }
+
     /// Create a new script as Sources/{name}/main.swift
     func createScript(name: String, content: String) -> String {
         ensurePackage()
@@ -121,11 +129,12 @@ final class ScriptService {
             return "Error: script '\(scriptName)' already exists. Use update_agent_script to modify it."
         }
 
+        let final = ensureShebang(content)
         do {
             try fm.createDirectory(at: scriptDir, withIntermediateDirectories: true)
-            try content.write(to: mainFile, atomically: true, encoding: .utf8)
+            try final.write(to: mainFile, atomically: true, encoding: .utf8)
             regeneratePackageSwift()
-            return "Created \(scriptName) (\(content.count) bytes)"
+            return "Created \(scriptName) (\(final.count) bytes)"
         } catch {
             return "Error creating script: \(error.localizedDescription)"
         }
@@ -141,9 +150,10 @@ final class ScriptService {
             return "Error: script '\(scriptName)' not found. Use create_agent_script to create it."
         }
 
+        let final = ensureShebang(content)
         do {
-            try content.write(to: mainFile, atomically: true, encoding: .utf8)
-            return "Updated \(scriptName) (\(content.count) bytes)"
+            try final.write(to: mainFile, atomically: true, encoding: .utf8)
+            return "Updated \(scriptName) (\(final.count) bytes)"
         } catch {
             return "Error updating script: \(error.localizedDescription)"
         }
