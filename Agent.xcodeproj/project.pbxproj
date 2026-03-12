@@ -18,6 +18,7 @@
 		AA10000000000000000038 /* UserService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000025 /* UserService.swift */; };
 		AA10000000000000000039 /* UserProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000026 /* UserProtocol.swift */; };
 		AA1000000000000000003A /* OllamaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000028 /* OllamaService.swift */; };
+		AA1000000000000000003B /* ScriptService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000029 /* ScriptService.swift */; };
 		BB10000000000000000030 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001A /* main.swift */; };
 		BB10000000000000000031 /* HelperProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001B /* HelperProtocol.swift */; };
 		BB10000000000000000032 /* com.agent.helper.plist in Copy Daemon Plist */ = {isa = PBXBuildFile; fileRef = AA10000000000000000023 /* com.agent.helper.plist */; };
@@ -26,6 +27,7 @@
 		CC10000000000000000031 /* UserProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1000000000000000001B /* UserProtocol.swift */; };
 		CC10000000000000000032 /* com.agent.user.plist in Copy Agent Plist */ = {isa = PBXBuildFile; fileRef = AA10000000000000000027 /* com.agent.user.plist */; };
 		CC10000000000000000033 /* AgentUser in Copy User Agent */ = {isa = PBXBuildFile; fileRef = CC1000000000000000001C /* AgentUser */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		EAF3666F2F623D6A004B7E38 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = EAF3666E2F623D6A004B7E38 /* AppIcon.icon */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -108,12 +110,14 @@
 		AA10000000000000000026 /* UserProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProtocol.swift; sourceTree = "<group>"; };
 		AA10000000000000000027 /* com.agent.user.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = com.agent.user.plist; sourceTree = "<group>"; };
 		AA10000000000000000028 /* OllamaService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaService.swift; sourceTree = "<group>"; };
+		AA10000000000000000029 /* ScriptService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptService.swift; sourceTree = "<group>"; };
 		BB1000000000000000001A /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		BB1000000000000000001B /* HelperProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperProtocol.swift; sourceTree = "<group>"; };
 		BB1000000000000000001C /* AgentHelper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = AgentHelper; sourceTree = BUILT_PRODUCTS_DIR; };
 		CC1000000000000000001A /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		CC1000000000000000001B /* UserProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProtocol.swift; sourceTree = "<group>"; };
 		CC1000000000000000001C /* AgentUser */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = AgentUser; sourceTree = BUILT_PRODUCTS_DIR; };
+		EAF3666E2F623D6A004B7E38 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -161,9 +165,11 @@
 				AA10000000000000000025 /* UserService.swift */,
 				AA1000000000000000001E /* ClaudeService.swift */,
 				AA10000000000000000028 /* OllamaService.swift */,
+				AA10000000000000000029 /* ScriptService.swift */,
 				AA1000000000000000001F /* HelperProtocol.swift */,
 				AA10000000000000000026 /* UserProtocol.swift */,
 				AA10000000000000000020 /* Models.swift */,
+				EAF3666E2F623D6A004B7E38 /* AppIcon.icon */,
 				AA10000000000000000021 /* Assets.xcassets */,
 				AA10000000000000000022 /* Agent.entitlements */,
 				BB10000000000000000041 /* LaunchDaemons */,
@@ -310,6 +316,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA10000000000000000037 /* Assets.xcassets in Resources */,
+				EAF3666F2F623D6A004B7E38 /* AppIcon.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -329,6 +336,7 @@
 				AA10000000000000000035 /* HelperProtocol.swift in Sources */,
 				AA10000000000000000039 /* UserProtocol.swift in Sources */,
 				AA1000000000000000003A /* OllamaService.swift in Sources */,
+				AA1000000000000000003B /* ScriptService.swift in Sources */,
 				AA10000000000000000036 /* Models.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

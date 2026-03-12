@@ -192,6 +192,7 @@ final class AgentViewModel {
 
     let helperService = HelperService()
     let userService = UserService()
+    let scriptService = ScriptService()
     let history = TaskHistory.shared
     private var isCancelled = false
     private var runningTask: Task<Void, Never>?
@@ -672,6 +673,85 @@ final class AgentViewModel {
                                 "tool_use_id": toolId,
                                 "content": truncated
                             ])
+                        }
+
+                        // Script management tools
+                        if name == "list_agent_scripts" {
+                            let scripts = scriptService.listScripts()
+                            let output: String
+                            if scripts.isEmpty {
+                                output = "No scripts found in ~/Documents/Agent/agents/"
+                            } else {
+                                output = scripts.map { "\($0.name) (\($0.size) bytes)" }.joined(separator: "\n")
+                            }
+                            appendLog("Scripts: \(scripts.count) found")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        if name == "read_agent_script" {
+                            let scriptName = input["name"] as? String ?? ""
+                            let output = scriptService.readScript(name: scriptName) ?? "Error: script '\(scriptName)' not found."
+                            appendLog("Read: \(scriptName)")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        if name == "create_agent_script" {
+                            let scriptName = input["name"] as? String ?? ""
+                            let content = input["content"] as? String ?? ""
+                            let output = scriptService.createScript(name: scriptName, content: content)
+                            appendLog(output)
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        if name == "update_agent_script" {
+                            let scriptName = input["name"] as? String ?? ""
+                            let content = input["content"] as? String ?? ""
+                            let output = scriptService.updateScript(name: scriptName, content: content)
+                            appendLog(output)
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        if name == "delete_agent_script" {
+                            let scriptName = input["name"] as? String ?? ""
+                            let output = scriptService.deleteScript(name: scriptName)
+                            appendLog(output)
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        if name == "run_agent_script" {
+                            let scriptName = input["name"] as? String ?? ""
+                            let arguments = input["arguments"] as? String ?? ""
+                            guard let command = scriptService.compileAndRunCommand(name: scriptName, arguments: arguments) else {
+                                let err = "Error: script '\(scriptName)' not found."
+                                appendLog(err)
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
+                                continue
+                            }
+                            appendLog("Compiling & running: \(scriptName)")
+                            flushLog()
+
+                            resetStreamCounters()
+                            userServiceActive = true
+                            userWasActive = true
+                            userService.onOutput = { [weak self] chunk in
+                                self?.appendRawOutput(chunk)
+                            }
+                            let result = await userService.execute(command: command)
+                            userService.onOutput = nil
+                            userServiceActive = false
+                            flushLog()
+
+                            guard !Task.isCancelled else { break }
+
+                            if result.status != 0 {
+                                appendLog("exit code: \(result.status)")
+                            }
+                            let toolOutput = result.output.isEmpty ? "(no output, exit code: \(result.status))" : result.output
+                            let truncated2 = toolOutput.count > 10000
+                                ? String(toolOutput.prefix(10000)) + "\n...(truncated)"
+                                : toolOutput
+                            commandsRun.append("run_agent_script: \(scriptName)")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": truncated2])
                         }
                     }
                 }

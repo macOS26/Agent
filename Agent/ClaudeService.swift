@@ -43,6 +43,12 @@ final class ClaudeService {
         You have memory of previous tasks — build on past results. \
         NEVER ask clarifying questions — always proceed with the most reasonable interpretation. \
         ALWAYS use tools to take action. Do not just describe what you would do — do it.
+
+        You can create, manage, and run Swift automation scripts stored in ~/Documents/Agent/agents/.
+        Use list_agent_scripts, create_agent_script, read_agent_script, update_agent_script, \
+        run_agent_script, and delete_agent_script to manage them.
+        Scripts are compiled with swiftc and run as the current user.
+        Scripts can import Foundation, AppKit, or ScriptingBridge for Xcode automation.
         """
         if !historyContext.isEmpty {
             prompt += historyContext
@@ -92,6 +98,72 @@ final class ClaudeService {
                         ] as [String: Any]
                     ] as [String: Any],
                     "required": ["summary"]
+                ] as [String: Any]
+            ],
+            [
+                "name": "list_agent_scripts",
+                "description": "List all Swift automation scripts in ~/Documents/Agent/agents/",
+                "input_schema": [
+                    "type": "object",
+                    "properties": [:] as [String: Any]
+                ] as [String: Any]
+            ],
+            [
+                "name": "read_agent_script",
+                "description": "Read the source code of a Swift automation script.",
+                "input_schema": [
+                    "type": "object",
+                    "properties": [
+                        "name": ["type": "string", "description": "Script name (with or without .swift)"] as [String: Any]
+                    ] as [String: Any],
+                    "required": ["name"]
+                ] as [String: Any]
+            ],
+            [
+                "name": "create_agent_script",
+                "description": "Create a new Swift automation script in ~/Documents/Agent/agents/",
+                "input_schema": [
+                    "type": "object",
+                    "properties": [
+                        "name": ["type": "string", "description": "Script filename (with or without .swift)"] as [String: Any],
+                        "content": ["type": "string", "description": "Swift source code"] as [String: Any]
+                    ] as [String: Any],
+                    "required": ["name", "content"]
+                ] as [String: Any]
+            ],
+            [
+                "name": "update_agent_script",
+                "description": "Update an existing Swift automation script.",
+                "input_schema": [
+                    "type": "object",
+                    "properties": [
+                        "name": ["type": "string", "description": "Script filename"] as [String: Any],
+                        "content": ["type": "string", "description": "New Swift source code"] as [String: Any]
+                    ] as [String: Any],
+                    "required": ["name", "content"]
+                ] as [String: Any]
+            ],
+            [
+                "name": "run_agent_script",
+                "description": "Compile and execute a Swift script from ~/Documents/Agent/agents/ using swiftc. Scripts can import Foundation, AppKit, or ScriptingBridge.",
+                "input_schema": [
+                    "type": "object",
+                    "properties": [
+                        "name": ["type": "string", "description": "Script filename"] as [String: Any],
+                        "arguments": ["type": "string", "description": "Optional command-line arguments"] as [String: Any]
+                    ] as [String: Any],
+                    "required": ["name"]
+                ] as [String: Any]
+            ],
+            [
+                "name": "delete_agent_script",
+                "description": "Delete a Swift automation script.",
+                "input_schema": [
+                    "type": "object",
+                    "properties": [
+                        "name": ["type": "string", "description": "Script filename"] as [String: Any]
+                    ] as [String: Any],
+                    "required": ["name"]
                 ] as [String: Any]
             ]
         ]
