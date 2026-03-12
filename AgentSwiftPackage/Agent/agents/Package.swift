@@ -35,6 +35,10 @@ let scriptTargets: [(String, [Target.Dependency])] = [
     ("TodayEvents", ["CalendarBridge"]),
 ]
 
+// Compute exclude lists so SPM doesn't warn about unhandled files in shared directories
+let allBridgeFiles = ["ScriptingBridgeCommon.swift"] + bridgeNames.map { "\($0).swift" }
+let allScriptFiles = scriptTargets.map { "\($0.0).swift" }
+
 let package = Package(
     name: "AgentScripts",
     platforms: [.macOS(.v15)],
@@ -42,10 +46,18 @@ let package = Package(
         .library(name: "XcodeBridge", targets: ["XcodeBridge"]),
     ],
     targets: [
-        .target(name: "ScriptingBridgeCommon", path: bridge, sources: ["ScriptingBridgeCommon.swift"]),
+        .target(name: "ScriptingBridgeCommon", path: bridge,
+                exclude: bridgeNames.map { "\($0).swift" },
+                sources: ["ScriptingBridgeCommon.swift"]),
     ]
-    + bridgeNames.map { .target(name: $0, dependencies: [common], path: bridge, sources: ["\($0).swift"]) }
+    + bridgeNames.map { name in
+        .target(name: name, dependencies: [common], path: bridge,
+                exclude: allBridgeFiles.filter { $0 != "\(name).swift" },
+                sources: ["\(name).swift"])
+    }
     + scriptTargets.map { name, deps in
-        .executableTarget(name: name, dependencies: deps, path: scripts, sources: ["\(name).swift"])
+        .executableTarget(name: name, dependencies: deps, path: scripts,
+                          exclude: allScriptFiles.filter { $0 != "\(name).swift" },
+                          sources: ["\(name).swift"])
     }
 )
