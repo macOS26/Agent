@@ -325,6 +325,7 @@ final class AgentViewModel {
             appendLog("Cancelled by user.")
         }
         flushLog()
+        persistLogNow()
         isRunning = false
         isThinking = false
         userServiceActive = false
@@ -482,6 +483,7 @@ final class AgentViewModel {
 
     private var logBuffer = ""
     private var logFlushTask: Task<Void, Never>?
+    private var logPersistTask: Task<Void, Never>?
     private var streamOutputCount = 0
     private var streamTruncated = false
     private static let maxStreamDisplay = 20_000
@@ -533,8 +535,23 @@ final class AgentViewModel {
             activityLog += logBuffer
             logBuffer = ""
             trimToRecentTasks()
+            schedulePersist()
+        }
+    }
+
+    private func schedulePersist() {
+        guard logPersistTask == nil else { return }
+        logPersistTask = Task {
+            try? await Task.sleep(for: .seconds(2))
+            logPersistTask = nil
             UserDefaults.standard.set(activityLog, forKey: "agentActivityLog")
         }
+    }
+
+    func persistLogNow() {
+        logPersistTask?.cancel()
+        logPersistTask = nil
+        UserDefaults.standard.set(activityLog, forKey: "agentActivityLog")
     }
 
     /// Keep only the last 3 tasks visible to prevent SwiftUI from choking on large Text views
@@ -851,6 +868,7 @@ final class AgentViewModel {
         }
 
         flushLog()
+        persistLogNow()
         isRunning = false
         isThinking = false
         userServiceActive = false

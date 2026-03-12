@@ -103,12 +103,10 @@ struct ContentView: View {
                         .padding()
                         .foregroundStyle(viewModel.activityLog.isEmpty ? .secondary : .primary)
                         .textSelection(.enabled)
-                        .id("logBottom")
+                    Color.clear.frame(height: 1).id("logBottom")
                 }
                 .onChange(of: viewModel.activityLog) {
-                    withAnimation {
-                        proxy.scrollTo("logBottom", anchor: .bottom)
-                    }
+                    proxy.scrollTo("logBottom", anchor: .bottom)
                 }
             }
 
@@ -298,20 +296,18 @@ struct StatusDot: View {
 }
 
 struct PulseRing: View {
-    @State private var animating = false
+    private let duration: Double = 1.0
 
     var body: some View {
-        Circle()
-            .stroke(Color.green.opacity(0.6), lineWidth: 2)
-            .frame(width: 12, height: 12)
-            .scaleEffect(animating ? 2.5 : 1.0)
-            .opacity(animating ? 0 : 0.8)
-            .onAppear {
-                animating = false
-                withAnimation(.easeOut(duration: 1.0).repeatForever(autoreverses: false)) {
-                    animating = true
-                }
-            }
+        TimelineView(.animation) { timeline in
+            let progress = timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: duration) / duration
+            let ease = 1.0 - pow(1.0 - progress, 2.0) // easeOut curve
+            Circle()
+                .stroke(Color.green.opacity(0.6), lineWidth: 2)
+                .frame(width: 12, height: 12)
+                .scaleEffect(1.0 + 1.5 * ease)
+                .opacity(0.8 * (1.0 - ease))
+        }
     }
 }
 
