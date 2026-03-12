@@ -53,6 +53,10 @@ final class OllamaService {
         run_agent_script, and delete_agent_script to manage them.
         Scripts are Swift Package executable targets built with `swift build`.
 
+        IMPORTANT: Before creating a new script, ALWAYS call list_agent_scripts first to check \
+        if a script for the same task already exists. If one does, use update_agent_script to \
+        modify it instead of creating a duplicate. Only use create_agent_script for genuinely new tasks.
+
         IMPORTANT: Scripts can `import ScriptingBridges` for type-safe macOS app automation. \
         ScriptingBridge is the cleanest and preferred approach. AppleScript via osascript is \
         still allowed but ScriptingBridge should be tried first. \

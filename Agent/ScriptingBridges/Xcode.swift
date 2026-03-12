@@ -1,18 +1,18 @@
 // MARK: XcodeSaveOptions
 @objc public enum XcodeSaveOptions : AEKeyword {
-    case yes = 0x79657320 /* b'yes ' */
-    case no = 0x6e6f2020 /* b'no  ' */
-    case ask = 0x61736b20 /* b'ask ' */
+    case yes = 0x79657320 /* Save the file. */
+    case no = 0x6e6f2020 /* Do not save the file. */
+    case ask = 0x61736b20 /* Ask the user whether or not to save the file. */
 }
 
 // MARK: XcodeSchemeActionResultStatus
 @objc public enum XcodeSchemeActionResultStatus : AEKeyword {
-    case notYetStarted = 0x7372736e /* b'srsn' */
-    case running = 0x73727372 /* b'srsr' */
-    case cancelled = 0x73727363 /* b'srsc' */
-    case failed = 0x73727366 /* b'srsf' */
-    case errorOccurred = 0x73727365 /* b'srse' */
-    case succeeded = 0x73727373 /* b'srss' */
+    case notYetStarted = 0x7372736e /* The action has not yet started. */
+    case running = 0x73727372 /* The action is in progress. */
+    case cancelled = 0x73727363 /* The action was cancelled. */
+    case failed = 0x73727366 /* The action ran but did not complete successfully. */
+    case errorOccurred = 0x73727365 /* The action was not able to run due to an error. */
+    case succeeded = 0x73727373 /* The action succeeded. */
 }
 
 // MARK: XcodeGenericMethods
@@ -31,11 +31,12 @@
 
 // MARK: XcodeApplication
 @objc public protocol XcodeApplication: SBApplicationProtocol {
-    @objc optional func documents() -> SBElementArray
-    @objc optional func windows() -> SBElementArray
     @objc optional var name: String { get } // The name of the application.
     @objc optional var frontmost: Bool { get } // Is this the active application?
     @objc optional var version: String { get } // The version number of the application.
+    @objc optional var activeWorkspaceDocument: XcodeWorkspaceDocument { get } // The active workspace document in Xcode.
+    @objc optional func documents() -> SBElementArray
+    @objc optional func windows() -> SBElementArray
     @objc optional func `open`(_ x: Any!) -> Any // Open a document.
     @objc optional func quitSaving(_ saving: XcodeSaveOptions) // Quit the application.
     @objc optional func exists(_ x: Any!) -> Bool // Verify that an object exists.
@@ -43,8 +44,6 @@
     @objc optional func fileDocuments() -> SBElementArray
     @objc optional func sourceDocuments() -> SBElementArray
     @objc optional func workspaceDocuments() -> SBElementArray
-    @objc optional var activeWorkspaceDocument: XcodeWorkspaceDocument { get } // The active workspace document in Xcode.
-    @objc optional func setActiveWorkspaceDocument(_ activeWorkspaceDocument: XcodeWorkspaceDocument!) // The active workspace document in Xcode.
 }
 extension SBApplication: XcodeApplication {}
 
@@ -54,14 +53,12 @@ extension SBApplication: XcodeApplication {}
     @objc optional var modified: Bool { get } // Has it been modified since the last save?
     @objc optional var file: URL { get } // Its location on disk, if it has one.
     @objc optional var path: String { get } // The document's path.
-    @objc optional func setPath(_ path: String!) // The document's path.
 }
 extension SBObject: XcodeDocument {}
 
 // MARK: XcodeWindow
 @objc public protocol XcodeWindow: SBObjectProtocol, XcodeGenericMethods {
     @objc optional var name: String { get } // The title of the window.
-    @objc optional func id() -> Int // The unique identifier of the window.
     @objc optional var index: Int { get } // The index of the window, ordered front to back.
     @objc optional var bounds: NSRect { get } // The bounding rectangle of the window.
     @objc optional var closeable: Bool { get } // Does the window have a close button?
@@ -72,11 +69,7 @@ extension SBObject: XcodeDocument {}
     @objc optional var zoomable: Bool { get } // Does the window have a zoom button?
     @objc optional var zoomed: Bool { get } // Is the window zoomed right now?
     @objc optional var document: XcodeDocument { get } // The document whose contents are displayed in the window.
-    @objc optional func setIndex(_ index: Int) // The index of the window, ordered front to back.
-    @objc optional func setBounds(_ bounds: NSRect) // The bounding rectangle of the window.
-    @objc optional func setMiniaturized(_ miniaturized: Bool) // Is the window minimized right now?
-    @objc optional func setVisible(_ visible: Bool) // Is the window visible right now?
-    @objc optional func setZoomed(_ zoomed: Bool) // Is the window zoomed right now?
+    @objc optional func id() -> Int // The unique identifier of the window.
 }
 extension SBObject: XcodeWindow {}
 
@@ -87,14 +80,10 @@ extension SBObject: XcodeFileDocument {}
 
 // MARK: XcodeTextDocument
 @objc public protocol XcodeTextDocument: XcodeFileDocument {
-    @objc optional var selectedCharacterRange: [NSNumber] { get } // The first and last character positions in the selection.
-    @objc optional var selectedParagraphRange: [NSNumber] { get } // The first and last paragraph positions that contain the selection.
+    @objc optional var selectedCharacterRange: [Any] { get } // The first and last character positions in the selection.
+    @objc optional var selectedParagraphRange: [Any] { get } // The first and last paragraph positions that contain the selection.
     @objc optional var text: String { get } // The text of the text file referenced.
     @objc optional var notifiesWhenClosing: Bool { get } // Should Xcode notify other apps when this document is closed?
-    @objc optional func setSelectedCharacterRange(_ selectedCharacterRange: [NSNumber]!) // The first and last character positions in the selection.
-    @objc optional func setSelectedParagraphRange(_ selectedParagraphRange: [NSNumber]!) // The first and last paragraph positions that contain the selection.
-    @objc optional func setText(_ text: String!) // The text of the text file referenced.
-    @objc optional func setNotifiesWhenClosing(_ notifiesWhenClosing: Bool) // Should Xcode notify other apps when this document is closed?
 }
 extension SBObject: XcodeTextDocument {}
 
@@ -105,35 +94,28 @@ extension SBObject: XcodeSourceDocument {}
 
 // MARK: XcodeWorkspaceDocument
 @objc public protocol XcodeWorkspaceDocument: XcodeDocument {
-    @objc optional func projects() -> SBElementArray
-    @objc optional func schemes() -> SBElementArray
-    @objc optional func runDestinations() -> SBElementArray
     @objc optional var loaded: Bool { get } // Whether the workspace document has finsished loading after being opened. Messages sent to a workspace document before it has loaded will result in errors.
     @objc optional var activeScheme: XcodeScheme { get } // The workspace's scheme that will be used for scheme actions.
     @objc optional var activeRunDestination: XcodeRunDestination { get } // The workspace's run destination that will be used for scheme actions.
     @objc optional var lastSchemeActionResult: XcodeSchemeActionResult { get } // The scheme action result for the last scheme action command issued to the workspace document.
     @objc optional var file: URL { get } // The workspace document's location on disk, if it has one.
-    @objc optional func setLoaded(_ loaded: Bool) // Whether the workspace document has finsished loading after being opened. Messages sent to a workspace document before it has loaded will result in errors.
-    @objc optional func setActiveScheme(_ activeScheme: XcodeScheme!) // The workspace's scheme that will be used for scheme actions.
-    @objc optional func setActiveRunDestination(_ activeRunDestination: XcodeRunDestination!) // The workspace's run destination that will be used for scheme actions.
-    @objc optional func setLastSchemeActionResult(_ lastSchemeActionResult: XcodeSchemeActionResult!) // The scheme action result for the last scheme action command issued to the workspace document.
+    @objc optional func projects() -> SBElementArray
+    @objc optional func schemes() -> SBElementArray
+    @objc optional func runDestinations() -> SBElementArray
 }
 extension SBObject: XcodeWorkspaceDocument {}
 
 // MARK: XcodeSchemeActionResult
 @objc public protocol XcodeSchemeActionResult: SBObjectProtocol, XcodeGenericMethods {
+    @objc optional var completed: Bool { get } // Whether this scheme action has completed (sucessfully or otherwise) or not.
+    @objc optional var status: XcodeSchemeActionResultStatus { get } // Indicates the status of the scheme action.
+    @objc optional var errorMessage: String { get } // If the result's status is "error occurred", this will be the error message; otherwise, this will be "missing value".
+    @objc optional var buildLog: String { get } // If this scheme action performed a build, this will be the text of the build log.
     @objc optional func buildErrors() -> SBElementArray
     @objc optional func buildWarnings() -> SBElementArray
     @objc optional func analyzerIssues() -> SBElementArray
     @objc optional func testFailures() -> SBElementArray
     @objc optional func id() -> String // The unique identifier for the scheme.
-    @objc optional var completed: Bool { get } // Whether this scheme action has completed (sucessfully or otherwise) or not.
-    @objc optional var status: XcodeSchemeActionResultStatus { get } // Indicates the status of the scheme action.
-    @objc optional var errorMessage: String { get } // If the result's status is "error occurred", this will be the error message; otherwise, this will be "missing value".
-    @objc optional var buildLog: String { get } // If this scheme action performed a build, this will be the text of the build log.
-    @objc optional func setStatus(_ status: XcodeSchemeActionResultStatus) // Indicates the status of the scheme action.
-    @objc optional func setErrorMessage(_ errorMessage: String!) // If the result's status is "error occurred", this will be the error message; otherwise, this will be "missing value".
-    @objc optional func setBuildLog(_ buildLog: String!) // If this scheme action performed a build, this will be the text of the build log.
 }
 extension SBObject: XcodeSchemeActionResult {}
 
@@ -145,12 +127,6 @@ extension SBObject: XcodeSchemeActionResult {}
     @objc optional var endingLineNumber: Int { get } // The ending line number in the file where the issue occurred. This may be 'missing value' if the issue is not associated with a specific source file.
     @objc optional var startingColumnNumber: Int { get } // The starting column number in the file where the issue occurred. This may be 'missing value' if the issue is not associated with a specific source file.
     @objc optional var endingColumnNumber: Int { get } // The ending column number in the file where the issue occurred. This may be 'missing value' if the issue is not associated with a specific source file.
-    @objc optional func setMessage(_ message: String!) // The text of the issue.
-    @objc optional func setFilePath(_ filePath: String!) // The file path where the issue occurred. This may be 'missing value' if the issue is not associated with a specific source file.
-    @objc optional func setStartingLineNumber(_ startingLineNumber: Int) // The starting line number in the file where the issue occurred. This may be 'missing value' if the issue is not associated with a specific source file.
-    @objc optional func setEndingLineNumber(_ endingLineNumber: Int) // The ending line number in the file where the issue occurred. This may be 'missing value' if the issue is not associated with a specific source file.
-    @objc optional func setStartingColumnNumber(_ startingColumnNumber: Int) // The starting column number in the file where the issue occurred. This may be 'missing value' if the issue is not associated with a specific source file.
-    @objc optional func setEndingColumnNumber(_ endingColumnNumber: Int) // The ending column number in the file where the issue occurred. This may be 'missing value' if the issue is not associated with a specific source file.
 }
 extension SBObject: XcodeSchemeActionIssue {}
 
@@ -203,18 +179,18 @@ extension SBObject: XcodeDevice {}
 
 // MARK: XcodeBuildConfiguration
 @objc public protocol XcodeBuildConfiguration: SBObjectProtocol, XcodeGenericMethods {
+    @objc optional var name: String { get } // The name of the build configuration.
     @objc optional func buildSettings() -> SBElementArray
     @objc optional func resolvedBuildSettings() -> SBElementArray
     @objc optional func id() -> String // The unique identifier for the build configuration.
-    @objc optional var name: String { get } // The name of the build configuration.
 }
 extension SBObject: XcodeBuildConfiguration {}
 
 // MARK: XcodeProject
 @objc public protocol XcodeProject: SBObjectProtocol, XcodeGenericMethods {
+    @objc optional var name: String { get } // The name of the project
     @objc optional func buildConfigurations() -> SBElementArray
     @objc optional func targets() -> SBElementArray
-    @objc optional var name: String { get } // The name of the project
     @objc optional func id() -> String // The unique identifier for the project.
 }
 extension SBObject: XcodeProject {}
@@ -223,8 +199,6 @@ extension SBObject: XcodeProject {}
 @objc public protocol XcodeBuildSetting: SBObjectProtocol, XcodeGenericMethods {
     @objc optional var name: String { get } // The unlocalized build setting name (e.g. DSTROOT).
     @objc optional var value: String { get } // A string value for the build setting.
-    @objc optional func setName(_ name: String!) // The unlocalized build setting name (e.g. DSTROOT).
-    @objc optional func setValue(_ value: String!) // A string value for the build setting.
 }
 extension SBObject: XcodeBuildSetting {}
 
@@ -232,18 +206,15 @@ extension SBObject: XcodeBuildSetting {}
 @objc public protocol XcodeResolvedBuildSetting: SBObjectProtocol, XcodeGenericMethods {
     @objc optional var name: String { get } // The unlocalized build setting name (e.g. DSTROOT).
     @objc optional var value: String { get } // A string value for the build setting.
-    @objc optional func setName(_ name: String!) // The unlocalized build setting name (e.g. DSTROOT).
-    @objc optional func setValue(_ value: String!) // A string value for the build setting.
 }
 extension SBObject: XcodeResolvedBuildSetting {}
 
 // MARK: XcodeTarget
 @objc public protocol XcodeTarget: SBObjectProtocol, XcodeGenericMethods {
-    @objc optional func buildConfigurations() -> SBElementArray
     @objc optional var name: String { get } // The name of this target.
-    @objc optional func id() -> String // The unique identifier for the target.
     @objc optional var project: XcodeProject { get } // The project that contains this target
-    @objc optional func setName(_ name: String!) // The name of this target.
+    @objc optional func buildConfigurations() -> SBElementArray
+    @objc optional func id() -> String // The unique identifier for the target.
 }
 extension SBObject: XcodeTarget {}
 
