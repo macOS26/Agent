@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct ContentView: View {
     @State private var viewModel = AgentViewModel()
@@ -95,20 +96,7 @@ struct ContentView: View {
             Divider()
 
             // Activity Log
-            ScrollViewReader { proxy in
-                ScrollView {
-                    Text(viewModel.activityLog.isEmpty ? "Ready. Enter a task below to begin." : viewModel.activityLog)
-                        .font(.system(.body, design: .monospaced))
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding()
-                        .foregroundStyle(viewModel.activityLog.isEmpty ? .secondary : .primary)
-                        .textSelection(.enabled)
-                    Color.clear.frame(height: 1).id("logBottom")
-                }
-                .onChange(of: viewModel.activityLog) {
-                    proxy.scrollTo("logBottom", anchor: .bottom)
-                }
-            }
+            ActivityLogView(text: viewModel.activityLog)
 
             Divider()
 
@@ -152,16 +140,15 @@ struct ContentView: View {
 
             // Input — always enabled so user can override a running task
             HStack {
-                if viewModel.isRunning {
-                    Button { viewModel.stop() } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.red)
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.regular)
-                    .help("Cancel running task")
-                    .keyboardShortcut(.escape, modifiers: [])
+                Button { viewModel.stop() } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.red)
                 }
+                .buttonStyle(.bordered)
+                .controlSize(.regular)
+                .help("Cancel running task")
+                .opacity(viewModel.isRunning ? 1 : 0)
+                .disabled(!viewModel.isRunning)
 
                 Button { viewModel.captureScreenshot() } label: {
                     Image(systemName: "camera")
@@ -265,6 +252,60 @@ struct ContentView: View {
                 return event
             }
         }
+    }
+}
+
+/// NSTextView-backed activity log — avoids SwiftUI Text layout storms on large/streaming content
+struct ActivityLogView: NSViewRepresentable {
+    let text: String
+
+    func makeNSView(context: Context) -> NSScrollView {
+        let scrollView = NSTextView.scrollableTextView()
+        guard let textView = scrollView.documentView as? NSTextView else { return scrollView }
+        textView.isEditable = false
+        textView.isSelectable = true
+        textView.font = .monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
+        textView.backgroundColor = .clear
+        textView.textContainerInset = NSSize(width: 12, height: 12)
+        textView.isAutomaticQuoteSubstitutionEnabled = false
+        textView.isAutomaticDashSubstitutionEnabled = false
+        textView.isAutomaticTextReplacementEnabled = false
+        scrollView.hasVerticalScroller = true
+        scrollView.drawsBackground = false
+        return scrollView
+    }
+
+    func updateNSView(_ scrollView: NSScrollView, context: Context) {
+        guard let textView = scrollView.documentView as? NSTextView else { return }
+        let coord = context.coordinator
+
+        if text.isEmpty {
+            guard !coord.showingPlaceholder else { return }
+            textView.string = "Ready. Enter a task below to begin."
+            textView.textColor = .secondaryLabelColor
+            coord.showingPlaceholder = true
+            coord.lastLength = 0
+            return
+        }
+
+        let len = (text as NSString).length
+        guard len != coord.lastLength || coord.showingPlaceholder else { return }
+
+        if coord.showingPlaceholder {
+            textView.textColor = .labelColor
+            coord.showingPlaceholder = false
+        }
+
+        textView.string = text
+        coord.lastLength = len
+        textView.scrollToEndOfDocument(nil)
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    class Coordinator {
+        var lastLength = 0
+        var showingPlaceholder = true
     }
 }
 
