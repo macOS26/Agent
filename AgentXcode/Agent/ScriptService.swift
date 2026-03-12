@@ -169,6 +169,7 @@ final class ScriptService {
 
     /// Read a script's source code
     func readScript(name: String) -> String? {
+        ensurePackage()
         let scriptName = name.replacingOccurrences(of: ".swift", with: "")
         let scriptFile = scriptsDir.appendingPathComponent("\(scriptName).swift")
         return try? String(contentsOf: scriptFile, encoding: .utf8)
@@ -244,6 +245,7 @@ final class ScriptService {
 
     /// Build the swift build + run command for a script
     func compileAndRunCommand(name: String, arguments: String = "") -> String? {
+        ensurePackage()
         let scriptName = name.replacingOccurrences(of: ".swift", with: "")
         let scriptFile = scriptsDir.appendingPathComponent("\(scriptName).swift")
         let fm = FileManager.default
