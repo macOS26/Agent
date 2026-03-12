@@ -1,5 +1,6 @@
 import Foundation
 import ScriptingBridge
+import XcodeBridge
 
 /// Xcode automation via ScriptingBridge — build, run, and grant permission.
 /// Follows the pattern from xcf's XcfSwiftScript and XcfOsaScript.
