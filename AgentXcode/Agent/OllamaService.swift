@@ -158,6 +158,22 @@ final class OllamaService {
           3. Add the new bridge name to bridgeNames in Package.swift
           The script handles the full sdef → sdp → Swift conversion pipeline automatically.
 
+        DYNAMIC SCRIPTING BRIDGE QUERIES — scripting_bridge_query:
+        For quick, one-off queries against any scriptable Mac app, use scripting_bridge_query \
+        instead of writing a full Swift script. It uses ObjC dynamic dispatch (value(forKey:)) \
+        so no compilation is needed. Pass a bundle_id and an array of operations:
+        - "get" {key}: walk the object graph (e.g. "tracks", "name", "currentTrack")
+        - "iterate" {properties, limit}: read properties from each item in an SBElementArray
+        - "index" {index}: pick one item from an array by index
+        - "call" {method, arg}: invoke a method (e.g. "playpause", "searchFor" with arg)
+        - "filter" {predicate}: NSPredicate filter on an SBElementArray
+        Examples:
+        Get current Music track: bundle_id="com.apple.Music", operations=[{action:"get",key:"currentTrack"},{action:"iterate",properties:["name","artist","album"]}]
+        List Safari windows: bundle_id="com.apple.Safari", operations=[{action:"get",key:"windows"},{action:"iterate",properties:["name"],limit:10}]
+        List first 5 Notes: bundle_id="com.apple.Notes", operations=[{action:"get",key:"notes"},{action:"iterate",properties:["name"],limit:5}]
+        Write operations (delete, close, move, etc.) are blocked by default. Set allow_writes=true to permit them.
+        Use scripting_bridge_query for reading data; use compiled scripts for complex logic.
+
         You can also control Xcode directly via built-in tools:
         Use xcode_grant_permission once to authorize Automation access, then \
         xcode_build to build a project (returns errors/warnings), and \
@@ -351,6 +367,26 @@ final class OllamaService {
                         "properties": [:] as [String: Any]
                     ] as [String: Any]
                 ] as [String: Any]
+            ],
+            [
+                "type": "function",
+                "function": [
+                    "name": "scripting_bridge_query",
+                    "description": "Query any scriptable Mac app dynamically via ScriptingBridge. No compilation needed.",
+                    "parameters": [
+                        "type": "object",
+                        "properties": [
+                            "bundle_id": ["type": "string", "description": "App bundle identifier (e.g. com.apple.Music)"] as [String: Any],
+                            "operations": [
+                                "type": "array",
+                                "description": "Array of operations. Each has 'action' (get/iterate/index/call/filter) plus action-specific keys.",
+                                "items": ["type": "object"] as [String: Any]
+                            ] as [String: Any],
+                            "allow_writes": ["type": "boolean", "description": "Allow destructive operations. Default false."] as [String: Any]
+                        ] as [String: Any],
+                        "required": ["bundle_id", "operations"]
+                    ] as [String: Any]
+                ] as [String: Any]
             ]
         ]
     }
@@ -502,7 +538,8 @@ final class OllamaService {
             let toolNames = ["execute_user_command", "execute_command", "task_complete",
                               "list_agent_scripts", "read_agent_script", "create_agent_script",
                               "update_agent_script", "run_agent_script", "delete_agent_script",
-                              "xcode_build", "xcode_run", "xcode_grant_permission"]
+                              "xcode_build", "xcode_run", "xcode_grant_permission",
+                              "scripting_bridge_query"]
             var extractedTool = false
 
             for toolName in toolNames {

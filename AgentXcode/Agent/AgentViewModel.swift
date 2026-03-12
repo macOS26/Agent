@@ -801,6 +801,20 @@ final class AgentViewModel {
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": truncated2])
                         }
 
+                        // Dynamic ScriptingBridge query tool
+                        if name == "scripting_bridge_query" {
+                            let bundleID = input["bundle_id"] as? String ?? ""
+                            let operations = input["operations"] as? [[String: Any]] ?? []
+                            let allowWrites = input["allow_writes"] as? Bool ?? false
+                            appendLog("SB query: \(bundleID) (\(operations.count) ops)")
+                            flushLog()
+                            let output = ScriptingBridgeQueryService.shared.execute(
+                                bundleID: bundleID, operations: operations, allowWrites: allowWrites
+                            )
+                            appendLog(output)
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
                         // Xcode ScriptingBridge tools
                         if name == "xcode_grant_permission" {
                             appendLog("Granting Xcode Automation permission...")
