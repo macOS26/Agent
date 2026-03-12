@@ -74,7 +74,7 @@ final class ScriptService {
             }
             let src = bundleDir.appendingPathComponent(file)
             if let content = try? String(contentsOf: src, encoding: .utf8) {
-                let withImport = "import ScriptingBridgeCommon\n\n" + content
+                let withImport = "@_exported import ScriptingBridgeCommon\n\n" + content
                 try? withImport.write(to: dst, atomically: true, encoding: .utf8)
             }
         }
@@ -134,7 +134,7 @@ final class ScriptService {
                     let src = oldDir.appendingPathComponent(file)
                     let dst = bridgeDir.appendingPathComponent(file)
                     if let content = try? String(contentsOf: src, encoding: .utf8) {
-                        let withImport = "import ScriptingBridgeCommon\n\n" + content
+                        let withImport = "@_exported import ScriptingBridgeCommon\n\n" + content
                         try? withImport.write(to: dst, atomically: true, encoding: .utf8)
                     }
                 }
