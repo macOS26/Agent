@@ -36,6 +36,8 @@
 		DD10000000000000000032 /* PackageGenerationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000003 /* PackageGenerationTests.swift */; };
 		EAF3666F2F623D6A004B7E38 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = EAF3666E2F623D6A004B7E38 /* AppIcon.icon */; };
 		EA37C5522F636B86009D0A23 /* XcodeBridge in Frameworks */ = {isa = PBXBuildFile; productRef = EA37C5512F636B86009D0A23 /* XcodeBridge */; };
+		EA37C5552F636B87009D0A23 /* Sources in Resources */ = {isa = PBXBuildFile; fileRef = EA37C5532F636B87009D0A23 /* Sources */; };
+		EA37C5562F636B87009D0A23 /* Package.swift in Resources */ = {isa = PBXBuildFile; fileRef = EA37C5542F636B87009D0A23 /* Package.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -141,6 +143,8 @@
 		DD10000000000000000003 /* PackageGenerationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageGenerationTests.swift; sourceTree = "<group>"; };
 		DD10000000000000000004 /* AgentTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AgentTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		EAF3666E2F623D6A004B7E38 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
+		EA37C5532F636B87009D0A23 /* Sources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Sources; path = ../AgentSwiftPackage/Agent/agents/Sources; sourceTree = SOURCE_ROOT; };
+		EA37C5542F636B87009D0A23 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = text; name = Package.swift; path = ../AgentSwiftPackage/Agent/agents/Package.swift; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -209,6 +213,8 @@
 				EAF3666E2F623D6A004B7E38 /* AppIcon.icon */,
 				AA10000000000000000021 /* Assets.xcassets */,
 				AA10000000000000000022 /* Agent.entitlements */,
+				EA37C5532F636B87009D0A23 /* Sources */,
+				EA37C5542F636B87009D0A23 /* Package.swift */,
 				BB10000000000000000041 /* LaunchDaemons */,
 				CC10000000000000000041 /* LaunchAgents */,
 			);
@@ -397,6 +403,8 @@
 			files = (
 				AA10000000000000000037 /* Assets.xcassets in Resources */,
 				EAF3666F2F623D6A004B7E38 /* AppIcon.icon in Resources */,
+				EA37C5552F636B87009D0A23 /* Sources in Resources */,
+				EA37C5562F636B87009D0A23 /* Package.swift in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
