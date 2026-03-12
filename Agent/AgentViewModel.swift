@@ -41,7 +41,12 @@ final class AgentViewModel {
     }()
 
     var selectedProvider: APIProvider = { _ = AgentViewModel._migrate; return APIProvider(rawValue: UserDefaults.standard.string(forKey: "agentProvider") ?? "claude") ?? .claude }() {
-        didSet { UserDefaults.standard.set(selectedProvider.rawValue, forKey: "agentProvider") }
+        didSet {
+            UserDefaults.standard.set(selectedProvider.rawValue, forKey: "agentProvider")
+            if selectedProvider == .ollama && ollamaModels.isEmpty {
+                fetchOllamaModels()
+            }
+        }
     }
 
     // Claude settings
@@ -220,6 +225,11 @@ final class AgentViewModel {
             UserService.cancelProcess(instanceID: userID)
             UserDefaults.standard.removeObject(forKey: "lastHelperInstanceID")
             UserDefaults.standard.removeObject(forKey: "lastUserInstanceID")
+        }
+
+        // Auto-fetch Ollama models on launch
+        if selectedProvider == .ollama {
+            fetchOllamaModels()
         }
     }
 
