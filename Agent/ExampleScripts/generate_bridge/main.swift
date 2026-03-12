@@ -293,6 +293,13 @@ func parseHeader(_ content: String, appName: String) -> (enums: [ParsedEnum], pr
     return (enums, protocols)
 }
 
+// ObjC attributes to strip from property/method declarations
+let objcAttributes: Set<String> = [
+    "NS_RETURNS_NOT_RETAINED", "NS_RETURNS_RETAINED",
+    "__nullable", "__nonnull", "_Nullable", "_Nonnull",
+    "nullable", "nonnull", "__kindof"
+]
+
 func parseProperty(_ line: String) -> ParsedProperty? {
     guard line.hasPrefix("@property") else { return nil }
     var rest = line.replacingOccurrences(of: "@property ", with: "")
@@ -305,6 +312,11 @@ func parseProperty(_ line: String) -> ParsedProperty? {
             isReadonly = attrs.contains("readonly")
             rest = String(rest[rest.index(after: closeP)...]).trimmingCharacters(in: .whitespaces)
         }
+    }
+
+    // Strip ObjC attributes
+    for attr in objcAttributes {
+        rest = rest.replacingOccurrences(of: attr, with: "")
     }
 
     // Extract comment

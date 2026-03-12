@@ -1,120 +1,119 @@
 // MARK: FinderPriv
 @objc public enum FinderPriv : AEKeyword {
-    case readOnly = 0x72656164 /* b'read' */
-    case readWrite = 0x72647772 /* b'rdwr' */
-    case writeOnly = 0x77726974 /* b'writ' */
-    case none = 0x6e6f6e65 /* b'none' */
+    case readOnly = 0x72656164
+    case readWrite = 0x72647772
+    case writeOnly = 0x77726974
+    case none = 0x6e6f6e65
 }
 
 // MARK: FinderEdfm
 @objc public enum FinderEdfm : AEKeyword {
-    case macOSFormat = 0x64666866 /* b'dfhf' */
-    case macOSExtendedFormat = 0x6466682b /* b'dfh+' */
-    case ufsFormat = 0x64667566 /* b'dfuf' */
-    case nfsFormat = 0x64666e66 /* b'dfnf' */
-    case audioFormat = 0x64666175 /* b'dfau' */
-    case proDOSFormat = 0x64667072 /* b'dfpr' */
-    case msdosFormat = 0x64666d73 /* b'dfms' */
-    case ntfsFormat = 0x64666e74 /* b'dfnt' */
-    case iso9660Format = 0x64663936 /* b'df96' */
-    case highSierraFormat = 0x64666873 /* b'dfhs' */
-    case quickTakeFormat = 0x64667174 /* b'dfqt' */
-    case applePhotoFormat = 0x64667068 /* b'dfph' */
-    case appleShareFormat = 0x64666173 /* b'dfas' */
-    case udfFormat = 0x64667564 /* b'dfud' */
-    case webDAVFormat = 0x64667764 /* b'dfwd' */
-    case ftpFormat = 0x64666674 /* b'dfft' */
-    case packetWrittenUDFFormat = 0x64667075 /* b'dfpu' */
-    case xsanFormat = 0x64666163 /* b'dfac' */
-    case apfsFormat = 0x64666170 /* b'dfap' */
-    case exFATFormat = 0x64667866 /* b'dfxf' */
-    case smbFormat = 0x6466736d /* b'dfsm' */
-    case unknownFormat = 0x64663f3f /* b'df??' */
+    case macOSFormat = 0x64666866
+    case macOSExtendedFormat = 0x6466682b
+    case ufsFormat = 0x64667566
+    case nfsFormat = 0x64666e66
+    case audioFormat = 0x64666175
+    case proDOSFormat = 0x64667072
+    case msdosFormat = 0x64666d73
+    case ntfsFormat = 0x64666e74
+    case iso9660Format = 0x64663936
+    case highSierraFormat = 0x64666873
+    case quickTakeFormat = 0x64667174
+    case applePhotoFormat = 0x64667068
+    case appleShareFormat = 0x64666173
+    case udfFormat = 0x64667564
+    case webDAVFormat = 0x64667764
+    case ftpFormat = 0x64666674
+    case packetWrittenUDFFormat = 0x64667075
+    case xsanFormat = 0x64666163
+    case apfsFormat = 0x64666170
+    case exFATFormat = 0x64667866
+    case smbFormat = 0x6466736d
+    case unknownFormat = 0x64663f3f
 }
 
 // MARK: FinderIpnl
 @objc public enum FinderIpnl : AEKeyword {
-    case generalInformationPanel = 0x67706e6c /* b'gpnl' */
-    case sharingPanel = 0x73706e6c /* b'spnl' */
-    case memoryPanel = 0x6d706e6c /* b'mpnl' */
-    case previewPanel = 0x76706e6c /* b'vpnl' */
-    case applicationPanel = 0x61706e6c /* b'apnl' */
-    case languagesPanel = 0x706b6c67 /* b'pklg' */
-    case pluginsPanel = 0x706b7067 /* b'pkpg' */
-    case nameExtensionPanel = 0x6e706e6c /* b'npnl' */
-    case commentsPanel = 0x63706e6c /* b'cpnl' */
-    case contentIndexPanel = 0x63696e6c /* b'cinl' */
-    case burningPanel = 0x62706e6c /* b'bpnl' */
-    case moreInfoPanel = 0x6d696e6c /* b'minl' */
-    case simpleHeaderPanel = 0x73686e6c /* b'shnl' */
+    case generalInformationPanel = 0x67706e6c
+    case sharingPanel = 0x73706e6c
+    case memoryPanel = 0x6d706e6c
+    case previewPanel = 0x76706e6c
+    case applicationPanel = 0x61706e6c
+    case languagesPanel = 0x706b6c67
+    case pluginsPanel = 0x706b7067
+    case nameExtensionPanel = 0x6e706e6c
+    case commentsPanel = 0x63706e6c
+    case contentIndexPanel = 0x63696e6c
+    case burningPanel = 0x62706e6c
+    case moreInfoPanel = 0x6d696e6c
+    case simpleHeaderPanel = 0x73686e6c
 }
 
 // MARK: FinderPple
 @objc public enum FinderPple : AEKeyword {
-    case generalPreferencesPanel = 0x70676e70 /* b'pgnp' */
-    case labelPreferencesPanel = 0x706c6270 /* b'plbp' */
-    case sidebarPreferencesPanel = 0x70736964 /* b'psid' */
-    case advancedPreferencesPanel = 0x70616476 /* b'padv' */
+    case generalPreferencesPanel = 0x70676e70
+    case labelPreferencesPanel = 0x706c6270
+    case sidebarPreferencesPanel = 0x70736964
+    case advancedPreferencesPanel = 0x70616476
 }
 
 // MARK: FinderEcvw
 @objc public enum FinderEcvw : AEKeyword {
-    case iconView = 0x69636e76 /* b'icnv' */
-    case listView = 0x6c737677 /* b'lsvw' */
-    case columnView = 0x636c7677 /* b'clvw' */
-    case groupView = 0x666c7677 /* b'flvw' */
-    // case flowView = 0x666c7677 -- duplicate raw value of groupView
+    case iconView = 0x69636e76
+    case listView = 0x6c737677
+    case columnView = 0x636c7677
+    case groupView = 0x666c7677
 }
 
 // MARK: FinderEarr
 @objc public enum FinderEarr : AEKeyword {
-    case notArranged = 0x6e617272 /* b'narr' */
-    case snapToGrid = 0x67726461 /* b'grda' */
-    case arrangedByName = 0x6e616d61 /* b'nama' */
-    case arrangedByModificationDate = 0x6d647461 /* b'mdta' */
-    case arrangedByCreationDate = 0x63647461 /* b'cdta' */
-    case arrangedBySize = 0x73697a61 /* b'siza' */
-    case arrangedByKind = 0x6b696e61 /* b'kina' */
-    case arrangedByLabel = 0x6c616261 /* b'laba' */
+    case notArranged = 0x6e617272
+    case snapToGrid = 0x67726461
+    case arrangedByName = 0x6e616d61
+    case arrangedByModificationDate = 0x6d647461
+    case arrangedByCreationDate = 0x63647461
+    case arrangedBySize = 0x73697a61
+    case arrangedByKind = 0x6b696e61
+    case arrangedByLabel = 0x6c616261
 }
 
 // MARK: FinderEpos
 @objc public enum FinderEpos : AEKeyword {
-    case right = 0x6c726774 /* b'lrgt' */
-    case bottom = 0x6c626f74 /* b'lbot' */
+    case right = 0x6c726774
+    case bottom = 0x6c626f74
 }
 
 // MARK: FinderSodr
 @objc public enum FinderSodr : AEKeyword {
-    case normal = 0x736e726d /* b'snrm' */
-    case reversed = 0x73727673 /* b'srvs' */
+    case normal = 0x736e726d
+    case reversed = 0x73727673
 }
 
 // MARK: FinderElsv
 @objc public enum FinderElsv : AEKeyword {
-    case nameColumn = 0x656c736e /* b'elsn' */
-    case modificationDateColumn = 0x656c736d /* b'elsm' */
-    case creationDateColumn = 0x656c7363 /* b'elsc' */
-    case sizeColumn = 0x656c7373 /* b'elss' */
-    case kindColumn = 0x656c736b /* b'elsk' */
-    case labelColumn = 0x656c736c /* b'elsl' */
-    case versionColumn = 0x656c7376 /* b'elsv' */
-    case commentColumn = 0x656c7343 /* b'elsC' */
+    case nameColumn = 0x656c736e
+    case modificationDateColumn = 0x656c736d
+    case creationDateColumn = 0x656c7363
+    case sizeColumn = 0x656c7373
+    case kindColumn = 0x656c736b
+    case labelColumn = 0x656c736c
+    case versionColumn = 0x656c7376
+    case commentColumn = 0x656c7343
 }
 
 // MARK: FinderLvic
 @objc public enum FinderLvic : AEKeyword {
-    case smallIcon = 0x736d6963 /* b'smic' */
-    case largeIcon = 0x6c676963 /* b'lgic' */
+    case smallIcon = 0x736d6963
+    case largeIcon = 0x6c676963
 }
 
 // MARK: FinderGenericMethods
 @objc public protocol FinderGenericMethods {
-    @objc optional func openUsing(_ using_: SBObject!, withProperties: [AnyHashable : Any]!) // Open the specified object(s)
+    @objc optional func openUsing(_ using: SBObject!, withProperties: [AnyHashable : Any]!) // Open the specified object(s)
     @objc optional func printWithProperties(_ withProperties: [AnyHashable : Any]!) // Print the specified object(s)
     @objc optional func activate() // Activate the specified window (or the Finder)
     @objc optional func close() // Close an object
-    @objc optional func dataSizeAs(_ as: NSNumber!) -> Int // Return the size in bytes of an object
+    @objc optional func dataSizeAs(_ `as`: NSNumber!) -> Int // Return the size in bytes of an object
     @objc optional func delete() -> SBObject // Move an item from its container to the trash
     @objc optional func duplicateTo(_ to: SBObject!, replacing: Bool, routingSuppressed: Bool, exactCopy: Bool) -> SBObject // Duplicate one or more object(s)
     @objc optional func exists() -> Bool // Verify if an object exists
@@ -131,20 +130,6 @@
 
 // MARK: FinderApplication
 @objc public protocol FinderApplication: SBApplicationProtocol {
-    @objc optional func items() -> SBElementArray
-    @objc optional func containers() -> SBElementArray
-    @objc optional func disks() -> SBElementArray
-    @objc optional func folders() -> SBElementArray
-    @objc optional func files() -> SBElementArray
-    @objc optional func aliasFiles() -> SBElementArray
-    @objc optional func applicationFiles() -> SBElementArray
-    @objc optional func documentFiles() -> SBElementArray
-    @objc optional func internetLocationFiles() -> SBElementArray
-    @objc optional func clippings() -> SBElementArray
-    @objc optional func packages() -> SBElementArray
-    @objc optional func windows() -> SBElementArray
-    @objc optional func FinderWindows() -> SBElementArray
-    @objc optional func clippingWindows() -> SBElementArray
     @objc optional var clipboard: SBObject { get } // (NOT AVAILABLE YET) the Finder’s clipboard window
     @objc optional var name: String { get } // the Finder’s name
     @objc optional var visible: Bool { get } // Is the Finder’s layer visible?
@@ -159,6 +144,21 @@
     @objc optional var home: FinderFolder { get } // the home directory
     @objc optional var computerContainer: FinderComputerObject { get } // the computer location (as in Go > Computer)
     @objc optional var FinderPreferences: FinderPreferences { get } // Various preferences that apply to the Finder as a whole
+    @objc optional var desktopPicture: FinderFile { get } // the desktop picture of the main monitor
+    @objc optional func items() -> SBElementArray
+    @objc optional func containers() -> SBElementArray
+    @objc optional func disks() -> SBElementArray
+    @objc optional func folders() -> SBElementArray
+    @objc optional func files() -> SBElementArray
+    @objc optional func aliasFiles() -> SBElementArray
+    @objc optional func applicationFiles() -> SBElementArray
+    @objc optional func documentFiles() -> SBElementArray
+    @objc optional func internetLocationFiles() -> SBElementArray
+    @objc optional func clippings() -> SBElementArray
+    @objc optional func packages() -> SBElementArray
+    @objc optional func windows() -> SBElementArray
+    @objc optional func FinderWindows() -> SBElementArray
+    @objc optional func clippingWindows() -> SBElementArray
     @objc optional func quit() // Quit the Finder
     @objc optional func activate() // Activate the specified window (or the Finder)
     @objc optional func copy() // (NOT AVAILABLE YET) Copy the selected items to the clipboard (the Finder must be the front application)
@@ -167,11 +167,6 @@
     @objc optional func restart() // Restart the computer
     @objc optional func shutDown() // Shut Down the computer
     @objc optional func sleep() // Put the computer to sleep
-    @objc optional func setVisible(_ visible: Bool) // Is the Finder’s layer visible?
-    @objc optional func setFrontmost(_ frontmost: Bool) // Is the Finder the frontmost process?
-    @objc optional func setSelection(_ selection: SBObject!) // the selection in the frontmost Finder window
-    @objc optional var desktopPicture: FinderFile { get } // the desktop picture of the main monitor
-    @objc optional func setDesktopPicture(_ desktopPicture: FinderFile!) // the desktop picture of the main monitor
 }
 extension SBApplication: FinderApplication {}
 
@@ -205,28 +200,16 @@ extension SBApplication: FinderApplication {}
     @objc optional var everyonesPrivileges: FinderPriv { get }
     @objc optional var informationWindow: SBObject { get } // the information window for the item
     @objc optional var properties: [AnyHashable : Any] { get } // every property of an item
-    @objc optional func setName(_ name: String!) // the name of the item
-    @objc optional func setNameExtension(_ nameExtension: String!) // the name extension of the item (such as “txt”)
-    @objc optional func setExtensionHidden(_ extensionHidden: Bool) // Is the item's extension hidden from the user?
-    @objc optional func setPosition(_ position: NSPoint) // the position of the item within its parent window (can only be set for an item in a window viewed as icons or buttons)
-    @objc optional func setDesktopPosition(_ desktopPosition: NSPoint) // the position of the item on the desktop
-    @objc optional func setBounds(_ bounds: NSRect) // the bounding rectangle of the item (can only be set for an item in a window viewed as icons or buttons)
-    @objc optional func setLabelIndex(_ labelIndex: Int) // the label of the item
-    @objc optional func setLocked(_ locked: Bool) // Is the file locked?
-    @objc optional func setComment(_ comment: String!) // the comment of the item, displayed in the “Get Info” window
-    @objc optional func setModificationDate(_ modificationDate: Date!) // the date on which the item was last modified
-    @objc optional func setIcon(_ icon: FinderIconFamily!) // the icon bitmap of the item
-    @objc optional func setOwner(_ owner: String!) // the user that owns the container
-    @objc optional func setGroup(_ group: String!) // the user or group that has special access to the container
-    @objc optional func setOwnerPrivileges(_ ownerPrivileges: FinderPriv)
-    @objc optional func setGroupPrivileges(_ groupPrivileges: FinderPriv)
-    @objc optional func setEveryonesPrivileges(_ everyonesPrivileges: FinderPriv)
-    @objc optional func setProperties(_ properties: [AnyHashable : Any]!) // every property of an item
 }
 extension SBObject: FinderItem {}
 
 // MARK: FinderContainer
 @objc public protocol FinderContainer: FinderItem {
+    @objc optional var entireContents: SBObject { get } // the entire contents of the container, including the contents of its children
+    @objc optional var expandable: Bool { get } // (NOT AVAILABLE YET) Is the container capable of being expanded as an outline?
+    @objc optional var expanded: Bool { get } // (NOT AVAILABLE YET) Is the container opened as an outline? (can only be set for containers viewed as lists)
+    @objc optional var completelyExpanded: Bool { get } // (NOT AVAILABLE YET) Are the container and all of its children opened as outlines? (can only be set for containers viewed as lists)
+    @objc optional var containerWindow: SBObject { get } // the container window for this folder
     @objc optional func items() -> SBElementArray
     @objc optional func containers() -> SBElementArray
     @objc optional func folders() -> SBElementArray
@@ -237,13 +220,6 @@ extension SBObject: FinderItem {}
     @objc optional func internetLocationFiles() -> SBElementArray
     @objc optional func clippings() -> SBElementArray
     @objc optional func packages() -> SBElementArray
-    @objc optional var entireContents: SBObject { get } // the entire contents of the container, including the contents of its children
-    @objc optional var expandable: Bool { get } // (NOT AVAILABLE YET) Is the container capable of being expanded as an outline?
-    @objc optional var expanded: Bool { get } // (NOT AVAILABLE YET) Is the container opened as an outline? (can only be set for containers viewed as lists)
-    @objc optional var completelyExpanded: Bool { get } // (NOT AVAILABLE YET) Are the container and all of its children opened as outlines? (can only be set for containers viewed as lists)
-    @objc optional var containerWindow: SBObject { get } // the container window for this folder
-    @objc optional func setExpanded(_ expanded: Bool) // (NOT AVAILABLE YET) Is the container opened as an outline? (can only be set for containers viewed as lists)
-    @objc optional func setCompletelyExpanded(_ completelyExpanded: Bool) // (NOT AVAILABLE YET) Are the container and all of its children opened as outlines? (can only be set for containers viewed as lists)
 }
 extension SBObject: FinderContainer {}
 
@@ -254,6 +230,14 @@ extension SBObject: FinderComputerObject {}
 
 // MARK: FinderDisk
 @objc public protocol FinderDisk: FinderContainer {
+    @objc optional var capacity: Int64 { get } // the total number of bytes (free or used) on the disk
+    @objc optional var freeSpace: Int64 { get } // the number of free bytes left on the disk
+    @objc optional var ejectable: Bool { get } // Can the media be ejected (floppies, CDs, and so on)?
+    @objc optional var localVolume: Bool { get } // Is the media a local volume (as opposed to a file server)?
+    @objc optional var startup: Bool { get } // Is this disk the boot disk?
+    @objc optional var format: FinderEdfm { get } // the filesystem format of this disk
+    @objc optional var journalingEnabled: Bool { get } // Does this disk do file system journaling?
+    @objc optional var ignorePrivileges: Bool { get } // Ignore permissions on this disk?
     @objc optional func items() -> SBElementArray
     @objc optional func containers() -> SBElementArray
     @objc optional func folders() -> SBElementArray
@@ -265,15 +249,6 @@ extension SBObject: FinderComputerObject {}
     @objc optional func clippings() -> SBElementArray
     @objc optional func packages() -> SBElementArray
     @objc optional func id() -> Int // the unique id for this disk (unchanged while disk remains connected and Finder remains running)
-    @objc optional var capacity: Int64 { get } // the total number of bytes (free or used) on the disk
-    @objc optional var freeSpace: Int64 { get } // the number of free bytes left on the disk
-    @objc optional var ejectable: Bool { get } // Can the media be ejected (floppies, CDs, and so on)?
-    @objc optional var localVolume: Bool { get } // Is the media a local volume (as opposed to a file server)?
-    @objc optional var startup: Bool { get } // Is this disk the boot disk?
-    @objc optional var format: FinderEdfm { get } // the filesystem format of this disk
-    @objc optional var journalingEnabled: Bool { get } // Does this disk do file system journaling?
-    @objc optional var ignorePrivileges: Bool { get } // Ignore permissions on this disk?
-    @objc optional func setIgnorePrivileges(_ ignorePrivileges: Bool) // Ignore permissions on this disk?
 }
 extension SBObject: FinderDisk {}
 
@@ -310,6 +285,7 @@ extension SBObject: FinderDesktopObject {}
 
 // MARK: FinderTrashObject
 @objc public protocol FinderTrashObject: FinderContainer {
+    @objc optional var warnsBeforeEmptying: Bool { get } // Display a dialog when emptying the trash?
     @objc optional func items() -> SBElementArray
     @objc optional func containers() -> SBElementArray
     @objc optional func folders() -> SBElementArray
@@ -320,8 +296,6 @@ extension SBObject: FinderDesktopObject {}
     @objc optional func internetLocationFiles() -> SBElementArray
     @objc optional func clippings() -> SBElementArray
     @objc optional func packages() -> SBElementArray
-    @objc optional var warnsBeforeEmptying: Bool { get } // Display a dialog when emptying the trash?
-    @objc optional func setWarnsBeforeEmptying(_ warnsBeforeEmptying: Bool) // Display a dialog when emptying the trash?
 }
 extension SBObject: FinderTrashObject {}
 
@@ -332,31 +306,24 @@ extension SBObject: FinderTrashObject {}
     @objc optional var stationery: Bool { get } // Is the file a stationery pad?
     @objc optional var productVersion: String { get } // the version of the product (visible at the top of the “Get Info” window)
     @objc optional var version: String { get } // the version of the file (visible at the bottom of the “Get Info” window)
-    @objc optional func setFileType(_ fileType: NSNumber!) // the OSType identifying the type of data contained in the item
-    @objc optional func setCreatorType(_ creatorType: NSNumber!) // the OSType identifying the application that created the item
-    @objc optional func setStationery(_ stationery: Bool) // Is the file a stationery pad?
 }
 extension SBObject: FinderFile {}
 
 // MARK: FinderAliasFile
 @objc public protocol FinderAliasFile: FinderFile {
     @objc optional var originalItem: SBObject { get } // the original item pointed to by the alias
-    @objc optional func setOriginalItem(_ originalItem: SBObject!) // the original item pointed to by the alias
 }
 extension SBObject: FinderAliasFile {}
 
 // MARK: FinderApplicationFile
 @objc public protocol FinderApplicationFile: FinderFile {
-    @objc optional func id() -> String // the bundle identifier or creator type of the application
     @objc optional var suggestedSize: Int { get } // (AVAILABLE IN 10.1 TO 10.4) the memory size with which the developer recommends the application be launched
     @objc optional var minimumSize: Int { get } // (AVAILABLE IN 10.1 TO 10.4) the smallest memory size with which the application can be launched
     @objc optional var preferredSize: Int { get } // (AVAILABLE IN 10.1 TO 10.4) the memory size with which the application will be launched
     @objc optional var acceptsHighLevelEvents: Bool { get } // Is the application high-level event aware? (OBSOLETE: always returns true)
     @objc optional var hasScriptingTerminology: Bool { get } // Does the process have a scripting terminology, i.e., can it be scripted?
     @objc optional var opensInClassic: Bool { get } // (AVAILABLE IN 10.1 TO 10.4) Should the application launch in the Classic environment?
-    @objc optional func setMinimumSize(_ minimumSize: Int) // (AVAILABLE IN 10.1 TO 10.4) the smallest memory size with which the application can be launched
-    @objc optional func setPreferredSize(_ preferredSize: Int) // (AVAILABLE IN 10.1 TO 10.4) the memory size with which the application will be launched
-    @objc optional func setOpensInClassic(_ opensInClassic: Bool) // (AVAILABLE IN 10.1 TO 10.4) Should the application launch in the Classic environment?
+    @objc optional func id() -> String // the bundle identifier or creator type of the application
 }
 extension SBObject: FinderApplicationFile {}
 
@@ -384,7 +351,6 @@ extension SBObject: FinderPackage {}
 
 // MARK: FinderWindow
 @objc public protocol FinderWindow: SBObjectProtocol, FinderGenericMethods {
-    @objc optional func id() -> Int // the unique id for this window
     @objc optional var position: NSPoint { get } // the upper left position of the window
     @objc optional var bounds: NSRect { get } // the boundary rectangle for the window
     @objc optional var titled: Bool { get } // Does the window have a title bar?
@@ -399,12 +365,7 @@ extension SBObject: FinderPackage {}
     @objc optional var visible: Bool { get } // Is the window visible (always true for open Finder windows)?
     @objc optional var collapsed: Bool { get } // Is the window collapsed
     @objc optional var properties: [AnyHashable : Any] { get } // every property of a window
-    @objc optional func setPosition(_ position: NSPoint) // the upper left position of the window
-    @objc optional func setBounds(_ bounds: NSRect) // the boundary rectangle for the window
-    @objc optional func setIndex(_ index: Int) // the number of the window in the front-to-back layer ordering
-    @objc optional func setZoomed(_ zoomed: Bool) // Is the window zoomed?
-    @objc optional func setCollapsed(_ collapsed: Bool) // Is the window collapsed
-    @objc optional func setProperties(_ properties: [AnyHashable : Any]!) // every property of a window
+    @objc optional func id() -> Int // the unique id for this window
 }
 extension SBObject: FinderWindow {}
 
@@ -419,12 +380,6 @@ extension SBObject: FinderWindow {}
     @objc optional var statusbarVisible: Bool { get } // Is the window's status bar visible?
     @objc optional var pathbarVisible: Bool { get } // Is the window's path bar visible?
     @objc optional var sidebarWidth: Int { get } // the width of the sidebar for the container window
-    @objc optional func setTarget(_ target: SBObject!) // the container at which this file viewer is targeted
-    @objc optional func setCurrentView(_ currentView: FinderEcvw) // the current view for the container window
-    @objc optional func setToolbarVisible(_ toolbarVisible: Bool) // Is the window's toolbar visible?
-    @objc optional func setStatusbarVisible(_ statusbarVisible: Bool) // Is the window's status bar visible?
-    @objc optional func setPathbarVisible(_ pathbarVisible: Bool) // Is the window's path bar visible?
-    @objc optional func setSidebarWidth(_ sidebarWidth: Int) // the width of the sidebar for the container window
 }
 extension SBObject: FinderFinderWindow {}
 
@@ -437,14 +392,12 @@ extension SBObject: FinderDesktopWindow {}
 @objc public protocol FinderInformationWindow: FinderWindow {
     @objc optional var item: SBObject { get } // the item from which this window was opened
     @objc optional var currentPanel: FinderIpnl { get } // the current panel in the information window
-    @objc optional func setCurrentPanel(_ currentPanel: FinderIpnl) // the current panel in the information window
 }
 extension SBObject: FinderInformationWindow {}
 
 // MARK: FinderPreferencesWindow
 @objc public protocol FinderPreferencesWindow: FinderWindow {
     @objc optional var currentPanel: FinderPple { get } // The current panel in the Finder preferences window
-    @objc optional func setCurrentPanel(_ currentPanel: FinderPple) // The current panel in the Finder preferences window
 }
 extension SBObject: FinderPreferencesWindow {}
 
@@ -466,8 +419,6 @@ extension SBObject: FinderClippingWindow {}
     @objc optional var hasScriptingTerminology: Bool { get } // Does the process have a scripting terminology, i.e., can it be scripted?
     @objc optional var totalPartitionSize: Int { get } // the size of the partition with which the process was launched
     @objc optional var partitionSpaceUsed: Int { get } // the number of bytes currently used in the process' partition
-    @objc optional func setVisible(_ visible: Bool) // Is the process' layer visible?
-    @objc optional func setFrontmost(_ frontmost: Bool) // Is the process the frontmost process?
 }
 extension SBObject: FinderProcess {}
 
@@ -500,17 +451,6 @@ extension SBObject: FinderDeskAccessoryProcess {}
     @objc optional var foldersOpenInNewTabs: Bool { get } // Folders open into new tabs?
     @objc optional var newWindowsOpenInColumnView: Bool { get } // Open new windows in column view?
     @objc optional var allNameExtensionsShowing: Bool { get } // Show name extensions, even for items whose “extension hidden” is true?
-    @objc optional func setFoldersSpringOpen(_ foldersSpringOpen: Bool) // Spring open folders after the specified delay?
-    @objc optional func setDelayBeforeSpringing(_ delayBeforeSpringing: Double) // the delay before springing open a container in seconds (from 0.167 to 1.169)
-    @objc optional func setDesktopShowsHardDisks(_ desktopShowsHardDisks: Bool) // Hard disks appear on the desktop?
-    @objc optional func setDesktopShowsExternalHardDisks(_ desktopShowsExternalHardDisks: Bool) // External hard disks appear on the desktop?
-    @objc optional func setDesktopShowsRemovableMedia(_ desktopShowsRemovableMedia: Bool) // CDs, DVDs, and iPods appear on the desktop?
-    @objc optional func setDesktopShowsConnectedServers(_ desktopShowsConnectedServers: Bool) // Connected servers appear on the desktop?
-    @objc optional func setNewWindowTarget(_ newWindowTarget: SBObject!) // target location for a newly-opened Finder window
-    @objc optional func setFoldersOpenInNewWindows(_ foldersOpenInNewWindows: Bool) // Folders open into new windows?
-    @objc optional func setFoldersOpenInNewTabs(_ foldersOpenInNewTabs: Bool) // Folders open into new tabs?
-    @objc optional func setNewWindowsOpenInColumnView(_ newWindowsOpenInColumnView: Bool) // Open new windows in column view?
-    @objc optional func setAllNameExtensionsShowing(_ allNameExtensionsShowing: Bool) // Show name extensions, even for items whose “extension hidden” is true?
 }
 extension SBObject: FinderPreferences {}
 
@@ -519,9 +459,6 @@ extension SBObject: FinderPreferences {}
     @objc optional var name: String { get } // the name associated with the label
     @objc optional var index: Int { get } // the index in the front-to-back ordering within its container
     @objc optional var color: NSColor { get } // the color associated with the label
-    @objc optional func setName(_ name: String!) // the name associated with the label
-    @objc optional func setIndex(_ index: Int) // the index in the front-to-back ordering within its container
-    @objc optional func setColor(_ color: NSColor!) // the color associated with the label
 }
 extension SBObject: FinderLabel {}
 
@@ -540,14 +477,6 @@ extension SBObject: FinderIconFamily {}
     @objc optional var labelPosition: FinderEpos { get } // the location of the label in reference to the icon
     @objc optional var backgroundPicture: FinderFile { get } // the background picture of the icon view
     @objc optional var backgroundColor: NSColor { get } // the background color of the icon view
-    @objc optional func setArrangement(_ arrangement: FinderEarr) // the property by which to keep icons arranged
-    @objc optional func setIconSize(_ iconSize: Int) // the size of icons displayed in the icon view
-    @objc optional func setShowsItemInfo(_ showsItemInfo: Bool) // additional info about an item displayed in icon view
-    @objc optional func setShowsIconPreview(_ showsIconPreview: Bool) // displays a preview of the item in icon view
-    @objc optional func setTextSize(_ textSize: Int) // the size of the text displayed in the icon view
-    @objc optional func setLabelPosition(_ labelPosition: FinderEpos) // the location of the label in reference to the icon
-    @objc optional func setBackgroundPicture(_ backgroundPicture: FinderFile!) // the background picture of the icon view
-    @objc optional func setBackgroundColor(_ backgroundColor: NSColor!) // the background color of the icon view
 }
 extension SBObject: FinderIconViewOptions {}
 
@@ -558,29 +487,18 @@ extension SBObject: FinderIconViewOptions {}
     @objc optional var showsIconPreview: Bool { get } // displays a preview of the item in column view
     @objc optional var showsPreviewColumn: Bool { get } // displays the preview column in column view
     @objc optional var disclosesPreviewPane: Bool { get } // discloses the preview pane of the preview column in column view
-    @objc optional func setTextSize(_ textSize: Int) // the size of the text displayed in the column view
-    @objc optional func setShowsIcon(_ showsIcon: Bool) // displays an icon next to the label in column view
-    @objc optional func setShowsIconPreview(_ showsIconPreview: Bool) // displays a preview of the item in column view
-    @objc optional func setShowsPreviewColumn(_ showsPreviewColumn: Bool) // displays the preview column in column view
-    @objc optional func setDisclosesPreviewPane(_ disclosesPreviewPane: Bool) // discloses the preview pane of the preview column in column view
 }
 extension SBObject: FinderColumnViewOptions {}
 
 // MARK: FinderListViewOptions
 @objc public protocol FinderListViewOptions: SBObjectProtocol, FinderGenericMethods {
-    @objc optional func columns() -> SBElementArray
     @objc optional var calculatesFolderSizes: Bool { get } // Are folder sizes calculated and displayed in the window?
     @objc optional var showsIconPreview: Bool { get } // displays a preview of the item in list view
     @objc optional var iconSize: FinderLvic { get } // the size of icons displayed in the list view
     @objc optional var textSize: Int { get } // the size of the text displayed in the list view
     @objc optional var sortColumn: FinderColumn { get } // the column that the list view is sorted on
     @objc optional var usesRelativeDates: Bool { get } // Are relative dates (e.g., today, yesterday) shown in the list view?
-    @objc optional func setCalculatesFolderSizes(_ calculatesFolderSizes: Bool) // Are folder sizes calculated and displayed in the window?
-    @objc optional func setShowsIconPreview(_ showsIconPreview: Bool) // displays a preview of the item in list view
-    @objc optional func setIconSize(_ iconSize: FinderLvic) // the size of icons displayed in the list view
-    @objc optional func setTextSize(_ textSize: Int) // the size of the text displayed in the list view
-    @objc optional func setSortColumn(_ sortColumn: FinderColumn!) // the column that the list view is sorted on
-    @objc optional func setUsesRelativeDates(_ usesRelativeDates: Bool) // Are relative dates (e.g., today, yesterday) shown in the list view?
+    @objc optional func columns() -> SBElementArray
 }
 extension SBObject: FinderListViewOptions {}
 
@@ -593,10 +511,6 @@ extension SBObject: FinderListViewOptions {}
     @objc optional var minimumWidth: Int { get } // the minimum allowed width of this column
     @objc optional var maximumWidth: Int { get } // the maximum allowed width of this column
     @objc optional var visible: Bool { get } // is this column visible
-    @objc optional func setIndex(_ index: Int) // the index in the front-to-back ordering within its container
-    @objc optional func setSortDirection(_ sortDirection: FinderSodr) // The direction in which the window is sorted
-    @objc optional func setWidth(_ width: Int) // the width of this column
-    @objc optional func setVisible(_ visible: Bool) // is this column visible
 }
 extension SBObject: FinderColumn {}
 

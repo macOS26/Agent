@@ -1,75 +1,76 @@
-// MARK: ScriptEditorSavo
-@objc public enum ScriptEditorSavo : AEKeyword {
+// MARK: SystemInformationSavo
+@objc public enum SystemInformationSavo : AEKeyword {
     case ask = 0x61736b20 /* Ask the user whether or not to save the file. */
     case no = 0x6e6f2020 /* Do not save the file. */
     case yes = 0x79657320 /* Save the file. */
 }
 
-// MARK: ScriptEditorEnum
-@objc public enum ScriptEditorEnum : AEKeyword {
+// MARK: SystemInformationEdtl
+@objc public enum SystemInformationEdtl : AEKeyword {
+    case basic = 0x62617369 /* A version which includes the basic hardware, software and network information. Moderate in size. */
+    case full = 0x66756c6c /* A profile which includes all available information - can be quite large */
+    case mini = 0x6d696e69 /* A compact profile which does not include any personal identifying information */
+}
+
+// MARK: SystemInformationEnum
+@objc public enum SystemInformationEnum : AEKeyword {
     case standard = 0x6c777374 /* Standard PostScript error handling */
     case detailed = 0x6c776474 /* print a detailed report of PostScript errors */
 }
 
-// MARK: ScriptEditorGenericMethods
-@objc public protocol ScriptEditorGenericMethods {
-    @objc optional func closeSaving(_ saving: ScriptEditorSavo, savingIn: URL!) // Close an object.
+// MARK: SystemInformationGenericMethods
+@objc public protocol SystemInformationGenericMethods {
+    @objc optional func closeSaving(_ saving: SystemInformationSavo, savingIn: URL!) // Close an object.
     @objc optional func delete() // Delete an object.
     @objc optional func duplicateTo(_ to: SBObject!, withProperties: [AnyHashable : Any]!) // Copy object(s) and put the copies at a new location.
     @objc optional func exists() -> Bool // Verify if an object exists.
     @objc optional func moveTo(_ to: SBObject!) // Move object(s) to a new location.
     @objc optional func saveAs(_ `as`: String!, `in`: URL!) // Save an object.
-    @objc optional func checkSyntax() // Check the syntax of a document.
-    @objc optional func compile() -> Bool // Compile the script of a document.
+    @objc optional func send() // Send to AppleCare
 }
 
-// MARK: ScriptEditorItem
-@objc public protocol ScriptEditorItem: SBObjectProtocol, ScriptEditorGenericMethods {
+// MARK: SystemInformationItem
+@objc public protocol SystemInformationItem: SBObjectProtocol, SystemInformationGenericMethods {
     @objc optional var properties: [AnyHashable : Any] { get } // All of the object's properties.
 }
-extension SBObject: ScriptEditorItem {}
+extension SBObject: SystemInformationItem {}
 
-// MARK: ScriptEditorApplication
-@objc public protocol ScriptEditorApplication: SBApplicationProtocol {
+// MARK: SystemInformationApplication
+@objc public protocol SystemInformationApplication: SBApplicationProtocol {
     @objc optional var frontmost: Bool { get } // Is this the frontmost (active) application?
     @objc optional var name: String { get } // The name of the application.
     @objc optional var version: String { get } // The version of the application.
-    @objc optional var selection: ScriptEditorSelectionObject { get } // The current selection.
+    @objc optional var systemProfile: String { get } // Plain text representation of a system profile for the current machine.
     @objc optional func documents() -> SBElementArray
     @objc optional func windows() -> SBElementArray
-    @objc optional func `open`(_ x: URL!) -> ScriptEditorDocument // Open an object.
-    @objc optional func print(_ x: URL!, printDialog: Bool, withProperties: ScriptEditorPrintSettings!) // Print an object.
-    @objc optional func quitSaving(_ saving: ScriptEditorSavo) // Quit an application.
-    @objc optional func objectClasss() -> SBElementArray
-    @objc optional func languages() -> SBElementArray
+    @objc optional func `open`(_ x: URL!) -> SystemInformationDocument // Open an object.
+    @objc optional func print(_ x: URL!, printDialog: Bool, withProperties: SystemInformationPrintSettings!) // Print an object.
+    @objc optional func quitSaving(_ saving: SystemInformationSavo) // Quit an application.
 }
-extension SBApplication: ScriptEditorApplication {}
+extension SBApplication: SystemInformationApplication {}
 
-// MARK: ScriptEditorColor
-@objc public protocol ScriptEditorColor: ScriptEditorItem {
+// MARK: SystemInformationColor
+@objc public protocol SystemInformationColor: SystemInformationItem {
 }
-extension SBObject: ScriptEditorColor {}
+extension SBObject: SystemInformationColor {}
 
-// MARK: ScriptEditorDocument
-@objc public protocol ScriptEditorDocument: ScriptEditorItem {
+// MARK: SystemInformationDocument
+@objc public protocol SystemInformationDocument: SystemInformationItem {
     @objc optional var modified: Bool { get } // Has the document been modified since the last save?
     @objc optional var name: String { get } // The document's name.
     @objc optional var path: String { get } // The document's path.
-    @objc optional var contents: ScriptEditorText { get } // The contents of the document.
-    @objc optional var objectDescription: ScriptEditorText { get } // The description of the document.
-    @objc optional var eventLog: ScriptEditorText { get } // The event log of the document.
-    @objc optional var language: ScriptEditorLanguage { get } // The scripting language.
-    @objc optional var selection: ScriptEditorSelectionObject { get } // The current selection.
-    @objc optional var text: ScriptEditorText { get } // The text of the document.
-    @objc optional func windows() -> SBElementArray
+    @objc optional var detailLevel: SystemInformationEdtl { get } // The desired level of detail for the system profile document.
+    @objc optional var plainText: String { get } // Plain text representation of the system profile document.
+    @objc optional var profile: String { get } // Plain text representation of the system profile document.
+    @objc optional var XMLText: String { get } // XML representation of the system profile document.
 }
-extension SBObject: ScriptEditorDocument {}
+extension SBObject: SystemInformationDocument {}
 
-// MARK: ScriptEditorWindow
-@objc public protocol ScriptEditorWindow: ScriptEditorItem {
+// MARK: SystemInformationWindow
+@objc public protocol SystemInformationWindow: SystemInformationItem {
     @objc optional var bounds: NSRect { get } // The bounding rectangle of the window.
     @objc optional var closeable: Bool { get } // Whether the window has a close box.
-    @objc optional var document: ScriptEditorDocument { get } // The document whose contents are being displayed in the window.
+    @objc optional var document: SystemInformationDocument { get } // The document whose contents are being displayed in the window.
     @objc optional var floating: Bool { get } // Whether the window floats.
     @objc optional var index: Int { get } // The index of the window, ordered front to back.
     @objc optional var miniaturizable: Bool { get } // Whether the window can be miniaturized.
@@ -83,10 +84,10 @@ extension SBObject: ScriptEditorDocument {}
     @objc optional var zoomed: Bool { get } // Whether the window is currently zoomed.
     @objc optional func id() -> Int // The unique identifier of the window.
 }
-extension SBObject: ScriptEditorWindow {}
+extension SBObject: SystemInformationWindow {}
 
-// MARK: ScriptEditorAttributeRun
-@objc public protocol ScriptEditorAttributeRun: ScriptEditorItem {
+// MARK: SystemInformationAttributeRun
+@objc public protocol SystemInformationAttributeRun: SystemInformationItem {
     @objc optional var color: NSColor { get } // The color of the first character.
     @objc optional var font: String { get } // The name of the font of the first character.
     @objc optional var size: Int { get } // The size in points of the first character.
@@ -96,10 +97,10 @@ extension SBObject: ScriptEditorWindow {}
     @objc optional func paragraphs() -> SBElementArray
     @objc optional func words() -> SBElementArray
 }
-extension SBObject: ScriptEditorAttributeRun {}
+extension SBObject: SystemInformationAttributeRun {}
 
-// MARK: ScriptEditorCharacter
-@objc public protocol ScriptEditorCharacter: ScriptEditorItem {
+// MARK: SystemInformationCharacter
+@objc public protocol SystemInformationCharacter: SystemInformationItem {
     @objc optional var color: NSColor { get } // The color of the first character.
     @objc optional var font: String { get } // The name of the font of the first character.
     @objc optional var size: Int { get } // The size in points of the first character.
@@ -109,10 +110,10 @@ extension SBObject: ScriptEditorAttributeRun {}
     @objc optional func paragraphs() -> SBElementArray
     @objc optional func words() -> SBElementArray
 }
-extension SBObject: ScriptEditorCharacter {}
+extension SBObject: SystemInformationCharacter {}
 
-// MARK: ScriptEditorParagraph
-@objc public protocol ScriptEditorParagraph: ScriptEditorItem {
+// MARK: SystemInformationParagraph
+@objc public protocol SystemInformationParagraph: SystemInformationItem {
     @objc optional var color: NSColor { get } // The color of the first character.
     @objc optional var font: String { get } // The name of the font of the first character.
     @objc optional var size: Int { get } // The size in points of the first character.
@@ -122,10 +123,10 @@ extension SBObject: ScriptEditorCharacter {}
     @objc optional func paragraphs() -> SBElementArray
     @objc optional func words() -> SBElementArray
 }
-extension SBObject: ScriptEditorParagraph {}
+extension SBObject: SystemInformationParagraph {}
 
-// MARK: ScriptEditorText
-@objc public protocol ScriptEditorText: ScriptEditorItem {
+// MARK: SystemInformationText
+@objc public protocol SystemInformationText: SystemInformationItem {
     @objc optional var color: NSColor { get } // The color of the first character.
     @objc optional var font: String { get } // The name of the font of the first character.
     @objc optional var size: Int { get } // The size in points of the first character.
@@ -134,19 +135,17 @@ extension SBObject: ScriptEditorParagraph {}
     @objc optional func characters() -> SBElementArray
     @objc optional func paragraphs() -> SBElementArray
     @objc optional func words() -> SBElementArray
-    @objc optional func insertionPoints() -> SBElementArray
-    @objc optional func text() -> SBElementArray
 }
-extension SBObject: ScriptEditorText {}
+extension SBObject: SystemInformationText {}
 
-// MARK: ScriptEditorAttachment
-@objc public protocol ScriptEditorAttachment: ScriptEditorText {
+// MARK: SystemInformationAttachment
+@objc public protocol SystemInformationAttachment: SystemInformationText {
     @objc optional var fileName: String { get } // The path to the file for the attachment
 }
-extension SBObject: ScriptEditorAttachment {}
+extension SBObject: SystemInformationAttachment {}
 
-// MARK: ScriptEditorWord
-@objc public protocol ScriptEditorWord: ScriptEditorItem {
+// MARK: SystemInformationWord
+@objc public protocol SystemInformationWord: SystemInformationItem {
     @objc optional var color: NSColor { get } // The color of the first character.
     @objc optional var font: String { get } // The name of the font of the first character.
     @objc optional var size: Int { get } // The size in points of the first character.
@@ -156,38 +155,10 @@ extension SBObject: ScriptEditorAttachment {}
     @objc optional func paragraphs() -> SBElementArray
     @objc optional func words() -> SBElementArray
 }
-extension SBObject: ScriptEditorWord {}
+extension SBObject: SystemInformationWord {}
 
-// MARK: ScriptEditorObjectClass
-@objc public protocol ScriptEditorObjectClass: ScriptEditorItem {
-}
-extension SBObject: ScriptEditorObjectClass {}
-
-// MARK: ScriptEditorInsertionPoint
-@objc public protocol ScriptEditorInsertionPoint: ScriptEditorItem {
-    @objc optional var contents: ScriptEditorItem { get } // The contents of the insertion point.
-}
-extension SBObject: ScriptEditorInsertionPoint {}
-
-// MARK: ScriptEditorLanguage
-@objc public protocol ScriptEditorLanguage: ScriptEditorItem {
-    @objc optional var objectDescription: String { get } // The description
-    @objc optional var name: String { get } // The name of the language.
-    @objc optional var supportsCompiling: Bool { get } // Is the language compilable?
-    @objc optional var supportsRecording: Bool { get } // Is the language recordable?
-    @objc optional func id() -> String // The unique id of the language.
-}
-extension SBObject: ScriptEditorLanguage {}
-
-// MARK: ScriptEditorSelectionObject
-@objc public protocol ScriptEditorSelectionObject: ScriptEditorItem {
-    @objc optional var characterRange: NSPoint { get } // The range of characters in the selection.
-    @objc optional var contents: ScriptEditorItem { get } // The contents of the selection.
-}
-extension SBObject: ScriptEditorSelectionObject {}
-
-// MARK: ScriptEditorPrintSettings
-@objc public protocol ScriptEditorPrintSettings: SBObjectProtocol, ScriptEditorGenericMethods {
+// MARK: SystemInformationPrintSettings
+@objc public protocol SystemInformationPrintSettings: SBObjectProtocol, SystemInformationGenericMethods {
     @objc optional var copies: Int { get } // the number of copies of a document to be printed
     @objc optional var collating: Bool { get } // Should printed copies be collated?
     @objc optional var startingPage: Int { get } // the first page of the document to be printed
@@ -195,9 +166,9 @@ extension SBObject: ScriptEditorSelectionObject {}
     @objc optional var pagesAcross: Int { get } // number of logical pages laid across a physical page
     @objc optional var pagesDown: Int { get } // number of logical pages laid out down a physical page
     @objc optional var requestedPrintTime: Date { get } // the time at which the desktop printer should print the document
-    @objc optional var errorHandling: ScriptEditorEnum { get } // how errors are handled
+    @objc optional var errorHandling: SystemInformationEnum { get } // how errors are handled
     @objc optional var faxNumber: String { get } // for fax number
     @objc optional var targetPrinter: String { get } // for target printer
 }
-extension SBObject: ScriptEditorPrintSettings {}
+extension SBObject: SystemInformationPrintSettings {}
 

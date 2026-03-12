@@ -1,21 +1,21 @@
 // MARK: AutomatorSavo
 @objc public enum AutomatorSavo : AEKeyword {
-    case ask = 0x61736b20 /* b'ask ' */
-    case no = 0x6e6f2020 /* b'no  ' */
-    case yes = 0x79657320 /* b'yes ' */
+    case ask = 0x61736b20 /* Ask the user whether or not to save the file. */
+    case no = 0x6e6f2020 /* Do not save the file. */
+    case yes = 0x79657320 /* Save the file. */
 }
 
 // MARK: AutomatorWlev
 @objc public enum AutomatorWlev : AEKeyword {
-    case irreversible = 0x69727276 /* b'irrv' */
-    case none = 0x6e6f6e65 /* b'none' */
-    case reversible = 0x7276626c /* b'rvbl' */
+    case irreversible = 0x69727276 /* irreversible */
+    case none = 0x6e6f6e65 /* none */
+    case reversible = 0x7276626c /* reversible */
 }
 
 // MARK: AutomatorEnum
 @objc public enum AutomatorEnum : AEKeyword {
-    case standard = 0x6c777374 /* b'lwst' */
-    case detailed = 0x6c776474 /* b'lwdt' */
+    case standard = 0x6c777374 /* Standard PostScript error handling */
+    case detailed = 0x6c776474 /* print a detailed report of PostScript errors */
 }
 
 // MARK: AutomatorGenericMethods
@@ -25,23 +25,22 @@
     @objc optional func duplicateTo(_ to: SBObject!, withProperties: [AnyHashable : Any]!) // Copy object(s) and put the copies at a new location.
     @objc optional func exists() -> Bool // Verify if an object exists.
     @objc optional func moveTo(_ to: SBObject!) // Move object(s) to a new location.
-    @objc optional func saveAs(_ as: String!, in in_: URL!) // Save an object.
+    @objc optional func saveAs(_ `as`: String!, `in`: URL!) // Save an object.
 }
 
 // MARK: AutomatorItem
 @objc public protocol AutomatorItem: SBObjectProtocol, AutomatorGenericMethods {
     @objc optional var properties: [AnyHashable : Any] { get } // All of the object's properties.
-    @objc optional func setProperties(_ properties: [AnyHashable : Any]!) // All of the object's properties.
 }
 extension SBObject: AutomatorItem {}
 
 // MARK: AutomatorApplication
 @objc public protocol AutomatorApplication: SBApplicationProtocol {
-    @objc optional func documents() -> SBElementArray
-    @objc optional func windows() -> SBElementArray
     @objc optional var frontmost: Bool { get } // Is this the frontmost (active) application?
     @objc optional var name: String { get } // The name of the application.
     @objc optional var version: String { get } // The version of the application.
+    @objc optional func documents() -> SBElementArray
+    @objc optional func windows() -> SBElementArray
     @objc optional func `open`(_ x: URL!) -> AutomatorDocument // Open an object.
     @objc optional func print(_ x: URL!, printDialog: Bool, withProperties: AutomatorPrintSettings!) // Print an object.
     @objc optional func quitSaving(_ saving: AutomatorSavo) // Quit an application.
@@ -63,8 +62,6 @@ extension SBObject: AutomatorColor {}
     @objc optional var modified: Bool { get } // Has the document been modified since the last save?
     @objc optional var name: String { get } // The document's name.
     @objc optional var path: String { get } // The document's path.
-    @objc optional func setName(_ name: String!) // The document's name.
-    @objc optional func setPath(_ path: String!) // The document's path.
 }
 extension SBObject: AutomatorDocument {}
 
@@ -74,7 +71,6 @@ extension SBObject: AutomatorDocument {}
     @objc optional var closeable: Bool { get } // Whether the window has a close box.
     @objc optional var document: AutomatorDocument { get } // The document whose contents are being displayed in the window.
     @objc optional var floating: Bool { get } // Whether the window floats.
-    @objc optional func id() -> Int // The unique identifier of the window.
     @objc optional var index: Int { get } // The index of the window, ordered front to back.
     @objc optional var miniaturizable: Bool { get } // Whether the window can be miniaturized.
     @objc optional var miniaturized: Bool { get } // Whether the window is currently miniaturized.
@@ -85,106 +81,83 @@ extension SBObject: AutomatorDocument {}
     @objc optional var visible: Bool { get } // Whether the window is currently visible.
     @objc optional var zoomable: Bool { get } // Whether the window can be zoomed.
     @objc optional var zoomed: Bool { get } // Whether the window is currently zoomed.
-    @objc optional func setBounds(_ bounds: NSRect) // The bounding rectangle of the window.
-    @objc optional func setIndex(_ index: Int) // The index of the window, ordered front to back.
-    @objc optional func setMiniaturized(_ miniaturized: Bool) // Whether the window is currently miniaturized.
-    @objc optional func setName(_ name: String!) // The full title of the window.
-    @objc optional func setVisible(_ visible: Bool) // Whether the window is currently visible.
-    @objc optional func setZoomed(_ zoomed: Bool) // Whether the window is currently zoomed.
+    @objc optional func id() -> Int // The unique identifier of the window.
 }
 extension SBObject: AutomatorWindow {}
 
 // MARK: AutomatorAttributeRun
 @objc public protocol AutomatorAttributeRun: AutomatorItem {
+    @objc optional var color: NSColor { get } // The color of the first character.
+    @objc optional var font: String { get } // The name of the font of the first character.
+    @objc optional var size: Int { get } // The size in points of the first character.
     @objc optional func attachments() -> SBElementArray
     @objc optional func attributeRuns() -> SBElementArray
     @objc optional func characters() -> SBElementArray
     @objc optional func paragraphs() -> SBElementArray
     @objc optional func words() -> SBElementArray
-    @objc optional var color: NSColor { get } // The color of the first character.
-    @objc optional var font: String { get } // The name of the font of the first character.
-    @objc optional var size: Int { get } // The size in points of the first character.
-    @objc optional func setColor(_ color: NSColor!) // The color of the first character.
-    @objc optional func setFont(_ font: String!) // The name of the font of the first character.
-    @objc optional func setSize(_ size: Int) // The size in points of the first character.
 }
 extension SBObject: AutomatorAttributeRun {}
 
 // MARK: AutomatorCharacter
 @objc public protocol AutomatorCharacter: AutomatorItem {
+    @objc optional var color: NSColor { get } // The color of the first character.
+    @objc optional var font: String { get } // The name of the font of the first character.
+    @objc optional var size: Int { get } // The size in points of the first character.
     @objc optional func attachments() -> SBElementArray
     @objc optional func attributeRuns() -> SBElementArray
     @objc optional func characters() -> SBElementArray
     @objc optional func paragraphs() -> SBElementArray
     @objc optional func words() -> SBElementArray
-    @objc optional var color: NSColor { get } // The color of the first character.
-    @objc optional var font: String { get } // The name of the font of the first character.
-    @objc optional var size: Int { get } // The size in points of the first character.
-    @objc optional func setColor(_ color: NSColor!) // The color of the first character.
-    @objc optional func setFont(_ font: String!) // The name of the font of the first character.
-    @objc optional func setSize(_ size: Int) // The size in points of the first character.
 }
 extension SBObject: AutomatorCharacter {}
 
 // MARK: AutomatorParagraph
 @objc public protocol AutomatorParagraph: AutomatorItem {
+    @objc optional var color: NSColor { get } // The color of the first character.
+    @objc optional var font: String { get } // The name of the font of the first character.
+    @objc optional var size: Int { get } // The size in points of the first character.
     @objc optional func attachments() -> SBElementArray
     @objc optional func attributeRuns() -> SBElementArray
     @objc optional func characters() -> SBElementArray
     @objc optional func paragraphs() -> SBElementArray
     @objc optional func words() -> SBElementArray
-    @objc optional var color: NSColor { get } // The color of the first character.
-    @objc optional var font: String { get } // The name of the font of the first character.
-    @objc optional var size: Int { get } // The size in points of the first character.
-    @objc optional func setColor(_ color: NSColor!) // The color of the first character.
-    @objc optional func setFont(_ font: String!) // The name of the font of the first character.
-    @objc optional func setSize(_ size: Int) // The size in points of the first character.
 }
 extension SBObject: AutomatorParagraph {}
 
 // MARK: AutomatorText
 @objc public protocol AutomatorText: AutomatorItem {
+    @objc optional var color: NSColor { get } // The color of the first character.
+    @objc optional var font: String { get } // The name of the font of the first character.
+    @objc optional var size: Int { get } // The size in points of the first character.
     @objc optional func attachments() -> SBElementArray
     @objc optional func attributeRuns() -> SBElementArray
     @objc optional func characters() -> SBElementArray
     @objc optional func paragraphs() -> SBElementArray
     @objc optional func words() -> SBElementArray
-    @objc optional var color: NSColor { get } // The color of the first character.
-    @objc optional var font: String { get } // The name of the font of the first character.
-    @objc optional var size: Int { get } // The size in points of the first character.
-    @objc optional func setColor(_ color: NSColor!) // The color of the first character.
-    @objc optional func setFont(_ font: String!) // The name of the font of the first character.
-    @objc optional func setSize(_ size: Int) // The size in points of the first character.
 }
 extension SBObject: AutomatorText {}
 
 // MARK: AutomatorAttachment
 @objc public protocol AutomatorAttachment: AutomatorText {
     @objc optional var fileName: String { get } // The path to the file for the attachment
-    @objc optional func setFileName(_ fileName: String!) // The path to the file for the attachment
 }
 extension SBObject: AutomatorAttachment {}
 
 // MARK: AutomatorWord
 @objc public protocol AutomatorWord: AutomatorItem {
+    @objc optional var color: NSColor { get } // The color of the first character.
+    @objc optional var font: String { get } // The name of the font of the first character.
+    @objc optional var size: Int { get } // The size in points of the first character.
     @objc optional func attachments() -> SBElementArray
     @objc optional func attributeRuns() -> SBElementArray
     @objc optional func characters() -> SBElementArray
     @objc optional func paragraphs() -> SBElementArray
     @objc optional func words() -> SBElementArray
-    @objc optional var color: NSColor { get } // The color of the first character.
-    @objc optional var font: String { get } // The name of the font of the first character.
-    @objc optional var size: Int { get } // The size in points of the first character.
-    @objc optional func setColor(_ color: NSColor!) // The color of the first character.
-    @objc optional func setFont(_ font: String!) // The name of the font of the first character.
-    @objc optional func setSize(_ size: Int) // The size in points of the first character.
 }
 extension SBObject: AutomatorWord {}
 
 // MARK: AutomatorAutomatorAction
 @objc public protocol AutomatorAutomatorAction: AutomatorItem {
-    @objc optional func requiredResources() -> SBElementArray
-    @objc optional func settings() -> SBElementArray
     @objc optional var bundleId: String { get } // The bundle identifier for the action
     @objc optional var category: [Any] { get } // The category that contains the action
     @objc optional var comment: String { get } // The comment for the name of the action
@@ -193,7 +166,6 @@ extension SBObject: AutomatorWord {}
     @objc optional var executionErrorNumber: Int { get } // The numeric error code generated by execution of the action
     @objc optional var executionResult: Any { get } // The result of the action, passed as input to the next action
     @objc optional var iconName: String { get } // The icon name of the action
-    @objc optional func id() -> String // The unique identifier for the action
     @objc optional var ignoresInput: Bool { get } // Shall the action ignore its input when it is run?
     @objc optional var index: Int { get } // The index of the action
     @objc optional var inputTypes: [Any] { get } // The input types accepted by the action
@@ -208,11 +180,9 @@ extension SBObject: AutomatorWord {}
     @objc optional var warningAction: String { get } // The action suggested by the warning, if any
     @objc optional var warningLevel: AutomatorWlev { get } // The level of the warning, increasing in likelihood of data loss
     @objc optional var warningMessage: String { get } // The message that accompanies the warning, if any
-    @objc optional func setComment(_ comment: String!) // The comment for the name of the action
-    @objc optional func setEnabled(_ enabled: Bool) // Is the action enabled?
-    @objc optional func setIgnoresInput(_ ignoresInput: Bool) // Shall the action ignore its input when it is run?
-    @objc optional func setIndex(_ index: Int) // The index of the action
-    @objc optional func setShowActionWhenRun(_ showActionWhenRun: Bool) // Shall the action show its user interface when it is run?
+    @objc optional func requiredResources() -> SBElementArray
+    @objc optional func settings() -> SBElementArray
+    @objc optional func id() -> String // The unique identifier for the action
 }
 extension SBObject: AutomatorAutomatorAction {}
 
@@ -230,7 +200,6 @@ extension SBObject: AutomatorRequiredResource {}
     @objc optional var defaultValue: Any { get } // The default value of the setting
     @objc optional var name: String { get } // The name of the setting
     @objc optional var value: Any { get } // The value of the setting
-    @objc optional func setValue(_ value: Any!) // The value of the setting
 }
 extension SBObject: AutomatorSetting {}
 
@@ -239,21 +208,19 @@ extension SBObject: AutomatorSetting {}
     @objc optional var name: String { get } // The name of the variable
     @objc optional var settable: Bool { get } // Are the name and value of the variable settable?
     @objc optional var value: Any { get } // The value of the variable
-    @objc optional func setName(_ name: String!) // The name of the variable
-    @objc optional func setValue(_ value: Any!) // The value of the variable
 }
 extension SBObject: AutomatorVariable {}
 
 // MARK: AutomatorWorkflow
 @objc public protocol AutomatorWorkflow: AutomatorDocument {
-    @objc optional func AutomatorActions() -> SBElementArray
-    @objc optional func variables() -> SBElementArray
     @objc optional var currentAction: AutomatorAutomatorAction { get } // The current or most recent action of the workflow
     @objc optional var executionErrorMessage: String { get } // The text error message generated by the most recent execution
     @objc optional var executionErrorNumber: Int { get } // The numeric error code generated by the most recent execution
     @objc optional var executionId: String { get } // The identifier of the current or most recent execution
     @objc optional var executionResult: Any { get } // The result of the most recent execution; the output of the last action of that execution
     @objc optional var name: String { get } // The name of the workflow
+    @objc optional func AutomatorActions() -> SBElementArray
+    @objc optional func variables() -> SBElementArray
     @objc optional func execute() -> Any // Execute the workflow
 }
 extension SBObject: AutomatorWorkflow {}
@@ -270,16 +237,6 @@ extension SBObject: AutomatorWorkflow {}
     @objc optional var errorHandling: AutomatorEnum { get } // how errors are handled
     @objc optional var faxNumber: String { get } // for fax number
     @objc optional var targetPrinter: String { get } // for target printer
-    @objc optional func setCopies(_ copies: Int) // the number of copies of a document to be printed
-    @objc optional func setCollating(_ collating: Bool) // Should printed copies be collated?
-    @objc optional func setStartingPage(_ startingPage: Int) // the first page of the document to be printed
-    @objc optional func setEndingPage(_ endingPage: Int) // the last page of the document to be printed
-    @objc optional func setPagesAcross(_ pagesAcross: Int) // number of logical pages laid across a physical page
-    @objc optional func setPagesDown(_ pagesDown: Int) // number of logical pages laid out down a physical page
-    @objc optional func setRequestedPrintTime(_ requestedPrintTime: Date!) // the time at which the desktop printer should print the document
-    @objc optional func setErrorHandling(_ errorHandling: AutomatorEnum) // how errors are handled
-    @objc optional func setFaxNumber(_ faxNumber: String!) // for fax number
-    @objc optional func setTargetPrinter(_ targetPrinter: String!) // for target printer
 }
 extension SBObject: AutomatorPrintSettings {}
 
