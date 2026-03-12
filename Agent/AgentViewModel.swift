@@ -517,13 +517,18 @@ final class AgentViewModel {
         if !logBuffer.isEmpty {
             activityLog += logBuffer
             logBuffer = ""
-            // Cap total log size to prevent layout thrashing
-            if activityLog.count > Self.maxLogSize {
-                let trimPoint = activityLog.index(activityLog.endIndex, offsetBy: -Self.maxLogSize)
-                activityLog = "...(earlier output trimmed)...\n" + String(activityLog[trimPoint...])
-            }
+            trimToRecentTasks()
             UserDefaults.standard.set(activityLog, forKey: "agentActivityLog")
         }
+    }
+
+    /// Keep only the last 3 tasks visible to prevent SwiftUI from choking on large Text views
+    private func trimToRecentTasks() {
+        let marker = "--- New Task ---"
+        let parts = activityLog.components(separatedBy: marker)
+        guard parts.count > 4 else { return } // 3 tasks + possible leading text
+        let kept = parts.suffix(3).joined(separator: marker)
+        activityLog = "...(older tasks trimmed)...\n\n" + marker + kept
     }
 
     // MARK: - Task Execution Loop
