@@ -212,7 +212,7 @@ struct ContentView: View {
                                 )
                                 .shadow(color: .blue.opacity(0.8), radius: 12)
                                 .shadow(color: .blue.opacity(0.4), radius: 24)
-                                .offset(y: 40)
+                                .offset(y: 90)
                         }
                     }
                     .opacity(splashOpacity)
