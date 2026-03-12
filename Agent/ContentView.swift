@@ -5,6 +5,7 @@ struct ContentView: View {
     @State private var showSettings = false
     @State private var showHistory = false
     @State private var showSplash = true
+    @State private var splashOpacity: Double = 0.85
 
     var body: some View {
         ZStack {
@@ -192,21 +193,21 @@ struct ContentView: View {
             if showSplash {
                 Color(.windowBackgroundColor)
                     .overlay {
-                        GeometryReader { geo in
-                            Image("AgentIcon")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: geo.size.width * 0.85, height: geo.size.height * 0.85)
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        }
+                        Image("AgentIcon")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .padding(40)
                     }
-                    .transition(.opacity)
+                    .opacity(splashOpacity)
             }
         }
         .frame(minWidth: 700, minHeight: 500)
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                 withAnimation(.easeOut(duration: 0.6)) {
+                    splashOpacity = 0
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
                     showSplash = false
                 }
             }
