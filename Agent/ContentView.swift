@@ -26,13 +26,14 @@ struct ContentView: View {
                     StatusDot(
                         isActive: viewModel.rootServiceActive,
                         wasActive: viewModel.rootWasActive,
-                        isBusy: viewModel.isRunning
+                        isBusy: viewModel.isRunning,
+                        enabled: viewModel.rootEnabled
                     )
                     Toggle("Root", isOn: $viewModel.rootEnabled)
                         .toggleStyle(.switch)
                         .controlSize(.mini)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(viewModel.rootEnabled ? .secondary : .tertiary)
                 }
 
                 Button("Register") {
@@ -274,8 +275,10 @@ struct StatusDot: View {
     let isActive: Bool
     let wasActive: Bool
     let isBusy: Bool
+    var enabled: Bool = true
 
     var dotColor: Color {
+        if !enabled { return .gray }
         if isActive || (wasActive && isBusy) { return .green }
         return .red
     }
