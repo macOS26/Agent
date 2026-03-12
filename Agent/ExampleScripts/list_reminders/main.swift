@@ -2,27 +2,17 @@ import Foundation
 import ScriptingBridges
 
 // List Reminders — shows incomplete reminders grouped by list
-// Note: Requires Automation permission for Reminders in System Settings > Privacy
-
-// Ignore SIGPIPE (sent when Reminders denies ScriptingBridge access)
-signal(SIGPIPE, SIG_IGN)
 
 guard let app: RemindersApplication = SBApplication(bundleIdentifier: "com.apple.reminders") else {
     print("Could not connect to Reminders.app")
     exit(1)
 }
 
-// Trigger a permission prompt by accessing a property
-let sbApp = app as? SBApplication
-sbApp?.activate()
-Thread.sleep(forTimeInterval: 0.5)
-
 print("Reminders")
 print("=========")
 
-guard let lists = app.lists?() else {
+guard let lists = app.lists?(), lists.count > 0 else {
     print("No reminder lists found.")
-    print("Tip: Grant Automation permission in System Settings > Privacy & Security > Automation")
     exit(0)
 }
 
@@ -37,7 +27,7 @@ for i in 0..<lists.count {
           let listName = list.name,
           let reminders = list.reminders?() else { continue }
 
-    var incomplete: [(String, Date?)] = []
+    var incomplete: [(String, String)] = []
 
     for j in 0..<reminders.count {
         guard let reminder = reminders.object(at: j) as? RemindersReminder,
@@ -45,7 +35,14 @@ for i in 0..<lists.count {
 
         let done = reminder.completed ?? false
         if !done {
-            incomplete.append((name, reminder.dueDate))
+            // Safely bridge dueDate — avoid crash on nil NSDate bridging
+            let dueString: String
+            if let nsDate = (reminder as AnyObject).value(forKey: "dueDate") as? NSDate {
+                dueString = "due \(dateFormatter.string(from: nsDate as Date))"
+            } else {
+                dueString = ""
+            }
+            incomplete.append((name, dueString))
         }
     }
 
@@ -53,8 +50,7 @@ for i in 0..<lists.count {
     totalIncomplete += incomplete.count
 
     print("\n\(listName) (\(incomplete.count))")
-    for (name, dueDate) in incomplete.prefix(10) {
-        let due = dueDate.map { "due \(dateFormatter.string(from: $0))" } ?? ""
+    for (name, due) in incomplete.prefix(10) {
         print("  - \(name) \(due)")
     }
     if incomplete.count > 10 {
