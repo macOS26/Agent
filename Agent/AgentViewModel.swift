@@ -753,6 +753,35 @@ final class AgentViewModel {
                             commandsRun.append("run_agent_script: \(scriptName)")
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": truncated2])
                         }
+
+                        // Xcode ScriptingBridge tools
+                        if name == "xcode_grant_permission" {
+                            appendLog("Granting Xcode Automation permission...")
+                            flushLog()
+                            let output = XcodeService.shared.grantPermission()
+                            appendLog(output)
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        if name == "xcode_build" {
+                            let projectPath = input["project_path"] as? String ?? ""
+                            appendLog("Building: \(projectPath)")
+                            flushLog()
+                            let output = XcodeService.shared.buildProject(projectPath: projectPath)
+                            appendLog(output)
+                            commandsRun.append("xcode_build: \(projectPath)")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        if name == "xcode_run" {
+                            let projectPath = input["project_path"] as? String ?? ""
+                            appendLog("Running: \(projectPath)")
+                            flushLog()
+                            let output = XcodeService.shared.runProject(projectPath: projectPath)
+                            appendLog(output)
+                            commandsRun.append("xcode_run: \(projectPath)")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
                     }
                 }
 
