@@ -51,8 +51,19 @@ final class OllamaService {
         You can create, manage, and run Swift automation scripts stored in ~/Documents/Agent/agents/.
         Use list_agent_scripts, create_agent_script, read_agent_script, update_agent_script, \
         run_agent_script, and delete_agent_script to manage them.
-        Scripts are compiled with swiftc and run as the current user.
-        Scripts can import Foundation, AppKit, or ScriptingBridge for Xcode automation.
+        Scripts are Swift Package executable targets built with `swift build`.
+        Scripts can `import ScriptingBridges` to get type-safe ScriptingBridge protocols for macOS apps.
+
+        Available ScriptingBridge apps (via `import ScriptingBridges`):
+        Automator, Calendar, Contacts, Finder, ImageEvents, Mail, Messages, Music, \
+        Notes, Numbers, Pages, Photos, Reminders, ScriptEditor, Shortcuts, \
+        SystemEvents, Terminal, TV, Xcode.
+
+        ScriptingBridge pattern — ALWAYS use this instead of osascript/AppleScript:
+        1. `import ScriptingBridges` (provides all protocols and SBApplication/SBObject extensions)
+        2. `let app: AppProtocol = SBApplication(bundleIdentifier: "com.apple.mail")!`
+        3. Access properties and methods via the protocol (all are @objc optional)
+        Example: `let count = mail.accounts?()?.count ?? 0`
 
         You can control Xcode directly via ScriptingBridge:
         Use xcode_grant_permission once to authorize Automation access, then \

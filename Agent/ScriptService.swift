@@ -30,13 +30,27 @@ final class ScriptService {
         let fm = FileManager.default
         let sourcesPath = sourcesDir.path
         let dirs = (try? fm.contentsOfDirectory(atPath: sourcesPath))?.filter { name in
+            // Skip the ScriptingBridges library directory
+            guard name != "ScriptingBridges" else { return false }
             var isDir: ObjCBool = false
             return fm.fileExists(atPath: sourcesPath + "/" + name, isDirectory: &isDir) && isDir.boolValue
         }.sorted() ?? []
 
-        let targets = dirs.map { name in
-            "        .executableTarget(name: \"\(name)\", path: \"Sources/\(name)\")"
-        }.joined(separator: ",\n")
+        // Check if ScriptingBridges library exists
+        let hasBridges = fm.fileExists(atPath: sourcesPath + "/ScriptingBridges")
+
+        let bridgeTarget = hasBridges
+            ? "        .target(name: \"ScriptingBridges\", path: \"Sources/ScriptingBridges\")"
+            : nil
+
+        let execTargets = dirs.map { name in
+            let deps = hasBridges
+                ? ", dependencies: [\"ScriptingBridges\"]"
+                : ""
+            return "        .executableTarget(name: \"\(name)\"\(deps), path: \"Sources/\(name)\")"
+        }
+
+        let allTargets = ([bridgeTarget].compactMap { $0 } + execTargets).joined(separator: ",\n")
 
         let packageSwift = """
         // swift-tools-version: 6.0
@@ -46,7 +60,7 @@ final class ScriptService {
             name: "AgentScripts",
             platforms: [.macOS(.v15)],
             targets: [
-        \(targets)
+        \(allTargets)
             ]
         )
         """
@@ -62,7 +76,7 @@ final class ScriptService {
         let sourcesPath = sourcesDir.path
         guard let dirs = try? fm.contentsOfDirectory(atPath: sourcesPath) else { return [] }
 
-        return dirs.sorted().compactMap { dirName in
+        return dirs.filter { $0 != "ScriptingBridges" }.sorted().compactMap { dirName in
             let mainPath = sourcesPath + "/" + dirName + "/main.swift"
             guard let attrs = try? fm.attributesOfItem(atPath: mainPath) else { return nil }
             return ScriptInfo(
