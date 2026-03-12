@@ -16,7 +16,18 @@
       "mcp__xcf-server__list_projects",
       "mcp__xcf-server__select_project",
       "Bash(mkdir -p ~/Documents/Github/Agent && rsync -av --exclude '.git' /Users/toddbruss/Agent/ ~/Documents/Github/Agent/)",
-      "Bash(find /Users/toddbruss/Documents/GitHub/CloneTool -type f -name \"main.swift\" | xargs ls -la)"
+      "Bash(find /Users/toddbruss/Documents/GitHub/CloneTool -type f -name \"main.swift\" | xargs ls -la)",
+      "WebSearch",
+      "WebFetch(domain:docs.ollama.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:ollama.readthedocs.io)",
+      "WebFetch(domain:ollama.com)",
+      "WebFetch(domain:ollama.apidog.io)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:markaicode.com)",
+      "mcp__xcf-server__create_doc",
+      "mcp__xcf-server__run_project",
+      "Bash(ls -la /tmp/Swift-Scripting/*.sh)"
     ]
   }
 }
