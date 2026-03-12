@@ -52,8 +52,8 @@ Agent controls Xcode directly through Apple's ScriptingBridge framework — the 
 
 The full ScriptingBridge protocol layer (`XcodeScriptingBridge.swift`) exposes Xcode's workspace documents, schemes, run destinations, build configurations, projects, and devices — all as native Swift types.
 
-### The "agents" Swift Package
-Agent includes a built-in Swift scripting system. Scripts live in `~/Documents/Agent/agents/` as a full Swift Package with `Package.swift` and per-script executable targets under `Sources/`.
+### Swift Agent Scripts
+Agent includes a built-in Swift scripting system. Scripts live in `~/Documents/Agent/agents/` as a Swift Package with per-script executable targets under `Sources/`.
 
 The AI can create, read, update, delete, compile, and run these scripts autonomously using dedicated tools:
 
@@ -64,7 +64,14 @@ The AI can create, read, update, delete, compile, and run these scripts autonomo
 - `run_agent_script` — compile with `swift build` and execute
 - `delete_agent_script` — remove a script
 
-Scripts can `import Foundation`, `import AppKit`, or `import ScriptingBridge`. This means the AI can write Swift programs that automate any Scriptable Mac application — Xcode, Finder, Safari, Mail, Terminal, and hundreds of others — compile them, and run them, all within a single task.
+### ScriptingBridges Library
+Agent ships with a bundled `ScriptingBridges` library — pre-generated Swift protocol definitions for 19 macOS applications, created from each app's scripting dictionary using the [Swift-Scripting](https://github.com/SuperBox64/Swift-Scripting) toolchain. On first launch, these are installed to the agents Swift Package so any script can `import ScriptingBridges` and get type-safe access to:
+
+Automator, Calendar, Contacts, Finder, Image Events, Mail, Messages, Music, Notes, Numbers, Pages, Photos, Reminders, Script Editor, Shortcuts, System Events, Terminal, TV, and Xcode.
+
+ScriptingBridge is the preferred approach for app automation — it calls the same Apple Event interface as AppleScript but natively from Swift, without spawning a subprocess. AppleScript via `osascript` is still available as a fallback.
+
+This means the AI can write Swift programs that automate Mac applications, compile them with `swift build`, and run them — all within a single task.
 
 ### Vision: Screenshot and Clipboard Support
 Attach screenshots or paste images directly into Agent. Images are encoded as base64 PNG and sent as vision content blocks. The AI can see what's on your screen and act on it.
@@ -91,6 +98,7 @@ Agent.app (SwiftUI)
   |-- ScriptService          Swift Package manager for agent scripts
   |-- XcodeService           ScriptingBridge automation for Xcode
   |-- XcodeScriptingBridge   Full SB protocol definitions for Xcode
+  |-- ScriptingBridges/      Bundled bridge protocols for 19 macOS apps
   |-- DependencyChecker      Xcode CLT detection + install trigger
   |
   |-- UserService (XPC) --> com.agent.user    (LaunchAgent, runs as user)
