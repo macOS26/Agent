@@ -56,15 +56,28 @@ final class ScriptService {
         }
 
         // Install individual bridge targets (e.g., MailBridge/Mail.swift)
+        // Each bridge file needs `import ScriptingBridgeCommon` prepended so it can
+        // access SBObject, SBApplication, and the shared protocols from Common.swift.
         guard let files = try? fm.contentsOfDirectory(atPath: bundleDir.path) else { return }
         for file in files where file.hasSuffix(".swift") && file != "Common.swift" {
             let bridgeName = file.replacingOccurrences(of: ".swift", with: "") + "Bridge"
             let bridgeDir = sourcesDir.appendingPathComponent(bridgeName)
-            guard !fm.fileExists(atPath: bridgeDir.path) else { continue }
-            try? fm.createDirectory(at: bridgeDir, withIntermediateDirectories: true)
-            let src = bundleDir.appendingPathComponent(file)
             let dst = bridgeDir.appendingPathComponent(file)
-            try? fm.copyItem(at: src, to: dst)
+
+            if !fm.fileExists(atPath: bridgeDir.path) {
+                // New bridge — install with import prepended
+                try? fm.createDirectory(at: bridgeDir, withIntermediateDirectories: true)
+                let src = bundleDir.appendingPathComponent(file)
+                if let content = try? String(contentsOf: src, encoding: .utf8) {
+                    let withImport = "import ScriptingBridgeCommon\n\n" + content
+                    try? withImport.write(to: dst, atomically: true, encoding: .utf8)
+                }
+            } else if let existing = try? String(contentsOf: dst, encoding: .utf8),
+                      !existing.contains("import ScriptingBridgeCommon") {
+                // Existing bridge missing the import — patch it
+                let patched = "import ScriptingBridgeCommon\n\n" + existing
+                try? patched.write(to: dst, atomically: true, encoding: .utf8)
+            }
         }
     }
 
@@ -92,10 +105,12 @@ final class ScriptService {
                 let bridgeDir = sourcesDir.appendingPathComponent(bridgeName)
                 if !fm.fileExists(atPath: bridgeDir.path) {
                     try? fm.createDirectory(at: bridgeDir, withIntermediateDirectories: true)
-                    try? fm.copyItem(
-                        at: oldDir.appendingPathComponent(file),
-                        to: bridgeDir.appendingPathComponent(file)
-                    )
+                    let src = oldDir.appendingPathComponent(file)
+                    let dst = bridgeDir.appendingPathComponent(file)
+                    if let content = try? String(contentsOf: src, encoding: .utf8) {
+                        let withImport = "import ScriptingBridgeCommon\n\n" + content
+                        try? withImport.write(to: dst, atomically: true, encoding: .utf8)
+                    }
                 }
             }
         }
