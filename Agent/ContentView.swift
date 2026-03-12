@@ -6,6 +6,8 @@ struct ContentView: View {
     @State private var showHistory = false
     @State private var showSplash = true
     @State private var splashOpacity: Double = 0.85
+    @State private var dependencyStatus: DependencyStatus?
+    @State private var showDependencyOverlay = false
 
     var body: some View {
         ZStack {
@@ -190,6 +192,8 @@ struct ContentView: View {
             .padding()
         }
 
+            DependencyOverlay(status: dependencyStatus, isVisible: $showDependencyOverlay)
+
             if showSplash {
                 Color(.windowBackgroundColor)
                     .overlay {
@@ -226,6 +230,15 @@ struct ContentView: View {
                 }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
                     showSplash = false
+                }
+            }
+            DispatchQueue.global(qos: .userInitiated).async {
+                let status = DependencyChecker.check()
+                DispatchQueue.main.async {
+                    dependencyStatus = status
+                    if !status.allGood {
+                        showDependencyOverlay = true
+                    }
                 }
             }
             NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
