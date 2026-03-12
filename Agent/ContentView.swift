@@ -193,12 +193,27 @@ struct ContentView: View {
             if showSplash {
                 Color(.windowBackgroundColor)
                     .overlay {
-                        Image("AgentIcon")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .shadow(color: .blue.opacity(0.6), radius: 40)
-                            .shadow(color: .blue.opacity(0.3), radius: 80)
-                            .padding(40)
+                        VStack(spacing: 0) {
+                            Image("AgentIcon")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .shadow(color: .blue.opacity(0.6), radius: 40)
+                                .shadow(color: .blue.opacity(0.3), radius: 80)
+                                .padding(40)
+
+                            Text("Agent")
+                                .font(.system(size: 48, weight: .black, design: .rounded))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [.white, .blue.opacity(0.8)],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                .shadow(color: .blue.opacity(0.8), radius: 12)
+                                .shadow(color: .blue.opacity(0.4), radius: 24)
+                                .padding(.top, -30)
+                        }
                     }
                     .opacity(splashOpacity)
             }
