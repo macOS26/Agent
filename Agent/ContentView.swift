@@ -4,8 +4,10 @@ struct ContentView: View {
     @State private var viewModel = AgentViewModel()
     @State private var showSettings = false
     @State private var showHistory = false
+    @State private var showSplash = true
 
     var body: some View {
+        ZStack {
         VStack(spacing: 0) {
             // Header
             HStack {
@@ -186,8 +188,25 @@ struct ContentView: View {
             }
             .padding()
         }
+
+            if showSplash {
+                Color(.windowBackgroundColor)
+                    .overlay {
+                        Image(nsImage: NSApp.applicationIconImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .padding(40)
+                    }
+                    .transition(.opacity)
+            }
+        }
         .frame(minWidth: 700, minHeight: 500)
         .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                withAnimation(.easeOut(duration: 0.6)) {
+                    showSplash = false
+                }
+            }
             NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
                 // Intercept Cmd+V for image paste
                 if event.modifierFlags.contains(.command),
