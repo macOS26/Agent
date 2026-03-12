@@ -192,10 +192,13 @@ struct ContentView: View {
             if showSplash {
                 Color(.windowBackgroundColor)
                     .overlay {
-                        Image("AgentIcon")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .padding(40)
+                        GeometryReader { geo in
+                            Image("AgentIcon")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: geo.size.width * 0.85, height: geo.size.height * 0.85)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        }
                     }
                     .transition(.opacity)
             }
