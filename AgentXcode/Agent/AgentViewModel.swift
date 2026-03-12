@@ -4,11 +4,13 @@ import AppKit
 enum APIProvider: String, CaseIterable {
     case claude = "claude"
     case ollama = "ollama"
+    case localOllama = "localOllama"
 
     var displayName: String {
         switch self {
         case .claude: "Claude"
         case .ollama: "Ollama"
+        case .localOllama: "Local Ollama"
         }
     }
 }
@@ -48,6 +50,9 @@ final class AgentViewModel {
             UserDefaults.standard.set(selectedProvider.rawValue, forKey: "agentProvider")
             if selectedProvider == .ollama && ollamaModels.isEmpty {
                 fetchOllamaModels()
+            }
+            if selectedProvider == .localOllama && localOllamaModels.isEmpty {
+                fetchLocalOllamaModels()
             }
         }
     }
@@ -114,6 +119,47 @@ final class AgentViewModel {
                 }
             } catch {
                 appendLog("Failed to fetch models: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    // Local Ollama settings
+    var localOllamaEndpoint: String = UserDefaults.standard.string(forKey: "localOllamaEndpoint") ?? "http://localhost:11434/api/chat" {
+        didSet { UserDefaults.standard.set(localOllamaEndpoint, forKey: "localOllamaEndpoint") }
+    }
+
+    var localOllamaModel: String = UserDefaults.standard.string(forKey: "localOllamaModel") ?? "" {
+        didSet {
+            UserDefaults.standard.set(localOllamaModel, forKey: "localOllamaModel")
+            if !localOllamaModel.isEmpty && oldValue != localOllamaModel {
+                let vision = selectedLocalOllamaSupportsVision ? " (vision)" : ""
+                appendLog("Switched to: \(localOllamaModel)\(vision)")
+                flushLog()
+            }
+        }
+    }
+
+    var localOllamaModels: [OllamaModelInfo] = []
+    var isFetchingLocalModels = false
+
+    var selectedLocalOllamaSupportsVision: Bool {
+        localOllamaModels.first(where: { $0.name == localOllamaModel })?.supportsVision ?? false
+    }
+
+    func fetchLocalOllamaModels() {
+        let endpoint = localOllamaEndpoint
+        isFetchingLocalModels = true
+        Task {
+            defer { isFetchingLocalModels = false }
+            do {
+                let models = try await Self.fetchModels(endpoint: endpoint, apiKey: "")
+                localOllamaModels = models
+                let names = models.map(\.name)
+                if localOllamaModel.isEmpty || (!names.isEmpty && !names.contains(localOllamaModel)) {
+                    localOllamaModel = names.first ?? ""
+                }
+            } catch {
+                appendLog("Failed to fetch local models: \(error.localizedDescription)")
             }
         }
     }
@@ -238,6 +284,8 @@ final class AgentViewModel {
         // Auto-fetch Ollama models on launch
         if selectedProvider == .ollama {
             fetchOllamaModels()
+        } else if selectedProvider == .localOllama {
+            fetchLocalOllamaModels()
         }
 
         // Xcode Command Line Tools check is handled by DependencyOverlay in ContentView
@@ -579,15 +627,33 @@ final class AgentViewModel {
 
         let historyContext = history.contextForPrompt()
         let provider = selectedProvider
-        let modelName = provider == .claude ? selectedModel : ollamaModel
-        let isVision = provider == .ollama && selectedOllamaSupportsVision
+        let modelName: String
+        let isVision: Bool
+        switch provider {
+        case .claude:
+            modelName = selectedModel
+            isVision = false
+        case .ollama:
+            modelName = ollamaModel
+            isVision = selectedOllamaSupportsVision
+        case .localOllama:
+            modelName = localOllamaModel
+            isVision = selectedLocalOllamaSupportsVision
+        }
         appendLog("Model: \(provider.displayName) / \(modelName)\(isVision ? " (vision)" : "")")
         flushLog()
 
         let claude: ClaudeService? = provider == .claude
             ? ClaudeService(apiKey: apiKey, model: selectedModel, historyContext: historyContext) : nil
-        let ollama: OllamaService? = provider == .ollama
-            ? OllamaService(apiKey: ollamaAPIKey, model: ollamaModel, endpoint: ollamaEndpoint, supportsVision: isVision, historyContext: historyContext) : nil
+        let ollama: OllamaService?
+        switch provider {
+        case .ollama:
+            ollama = OllamaService(apiKey: ollamaAPIKey, model: ollamaModel, endpoint: ollamaEndpoint, supportsVision: isVision, historyContext: historyContext)
+        case .localOllama:
+            ollama = OllamaService(apiKey: "", model: localOllamaModel, endpoint: localOllamaEndpoint, supportsVision: isVision, historyContext: historyContext)
+        default:
+            ollama = nil
+        }
 
         var messages: [[String: Any]]
 
