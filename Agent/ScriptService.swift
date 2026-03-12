@@ -8,10 +8,10 @@ final class ScriptService {
     }()
 
     private var sourcesDir: URL { Self.agentsDir.appendingPathComponent("Sources") }
-    private var bridgesDir: URL { sourcesDir.appendingPathComponent("Bridges") }
+    private var bridgesDir: URL { sourcesDir.appendingPathComponent("ScriptingBridges") }
 
     /// Names of infrastructure directories under Sources/ that are not user scripts
-    private static let reservedDirs: Set<String> = ["Bridges"]
+    private static let reservedDirs: Set<String> = ["ScriptingBridges"]
 
     struct ScriptInfo {
         let name: String
@@ -33,7 +33,7 @@ final class ScriptService {
 
     // MARK: - Bridge Installation
 
-    /// Install ScriptingBridges as individual per-app bridge targets inside Sources/Bridges/
+    /// Install ScriptingBridges as individual per-app bridge targets inside Sources/ScriptingBridges/
     private func installScriptingBridges() {
         let fm = FileManager.default
 
@@ -80,7 +80,7 @@ final class ScriptService {
         }
     }
 
-    /// Migrate *Bridge dirs and ScriptingBridgeCommon from Sources/ flat layout into Sources/Bridges/
+    /// Migrate *Bridge dirs and ScriptingBridgeCommon from Sources/ flat layout into Sources/ScriptingBridges/
     private func migrateFlatBridgesIfNeeded() {
         let fm = FileManager.default
         let sourcesPath = sourcesDir.path
@@ -208,7 +208,7 @@ final class ScriptService {
         Self.reservedDirs.contains(name)
     }
 
-    /// Discover all installed bridge targets inside Sources/Bridges/
+    /// Discover all installed bridge targets inside Sources/ScriptingBridges/
     private func installedBridgeTargets() -> [String] {
         let fm = FileManager.default
         guard let dirs = try? fm.contentsOfDirectory(atPath: bridgesDir.path) else { return [] }
@@ -245,7 +245,7 @@ final class ScriptService {
         // ScriptingBridgeCommon target
         if hasCommon {
             targets.append(
-                "        .target(name: \"ScriptingBridgeCommon\", path: \"Sources/Bridges/ScriptingBridgeCommon\")"
+                "        .target(name: \"ScriptingBridgeCommon\", path: \"Sources/ScriptingBridges/ScriptingBridgeCommon\")"
             )
         }
 
@@ -253,7 +253,7 @@ final class ScriptService {
         for bridge in bridgeTargets {
             let dep = hasCommon ? ", dependencies: [\"ScriptingBridgeCommon\"]" : ""
             targets.append(
-                "        .target(name: \"\(bridge)\"\(dep), path: \"Sources/Bridges/\(bridge)\")"
+                "        .target(name: \"\(bridge)\"\(dep), path: \"Sources/ScriptingBridges/\(bridge)\")"
             )
         }
 
