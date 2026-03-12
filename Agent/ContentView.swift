@@ -205,13 +205,13 @@ struct ContentView: View {
                                 .font(.system(size: 48, weight: .black, design: .rounded))
                                 .foregroundStyle(
                                     LinearGradient(
-                                        colors: [.white, .blue.opacity(0.8)],
+                                        colors: [.white, .blue],
                                         startPoint: .top,
                                         endPoint: .bottom
                                     )
                                 )
-                                .shadow(color: .blue.opacity(0.8), radius: 12)
-                                .shadow(color: .blue.opacity(0.4), radius: 24)
+                                .shadow(color: .blue, radius: 12)
+                                .shadow(color: .blue.opacity(0.7), radius: 24)
                                 .offset(y: 90)
                         }
                     }
