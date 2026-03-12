@@ -456,10 +456,10 @@ struct SettingsView: View {
                         .labelsHidden()
                     }
                 }
-            } else {
-                // Ollama settings
+            } else if viewModel.selectedProvider == .ollama {
+                // Cloud Ollama settings
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Ollama API")
+                    Text("Ollama Cloud")
                         .font(.headline)
 
                     VStack(alignment: .leading, spacing: 4) {
@@ -470,7 +470,7 @@ struct SettingsView: View {
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("API Key").font(.caption).foregroundStyle(.secondary)
-                        SecureField("Optional for local", text: $viewModel.ollamaAPIKey)
+                        SecureField("Required for cloud", text: $viewModel.ollamaAPIKey)
                             .textFieldStyle(.roundedBorder)
                     }
 
@@ -511,6 +511,58 @@ struct SettingsView: View {
                             .controlSize(.small)
                             .disabled(viewModel.isFetchingModels)
                             .help("Fetch available models")
+                        }
+                    }
+                }
+            } else {
+                // Local Ollama settings
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Local Ollama")
+                        .font(.headline)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Endpoint").font(.caption).foregroundStyle(.secondary)
+                        TextField("http://localhost:11434/api/chat", text: $viewModel.localOllamaEndpoint)
+                            .textFieldStyle(.roundedBorder)
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Model").font(.caption).foregroundStyle(.secondary)
+                        HStack {
+                            if viewModel.localOllamaModels.isEmpty {
+                                TextField("Model name", text: $viewModel.localOllamaModel)
+                                    .textFieldStyle(.roundedBorder)
+                            } else {
+                                Picker("Model", selection: $viewModel.localOllamaModel) {
+                                    ForEach(viewModel.localOllamaModels) { model in
+                                        HStack(spacing: 4) {
+                                            Text(model.name)
+                                            if model.supportsVision {
+                                                Image(systemName: "eye")
+                                                    .foregroundStyle(.blue)
+                                                    .font(.caption2)
+                                            }
+                                        }
+                                        .tag(model.name)
+                                    }
+                                }
+                                .labelsHidden()
+                            }
+
+                            Button {
+                                viewModel.fetchLocalOllamaModels()
+                            } label: {
+                                if viewModel.isFetchingLocalModels {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(viewModel.isFetchingLocalModels)
+                            .help("Fetch available local models")
                         }
                     }
                 }
