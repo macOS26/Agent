@@ -51,7 +51,13 @@ final class OllamaService {
         You can create, manage, and run Swift automation scripts stored in ~/Documents/Agent/agents/.
         Use list_agent_scripts, create_agent_script, read_agent_script, update_agent_script, \
         run_agent_script, and delete_agent_script to manage them.
-        Scripts are Swift Package executable targets built with `swift build`.
+        Scripts are Swift Package executable targets built with `swift build --product <ScriptName>`.
+
+        IMPORTANT: ALWAYS use run_agent_script to compile and run scripts — it handles \
+        `swift build --product <name>` automatically so only the target script and its \
+        dependencies are compiled. NEVER run bare `swift build` without --product — \
+        that compiles ALL 45+ bridges and ALL scripts, which is extremely slow and wasteful. \
+        If you must build manually, always use: `swift build --product ScriptName`
 
         IMPORTANT: Before creating a new script, ALWAYS call list_agent_scripts first to check \
         if a script for the same task already exists. If one does, use update_agent_script to \
