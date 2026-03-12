@@ -54,7 +54,8 @@ final class OllamaService {
         Scripts are Swift Package executable targets built with `swift build`.
 
         IMPORTANT: Scripts can `import ScriptingBridges` for type-safe macOS app automation. \
-        NEVER use osascript or AppleScript — always use ScriptingBridge via Swift scripts.
+        ScriptingBridge is the cleanest and preferred approach. AppleScript via osascript is \
+        still allowed but ScriptingBridge should be tried first.
 
         Before writing a ScriptingBridge script, ALWAYS read the bridge file first to learn \
         the available protocols, properties, and methods:
