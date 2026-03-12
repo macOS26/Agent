@@ -1,23 +1,28 @@
 # Agent
 
-A native macOS autonomous AI agent built entirely in Swift. Agent is the macOS-native competitor to [OpenClaw](https://github.com/openclaw/openclaw) — purpose-built for Apple's platform instead of bolted on as an afterthought.
+A native macOS autonomous AI agent built entirely in Swift. Agent takes a different approach than projects like [OpenClaw](https://github.com/openclaw/openclaw) — where OpenClaw is a versatile cross-platform assistant that connects to messaging apps and runs on any OS, Agent is purpose-built for macOS, leveraging Apple-native frameworks to go deeper into the platform than a cross-platform tool can.
 
-Where OpenClaw is a Node.js server that you talk to through Telegram or a web interface, Agent is a real macOS app. It uses Apple's own frameworks — SwiftUI, XPC, SMAppService, ScriptingBridge — to give an AI agent deep, native access to your Mac. No Electron. No Docker. No npm install. Just a `.app` that speaks macOS.
+Agent uses SwiftUI, XPC, SMAppService, and ScriptingBridge to give an AI agent native access to your Mac. No Electron. No Docker. No npm install. Just a `.app` that speaks macOS.
 
-## Why Agent over OpenClaw on Mac
+## Agent vs. OpenClaw on Mac
+
+OpenClaw is a great project with broad platform reach and a rich ecosystem of messaging integrations. Agent takes a narrower but deeper approach — trading cross-platform flexibility for native macOS integration.
 
 | | **Agent** | **OpenClaw** |
 |---|---|---|
+| **Focus** | macOS-native depth | Cross-platform breadth |
 | **Runtime** | Native Swift binary | Node.js server |
 | **UI** | SwiftUI app | Web chat / Telegram / CLI |
-| **Privilege escalation** | XPC + Launch Daemon (Apple's official pattern) | Shell commands via Node child_process |
-| **macOS integration** | ScriptingBridge, AppleScript via osascript, SMAppService | Generic shell access |
-| **Xcode automation** | Built-in: build, run, grant permissions via ScriptingBridge | Not available |
-| **Swift scripting** | Full Swift Package-based agent scripts | Python/JS scripts |
-| **Architecture** | Two XPC services (user + root), proper sandboxing | Single process with broad permissions |
+| **Privilege model** | XPC + Launch Daemon (Apple's official pattern) | Shell commands |
+| **macOS integration** | ScriptingBridge, AppleScript, SMAppService | Generic shell access |
+| **Xcode automation** | Built-in: build, run, grant permissions | N/A |
+| **Scripting language** | Swift Package-based agent scripts | Python/JS scripts |
+| **Messaging** | Local app only | WhatsApp, Telegram, Slack, Discord, iMessage, and more |
 | **Installation** | Open in Xcode, build, run | `openclaw onboard` wizard |
-| **Dependencies** | Zero (ships as .app) | Node.js + npm ecosystem |
+| **Dependencies** | Xcode Command Line Tools | Node.js + npm ecosystem |
 | **Apple Silicon** | Native ARM64 | Interpreted (Node.js) |
+
+Both tools have their strengths. If you want a personal assistant across every messaging platform, OpenClaw is excellent. If you want an AI agent that can drive Xcode, compile Swift, control Mac apps through ScriptingBridge, and escalate to root through a proper Launch Daemon — Agent is built for that.
 
 ## What Agent Can Do
 
@@ -31,6 +36,9 @@ Agent runs two XPC services registered through Apple's SMAppService:
 - **Privileged Daemon** (`com.agent.helper`) — runs commands as root via a Launch Daemon. Used only when root is truly required: system packages, `/System` or `/Library` modifications, disk operations, launchd services.
 
 The AI defaults to user-level execution and only escalates to root when necessary.
+
+### Xcode Command Line Tools
+Agent relies on Xcode Command Line Tools (`clang`, `swiftc`, `swift build`) for compiling and running Swift agent scripts. On launch, Agent runs a system check and detects whether CLT is installed. If missing, it presents an overlay with an **Install** button that triggers `xcode-select --install` — Apple's standard installer dialog — so you can get set up without leaving the app.
 
 ### AppleScript via osascript
 Agent can execute AppleScript through `/usr/bin/osascript`, giving it control over any Mac application that supports the Open Scripting Architecture. This is how it bootstraps Xcode Automation permissions — by running an AppleScript that triggers the macOS consent dialog.
@@ -77,12 +85,13 @@ Agent persists task history to `~/Library/Application Support/Agent/task_history
 ```
 Agent.app (SwiftUI)
   |
-  |-- AgentViewModel        Orchestrates task loop, screenshots, clipboard
-  |-- ClaudeService         Anthropic Messages API
-  |-- OllamaService         Ollama native API (OpenAI-compatible)
+  |-- AgentViewModel         Orchestrates task loop, screenshots, clipboard
+  |-- ClaudeService          Anthropic Messages API
+  |-- OllamaService          Ollama native API (OpenAI-compatible)
   |-- ScriptService          Swift Package manager for agent scripts
   |-- XcodeService           ScriptingBridge automation for Xcode
   |-- XcodeScriptingBridge   Full SB protocol definitions for Xcode
+  |-- DependencyChecker      Xcode CLT detection + install trigger
   |
   |-- UserService (XPC) --> com.agent.user    (LaunchAgent, runs as user)
   |-- HelperService (XPC) --> com.agent.helper (LaunchDaemon, runs as root)
@@ -91,17 +100,18 @@ Agent.app (SwiftUI)
 ## Requirements
 
 - macOS 26.0+
-- Xcode Command Line Tools (`xcode-select --install`)
+- Xcode Command Line Tools (Agent will prompt to install if missing)
 - An Anthropic API key, or a running Ollama instance
 
 ## Getting Started
 
 1. Open `Agent.xcodeproj` in Xcode
 2. Build and run the **Agent** target
-3. Click **Register** to install the user agent and privileged daemon
-4. Approve in System Settings > Login Items if prompted
-5. Open Settings (gear icon), add your API key
-6. Type a task and hit Run
+3. If prompted, install Xcode Command Line Tools via the system check overlay
+4. Click **Register** to install the user agent and privileged daemon
+5. Approve in System Settings > Login Items if prompted
+6. Open Settings (gear icon), add your API key
+7. Type a task and hit Run
 
 ## License
 
