@@ -55,7 +55,8 @@ final class OllamaService {
 
         IMPORTANT: Scripts can `import ScriptingBridges` for type-safe macOS app automation. \
         ScriptingBridge is the cleanest and preferred approach. AppleScript via osascript is \
-        still allowed but ScriptingBridge should be tried first.
+        still allowed but ScriptingBridge should be tried first. \
+        Do NOT include shebang lines (#!/usr/bin/env swift) — scripts are compiled via swift build.
 
         Before writing a ScriptingBridge script, ALWAYS read the bridge file first to learn \
         the available protocols, properties, and methods:
@@ -91,10 +92,36 @@ final class OllamaService {
             print("Could not connect to Mail")
             exit(1)
         }
-        // Use @objc optional properties/methods from the protocol
-        let count = mail.accounts?()?.count ?? 0
-        print("Mail has \\(count) accounts")
+        // Element arrays: use .object(at:) and cast to the protocol type
+        guard let accounts = mail.accounts?() else { exit(0) }
+        for i in 0..<accounts.count {
+            guard let acct = accounts.object(at: i) as? MailAccount,
+                  let name = acct.name else { continue }
+            print("Account: \\(name)")
+            // Nested element arrays
+            if let mailboxes = acct.mailboxes?() {
+                for j in 0..<mailboxes.count {
+                    if let mb = mailboxes.object(at: j) as? MailMailbox {
+                        print("  \\(mb.name ?? "?") — \\(mb.unreadCount ?? 0) unread")
+                    }
+                }
+            }
+        }
+        // Methods on SBObject: cast first, e.g. message.moveTo?(target as? SBObject)
         ```
+
+        Key ScriptingBridge patterns:
+        - Connect: `guard let app: ProtocolName = SBApplication(bundleIdentifier: "...") else { exit(1) }`
+        - Element arrays: `app.accounts?()` returns SBElementArray, iterate with `.object(at: i) as? Type`
+        - Properties are @objc optional: always use `?.` and `??` for defaults
+        - Methods like moveTo, delete: `object.moveTo?(target as? SBObject)`
+        - For apps not yet in ScriptingBridges, you can generate new bridge files:
+          1. Clone https://github.com/SuperBox64/Swift-Scripting if not already at ~/Documents/Agent/Swift-Scripting
+          2. Run: `sdef /Applications/AppName.app | sdp -fh --basename AppName`
+          3. Run: `python3 ~/Documents/Agent/Swift-Scripting/sbhc.py AppName.h > AppName.swift`
+          4. Remove duplicate SBObjectProtocol/SBApplicationProtocol (they are in Common.swift)
+          5. Remove standalone `import AppKit` / `import ScriptingBridge` lines (use @_exported from Common.swift)
+          6. Copy the generated .swift file to ~/Documents/Agent/agents/Sources/ScriptingBridges/
 
         You can also control Xcode directly via built-in tools:
         Use xcode_grant_permission once to authorize Automation access, then \
