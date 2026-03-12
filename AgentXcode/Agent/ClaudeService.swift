@@ -154,6 +154,22 @@ final class ClaudeService {
           3. Add the new bridge name to bridgeNames in Package.swift
           The script handles the full sdef → sdp → Swift conversion pipeline automatically.
 
+        DYNAMIC SCRIPTING BRIDGE QUERIES — scripting_bridge_query:
+        For quick, one-off queries against any scriptable Mac app, use scripting_bridge_query \
+        instead of writing a full Swift script. It uses ObjC dynamic dispatch (value(forKey:)) \
+        so no compilation is needed. Pass a bundle_id and an array of operations:
+        - "get" {key}: walk the object graph (e.g. "tracks", "name", "currentTrack")
+        - "iterate" {properties, limit}: read properties from each item in an SBElementArray
+        - "index" {index}: pick one item from an array by index
+        - "call" {method, arg}: invoke a method (e.g. "playpause", "searchFor" with arg)
+        - "filter" {predicate}: NSPredicate filter on an SBElementArray
+        Examples:
+        Get current Music track: bundle_id="com.apple.Music", operations=[{action:"get",key:"currentTrack"},{action:"iterate",properties:["name","artist","album"]}]
+        List Safari windows: bundle_id="com.apple.Safari", operations=[{action:"get",key:"windows"},{action:"iterate",properties:["name"],limit:10}]
+        List first 5 Notes: bundle_id="com.apple.Notes", operations=[{action:"get",key:"notes"},{action:"iterate",properties:["name"],limit:5}]
+        Write operations (delete, close, move, etc.) are blocked by default. Set allow_writes=true to permit them.
+        Use scripting_bridge_query for reading data; use compiled scripts for complex logic.
+
         You can also control Xcode directly via built-in tools:
         Use xcode_grant_permission once to authorize Automation access, then \
         xcode_build to build a project (returns errors/warnings), and \
@@ -303,6 +319,36 @@ final class ClaudeService {
                 "input_schema": [
                     "type": "object",
                     "properties": [:] as [String: Any]
+                ] as [String: Any]
+            ],
+            [
+                "name": "scripting_bridge_query",
+                "description": "Query any scriptable Mac app dynamically via ScriptingBridge. No compilation needed. Walks the object graph using ObjC dynamic dispatch.",
+                "input_schema": [
+                    "type": "object",
+                    "properties": [
+                        "bundle_id": ["type": "string", "description": "App bundle identifier (e.g. com.apple.Music)"] as [String: Any],
+                        "operations": [
+                            "type": "array",
+                            "description": "Array of operations to execute sequentially. Each has an 'action' key.",
+                            "items": [
+                                "type": "object",
+                                "properties": [
+                                    "action": ["type": "string", "description": "One of: get, iterate, index, call, filter"] as [String: Any],
+                                    "key": ["type": "string", "description": "Property key for 'get'"] as [String: Any],
+                                    "properties": ["type": "array", "items": ["type": "string"] as [String: Any], "description": "Properties to read for 'iterate'"] as [String: Any],
+                                    "limit": ["type": "integer", "description": "Max items for 'iterate' (default 50)"] as [String: Any],
+                                    "index": ["type": "integer", "description": "Array index for 'index'"] as [String: Any],
+                                    "method": ["type": "string", "description": "Method name for 'call'"] as [String: Any],
+                                    "arg": ["type": "string", "description": "Optional argument for 'call'"] as [String: Any],
+                                    "predicate": ["type": "string", "description": "NSPredicate format string for 'filter'"] as [String: Any]
+                                ] as [String: Any],
+                                "required": ["action"]
+                            ] as [String: Any]
+                        ] as [String: Any],
+                        "allow_writes": ["type": "boolean", "description": "Allow destructive operations (delete, close, move, etc.). Default false."] as [String: Any]
+                    ] as [String: Any],
+                    "required": ["bundle_id", "operations"]
                 ] as [String: Any]
             ]
         ]
