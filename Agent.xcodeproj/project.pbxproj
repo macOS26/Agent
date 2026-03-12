@@ -34,6 +34,9 @@
 		CC10000000000000000033 /* AgentUser in Copy User Agent */ = {isa = PBXBuildFile; fileRef = CC1000000000000000001C /* AgentUser */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		EAF3666F2F623D6A004B7E38 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = EAF3666E2F623D6A004B7E38 /* AppIcon.icon */; };
 		AA10000000000000000045 /* ScriptingBridges in Resources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002F /* ScriptingBridges */; };
+		DD10000000000000000030 /* ScriptServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000001 /* ScriptServiceTests.swift */; };
+		DD10000000000000000031 /* ScriptingBridgesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000002 /* ScriptingBridgesTests.swift */; };
+		DD10000000000000000032 /* PackageGenerationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000003 /* PackageGenerationTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -50,6 +53,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = CC10000000000000000060;
 			remoteInfo = AgentUser;
+		};
+		DD10000000000000000070 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AA10000000000000000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA10000000000000000060;
+			remoteInfo = Agent;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -130,6 +140,10 @@
 		CC1000000000000000001B /* UserProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProtocol.swift; sourceTree = "<group>"; };
 		CC1000000000000000001C /* AgentUser */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = AgentUser; sourceTree = BUILT_PRODUCTS_DIR; };
 		EAF3666E2F623D6A004B7E38 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
+		DD10000000000000000001 /* ScriptServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptServiceTests.swift; sourceTree = "<group>"; };
+		DD10000000000000000002 /* ScriptingBridgesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptingBridgesTests.swift; sourceTree = "<group>"; };
+		DD10000000000000000003 /* PackageGenerationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageGenerationTests.swift; sourceTree = "<group>"; };
+		DD10000000000000000004 /* AgentTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AgentTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -155,6 +169,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		DD10000000000000000053 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -164,6 +185,7 @@
 				AA10000000000000000041 /* Agent */,
 				BB10000000000000000040 /* AgentHelper */,
 				CC10000000000000000040 /* AgentUser */,
+				DD10000000000000000040 /* AgentTests */,
 				AA10000000000000000042 /* Products */,
 				AA10000000000000000043 /* Frameworks */,
 			);
@@ -203,6 +225,7 @@
 				AA10000000000000000024 /* Agent.app */,
 				BB1000000000000000001C /* AgentHelper */,
 				CC1000000000000000001C /* AgentUser */,
+				DD10000000000000000004 /* AgentTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -247,6 +270,16 @@
 				AA10000000000000000027 /* com.agent.user.plist */,
 			);
 			path = LaunchAgents;
+			sourceTree = "<group>";
+		};
+		DD10000000000000000040 /* AgentTests */ = {
+			isa = PBXGroup;
+			children = (
+				DD10000000000000000001 /* ScriptServiceTests.swift */,
+				DD10000000000000000002 /* ScriptingBridgesTests.swift */,
+				DD10000000000000000003 /* PackageGenerationTests.swift */,
+			);
+			path = AgentTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -307,6 +340,23 @@
 			productReference = CC1000000000000000001C /* AgentUser */;
 			productType = "com.apple.product-type.tool";
 		};
+		DD10000000000000000060 /* AgentTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DD10000000000000000090 /* Build configuration list for PBXNativeTarget "AgentTests" */;
+			buildPhases = (
+				DD10000000000000000050 /* Sources */,
+				DD10000000000000000053 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DD10000000000000000071 /* PBXTargetDependency */,
+			);
+			name = AgentTests;
+			productName = AgentTests;
+			productReference = DD10000000000000000004 /* AgentTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -333,6 +383,7 @@
 				AA10000000000000000060 /* Agent */,
 				BB10000000000000000060 /* AgentHelper */,
 				CC10000000000000000060 /* AgentUser */,
+				DD10000000000000000060 /* AgentTests */,
 			);
 		};
 /* End PBXProject section */
@@ -391,6 +442,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		DD10000000000000000050 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DD10000000000000000030 /* ScriptServiceTests.swift in Sources */,
+				DD10000000000000000031 /* ScriptingBridgesTests.swift in Sources */,
+				DD10000000000000000032 /* PackageGenerationTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -403,6 +464,11 @@
 			isa = PBXTargetDependency;
 			target = CC10000000000000000060 /* AgentUser */;
 			targetProxy = CC10000000000000000070 /* PBXContainerItemProxy */;
+		};
+		DD10000000000000000071 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA10000000000000000060 /* Agent */;
+			targetProxy = DD10000000000000000070 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -647,6 +713,38 @@
 			};
 			name = Release;
 		};
+		DD10000000000000000080 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = 469UCUB275;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.agent.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Agent.app/Contents/MacOS/Agent";
+			};
+			name = Debug;
+		};
+		DD10000000000000000081 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = 469UCUB275;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.agent.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Agent.app/Contents/MacOS/Agent";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -682,6 +780,15 @@
 			buildConfigurations = (
 				CC10000000000000000080 /* Debug */,
 				CC10000000000000000081 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DD10000000000000000090 /* Build configuration list for PBXNativeTarget "AgentTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DD10000000000000000080 /* Debug */,
+				DD10000000000000000081 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
