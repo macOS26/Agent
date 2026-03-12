@@ -19,6 +19,9 @@
 		AA10000000000000000039 /* UserProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000026 /* UserProtocol.swift */; };
 		AA1000000000000000003A /* OllamaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000028 /* OllamaService.swift */; };
 		AA1000000000000000003B /* ScriptService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000029 /* ScriptService.swift */; };
+		AA1000000000000000003C /* XcodeScriptingBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002A /* XcodeScriptingBridge.swift */; };
+		AA1000000000000000003D /* XcodeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002B /* XcodeService.swift */; };
+		AA1000000000000000003E /* ScriptingBridge.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002C /* ScriptingBridge.framework */; };
 		BB10000000000000000030 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001A /* main.swift */; };
 		BB10000000000000000031 /* HelperProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001B /* HelperProtocol.swift */; };
 		BB10000000000000000032 /* com.agent.helper.plist in Copy Daemon Plist */ = {isa = PBXBuildFile; fileRef = AA10000000000000000023 /* com.agent.helper.plist */; };
@@ -111,6 +114,9 @@
 		AA10000000000000000027 /* com.agent.user.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = com.agent.user.plist; sourceTree = "<group>"; };
 		AA10000000000000000028 /* OllamaService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaService.swift; sourceTree = "<group>"; };
 		AA10000000000000000029 /* ScriptService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptService.swift; sourceTree = "<group>"; };
+		AA1000000000000000002A /* XcodeScriptingBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XcodeScriptingBridge.swift; sourceTree = "<group>"; };
+		AA1000000000000000002B /* XcodeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XcodeService.swift; sourceTree = "<group>"; };
+		AA1000000000000000002C /* ScriptingBridge.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ScriptingBridge.framework; path = System/Library/Frameworks/ScriptingBridge.framework; sourceTree = SDKROOT; };
 		BB1000000000000000001A /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		BB1000000000000000001B /* HelperProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperProtocol.swift; sourceTree = "<group>"; };
 		BB1000000000000000001C /* AgentHelper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = AgentHelper; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -125,6 +131,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA1000000000000000003E /* ScriptingBridge.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -152,6 +159,7 @@
 				BB10000000000000000040 /* AgentHelper */,
 				CC10000000000000000040 /* AgentUser */,
 				AA10000000000000000042 /* Products */,
+				AA10000000000000000043 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -166,6 +174,8 @@
 				AA1000000000000000001E /* ClaudeService.swift */,
 				AA10000000000000000028 /* OllamaService.swift */,
 				AA10000000000000000029 /* ScriptService.swift */,
+				AA1000000000000000002A /* XcodeScriptingBridge.swift */,
+				AA1000000000000000002B /* XcodeService.swift */,
 				AA1000000000000000001F /* HelperProtocol.swift */,
 				AA10000000000000000026 /* UserProtocol.swift */,
 				AA10000000000000000020 /* Models.swift */,
@@ -186,6 +196,14 @@
 				CC1000000000000000001C /* AgentUser */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		AA10000000000000000043 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				AA1000000000000000002C /* ScriptingBridge.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 		BB10000000000000000040 /* AgentHelper */ = {
@@ -337,6 +355,8 @@
 				AA10000000000000000039 /* UserProtocol.swift in Sources */,
 				AA1000000000000000003A /* OllamaService.swift in Sources */,
 				AA1000000000000000003B /* ScriptService.swift in Sources */,
+				AA1000000000000000003C /* XcodeScriptingBridge.swift in Sources */,
+				AA1000000000000000003D /* XcodeService.swift in Sources */,
 				AA10000000000000000036 /* Models.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

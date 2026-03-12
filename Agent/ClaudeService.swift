@@ -49,6 +49,11 @@ final class ClaudeService {
         run_agent_script, and delete_agent_script to manage them.
         Scripts are compiled with swiftc and run as the current user.
         Scripts can import Foundation, AppKit, or ScriptingBridge for Xcode automation.
+
+        You can control Xcode directly via ScriptingBridge:
+        Use xcode_grant_permission once to authorize Automation access, then \
+        xcode_build to build a project (returns errors/warnings), and \
+        xcode_run to run a project.
         """
         if !historyContext.isEmpty {
             prompt += historyContext
@@ -164,6 +169,36 @@ final class ClaudeService {
                         "name": ["type": "string", "description": "Script filename"] as [String: Any]
                     ] as [String: Any],
                     "required": ["name"]
+                ] as [String: Any]
+            ],
+            [
+                "name": "xcode_build",
+                "description": "Build an Xcode project or workspace via ScriptingBridge. Blocks until build completes and returns errors/warnings.",
+                "input_schema": [
+                    "type": "object",
+                    "properties": [
+                        "project_path": ["type": "string", "description": "Path to .xcodeproj or .xcworkspace"] as [String: Any]
+                    ] as [String: Any],
+                    "required": ["project_path"]
+                ] as [String: Any]
+            ],
+            [
+                "name": "xcode_run",
+                "description": "Run an Xcode project via ScriptingBridge. Triggers run and returns immediately.",
+                "input_schema": [
+                    "type": "object",
+                    "properties": [
+                        "project_path": ["type": "string", "description": "Path to .xcodeproj or .xcworkspace"] as [String: Any]
+                    ] as [String: Any],
+                    "required": ["project_path"]
+                ] as [String: Any]
+            ],
+            [
+                "name": "xcode_grant_permission",
+                "description": "Grant macOS Automation permission so the agent can control Xcode via ScriptingBridge. Run this once before using xcode_build or xcode_run.",
+                "input_schema": [
+                    "type": "object",
+                    "properties": [:] as [String: Any]
                 ] as [String: Any]
             ]
         ]
