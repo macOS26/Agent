@@ -456,8 +456,8 @@ final class AgentViewModel {
     private var logFlushTask: Task<Void, Never>?
     private var streamOutputCount = 0
     private var streamTruncated = false
-    private static let maxStreamDisplay = 20_000
-    private static let maxLogSize = 60_000
+    private static let maxStreamDisplay = 100_000
+    private static let maxLogSize = 200_000
 
     private func appendLog(_ message: String) {
         let timestamp = Self.timestampFormatter.string(from: Date())
