@@ -115,13 +115,11 @@ final class OllamaService {
         - Element arrays: `app.accounts?()` returns SBElementArray, iterate with `.object(at: i) as? Type`
         - Properties are @objc optional: always use `?.` and `??` for defaults
         - Methods like moveTo, delete: `object.moveTo?(target as? SBObject)`
-        - For apps not yet in ScriptingBridges, you can generate new bridge files:
-          1. Clone https://github.com/SuperBox64/Swift-Scripting if not already at ~/Documents/Agent/Swift-Scripting
-          2. Run: `sdef /Applications/AppName.app | sdp -fh --basename AppName`
-          3. Run: `python3 ~/Documents/Agent/Swift-Scripting/sbhc.py AppName.h > AppName.swift`
-          4. Remove duplicate SBObjectProtocol/SBApplicationProtocol (they are in Common.swift)
-          5. Remove standalone `import AppKit` / `import ScriptingBridge` lines (use @_exported from Common.swift)
-          6. Copy the generated .swift file to ~/Documents/Agent/agents/Sources/ScriptingBridges/
+        - For apps not yet in ScriptingBridges, generate a new bridge file using the generate_bridge script:
+          1. Run: `run_agent_script generate_bridge` with arguments: `/Applications/AppName.app ~/Documents/Agent/agents/Sources/ScriptingBridges`
+          2. Remove duplicate SBObjectProtocol/SBApplicationProtocol from the output (they are in Common.swift)
+          3. Remove standalone `import` lines (Common.swift has @_exported imports)
+          The script handles the full sdef → sdp → Swift conversion pipeline automatically.
 
         You can also control Xcode directly via built-in tools:
         Use xcode_grant_permission once to authorize Automation access, then \
