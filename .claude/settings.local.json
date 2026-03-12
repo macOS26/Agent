@@ -90,7 +90,11 @@
       "Bash(cd ~/Documents/Agent/agents/Sources/XCFScriptingBridges && for d in */; do mv \"$d\"*.swift . 2>/dev/null; done && rm -rf */  && ls *.swift | sort)",
       "Bash(find /Users/toddbruss/Documents/GitHub/Agent -path \"*ExampleScripts*\" -type f 2>/dev/null | head -30)",
       "Bash(xcodebuild -project Agent.xcodeproj -target Agent -showBuildSettings 2>&1 | grep -i \"resource\\\\|bundle\\\\|copy\" | head -20)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(git -C /Users/toddbruss/Documents/GitHub/Agent log --oneline --all -20)",
+      "Bash(git -C /Users/toddbruss/Documents/GitHub/Agent show HEAD:Agent/ScriptService.swift | head -100)",
+      "Bash(git -C /Users/toddbruss/Documents/GitHub/Agent show 7bdaefd:Agent/ScriptService.swift | grep -A 10 \"resourcePath\")",
+      "Bash(git -C /Users/toddbruss/Documents/GitHub/Agent ls-tree -r --name-only 7bdaefd | grep -i \"bridge\\\\|example\" | head -30)"
     ]
   }
 }
