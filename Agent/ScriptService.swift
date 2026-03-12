@@ -16,13 +16,14 @@ final class ScriptService {
         let size: Int
     }
 
-    /// Ensure the package directory structure exists, ScriptingBridges are installed, and Package.swift is present
+    /// Ensure the package directory structure exists, ScriptingBridges and example scripts are installed, and Package.swift is present
     private func ensurePackage() {
         let fm = FileManager.default
         if !fm.fileExists(atPath: sourcesDir.path) {
             try? fm.createDirectory(at: sourcesDir, withIntermediateDirectories: true)
         }
         installScriptingBridges()
+        installExampleScripts()
         regeneratePackageSwift()
     }
 
@@ -37,6 +38,25 @@ final class ScriptService {
               fm.fileExists(atPath: bundleDir.path) else { return }
 
         try? fm.copyItem(at: bundleDir, to: destDir)
+    }
+
+    /// Copy bundled example scripts to ~/Documents/Agent/agents/Sources/ (only if not already present)
+    private func installExampleScripts() {
+        let fm = FileManager.default
+        guard let bundleDir = Bundle.main.resourcePath.map({ URL(fileURLWithPath: $0) })?
+            .appendingPathComponent("ExampleScripts"),
+              fm.fileExists(atPath: bundleDir.path),
+              let examples = try? fm.contentsOfDirectory(atPath: bundleDir.path) else { return }
+
+        for dirName in examples {
+            let srcDir = bundleDir.appendingPathComponent(dirName)
+            let destDir = sourcesDir.appendingPathComponent(dirName)
+            // Only install if the script doesn't already exist
+            guard !fm.fileExists(atPath: destDir.path) else { continue }
+            var isDir: ObjCBool = false
+            guard fm.fileExists(atPath: srcDir.path, isDirectory: &isDir), isDir.boolValue else { continue }
+            try? fm.copyItem(at: srcDir, to: destDir)
+        }
     }
 
     /// Regenerate Package.swift based on existing script directories under Sources/
@@ -109,12 +129,15 @@ final class ScriptService {
         return try? String(contentsOf: mainPath, encoding: .utf8)
     }
 
-    private static let shebang = "#!/usr/bin/env swift"
-
-    /// Ensure content starts with a shebang line
-    private func ensureShebang(_ content: String) -> String {
-        if content.hasPrefix(Self.shebang) { return content }
-        return Self.shebang + "\n" + content
+    /// Strip any shebang line — scripts are compiled via swift build, not run directly
+    private func stripShebang(_ content: String) -> String {
+        if content.hasPrefix("#!/") {
+            // Remove the first line
+            if let newline = content.firstIndex(of: "\n") {
+                return String(content[content.index(after: newline)...])
+            }
+        }
+        return content
     }
 
     /// Create a new script as Sources/{name}/main.swift
@@ -129,7 +152,7 @@ final class ScriptService {
             return "Error: script '\(scriptName)' already exists. Use update_agent_script to modify it."
         }
 
-        let final = ensureShebang(content)
+        let final = stripShebang(content)
         do {
             try fm.createDirectory(at: scriptDir, withIntermediateDirectories: true)
             try final.write(to: mainFile, atomically: true, encoding: .utf8)
@@ -150,7 +173,7 @@ final class ScriptService {
             return "Error: script '\(scriptName)' not found. Use create_agent_script to create it."
         }
 
-        let final = ensureShebang(content)
+        let final = stripShebang(content)
         do {
             try final.write(to: mainFile, atomically: true, encoding: .utf8)
             return "Updated \(scriptName) (\(final.count) bytes)"
