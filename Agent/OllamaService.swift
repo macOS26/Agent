@@ -7,6 +7,8 @@ final class OllamaService {
     let baseURL: URL
     let supportsVision: Bool
 
+    var onStreamText: (@MainActor @Sendable (String) -> Void)?
+
     let historyContext: String
     let userHome: String
     let userName: String
@@ -30,6 +32,7 @@ final class OllamaService {
         running scripts, reading/writing user files, and anything that does NOT need root. \
         Home directory ~ works normally as "\(userHome)".
 
+        
         2. execute_command — runs as ROOT via a privileged launch daemon. \
         ONLY use this when root is truly required: installing system packages, \
         modifying /System or /Library, managing launchd services, disk operations, \
@@ -44,6 +47,12 @@ final class OllamaService {
         You have memory of previous tasks — build on past results. \
         NEVER ask clarifying questions — always proceed with the most reasonable interpretation. \
         ALWAYS use tools to take action. Do not just describe what you would do — do it.
+
+        You can create, manage, and run Swift automation scripts stored in ~/Documents/Agent/agents/.
+        Use list_agent_scripts, create_agent_script, read_agent_script, update_agent_script, \
+        run_agent_script, and delete_agent_script to manage them.
+        Scripts are compiled with swiftc and run as the current user.
+        Scripts can import Foundation, AppKit, or ScriptingBridge for Xcode automation.
         """
         if supportsVision {
             prompt += """
@@ -108,6 +117,90 @@ final class OllamaService {
                             ] as [String: Any]
                         ] as [String: Any],
                         "required": ["summary"]
+                    ] as [String: Any]
+                ] as [String: Any]
+            ],
+            [
+                "type": "function",
+                "function": [
+                    "name": "list_agent_scripts",
+                    "description": "List all Swift automation scripts in ~/Documents/Agent/agents/",
+                    "parameters": [
+                        "type": "object",
+                        "properties": [:] as [String: Any]
+                    ] as [String: Any]
+                ] as [String: Any]
+            ],
+            [
+                "type": "function",
+                "function": [
+                    "name": "read_agent_script",
+                    "description": "Read the source code of a Swift automation script.",
+                    "parameters": [
+                        "type": "object",
+                        "properties": [
+                            "name": ["type": "string", "description": "Script name (with or without .swift)"] as [String: Any]
+                        ] as [String: Any],
+                        "required": ["name"]
+                    ] as [String: Any]
+                ] as [String: Any]
+            ],
+            [
+                "type": "function",
+                "function": [
+                    "name": "create_agent_script",
+                    "description": "Create a new Swift automation script in ~/Documents/Agent/agents/",
+                    "parameters": [
+                        "type": "object",
+                        "properties": [
+                            "name": ["type": "string", "description": "Script filename"] as [String: Any],
+                            "content": ["type": "string", "description": "Swift source code"] as [String: Any]
+                        ] as [String: Any],
+                        "required": ["name", "content"]
+                    ] as [String: Any]
+                ] as [String: Any]
+            ],
+            [
+                "type": "function",
+                "function": [
+                    "name": "update_agent_script",
+                    "description": "Update an existing Swift automation script.",
+                    "parameters": [
+                        "type": "object",
+                        "properties": [
+                            "name": ["type": "string", "description": "Script filename"] as [String: Any],
+                            "content": ["type": "string", "description": "New Swift source code"] as [String: Any]
+                        ] as [String: Any],
+                        "required": ["name", "content"]
+                    ] as [String: Any]
+                ] as [String: Any]
+            ],
+            [
+                "type": "function",
+                "function": [
+                    "name": "run_agent_script",
+                    "description": "Compile and execute a Swift script from ~/Documents/Agent/agents/ using swiftc.",
+                    "parameters": [
+                        "type": "object",
+                        "properties": [
+                            "name": ["type": "string", "description": "Script filename"] as [String: Any],
+                            "arguments": ["type": "string", "description": "Optional command-line arguments"] as [String: Any]
+                        ] as [String: Any],
+                        "required": ["name"]
+                    ] as [String: Any]
+                ] as [String: Any]
+            ],
+            [
+                "type": "function",
+                "function": [
+                    "name": "delete_agent_script",
+                    "description": "Delete a Swift automation script.",
+                    "parameters": [
+                        "type": "object",
+                        "properties": [
+                            "name": ["type": "string", "description": "Script filename"] as [String: Any]
+                        ] as [String: Any],
+                        "required": ["name"]
                     ] as [String: Any]
                 ] as [String: Any]
             ]
@@ -258,7 +351,9 @@ final class OllamaService {
 
         if let text = message["content"] as? String, !text.isEmpty {
             // Check if model wrote a tool call as plain text (common with Ollama models)
-            let toolNames = ["execute_user_command", "execute_command", "task_complete"]
+            let toolNames = ["execute_user_command", "execute_command", "task_complete",
+                              "list_agent_scripts", "read_agent_script", "create_agent_script",
+                              "update_agent_script", "run_agent_script", "delete_agent_script"]
             var extractedTool = false
 
             for toolName in toolNames {
