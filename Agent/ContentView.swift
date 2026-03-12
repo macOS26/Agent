@@ -192,7 +192,7 @@ struct ContentView: View {
             if showSplash {
                 Color(.windowBackgroundColor)
                     .overlay {
-                        Image(nsImage: NSApp.applicationIconImage)
+                        Image("AgentIcon")
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                             .padding(40)
