@@ -1,5 +1,5 @@
 import Foundation
-import ScriptingBridges
+import SystemEventsBridge
 
 // Running Apps — lists running applications via System Events
 

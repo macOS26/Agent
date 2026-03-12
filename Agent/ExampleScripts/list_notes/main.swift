@@ -1,5 +1,5 @@
 import Foundation
-import ScriptingBridges
+import NotesBridge
 
 // List Notes — shows recent notes from Notes.app
 

@@ -9,6 +9,9 @@ final class ScriptService {
 
     private var sourcesDir: URL { Self.agentsDir.appendingPathComponent("Sources") }
 
+    /// Names of infrastructure directories that are not user scripts
+    private static let reservedDirs: Set<String> = ["ScriptingBridges", "ScriptingBridgeCommon"]
+
     struct ScriptInfo {
         let name: String
         let path: String
@@ -16,7 +19,7 @@ final class ScriptService {
         let size: Int
     }
 
-    /// Ensure the package directory structure exists, ScriptingBridges and example scripts are installed, and Package.swift is present
+    /// Ensure the package directory structure exists, bridges and example scripts are installed, and Package.swift is present
     private func ensurePackage() {
         let fm = FileManager.default
         if !fm.fileExists(atPath: sourcesDir.path) {
@@ -27,18 +30,125 @@ final class ScriptService {
         regeneratePackageSwift()
     }
 
-    /// Copy ScriptingBridges from the app bundle to ~/Documents/Agent/agents/Sources/ if not already present
+    // MARK: - Bridge Installation
+
+    /// Install ScriptingBridges as individual per-app bridge targets + ScriptingBridgeCommon
     private func installScriptingBridges() {
         let fm = FileManager.default
-        let destDir = sourcesDir.appendingPathComponent("ScriptingBridges")
-        guard !fm.fileExists(atPath: destDir.path) else { return }
+
+        // Migrate from old monolithic layout if present
+        migrateOldBridgesIfNeeded()
+
+        let commonDir = sourcesDir.appendingPathComponent("ScriptingBridgeCommon")
 
         guard let bundleDir = Bundle.main.resourcePath.map({ URL(fileURLWithPath: $0) })?
             .appendingPathComponent("ScriptingBridges"),
               fm.fileExists(atPath: bundleDir.path) else { return }
 
-        try? fm.copyItem(at: bundleDir, to: destDir)
+        // Install ScriptingBridgeCommon (Common.swift)
+        if !fm.fileExists(atPath: commonDir.path) {
+            try? fm.createDirectory(at: commonDir, withIntermediateDirectories: true)
+            let src = bundleDir.appendingPathComponent("Common.swift")
+            let dst = commonDir.appendingPathComponent("Common.swift")
+            if fm.fileExists(atPath: src.path) {
+                try? fm.copyItem(at: src, to: dst)
+            }
+        }
+
+        // Install individual bridge targets (e.g., MailBridge/Mail.swift)
+        guard let files = try? fm.contentsOfDirectory(atPath: bundleDir.path) else { return }
+        for file in files where file.hasSuffix(".swift") && file != "Common.swift" {
+            let bridgeName = file.replacingOccurrences(of: ".swift", with: "") + "Bridge"
+            let bridgeDir = sourcesDir.appendingPathComponent(bridgeName)
+            guard !fm.fileExists(atPath: bridgeDir.path) else { continue }
+            try? fm.createDirectory(at: bridgeDir, withIntermediateDirectories: true)
+            let src = bundleDir.appendingPathComponent(file)
+            let dst = bridgeDir.appendingPathComponent(file)
+            try? fm.copyItem(at: src, to: dst)
+        }
     }
+
+    /// Migrate old monolithic ScriptingBridges directory to per-bridge layout
+    private func migrateOldBridgesIfNeeded() {
+        let fm = FileManager.default
+        let oldDir = sourcesDir.appendingPathComponent("ScriptingBridges")
+        guard fm.fileExists(atPath: oldDir.path) else { return }
+
+        // Check if it's the old monolithic layout (has Common.swift directly inside)
+        let oldCommon = oldDir.appendingPathComponent("Common.swift")
+        guard fm.fileExists(atPath: oldCommon.path) else { return }
+
+        // Move Common.swift → ScriptingBridgeCommon/
+        let commonDir = sourcesDir.appendingPathComponent("ScriptingBridgeCommon")
+        if !fm.fileExists(atPath: commonDir.path) {
+            try? fm.createDirectory(at: commonDir, withIntermediateDirectories: true)
+            try? fm.copyItem(at: oldCommon, to: commonDir.appendingPathComponent("Common.swift"))
+        }
+
+        // Move each bridge file → {Name}Bridge/
+        if let files = try? fm.contentsOfDirectory(atPath: oldDir.path) {
+            for file in files where file.hasSuffix(".swift") && file != "Common.swift" {
+                let bridgeName = file.replacingOccurrences(of: ".swift", with: "") + "Bridge"
+                let bridgeDir = sourcesDir.appendingPathComponent(bridgeName)
+                if !fm.fileExists(atPath: bridgeDir.path) {
+                    try? fm.createDirectory(at: bridgeDir, withIntermediateDirectories: true)
+                    try? fm.copyItem(
+                        at: oldDir.appendingPathComponent(file),
+                        to: bridgeDir.appendingPathComponent(file)
+                    )
+                }
+            }
+        }
+
+        // Remove old monolithic directory
+        try? fm.removeItem(at: oldDir)
+
+        // Also update any existing scripts that use `import ScriptingBridges`
+        migrateScriptImports()
+    }
+
+    /// Update existing scripts from `import ScriptingBridges` to specific bridge imports
+    private func migrateScriptImports() {
+        let fm = FileManager.default
+        let sourcesPath = sourcesDir.path
+        guard let dirs = try? fm.contentsOfDirectory(atPath: sourcesPath) else { return }
+
+        for dirName in dirs where !isReservedDir(dirName) {
+            let mainPath = sourcesPath + "/" + dirName + "/main.swift"
+            guard let content = try? String(contentsOfFile: mainPath, encoding: .utf8),
+                  content.contains("import ScriptingBridges") else { continue }
+
+            // Detect which bridges the script actually uses by checking for protocol/type prefixes
+            let bridgeDeps = detectBridgeDependencies(in: content)
+
+            if !bridgeDeps.isEmpty {
+                let newImports = bridgeDeps.sorted().map { "import \($0)" }.joined(separator: "\n")
+                let updated = content.replacingOccurrences(of: "import ScriptingBridges", with: newImports)
+                try? updated.write(toFile: mainPath, atomically: true, encoding: .utf8)
+            }
+        }
+    }
+
+    /// Detect which bridge targets a script uses based on type prefixes in the source
+    private func detectBridgeDependencies(in content: String) -> Set<String> {
+        let fm = FileManager.default
+        let sourcesPath = sourcesDir.path
+        guard let dirs = try? fm.contentsOfDirectory(atPath: sourcesPath) else { return [] }
+
+        var deps = Set<String>()
+        for dirName in dirs where dirName.hasSuffix("Bridge") {
+            let baseName = dirName.replacingOccurrences(of: "Bridge", with: "")
+            // Check if the script references types from this bridge (e.g., "MailApplication", "FinderItem")
+            if content.contains(baseName + "Application") ||
+               content.contains(baseName + "GenericMethods") ||
+               content.range(of: "\\b\(baseName)\\w+", options: .regularExpression) != nil {
+                deps.insert(dirName)
+            }
+        }
+        return deps
+    }
+
+    // MARK: - Example Scripts
 
     /// Copy bundled example scripts to ~/Documents/Agent/agents/Sources/ (only if not already present)
     private func installExampleScripts() {
@@ -51,7 +161,6 @@ final class ScriptService {
         for dirName in examples {
             let srcDir = bundleDir.appendingPathComponent(dirName)
             let destDir = sourcesDir.appendingPathComponent(dirName)
-            // Only install if the script doesn't already exist
             guard !fm.fileExists(atPath: destDir.path) else { continue }
             var isDir: ObjCBool = false
             guard fm.fileExists(atPath: srcDir.path, isDirectory: &isDir), isDir.boolValue else { continue }
@@ -59,32 +168,79 @@ final class ScriptService {
         }
     }
 
-    /// Regenerate Package.swift based on existing script directories under Sources/
+    // MARK: - Package.swift Generation
+
+    /// Check if a directory name is reserved (not a user script)
+    private func isReservedDir(_ name: String) -> Bool {
+        Self.reservedDirs.contains(name) || name.hasSuffix("Bridge")
+    }
+
+    /// Discover all installed bridge targets (directories ending in "Bridge")
+    private func installedBridgeTargets() -> [String] {
+        let fm = FileManager.default
+        let sourcesPath = sourcesDir.path
+        guard let dirs = try? fm.contentsOfDirectory(atPath: sourcesPath) else { return [] }
+        return dirs.filter { $0.hasSuffix("Bridge") }.sorted()
+    }
+
+    /// Scan a script's main.swift for `import *Bridge` to determine its bridge dependencies
+    private func scriptBridgeDeps(scriptName: String) -> [String] {
+        let mainPath = sourcesDir.appendingPathComponent(scriptName)
+            .appendingPathComponent("main.swift")
+        guard let content = try? String(contentsOf: mainPath, encoding: .utf8) else { return [] }
+
+        let bridges = installedBridgeTargets()
+        return bridges.filter { bridge in
+            content.contains("import \(bridge)")
+        }
+    }
+
+    /// Regenerate Package.swift based on existing script directories and their bridge imports
     private func regeneratePackageSwift() {
         let fm = FileManager.default
         let sourcesPath = sourcesDir.path
-        let dirs = (try? fm.contentsOfDirectory(atPath: sourcesPath))?.filter { name in
-            // Skip the ScriptingBridges library directory
-            guard name != "ScriptingBridges" else { return false }
+        let allDirs = (try? fm.contentsOfDirectory(atPath: sourcesPath))?.filter { name in
             var isDir: ObjCBool = false
             return fm.fileExists(atPath: sourcesPath + "/" + name, isDirectory: &isDir) && isDir.boolValue
         }.sorted() ?? []
 
-        // Check if ScriptingBridges library exists
-        let hasBridges = fm.fileExists(atPath: sourcesPath + "/ScriptingBridges")
+        let hasCommon = fm.fileExists(atPath: sourcesPath + "/ScriptingBridgeCommon")
+        let bridgeTargets = allDirs.filter { $0.hasSuffix("Bridge") }
+        let scriptDirs = allDirs.filter { !isReservedDir($0) }
 
-        let bridgeTarget = hasBridges
-            ? "        .target(name: \"ScriptingBridges\", path: \"Sources/ScriptingBridges\")"
-            : nil
+        var targets: [String] = []
 
-        let execTargets = dirs.map { name in
-            let deps = hasBridges
-                ? ", dependencies: [\"ScriptingBridges\"]"
-                : ""
-            return "        .executableTarget(name: \"\(name)\"\(deps), path: \"Sources/\(name)\")"
+        // ScriptingBridgeCommon target
+        if hasCommon {
+            targets.append(
+                "        .target(name: \"ScriptingBridgeCommon\", path: \"Sources/ScriptingBridgeCommon\")"
+            )
         }
 
-        let allTargets = ([bridgeTarget].compactMap { $0 } + execTargets).joined(separator: ",\n")
+        // Individual bridge targets (each depends on ScriptingBridgeCommon)
+        for bridge in bridgeTargets {
+            let dep = hasCommon ? ", dependencies: [\"ScriptingBridgeCommon\"]" : ""
+            targets.append(
+                "        .target(name: \"\(bridge)\"\(dep), path: \"Sources/\(bridge)\")"
+            )
+        }
+
+        // Executable script targets (depend on their imported bridges)
+        for script in scriptDirs {
+            let deps = scriptBridgeDeps(scriptName: script)
+            let depStr: String
+            if deps.isEmpty {
+                depStr = ""
+            } else {
+                let depList = deps.map { "\"\($0)\"" }.joined(separator: ", ")
+                depStr = ", dependencies: [\(depList)]"
+            }
+            targets.append(
+                "        .executableTarget(name: \"\(script)\"\(depStr), path: \"Sources/\(script)\")"
+            )
+        }
+
+        let allTargets = targets.joined(separator: ",\n")
 
         let packageSwift = """
         // swift-tools-version: 6.0
@@ -103,6 +259,8 @@ final class ScriptService {
         try? packageSwift.write(to: packagePath, atomically: true, encoding: .utf8)
     }
 
+    // MARK: - Script CRUD
+
     /// List all scripts (each is a directory under Sources/ containing main.swift)
     func listScripts() -> [ScriptInfo] {
         ensurePackage()
@@ -110,7 +268,7 @@ final class ScriptService {
         let sourcesPath = sourcesDir.path
         guard let dirs = try? fm.contentsOfDirectory(atPath: sourcesPath) else { return [] }
 
-        return dirs.filter { $0 != "ScriptingBridges" }.sorted().compactMap { dirName in
+        return dirs.filter { !isReservedDir($0) }.sorted().compactMap { dirName in
             let mainPath = sourcesPath + "/" + dirName + "/main.swift"
             guard let attrs = try? fm.attributesOfItem(atPath: mainPath) else { return nil }
             return ScriptInfo(
@@ -132,7 +290,6 @@ final class ScriptService {
     /// Strip any shebang line — scripts are compiled via swift build, not run directly
     private func stripShebang(_ content: String) -> String {
         if content.hasPrefix("#!/") {
-            // Remove the first line
             if let newline = content.firstIndex(of: "\n") {
                 return String(content[content.index(after: newline)...])
             }
@@ -176,6 +333,7 @@ final class ScriptService {
         let final = stripShebang(content)
         do {
             try final.write(to: mainFile, atomically: true, encoding: .utf8)
+            regeneratePackageSwift()
             return "Updated \(scriptName) (\(final.count) bytes)"
         } catch {
             return "Error updating script: \(error.localizedDescription)"

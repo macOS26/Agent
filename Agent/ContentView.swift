@@ -28,7 +28,9 @@ struct ContentView: View {
                         wasActive: viewModel.rootWasActive,
                         isBusy: viewModel.isRunning
                     )
-                    Text("Root")
+                    Toggle("Root", isOn: $viewModel.rootEnabled)
+                        .toggleStyle(.switch)
+                        .controlSize(.mini)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -54,9 +56,9 @@ struct ContentView: View {
                     HStack(spacing: 4) {
                         ProgressView()
                             .controlSize(.small)
-                        Text(viewModel.userServiceActive || viewModel.rootServiceActive ? "Executing..." : "Running...")
+                        Text(viewModel.rootServiceActive ? "Root executing..." : viewModel.userServiceActive ? "Executing..." : "Running...")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(viewModel.rootServiceActive ? .orange : .secondary)
                     }
                 }
 

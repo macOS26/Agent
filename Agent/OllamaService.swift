@@ -57,40 +57,49 @@ final class OllamaService {
         if a script for the same task already exists. If one does, use update_agent_script to \
         modify it instead of creating a duplicate. Only use create_agent_script for genuinely new tasks.
 
-        IMPORTANT: Scripts can `import ScriptingBridges` for type-safe macOS app automation. \
+        IMPORTANT: Scripts import individual bridge targets for type-safe macOS app automation. \
+        Each app has its own bridge module (e.g., `import MailBridge`, `import FinderBridge`). \
+        Only import the bridges your script actually needs — this keeps builds fast and isolated. \
         ScriptingBridge is the cleanest and preferred approach. AppleScript via osascript is \
         still allowed but ScriptingBridge should be tried first. \
         Do NOT include shebang lines (#!/usr/bin/env swift) — scripts are compiled via swift build.
 
         Before writing a ScriptingBridge script, ALWAYS read the bridge file first to learn \
         the available protocols, properties, and methods:
-        `cat ~/Documents/Agent/agents/Sources/ScriptingBridges/Mail.swift`
+        `cat ~/Documents/Agent/agents/Sources/MailBridge/Mail.swift`
 
-        App bridge reference (protocol name → bundle identifier):
-        AutomatorApplication → com.apple.Automator
-        CalendarApplication → com.apple.iCal
-        ContactsApplication → com.apple.AddressBook
-        FinderApplication → com.apple.finder
-        ImageEventsApplication → com.apple.systemevents (Image Events)
-        MailApplication → com.apple.mail
-        MessagesApplication → com.apple.MobileSMS
-        MusicApplication → com.apple.Music
-        NotesApplication → com.apple.Notes
-        NumbersApplication → com.apple.iWork.Numbers
-        PagesApplication → com.apple.iWork.Pages
-        PhotosApplication → com.apple.Photos
-        RemindersApplication → com.apple.reminders
-        ScriptEditorApplication → com.apple.ScriptEditor2
-        ShortcutsApplication → com.apple.shortcuts
-        SystemEventsApplication → com.apple.systemevents
-        TerminalApplication → com.apple.Terminal
-        TVApplication → com.apple.TV
-        XcodeApplication → com.apple.dt.Xcode
+        App bridge reference (import → protocol → bundle identifier):
+        import AutomatorBridge → AutomatorApplication → com.apple.Automator
+        import CalendarBridge → CalendarApplication → com.apple.iCal
+        import ContactsBridge → ContactsApplication → com.apple.AddressBook
+        import FinderBridge → FinderApplication → com.apple.finder
+        import ImageEventsBridge → ImageEventsApplication → com.apple.systemevents (Image Events)
+        import MailBridge → MailApplication → com.apple.mail
+        import MessagesBridge → MessagesApplication → com.apple.MobileSMS
+        import MusicBridge → MusicApplication → com.apple.Music
+        import NotesBridge → NotesApplication → com.apple.Notes
+        import NumbersBridge → NumbersApplication → com.apple.iWork.Numbers
+        import PagesBridge → PagesApplication → com.apple.iWork.Pages
+        import PhotosBridge → PhotosApplication → com.apple.Photos
+        import RemindersBridge → RemindersApplication → com.apple.reminders
+        import ScriptEditorBridge → ScriptEditorApplication → com.apple.ScriptEditor2
+        import ShortcutsBridge → ShortcutsApplication → com.apple.shortcuts
+        import SystemEventsBridge → SystemEventsApplication → com.apple.systemevents
+        import TerminalBridge → TerminalApplication → com.apple.Terminal
+        import TVBridge → TVApplication → com.apple.TV
+        import XcodeBridge → XcodeApplication → com.apple.dt.Xcode
+        import SafariBridge → SafariApplication → com.apple.Safari
+        import GoogleChromeBridge → GoogleChromeApplication → com.google.Chrome
+        import FirefoxBridge → FirefoxApplication → org.mozilla.firefox
+        import KeynoteBridge → KeynoteApplication → com.apple.iWork.Keynote
+        import PreviewBridge → PreviewApplication → com.apple.Preview
+        import TextEditBridge → TextEditApplication → com.apple.TextEdit
+        import QuickTimePlayerBridge → QuickTimePlayerApplication → com.apple.QuickTimePlayerX
 
         ScriptingBridge script pattern:
         ```
         import Foundation
-        import ScriptingBridges
+        import MailBridge
 
         guard let mail: MailApplication = SBApplication(bundleIdentifier: "com.apple.mail") else {
             print("Could not connect to Mail")
