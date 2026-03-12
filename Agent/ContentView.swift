@@ -362,74 +362,105 @@ struct SettingsView: View {
     @Bindable var viewModel: AgentViewModel
 
     var body: some View {
-        Form {
-            Section("Provider") {
+        VStack(alignment: .leading, spacing: 16) {
+            // Provider toggle
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Provider")
+                    .font(.headline)
                 Picker("Provider", selection: $viewModel.selectedProvider) {
                     ForEach(APIProvider.allCases, id: \.self) { provider in
                         Text(provider.displayName).tag(provider)
                     }
                 }
                 .pickerStyle(.segmented)
+                .labelsHidden()
             }
 
-            if viewModel.selectedProvider == .claude {
-                Section("Claude API") {
-                    SecureField("API Key", text: $viewModel.apiKey)
-                        .frame(width: 300)
+            Divider()
 
-                    Picker("Model", selection: $viewModel.selectedModel) {
-                        Text("Claude Sonnet 4").tag("claude-sonnet-4-20250514")
-                        Text("Claude Opus 4").tag("claude-opus-4-20250514")
-                        Text("Claude Haiku 3.5").tag("claude-haiku-3-5-20241022")
+            if viewModel.selectedProvider == .claude {
+                // Claude settings
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Claude API")
+                        .font(.headline)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("API Key").font(.caption).foregroundStyle(.secondary)
+                        SecureField("sk-ant-...", text: $viewModel.apiKey)
+                            .textFieldStyle(.roundedBorder)
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Model").font(.caption).foregroundStyle(.secondary)
+                        Picker("Model", selection: $viewModel.selectedModel) {
+                            Text("Claude Sonnet 4").tag("claude-sonnet-4-20250514")
+                            Text("Claude Opus 4").tag("claude-opus-4-20250514")
+                            Text("Claude Haiku 3.5").tag("claude-haiku-3-5-20241022")
+                        }
+                        .labelsHidden()
                     }
                 }
             } else {
-                Section("Ollama API") {
-                    TextField("Endpoint", text: $viewModel.ollamaEndpoint)
-                        .frame(width: 300)
-                    SecureField("API Key (optional for local)", text: $viewModel.ollamaAPIKey)
-                        .frame(width: 300)
+                // Ollama settings
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Ollama API")
+                        .font(.headline)
 
-                    HStack {
-                        if viewModel.ollamaModels.isEmpty {
-                            TextField("Model", text: $viewModel.ollamaModel)
-                                .frame(width: 220)
-                        } else {
-                            Picker("Model", selection: $viewModel.ollamaModel) {
-                                ForEach(viewModel.ollamaModels) { model in
-                                    HStack(spacing: 4) {
-                                        Text(model.name)
-                                        if model.supportsVision {
-                                            Image(systemName: "eye")
-                                                .foregroundStyle(.blue)
-                                                .font(.caption2)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Endpoint").font(.caption).foregroundStyle(.secondary)
+                        TextField("https://ollama.com/api/chat", text: $viewModel.ollamaEndpoint)
+                            .textFieldStyle(.roundedBorder)
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("API Key").font(.caption).foregroundStyle(.secondary)
+                        SecureField("Optional for local", text: $viewModel.ollamaAPIKey)
+                            .textFieldStyle(.roundedBorder)
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Model").font(.caption).foregroundStyle(.secondary)
+                        HStack {
+                            if viewModel.ollamaModels.isEmpty {
+                                TextField("Model name", text: $viewModel.ollamaModel)
+                                    .textFieldStyle(.roundedBorder)
+                            } else {
+                                Picker("Model", selection: $viewModel.ollamaModel) {
+                                    ForEach(viewModel.ollamaModels) { model in
+                                        HStack(spacing: 4) {
+                                            Text(model.name)
+                                            if model.supportsVision {
+                                                Image(systemName: "eye")
+                                                    .foregroundStyle(.blue)
+                                                    .font(.caption2)
+                                            }
                                         }
+                                        .tag(model.name)
                                     }
-                                    .tag(model.name)
+                                }
+                                .labelsHidden()
+                            }
+
+                            Button {
+                                viewModel.fetchOllamaModels()
+                            } label: {
+                                if viewModel.isFetchingModels {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
                                 }
                             }
-                            .frame(width: 260)
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(viewModel.isFetchingModels)
+                            .help("Fetch available models")
                         }
-
-                        Button {
-                            viewModel.fetchOllamaModels()
-                        } label: {
-                            if viewModel.isFetchingModels {
-                                ProgressView()
-                                    .controlSize(.small)
-                            } else {
-                                Image(systemName: "arrow.clockwise")
-                            }
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
-                        .disabled(viewModel.isFetchingModels)
-                        .help("Fetch available models")
                     }
                 }
             }
         }
-        .padding()
-        .frame(width: 420)
+        .padding(20)
+        .frame(width: 360)
     }
 }
