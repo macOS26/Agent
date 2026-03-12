@@ -472,6 +472,7 @@ final class AgentViewModel {
     private var streamTruncated = false
     private static let maxStreamDisplay = 20_000
     private static let maxLogSize = 60_000
+    private var recentOutputHashes: Set<Int> = []
 
     private func appendLog(_ message: String) {
         let timestamp = Self.timestampFormatter.string(from: Date())
@@ -537,6 +538,7 @@ final class AgentViewModel {
         isRunning = true
         userWasActive = false
         rootWasActive = false
+        recentOutputHashes.removeAll()
 
         if !activityLog.isEmpty {
             logBuffer += "\n"
@@ -670,9 +672,16 @@ final class AgentViewModel {
                                 toolOutput = result.output
                             }
 
-                            // Truncate very long outputs for the API
-                            let truncated = toolOutput.count > 10000
-                                ? String(toolOutput.prefix(10000)) + "\n...(truncated)"
+                            // Deduplicate: skip display if we've seen this exact output before
+                            let outputHash = toolOutput.hashValue
+                            if recentOutputHashes.contains(outputHash) {
+                                appendLog("(same output as before — not shown)")
+                            }
+                            recentOutputHashes.insert(outputHash)
+
+                            // Truncate very long outputs for the API (50K keeps full bridge files)
+                            let truncated = toolOutput.count > 50_000
+                                ? String(toolOutput.prefix(50_000)) + "\n...(truncated)"
                                 : toolOutput
 
                             toolResults.append([
