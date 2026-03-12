@@ -33,6 +33,7 @@
 		CC10000000000000000032 /* com.agent.user.plist in Copy Agent Plist */ = {isa = PBXBuildFile; fileRef = AA10000000000000000027 /* com.agent.user.plist */; };
 		CC10000000000000000033 /* AgentUser in Copy User Agent */ = {isa = PBXBuildFile; fileRef = CC1000000000000000001C /* AgentUser */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		EAF3666F2F623D6A004B7E38 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = EAF3666E2F623D6A004B7E38 /* AppIcon.icon */; };
+		AA10000000000000000045 /* ScriptingBridges in Resources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002F /* ScriptingBridges */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -121,6 +122,7 @@
 		AA1000000000000000002C /* ScriptingBridge.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ScriptingBridge.framework; path = System/Library/Frameworks/ScriptingBridge.framework; sourceTree = SDKROOT; };
 		AA1000000000000000002D /* DependencyChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyChecker.swift; sourceTree = "<group>"; };
 		AA1000000000000000002E /* DependencyOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyOverlay.swift; sourceTree = "<group>"; };
+		AA1000000000000000002F /* ScriptingBridges */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ScriptingBridges; sourceTree = "<group>"; };
 		BB1000000000000000001A /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		BB1000000000000000001B /* HelperProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperProtocol.swift; sourceTree = "<group>"; };
 		BB1000000000000000001C /* AgentHelper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = AgentHelper; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -182,6 +184,7 @@
 				AA1000000000000000002B /* XcodeService.swift */,
 				AA1000000000000000002D /* DependencyChecker.swift */,
 				AA1000000000000000002E /* DependencyOverlay.swift */,
+				AA1000000000000000002F /* ScriptingBridges */,
 				AA1000000000000000001F /* HelperProtocol.swift */,
 				AA10000000000000000026 /* UserProtocol.swift */,
 				AA10000000000000000020 /* Models.swift */,
@@ -341,6 +344,7 @@
 			files = (
 				AA10000000000000000037 /* Assets.xcassets in Resources */,
 				EAF3666F2F623D6A004B7E38 /* AppIcon.icon in Resources */,
+				AA10000000000000000045 /* ScriptingBridges in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

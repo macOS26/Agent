@@ -16,13 +16,27 @@ final class ScriptService {
         let size: Int
     }
 
-    /// Ensure the package directory structure exists and Package.swift is present
+    /// Ensure the package directory structure exists, ScriptingBridges are installed, and Package.swift is present
     private func ensurePackage() {
         let fm = FileManager.default
         if !fm.fileExists(atPath: sourcesDir.path) {
             try? fm.createDirectory(at: sourcesDir, withIntermediateDirectories: true)
         }
+        installScriptingBridges()
         regeneratePackageSwift()
+    }
+
+    /// Copy ScriptingBridges from the app bundle to ~/Documents/Agent/agents/Sources/ if not already present
+    private func installScriptingBridges() {
+        let fm = FileManager.default
+        let destDir = sourcesDir.appendingPathComponent("ScriptingBridges")
+        guard !fm.fileExists(atPath: destDir.path) else { return }
+
+        guard let bundleDir = Bundle.main.resourcePath.map({ URL(fileURLWithPath: $0) })?
+            .appendingPathComponent("ScriptingBridges"),
+              fm.fileExists(atPath: bundleDir.path) else { return }
+
+        try? fm.copyItem(at: bundleDir, to: destDir)
     }
 
     /// Regenerate Package.swift based on existing script directories under Sources/
