@@ -75,7 +75,7 @@ Attach screenshots or paste images directly into Agent. Images are encoded as ba
 
 ### Multi-Provider Support
 - **Claude** (Anthropic) — Sonnet 4, Opus 4, Haiku 3.5
-- **Ollama** — any model available on your Ollama instance, with automatic vision capability detection
+- **Ollama** — cloud-hosted Ollama via API key, with automatic vision capability detection. Local Ollama support is coming soon.
 
 ### Task Memory
 Agent persists task history to `~/Library/Application Support/Agent/task_history.json`. The last 20 tasks are injected into the system prompt, giving the AI memory across sessions. It knows what it did before and can build on it.
@@ -101,7 +101,7 @@ Agent.app (SwiftUI)
 
 - macOS 26.0+
 - Xcode Command Line Tools (Agent will prompt to install if missing)
-- An Anthropic API key, or a running Ollama instance
+- An Anthropic API key, or an Ollama API key (local Ollama support coming soon)
 
 ## Getting Started
 
