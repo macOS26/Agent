@@ -51,6 +51,7 @@ final class ScriptService {
             copyPackageSwift()
         }
         copyBundledJSONFiles()
+        syncBridgesWithPackage()
         syncScriptsWithPackage()
     }
 
@@ -65,21 +66,45 @@ final class ScriptService {
         let diskScripts = Set(files.filter { $0.hasSuffix(".swift") }
             .map { $0.replacingOccurrences(of: ".swift", with: "") })
 
-        guard let content = try? String(contentsOf: packageSwiftURL, encoding: .utf8) else { return }
-        guard let arrayStart = content.range(of: "let scriptNames = [") else { return }
-        guard let arrayEnd = content[arrayStart.upperBound...].range(of: "]") else { return }
+        guard var content = try? String(contentsOf: packageSwiftURL, encoding: .utf8) else { return }
+        content = syncArray(named: "let scriptNames = [", with: diskScripts, in: content)
+        try? content.write(to: packageSwiftURL, atomically: true, encoding: .utf8)
+    }
+
+    /// Sync bridgeNames in Package.swift with actual .swift files on disk.
+    /// Excludes ScriptingBridgeCommon.swift and AgentScriptingBridge.swift (managed separately).
+    func syncBridgesWithPackage() {
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: bridgesDir.path),
+              fm.fileExists(atPath: packageSwiftURL.path) else { return }
+
+        guard let files = try? fm.contentsOfDirectory(atPath: bridgesDir.path) else { return }
+        let excluded: Set<String> = ["ScriptingBridgeCommon", "AgentScriptingBridge"]
+        let diskBridges = Set(files.filter { $0.hasSuffix(".swift") }
+            .map { $0.replacingOccurrences(of: ".swift", with: "") })
+            .subtracting(excluded)
+
+        guard var content = try? String(contentsOf: packageSwiftURL, encoding: .utf8) else { return }
+        content = syncArray(named: "let bridgeNames = [", with: diskBridges, in: content)
+        try? content.write(to: packageSwiftURL, atomically: true, encoding: .utf8)
+    }
+
+    /// Replace the contents of a named array in Package.swift with the given set of names.
+    /// Returns the updated content, or the original if unchanged.
+    private func syncArray(named marker: String, with diskNames: Set<String>, in content: String) -> String {
+        guard let arrayStart = content.range(of: marker) else { return content }
+        guard let arrayEnd = content[arrayStart.upperBound...].range(of: "]") else { return content }
 
         let arrayContent = content[arrayStart.upperBound..<arrayEnd.lowerBound]
-        let registeredScripts = Set(arrayContent.components(separatedBy: "\n")
+        let registered = Set(arrayContent.components(separatedBy: "\n")
             .map { $0.trimmingCharacters(in: .whitespaces).trimmingCharacters(in: CharacterSet(charactersIn: "\",")) }
             .filter { !$0.isEmpty })
 
-        guard diskScripts != registeredScripts else { return }
+        guard diskNames != registered else { return content }
 
-        let sorted = diskScripts.sorted()
+        let sorted = diskNames.sorted()
         let newArray = sorted.map { "    \"\($0)\"," }.joined(separator: "\n")
-        let newContent = content[..<arrayStart.upperBound] + "\n" + newArray + "\n" + content[arrayEnd.lowerBound...]
-        try? String(newContent).write(to: packageSwiftURL, atomically: true, encoding: .utf8)
+        return String(content[..<arrayStart.upperBound]) + "\n" + newArray + "\n" + String(content[arrayEnd.lowerBound...])
     }
 
     // MARK: - JSON files
