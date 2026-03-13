@@ -147,9 +147,13 @@ final class ScriptingBridgeQueryService: @unchecked Sendable {
         // Try perform(_:) first for element accessors that return objects
         let sel = Selector(key)
         if nsObj.responds(to: sel) {
-            if let unmanaged = nsObj.perform(sel) {
-                return unmanaged.takeUnretainedValue()
+            var result: Any?
+            let success = ObjCTry {
+                if let unmanaged = nsObj.perform(sel) {
+                    result = unmanaged.takeUnretainedValue()
+                }
             }
+            if success, let r = result { return r }
         }
         // Fallback to KVC — wraps in ObjC exception handler to avoid crashes
         // on ScriptingBridge proxy objects that return invalid pointers
