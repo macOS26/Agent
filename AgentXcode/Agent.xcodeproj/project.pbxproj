@@ -24,6 +24,7 @@
 		AA1000000000000000003F /* DependencyChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002D /* DependencyChecker.swift */; };
 		AA10000000000000000044 /* DependencyOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002E /* DependencyOverlay.swift */; };
 		AA10000000000000000045 /* ScriptingBridgeQueryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002F /* ScriptingBridgeQueryService.swift */; };
+		AA10000000000000000046 /* ObjCTry.m in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000031 /* ObjCTry.m */; };
 		BB10000000000000000030 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001A /* main.swift */; };
 		BB10000000000000000031 /* HelperProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001B /* HelperProtocol.swift */; };
 		BB10000000000000000032 /* com.agent.helper.plist in Copy Daemon Plist */ = {isa = PBXBuildFile; fileRef = AA10000000000000000023 /* com.agent.helper.plist */; };
@@ -134,6 +135,9 @@
 		AA1000000000000000002D /* DependencyChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyChecker.swift; sourceTree = "<group>"; };
 		AA1000000000000000002E /* DependencyOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyOverlay.swift; sourceTree = "<group>"; };
 		AA1000000000000000002F /* ScriptingBridgeQueryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptingBridgeQueryService.swift; sourceTree = "<group>"; };
+		AA10000000000000000030 /* ObjCTry.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ObjCTry.h; sourceTree = "<group>"; };
+		AA10000000000000000031 /* ObjCTry.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ObjCTry.m; sourceTree = "<group>"; };
+		AA10000000000000000032 /* Agent-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Agent-Bridging-Header.h"; sourceTree = "<group>"; };
 		BB1000000000000000001A /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		BB1000000000000000001B /* HelperProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperProtocol.swift; sourceTree = "<group>"; };
 		BB1000000000000000001C /* AgentHelper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = AgentHelper; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -210,6 +214,9 @@
 				AA1000000000000000002D /* DependencyChecker.swift */,
 				AA1000000000000000002E /* DependencyOverlay.swift */,
 				AA1000000000000000002F /* ScriptingBridgeQueryService.swift */,
+				AA10000000000000000030 /* ObjCTry.h */,
+				AA10000000000000000031 /* ObjCTry.m */,
+				AA10000000000000000032 /* Agent-Bridging-Header.h */,
 				AA1000000000000000001F /* HelperProtocol.swift */,
 				AA10000000000000000026 /* UserProtocol.swift */,
 				AA10000000000000000020 /* Models.swift */,
@@ -432,6 +439,7 @@
 				AA1000000000000000003F /* DependencyChecker.swift in Sources */,
 				AA10000000000000000044 /* DependencyOverlay.swift in Sources */,
 				AA10000000000000000045 /* ScriptingBridgeQueryService.swift in Sources */,
+				AA10000000000000000046 /* ObjCTry.m in Sources */,
 				AA10000000000000000036 /* Models.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -633,6 +641,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.agent.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "Agent/Agent-Bridging-Header.h";
 				SWIFT_VERSION = 6.0;
 			};
 			name = Debug;
@@ -661,6 +670,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.agent.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "Agent/Agent-Bridging-Header.h";
 				SWIFT_VERSION = 6.0;
 			};
 			name = Release;
