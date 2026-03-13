@@ -239,6 +239,12 @@ struct ContentView: View {
                     }
                 }
 
+                // Escape key to cancel running task
+                if event.keyCode == 53, viewModel.isRunning {
+                    viewModel.stop()
+                    return nil
+                }
+
                 // Up/Down arrow for prompt history
                 if true {
                     if event.keyCode == 126 { // Up arrow
