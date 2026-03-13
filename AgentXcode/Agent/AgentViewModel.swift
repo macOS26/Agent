@@ -33,16 +33,14 @@ final class AgentViewModel {
     @ObservationIgnored
     private static let _migrate: Void = {
         let defaults = UserDefaults.standard
-        guard !defaults.bool(forKey: "agentMigrationV2") else { return }
-        if let stored = defaults.string(forKey: "ollamaEndpoint"),
-           stored == "http://localhost:11434/v1/chat/completions" {
-            defaults.set("https://ollama.com/api/chat", forKey: "ollamaEndpoint")
-        }
+        guard !defaults.bool(forKey: "agentMigrationV3") else { return }
+        // ollamaEndpoint is now a constant — remove any stale/blank cached value
+        defaults.removeObject(forKey: "ollamaEndpoint")
         // Clear stale default model so user fetches from cloud
         if let model = defaults.string(forKey: "ollamaModel"), model == "llama3.1" {
             defaults.set("", forKey: "ollamaModel")
         }
-        defaults.set(true, forKey: "agentMigrationV2")
+        defaults.set(true, forKey: "agentMigrationV3")
     }()
 
     var selectedProvider: APIProvider = { _ = AgentViewModel._migrate; return APIProvider(rawValue: UserDefaults.standard.string(forKey: "agentProvider") ?? "claude") ?? .claude }() {
