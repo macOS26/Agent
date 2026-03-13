@@ -254,6 +254,6 @@ final class ScriptService {
         let agentsPath = Self.agentsDir.path
         let args = arguments.isEmpty ? "" : " \(arguments)"
 
-        return "cd '\(agentsPath)' && swift build --product '\(scriptName)' 2>&1 && .build/debug/'\(scriptName)'\(args) 2>&1"
+        return "cd '\(agentsPath)' && swift package resolve 2>&1 && swift build --product '\(scriptName)' 2>&1 && .build/debug/'\(scriptName)'\(args) 2>&1"
     }
 }
