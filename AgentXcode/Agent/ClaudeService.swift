@@ -195,6 +195,36 @@ final class ClaudeService {
     var tools: [[String: Any]] {
         [
             [
+                "name": "scripting_bridge_query",
+                "description": "Query any scriptable Mac app dynamically via ScriptingBridge. No compilation needed. Walks the object graph using ObjC dynamic dispatch. Use this FIRST for reading app data (mail, notes, music, safari, calendar, reminders, etc.).",
+                "input_schema": [
+                    "type": "object",
+                    "properties": [
+                        "bundle_id": ["type": "string", "description": "App bundle identifier (e.g. com.apple.Music)"] as [String: Any],
+                        "operations": [
+                            "type": "array",
+                            "description": "Array of operations to execute sequentially. Each has an 'action' key.",
+                            "items": [
+                                "type": "object",
+                                "properties": [
+                                    "action": ["type": "string", "description": "One of: get, iterate, index, call, filter"] as [String: Any],
+                                    "key": ["type": "string", "description": "Property key for 'get'"] as [String: Any],
+                                    "properties": ["type": "array", "items": ["type": "string"] as [String: Any], "description": "Properties to read for 'iterate'"] as [String: Any],
+                                    "limit": ["type": "integer", "description": "Max items for 'iterate' (default 50)"] as [String: Any],
+                                    "index": ["type": "integer", "description": "Array index for 'index'"] as [String: Any],
+                                    "method": ["type": "string", "description": "Method name for 'call'"] as [String: Any],
+                                    "arg": ["type": "string", "description": "Optional argument for 'call'"] as [String: Any],
+                                    "predicate": ["type": "string", "description": "NSPredicate format string for 'filter'"] as [String: Any]
+                                ] as [String: Any],
+                                "required": ["action"]
+                            ] as [String: Any]
+                        ] as [String: Any],
+                        "allow_writes": ["type": "boolean", "description": "Allow destructive operations (delete, close, move, etc.). Default false."] as [String: Any]
+                    ] as [String: Any],
+                    "required": ["bundle_id", "operations"]
+                ] as [String: Any]
+            ],
+            [
                 "name": "execute_user_command",
                 "description": "Execute a shell command as the current user (no root). Use this for most tasks: file editing, git, builds, scripts, homebrew, etc.",
                 "input_schema": [
@@ -332,36 +362,6 @@ final class ClaudeService {
                     "properties": [:] as [String: Any]
                 ] as [String: Any]
             ],
-            [
-                "name": "scripting_bridge_query",
-                "description": "Query any scriptable Mac app dynamically via ScriptingBridge. No compilation needed. Walks the object graph using ObjC dynamic dispatch.",
-                "input_schema": [
-                    "type": "object",
-                    "properties": [
-                        "bundle_id": ["type": "string", "description": "App bundle identifier (e.g. com.apple.Music)"] as [String: Any],
-                        "operations": [
-                            "type": "array",
-                            "description": "Array of operations to execute sequentially. Each has an 'action' key.",
-                            "items": [
-                                "type": "object",
-                                "properties": [
-                                    "action": ["type": "string", "description": "One of: get, iterate, index, call, filter"] as [String: Any],
-                                    "key": ["type": "string", "description": "Property key for 'get'"] as [String: Any],
-                                    "properties": ["type": "array", "items": ["type": "string"] as [String: Any], "description": "Properties to read for 'iterate'"] as [String: Any],
-                                    "limit": ["type": "integer", "description": "Max items for 'iterate' (default 50)"] as [String: Any],
-                                    "index": ["type": "integer", "description": "Array index for 'index'"] as [String: Any],
-                                    "method": ["type": "string", "description": "Method name for 'call'"] as [String: Any],
-                                    "arg": ["type": "string", "description": "Optional argument for 'call'"] as [String: Any],
-                                    "predicate": ["type": "string", "description": "NSPredicate format string for 'filter'"] as [String: Any]
-                                ] as [String: Any],
-                                "required": ["action"]
-                            ] as [String: Any]
-                        ] as [String: Any],
-                        "allow_writes": ["type": "boolean", "description": "Allow destructive operations (delete, close, move, etc.). Default false."] as [String: Any]
-                    ] as [String: Any],
-                    "required": ["bundle_id", "operations"]
-                ] as [String: Any]
-            ]
         ]
     }
 
