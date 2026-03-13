@@ -51,7 +51,6 @@ let bridgeNames = [
     "TextEditBridge",
     "UTMBridge",
     "VoiceOverBridge",
-    "XcodeBridge",
 ]
 
 // Set of all known bridge target names for fast lookup
@@ -99,28 +98,35 @@ func parseDeps(for name: String) -> [Target.Dependency] {
 }
 
 // Compute exclude lists so SPM doesn't warn about unhandled files in shared directories
-let allBridgeFiles = ["ScriptingBridgeCommon.swift"] + bridgeNames.map { "\($0).swift" }
+let allBridgeFiles = ["ScriptingBridgeCommon.swift", "AgentScriptingBridge.swift"] + bridgeNames.map { "\($0).swift" }
 let allScriptFiles = scriptNames.map { "\($0).swift" }
+
+let scriptProducts: [Product] = scriptNames.map {
+    .library(name: $0, type: .dynamic, targets: [$0])
+}
+
+let bridgeTargets: [Target] = bridgeNames.map { name in
+    .target(name: name, dependencies: [common], path: bridge,
+            exclude: allBridgeFiles.filter { $0 != "\(name).swift" },
+            sources: ["\(name).swift"])
+}
+
+let scriptTargets: [Target] = scriptNames.map { name in
+    .target(name: name, dependencies: parseDeps(for: name), path: scripts,
+            exclude: allScriptFiles.filter { $0 != "\(name).swift" },
+            sources: ["\(name).swift"])
+}
 
 let package = Package(
     name: "AgentScripts",
     platforms: [.macOS(.v15)],
-    products:
-        [.library(name: "XcodeBridge", targets: ["XcodeBridge"])]
-        + scriptNames.map { .library(name: $0, type: .dynamic, targets: [$0]) },
+    products: [.library(name: "AgentScriptingBridge", targets: ["AgentScriptingBridge"])] + scriptProducts,
     targets: [
         .target(name: "ScriptingBridgeCommon", path: bridge,
-                exclude: bridgeNames.map { "\($0).swift" },
+                exclude: bridgeNames.map { "\($0).swift" } + ["AgentScriptingBridge.swift"],
                 sources: ["ScriptingBridgeCommon.swift"]),
-    ]
-    + bridgeNames.map { name in
-        .target(name: name, dependencies: [common], path: bridge,
-                exclude: allBridgeFiles.filter { $0 != "\(name).swift" },
-                sources: ["\(name).swift"])
-    }
-    + scriptNames.map { name in
-        .target(name: name, dependencies: parseDeps(for: name), path: scripts,
-                exclude: allScriptFiles.filter { $0 != "\(name).swift" },
-                sources: ["\(name).swift"])
-    }
+        .target(name: "AgentScriptingBridge", dependencies: [common], path: bridge,
+                exclude: allBridgeFiles.filter { $0 != "AgentScriptingBridge.swift" },
+                sources: ["AgentScriptingBridge.swift"]),
+    ] + bridgeTargets + scriptTargets
 )

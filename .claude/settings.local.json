@@ -125,7 +125,9 @@
       "Bash(cd \"/Users/toddbruss/Documents/GitHub/Agent/AgentXcode\" && xcodebuild -project \"Agent!.xcodeproj\" -list 2>&1)",
       "Bash(cd \"/Users/toddbruss/Documents/GitHub/Agent/AgentXcode\" && xcodebuild -project \"Agent!.xcodeproj\" -scheme \"Agent!\" -configuration Debug build 2>&1 | tail -15)",
       "Bash(cd \"/Users/toddbruss/Documents/GitHub/Agent\" && xcodebuild -workspace Agent.xcworkspace -scheme \"Agent!\" -configuration Debug build 2>&1 | tail -10)",
-      "Bash(cd \"/Users/toddbruss/Documents/GitHub/Agent\" && xcodebuild -workspace Agent.xcworkspace -scheme \"Agent!\" -configuration Debug build 2>&1 | tail -5)"
+      "Bash(cd \"/Users/toddbruss/Documents/GitHub/Agent\" && xcodebuild -workspace Agent.xcworkspace -scheme \"Agent!\" -configuration Debug build 2>&1 | tail -5)",
+      "Bash(cd \"/Users/toddbruss/Documents/GitHub/Agent\" && xcodebuild -workspace Agent.xcworkspace -scheme \"Agent!\" -configuration Debug build 2>&1 | grep -E \"\\(error:|BUILD\\)\" | head -10)",
+      "Bash(cd \"/Users/toddbruss/Documents/GitHub/Agent/AgentXcode\" && xcodebuild -resolvePackageDependencies -project \"Agent.xcodeproj\" 2>&1 | tail -5)"
     ]
   }
 }
