@@ -47,7 +47,7 @@ A macOS SwiftUI app that uses SMAppService + a privileged Launch Daemon to give 
 1. **apple_event_query** — zero compilation, instant ObjC dispatch for small queries
 2. **run_agent_script** — native Swift AgentScriptingBridge dylibs for persistent automation
 3. **NSAppleScript in scripts** — fallback if AgentScriptingBridge has issues with an app
-4. **osascript via user agent** — last resort for one-off AppleScript
+4. **osascript via Agent app** — last resort for one-off AppleScript; runs directly in the Agent app process (not via XPC) to inherit Automation permissions
 - Prefer `execute_user_command` for all tasks; only escalate to root when truly needed
 - Chown/chmod files back to user after root operations
 
