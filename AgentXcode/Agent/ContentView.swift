@@ -405,10 +405,14 @@ struct ActivityLogView: NSViewRepresentable {
                 guard fileAttrs != nil else { continue }
                 let fileSize = fileAttrs?[.size] as? Int ?? 0
                 let fileMtime = fileAttrs?[.modificationDate] as? Date ?? .distantPast
+                // Also check parent directory mtime — catches sibling resources (e.g. album_art.jpg) created after the HTML
+                let dirPath = (match.path as NSString).deletingLastPathComponent
+                let dirMtime = (try? FileManager.default.attributesOfItem(atPath: dirPath)[.modificationDate] as? Date) ?? .distantPast
+                let effectiveMtime = max(fileMtime, dirMtime)
 
                 if match.isHTML {
-                    // HTML: use cached snapshot, invalidate if file changed
-                    if let cached = htmlCache[offset], cached.mtime >= fileMtime {
+                    // HTML: use cached snapshot, invalidate if file or sibling resources changed
+                    if let cached = htmlCache[offset], cached.mtime >= effectiveMtime {
                         if fileSize > 0 && renderedSizes.contains(fileSize) { continue }
                         renderedSizes.insert(fileSize)
                         appendImage(cached.image, maxWidth: 480.0, to: result, attrs: baseAttrs)
@@ -424,7 +428,7 @@ struct ActivityLogView: NSViewRepresentable {
                     renderedSizes.insert(fileSize)
 
                     let image: NSImage
-                    if let cached = imageCache[offset], cached.mtime >= fileMtime {
+                    if let cached = imageCache[offset], cached.mtime >= effectiveMtime {
                         image = cached.image
                     } else if let loaded = NSImage(contentsOfFile: match.path) {
                         imageCache[offset] = (image: loaded, mtime: fileMtime)
@@ -504,8 +508,10 @@ struct ActivityLogView: NSViewRepresentable {
                 do {
                     let snapshot = try await webView.takeSnapshot(configuration: snapConfig)
                     let path = objc_getAssociatedObject(webView, &Self.snapshotPathKey) as? String ?? ""
-                    let mtime = (try? FileManager.default.attributesOfItem(atPath: path)[.modificationDate] as? Date) ?? Date()
-                    self.htmlCache[offset] = (image: snapshot, mtime: mtime)
+                    let fileMtime = (try? FileManager.default.attributesOfItem(atPath: path)[.modificationDate] as? Date) ?? Date()
+                    let dirPath = (path as NSString).deletingLastPathComponent
+                    let dirMtime = (try? FileManager.default.attributesOfItem(atPath: dirPath)[.modificationDate] as? Date) ?? Date()
+                    self.htmlCache[offset] = (image: snapshot, mtime: max(fileMtime, dirMtime))
                 } catch {
                     // Snapshot failed — allow retry on next render
                 }
