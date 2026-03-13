@@ -145,7 +145,7 @@
 		DD10000000000000000001 /* ScriptServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptServiceTests.swift; sourceTree = "<group>"; };
 		DD10000000000000000002 /* ScriptingBridgesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptingBridgesTests.swift; sourceTree = "<group>"; };
 		DD10000000000000000003 /* PackageGenerationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageGenerationTests.swift; sourceTree = "<group>"; };
-		DD10000000000000000004 /* AgentTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "AgentTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		DD10000000000000000004 /* AgentTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AgentTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		EA37C5532F636B87009D0A23 /* Sources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Sources; path = ../AgentSwiftPackage/Agent/agents/Sources; sourceTree = SOURCE_ROOT; };
 		EA37C5542F636B87009D0A23 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = text; name = Package.swift; path = ../AgentSwiftPackage/Agent/agents/Package.swift; sourceTree = SOURCE_ROOT; };
 		EAF3666E2F623D6A004B7E38 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
@@ -370,7 +370,7 @@
 			dependencies = (
 				DD10000000000000000071 /* PBXTargetDependency */,
 			);
-			name = "AgentTests";
+			name = AgentTests;
 			productName = AgentTests;
 			productReference = DD10000000000000000004 /* AgentTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -629,7 +629,7 @@
 				CODE_SIGN_ENTITLEMENTS = Agent/Agent.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 469UCUB275;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -642,7 +642,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -660,7 +660,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=macosx*]" = 469UCUB275;
@@ -674,7 +674,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
