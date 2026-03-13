@@ -200,7 +200,7 @@ final class ScriptService {
         do {
             try fm.createDirectory(at: scriptsDir, withIntermediateDirectories: true)
             try final.write(to: scriptFile, atomically: true, encoding: .utf8)
-            return "Created \(scriptName) (\(final.count) bytes). Remember to add it to scriptTargets in Package.swift."
+            return "Created \(scriptName) (\(final.count) bytes). Auto-discovered by Package.swift — no manual registration needed."
         } catch {
             return "Error creating script: \(error.localizedDescription)"
         }
@@ -237,7 +237,7 @@ final class ScriptService {
 
         do {
             try fm.removeItem(at: scriptFile)
-            return "Deleted \(scriptName). Remember to remove it from scriptTargets in Package.swift."
+            return "Deleted \(scriptName). Auto-removed from Package.swift discovery."
         } catch {
             return "Error deleting script: \(error.localizedDescription)"
         }
