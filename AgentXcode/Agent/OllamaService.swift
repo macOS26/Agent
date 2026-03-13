@@ -208,6 +208,26 @@ final class OllamaService {
             [
                 "type": "function",
                 "function": [
+                    "name": "scripting_bridge_query",
+                    "description": "Query any scriptable Mac app dynamically via ScriptingBridge. No compilation needed. Use this FIRST for reading app data (mail, notes, music, safari, calendar, reminders, etc.).",
+                    "parameters": [
+                        "type": "object",
+                        "properties": [
+                            "bundle_id": ["type": "string", "description": "App bundle identifier (e.g. com.apple.Music)"] as [String: Any],
+                            "operations": [
+                                "type": "array",
+                                "description": "Array of operations. Each has 'action' (get/iterate/index/call/filter) plus action-specific keys.",
+                                "items": ["type": "object"] as [String: Any]
+                            ] as [String: Any],
+                            "allow_writes": ["type": "boolean", "description": "Allow destructive operations. Default false."] as [String: Any]
+                        ] as [String: Any],
+                        "required": ["bundle_id", "operations"]
+                    ] as [String: Any]
+                ] as [String: Any]
+            ],
+            [
+                "type": "function",
+                "function": [
                     "name": "execute_user_command",
                     "description": "Execute a shell command as the current user (no root). Use this for most tasks.",
                     "parameters": [
@@ -379,26 +399,6 @@ final class OllamaService {
                     ] as [String: Any]
                 ] as [String: Any]
             ],
-            [
-                "type": "function",
-                "function": [
-                    "name": "scripting_bridge_query",
-                    "description": "Query any scriptable Mac app dynamically via ScriptingBridge. No compilation needed.",
-                    "parameters": [
-                        "type": "object",
-                        "properties": [
-                            "bundle_id": ["type": "string", "description": "App bundle identifier (e.g. com.apple.Music)"] as [String: Any],
-                            "operations": [
-                                "type": "array",
-                                "description": "Array of operations. Each has 'action' (get/iterate/index/call/filter) plus action-specific keys.",
-                                "items": ["type": "object"] as [String: Any]
-                            ] as [String: Any],
-                            "allow_writes": ["type": "boolean", "description": "Allow destructive operations. Default false."] as [String: Any]
-                        ] as [String: Any],
-                        "required": ["bundle_id", "operations"]
-                    ] as [String: Any]
-                ] as [String: Any]
-            ]
         ]
     }
 
@@ -546,11 +546,11 @@ final class OllamaService {
 
         if let text = message["content"] as? String, !text.isEmpty {
             // Check if model wrote a tool call as plain text (common with Ollama models)
-            let toolNames = ["execute_user_command", "execute_command", "task_complete",
+            let toolNames = ["scripting_bridge_query",
+                              "execute_user_command", "execute_command", "task_complete",
                               "list_agent_scripts", "read_agent_script", "create_agent_script",
                               "update_agent_script", "run_agent_script", "delete_agent_script",
-                              "xcode_build", "xcode_run", "xcode_grant_permission",
-                              "scripting_bridge_query"]
+                              "xcode_build", "xcode_run", "xcode_grant_permission"]
             var extractedTool = false
 
             for toolName in toolNames {
