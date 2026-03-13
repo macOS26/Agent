@@ -32,8 +32,8 @@ Give Agent a task in plain English. It figures out the commands, runs them, read
 ### Dual Privilege Model
 Agent runs two XPC services registered through Apple's SMAppService:
 
-- **User Agent** (`com.agent.user`) — runs commands as your user account. Used for everyday tasks: file editing, git, Homebrew, builds, scripts.
-- **Privileged Daemon** (`com.agent.helper`) — runs commands as root via a Launch Daemon. Used only when root is truly required: system packages, `/System` or `/Library` modifications, disk operations, launchd services.
+- **User Agent** (`Agent.app.toddbruss.user`) — runs commands as your user account. Used for everyday tasks: file editing, git, Homebrew, builds, scripts.
+- **Privileged Daemon** (`Agent.app.toddbruss.helper`) — runs commands as root via a Launch Daemon. Used only when root is truly required: system packages, `/System` or `/Library` modifications, disk operations, launchd services.
 
 The AI defaults to user-level execution and only escalates to root when necessary.
 
@@ -180,8 +180,8 @@ Agent.app (SwiftUI)
   |-- XcodeService           ScriptingBridge automation for Xcode
   |-- DependencyChecker      Xcode CLT detection + install trigger
   |
-  |-- UserService (XPC) --> com.agent.user    (LaunchAgent, runs as user)
-  |-- HelperService (XPC) --> com.agent.helper (LaunchDaemon, runs as root)
+  |-- UserService (XPC) --> Agent.app.toddbruss.user    (LaunchAgent, runs as user)
+  |-- HelperService (XPC) --> Agent.app.toddbruss.helper (LaunchDaemon, runs as root)
 
 ~/Documents/Agent/agents/   (Swift Package — scripts + bridges)
   |

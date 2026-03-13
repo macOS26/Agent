@@ -15,7 +15,7 @@ final class OutputHandler: NSObject, HelperProgressProtocol, @unchecked Sendable
 
 @MainActor @Observable
 final class HelperService {
-    nonisolated static let helperID = "com.agent.helper"
+    nonisolated static let helperID = "Agent.app.toddbruss.helper"
     nonisolated let instanceID = UUID().uuidString
 
     var onOutput: (@MainActor @Sendable (String) -> Void)?
@@ -23,12 +23,12 @@ final class HelperService {
     nonisolated init() {}
 
     var helperReady: Bool {
-        SMAppService.daemon(plistName: "com.agent.helper.plist").status == .enabled
+        SMAppService.daemon(plistName: "Agent.app.toddbruss.helper.plist").status == .enabled
     }
 
     @discardableResult
     func registerHelper() -> String {
-        let service = SMAppService.daemon(plistName: "com.agent.helper.plist")
+        let service = SMAppService.daemon(plistName: "Agent.app.toddbruss.helper.plist")
         let status = service.status
 
         // Log current status for diagnostics

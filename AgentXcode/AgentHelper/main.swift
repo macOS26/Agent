@@ -104,7 +104,7 @@ final class HelperDelegate: NSObject, NSXPCListenerDelegate {
 }
 
 let delegate = HelperDelegate()
-let listener = NSXPCListener(machServiceName: "com.agent.helper")
+let listener = NSXPCListener(machServiceName: "Agent.app.toddbruss.helper")
 listener.delegate = delegate
 listener.resume()
 RunLoop.current.run()

@@ -5,7 +5,7 @@ The app follows Apple's privileged helper pattern (same as CloneTool):
 
 1. **Agent** (main app bundle)
    - SwiftUI interface
-   - Connects to daemon via NSXPCConnection (Mach service: "com.agent.helper")
+   - Connects to daemon via NSXPCConnection (Mach service: "Agent.app.toddbruss.helper")
    - Registers daemon via SMAppService
    - Calls Anthropic Messages API
 
@@ -35,7 +35,7 @@ User Input -> AgentViewModel -> ClaudeService (API call)
 ## Build Phases (Agent target)
 1. Compile Sources
 2. Copy Helper - copies AgentHelper binary to Contents/MacOS/ (dstSubfolderSpec=6)
-3. Copy Daemon Plist - copies com.agent.helper.plist to Contents/Library/LaunchDaemons/ (dstSubfolderSpec=1)
+3. Copy Daemon Plist - copies Agent.app.toddbruss.helper.plist to Contents/Library/LaunchDaemons/ (dstSubfolderSpec=1)
 
 ## XPC Protocol
 ```swift

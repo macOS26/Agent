@@ -15,7 +15,7 @@ final class UserOutputHandler: NSObject, UserProgressProtocol, @unchecked Sendab
 
 @MainActor @Observable
 final class UserService {
-    nonisolated static let userID = "com.agent.user"
+    nonisolated static let userID = "Agent.app.toddbruss.user"
     nonisolated let instanceID = UUID().uuidString
 
     var onOutput: (@MainActor @Sendable (String) -> Void)?
@@ -23,12 +23,12 @@ final class UserService {
     nonisolated init() {}
 
     var userReady: Bool {
-        SMAppService.agent(plistName: "com.agent.user.plist").status == .enabled
+        SMAppService.agent(plistName: "Agent.app.toddbruss.user.plist").status == .enabled
     }
 
     @discardableResult
     func registerUser() -> String {
-        let service = SMAppService.agent(plistName: "com.agent.user.plist")
+        let service = SMAppService.agent(plistName: "Agent.app.toddbruss.user.plist")
         let status = service.status
 
         let statusName: String
