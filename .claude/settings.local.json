@@ -96,7 +96,8 @@
       "Bash(git -C /Users/toddbruss/Documents/GitHub/Agent show 7bdaefd:Agent/ScriptService.swift | grep -A 10 \"resourcePath\")",
       "Bash(git -C /Users/toddbruss/Documents/GitHub/Agent ls-tree -r --name-only 7bdaefd | grep -i \"bridge\\\\|example\" | head -30)",
       "Bash(swift package:*)",
-      "Bash(git -C /Users/toddbruss/Documents/GitHub/Agent status -s -- AgentSwiftPackage/)"
+      "Bash(git -C /Users/toddbruss/Documents/GitHub/Agent status -s -- AgentSwiftPackage/)",
+      "Bash(defaults read:*)"
     ]
   }
 }
