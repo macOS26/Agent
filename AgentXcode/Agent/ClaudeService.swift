@@ -45,7 +45,7 @@ final class ClaudeService {
         ALWAYS use tools to take action. Do not just describe what you would do — do it.
 
         TOOL SELECTION — choose the fastest approach:
-        1. scripting_bridge_query — ZERO compilation. Use this FIRST for reading app data \
+        1. apple_event_query — ZERO compilation. Use this FIRST for reading app data \
         (mail, notes, music, reminders, safari tabs, etc.). Instant results via ObjC dynamic dispatch.
         2. Already-compiled scripts — if a script was previously built, run it directly: \
         `cd ~/Documents/Agent/agents && .build/debug/ScriptName` — NO recompile needed. \
@@ -165,8 +165,8 @@ final class ClaudeService {
           3. Add the new bridge name to bridgeNames in Package.swift
           The script handles the full sdef → sdp → Swift conversion pipeline automatically.
 
-        DYNAMIC SCRIPTING BRIDGE QUERIES — scripting_bridge_query:
-        For quick, one-off queries against any scriptable Mac app, use scripting_bridge_query \
+        DYNAMIC APPLE EVENT QUERIES — apple_event_query:
+        For quick, one-off queries against any scriptable Mac app, use apple_event_query \
         instead of writing a full Swift script. It uses ObjC dynamic dispatch (value(forKey:)) \
         so no compilation is needed. Pass a bundle_id and an array of operations:
         - "get" {key}: walk the object graph (e.g. "tracks", "name", "currentTrack")
@@ -179,7 +179,7 @@ final class ClaudeService {
         List Safari windows: bundle_id="com.apple.Safari", operations=[{action:"get",key:"windows"},{action:"iterate",properties:["name"],limit:10}]
         List first 5 Notes: bundle_id="com.apple.Notes", operations=[{action:"get",key:"notes"},{action:"iterate",properties:["name"],limit:5}]
         Write operations (delete, close, move, etc.) are blocked by default. Set allow_writes=true to permit them.
-        Use scripting_bridge_query for reading data; use compiled scripts for complex logic.
+        Use apple_event_query for reading data; use compiled scripts for complex logic.
 
         You can also control Xcode directly via built-in tools:
         Use xcode_grant_permission once to authorize Automation access, then \
@@ -195,7 +195,7 @@ final class ClaudeService {
     var tools: [[String: Any]] {
         [
             [
-                "name": "scripting_bridge_query",
+                "name": "apple_event_query",
                 "description": "Query any scriptable Mac app dynamically via ScriptingBridge. No compilation needed. Walks the object graph using ObjC dynamic dispatch. Use this FIRST for reading app data (mail, notes, music, safari, calendar, reminders, etc.).",
                 "input_schema": [
                     "type": "object",

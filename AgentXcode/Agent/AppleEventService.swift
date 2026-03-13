@@ -2,10 +2,10 @@ import Foundation
 import ScriptingBridge
 import AppKit
 
-/// Executes dynamic ScriptingBridge queries using ObjC runtime dispatch.
-/// No compilation needed — walks the object graph via value(forKey:) and perform(_:with:).
-final class ScriptingBridgeQueryService: @unchecked Sendable {
-    static let shared = ScriptingBridgeQueryService()
+/// Executes dynamic Apple Event queries using ObjC runtime dispatch.
+/// No compilation needed — walks the object graph via value(forKey:) and NSInvocation.
+final class AppleEventService: @unchecked Sendable {
+    static let shared = AppleEventService()
 
     private static let maxOutputLines = 500
     private static let defaultLimit = 50
@@ -34,7 +34,7 @@ final class ScriptingBridgeQueryService: @unchecked Sendable {
     /// Times out after 10 seconds to avoid blocking if the dialog is dismissed or app is unresponsive.
     private func grantPermissionViaOsascript(appName: String) {
         if grantedApps.contains(appName) { return }
-        (self as ScriptingBridgeQueryService).grantedApps.insert(appName)
+        (self as AppleEventService).grantedApps.insert(appName)
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
         process.arguments = ["-e", "tell application \"\(appName)\" to get every window"]
