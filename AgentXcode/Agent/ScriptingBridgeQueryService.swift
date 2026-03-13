@@ -31,7 +31,7 @@ final class ScriptingBridgeQueryService: @unchecked Sendable {
     private var grantedApps: Set<String> = []
 
     /// Trigger the macOS Automation permission dialog by running osascript.
-    /// Uses 'get name' which every scriptable app supports.
+    /// Times out after 10 seconds to avoid blocking if the dialog is dismissed or app is unresponsive.
     private func grantPermissionViaOsascript(appName: String) {
         if grantedApps.contains(appName) { return }
         (self as ScriptingBridgeQueryService).grantedApps.insert(appName)
@@ -44,7 +44,16 @@ final class ScriptingBridgeQueryService: @unchecked Sendable {
         process.standardError = errorPipe
         do {
             try process.run()
-            process.waitUntilExit()
+            // Wait with timeout — don't block forever
+            let deadline = DispatchTime.now() + 10
+            let semaphore = DispatchSemaphore(value: 0)
+            DispatchQueue.global().async {
+                process.waitUntilExit()
+                semaphore.signal()
+            }
+            if semaphore.wait(timeout: deadline) == .timedOut {
+                process.terminate()
+            }
         } catch { }
     }
 
