@@ -113,7 +113,19 @@
       "Bash(cd ~/Documents/Agent/agents && touch Package.swift && swift build --product NowPlayingHTML 2>&1 | tail -5)",
       "Bash(cd ~/Documents/Agent/agents && touch Package.swift && swift build --product Hello 2>&1 | tail -3)",
       "Bash(swift -e '\nlet command = \"cat > /tmp/test.html <<'\\\\''EOF'\\\\''\\\\n<html>\\\\n<body>Hello</body>\\\\n</html>\\\\nEOF\\\\necho done\"\nprint\\(\"Input:\", command\\)\n')",
-      "Bash(ls ~/Documents/Agent/agents/Sources/Scripts/*.swift | xargs -I{} basename {} .swift | sort)"
+      "Bash(ls ~/Documents/Agent/agents/Sources/Scripts/*.swift | xargs -I{} basename {} .swift | sort)",
+      "Bash(ls /Users/toddbruss/Documents/Agent/agents/.build/debug/lib* 2>/dev/null | head -20)",
+      "Bash(ls /Users/toddbruss/Documents/Agent/agents/.build/debug/Hello* 2>/dev/null)",
+      "Bash(mkdir -p /Users/toddbruss/Documents/GitHub/Agent/AgentSwiftPackage/Agent/agents/Sources && cp -R /Users/toddbruss/Documents/GitHub/Agent/AgentSwiftPackage/Agent/AgentBak/Sources/XCFScriptingBridges /Users/toddbruss/Documents/GitHub/Agent/AgentSwiftPackage/Agent/agents/Sources/ && cp -R /Users/toddbruss/Documents/GitHub/Agent/AgentSwiftPackage/Agent/AgentBak/Sources/Scripts /Users/toddbruss/Documents/GitHub/Agent/AgentSwiftPackage/Agent/agents/Sources/)",
+      "Bash(nm -gU /Users/toddbruss/Documents/GitHub/Agent/AgentSwiftPackage/Agent/agents/.build/debug/libHello.dylib | grep script_main)",
+      "Bash(ls ~/Documents/Agent/agents/Sources/Scripts/*.swift | xargs -I {} basename {} .swift | sort)",
+      "Bash(file ~/Documents/Agent/agents/.build/debug/libHello.dylib && nm -gU ~/Documents/Agent/agents/.build/debug/libHello.dylib | grep script_main)",
+      "Bash(cd \"/Users/toddbruss/Documents/GitHub/Agent/AgentXcode\" && xcodebuild -resolvePackageDependencies -project \"Agent!.xcodeproj\" 2>&1 | tail -5)",
+      "Bash(cd \"/Users/toddbruss/Documents/GitHub/Agent/AgentXcode\" && xcodebuild -project \"Agent!.xcodeproj\" -scheme Agent -configuration Debug build 2>&1 | tail -20)",
+      "Bash(cd \"/Users/toddbruss/Documents/GitHub/Agent/AgentXcode\" && xcodebuild -project \"Agent!.xcodeproj\" -list 2>&1)",
+      "Bash(cd \"/Users/toddbruss/Documents/GitHub/Agent/AgentXcode\" && xcodebuild -project \"Agent!.xcodeproj\" -scheme \"Agent!\" -configuration Debug build 2>&1 | tail -15)",
+      "Bash(cd \"/Users/toddbruss/Documents/GitHub/Agent\" && xcodebuild -workspace Agent.xcworkspace -scheme \"Agent!\" -configuration Debug build 2>&1 | tail -10)",
+      "Bash(cd \"/Users/toddbruss/Documents/GitHub/Agent\" && xcodebuild -workspace Agent.xcworkspace -scheme \"Agent!\" -configuration Debug build 2>&1 | tail -5)"
     ]
   }
 }
