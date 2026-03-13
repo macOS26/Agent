@@ -7,65 +7,109 @@ let scripts = "Sources/Scripts"
 let common: Target.Dependency = "ScriptingBridgeCommon"
 
 let bridgeNames = [
-    "AdobeIllustratorBridge", "AutomatorBridge", "BluetoothFileExchangeBridge",
-    "CalendarBridge", "ConsoleBridge", "ContactsBridge", "DatabaseEventsBridge",
-    "DeveloperBridge", "FinalCutProCreatorStudioBridge", "FinderBridge",
-    "FirefoxBridge", "FolderActionsSetupBridge", "GoogleChromeBridge",
-    "ImageEventsBridge", "InstrumentsBridge", "KeynoteBridge",
-    "LogicProCreatorStudioBridge", "MailBridge", "MessagesBridge",
-    "MicrosoftEdgeBridge", "MusicBridge", "NotesBridge", "NumbersBridge",
-    "NumbersCreatorStudioBridge", "PagesBridge", "PagesCreatorStudioBridge",
-    "PhotosBridge", "PixelmatorProBridge", "PreviewBridge", "QuickTimePlayerBridge",
-    "RemindersBridge", "SafariBridge", "ScreenSharingBridge", "ScriptEditorBridge",
-    "ShortcutsBridge", "SimulatorBridge", "SystemEventsBridge",
-    "SystemInformationBridge", "SystemSettingsBridge", "TVBridge", "TerminalBridge",
-    "TextEditBridge", "UTMBridge", "VoiceOverBridge", "XcodeBridge",
+    "AdobeIllustratorBridge",
+    "AutomatorBridge",
+    "BluetoothFileExchangeBridge",
+    "CalendarBridge",
+    "ConsoleBridge",
+    "ContactsBridge",
+    "DatabaseEventsBridge",
+    "DeveloperBridge",
+    "FinalCutProCreatorStudioBridge",
+    "FinderBridge",
+    "FirefoxBridge",
+    "FolderActionsSetupBridge",
+    "GoogleChromeBridge",
+    "ImageEventsBridge",
+    "InstrumentsBridge",
+    "KeynoteBridge",
+    "LogicProCreatorStudioBridge",
+    "MailBridge",
+    "MessagesBridge",
+    "MicrosoftEdgeBridge",
+    "MusicBridge",
+    "NotesBridge",
+    "NumbersBridge",
+    "NumbersCreatorStudioBridge",
+    "PagesBridge",
+    "PagesCreatorStudioBridge",
+    "PhotosBridge",
+    "PixelmatorProBridge",
+    "PreviewBridge",
+    "QuickTimePlayerBridge",
+    "RemindersBridge",
+    "SafariBridge",
+    "ScreenSharingBridge",
+    "ScriptEditorBridge",
+    "ShortcutsBridge",
+    "SimulatorBridge",
+    "SystemEventsBridge",
+    "SystemInformationBridge",
+    "SystemSettingsBridge",
+    "TVBridge",
+    "TerminalBridge",
+    "TextEditBridge",
+    "UTMBridge",
+    "VoiceOverBridge",
+    "XcodeBridge",
 ]
 
 // Set of all known bridge target names for fast lookup
 let bridgeNameSet = Set(bridgeNames)
 
-// Auto-discover scripts from Sources/Scripts/ and parse their imports for dependencies.
-// The agent can create new .swift files and they'll be picked up automatically.
-let scriptTargets: [(String, [Target.Dependency])] = {
-    let scriptsDir = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
-        .appendingPathComponent(scripts)
-    guard let files = try? FileManager.default.contentsOfDirectory(
-        at: scriptsDir, includingPropertiesForKeys: nil
-    ) else { return [] }
+// Explicit script list — ScriptService adds/removes entries when scripts are created/deleted.
+let scriptNames = [
+    "AddSongsToRockPlaylist",
+    "AlbumArtMonitor",
+    "CheckMail",
+    "ExtractAlbumArt",
+    "GenerateBridge",
+    "GenerateRockPlaylistSuggestions",
+    "Hello",
+    "ListHomeContents",
+    "ListNotes",
+    "ListReminders",
+    "MusicScriptingExamples",
+    "NowPlaying",
+    "NowPlayingHTML",
+    "OrganizeEmails",
+    "OrganizeOtherSubcategories",
+    "QuickTest",
+    "ResearchRockPlaylistSuggestions",
+    "RunningApps",
+    "SaveAlbumArt",
+    "TestGenerateBridge",
+    "TodayEvents",
+]
 
-    return files
-        .filter { $0.pathExtension == "swift" }
-        .map { url -> (String, [Target.Dependency]) in
-            let name = url.deletingPathExtension().lastPathComponent
-            // Parse imports to find bridge dependencies
-            var deps: [Target.Dependency] = []
-            if let contents = try? String(contentsOf: url, encoding: .utf8) {
-                for line in contents.components(separatedBy: .newlines) {
-                    let trimmed = line.trimmingCharacters(in: .whitespaces)
-                    if trimmed.hasPrefix("import ") {
-                        let module = String(trimmed.dropFirst(7)).trimmingCharacters(in: .whitespaces)
-                        if bridgeNameSet.contains(module) {
-                            deps.append(.init(stringLiteral: module))
-                        } else if module == "ScriptingBridgeCommon" {
-                            deps.append(common)
-                        }
-                    }
-                    // Stop scanning after first non-import, non-comment, non-blank line
-                    if !trimmed.isEmpty && !trimmed.hasPrefix("import ") &&
-                       !trimmed.hasPrefix("//") && !trimmed.hasPrefix("@") {
-                        break
-                    }
-                }
+// Parse imports from each script to find bridge dependencies
+func parseDeps(for name: String) -> [Target.Dependency] {
+    let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+        .appendingPathComponent(scripts).appendingPathComponent("\(name).swift")
+    guard let contents = try? String(contentsOf: url, encoding: .utf8) else { return [] }
+    var deps: [Target.Dependency] = []
+    for line in contents.components(separatedBy: .newlines) {
+        let trimmed = line.trimmingCharacters(in: .whitespaces)
+        if trimmed.hasPrefix("import ") {
+            let module = String(trimmed.dropFirst(7)).trimmingCharacters(in: .whitespaces)
+            if bridgeNameSet.contains(module) {
+                deps.append(.init(stringLiteral: module))
+            } else if module == "ScriptingBridgeCommon" {
+                deps.append(common)
             }
-            return (name, deps)
         }
-        .sorted { $0.0 < $1.0 }
-}()
+        // Stop scanning after first non-import, non-comment, non-blank line
+        if !trimmed.isEmpty && !trimmed.hasPrefix("import ") &&
+           !trimmed.hasPrefix("//") && !trimmed.hasPrefix("@") {
+            break
+        }
+    }
+    return deps
+}
 
 // Compute exclude lists so SPM doesn't warn about unhandled files in shared directories
 let allBridgeFiles = ["ScriptingBridgeCommon.swift"] + bridgeNames.map { "\($0).swift" }
-let allScriptFiles = scriptTargets.map { "\($0.0).swift" }
+let allScriptFiles = scriptNames.map { "\($0).swift" }
 
 let package = Package(
     name: "AgentScripts",
@@ -83,8 +127,8 @@ let package = Package(
                 exclude: allBridgeFiles.filter { $0 != "\(name).swift" },
                 sources: ["\(name).swift"])
     }
-    + scriptTargets.map { name, deps in
-        .executableTarget(name: name, dependencies: deps, path: scripts,
+    + scriptNames.map { name in
+        .executableTarget(name: name, dependencies: parseDeps(for: name), path: scripts,
                           exclude: allScriptFiles.filter { $0 != "\(name).swift" },
                           sources: ["\(name).swift"])
     }

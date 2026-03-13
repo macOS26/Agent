@@ -125,13 +125,14 @@ final class ScriptService {
 
     // MARK: - Package.swift
 
-    /// Copy Package.swift from bundle (always overwrite to keep in sync with bridges)
+    /// Copy Package.swift from bundle only if it doesn't exist (preserves user's scriptNames)
     private func copyPackageSwift() {
         let fm = FileManager.default
         guard let src = bundlePackage, fm.fileExists(atPath: src.path) else { return }
         let dst = Self.agentsDir.appendingPathComponent("Package.swift")
-        try? fm.removeItem(at: dst)
-        try? fm.copyItem(at: src, to: dst)
+        if !fm.fileExists(atPath: dst.path) {
+            try? fm.copyItem(at: src, to: dst)
+        }
     }
 
     // MARK: - Helpers
@@ -185,7 +186,7 @@ final class ScriptService {
         return content
     }
 
-    /// Create a new script as Sources/Scripts/{name}.swift
+    /// Create a new script as Sources/Scripts/{name}.swift and register in Package.swift
     func createScript(name: String, content: String) -> String {
         ensurePackage()
         let scriptName = name.replacingOccurrences(of: ".swift", with: "")
@@ -200,7 +201,8 @@ final class ScriptService {
         do {
             try fm.createDirectory(at: scriptsDir, withIntermediateDirectories: true)
             try final.write(to: scriptFile, atomically: true, encoding: .utf8)
-            return "Created \(scriptName) (\(final.count) bytes). Auto-discovered by Package.swift — no manual registration needed."
+            addScriptToPackage(scriptName)
+            return "Created \(scriptName) (\(final.count) bytes). Registered in Package.swift."
         } catch {
             return "Error creating script: \(error.localizedDescription)"
         }
@@ -225,7 +227,7 @@ final class ScriptService {
         }
     }
 
-    /// Delete a script
+    /// Delete a script and remove from Package.swift
     func deleteScript(name: String) -> String {
         let scriptName = name.replacingOccurrences(of: ".swift", with: "")
         let scriptFile = scriptsDir.appendingPathComponent("\(scriptName).swift")
@@ -237,10 +239,53 @@ final class ScriptService {
 
         do {
             try fm.removeItem(at: scriptFile)
-            return "Deleted \(scriptName). Auto-removed from Package.swift discovery."
+            removeScriptFromPackage(scriptName)
+            return "Deleted \(scriptName). Removed from Package.swift."
         } catch {
             return "Error deleting script: \(error.localizedDescription)"
         }
+    }
+
+    // MARK: - Package.swift script registration
+
+    private var packageSwiftURL: URL {
+        Self.agentsDir.appendingPathComponent("Package.swift")
+    }
+
+    /// Add a script name to the scriptNames array in Package.swift
+    private func addScriptToPackage(_ name: String) {
+        guard let content = try? String(contentsOf: packageSwiftURL, encoding: .utf8) else { return }
+
+        // Find the scriptNames array and insert the new name in sorted order
+        guard let range = content.range(of: "let scriptNames = [") else { return }
+        guard let closingBracket = content[range.upperBound...].range(of: "]") else { return }
+
+        let arrayContent = content[range.upperBound..<closingBracket.lowerBound]
+        var names = arrayContent.components(separatedBy: "\n")
+            .map { $0.trimmingCharacters(in: .whitespaces).trimmingCharacters(in: CharacterSet(charactersIn: "\",")) }
+            .filter { !$0.isEmpty }
+
+        guard !names.contains(name) else { return }
+        names.append(name)
+        names.sort()
+
+        let newArray = names.map { "    \"\($0)\"," }.joined(separator: "\n")
+        let newContent = content[..<range.upperBound] + "\n" + newArray + "\n" + content[closingBracket.lowerBound...]
+
+        try? String(newContent).write(to: packageSwiftURL, atomically: true, encoding: .utf8)
+    }
+
+    /// Remove a script name from the scriptNames array in Package.swift
+    private func removeScriptFromPackage(_ name: String) {
+        guard let content = try? String(contentsOf: packageSwiftURL, encoding: .utf8) else { return }
+
+        // Find and remove the line containing this script name
+        let lines = content.components(separatedBy: "\n")
+        let pattern = "    \"\(name)\","
+        let filtered = lines.filter { $0 != pattern }
+
+        guard filtered.count < lines.count else { return }
+        try? filtered.joined(separator: "\n").write(to: packageSwiftURL, atomically: true, encoding: .utf8)
     }
 
     /// Build the swift build + run command for a script
