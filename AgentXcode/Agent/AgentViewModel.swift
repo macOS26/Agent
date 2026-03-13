@@ -616,6 +616,36 @@ final class AgentViewModel {
         scheduleLogFlush()
     }
 
+    /// Collapse heredoc bodies in commands to keep the log clean.
+    /// "cat > file.html <<'EOF'\n<html>...\nEOF" → "cat > file.html <<'EOF'\n...(heredoc)...\nEOF"
+    private static func collapseHeredocs(_ command: String) -> String {
+        let lines = command.components(separatedBy: "\n")
+        guard lines.count > 3 else { return command }
+
+        // Find the line containing a heredoc marker: <<'DELIM', <<DELIM, <<"DELIM", <<-'DELIM'
+        let pattern = #"<<-?\s*'?"?(\w+)'?"?"#
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return command }
+
+        for (i, line) in lines.enumerated() {
+            let nsLine = line as NSString
+            guard let match = regex.firstMatch(in: line, range: NSRange(location: 0, length: nsLine.length)),
+                  match.range(at: 1).location != NSNotFound else { continue }
+            let delimiter = nsLine.substring(with: match.range(at: 1))
+
+            // Find the closing delimiter line after the heredoc start
+            guard let endIdx = lines[(i + 1)...].firstIndex(where: {
+                $0.trimmingCharacters(in: .whitespaces) == delimiter
+            }), endIdx > i + 1 else { continue }
+
+            // Collapse: keep lines before + heredoc line, placeholder, delimiter + remainder
+            var result = Array(lines[...i])
+            result.append("...(\(delimiter) heredoc)...")
+            result.append(contentsOf: lines[endIdx...])
+            return result.joined(separator: "\n")
+        }
+        return command
+    }
+
     private func resetStreamCounters() {
         streamOutputCount = 0
         streamTruncated = false
@@ -782,7 +812,7 @@ final class AgentViewModel {
                             let command = input["command"] as? String ?? ""
                             let isPrivileged = (name == "execute_command") && rootEnabled
                             commandsRun.append(command)
-                            appendLog("\(isPrivileged ? "#" : "$") \(command)")
+                            appendLog("\(isPrivileged ? "#" : "$") \(Self.collapseHeredocs(command))")
                             flushLog()
 
                             let result: (status: Int32, output: String)

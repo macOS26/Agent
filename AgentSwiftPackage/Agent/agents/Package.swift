@@ -59,25 +59,15 @@ let bridgeNameSet = Set(bridgeNames)
 
 // Explicit script list — ScriptService adds/removes entries when scripts are created/deleted.
 let scriptNames = [
-    "AddSongsToRockPlaylist",
-    "AlbumArtMonitor",
     "CheckMail",
-    "ExtractAlbumArt",
     "GenerateBridge",
-    "GenerateRockPlaylistSuggestions",
     "Hello",
-    "ListHomeContents",
     "ListNotes",
     "ListReminders",
-    "MusicScriptingExamples",
     "NowPlaying",
-    "NowPlayingHTML",
     "OrganizeEmails",
     "OrganizeOtherSubcategories",
-    "QuickTest",
-    "ResearchRockPlaylistSuggestions",
     "RunningApps",
-    "SaveAlbumArt",
     "TestGenerateBridge",
     "TodayEvents",
 ]
