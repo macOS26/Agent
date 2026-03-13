@@ -103,6 +103,55 @@ final class UserDelegate: NSObject, NSXPCListenerDelegate {
     }
 }
 
+// MARK: - Package.swift auto-sync
+
+/// Sync scriptNames in Package.swift with actual .swift files in Sources/Scripts/
+/// Adds missing scripts and removes stale entries.
+func syncPackageScripts() {
+    let fm = FileManager.default
+    let home = fm.homeDirectoryForCurrentUser
+    let agentsDir = home.appendingPathComponent("Documents/Agent/agents")
+    let scriptsDir = agentsDir.appendingPathComponent("Sources/Scripts")
+    let packageURL = agentsDir.appendingPathComponent("Package.swift")
+
+    guard fm.fileExists(atPath: packageURL.path),
+          fm.fileExists(atPath: scriptsDir.path) else { return }
+
+    // Get actual script files on disk
+    guard let files = try? fm.contentsOfDirectory(atPath: scriptsDir.path) else { return }
+    let diskScripts = Set(files.filter { $0.hasSuffix(".swift") }
+        .map { $0.replacingOccurrences(of: ".swift", with: "") })
+
+    // Read Package.swift and parse scriptNames array
+    guard let content = try? String(contentsOf: packageURL, encoding: .utf8) else { return }
+    guard let arrayStart = content.range(of: "let scriptNames = [") else { return }
+    guard let arrayEnd = content[arrayStart.upperBound...].range(of: "]") else { return }
+
+    let arrayContent = content[arrayStart.upperBound..<arrayEnd.lowerBound]
+    let registeredScripts = Set(arrayContent.components(separatedBy: "\n")
+        .map { $0.trimmingCharacters(in: .whitespaces).trimmingCharacters(in: CharacterSet(charactersIn: "\",")) }
+        .filter { !$0.isEmpty })
+
+    // Check if sync is needed
+    guard diskScripts != registeredScripts else { return }
+
+    // Build new sorted array from disk
+    let sorted = diskScripts.sorted()
+    let newArray = sorted.map { "    \"\($0)\"," }.joined(separator: "\n")
+    let newContent = content[..<arrayStart.upperBound] + "\n" + newArray + "\n" + content[arrayEnd.lowerBound...]
+
+    try? String(newContent).write(to: packageURL, atomically: true, encoding: .utf8)
+}
+
+// Run sync on startup
+syncPackageScripts()
+
+// Schedule sync every 20 seconds
+let syncTimer = DispatchSource.makeTimerSource(queue: DispatchQueue.global(qos: .utility))
+syncTimer.schedule(deadline: .now() + 20, repeating: 20)
+syncTimer.setEventHandler { syncPackageScripts() }
+syncTimer.resume()
+
 let delegate = UserDelegate()
 let listener = NSXPCListener(machServiceName: "Agent.app.toddbruss.user")
 listener.delegate = delegate
