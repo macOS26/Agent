@@ -205,7 +205,7 @@ Agent.app (SwiftUI)
 
 - macOS 26.0+
 - Xcode Command Line Tools (Agent will prompt to install if missing)
-- An Anthropic API key, or an Ollama Cloud API key. Local Ollama support works requires lots of RAM.
+- An Anthropic API key, or an Ollama Cloud API key. Apple Silcon with Local Ollama support works, but requires lots of RAM. Min 32GB, 64-128GB recommended.
 
 ## Getting Started
 
