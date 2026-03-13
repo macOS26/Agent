@@ -16,7 +16,10 @@ func todayEvents() {
     let now = Date()
     let calendar = Calendar.current
     let startOfDay = calendar.startOfDay(for: now)
-    let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
+    guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
+        print("Could not calculate end of day")
+        return
+    }
 
     let formatter = DateFormatter()
     formatter.dateStyle = .medium

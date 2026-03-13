@@ -5,7 +5,7 @@ final class ClaudeService {
     let apiKey: String
     let model: String
 
-    private static let baseURL = URL(string: "https://api.anthropic.com/v1/messages")!
+    private static let baseURL = URL(string: "https://api.anthropic.com/v1/messages") ?? URL(filePath: "/")
     private static let apiVersion = "2023-06-01"
 
     let historyContext: String
@@ -178,7 +178,7 @@ final class ClaudeService {
         - MUSIC: To add tracks to a playlist, use the library playlist's searchFor method to find tracks, \
         then call duplicateTo on each result to copy it into the target playlist:
         ```
-        let library = (music.playlists?().object(at: 0) as? MusicLibraryPlaylist)!
+        guard let library = music.playlists?().object(at: 0) as? MusicLibraryPlaylist else { return 1 }
         let results = library.searchFor("Song Name", only: .names)
         // results is an SBObject acting as an array — iterate with value(forKey:)
         if let tracks = (results as? SBObject)?.value(forKey: "get") as? [SBObject] {
