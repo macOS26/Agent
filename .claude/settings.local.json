@@ -98,7 +98,11 @@
       "Bash(swift package:*)",
       "Bash(git -C /Users/toddbruss/Documents/GitHub/Agent status -s -- AgentSwiftPackage/)",
       "Bash(defaults read:*)",
-      "Bash(grep -r \"scripting_bridge_query\" /Users/toddbruss/Documents/Agent/agents/ --include=\"*\" 2>/dev/null | head -50)"
+      "Bash(grep -r \"scripting_bridge_query\" /Users/toddbruss/Documents/Agent/agents/ --include=\"*\" 2>/dev/null | head -50)",
+      "Bash(find /Users/toddbruss/Documents/Agent/agents/Sources/Scripts -name \"*.swift\" -type f 2>/dev/null | head -20)",
+      "Bash(ls /Users/toddbruss/Documents/GitHub/Agent/Agent/ScriptingBridges/ | grep -v -E \"^\\(Automator|Calendar|Common|Contacts|Finder|ImageEvents|Mail|Messages|Music|Notes|Numbers|Pages|Photos|Reminders|ScriptEditor|Shortcuts|SystemEvents|Terminal|TV|Xcode\\)\\\\.swift$\")",
+      "Bash(find /Users/toddbruss/Documents/GitHub/Agent -name \"*.swift\" 2>/dev/null | head -30)",
+      "Bash(plutil -lint /Users/toddbruss/Documents/GitHub/Agent/AgentXcode/Agent.xcodeproj/project.pbxproj)"
     ]
   }
 }
