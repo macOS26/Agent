@@ -50,6 +50,35 @@ final class ScriptService {
             installNewScripts()
             copyPackageSwift()
         }
+        syncScriptsWithPackage()
+    }
+
+    /// Sync scriptNames in Package.swift with actual .swift files on disk.
+    /// Adds unregistered scripts and removes entries for deleted files.
+    func syncScriptsWithPackage() {
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: scriptsDir.path),
+              fm.fileExists(atPath: packageSwiftURL.path) else { return }
+
+        guard let files = try? fm.contentsOfDirectory(atPath: scriptsDir.path) else { return }
+        let diskScripts = Set(files.filter { $0.hasSuffix(".swift") }
+            .map { $0.replacingOccurrences(of: ".swift", with: "") })
+
+        guard let content = try? String(contentsOf: packageSwiftURL, encoding: .utf8) else { return }
+        guard let arrayStart = content.range(of: "let scriptNames = [") else { return }
+        guard let arrayEnd = content[arrayStart.upperBound...].range(of: "]") else { return }
+
+        let arrayContent = content[arrayStart.upperBound..<arrayEnd.lowerBound]
+        let registeredScripts = Set(arrayContent.components(separatedBy: "\n")
+            .map { $0.trimmingCharacters(in: .whitespaces).trimmingCharacters(in: CharacterSet(charactersIn: "\",")) }
+            .filter { !$0.isEmpty })
+
+        guard diskScripts != registeredScripts else { return }
+
+        let sorted = diskScripts.sorted()
+        let newArray = sorted.map { "    \"\($0)\"," }.joined(separator: "\n")
+        let newContent = content[..<arrayStart.upperBound] + "\n" + newArray + "\n" + content[arrayEnd.lowerBound...]
+        try? String(newContent).write(to: packageSwiftURL, atomically: true, encoding: .utf8)
     }
 
     // MARK: - Fresh install
