@@ -38,6 +38,10 @@
 		EA37C5522F636B86009D0A23 /* AgentScriptingBridge in Frameworks */ = {isa = PBXBuildFile; productRef = EA37C5512F636B86009D0A23 /* AgentScriptingBridge */; };
 		EA37C5552F636B87009D0A23 /* Sources in Resources */ = {isa = PBXBuildFile; fileRef = EA37C5532F636B87009D0A23 /* Sources */; };
 		EA37C5562F636B87009D0A23 /* Package.swift in Resources */ = {isa = PBXBuildFile; fileRef = EA37C5542F636B87009D0A23 /* Package.swift */; };
+		EA50000000000000000001 /* send_message_input.json in Resources */ = {isa = PBXBuildFile; fileRef = EA50000000000000000005 /* send_message_input.json */; };
+		EA50000000000000000002 /* send_message_output.json in Resources */ = {isa = PBXBuildFile; fileRef = EA50000000000000000006 /* send_message_output.json */; };
+		EA50000000000000000003 /* send_image_input.json in Resources */ = {isa = PBXBuildFile; fileRef = EA50000000000000000007 /* send_image_input.json */; };
+		EA50000000000000000004 /* send_image_output.json in Resources */ = {isa = PBXBuildFile; fileRef = EA50000000000000000008 /* send_image_output.json */; };
 		EAF3666F2F623D6A004B7E38 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = EAF3666E2F623D6A004B7E38 /* AppIcon.icon */; };
 		EE10000000000000000004 /* ObjCTry.m in Sources */ = {isa = PBXBuildFile; fileRef = EE10000000000000000002 /* ObjCTry.m */; };
 		FF10000000000000000002 /* PackageAutoDiscoveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000001 /* PackageAutoDiscoveryTests.swift */; };
@@ -148,6 +152,10 @@
 		DD10000000000000000004 /* AgentTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AgentTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		EA37C5532F636B87009D0A23 /* Sources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Sources; path = ../AgentSwiftPackage/Agent/agents/Sources; sourceTree = SOURCE_ROOT; };
 		EA37C5542F636B87009D0A23 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = text; name = Package.swift; path = ../AgentSwiftPackage/Agent/agents/Package.swift; sourceTree = SOURCE_ROOT; };
+		EA50000000000000000005 /* send_message_input.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = send_message_input.json; path = ../AgentSwiftPackage/Agent/send_message_input.json; sourceTree = SOURCE_ROOT; };
+		EA50000000000000000006 /* send_message_output.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = send_message_output.json; path = ../AgentSwiftPackage/Agent/send_message_output.json; sourceTree = SOURCE_ROOT; };
+		EA50000000000000000007 /* send_image_input.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = send_image_input.json; path = ../AgentSwiftPackage/Agent/send_image_input.json; sourceTree = SOURCE_ROOT; };
+		EA50000000000000000008 /* send_image_output.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = send_image_output.json; path = ../AgentSwiftPackage/Agent/send_image_output.json; sourceTree = SOURCE_ROOT; };
 		EAF3666E2F623D6A004B7E38 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		EE10000000000000000001 /* ObjCTry.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ObjCTry.h; sourceTree = "<group>"; };
 		EE10000000000000000002 /* ObjCTry.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ObjCTry.m; sourceTree = "<group>"; };
@@ -194,7 +202,6 @@
 			children = (
 				AA10000000000000000041 /* Agent */,
 				BB10000000000000000040 /* AgentHelper */,
-				CC10000000000000000040 /* AgentUser */,
 				DD10000000000000000040 /* AgentTests */,
 				AA10000000000000000042 /* Products */,
 				AA10000000000000000043 /* Frameworks */,
@@ -227,6 +234,10 @@
 				AA10000000000000000022 /* Agent.entitlements */,
 				EA37C5532F636B87009D0A23 /* Sources */,
 				EA37C5542F636B87009D0A23 /* Package.swift */,
+				EA50000000000000000005 /* send_message_input.json */,
+				EA50000000000000000006 /* send_message_output.json */,
+				EA50000000000000000007 /* send_image_input.json */,
+				EA50000000000000000008 /* send_image_output.json */,
 				BB10000000000000000041 /* LaunchDaemons */,
 				CC10000000000000000041 /* LaunchAgents */,
 			);
@@ -257,6 +268,7 @@
 			children = (
 				BB1000000000000000001A /* main.swift */,
 				BB1000000000000000001B /* HelperProtocol.swift */,
+				CC10000000000000000040 /* AgentUser */,
 			);
 			path = AgentHelper;
 			sourceTree = "<group>";
@@ -418,6 +430,10 @@
 				EAF3666F2F623D6A004B7E38 /* AppIcon.icon in Resources */,
 				EA37C5552F636B87009D0A23 /* Sources in Resources */,
 				EA37C5562F636B87009D0A23 /* Package.swift in Resources */,
+				EA50000000000000000001 /* send_message_input.json in Resources */,
+				EA50000000000000000002 /* send_message_output.json in Resources */,
+				EA50000000000000000003 /* send_image_input.json in Resources */,
+				EA50000000000000000004 /* send_image_output.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

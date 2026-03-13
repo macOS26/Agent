@@ -50,6 +50,7 @@ final class ScriptService {
             installNewScripts()
             copyPackageSwift()
         }
+        copyBundledJSONFiles()
         syncScriptsWithPackage()
     }
 
@@ -79,6 +80,31 @@ final class ScriptService {
         let newArray = sorted.map { "    \"\($0)\"," }.joined(separator: "\n")
         let newContent = content[..<arrayStart.upperBound] + "\n" + newArray + "\n" + content[arrayEnd.lowerBound...]
         try? String(newContent).write(to: packageSwiftURL, atomically: true, encoding: .utf8)
+    }
+
+    // MARK: - JSON files
+
+    /// The parent directory ~/Documents/Agent/ where JSON input/output files live
+    static let agentDir: URL = {
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        return home.appendingPathComponent("Documents/Agent")
+    }()
+
+    /// Copy any bundled .json files to ~/Documents/Agent/ if they don't already exist
+    private func copyBundledJSONFiles() {
+        let fm = FileManager.default
+        guard let bundleURL = Bundle.main.resourceURL else { return }
+
+        try? fm.createDirectory(at: Self.agentDir, withIntermediateDirectories: true)
+
+        guard let items = try? fm.contentsOfDirectory(atPath: bundleURL.path) else { return }
+        for item in items where item.hasSuffix(".json") {
+            let dst = Self.agentDir.appendingPathComponent(item)
+            if !fm.fileExists(atPath: dst.path) {
+                let src = bundleURL.appendingPathComponent(item)
+                try? fm.copyItem(at: src, to: dst)
+            }
+        }
     }
 
     // MARK: - Fresh install
