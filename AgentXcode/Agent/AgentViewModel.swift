@@ -388,6 +388,9 @@ final class AgentViewModel {
         logFlushTask = nil
         activityLog = ""
         UserDefaults.standard.removeObject(forKey: "agentActivityLog")
+        // Clean up cached image snapshots
+        try? FileManager.default.removeItem(at: Self.logImageCacheDir)
+        try? FileManager.default.createDirectory(at: Self.logImageCacheDir, withIntermediateDirectories: true)
     }
 
     // MARK: - Screenshot
@@ -538,9 +541,58 @@ final class AgentViewModel {
     private static let maxLogSize = 60_000
     private var recentOutputHashes: Set<Int> = []
 
+    // MARK: - Image snapshot cache (persists across launches)
+
+    private static let logImageCacheDir: URL = {
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let dir = appSupport.appendingPathComponent("Agent/log_images")
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir
+    }()
+
+    private static let imagePathRegex = try! NSRegularExpression(
+        pattern: #"(/[^\s"'<>]+\.(?:jpg|jpeg|png|gif|tiff|bmp|webp|heic))"#,
+        options: .caseInsensitive
+    )
+
+    /// Snapshot any image files found in text to persistent cache, rewriting paths to UUID copies.
+    private func snapshotImages(in text: String) -> String {
+        let nsText = text as NSString
+        let matches = Self.imagePathRegex.matches(in: text, range: NSRange(location: 0, length: nsText.length))
+        guard !matches.isEmpty else { return text }
+
+        var result = text
+        // Process in reverse so earlier offsets stay valid
+        for match in matches.reversed() {
+            let range = match.range(at: 1)
+            let path = nsText.substring(with: range)
+
+            // Skip if already a cached path
+            if path.contains("/log_images/") { continue }
+
+            // Skip if file doesn't exist
+            guard FileManager.default.fileExists(atPath: path) else { continue }
+
+            let ext = (path as NSString).pathExtension
+            let uuid = UUID().uuidString
+            let cachedURL = Self.logImageCacheDir.appendingPathComponent("\(uuid).\(ext)")
+
+            do {
+                try FileManager.default.copyItem(atPath: path, toPath: cachedURL.path)
+                let swiftRange = Range(range, in: result)!
+                result.replaceSubrange(swiftRange, with: cachedURL.path)
+            } catch {
+                // Copy failed — leave original path
+            }
+        }
+
+        return result
+    }
+
     private func appendLog(_ message: String) {
         let timestamp = Self.timestampFormatter.string(from: Date())
-        logBuffer += "[\(timestamp)] \(message)\n"
+        let cached = snapshotImages(in: message)
+        logBuffer += "[\(timestamp)] \(cached)\n"
         scheduleLogFlush()
     }
 
@@ -556,8 +608,9 @@ final class AgentViewModel {
             }
             return
         }
-        logBuffer += text
-        if !text.hasSuffix("\n") {
+        let cached = snapshotImages(in: text)
+        logBuffer += cached
+        if !cached.hasSuffix("\n") {
             logBuffer += "\n"
         }
         scheduleLogFlush()
