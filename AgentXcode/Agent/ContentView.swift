@@ -195,7 +195,7 @@ struct ContentView: View {
                                 .shadow(color: .blue.opacity(0.3), radius: 80)
                                 .padding(40)
 
-                            Text("Agent")
+                            Text("Agent!")
                                 .font(.system(size: 48, weight: .black, design: .rounded))
                                 .foregroundStyle(
                                     LinearGradient(
