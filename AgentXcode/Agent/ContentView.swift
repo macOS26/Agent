@@ -327,9 +327,9 @@ struct ActivityLogView: NSViewRepresentable {
         let font = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
         /// Images keyed by their character offset in the log — each occurrence gets its own
         /// snapshot so the same path (e.g. current_artwork.jpg) shows different art per task.
-        var imageCache: [Int: NSImage] = [:]
-        /// HTML snapshots keyed by character offset
-        var htmlCache: [Int: NSImage] = [:]
+        var imageCache: [Int: (image: NSImage, mtime: Date)] = [:]
+        /// HTML snapshots keyed by character offset, with file modification time for invalidation
+        var htmlCache: [Int: (image: NSImage, mtime: Date)] = [:]
         /// Offsets currently being rendered (prevent duplicate requests)
         var htmlPending: Set<Int> = []
         /// Retain WKWebViews until snapshot completes
@@ -401,31 +401,33 @@ struct ActivityLogView: NSViewRepresentable {
                 result.append(NSAttributedString(string: match.path, attributes: baseAttrs))
                 lastEnd = match.range.location + match.range.length
 
-                guard FileManager.default.fileExists(atPath: match.path) else { continue }
+                let fileAttrs = try? FileManager.default.attributesOfItem(atPath: match.path)
+                guard fileAttrs != nil else { continue }
+                let fileSize = fileAttrs?[.size] as? Int ?? 0
+                let fileMtime = fileAttrs?[.modificationDate] as? Date ?? .distantPast
 
                 if match.isHTML {
-                    // HTML: use cached snapshot or kick off async render
-                    if let snapshot = htmlCache[offset] {
-                        let fileSize = (try? FileManager.default.attributesOfItem(atPath: match.path)[.size] as? Int) ?? 0
+                    // HTML: use cached snapshot, invalidate if file changed
+                    if let cached = htmlCache[offset], cached.mtime >= fileMtime {
                         if fileSize > 0 && renderedSizes.contains(fileSize) { continue }
                         renderedSizes.insert(fileSize)
-                        appendImage(snapshot, maxWidth: 480.0, to: result, attrs: baseAttrs)
+                        appendImage(cached.image, maxWidth: 480.0, to: result, attrs: baseAttrs)
                     } else if !htmlPending.contains(offset) {
+                        htmlCache.removeValue(forKey: offset)
                         htmlPending.insert(offset)
                         let path = match.path
                         snapshotHTML(path: path, offset: offset)
                     }
                 } else {
                     // Image file
-                    let fileSize = (try? FileManager.default.attributesOfItem(atPath: match.path)[.size] as? Int) ?? 0
                     if fileSize > 0 && renderedSizes.contains(fileSize) { continue }
                     renderedSizes.insert(fileSize)
 
                     let image: NSImage
-                    if let cached = imageCache[offset] {
-                        image = cached
+                    if let cached = imageCache[offset], cached.mtime >= fileMtime {
+                        image = cached.image
                     } else if let loaded = NSImage(contentsOfFile: match.path) {
-                        imageCache[offset] = loaded
+                        imageCache[offset] = (image: loaded, mtime: fileMtime)
                         image = loaded
                     } else {
                         continue
@@ -461,6 +463,7 @@ struct ActivityLogView: NSViewRepresentable {
         }
 
         private static var snapshotOffsetKey: UInt8 = 0
+        private static var snapshotPathKey: UInt8 = 0
 
         /// Render HTML to image via off-screen WKWebView
         private func snapshotHTML(path: String, offset: Int) {
@@ -471,6 +474,7 @@ struct ActivityLogView: NSViewRepresentable {
 
             // Store context for the delegate callback
             objc_setAssociatedObject(webView, &Self.snapshotOffsetKey, offset, .OBJC_ASSOCIATION_RETAIN)
+            objc_setAssociatedObject(webView, &Self.snapshotPathKey, path, .OBJC_ASSOCIATION_RETAIN)
 
             // Retain the web view until snapshot completes
             activeWebViews[offset] = webView
@@ -499,7 +503,9 @@ struct ActivityLogView: NSViewRepresentable {
 
                 do {
                     let snapshot = try await webView.takeSnapshot(configuration: snapConfig)
-                    self.htmlCache[offset] = snapshot
+                    let path = objc_getAssociatedObject(webView, &Self.snapshotPathKey) as? String ?? ""
+                    let mtime = (try? FileManager.default.attributesOfItem(atPath: path)[.modificationDate] as? Date) ?? Date()
+                    self.htmlCache[offset] = (image: snapshot, mtime: mtime)
                 } catch {
                     // Snapshot failed — allow retry on next render
                 }
