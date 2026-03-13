@@ -16,7 +16,8 @@ final class OllamaService {
     init(apiKey: String, model: String, endpoint: String, supportsVision: Bool = false, historyContext: String = "") {
         self.apiKey = apiKey
         self.model = model
-        self.baseURL = URL(string: endpoint)!
+        let effectiveEndpoint = endpoint.isEmpty ? "http://localhost:11434/api/chat" : endpoint
+        self.baseURL = URL(string: effectiveEndpoint) ?? URL(string: "http://localhost:11434/api/chat")!
         self.supportsVision = supportsVision
         self.historyContext = historyContext
         self.userHome = FileManager.default.homeDirectoryForCurrentUser.path

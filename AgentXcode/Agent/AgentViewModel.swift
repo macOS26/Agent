@@ -71,9 +71,7 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(ollamaAPIKey, forKey: "ollamaAPIKey") }
     }
 
-    var ollamaEndpoint: String = UserDefaults.standard.string(forKey: "ollamaEndpoint") ?? "https://ollama.com/api/chat" {
-        didSet { UserDefaults.standard.set(ollamaEndpoint, forKey: "ollamaEndpoint") }
-    }
+    let ollamaEndpoint = "https://ollama.com/api/chat"
 
     var maxHistoryBeforeSummary: Int = UserDefaults.standard.object(forKey: "agentMaxHistory") as? Int ?? 10 {
         didSet { UserDefaults.standard.set(maxHistoryBeforeSummary, forKey: "agentMaxHistory") }
@@ -169,7 +167,8 @@ final class AgentViewModel {
     }
 
     private nonisolated static func fetchModels(endpoint: String, apiKey: String) async throws -> [OllamaModelInfo] {
-        guard let chatURL = URL(string: endpoint) else { throw AgentError.invalidResponse }
+        let effectiveEndpoint = endpoint.isEmpty ? "http://localhost:11434/api/chat" : endpoint
+        guard let chatURL = URL(string: effectiveEndpoint) else { throw AgentError.invalidResponse }
         let baseDir = chatURL.deletingLastPathComponent().absoluteString
 
         guard let tagsURL = URL(string: baseDir + "tags") else { throw AgentError.invalidResponse }
