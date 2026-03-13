@@ -17,7 +17,46 @@ final class ScriptingBridgeQueryService: @unchecked Sendable {
     ]
 
     /// Execute a query against a scriptable application.
+    /// Automatically requests Automation permission on first failure, then retries once.
     nonisolated func execute(bundleID: String, operations: [[String: Any]], allowWrites: Bool = false) -> String {
+        let result = run(bundleID: bundleID, operations: operations, allowWrites: allowWrites)
+        // If we got nil/empty results, try requesting permission and retry once
+        if looksLikePermissionIssue(result) {
+            requestAutomationPermission(bundleID: bundleID)
+            let retry = run(bundleID: bundleID, operations: operations, allowWrites: allowWrites)
+            if looksLikePermissionIssue(retry) {
+                return retry + "\n(Automation permission may not have been granted. Check System Settings → Privacy & Security → Automation.)"
+            }
+            return retry
+        }
+        return result
+    }
+
+    /// Detect results that suggest a permission issue
+    private func looksLikePermissionIssue(_ result: String) -> Bool {
+        result.contains("0 items") || result.contains("the array is empty") ||
+        result.contains("no output") || result.contains("no data")
+    }
+
+    /// Trigger the macOS Automation consent dialog via osascript
+    private func requestAutomationPermission(bundleID: String) {
+        // Resolve app name from bundle ID for the osascript tell block
+        let appName: String
+        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
+            appName = url.deletingPathExtension().lastPathComponent
+        } else {
+            appName = bundleID
+        }
+        let proc = Process()
+        proc.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+        proc.arguments = ["-e", "tell application \"\(appName)\" to get name"]
+        proc.standardOutput = FileHandle.nullDevice
+        proc.standardError = FileHandle.nullDevice
+        try? proc.run()
+        proc.waitUntilExit()
+    }
+
+    private func run(bundleID: String, operations: [[String: Any]], allowWrites: Bool) -> String {
         guard !bundleID.isEmpty else { return "Error: bundle_id is required" }
         guard !operations.isEmpty else { return "Error: operations array is empty" }
 
@@ -60,7 +99,7 @@ final class ScriptingBridgeQueryService: @unchecked Sendable {
                 if let array = cursor as? SBElementArray {
                     let count = array.count
                     if count == 0 {
-                        output.append("(0 items — the array is empty. If this is unexpected, the app may need Automation permission. Try: osascript -e 'tell application \"AppName\" to get name')")
+                        output.append("(0 items — the array is empty)")
                         return output.joined(separator: "\n")
                     }
                     let cap = min(count, limit)
@@ -135,7 +174,7 @@ final class ScriptingBridgeQueryService: @unchecked Sendable {
         }
 
         if output.isEmpty {
-            return "(no output — the query returned no data. Possible causes: 1) The app needs Automation permission — run: osascript -e 'tell application \"AppName\" to get name' to trigger the consent dialog. 2) The property key may be wrong — check the app's scripting dictionary.)"
+            return "(no output — the query returned no data)"
         }
         return output.joined(separator: "\n")
     }
@@ -162,18 +201,22 @@ final class ScriptingBridgeQueryService: @unchecked Sendable {
 
     private func callMethod(on object: Any, method: String, arg: String?) -> Any? {
         guard let nsObj = object as? NSObject else { return nil }
+        var result: Any?
         if let arg = arg {
             let sel = Selector("\(method):")
-            if nsObj.responds(to: sel) {
-                return nsObj.perform(sel, with: arg)?.takeUnretainedValue()
+            guard nsObj.responds(to: sel) else { return nil }
+            let success = ObjCTry {
+                result = nsObj.perform(sel, with: arg)?.takeUnretainedValue()
             }
+            return success ? result : nil
         } else {
             let sel = Selector(method)
-            if nsObj.responds(to: sel) {
-                return nsObj.perform(sel)?.takeUnretainedValue()
+            guard nsObj.responds(to: sel) else { return nil }
+            let success = ObjCTry {
+                result = nsObj.perform(sel)?.takeUnretainedValue()
             }
+            return success ? result : nil
         }
-        return nil
     }
 
     private func readProperties(from object: Any, properties: [String]) -> String {
