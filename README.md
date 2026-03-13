@@ -45,7 +45,7 @@ The AI defaults to user-level execution and only escalates to root when necessar
 Agent relies on Xcode Command Line Tools (`clang`, `swiftc`, `swift build`) for compiling and running Swift agent scripts. On launch, Agent runs a system check and detects whether CLT is installed. If missing, it presents an overlay with an **Install** button that triggers `xcode-select --install` — Apple's standard installer dialog — so you can get set up without leaving the app.
 
 ### AppleScript via osascript
-Agent can execute AppleScript through `/usr/bin/osascript`, giving it control over any Mac application that supports the Open Scripting Architecture. This is how it bootstraps Xcode Automation permissions — by running an AppleScript that triggers the macOS consent dialog.
+Agent runs `osascript` commands directly in the app process — not through XPC helpers — so they automatically inherit the app's macOS Automation permissions. This means AppleScript "just works" for controlling any Mac application that supports the Open Scripting Architecture. The same mechanism is used to bootstrap Xcode Automation permissions by triggering the macOS consent dialog.
 
 ### Xcode Automation via ScriptingBridge
 Agent controls Xcode directly through Apple's ScriptingBridge framework — the same Objective-C/Swift bridge that powers AppleScript, but called natively without spawning a subprocess:
@@ -143,7 +143,7 @@ The AI selects the right scripting approach based on task complexity:
 | 1. `apple_event_query` | Zero compilation, instant ObjC dispatch | Small queries: reading app data (mail, notes, music, calendar, etc.) |
 | 2. `run_agent_script` | Native Swift dylib via AgentScriptingBridge | Persistent, repeatable automation needing type-safe compiled code |
 | 3. NSAppleScript in scripts | In-process AppleScript fallback | When AgentScriptingBridge has issues with a particular app |
-| 4. `osascript` via user agent | Shell-based AppleScript | Last resort for one-off scripts or complex `tell` blocks |
+| 4. `osascript` via Agent app | Shell-based AppleScript (runs in-app for Automation permissions) | Last resort for one-off scripts or complex `tell` blocks |
 
 The AI prefers `execute_user_command` for all tasks unless root privileges are truly required. When root is used, files are chown'd back to the user to avoid permission issues.
 
