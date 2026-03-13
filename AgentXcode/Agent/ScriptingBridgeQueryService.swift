@@ -1,7 +1,6 @@
 import Foundation
 import ScriptingBridge
 import AppKit
-import ApplicationServices
 
 /// Executes dynamic ScriptingBridge queries using ObjC runtime dispatch.
 /// No compilation needed — walks the object graph via value(forKey:) and perform(_:with:).
@@ -18,64 +17,34 @@ final class ScriptingBridgeQueryService: @unchecked Sendable {
     ]
 
     /// Execute a query against a scriptable application.
-    /// Ensures the app is running, checks Automation permission (triggering the macOS
-    /// consent dialog if needed), then runs the query.
+    /// Runs osascript first to trigger the Automation permission dialog if needed,
+    /// then runs the ScriptingBridge query.
     nonisolated func execute(bundleID: String, operations: [[String: Any]], allowWrites: Bool = false) -> String {
-        // Ensure the app is running so we can check permission against its PID
-        launchAppIfNeeded(bundleID: bundleID)
-
-        // Check/request Automation permission — triggers consent dialog on first contact
-        let permStatus = checkAutomationPermission(bundleID: bundleID)
-        if permStatus == errAEEventNotPermitted {
-            let appName = resolveAppName(bundleID)
-            return "Error: Agent does not have Automation permission for \(appName). Grant it in System Settings → Privacy & Security → Automation → Agent, then retry."
-        }
+        let appName = resolveAppName(bundleID)
+        // Run a trivial osascript to trigger the macOS Automation permission dialog.
+        // This is what actually makes the "Agent wants to control X" prompt appear.
+        grantPermissionViaOsascript(appName: appName)
         return run(bundleID: bundleID, operations: operations, allowWrites: allowWrites)
     }
 
-    /// Launch the target app if it's not already running.
-    private func launchAppIfNeeded(bundleID: String) {
-        if NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).isEmpty {
-            if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
-                let config = NSWorkspace.OpenConfiguration()
-                config.activates = false  // Don't steal focus
-                let semaphore = DispatchSemaphore(value: 0)
-                NSWorkspace.shared.openApplication(at: url, configuration: config) { _, _ in
-                    semaphore.signal()
-                }
-                _ = semaphore.wait(timeout: .now() + 5)
-                // Give the app a moment to register its PID
-                Thread.sleep(forTimeInterval: 1)
-            }
-        }
-    }
+    /// Apps that have already been granted permission this session
+    private var grantedApps: Set<String> = []
 
-    /// Check Automation permission using AEDeterminePermissionToAutomateTarget.
-    /// Must run on the main thread so macOS can show the consent dialog.
-    private func checkAutomationPermission(bundleID: String) -> OSStatus {
-        guard let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first else {
-            return noErr  // Couldn't find PID — let SBApplication try anyway
-        }
-        let pid = app.processIdentifier
-
-        // Dispatch to main thread — TCC consent dialog requires it
-        if Thread.isMainThread {
-            return aePermissionCheck(pid: pid)
-        } else {
-            var status: OSStatus = noErr
-            DispatchQueue.main.sync {
-                status = aePermissionCheck(pid: pid)
-            }
-            return status
-        }
-    }
-
-    private func aePermissionCheck(pid: pid_t) -> OSStatus {
-        var pidValue = pid
-        var targetDesc = AEAddressDesc()
-        AECreateDesc(typeKernelProcessID, &pidValue, MemoryLayout<pid_t>.size, &targetDesc)
-        defer { AEDisposeDesc(&targetDesc) }
-        return AEDeterminePermissionToAutomateTarget(&targetDesc, typeWildCard, typeWildCard, true)
+    /// Trigger the macOS Automation permission dialog by running osascript.
+    /// Same pattern as XcodeService.grantPermission().
+    private func grantPermissionViaOsascript(appName: String) {
+        if grantedApps.contains(appName) { return }
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+        process.arguments = ["-e", "tell application \"\(appName)\" to activate"]
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = pipe
+        do {
+            try process.run()
+            process.waitUntilExit()
+        } catch { }
+        (self as ScriptingBridgeQueryService).grantedApps.insert(appName)
     }
 
     private func resolveAppName(_ bundleID: String) -> String {
