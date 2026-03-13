@@ -206,7 +206,33 @@ struct ContentView: View {
                                 )
                                 .shadow(color: .blue, radius: 12)
                                 .shadow(color: .blue.opacity(0.7), radius: 24)
-                                .offset(y: 90)
+                                .offset(y: 100)
+                            
+                            Text("macOS26")
+                                .font(.system(size: 48, weight: .black, design: .rounded))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [.white, .blue],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                .shadow(color: .blue, radius: 12)
+                                .shadow(color: .blue.opacity(0.7), radius: 24)
+                                .offset(y: 150)
+                            
+                            Text("Github")
+                                .font(.system(size: 48, weight: .black, design: .rounded))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [.white, .blue],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                .shadow(color: .blue, radius: 12)
+                                .shadow(color: .blue.opacity(0.7), radius: 24)
+                                .offset(y: 200)
                         }
                     }
                     .opacity(splashOpacity)

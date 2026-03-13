@@ -141,7 +141,8 @@
       "Bash(open /Users/toddbruss/Documents/GitHub/Agent/AgentXcode/Agent.xcodeproj)",
       "Bash(tccutil reset:*)",
       "Bash(sudo rm:*)",
-      "Bash(ls /Users/toddbruss/Documents/GitHub/Agent/AgentSwiftPackage/Agent/*.json 2>/dev/null)"
+      "Bash(ls /Users/toddbruss/Documents/GitHub/Agent/AgentSwiftPackage/Agent/*.json 2>/dev/null)",
+      "Bash(xcodebuild -project AgentXcode/Agent.xcodeproj -list 2>&1)"
     ]
   }
 }
