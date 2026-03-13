@@ -900,6 +900,10 @@ struct SettingsView: View {
                     Text("Summarize after").font(.caption).foregroundStyle(.secondary)
                     Stepper("\(viewModel.maxHistoryBeforeSummary) tasks", value: $viewModel.maxHistoryBeforeSummary, in: 5...50)
                 }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Visible tasks in chat").font(.caption).foregroundStyle(.secondary)
+                    Stepper("\(viewModel.visibleTaskCount)", value: $viewModel.visibleTaskCount, in: 1...5)
+                }
             }
         }
         .padding(20)
