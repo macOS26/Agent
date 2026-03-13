@@ -184,6 +184,37 @@ final class OllamaService {
         Return 0 for success, non-zero for error. NEVER use exit() — use return instead. \
         NEVER put executable code at top level — ALL code must be inside scriptMain() or helper functions.
 
+        PASSING DATA TO SCRIPTS — scripts are dylibs loaded in the Agent app's process via dlopen, \
+        NOT separate executables. This means:
+        - CommandLine.arguments and ProcessInfo.processInfo.arguments return the AGENT APP's args, NOT yours. \
+        Do NOT use CommandLine.arguments to read script input — it will not work.
+        - The `arguments` field in run_agent_script is passed via an environment variable. \
+        Read it with: `ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"]` \
+        Best for simple string values like file paths or short flags.
+        - For structured input/output, use JSON files in ~/Documents/Agent/:
+          1. Before calling run_agent_script, write input to ~/Documents/Agent/{scriptName}_input.json \
+          using execute_user_command (e.g. `echo '{"key":"value"}' > ~/Documents/Agent/MyScript_input.json`)
+          2. The script reads ~/Documents/Agent/{scriptName}_input.json and does its work
+          3. The script writes results to ~/Documents/Agent/{scriptName}_output.json
+          4. After run_agent_script returns, read the output JSON using execute_user_command \
+          (e.g. `cat ~/Documents/Agent/MyScript_output.json`)
+        - JSON I/O pattern in scripts:
+        ```
+        let home = NSHomeDirectory()
+        let inputPath = "\\(home)/Documents/Agent/MyScript_input.json"
+        let outputPath = "\\(home)/Documents/Agent/MyScript_output.json"
+        // Read input
+        guard let data = FileManager.default.contents(atPath: inputPath),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
+        // ... do work ...
+        // Write output
+        let result: [String: Any] = ["success": true, "data": "..."]
+        if let out = try? JSONSerialization.data(withJSONObject: result, options: .prettyPrinted) {
+            try? out.write(to: URL(fileURLWithPath: outputPath))
+        }
+        ```
+        See SendMessage.swift for a complete example using send_message_input.json / send_message_output.json.
+
         Key ScriptingBridge patterns:
         - Connect: `guard let app: ProtocolName = SBApplication(bundleIdentifier: "...") else { return 1 }`
         - Element arrays: `app.accounts?()` returns SBElementArray, iterate with `.object(at: i) as? Type`
@@ -376,12 +407,12 @@ final class OllamaService {
                 "type": "function",
                 "function": [
                     "name": "run_agent_script",
-                    "description": "Compile and execute a Swift script from ~/Documents/Agent/agents/ using swiftc.",
+                    "description": "Compile and run a Swift dylib script from ~/Documents/Agent/agents/. For structured data, write a JSON input file first via execute_user_command, then run the script.",
                     "parameters": [
                         "type": "object",
                         "properties": [
-                            "name": ["type": "string", "description": "Script filename"] as [String: Any],
-                            "arguments": ["type": "string", "description": "Optional command-line arguments"] as [String: Any]
+                            "name": ["type": "string", "description": "Script filename (without .swift)"] as [String: Any],
+                            "arguments": ["type": "string", "description": "Simple string passed via AGENT_SCRIPT_ARGS env var (read with ProcessInfo.processInfo.environment). For complex data, use JSON files instead."] as [String: Any]
                         ] as [String: Any],
                         "required": ["name"]
                     ] as [String: Any]
