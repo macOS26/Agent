@@ -409,7 +409,7 @@ struct ActivityLogView: NSViewRepresentable {
                         let fileSize = (try? FileManager.default.attributesOfItem(atPath: match.path)[.size] as? Int) ?? 0
                         if fileSize > 0 && renderedSizes.contains(fileSize) { continue }
                         renderedSizes.insert(fileSize)
-                        appendImage(snapshot, maxWidth: 400.0, to: result, attrs: baseAttrs)
+                        appendImage(snapshot, maxWidth: 480.0, to: result, attrs: baseAttrs)
                     } else if !htmlPending.contains(offset) {
                         htmlPending.insert(offset)
                         let path = match.path
@@ -460,16 +460,17 @@ struct ActivityLogView: NSViewRepresentable {
             result.append(NSAttributedString(string: "\n", attributes: attrs))
         }
 
+        private static var snapshotOffsetKey: UInt8 = 0
+
         /// Render HTML to image via off-screen WKWebView
         private func snapshotHTML(path: String, offset: Int) {
             let fileURL = URL(fileURLWithPath: path)
             let config = WKWebViewConfiguration()
-            let webView = WKWebView(frame: CGRect(x: 0, y: 0, width: 400, height: 500), configuration: config)
+            let webView = WKWebView(frame: CGRect(x: 0, y: 0, width: 480, height: 800), configuration: config)
             webView.navigationDelegate = self
-            webView.setValue(false, forKey: "drawsBackground")
 
             // Store context for the delegate callback
-            objc_setAssociatedObject(webView, "snapshotOffset", offset, .OBJC_ASSOCIATION_RETAIN)
+            objc_setAssociatedObject(webView, &Self.snapshotOffsetKey, offset, .OBJC_ASSOCIATION_RETAIN)
 
             // Retain the web view until snapshot completes
             activeWebViews[offset] = webView
@@ -480,21 +481,42 @@ struct ActivityLogView: NSViewRepresentable {
         // WKNavigationDelegate — snapshot when page finishes loading
         nonisolated func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             Task { @MainActor in
-                // Brief delay for CSS/images to settle
-                try? await Task.sleep(for: .milliseconds(500))
+                let offset = objc_getAssociatedObject(webView, &Self.snapshotOffsetKey) as? Int ?? 0
 
-                let offset = objc_getAssociatedObject(webView, "snapshotOffset") as? Int ?? 0
-                let config = WKSnapshotConfiguration()
-                config.snapshotWidth = 400 as NSNumber
-
-                if let snapshot = try? await webView.takeSnapshot(configuration: config) {
-                    self.htmlCache[offset] = snapshot
-                    self.htmlPending.remove(offset)
-                    self.activeWebViews.removeValue(forKey: offset)
-                    // Force re-render
-                    self.lastLength = 0
-                    self.onHTMLReady?()
+                // Wait for images/fonts to load (up to 3s, polling every 250ms)
+                for _ in 0..<12 {
+                    let ready = try? await webView.evaluateJavaScript(
+                        "document.readyState === 'complete' && Array.from(document.images).every(i => i.complete)"
+                    ) as? Bool
+                    if ready == true { break }
+                    try? await Task.sleep(for: .milliseconds(250))
                 }
+                // Extra settle time for CSS animations/fonts
+                try? await Task.sleep(for: .milliseconds(300))
+
+                let snapConfig = WKSnapshotConfiguration()
+                snapConfig.snapshotWidth = 480 as NSNumber
+
+                do {
+                    let snapshot = try await webView.takeSnapshot(configuration: snapConfig)
+                    self.htmlCache[offset] = snapshot
+                } catch {
+                    // Snapshot failed — allow retry on next render
+                }
+                self.htmlPending.remove(offset)
+                self.activeWebViews.removeValue(forKey: offset)
+                // Force re-render
+                self.lastLength = 0
+                self.onHTMLReady?()
+            }
+        }
+
+        // WKNavigationDelegate — handle load failures
+        nonisolated func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            Task { @MainActor in
+                let offset = objc_getAssociatedObject(webView, &Self.snapshotOffsetKey) as? Int ?? 0
+                self.htmlPending.remove(offset)
+                self.activeWebViews.removeValue(forKey: offset)
             }
         }
 
