@@ -91,13 +91,13 @@ final class OllamaService {
         ```
         Each bridge target depends on ScriptingBridgeCommon. Each script target lists its bridge dependencies.
 
-        UPDATING Package.swift — you MUST update it when adding scripts or bridges:
-        - To add a new script: 1) Write Sources/Scripts/MyScript.swift, \
-        2) Add ("MyScript", ["MailBridge"]) to the scriptTargets array in Package.swift.
+        SCRIPTS ARE AUTO-DISCOVERED — just create the .swift file, no Package.swift edits needed:
+        - To add a new script: Write Sources/Scripts/MyScript.swift with the correct `import` lines \
+        (e.g. `import MusicBridge`). Package.swift auto-discovers it and parses imports for dependencies.
         - To add a new bridge: 1) Write Sources/XCFScriptingBridges/AppNameBridge.swift, \
         2) Add "AppNameBridge" to the bridgeNames array in Package.swift.
-        - To remove a script or bridge: delete the .swift file AND remove its entry from Package.swift.
-        Always keep Package.swift in sync with the files on disk or swift build will fail.
+        - To remove a script: just delete the .swift file. To remove a bridge: delete AND remove from Package.swift.
+        IMPORTANT: Script imports must appear at the top of the file before any other code for auto-detection to work.
 
         Before writing a ScriptingBridge script, ALWAYS read the bridge file first to learn \
         the available protocols, properties, and methods:
