@@ -140,7 +140,8 @@
       "Bash(xcodebuild -workspace Agent.xcworkspace -scheme \"Agent!\" clean 2>&1 | tail -5)",
       "Bash(open /Users/toddbruss/Documents/GitHub/Agent/AgentXcode/Agent.xcodeproj)",
       "Bash(tccutil reset:*)",
-      "Bash(sudo rm:*)"
+      "Bash(sudo rm:*)",
+      "Bash(ls /Users/toddbruss/Documents/GitHub/Agent/AgentSwiftPackage/Agent/*.json 2>/dev/null)"
     ]
   }
 }
