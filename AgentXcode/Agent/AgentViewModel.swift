@@ -79,6 +79,10 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(maxHistoryBeforeSummary, forKey: "agentMaxHistory") }
     }
 
+    var visibleTaskCount: Int = UserDefaults.standard.object(forKey: "agentVisibleTasks") as? Int ?? 3 {
+        didSet { UserDefaults.standard.set(visibleTaskCount, forKey: "agentVisibleTasks") }
+    }
+
     var ollamaModel: String = UserDefaults.standard.string(forKey: "ollamaModel") ?? "" {
         didSet {
             UserDefaults.standard.set(ollamaModel, forKey: "ollamaModel")
@@ -727,12 +731,13 @@ final class AgentViewModel {
         UserDefaults.standard.set(activityLog, forKey: "agentActivityLog")
     }
 
-    /// Keep only the last 3 tasks visible
+    /// Keep only the last N tasks visible in the chat (controlled by visibleTaskCount preference)
     private func trimToRecentTasks() {
         let marker = "--- New Task ---"
         let parts = activityLog.components(separatedBy: marker)
-        guard parts.count > 4 else { return } // 3 tasks + possible leading text
-        let kept = parts.suffix(3).joined(separator: marker)
+        let limit = visibleTaskCount
+        guard parts.count > limit + 1 else { return }
+        let kept = parts.suffix(limit).joined(separator: marker)
         activityLog = marker + kept
     }
 
