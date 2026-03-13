@@ -1,4 +1,5 @@
 import Foundation
+import Darwin
 
 @MainActor
 final class ScriptService {
@@ -288,8 +289,8 @@ final class ScriptService {
         try? filtered.joined(separator: "\n").write(to: packageSwiftURL, atomically: true, encoding: .utf8)
     }
 
-    /// Build the swift build + run command for a script
-    func compileAndRunCommand(name: String, arguments: String = "") -> String? {
+    /// Return the swift build command to compile a script as a dynamic library
+    func compileCommand(name: String) -> String? {
         ensurePackage()
         let scriptName = name.replacingOccurrences(of: ".swift", with: "")
         let scriptFile = scriptsDir.appendingPathComponent("\(scriptName).swift")
@@ -297,8 +298,87 @@ final class ScriptService {
         guard fm.fileExists(atPath: scriptFile.path) else { return nil }
 
         let agentsPath = Self.agentsDir.path
-        let args = arguments.isEmpty ? "" : " \(arguments)"
+        return "cd '\(agentsPath)' && touch Package.swift && swift build --product '\(scriptName)' 2>&1"
+    }
 
-        return "cd '\(agentsPath)' && touch Package.swift && swift build --product '\(scriptName)' 2>&1 && .build/debug/'\(scriptName)'\(args) 2>&1"
+    /// Path to the compiled dylib for a script
+    func dylibPath(name: String) -> String {
+        let scriptName = name.replacingOccurrences(of: ".swift", with: "")
+        return Self.agentsDir.appendingPathComponent(".build/debug/lib\(scriptName).dylib").path
+    }
+
+    /// Load and run a compiled script dylib in-process via dlopen/dlsym.
+    /// Captures stdout/stderr and returns the output + exit status.
+    /// Runs on a background thread to avoid blocking the main thread.
+    func loadAndRunScript(name: String, arguments: String = "") async -> (output: String, status: Int32) {
+        let scriptName = name.replacingOccurrences(of: ".swift", with: "")
+        let path = dylibPath(name: scriptName)
+
+        return await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                // Set arguments via environment variable for scripts that need them
+                if !arguments.isEmpty {
+                    setenv("AGENT_SCRIPT_ARGS", arguments, 1)
+                }
+
+                // Create pipe to capture stdout/stderr
+                var pipefd: [Int32] = [0, 0]
+                pipe(&pipefd)
+                let savedStdout = dup(STDOUT_FILENO)
+                let savedStderr = dup(STDERR_FILENO)
+                dup2(pipefd[1], STDOUT_FILENO)
+                dup2(pipefd[1], STDERR_FILENO)
+
+                // Load dylib
+                guard let handle = dlopen(path, RTLD_NOW) else {
+                    // Restore file descriptors
+                    dup2(savedStdout, STDOUT_FILENO)
+                    dup2(savedStderr, STDERR_FILENO)
+                    close(pipefd[0]); close(pipefd[1])
+                    close(savedStdout); close(savedStderr)
+                    unsetenv("AGENT_SCRIPT_ARGS")
+                    let err = String(cString: dlerror())
+                    continuation.resume(returning: ("dlopen error: \(err)", 1))
+                    return
+                }
+
+                // Find entry point
+                guard let sym = dlsym(handle, "script_main") else {
+                    dlclose(handle)
+                    dup2(savedStdout, STDOUT_FILENO)
+                    dup2(savedStderr, STDERR_FILENO)
+                    close(pipefd[0]); close(pipefd[1])
+                    close(savedStdout); close(savedStderr)
+                    unsetenv("AGENT_SCRIPT_ARGS")
+                    continuation.resume(returning: ("dlsym error: script_main not found in \(scriptName)", 1))
+                    return
+                }
+
+                // Call script_main
+                typealias ScriptMainFunc = @convention(c) () -> Int32
+                let scriptMain = unsafeBitCast(sym, to: ScriptMainFunc.self)
+                let status = scriptMain()
+
+                // Flush and restore
+                fflush(stdout)
+                fflush(stderr)
+                close(pipefd[1])
+                dup2(savedStdout, STDOUT_FILENO)
+                dup2(savedStderr, STDERR_FILENO)
+                close(savedStdout)
+                close(savedStderr)
+
+                // Read captured output
+                let readHandle = FileHandle(fileDescriptor: pipefd[0])
+                let data = readHandle.readDataToEndOfFile()
+                close(pipefd[0])
+
+                dlclose(handle)
+                unsetenv("AGENT_SCRIPT_ARGS")
+
+                let output = String(data: data, encoding: .utf8) ?? ""
+                continuation.resume(returning: (output, status))
+            }
+        }
     }
 }

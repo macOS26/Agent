@@ -1,8 +1,10 @@
 import Foundation
 
-@_cdecl("script_main")
-public func scriptMain() -> Int32 {
-    return testGenerateBridge()
+@main
+struct TestGenerateBridge {
+    static func main() {
+        testGenerateBridge()
+    }
 }
 
 nonisolated(unsafe) private var passed = 0
@@ -113,11 +115,11 @@ private func analyzeBridge(_ content: String) -> BridgeStats {
 
 // MARK: - Entry Point
 
-func testGenerateBridge() -> Int32 {
-    let argsString = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""
-    let args = argsString.components(separatedBy: " ").filter { !$0.isEmpty }
-    let bridgesDir = args.first
-        ?? FileManager.default.homeDirectoryForCurrentUser
+func testGenerateBridge() {
+    let args = CommandLine.arguments
+    let bridgesDir = args.count > 1
+        ? args[1]
+        : FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Documents/Agent/agents/Sources/Z-ScriptingBridges").path
 
     passed = 0
@@ -135,7 +137,7 @@ func testGenerateBridge() -> Int32 {
     let buildResult = runCmd("cd '\(buildDir)' && swift build --product GenerateBridge 2>&1")
     guard buildResult.status == 0 else {
         print("FATAL: Build failed:\n\(buildResult.output)")
-        return 1
+        exit(1)
     }
     print("Build OK\n")
 
@@ -343,5 +345,5 @@ func testGenerateBridge() -> Int32 {
     print("Results: \(passed) passed, \(failed) failed")
     print("══════════════════════════════════════════════")
 
-    return failed > 0 ? 1 : 0
+    exit(failed > 0 ? 1 : 0)
 }

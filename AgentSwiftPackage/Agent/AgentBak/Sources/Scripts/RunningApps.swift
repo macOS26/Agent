@@ -1,10 +1,11 @@
 import Foundation
 import SystemEventsBridge
 
-@_cdecl("script_main")
-public func scriptMain() -> Int32 {
-    runningApps()
-    return 0
+@main
+struct RunningApps {
+    static func main() {
+        runningApps()
+    }
 }
 
 func runningApps() {

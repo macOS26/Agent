@@ -1,10 +1,11 @@
 import Foundation
 import MailBridge
 
-@_cdecl("script_main")
-public func scriptMain() -> Int32 {
-    organizeEmails()
-    return 0
+@main
+struct OrganizeEmails {
+    static func main() {
+        organizeEmails()
+    }
 }
 
 private let categories = [

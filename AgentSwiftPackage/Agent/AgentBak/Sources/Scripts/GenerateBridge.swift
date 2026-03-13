@@ -1,8 +1,10 @@
 import Foundation
 
-@_cdecl("script_main")
-public func scriptMain() -> Int32 {
-    return generateBridge()
+@main
+struct GenerateBridge {
+    static func main() {
+        generateBridge()
+    }
 }
 
 // MARK: - Type Mapping
@@ -474,22 +476,20 @@ private func runCmd(_ cmd: String) -> (output: String, status: Int32) {
 
 // MARK: - Entry Point
 
-func generateBridge() -> Int32 {
-    // When loaded as dylib, read arguments from AGENT_SCRIPT_ARGS environment variable
-    let argsString = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""
-    let args = argsString.components(separatedBy: " ").filter { !$0.isEmpty }
-    guard !args.isEmpty else {
+func generateBridge() {
+    let args = CommandLine.arguments
+    guard args.count >= 2 else {
         print("Usage: GenerateBridge /Applications/AppName.app [output_dir]")
         print("       GenerateBridge AppName.h [output_dir]")
         print("")
         print("Generates a Swift ScriptingBridge protocol file from a macOS app.")
         print("If given an .app path, runs sdef + sdp automatically.")
         print("If given a .h file, converts it directly.")
-        return 1
+        exit(1)
     }
 
-    let input = args[0]
-    let outputDir = args.count > 1 ? args[1] : FileManager.default.currentDirectoryPath
+    let input = args[1]
+    let outputDir = args.count > 2 ? args[2] : FileManager.default.currentDirectoryPath
 
     var headerPath: String
     var appName: String
@@ -508,7 +508,7 @@ func generateBridge() -> Int32 {
         let sdefResult = runCmd("sdef '\(appPath)' 2>/dev/null")
         guard sdefResult.status == 0, !sdefResult.output.isEmpty else {
             print("Error: \(appName) does not have a scripting definition (sdef)")
-            return 1
+            exit(1)
         }
 
         let sdefPath = "\(tempDir)/\(appName).sdef"
@@ -520,14 +520,14 @@ func generateBridge() -> Int32 {
         guard FileManager.default.fileExists(atPath: headerPath) else {
             print("Error: sdp failed to generate header")
             print(sdpResult.output)
-            return 1
+            exit(1)
         }
     } else if input.hasSuffix(".h") {
         headerPath = input
         appName = URL(fileURLWithPath: input).deletingPathExtension().lastPathComponent
     } else {
         print("Error: Input must be an .app bundle or a .h header file")
-        return 1
+        exit(1)
     }
 
     // Reset global state for repeated calls
@@ -546,5 +546,4 @@ func generateBridge() -> Int32 {
 
     print("Generated \(outputPath)")
     print("  \(enums.count) enums, \(protocols.count) protocols")
-    return 0
 }

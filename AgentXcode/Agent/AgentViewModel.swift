@@ -917,13 +917,15 @@ final class AgentViewModel {
                         if name == "run_agent_script" {
                             let scriptName = input["name"] as? String ?? ""
                             let arguments = input["arguments"] as? String ?? ""
-                            guard let command = scriptService.compileAndRunCommand(name: scriptName, arguments: arguments) else {
+                            guard let compileCmd = scriptService.compileCommand(name: scriptName) else {
                                 let err = "Error: script '\(scriptName)' not found."
                                 appendLog(err)
                                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
                                 continue
                             }
-                            appendLog("Compiling & running: \(scriptName)")
+
+                            // Step 1: Compile the script dylib via UserService
+                            appendLog("Compiling: \(scriptName)")
                             flushLog()
 
                             resetStreamCounters()
@@ -932,17 +934,43 @@ final class AgentViewModel {
                             userService.onOutput = { [weak self] chunk in
                                 self?.appendRawOutput(chunk)
                             }
-                            let result = await userService.execute(command: command)
+                            let compileResult = await userService.execute(command: compileCmd)
                             userService.onOutput = nil
                             userServiceActive = false
                             flushLog()
 
                             guard !Task.isCancelled else { break }
 
-                            if result.status != 0 {
-                                appendLog("exit code: \(result.status)")
+                            if compileResult.status != 0 {
+                                appendLog("Compile failed (exit code: \(compileResult.status))")
+                                let toolOutput = compileResult.output.isEmpty
+                                    ? "(compile failed, exit code: \(compileResult.status))"
+                                    : compileResult.output
+                                let truncated2 = toolOutput.count > 10000
+                                    ? String(toolOutput.prefix(10000)) + "\n...(truncated)"
+                                    : toolOutput
+                                commandsRun.append("run_agent_script: \(scriptName) (compile failed)")
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": truncated2])
+                                continue
                             }
-                            let toolOutput = result.output.isEmpty ? "(no output, exit code: \(result.status))" : result.output
+
+                            // Step 2: Load and run dylib in Agent!'s process
+                            appendLog("Running: \(scriptName) (in-process)")
+                            flushLog()
+
+                            let runResult = await scriptService.loadAndRunScript(name: scriptName, arguments: arguments)
+
+                            guard !Task.isCancelled else { break }
+
+                            if runResult.status != 0 {
+                                appendLog("exit code: \(runResult.status)")
+                            }
+                            if !runResult.output.isEmpty {
+                                appendLog(runResult.output)
+                            }
+                            let toolOutput = runResult.output.isEmpty
+                                ? "(no output, exit code: \(runResult.status))"
+                                : runResult.output
                             let truncated2 = toolOutput.count > 10000
                                 ? String(toolOutput.prefix(10000)) + "\n...(truncated)"
                                 : toolOutput

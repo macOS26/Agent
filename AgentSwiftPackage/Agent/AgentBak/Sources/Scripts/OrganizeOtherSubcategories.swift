@@ -2,10 +2,11 @@ import Foundation
 import ScriptingBridgeCommon
 import MailBridge
 
-@_cdecl("script_main")
-public func scriptMain() -> Int32 {
-    organizeOtherSubcategories()
-    return 0
+@main
+struct OrganizeOtherSubcategories {
+    static func main() {
+        organizeOtherSubcategories()
+    }
 }
 
 private let subcategoryNames = [

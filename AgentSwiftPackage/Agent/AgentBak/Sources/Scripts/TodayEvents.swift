@@ -1,10 +1,11 @@
 import Foundation
 import CalendarBridge
 
-@_cdecl("script_main")
-public func scriptMain() -> Int32 {
-    todayEvents()
-    return 0
+@main
+struct TodayEvents {
+    static func main() {
+        todayEvents()
+    }
 }
 
 func todayEvents() {

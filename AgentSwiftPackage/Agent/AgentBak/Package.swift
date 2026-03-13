@@ -58,7 +58,6 @@ let bridgeNames = [
 let bridgeNameSet = Set(bridgeNames)
 
 // Explicit script list — ScriptService adds/removes entries when scripts are created/deleted.
-// Scripts compile as dynamic libraries (.dylib) loaded into Agent! via dlopen.
 let scriptNames = [
     "CheckMail",
     "GenerateBridge",
@@ -105,9 +104,9 @@ let allScriptFiles = scriptNames.map { "\($0).swift" }
 let package = Package(
     name: "AgentScripts",
     platforms: [.macOS(.v15)],
-    products:
-        [.library(name: "XcodeBridge", targets: ["XcodeBridge"])]
-        + scriptNames.map { .library(name: $0, type: .dynamic, targets: [$0]) },
+    products: [
+        .library(name: "XcodeBridge", targets: ["XcodeBridge"]),
+    ],
     targets: [
         .target(name: "ScriptingBridgeCommon", path: bridge,
                 exclude: bridgeNames.map { "\($0).swift" },
@@ -119,8 +118,8 @@ let package = Package(
                 sources: ["\(name).swift"])
     }
     + scriptNames.map { name in
-        .target(name: name, dependencies: parseDeps(for: name), path: scripts,
-                exclude: allScriptFiles.filter { $0 != "\(name).swift" },
-                sources: ["\(name).swift"])
+        .executableTarget(name: name, dependencies: parseDeps(for: name), path: scripts,
+                          exclude: allScriptFiles.filter { $0 != "\(name).swift" },
+                          sources: ["\(name).swift"])
     }
 )

@@ -1,9 +1,10 @@
 import Foundation
 
-@_cdecl("script_main")
-public func scriptMain() -> Int32 {
-    hello()
-    return 0
+@main
+struct Hello {
+    static func main() {
+        hello()
+    }
 }
 
 func hello() {

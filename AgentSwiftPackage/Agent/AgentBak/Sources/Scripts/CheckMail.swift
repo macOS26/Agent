@@ -1,10 +1,11 @@
 import Foundation
 import MailBridge
 
-@_cdecl("script_main")
-public func scriptMain() -> Int32 {
-    checkMail()
-    return 0
+@main
+struct CheckMail {
+    static func main() {
+        checkMail()
+    }
 }
 
 func checkMail() {
