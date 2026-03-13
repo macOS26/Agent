@@ -205,7 +205,7 @@ Agent.app (SwiftUI)
 
 - macOS 26.0+
 - Xcode Command Line Tools (Agent will prompt to install if missing)
-- An Anthropic API key, or an Ollama API key (local Ollama support coming soon)
+- An Anthropic API key, or an Ollama API key (local Ollama support works but eats RAM)
 
 ## Getting Started
 
