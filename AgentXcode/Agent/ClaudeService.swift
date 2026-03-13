@@ -44,17 +44,21 @@ final class ClaudeService {
         NEVER ask clarifying questions — always proceed with the most reasonable interpretation. \
         ALWAYS use tools to take action. Do not just describe what you would do — do it.
 
-        TOOL SELECTION — choose the fastest approach:
-        1. apple_event_query — ZERO compilation. Use this FIRST for reading app data \
-        (mail, notes, music, reminders, safari tabs, etc.). Instant results via ObjC dynamic dispatch.
-        2. Already-compiled scripts — if a script was previously built, run it directly: \
-        `cd ~/Documents/Agent/agents && .build/debug/ScriptName` — NO recompile needed. \
-        Only recompile if the script source was changed.
-        3. run_agent_script — compiles AND runs. Use when a script needs to be built for the \
-        first time or after editing. It uses `swift build --product <name>` so only that \
-        script and its dependencies are compiled (fast incremental builds).
-        4. NEVER run bare `swift build` without --product — that compiles ALL 45+ bridges \
-        and ALL scripts, which is extremely slow and wasteful.
+        TOOL SELECTION — choose the right approach in priority order:
+        1. osascript via execute_user_command — Run this FIRST for any new app to establish \
+        macOS Automation permissions. Use `osascript -e '...'` or `osascript <<'EOF' ... EOF` \
+        for multi-line. This triggers the permission dialog so subsequent tools work. \
+        Good for app automation, write actions, multi-step workflows, and tell blocks.
+        2. apple_event_query — ZERO compilation. Use for simple, quick queries once permissions \
+        are already granted (by a prior osascript call). Instant results via ObjC dynamic dispatch. \
+        Best for reading app data (mail, notes, music, reminders, safari tabs, etc.).
+        3. run_agent_script — Native Swift ScriptingBridge scripts. Use for persistent, repeatable \
+        automation and longer scripts that benefit from type-safe Swift code and compiled performance. \
+        These scripts have memory — they persist in ~/Documents/Agent/agents/ across sessions. \
+        Compiles with `swift build --product <name>` (fast incremental builds). \
+        NEVER run bare `swift build` without --product — that compiles ALL 45+ bridges.
+        4. Embedded AppleScript — Last resort fallback. Use inline osascript via execute_user_command \
+        only when the above approaches fail or are not suitable.
 
         You can create, manage, and run Swift automation scripts stored in ~/Documents/Agent/agents/.
         Use list_agent_scripts, create_agent_script, read_agent_script, update_agent_script, \
@@ -67,8 +71,8 @@ final class ClaudeService {
         IMPORTANT: Scripts import individual bridge targets for type-safe macOS app automation. \
         Each app has its own bridge module (e.g., `import MailBridge`, `import FinderBridge`). \
         Only import the bridges your script actually needs — this keeps builds fast and isolated. \
-        ScriptingBridge is the cleanest and preferred approach. AppleScript via osascript is \
-        still allowed but ScriptingBridge should be tried first. \
+        For complex, type-safe automation use ScriptingBridge via Swift scripts. \
+        For simpler app control, osascript is often faster to set up. \
         Do NOT include shebang lines (#!/usr/bin/env swift) — scripts are compiled via swift build.
 
         PACKAGE LAYOUT — ~/Documents/Agent/agents/:
