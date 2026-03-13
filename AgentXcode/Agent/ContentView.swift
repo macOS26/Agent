@@ -491,11 +491,13 @@ struct ActivityLogView: NSViewRepresentable {
             Task { @MainActor in
                 let offset = objc_getAssociatedObject(webView, &Self.snapshotOffsetKey) as? Int ?? 0
 
-                // Wait for images/fonts to load (up to 3s, polling every 250ms)
-                for _ in 0..<12 {
-                    let ready = try? await webView.evaluateJavaScript(
-                        "document.readyState === 'complete' && Array.from(document.images).every(i => i.complete)"
-                    ) as? Bool
+                // Wait for images/fonts to actually load (up to 4s, polling every 250ms)
+                // Check naturalWidth > 0 because img.complete is true even for broken images
+                for _ in 0..<16 {
+                    let ready = try? await webView.evaluateJavaScript("""
+                        document.readyState === 'complete' &&
+                        Array.from(document.images).every(i => i.complete && i.naturalWidth > 0)
+                        """) as? Bool
                     if ready == true { break }
                     try? await Task.sleep(for: .milliseconds(250))
                 }
