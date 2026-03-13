@@ -1,10 +1,11 @@
 import Foundation
 import MusicBridge
 
-@_cdecl("script_main")
-public func scriptMain() -> Int32 {
-    nowPlaying()
-    return 0
+@main
+struct NowPlaying {
+    static func main() {
+        nowPlaying()
+    }
 }
 
 func nowPlaying() {

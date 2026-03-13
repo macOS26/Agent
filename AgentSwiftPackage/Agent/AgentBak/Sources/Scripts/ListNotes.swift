@@ -1,10 +1,11 @@
 import Foundation
 import NotesBridge
 
-@_cdecl("script_main")
-public func scriptMain() -> Int32 {
-    listNotes()
-    return 0
+@main
+struct ListNotes {
+    static func main() {
+        listNotes()
+    }
 }
 
 func listNotes() {

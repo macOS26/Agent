@@ -1,10 +1,11 @@
 import Foundation
 import RemindersBridge
 
-@_cdecl("script_main")
-public func scriptMain() -> Int32 {
-    listReminders()
-    return 0
+@main
+struct ListReminders {
+    static func main() {
+        listReminders()
+    }
 }
 
 func listReminders() {
