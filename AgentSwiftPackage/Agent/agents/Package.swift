@@ -2,6 +2,34 @@
 import PackageDescription
 import Foundation
 
+// Explicit script list — ScriptService adds/removes entries when scripts are created/deleted.
+// Scripts compile as dynamic libraries (.dylib) loaded into Agent! via dlopen.
+let scriptNames = [
+    "CheckMail",
+    "CloseAllExceptEssential",
+    "CloseAllExceptXcodeAgentTerminal",
+    "DebugArtwork",
+    "ExtractAlbumArt",
+    "GenerateBridge",
+    "Hello",
+    "ListHomeContents",
+    "ListNotes",
+    "ListReminders",
+    "MusicScriptingExamples",
+    "NowPlaying",
+    "NowPlayingHTML",
+    "OrganizeEmails",
+    "OrganizeOtherSubcategories",
+    "PlayPlaylist",
+    "PlayRandomFromCurrent",
+    "RunningApps",
+    "SaveImageFromChat",
+    "SendMessage",
+    "TestGenerateBridge",
+    "TodayEvents",
+    "WhatsPlaying",
+]
+
 let bridge = "Sources/XCFScriptingBridges"
 let scripts = "Sources/Scripts"
 let common: Target.Dependency = "ScriptingBridgeCommon"
@@ -55,22 +83,6 @@ let bridgeNames = [
 
 // Set of all known bridge target names for fast lookup
 let bridgeNameSet = Set(bridgeNames)
-
-// Explicit script list — ScriptService adds/removes entries when scripts are created/deleted.
-// Scripts compile as dynamic libraries (.dylib) loaded into Agent! via dlopen.
-let scriptNames = [
-    "CheckMail",
-    "GenerateBridge",
-    "Hello",
-    "ListNotes",
-    "ListReminders",
-    "NowPlaying",
-    "OrganizeEmails",
-    "OrganizeOtherSubcategories",
-    "RunningApps",
-    "TestGenerateBridge",
-    "TodayEvents",
-]
 
 // Parse imports from each script to find bridge dependencies
 func parseDeps(for name: String) -> [Target.Dependency] {
