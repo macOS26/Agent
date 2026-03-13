@@ -4,6 +4,7 @@ A native macOS autonomous AI agent built entirely in Swift. Agent takes a differ
 
 Agent uses SwiftUI, XPC, SMAppService, Apple Events, and ScriptingBridge to give an AI agent native access to your Mac. No Electron. No Docker. No npm install. Just a `.app` that speaks macOS.
 
+
 ## Agent! vs. OpenClaw on Mac
 
 OpenClaw is a great project with broad platform reach and a rich ecosystem of messaging integrations. Agent takes a narrower but deeper approach — trading cross-platform flexibility for native macOS integration.
