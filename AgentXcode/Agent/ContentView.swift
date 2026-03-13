@@ -473,13 +473,29 @@ struct ActivityLogView: NSViewRepresentable {
             options: []
         )
 
+        private static let headerPattern: NSRegularExpression? = try? NSRegularExpression(
+            pattern: #"^(#{1,6})\s+(.*)"#, options: []
+        )
+
+        private static let bulletPattern: NSRegularExpression? = try? NSRegularExpression(
+            pattern: #"^(\s*)[-*+]\s+(.*)"#, options: []
+        )
+
+        private static let hrPattern: NSRegularExpression? = try? NSRegularExpression(
+            pattern: #"^[-*_]{3,}\s*$"#, options: []
+        )
+
+        private static let blockquotePattern: NSRegularExpression? = try? NSRegularExpression(
+            pattern: #"^>\s?(.*)"#, options: []
+        )
+
         private func renderMarkdown(_ text: String) -> NSAttributedString {
             let nsText = text as NSString
             let fullRange = NSRange(location: 0, length: nsText.length)
             let codeMatches = Self.codeBlockPattern?.matches(in: text, range: fullRange) ?? []
 
             guard !codeMatches.isEmpty else {
-                return renderInlineMarkdown(text)
+                return renderBlockMarkdown(text)
             }
 
             let result = NSMutableAttributedString()
@@ -489,7 +505,7 @@ struct ActivityLogView: NSViewRepresentable {
             for match in codeMatches {
                 if match.range.location > lastEnd {
                     let before = nsText.substring(with: NSRange(location: lastEnd, length: match.range.location - lastEnd))
-                    result.append(renderInlineMarkdown(before))
+                    result.append(renderBlockMarkdown(before))
                 }
                 let codeContent = nsText.substring(with: match.range(at: 1))
                 let codeAttrs: [NSAttributedString.Key: Any] = [
@@ -505,13 +521,93 @@ struct ActivityLogView: NSViewRepresentable {
 
             if lastEnd < nsText.length {
                 let remaining = nsText.substring(from: lastEnd)
-                result.append(renderInlineMarkdown(remaining))
+                result.append(renderBlockMarkdown(remaining))
             }
 
             return result
         }
 
-        private func renderInlineMarkdown(_ text: String) -> NSAttributedString {
+        /// Splits text into lines and renders block-level markdown (headers, lists, rules)
+        /// then delegates inline rendering (bold, italic, code) per line.
+        private func renderBlockMarkdown(_ text: String) -> NSAttributedString {
+            guard !text.isEmpty else { return NSAttributedString() }
+
+            let result = NSMutableAttributedString()
+            let lines = text.components(separatedBy: "\n")
+
+            for (i, line) in lines.enumerated() {
+                result.append(renderMarkdownLine(line))
+                if i < lines.count - 1 {
+                    result.append(NSAttributedString(string: "\n", attributes: [.font: font]))
+                }
+            }
+
+            return result
+        }
+
+        /// Renders a single line, detecting block-level elements first, then inline.
+        private func renderMarkdownLine(_ line: String) -> NSAttributedString {
+            let nsLine = line as NSString
+            let fullRange = NSRange(location: 0, length: nsLine.length)
+
+            // Horizontal rule (check before bullet since --- could conflict)
+            if Self.hrPattern?.firstMatch(in: line, range: fullRange) != nil {
+                return NSAttributedString(
+                    string: "────────────────────────────────",
+                    attributes: [.font: font, .foregroundColor: NSColor.separatorColor]
+                )
+            }
+
+            // Header
+            if let match = Self.headerPattern?.firstMatch(in: line, range: fullRange) {
+                let level = nsLine.substring(with: match.range(at: 1)).count
+                let content = nsLine.substring(with: match.range(at: 2))
+                let size: CGFloat
+                switch level {
+                case 1: size = font.pointSize * 1.5
+                case 2: size = font.pointSize * 1.3
+                case 3: size = font.pointSize * 1.15
+                default: size = font.pointSize
+                }
+                let headerFont = NSFont.monospacedSystemFont(ofSize: size, weight: .bold)
+                return renderInlineElements(content, baseFont: headerFont)
+            }
+
+            // Bullet list
+            if let match = Self.bulletPattern?.firstMatch(in: line, range: fullRange) {
+                let indent = nsLine.substring(with: match.range(at: 1))
+                let content = nsLine.substring(with: match.range(at: 2))
+                let result = NSMutableAttributedString()
+                result.append(NSAttributedString(
+                    string: indent + "  \u{2022} ",
+                    attributes: [.font: font, .foregroundColor: NSColor.secondaryLabelColor]
+                ))
+                result.append(renderInlineElements(content, baseFont: font))
+                return result
+            }
+
+            // Blockquote
+            if let match = Self.blockquotePattern?.firstMatch(in: line, range: fullRange) {
+                let content = nsLine.substring(with: match.range(at: 1))
+                let result = NSMutableAttributedString()
+                result.append(NSAttributedString(
+                    string: "\u{258E} ",
+                    attributes: [.font: font, .foregroundColor: NSColor.systemBlue]
+                ))
+                let rendered = renderInlineElements(content, baseFont: font)
+                let mutableRendered = NSMutableAttributedString(attributedString: rendered)
+                let rRange = NSRange(location: 0, length: mutableRendered.length)
+                mutableRendered.addAttribute(.foregroundColor, value: NSColor.secondaryLabelColor, range: rRange)
+                result.append(mutableRendered)
+                return result
+            }
+
+            // Regular line — inline elements only
+            return renderInlineElements(line, baseFont: font)
+        }
+
+        /// Parses inline markdown (bold, italic, inline code) within a single line.
+        private func renderInlineElements(_ text: String, baseFont: NSFont) -> NSAttributedString {
             guard !text.isEmpty else { return NSAttributedString() }
 
             do {
@@ -523,15 +619,14 @@ struct ActivityLogView: NSViewRepresentable {
                 let fullRange = NSRange(location: 0, length: nsAttr.length)
 
                 // Set base monospaced font and color
-                nsAttr.addAttribute(.font, value: font, range: fullRange)
+                nsAttr.addAttribute(.font, value: baseFont, range: fullRange)
                 nsAttr.addAttribute(.foregroundColor, value: NSColor.labelColor, range: fullRange)
 
                 // Apply bold/italic/code from inline presentation intents
                 nsAttr.enumerateAttributes(in: fullRange, options: []) { attrs, range, _ in
-                    // Check for presentation intent stored by markdown parser
                     if let intentValue = attrs[.inlinePresentationIntent] as? Int {
                         let intent = InlinePresentationIntent(rawValue: UInt(intentValue))
-                        var styledFont = self.font
+                        var styledFont = baseFont
                         if intent.contains(.stronglyEmphasized) {
                             styledFont = NSFontManager.shared.convert(styledFont, toHaveTrait: .boldFontMask)
                         }
@@ -548,7 +643,7 @@ struct ActivityLogView: NSViewRepresentable {
                 return nsAttr
             } catch {
                 return NSAttributedString(string: text, attributes: [
-                    .font: font,
+                    .font: baseFont,
                     .foregroundColor: NSColor.labelColor
                 ])
             }
