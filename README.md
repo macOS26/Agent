@@ -208,6 +208,7 @@ Agent.app (SwiftUI)
 - An Anthropic API key, or an Ollama Cloud API key.
 - Apple Silcon with Local Ollama support works, but requires lots of RAM. Min 32GB, 64-128GB recommended.
 - If you have a Mac Min, cloud based LLMs are highly recommended. Ollama Pro (Cloud) is a good deal for only $20 a month.
+- We are not responsible if you spend lots of tokens via Claude.
 
 ## Getting Started
 
