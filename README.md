@@ -8,7 +8,7 @@ Agent uses SwiftUI, XPC, SMAppService, Apple Events, and ScriptingBridge to give
 
 OpenClaw is a great project with broad platform reach and a rich ecosystem of messaging integrations. Agent takes a narrower but deeper approach — trading cross-platform flexibility for native macOS integration.
 
-| | **Agent** | **OpenClaw** |
+| | **Agent!** | **OpenClaw** |
 |---|---|---|
 | **Focus** | macOS-native depth | Cross-platform breadth |
 | **Runtime** | Native Swift binary | Node.js server |
