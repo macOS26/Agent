@@ -295,6 +295,7 @@ struct ActivityLogView: NSViewRepresentable {
             )
             coord.showingPlaceholder = true
             coord.lastLength = 0
+            coord.clearCache()
             return
         }
 
@@ -314,7 +315,9 @@ struct ActivityLogView: NSViewRepresentable {
         var lastLength = 0
         var showingPlaceholder = true
         let font = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
-        var imageCache: [String: NSImage] = [:]
+        /// Images keyed by their character offset in the log — each occurrence gets its own
+        /// snapshot so the same path (e.g. current_artwork.jpg) shows different art per task.
+        var imageCache: [Int: NSImage] = [:]
 
         private static let imagePathPattern = try! NSRegularExpression(
             pattern: #"(/[^\s"'<>]+\.(?:jpg|jpeg|png|gif|tiff|bmp|webp|heic|ico|icon))"#,
@@ -341,6 +344,7 @@ struct ActivityLogView: NSViewRepresentable {
             for match in matches {
                 let matchRange = match.range(at: 1)
                 let path = nsText.substring(with: matchRange)
+                let offset = matchRange.location
 
                 // Add text before this match
                 if matchRange.location > lastEnd {
@@ -355,11 +359,12 @@ struct ActivityLogView: NSViewRepresentable {
                 // Try to load and insert the image inline
                 guard FileManager.default.fileExists(atPath: path) else { continue }
 
+                // Cache by character offset — each occurrence is a unique snapshot
                 let image: NSImage
-                if let cached = imageCache[path] {
+                if let cached = imageCache[offset] {
                     image = cached
                 } else if let loaded = NSImage(contentsOfFile: path) {
-                    imageCache[path] = loaded
+                    imageCache[offset] = loaded
                     image = loaded
                 } else {
                     continue
@@ -394,6 +399,10 @@ struct ActivityLogView: NSViewRepresentable {
             }
 
             return result
+        }
+
+        func clearCache() {
+            imageCache.removeAll()
         }
     }
 }
