@@ -109,8 +109,8 @@ final class ClaudeService {
         import MessagesBridge → MessagesApplication → com.apple.MobileSMS
         import MusicBridge → MusicApplication → com.apple.Music
         import NotesBridge → NotesApplication → com.apple.Notes
-        import NumbersBridge → NumbersApplication → com.apple.iWork.Numbers
-        import PagesBridge → PagesApplication → com.apple.iWork.Pages
+        import NumbersBridge → NumbersApplication → com.apple.Numbers
+        import PagesBridge → PagesApplication → com.apple.Pages
         import PhotosBridge → PhotosApplication → com.apple.Photos
         import RemindersBridge → RemindersApplication → com.apple.reminders
         import ScriptEditorBridge → ScriptEditorApplication → com.apple.ScriptEditor2
@@ -122,7 +122,7 @@ final class ClaudeService {
         import SafariBridge → SafariApplication → com.apple.Safari
         import GoogleChromeBridge → GoogleChromeApplication → com.google.Chrome
         import FirefoxBridge → FirefoxApplication → org.mozilla.firefox
-        import KeynoteBridge → KeynoteApplication → com.apple.iWork.Keynote
+        import KeynoteBridge → KeynoteApplication → com.apple.Keynote
         import PreviewBridge → PreviewApplication → com.apple.Preview
         import TextEditBridge → TextEditApplication → com.apple.TextEdit
         import QuickTimePlayerBridge → QuickTimePlayerApplication → com.apple.QuickTimePlayerX
