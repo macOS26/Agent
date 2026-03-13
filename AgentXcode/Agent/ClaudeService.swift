@@ -40,7 +40,8 @@ final class ClaudeService {
         INLINE IMAGES: The activity log renders image files inline automatically. \
         When you save an image to disk (e.g. album art, screenshots), just print or return \
         the file path — do NOT run `open` to display it. The UI detects paths ending in \
-        .jpg/.png/.gif/.tiff/.webp/.heic and shows them inline in the log.
+        .jpg/.png/.gif/.tiff/.webp/.heic and shows them inline in the log. \
+        HTML files (.html) are also rendered inline as snapshots — great for rich formatted output.
 
         Work efficiently and methodically. Verify changes after making them. \
         Call task_complete when done. If a command fails, try an alternative. \

@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+@preconcurrency import WebKit
 
 struct ContentView: View {
     @State private var viewModel = AgentViewModel()
@@ -287,6 +288,16 @@ struct ActivityLogView: NSViewRepresentable {
         guard let textView = scrollView.documentView as? NSTextView else { return }
         let coord = context.coordinator
 
+        // Wire up HTML snapshot callback to trigger re-render
+        if coord.onHTMLReady == nil {
+            coord.onHTMLReady = { [weak textView, weak coord] in
+                guard let textView, let coord else { return }
+                let attributed = coord.buildAttributedString(from: textView.string)
+                textView.textStorage?.setAttributedString(attributed)
+                textView.scrollToEndOfDocument(nil)
+            }
+        }
+
         if text.isEmpty {
             guard !coord.showingPlaceholder else { return }
             textView.textStorage?.setAttributedString(
@@ -311,16 +322,28 @@ struct ActivityLogView: NSViewRepresentable {
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
-    @MainActor class Coordinator {
+    @MainActor class Coordinator: NSObject, WKNavigationDelegate {
         var lastLength = 0
         var showingPlaceholder = true
         let font = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
         /// Images keyed by their character offset in the log — each occurrence gets its own
         /// snapshot so the same path (e.g. current_artwork.jpg) shows different art per task.
         var imageCache: [Int: NSImage] = [:]
+        /// HTML snapshots keyed by character offset
+        var htmlCache: [Int: NSImage] = [:]
+        /// Offsets currently being rendered (prevent duplicate requests)
+        var htmlPending: Set<Int> = []
+        /// Callback to trigger re-render when HTML snapshot is ready
+        var onHTMLReady: (() -> Void)?
 
+        // Matches image files
         private static let imagePathPattern = try! NSRegularExpression(
             pattern: #"(/[^\s"'<>]+\.(?:jpg|jpeg|png|gif|tiff|bmp|webp|heic|ico|icon))"#,
+            options: .caseInsensitive
+        )
+        // Matches HTML files
+        private static let htmlPathPattern = try! NSRegularExpression(
+            pattern: #"(/[^\s"'<>]+\.html?)"#,
             options: .caseInsensitive
         )
 
@@ -332,79 +355,84 @@ struct ActivityLogView: NSViewRepresentable {
 
             let nsText = text as NSString
             let fullRange = NSRange(location: 0, length: nsText.length)
-            let matches = Self.imagePathPattern.matches(in: text, range: fullRange)
+            let imageMatches = Self.imagePathPattern.matches(in: text, range: fullRange)
+            let htmlMatches = Self.htmlPathPattern.matches(in: text, range: fullRange)
 
-            guard !matches.isEmpty else {
+            guard !imageMatches.isEmpty || !htmlMatches.isEmpty else {
                 return NSAttributedString(string: text, attributes: baseAttrs)
             }
 
+            // Merge all matches sorted by location
+            struct FileMatch {
+                let range: NSRange
+                let path: String
+                let isHTML: Bool
+            }
+            var allMatches: [FileMatch] = []
+            for m in imageMatches {
+                let r = m.range(at: 1)
+                allMatches.append(FileMatch(range: r, path: nsText.substring(with: r), isHTML: false))
+            }
+            for m in htmlMatches {
+                let r = m.range(at: 1)
+                allMatches.append(FileMatch(range: r, path: nsText.substring(with: r), isHTML: true))
+            }
+            allMatches.sort { $0.range.location < $1.range.location }
+
             let result = NSMutableAttributedString()
             var lastEnd = 0
-            // Deduplicate: only render one inline image per unique file size per task
             var renderedSizes: Set<Int> = []
 
-            for match in matches {
-                let matchRange = match.range(at: 1)
-                let path = nsText.substring(with: matchRange)
-                let offset = matchRange.location
+            for match in allMatches {
+                let offset = match.range.location
 
                 // Add text before this match
-                if matchRange.location > lastEnd {
-                    let beforeRange = NSRange(location: lastEnd, length: matchRange.location - lastEnd)
+                if match.range.location > lastEnd {
+                    let beforeRange = NSRange(location: lastEnd, length: match.range.location - lastEnd)
                     let beforeText = nsText.substring(with: beforeRange)
                     result.append(NSAttributedString(string: beforeText, attributes: baseAttrs))
-                    // Reset dedup on new task boundary
                     if beforeText.contains("--- New Task ---") {
                         renderedSizes.removeAll()
                     }
                 }
 
                 // Add the path text itself
-                result.append(NSAttributedString(string: path, attributes: baseAttrs))
-                lastEnd = matchRange.location + matchRange.length
+                result.append(NSAttributedString(string: match.path, attributes: baseAttrs))
+                lastEnd = match.range.location + match.range.length
 
-                // Try to load and insert the image inline
-                guard FileManager.default.fileExists(atPath: path) else { continue }
+                guard FileManager.default.fileExists(atPath: match.path) else { continue }
 
-                // Deduplicate by file size — same image content = skip
-                let fileSize = (try? FileManager.default.attributesOfItem(atPath: path)[.size] as? Int) ?? 0
-                if fileSize > 0 && renderedSizes.contains(fileSize) { continue }
-                renderedSizes.insert(fileSize)
-
-                // Cache by character offset — each occurrence is a unique snapshot
-                let image: NSImage
-                if let cached = imageCache[offset] {
-                    image = cached
-                } else if let loaded = NSImage(contentsOfFile: path) {
-                    imageCache[offset] = loaded
-                    image = loaded
+                if match.isHTML {
+                    // HTML: use cached snapshot or kick off async render
+                    if let snapshot = htmlCache[offset] {
+                        let fileSize = (try? FileManager.default.attributesOfItem(atPath: match.path)[.size] as? Int) ?? 0
+                        if fileSize > 0 && renderedSizes.contains(fileSize) { continue }
+                        renderedSizes.insert(fileSize)
+                        appendImage(snapshot, maxWidth: 400.0, to: result, attrs: baseAttrs)
+                    } else if !htmlPending.contains(offset) {
+                        htmlPending.insert(offset)
+                        let path = match.path
+                        snapshotHTML(path: path, offset: offset)
+                    }
                 } else {
-                    continue
+                    // Image file
+                    let fileSize = (try? FileManager.default.attributesOfItem(atPath: match.path)[.size] as? Int) ?? 0
+                    if fileSize > 0 && renderedSizes.contains(fileSize) { continue }
+                    renderedSizes.insert(fileSize)
+
+                    let image: NSImage
+                    if let cached = imageCache[offset] {
+                        image = cached
+                    } else if let loaded = NSImage(contentsOfFile: match.path) {
+                        imageCache[offset] = loaded
+                        image = loaded
+                    } else {
+                        continue
+                    }
+                    appendImage(image, maxWidth: 300.0, to: result, attrs: baseAttrs)
                 }
-
-                // Scale to reasonable inline size
-                let maxWidth: CGFloat = 300.0
-                let scale = min(1.0, maxWidth / image.size.width)
-                let scaledSize = NSSize(
-                    width: image.size.width * scale,
-                    height: image.size.height * scale
-                )
-
-                let resized = NSImage(size: scaledSize, flipped: false) { rect in
-                    image.draw(in: rect)
-                    return true
-                }
-
-                let attachment = NSTextAttachment()
-                let cell = NSTextAttachmentCell(imageCell: resized)
-                attachment.attachmentCell = cell
-
-                result.append(NSAttributedString(string: "\n", attributes: baseAttrs))
-                result.append(NSAttributedString(attachment: attachment))
-                result.append(NSAttributedString(string: "\n", attributes: baseAttrs))
             }
 
-            // Add remaining text after last match
             if lastEnd < nsText.length {
                 let remaining = NSRange(location: lastEnd, length: nsText.length - lastEnd)
                 result.append(NSAttributedString(string: nsText.substring(with: remaining), attributes: baseAttrs))
@@ -413,8 +441,62 @@ struct ActivityLogView: NSViewRepresentable {
             return result
         }
 
+        private func appendImage(_ image: NSImage, maxWidth: CGFloat, to result: NSMutableAttributedString, attrs: [NSAttributedString.Key: Any]) {
+            let scale = min(1.0, maxWidth / image.size.width)
+            let scaledSize = NSSize(width: image.size.width * scale, height: image.size.height * scale)
+
+            let resized = NSImage(size: scaledSize, flipped: false) { rect in
+                image.draw(in: rect)
+                return true
+            }
+
+            let attachment = NSTextAttachment()
+            let cell = NSTextAttachmentCell(imageCell: resized)
+            attachment.attachmentCell = cell
+
+            result.append(NSAttributedString(string: "\n", attributes: attrs))
+            result.append(NSAttributedString(attachment: attachment))
+            result.append(NSAttributedString(string: "\n", attributes: attrs))
+        }
+
+        /// Render HTML to image via off-screen WKWebView
+        private func snapshotHTML(path: String, offset: Int) {
+            let fileURL = URL(fileURLWithPath: path)
+            let config = WKWebViewConfiguration()
+            let webView = WKWebView(frame: CGRect(x: 0, y: 0, width: 400, height: 500), configuration: config)
+            webView.navigationDelegate = self
+            webView.setValue(false, forKey: "drawsBackground")
+
+            // Store context for the delegate callback
+            objc_setAssociatedObject(webView, "snapshotOffset", offset, .OBJC_ASSOCIATION_RETAIN)
+
+            webView.loadFileURL(fileURL, allowingReadAccessTo: fileURL.deletingLastPathComponent())
+        }
+
+        // WKNavigationDelegate — snapshot when page finishes loading
+        nonisolated func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            Task { @MainActor in
+                // Brief delay for CSS/images to settle
+                try? await Task.sleep(for: .milliseconds(300))
+
+                let offset = objc_getAssociatedObject(webView, "snapshotOffset") as? Int ?? 0
+                let config = WKSnapshotConfiguration()
+                config.snapshotWidth = 400 as NSNumber
+
+                if let snapshot = try? await webView.takeSnapshot(configuration: config) {
+                    self.htmlCache[offset] = snapshot
+                    self.htmlPending.remove(offset)
+                    // Force re-render
+                    self.lastLength = 0
+                    self.onHTMLReady?()
+                }
+            }
+        }
+
         func clearCache() {
             imageCache.removeAll()
+            htmlCache.removeAll()
+            htmlPending.removeAll()
         }
     }
 }
