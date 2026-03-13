@@ -37,7 +37,7 @@ final class ScriptingBridgeQueryService: @unchecked Sendable {
         (self as ScriptingBridgeQueryService).grantedApps.insert(appName)
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-        process.arguments = ["-e", "tell application \"\(appName)\" to get name"]
+        process.arguments = ["-e", "tell application \"\(appName)\" to get every window"]
         let outputPipe = Pipe()
         let errorPipe = Pipe()
         process.standardOutput = outputPipe
