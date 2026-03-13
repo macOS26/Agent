@@ -298,7 +298,10 @@ final class ScriptService {
         guard fm.fileExists(atPath: scriptFile.path) else { return nil }
 
         let agentsPath = Self.agentsDir.path
-        return "cd '\(agentsPath)' && touch Package.swift && swift build --product '\(scriptName)' 2>&1"
+        let dylibFile = dylibPath(name: scriptName)
+        // Re-sign dylib with the app's identity so macOS attributes AppleScript
+        // permission prompts to "Agent!" instead of "Xcode"
+        return "cd '\(agentsPath)' && touch Package.swift && swift build --product '\(scriptName)' 2>&1 && codesign --force --sign - --identifier Agent.app.toddbruss '\(dylibFile)' 2>&1"
     }
 
     /// Path to the compiled dylib for a script
