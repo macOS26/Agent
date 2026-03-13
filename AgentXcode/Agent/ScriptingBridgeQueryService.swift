@@ -51,14 +51,29 @@ final class ScriptingBridgeQueryService: @unchecked Sendable {
     }
 
     /// Check Automation permission using AEDeterminePermissionToAutomateTarget.
-    /// askUserIfNeeded=true triggers the macOS consent dialog if permission is undetermined.
+    /// Must run on the main thread so macOS can show the consent dialog.
     private func checkAutomationPermission(bundleID: String) -> OSStatus {
         guard let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first else {
             return noErr  // Couldn't find PID — let SBApplication try anyway
         }
-        var pid = app.processIdentifier
+        let pid = app.processIdentifier
+
+        // Dispatch to main thread — TCC consent dialog requires it
+        if Thread.isMainThread {
+            return aePermissionCheck(pid: pid)
+        } else {
+            var status: OSStatus = noErr
+            DispatchQueue.main.sync {
+                status = aePermissionCheck(pid: pid)
+            }
+            return status
+        }
+    }
+
+    private func aePermissionCheck(pid: pid_t) -> OSStatus {
+        var pidValue = pid
         var targetDesc = AEAddressDesc()
-        AECreateDesc(typeKernelProcessID, &pid, MemoryLayout<pid_t>.size, &targetDesc)
+        AECreateDesc(typeKernelProcessID, &pidValue, MemoryLayout<pid_t>.size, &targetDesc)
         defer { AEDisposeDesc(&targetDesc) }
         return AEDeterminePermissionToAutomateTarget(&targetDesc, typeWildCard, typeWildCard, true)
     }
