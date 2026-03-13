@@ -786,12 +786,6 @@ struct SettingsView: View {
                         .font(.headline)
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Endpoint").font(.caption).foregroundStyle(.secondary)
-                        TextField("https://ollama.com/api/chat", text: $viewModel.ollamaEndpoint)
-                            .textFieldStyle(.roundedBorder)
-                    }
-
-                    VStack(alignment: .leading, spacing: 4) {
                         Text("API Key").font(.caption).foregroundStyle(.secondary)
                         SecureField("Required for cloud", text: $viewModel.ollamaAPIKey)
                             .textFieldStyle(.roundedBorder)
