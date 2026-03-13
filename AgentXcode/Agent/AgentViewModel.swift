@@ -701,10 +701,9 @@ final class AgentViewModel {
         }
     }
 
-    /// Returns true if the command should run locally (osascript).
+    /// Returns true if the command contains osascript and should run locally.
     private nonisolated static func isOsascriptCommand(_ command: String) -> Bool {
-        let trimmed = command.trimmingCharacters(in: .whitespaces)
-        return trimmed.hasPrefix("osascript") || trimmed.hasPrefix("/usr/bin/osascript")
+        command.contains("osascript") || command.contains("/usr/bin/osascript")
     }
 
     // MARK: - LLM Streaming
