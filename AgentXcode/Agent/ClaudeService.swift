@@ -68,7 +68,8 @@ final class ClaudeService {
         AppleScript code in-process without spawning osascript.
         4. osascript via execute_user_command — Last resort. Use for one-off AppleScript \
         that doesn't fit the above, or when you need `tell` blocks with complex app interactions. \
-        Use execute_user_command (not execute_command) unless root privileges are truly required. \
+        Use execute_user_command (not execute_command). osascript commands are automatically \
+        run directly from the Agent app to inherit its Automation permissions. \
         Use `osascript -e '...'` or `osascript <<'EOF' ... EOF` for multi-line.
 
         You can create, manage, and run Swift automation scripts stored in ~/Documents/Agent/agents/.

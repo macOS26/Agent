@@ -657,6 +657,56 @@ final class AgentViewModel {
         streamTruncated = false
     }
 
+    // MARK: - Local Execution (osascript)
+
+    /// Runs a command directly in the Agent app process (not via XPC).
+    /// Used for osascript so it inherits the app's Automation permissions.
+    private nonisolated func executeLocal(command: String) async -> (status: Int32, output: String) {
+        await withCheckedContinuation { continuation in
+            DispatchQueue.global().async {
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: "/bin/bash")
+                process.arguments = ["-c", command]
+
+                var env = ProcessInfo.processInfo.environment
+                env["HOME"] = FileManager.default.homeDirectoryForCurrentUser.path
+                process.environment = env
+
+                let stdoutPipe = Pipe()
+                let stderrPipe = Pipe()
+                process.standardOutput = stdoutPipe
+                process.standardError = stderrPipe
+
+                do {
+                    try process.run()
+                } catch {
+                    continuation.resume(returning: (-1, "Failed to launch: \(error.localizedDescription)"))
+                    return
+                }
+
+                // Read pipes then wait — osascript output is small, no deadlock risk
+                let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+                let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+                process.waitUntilExit()
+
+                var output = String(data: stdoutData, encoding: .utf8) ?? ""
+                let errStr = String(data: stderrData, encoding: .utf8) ?? ""
+                if !errStr.isEmpty {
+                    if !output.isEmpty { output += "\n" }
+                    output += errStr
+                }
+
+                continuation.resume(returning: (process.terminationStatus, output))
+            }
+        }
+    }
+
+    /// Returns true if the command should run locally (osascript).
+    private nonisolated static func isOsascriptCommand(_ command: String) -> Bool {
+        let trimmed = command.trimmingCharacters(in: .whitespaces)
+        return trimmed.hasPrefix("osascript") || trimmed.hasPrefix("/usr/bin/osascript")
+    }
+
     // MARK: - LLM Streaming
 
     private func appendStreamDelta(_ delta: String) {
@@ -878,6 +928,13 @@ final class AgentViewModel {
                                 result = await helperService.execute(command: command)
                                 helperService.onOutput = nil
                                 rootServiceActive = false
+                            } else if Self.isOsascriptCommand(command) {
+                                // Run osascript directly in the Agent app process
+                                // so it inherits the app's Automation permissions
+                                userServiceActive = true
+                                userWasActive = true
+                                result = await executeLocal(command: command)
+                                userServiceActive = false
                             } else {
                                 userServiceActive = true
                                 userWasActive = true
