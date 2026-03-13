@@ -1,5 +1,6 @@
 // swift-tools-version: 6.0
 import PackageDescription
+import Foundation
 
 let bridge = "Sources/XCFScriptingBridges"
 let scripts = "Sources/Scripts"
@@ -21,19 +22,46 @@ let bridgeNames = [
     "TextEditBridge", "UTMBridge", "VoiceOverBridge", "XcodeBridge",
 ]
 
-let scriptTargets: [(String, [Target.Dependency])] = [
-    ("CheckMail", ["MailBridge"]),
-    ("GenerateBridge", []),
-    ("Hello", []),
-    ("ListNotes", ["NotesBridge"]),
-    ("ListReminders", ["RemindersBridge"]),
-    ("NowPlaying", ["MusicBridge"]),
-    ("OrganizeEmails", ["MailBridge"]),
-    ("OrganizeOtherSubcategories", [common, "MailBridge"]),
-    ("RunningApps", ["SystemEventsBridge"]),
-    ("TestGenerateBridge", []),
-    ("TodayEvents", ["CalendarBridge"]),
-]
+// Set of all known bridge target names for fast lookup
+let bridgeNameSet = Set(bridgeNames)
+
+// Auto-discover scripts from Sources/Scripts/ and parse their imports for dependencies.
+// The agent can create new .swift files and they'll be picked up automatically.
+let scriptTargets: [(String, [Target.Dependency])] = {
+    let scriptsDir = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+        .appendingPathComponent(scripts)
+    guard let files = try? FileManager.default.contentsOfDirectory(
+        at: scriptsDir, includingPropertiesForKeys: nil
+    ) else { return [] }
+
+    return files
+        .filter { $0.pathExtension == "swift" }
+        .map { url -> (String, [Target.Dependency]) in
+            let name = url.deletingPathExtension().lastPathComponent
+            // Parse imports to find bridge dependencies
+            var deps: [Target.Dependency] = []
+            if let contents = try? String(contentsOf: url, encoding: .utf8) {
+                for line in contents.components(separatedBy: .newlines) {
+                    let trimmed = line.trimmingCharacters(in: .whitespaces)
+                    if trimmed.hasPrefix("import ") {
+                        let module = String(trimmed.dropFirst(7)).trimmingCharacters(in: .whitespaces)
+                        if bridgeNameSet.contains(module) {
+                            deps.append(.init(stringLiteral: module))
+                        } else if module == "ScriptingBridgeCommon" {
+                            deps.append(common)
+                        }
+                    }
+                    // Stop scanning after first non-import, non-comment, non-blank line
+                    if !trimmed.isEmpty && !trimmed.hasPrefix("import ") &&
+                       !trimmed.hasPrefix("//") && !trimmed.hasPrefix("@") {
+                        break
+                    }
+                }
+            }
+            return (name, deps)
+        }
+        .sorted { $0.0 < $1.0 }
+}()
 
 // Compute exclude lists so SPM doesn't warn about unhandled files in shared directories
 let allBridgeFiles = ["ScriptingBridgeCommon.swift"] + bridgeNames.map { "\($0).swift" }
