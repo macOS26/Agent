@@ -1,14 +1,14 @@
-# Agent
+# Agent!
 
 A native macOS autonomous AI agent built entirely in Swift. Agent takes a different approach than projects like [OpenClaw](https://github.com/openclaw/openclaw) — where OpenClaw is a versatile cross-platform assistant that connects to messaging apps and runs on any OS, Agent is purpose-built for macOS, leveraging Apple-native frameworks to go deeper into the platform than a cross-platform tool can.
 
 Agent uses SwiftUI, XPC, SMAppService, Apple Events, and ScriptingBridge to give an AI agent native access to your Mac. No Electron. No Docker. No npm install. Just a `.app` that speaks macOS.
 
-## Agent vs. OpenClaw on Mac
+## Agent! vs. OpenClaw on Mac
 
 OpenClaw is a great project with broad platform reach and a rich ecosystem of messaging integrations. Agent takes a narrower but deeper approach — trading cross-platform flexibility for native macOS integration.
 
-| | **Agent** | **OpenClaw** |
+| | **Agent!** | **OpenClaw** |
 |---|---|---|
 | **Focus** | macOS-native depth | Cross-platform breadth |
 | **Runtime** | Native Swift binary | Node.js server |
@@ -24,10 +24,10 @@ OpenClaw is a great project with broad platform reach and a rich ecosystem of me
 
 Both tools have their strengths. If you want a personal assistant across every messaging platform, OpenClaw is excellent. If you want an AI agent that can drive Xcode, compile Swift, control Mac apps through ScriptingBridge, and escalate to root through a proper Launch Daemon — Agent is built for that.
 
-## What Agent Can Do
+## What Agent! Can Do
 
 ### Autonomous Task Execution
-Give Agent a task in plain English. It figures out the commands, runs them, reads the output, adapts, and keeps going — up to 50 iterations per task. It remembers previous tasks and builds on past results.
+Give Agent! a task in plain English. It figures out the commands, runs them, reads the output, adapts, and keeps going — up to 50 iterations per task. It remembers previous tasks and builds on past results.
 
 ### Dual Privilege Model
 Agent runs two XPC services registered through Apple's SMAppService:
