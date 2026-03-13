@@ -165,6 +165,7 @@ Attach screenshots or paste images directly into Agent. Images are encoded as ba
 - Automatic downscaling of images larger than 2048px
 
 ### Multi-Provider Support
+- Cloud based LLMs require a valid API key, each for Claude and Ollama Cloud
 - **Claude** (Anthropic) — Sonnet 4, Opus 4, Haiku 3.5
 - **Ollama** — cloud-hosted Ollama via API key, with automatic vision capability detection. Local Ollama support is coming soon.
 
