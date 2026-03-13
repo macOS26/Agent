@@ -132,16 +132,18 @@ Under the hood, this uses the same Apple Event interface that compiled Scripting
 
 ### Execution Priority
 
-The AI is taught to choose the fastest approach for each task:
+The AI selects the right scripting approach based on task complexity:
 
 | Priority | Method | When to use |
 |----------|--------|-------------|
-| 1. `apple_event_query` | Zero compilation. Instant. | Reading app data (mail, notes, music, calendar, etc.) |
-| 2. Run existing binary | `~/Documents/Agent/agents/.build/debug/ScriptName` | Script was already compiled and source hasn't changed |
-| 3. `run_agent_script` | Compiles with `swift build --product <name>` | First build or after editing a script's source |
-| 4. Never bare `swift build` | — | Compiles all 44 bridges and all scripts. Extremely slow. |
+| 1. `apple_event_query` | Zero compilation, instant ObjC dispatch | Small queries: reading app data (mail, notes, music, calendar, etc.) |
+| 2. `run_agent_script` | Native Swift dylib via AgentScriptingBridge | Persistent, repeatable automation needing type-safe compiled code |
+| 3. NSAppleScript in scripts | In-process AppleScript fallback | When AgentScriptingBridge has issues with a particular app |
+| 4. `osascript` via user agent | Shell-based AppleScript | Last resort for one-off scripts or complex `tell` blocks |
 
-After the first compilation, SPM caches compiled modules so incremental builds only recompile changed files. The `--product` flag ensures only the target script and its bridge dependencies are built — not the entire package.
+The AI prefers `execute_user_command` for all tasks unless root privileges are truly required. When root is used, files are chown'd back to the user to avoid permission issues.
+
+After the first compilation, SPM caches compiled modules so incremental builds only recompile changed files. The `--product` flag ensures only the target script and its bridge dependencies are built — not the entire package. Never run bare `swift build` — it compiles all 45+ bridges and is extremely slow.
 
 ### ScriptingBridges Library
 Agent ships with pre-generated Swift protocol definitions for 44 macOS applications, created from each app's scripting dictionary using the [Swift-Scripting](https://github.com/SuperBox64/Swift-Scripting) toolchain. These bridge files live in `Sources/XCFScriptingBridges/` and give scripts type-safe access to:
@@ -153,6 +155,9 @@ Each bridge is its own Swift module. Scripts import only what they need (e.g. `i
 For compiled scripts, ScriptingBridge is the preferred approach — it calls the same Apple Event interface as AppleScript but natively from Swift, without spawning a subprocess. For quick queries, `apple_event_query` accesses the same interface dynamically with zero compilation. AppleScript via `osascript` is still available as a fallback.
 
 To add a bridge for a new app, the AI runs the built-in `GenerateBridge` script with the app path, then adds the new bridge name to `bridgeNames` in Package.swift.
+
+### Streaming & Markdown
+Agent streams Claude's responses token-by-token in real time — no waiting for the full response. The activity log renders markdown inline: **bold**, *italic*, `inline code`, and fenced code blocks with syntax-aware background styling.
 
 ### Vision: Screenshot and Clipboard Support
 Attach screenshots or paste images directly into Agent. Images are encoded as base64 PNG and sent as vision content blocks. The AI can see what's on your screen and act on it.
