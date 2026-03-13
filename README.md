@@ -2,7 +2,7 @@
 
 A native macOS autonomous AI agent built entirely in Swift. Agent takes a different approach than projects like [OpenClaw](https://github.com/openclaw/openclaw) — where OpenClaw is a versatile cross-platform assistant that connects to messaging apps and runs on any OS, Agent is purpose-built for macOS, leveraging Apple-native frameworks to go deeper into the platform than a cross-platform tool can.
 
-Agent uses SwiftUI, XPC, SMAppService, and ScriptingBridge to give an AI agent native access to your Mac. No Electron. No Docker. No npm install. Just a `.app` that speaks macOS.
+Agent uses SwiftUI, XPC, SMAppService, Apple Events, and ScriptingBridge to give an AI agent native access to your Mac. No Electron. No Docker. No npm install. Just a `.app` that speaks macOS.
 
 ## Agent vs. OpenClaw on Mac
 
@@ -14,7 +14,7 @@ OpenClaw is a great project with broad platform reach and a rich ecosystem of me
 | **Runtime** | Native Swift binary | Node.js server |
 | **UI** | SwiftUI app | Web chat / Telegram / CLI |
 | **Privilege model** | XPC + Launch Daemon (Apple's official pattern) | Shell commands |
-| **macOS integration** | ScriptingBridge, AppleScript, SMAppService | Generic shell access |
+| **macOS integration** | Apple Events, ScriptingBridge, AppleScript, SMAppService | Generic shell access |
 | **Xcode automation** | Built-in: build, run, grant permissions | N/A |
 | **Scripting language** | Swift Package-based agent scripts | Python/JS scripts |
 | **Messaging** | Local app only | WhatsApp, Telegram, Slack, Discord, iMessage, and more |
@@ -88,9 +88,9 @@ The AI can create, read, update, delete, compile, and run these scripts autonomo
 - `run_agent_script` — compile with `swift build --product <name>` and execute
 - `delete_agent_script` — remove a script
 
-### Dynamic ScriptingBridge Queries
+### Dynamic Apple Event Queries
 
-Agent includes a `scripting_bridge_query` tool that lets the AI query any scriptable Mac app **instantly — with zero compilation**. It uses Objective-C dynamic dispatch (`value(forKey:)`, `perform(_:with:)`) to walk an app's ScriptingBridge object graph at runtime, bypassing the need to compile Swift code entirely.
+Agent includes an `apple_event_query` tool that lets the AI query any scriptable Mac app **instantly — with zero compilation**. It uses Objective-C dynamic dispatch (`value(forKey:)`, `perform(_:with:)`) to walk an app's Apple Event object graph at runtime, bypassing the need to compile Swift code entirely.
 
 The tool takes a `bundle_id` and a chain of operations:
 
@@ -128,7 +128,7 @@ operations: [
 
 Write operations (`delete`, `close`, `move`, `quit`, etc.) are blocked by default. The AI must explicitly set `allow_writes: true` to permit them.
 
-Under the hood, this is the same Apple Event interface that compiled ScriptingBridge scripts use — just accessed dynamically through `NSObject` instead of through generated Swift protocol types.
+Under the hood, this uses the same Apple Event interface that compiled ScriptingBridge scripts use — just accessed dynamically through `NSObject` instead of through generated Swift protocol types.
 
 ### Execution Priority
 
@@ -136,21 +136,21 @@ The AI is taught to choose the fastest approach for each task:
 
 | Priority | Method | When to use |
 |----------|--------|-------------|
-| 1. `scripting_bridge_query` | Zero compilation. Instant. | Reading app data (mail, notes, music, calendar, etc.) |
+| 1. `apple_event_query` | Zero compilation. Instant. | Reading app data (mail, notes, music, calendar, etc.) |
 | 2. Run existing binary | `~/Documents/Agent/agents/.build/debug/ScriptName` | Script was already compiled and source hasn't changed |
 | 3. `run_agent_script` | Compiles with `swift build --product <name>` | First build or after editing a script's source |
-| 4. Never bare `swift build` | — | Compiles all 45+ bridges and all scripts. Extremely slow. |
+| 4. Never bare `swift build` | — | Compiles all 44 bridges and all scripts. Extremely slow. |
 
 After the first compilation, SPM caches compiled modules so incremental builds only recompile changed files. The `--product` flag ensures only the target script and its bridge dependencies are built — not the entire package.
 
 ### ScriptingBridges Library
-Agent ships with pre-generated Swift protocol definitions for 40+ macOS applications, created from each app's scripting dictionary using the [Swift-Scripting](https://github.com/SuperBox64/Swift-Scripting) toolchain. These bridge files live in `Sources/XCFScriptingBridges/` and give scripts type-safe access to:
+Agent ships with pre-generated Swift protocol definitions for 44 macOS applications, created from each app's scripting dictionary using the [Swift-Scripting](https://github.com/SuperBox64/Swift-Scripting) toolchain. These bridge files live in `Sources/XCFScriptingBridges/` and give scripts type-safe access to:
 
-Adobe Illustrator, Automator, Bluetooth File Exchange, Calendar, Console, Contacts, Database Events, Developer Tools, Final Cut Pro, Finder, Firefox, Folder Actions Setup, Google Chrome, Image Events, Instruments, Keynote, Logic Pro, Mail, Messages, Microsoft Edge, Music, Notes, Numbers, Numbers (Creator Studio), Pages, Pages (Creator Studio), Photos, Pixelmator Pro, Preview, QuickTime Player, Reminders, Safari, Screen Sharing, Script Editor, Shortcuts, Simulator, System Events, System Information, System Settings, Terminal, TextEdit, TV, UTM, VoiceOver, and Xcode.
+Adobe Illustrator, Automator, Bluetooth File Exchange, Calendar, Console, Contacts, Database Events, Developer, Final Cut Pro, Finder, Firefox, Folder Actions Setup, Google Chrome, Image Events, Instruments, Keynote, Logic Pro, Mail, Messages, Microsoft Edge, Music, Notes, Numbers, Numbers (Creator Studio), Pages, Pages (Creator Studio), Photos, Pixelmator Pro, Preview, QuickTime Player, Reminders, Safari, Screen Sharing, Script Editor, Shortcuts, Simulator, System Events, System Information, System Settings, Terminal, TextEdit, TV, UTM, VoiceOver, and Xcode.
 
 Each bridge is its own Swift module. Scripts import only what they need (e.g. `import MailBridge`), keeping builds fast and isolated. The common types (`SBObjectProtocol`, `SBApplicationProtocol`, `AEKeyword`) live in `ScriptingBridgeCommon`, which every bridge re-exports via `@_exported import`.
 
-ScriptingBridge is the preferred approach for app automation — it calls the same Apple Event interface as AppleScript but natively from Swift, without spawning a subprocess. AppleScript via `osascript` is still available as a fallback.
+For compiled scripts, ScriptingBridge is the preferred approach — it calls the same Apple Event interface as AppleScript but natively from Swift, without spawning a subprocess. For quick queries, `apple_event_query` accesses the same interface dynamically with zero compilation. AppleScript via `osascript` is still available as a fallback.
 
 To add a bridge for a new app, the AI runs the built-in `GenerateBridge` script with the app path, then adds the new bridge name to `bridgeNames` in Package.swift.
 
