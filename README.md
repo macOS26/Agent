@@ -143,7 +143,6 @@ The AI is taught to choose the fastest approach for each task:
 | 1. `apple_event_query` | Zero compilation. Instant. | Reading app data (mail, notes, music, calendar, etc.) |
 | 2. Run existing binary | `~/Documents/Agent/agents/.build/debug/ScriptName` | Script was already compiled and source hasn't changed |
 | 3. `run_agent_script` | Compiles with `swift build --product <name>` | First build or after editing a script's source |
-| 4. Never bare `swift build` | — | Compiles all 44 bridges and all scripts. Extremely slow. |
 
 After the first compilation, SPM caches compiled modules so incremental builds only recompile changed files. The `--product` flag ensures only the target script and its bridge dependencies are built — not the entire package.
 
