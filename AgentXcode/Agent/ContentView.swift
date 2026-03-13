@@ -360,7 +360,7 @@ struct ActivityLogView: NSViewRepresentable {
             let htmlMatches = Self.htmlPathPattern.matches(in: text, range: fullRange)
 
             guard !imageMatches.isEmpty || !htmlMatches.isEmpty else {
-                return NSAttributedString(string: text, attributes: baseAttrs)
+                return renderMarkdown(text)
             }
 
             // Merge all matches sorted by location
@@ -391,7 +391,7 @@ struct ActivityLogView: NSViewRepresentable {
                 if match.range.location > lastEnd {
                     let beforeRange = NSRange(location: lastEnd, length: match.range.location - lastEnd)
                     let beforeText = nsText.substring(with: beforeRange)
-                    result.append(NSAttributedString(string: beforeText, attributes: baseAttrs))
+                    result.append(renderMarkdown(beforeText))
                     if beforeText.contains("--- New Task ---") {
                         renderedSizes.removeAll()
                     }
@@ -442,7 +442,7 @@ struct ActivityLogView: NSViewRepresentable {
 
             if lastEnd < nsText.length {
                 let remaining = NSRange(location: lastEnd, length: nsText.length - lastEnd)
-                result.append(NSAttributedString(string: nsText.substring(with: remaining), attributes: baseAttrs))
+                result.append(renderMarkdown(nsText.substring(with: remaining)))
             }
 
             return result
@@ -464,6 +464,94 @@ struct ActivityLogView: NSViewRepresentable {
             result.append(NSAttributedString(string: "\n", attributes: attrs))
             result.append(NSAttributedString(attachment: attachment))
             result.append(NSAttributedString(string: "\n", attributes: attrs))
+        }
+
+        // MARK: - Markdown rendering
+
+        private static let codeBlockPattern = try! NSRegularExpression(
+            pattern: "```\\w*\\n?([\\s\\S]*?)```",
+            options: []
+        )
+
+        private func renderMarkdown(_ text: String) -> NSAttributedString {
+            let nsText = text as NSString
+            let fullRange = NSRange(location: 0, length: nsText.length)
+            let codeMatches = Self.codeBlockPattern.matches(in: text, range: fullRange)
+
+            guard !codeMatches.isEmpty else {
+                return renderInlineMarkdown(text)
+            }
+
+            let result = NSMutableAttributedString()
+            var lastEnd = 0
+            let codeBg = NSColor.unemphasizedSelectedContentBackgroundColor
+
+            for match in codeMatches {
+                if match.range.location > lastEnd {
+                    let before = nsText.substring(with: NSRange(location: lastEnd, length: match.range.location - lastEnd))
+                    result.append(renderInlineMarkdown(before))
+                }
+                let codeContent = nsText.substring(with: match.range(at: 1))
+                let codeAttrs: [NSAttributedString.Key: Any] = [
+                    .font: font,
+                    .foregroundColor: NSColor.labelColor,
+                    .backgroundColor: codeBg
+                ]
+                result.append(NSAttributedString(string: "\n", attributes: [.font: font]))
+                result.append(NSAttributedString(string: codeContent, attributes: codeAttrs))
+                result.append(NSAttributedString(string: "\n", attributes: [.font: font]))
+                lastEnd = match.range.location + match.range.length
+            }
+
+            if lastEnd < nsText.length {
+                let remaining = nsText.substring(from: lastEnd)
+                result.append(renderInlineMarkdown(remaining))
+            }
+
+            return result
+        }
+
+        private func renderInlineMarkdown(_ text: String) -> NSAttributedString {
+            guard !text.isEmpty else { return NSAttributedString() }
+
+            do {
+                var options = AttributedString.MarkdownParsingOptions()
+                options.interpretedSyntax = .inlineOnlyPreservingWhitespace
+                let parsed = try AttributedString(markdown: text, options: options)
+
+                let nsAttr = NSMutableAttributedString(parsed)
+                let fullRange = NSRange(location: 0, length: nsAttr.length)
+
+                // Set base monospaced font and color
+                nsAttr.addAttribute(.font, value: font, range: fullRange)
+                nsAttr.addAttribute(.foregroundColor, value: NSColor.labelColor, range: fullRange)
+
+                // Apply bold/italic/code from inline presentation intents
+                nsAttr.enumerateAttributes(in: fullRange, options: []) { attrs, range, _ in
+                    // Check for presentation intent stored by markdown parser
+                    if let intentValue = attrs[.inlinePresentationIntent] as? Int {
+                        let intent = InlinePresentationIntent(rawValue: UInt(intentValue))
+                        var styledFont = self.font
+                        if intent.contains(.stronglyEmphasized) {
+                            styledFont = NSFontManager.shared.convert(styledFont, toHaveTrait: .boldFontMask)
+                        }
+                        if intent.contains(.emphasized) {
+                            styledFont = NSFontManager.shared.convert(styledFont, toHaveTrait: .italicFontMask)
+                        }
+                        nsAttr.addAttribute(.font, value: styledFont, range: range)
+                        if intent.contains(.code) {
+                            nsAttr.addAttribute(.backgroundColor, value: NSColor.quaternaryLabelColor, range: range)
+                        }
+                    }
+                }
+
+                return nsAttr
+            } catch {
+                return NSAttributedString(string: text, attributes: [
+                    .font: font,
+                    .foregroundColor: NSColor.labelColor
+                ])
+            }
         }
 
         private static var snapshotOffsetKey: UInt8 = 0

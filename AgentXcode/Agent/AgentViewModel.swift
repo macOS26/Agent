@@ -538,6 +538,11 @@ final class AgentViewModel {
     private var streamOutputCount = 0
     private var streamTruncated = false
     private static let maxStreamDisplay = 20_000
+
+    // LLM streaming state
+    private var streamBuffer = ""
+    private var streamFlushTask: Task<Void, Never>?
+    private var streamingTextStarted = false
     private static let maxLogSize = 60_000
     private var recentOutputHashes: Set<Int> = []
 
@@ -651,6 +656,43 @@ final class AgentViewModel {
         streamTruncated = false
     }
 
+    // MARK: - LLM Streaming
+
+    private func appendStreamDelta(_ delta: String) {
+        if !streamingTextStarted {
+            let timestamp = Self.timestampFormatter.string(from: Date())
+            streamBuffer += "[\(timestamp)] "
+            streamingTextStarted = true
+        }
+        streamBuffer += delta
+        scheduleStreamFlush()
+    }
+
+    private func scheduleStreamFlush() {
+        guard streamFlushTask == nil else { return }
+        streamFlushTask = Task {
+            try? await Task.sleep(for: .milliseconds(50))
+            self.streamFlushTask = nil
+            if !self.streamBuffer.isEmpty {
+                self.activityLog += self.streamBuffer
+                self.streamBuffer = ""
+            }
+        }
+    }
+
+    private func flushStreamBuffer() {
+        streamFlushTask?.cancel()
+        streamFlushTask = nil
+        if !streamBuffer.isEmpty {
+            activityLog += streamBuffer
+            streamBuffer = ""
+        }
+        if streamingTextStarted {
+            activityLog += "\n"
+            streamingTextStarted = false
+        }
+    }
+
     private func scheduleLogFlush() {
         guard logFlushTask == nil else { return }
         logFlushTask = Task {
@@ -685,13 +727,13 @@ final class AgentViewModel {
         UserDefaults.standard.set(activityLog, forKey: "agentActivityLog")
     }
 
-    /// Keep only the last 3 tasks visible to prevent SwiftUI from choking on large Text views
+    /// Keep only the last 3 tasks visible
     private func trimToRecentTasks() {
         let marker = "--- New Task ---"
         let parts = activityLog.components(separatedBy: marker)
         guard parts.count > 4 else { return } // 3 tasks + possible leading text
         let kept = parts.suffix(3).joined(separator: marker)
-        activityLog = "...(older tasks trimmed)...\n\n" + marker + kept
+        activityLog = marker + kept
     }
 
     // MARK: - Task Execution Loop
@@ -774,8 +816,16 @@ final class AgentViewModel {
             do {
                 isThinking = true
                 let response: (content: [[String: Any]], stopReason: String)
+                var textWasStreamed = false
                 if let claude {
-                    response = try await claude.send(messages: messages)
+                    response = try await claude.sendStreaming(messages: messages) { [weak self] delta in
+                        Task { @MainActor in
+                            self?.isThinking = false
+                            self?.appendStreamDelta(delta)
+                        }
+                    }
+                    textWasStreamed = true
+                    flushStreamBuffer()
                 } else if let ollama {
                     response = try await ollama.send(messages: messages)
                 } else {
@@ -791,7 +841,7 @@ final class AgentViewModel {
                     guard let type = block["type"] as? String else { continue }
 
                     if type == "text", let text = block["text"] as? String {
-                        appendLog(text)
+                        if !textWasStreamed { appendLog(text) }
                     } else if type == "tool_use" {
                         hasToolUse = true
                         guard let toolId = block["id"] as? String,
