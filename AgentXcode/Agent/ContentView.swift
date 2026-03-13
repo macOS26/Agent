@@ -338,12 +338,12 @@ struct ActivityLogView: NSViewRepresentable {
         var onHTMLReady: (() -> Void)?
 
         // Matches image files
-        private static let imagePathPattern = try! NSRegularExpression(
+        private static let imagePathPattern: NSRegularExpression? = try? NSRegularExpression(
             pattern: #"(/[^\s"'<>]+\.(?:jpg|jpeg|png|gif|tiff|bmp|webp|heic|ico|icon))"#,
             options: .caseInsensitive
         )
         // Matches HTML files
-        private static let htmlPathPattern = try! NSRegularExpression(
+        private static let htmlPathPattern: NSRegularExpression? = try? NSRegularExpression(
             pattern: #"(/[^\s"'<>]+\.html?)"#,
             options: .caseInsensitive
         )
@@ -356,8 +356,8 @@ struct ActivityLogView: NSViewRepresentable {
 
             let nsText = text as NSString
             let fullRange = NSRange(location: 0, length: nsText.length)
-            let imageMatches = Self.imagePathPattern.matches(in: text, range: fullRange)
-            let htmlMatches = Self.htmlPathPattern.matches(in: text, range: fullRange)
+            let imageMatches = Self.imagePathPattern?.matches(in: text, range: fullRange) ?? []
+            let htmlMatches = Self.htmlPathPattern?.matches(in: text, range: fullRange) ?? []
 
             guard !imageMatches.isEmpty || !htmlMatches.isEmpty else {
                 return renderMarkdown(text)
@@ -468,7 +468,7 @@ struct ActivityLogView: NSViewRepresentable {
 
         // MARK: - Markdown rendering
 
-        private static let codeBlockPattern = try! NSRegularExpression(
+        private static let codeBlockPattern: NSRegularExpression? = try? NSRegularExpression(
             pattern: "```\\w*\\n?([\\s\\S]*?)```",
             options: []
         )
@@ -476,7 +476,7 @@ struct ActivityLogView: NSViewRepresentable {
         private func renderMarkdown(_ text: String) -> NSAttributedString {
             let nsText = text as NSString
             let fullRange = NSRange(location: 0, length: nsText.length)
-            let codeMatches = Self.codeBlockPattern.matches(in: text, range: fullRange)
+            let codeMatches = Self.codeBlockPattern?.matches(in: text, range: fullRange) ?? []
 
             guard !codeMatches.isEmpty else {
                 return renderInlineMarkdown(text)
@@ -754,7 +754,6 @@ struct SettingsView: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
                 .frame(maxWidth: .infinity)
-                .padding(.horizontal, -20)
             }
 
             Divider()

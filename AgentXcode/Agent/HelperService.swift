@@ -106,9 +106,13 @@ final class HelperService {
     nonisolated private func executeViaXPC(script: String, outputHandler: OutputHandler) async -> (status: Int32, output: String) {
         await withCheckedContinuation { continuation in
             let connection = makeConnection(outputHandler: outputHandler)
-            let proxy = connection.remoteObjectProxyWithErrorHandler { error in
+            guard let proxy = connection.remoteObjectProxyWithErrorHandler({ error in
                 continuation.resume(returning: (-1, "XPC error: \(error.localizedDescription)"))
-            } as! HelperToolProtocol
+            }) as? HelperToolProtocol else {
+                connection.invalidate()
+                continuation.resume(returning: (-1, "XPC proxy cast failed"))
+                return
+            }
 
             proxy.execute(script: script, instanceID: self.instanceID) { status, output in
                 connection.invalidate()
@@ -122,9 +126,13 @@ final class HelperService {
             let connection = NSXPCConnection(machServiceName: helperID, options: .privileged)
             connection.remoteObjectInterface = NSXPCInterface(with: HelperToolProtocol.self)
             connection.resume()
-            let proxy = connection.remoteObjectProxyWithErrorHandler { _ in
+            guard let proxy = connection.remoteObjectProxyWithErrorHandler({ _ in
                 continuation.resume()
-            } as! HelperToolProtocol
+            }) as? HelperToolProtocol else {
+                connection.invalidate()
+                continuation.resume()
+                return
+            }
             proxy.cancelOperation(instanceID: instanceID) {
                 connection.invalidate()
                 continuation.resume()
