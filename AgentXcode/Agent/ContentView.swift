@@ -887,26 +887,21 @@ struct SettingsView: View {
             Divider()
 
             // History settings
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Text("History")
-                        .font(.headline)
-                    Spacer()
+            HStack {
+                Text("History")
+                    .font(.headline)
+                Spacer()
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Summarize after").font(.caption).foregroundStyle(.secondary)
+                    Stepper("\(viewModel.maxHistoryBeforeSummary) tasks",
+                           onIncrement: { if viewModel.maxHistoryBeforeSummary > 5 { viewModel.maxHistoryBeforeSummary -= 5 } },
+                           onDecrement: { if viewModel.maxHistoryBeforeSummary < 50 { viewModel.maxHistoryBeforeSummary += 5 } })
                 }
-                HStack(alignment: .top, spacing: 16) {
-                    Spacer()
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Summarize after").font(.caption).foregroundStyle(.secondary)
-                        Stepper("\(viewModel.maxHistoryBeforeSummary) tasks",
-                               onIncrement: { if viewModel.maxHistoryBeforeSummary > 5 { viewModel.maxHistoryBeforeSummary -= 5 } },
-                               onDecrement: { if viewModel.maxHistoryBeforeSummary < 50 { viewModel.maxHistoryBeforeSummary += 5 } })
-                    }
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Visible tasks in chat").font(.caption).foregroundStyle(.secondary)
-                        Stepper("\(viewModel.visibleTaskCount)",
-                               onIncrement: { if viewModel.visibleTaskCount > 1 { viewModel.visibleTaskCount -= 1 } },
-                               onDecrement: { if viewModel.visibleTaskCount < 5 { viewModel.visibleTaskCount += 1 } })
-                    }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Visible tasks in chat").font(.caption).foregroundStyle(.secondary)
+                    Stepper("\(viewModel.visibleTaskCount)",
+                           onIncrement: { if viewModel.visibleTaskCount > 1 { viewModel.visibleTaskCount -= 1 } },
+                           onDecrement: { if viewModel.visibleTaskCount < 5 { viewModel.visibleTaskCount += 1 } })
                 }
             }
         }
