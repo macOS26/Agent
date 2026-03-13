@@ -18,29 +18,48 @@ final class ScriptingBridgeQueryService: @unchecked Sendable {
     ]
 
     /// Execute a query against a scriptable application.
-    /// Checks Automation permission first and triggers the macOS consent dialog if needed.
+    /// Ensures the app is running, checks Automation permission (triggering the macOS
+    /// consent dialog if needed), then runs the query.
     nonisolated func execute(bundleID: String, operations: [[String: Any]], allowWrites: Bool = false) -> String {
-        // Check/request Automation permission before querying
-        let permStatus = requestAutomationPermission(bundleID: bundleID)
+        // Ensure the app is running so we can check permission against its PID
+        launchAppIfNeeded(bundleID: bundleID)
+
+        // Check/request Automation permission — triggers consent dialog on first contact
+        let permStatus = checkAutomationPermission(bundleID: bundleID)
         if permStatus == errAEEventNotPermitted {
             let appName = resolveAppName(bundleID)
-            return "Error: Agent does not have Automation permission for \(appName). Grant it in System Settings → Privacy & Security → Automation, then retry."
+            return "Error: Agent does not have Automation permission for \(appName). Grant it in System Settings → Privacy & Security → Automation → Agent, then retry."
         }
         return run(bundleID: bundleID, operations: operations, allowWrites: allowWrites)
     }
 
-    /// Use AEDeterminePermissionToAutomateTarget to check permission and trigger the
-    /// macOS consent dialog if the user hasn't been asked yet. Returns the OSStatus.
-    @discardableResult
-    private func requestAutomationPermission(bundleID: String) -> OSStatus {
+    /// Launch the target app if it's not already running.
+    private func launchAppIfNeeded(bundleID: String) {
+        if NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).isEmpty {
+            if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
+                let config = NSWorkspace.OpenConfiguration()
+                config.activates = false  // Don't steal focus
+                let semaphore = DispatchSemaphore(value: 0)
+                NSWorkspace.shared.openApplication(at: url, configuration: config) { _, _ in
+                    semaphore.signal()
+                }
+                _ = semaphore.wait(timeout: .now() + 5)
+                // Give the app a moment to register its PID
+                Thread.sleep(forTimeInterval: 1)
+            }
+        }
+    }
+
+    /// Check Automation permission using AEDeterminePermissionToAutomateTarget.
+    /// askUserIfNeeded=true triggers the macOS consent dialog if permission is undetermined.
+    private func checkAutomationPermission(bundleID: String) -> OSStatus {
         guard let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first else {
-            return noErr  // App not running — skip check, SBApplication will handle it
+            return noErr  // Couldn't find PID — let SBApplication try anyway
         }
         var pid = app.processIdentifier
         var targetDesc = AEAddressDesc()
         AECreateDesc(typeKernelProcessID, &pid, MemoryLayout<pid_t>.size, &targetDesc)
         defer { AEDisposeDesc(&targetDesc) }
-        // askUserIfNeeded = true → shows the consent dialog if not yet determined
         return AEDeterminePermissionToAutomateTarget(&targetDesc, typeWildCard, typeWildCard, true)
     }
 
