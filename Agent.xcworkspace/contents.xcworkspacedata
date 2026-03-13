@@ -2,7 +2,7 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "group:AgentXcode/Agent.xcodeproj">
+      location = "group:AgentXcode/Agent!.xcodeproj">
    </FileRef>
    <FileRef
       location = "container:AgentSwiftPackage/Agent/agents">

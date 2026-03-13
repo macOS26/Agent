@@ -125,7 +125,7 @@
 		AA10000000000000000021 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA10000000000000000022 /* Agent.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Agent.entitlements; sourceTree = "<group>"; };
 		AA10000000000000000023 /* Agent.app.toddbruss.helper.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Agent.app.toddbruss.helper.plist; sourceTree = "<group>"; };
-		AA10000000000000000024 /* Agent.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Agent.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA10000000000000000024 /* Agent!.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Agent!.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA10000000000000000025 /* UserService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserService.swift; sourceTree = "<group>"; };
 		AA10000000000000000026 /* UserProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProtocol.swift; sourceTree = "<group>"; };
 		AA10000000000000000027 /* Agent.app.toddbruss.user.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Agent.app.toddbruss.user.plist; sourceTree = "<group>"; };
@@ -145,7 +145,7 @@
 		DD10000000000000000001 /* ScriptServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptServiceTests.swift; sourceTree = "<group>"; };
 		DD10000000000000000002 /* ScriptingBridgesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptingBridgesTests.swift; sourceTree = "<group>"; };
 		DD10000000000000000003 /* PackageGenerationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageGenerationTests.swift; sourceTree = "<group>"; };
-		DD10000000000000000004 /* AgentTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AgentTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DD10000000000000000004 /* Agent!Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Agent!Tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		EA37C5532F636B87009D0A23 /* Sources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Sources; path = ../AgentSwiftPackage/Agent/agents/Sources; sourceTree = SOURCE_ROOT; };
 		EA37C5542F636B87009D0A23 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = text; name = Package.swift; path = ../AgentSwiftPackage/Agent/agents/Package.swift; sourceTree = SOURCE_ROOT; };
 		EAF3666E2F623D6A004B7E38 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
@@ -236,10 +236,10 @@
 		AA10000000000000000042 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				AA10000000000000000024 /* Agent.app */,
+				AA10000000000000000024 /* Agent!.app */,
 				BB1000000000000000001C /* AgentHelper */,
 				CC1000000000000000001C /* AgentUser */,
-				DD10000000000000000004 /* AgentTests.xctest */,
+				DD10000000000000000004 /* Agent!Tests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -300,9 +300,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		AA10000000000000000060 /* Agent */ = {
+		AA10000000000000000060 /* Agent! */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = AA10000000000000000091 /* Build configuration list for PBXNativeTarget "Agent" */;
+			buildConfigurationList = AA10000000000000000091 /* Build configuration list for PBXNativeTarget "Agent!" */;
 			buildPhases = (
 				AA10000000000000000050 /* Sources */,
 				AA10000000000000000051 /* Resources */,
@@ -318,12 +318,12 @@
 				BB10000000000000000071 /* PBXTargetDependency */,
 				CC10000000000000000071 /* PBXTargetDependency */,
 			);
-			name = Agent;
+			name = "Agent!";
 			packageProductDependencies = (
 				EA37C5512F636B86009D0A23 /* XcodeBridge */,
 			);
 			productName = Agent;
-			productReference = AA10000000000000000024 /* Agent.app */;
+			productReference = AA10000000000000000024 /* Agent!.app */;
 			productType = "com.apple.product-type.application";
 		};
 		BB10000000000000000060 /* AgentHelper */ = {
@@ -358,9 +358,9 @@
 			productReference = CC1000000000000000001C /* AgentUser */;
 			productType = "com.apple.product-type.tool";
 		};
-		DD10000000000000000060 /* AgentTests */ = {
+		DD10000000000000000060 /* Agent!Tests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = DD10000000000000000090 /* Build configuration list for PBXNativeTarget "AgentTests" */;
+			buildConfigurationList = DD10000000000000000090 /* Build configuration list for PBXNativeTarget "Agent!Tests" */;
 			buildPhases = (
 				DD10000000000000000050 /* Sources */,
 				DD10000000000000000053 /* Frameworks */,
@@ -370,9 +370,9 @@
 			dependencies = (
 				DD10000000000000000071 /* PBXTargetDependency */,
 			);
-			name = AgentTests;
+			name = "Agent!Tests";
 			productName = AgentTests;
-			productReference = DD10000000000000000004 /* AgentTests.xctest */;
+			productReference = DD10000000000000000004 /* Agent!Tests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
@@ -385,7 +385,7 @@
 				LastSwiftUpdateCheck = 1600;
 				LastUpgradeCheck = 2600;
 			};
-			buildConfigurationList = AA10000000000000000090 /* Build configuration list for PBXProject "Agent" */;
+			buildConfigurationList = AA10000000000000000090 /* Build configuration list for PBXProject "Agent!" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -401,10 +401,10 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				AA10000000000000000060 /* Agent */,
+				AA10000000000000000060 /* Agent! */,
 				BB10000000000000000060 /* AgentHelper */,
 				CC10000000000000000060 /* AgentUser */,
-				DD10000000000000000060 /* AgentTests */,
+				DD10000000000000000060 /* Agent!Tests */,
 			);
 		};
 /* End PBXProject section */
@@ -491,7 +491,7 @@
 		};
 		DD10000000000000000071 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = AA10000000000000000060 /* Agent */;
+			target = AA10000000000000000060 /* Agent! */;
 			targetProxy = DD10000000000000000070 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -753,7 +753,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 6.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Agent.app/Contents/MacOS/Agent";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Agent!.app/Contents/MacOS/Agent!";
 			};
 			name = Debug;
 		};
@@ -769,14 +769,14 @@
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 6.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Agent.app/Contents/MacOS/Agent";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Agent!.app/Contents/MacOS/Agent!";
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		AA10000000000000000090 /* Build configuration list for PBXProject "Agent" */ = {
+		AA10000000000000000090 /* Build configuration list for PBXProject "Agent!" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				AA10000000000000000080 /* Debug */,
@@ -785,7 +785,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		AA10000000000000000091 /* Build configuration list for PBXNativeTarget "Agent" */ = {
+		AA10000000000000000091 /* Build configuration list for PBXNativeTarget "Agent!" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				AA10000000000000000082 /* Debug */,
@@ -812,7 +812,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		DD10000000000000000090 /* Build configuration list for PBXNativeTarget "AgentTests" */ = {
+		DD10000000000000000090 /* Build configuration list for PBXNativeTarget "Agent!Tests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				DD10000000000000000080 /* Debug */,
