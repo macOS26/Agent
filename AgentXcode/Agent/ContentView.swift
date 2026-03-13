@@ -249,10 +249,10 @@ struct ContentView: View {
                 // Up/Down arrow for prompt history
                 if true {
                     if event.keyCode == 126 { // Up arrow
-                        viewModel.navigatePromptHistory(direction: -1)
+                        viewModel.navigatePromptHistory(direction: 1)
                         return nil
                     } else if event.keyCode == 125 { // Down arrow
-                        viewModel.navigatePromptHistory(direction: 1)
+                        viewModel.navigatePromptHistory(direction: -1)
                         return nil
                     }
                 }
