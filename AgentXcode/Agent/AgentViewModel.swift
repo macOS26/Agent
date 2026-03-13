@@ -329,15 +329,16 @@ final class AgentViewModel {
         }
     }
 
-    /// Navigate prompt history. direction: -1 = older (up arrow), 1 = newer (down arrow)
+    /// Navigate prompt history. direction: 1 = older (up arrow), -1 = newer (down arrow)
     func navigatePromptHistory(direction: Int) {
-        guard !promptHistory.isEmpty else { return }
+        let reversed = Array(promptHistory.reversed())
+        guard !reversed.isEmpty else { return }
 
         if historyIndex == -1 {
             // Starting to browse — save current input
             savedInput = taskInput
-            if direction == -1 {
-                historyIndex = promptHistory.count - 1
+            if direction == 1 {
+                historyIndex = 0
             } else {
                 return // already at the beginning, nothing newer
             }
@@ -346,20 +347,19 @@ final class AgentViewModel {
         }
 
         if historyIndex < 0 {
-            // Went past the oldest — restore saved input
-            historyIndex = -1
-            taskInput = savedInput
-            return
-        }
-
-        if historyIndex >= promptHistory.count {
             // Back to current input
             historyIndex = -1
             taskInput = savedInput
             return
         }
 
-        taskInput = promptHistory[historyIndex]
+        if historyIndex >= reversed.count {
+            // Went past the oldest — restore saved input
+            historyIndex = reversed.count - 1
+            return
+        }
+
+        taskInput = reversed[historyIndex]
     }
 
     func stop(silent: Bool = false) {
