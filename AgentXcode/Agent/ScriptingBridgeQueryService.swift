@@ -38,22 +38,17 @@ final class ScriptingBridgeQueryService: @unchecked Sendable {
         result.contains("no output") || result.contains("no data")
     }
 
-    /// Trigger the macOS Automation consent dialog via osascript
+    /// Trigger the macOS Automation consent dialog for the Agent app itself.
+    /// Uses NSAppleScript in-process so the permission prompt is for Agent, not osascript.
     private func requestAutomationPermission(bundleID: String) {
-        // Resolve app name from bundle ID for the osascript tell block
         let appName: String
         if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
             appName = url.deletingPathExtension().lastPathComponent
         } else {
             appName = bundleID
         }
-        let proc = Process()
-        proc.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-        proc.arguments = ["-e", "tell application \"\(appName)\" to get name"]
-        proc.standardOutput = FileHandle.nullDevice
-        proc.standardError = FileHandle.nullDevice
-        try? proc.run()
-        proc.waitUntilExit()
+        let script = NSAppleScript(source: "tell application \"\(appName)\" to get name")
+        script?.executeAndReturnError(nil)
     }
 
     private func run(bundleID: String, operations: [[String: Any]], allowWrites: Bool) -> String {
