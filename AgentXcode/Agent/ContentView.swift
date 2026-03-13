@@ -262,7 +262,8 @@ struct ContentView: View {
     }
 }
 
-/// NSTextView-backed activity log — avoids SwiftUI Text layout storms on large/streaming content
+/// NSTextView-backed activity log — avoids SwiftUI Text layout storms on large/streaming content.
+/// Detects image file paths in log output and renders them inline.
 struct ActivityLogView: NSViewRepresentable {
     let text: String
 
@@ -288,8 +289,10 @@ struct ActivityLogView: NSViewRepresentable {
 
         if text.isEmpty {
             guard !coord.showingPlaceholder else { return }
-            textView.string = "Ready. Enter a task below to begin."
-            textView.textColor = .secondaryLabelColor
+            textView.textStorage?.setAttributedString(
+                NSAttributedString(string: "Ready. Enter a task below to begin.",
+                                   attributes: [.font: coord.font, .foregroundColor: NSColor.secondaryLabelColor])
+            )
             coord.showingPlaceholder = true
             coord.lastLength = 0
             return
@@ -297,22 +300,101 @@ struct ActivityLogView: NSViewRepresentable {
 
         let len = (text as NSString).length
         guard len != coord.lastLength || coord.showingPlaceholder else { return }
+        coord.showingPlaceholder = false
 
-        if coord.showingPlaceholder {
-            textView.textColor = .labelColor
-            coord.showingPlaceholder = false
-        }
-
-        textView.string = text
+        let attributed = coord.buildAttributedString(from: text)
+        textView.textStorage?.setAttributedString(attributed)
         coord.lastLength = len
         textView.scrollToEndOfDocument(nil)
     }
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
-    class Coordinator {
+    @MainActor class Coordinator {
         var lastLength = 0
         var showingPlaceholder = true
+        let font = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
+        var imageCache: [String: NSImage] = [:]
+
+        private static let imagePathPattern = try! NSRegularExpression(
+            pattern: #"(/[^\s"'<>]+\.(?:jpg|jpeg|png|gif|tiff|bmp|webp|heic|ico|icon))"#,
+            options: .caseInsensitive
+        )
+
+        func buildAttributedString(from text: String) -> NSAttributedString {
+            let baseAttrs: [NSAttributedString.Key: Any] = [
+                .font: font,
+                .foregroundColor: NSColor.labelColor
+            ]
+
+            let nsText = text as NSString
+            let fullRange = NSRange(location: 0, length: nsText.length)
+            let matches = Self.imagePathPattern.matches(in: text, range: fullRange)
+
+            guard !matches.isEmpty else {
+                return NSAttributedString(string: text, attributes: baseAttrs)
+            }
+
+            let result = NSMutableAttributedString()
+            var lastEnd = 0
+
+            for match in matches {
+                let matchRange = match.range(at: 1)
+                let path = nsText.substring(with: matchRange)
+
+                // Add text before this match
+                if matchRange.location > lastEnd {
+                    let beforeRange = NSRange(location: lastEnd, length: matchRange.location - lastEnd)
+                    result.append(NSAttributedString(string: nsText.substring(with: beforeRange), attributes: baseAttrs))
+                }
+
+                // Add the path text itself
+                result.append(NSAttributedString(string: path, attributes: baseAttrs))
+                lastEnd = matchRange.location + matchRange.length
+
+                // Try to load and insert the image inline
+                guard FileManager.default.fileExists(atPath: path) else { continue }
+
+                let image: NSImage
+                if let cached = imageCache[path] {
+                    image = cached
+                } else if let loaded = NSImage(contentsOfFile: path) {
+                    imageCache[path] = loaded
+                    image = loaded
+                } else {
+                    continue
+                }
+
+                // Scale to reasonable inline size
+                let maxWidth: CGFloat = 300.0
+                let scale = min(1.0, maxWidth / image.size.width)
+                let scaledSize = NSSize(
+                    width: image.size.width * scale,
+                    height: image.size.height * scale
+                )
+
+                let resized = NSImage(size: scaledSize, flipped: false) { rect in
+                    image.draw(in: rect)
+                    return true
+                }
+
+                let attachment = NSTextAttachment()
+                let cell = NSTextAttachmentCell(imageCell: resized)
+                attachment.attachmentCell = cell
+
+                result.append(NSAttributedString(string: "\n", attributes: baseAttrs))
+                result.append(NSAttributedString(attachment: attachment))
+                result.append(NSAttributedString(string: "\n", attributes: baseAttrs))
+            }
+
+            // Add remaining text after last match
+            if lastEnd < nsText.length {
+                let remaining = NSRange(location: lastEnd, length: nsText.length - lastEnd)
+                result.append(NSAttributedString(string: nsText.substring(with: remaining), attributes: baseAttrs))
+            }
+
+            return result
+        }
     }
 }
 
