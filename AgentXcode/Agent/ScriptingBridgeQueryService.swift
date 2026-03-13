@@ -143,15 +143,18 @@ final class ScriptingBridgeQueryService: @unchecked Sendable {
     // MARK: - Helpers
 
     private func getValue(from object: Any, key: String) -> Any? {
-        // Try value(forKey:) on NSObject
         guard let nsObj = object as? NSObject else { return nil }
-        // For SBElementArray element names, try calling it as a method first
+        // Prefer KVC — it auto-boxes primitives (enums, ints, bools) into NSNumber.
+        // perform(_:) only works for methods returning objects, not primitives.
+        if let result = (nsObj as AnyObject).value(forKey: key) {
+            return result
+        }
+        // Fallback to perform(_:) for method-style element accessors
         let sel = Selector(key)
         if nsObj.responds(to: sel) {
             return nsObj.perform(sel)?.takeUnretainedValue()
         }
-        // Fallback to KVC
-        return (nsObj as AnyObject).value(forKey: key)
+        return nil
     }
 
     private func callMethod(on object: Any, method: String, arg: String?) -> Any? {
