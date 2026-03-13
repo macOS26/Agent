@@ -59,6 +59,10 @@ final class ScriptingBridgeQueryService: @unchecked Sendable {
 
                 if let array = cursor as? SBElementArray {
                     let count = array.count
+                    if count == 0 {
+                        output.append("(0 items — the array is empty. If this is unexpected, the app may need Automation permission. Try: osascript -e 'tell application \"AppName\" to get name')")
+                        return output.joined(separator: "\n")
+                    }
                     let cap = min(count, limit)
                     for idx in 0..<cap {
                         guard output.count < Self.maxOutputLines else {
@@ -130,7 +134,10 @@ final class ScriptingBridgeQueryService: @unchecked Sendable {
             }
         }
 
-        return output.isEmpty ? "(no output)" : output.joined(separator: "\n")
+        if output.isEmpty {
+            return "(no output — the query returned no data. Possible causes: 1) The app needs Automation permission — run: osascript -e 'tell application \"AppName\" to get name' to trigger the consent dialog. 2) The property key may be wrong — check the app's scripting dictionary.)"
+        }
+        return output.joined(separator: "\n")
     }
 
     // MARK: - Helpers
