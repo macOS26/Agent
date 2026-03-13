@@ -52,7 +52,7 @@ final class TaskHistory {
     private(set) var records: [TaskRecord] = []
 
     private var fileURL: URL {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        guard let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("task_history.json") }
         let dir = appSupport.appendingPathComponent("Agent", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir.appendingPathComponent("task_history.json")

@@ -87,15 +87,14 @@ final class AppleEventService: @unchecked Sendable {
                     output.append("Error at step \(i): 'get' requires 'key'")
                     return output.joined(separator: "\n")
                 }
-                let result = getValue(from: cursor, key: key)
-                if result == nil {
+                guard let result = getValue(from: cursor, key: key) else {
                     output.append("\(key) = nil")
                     return output.joined(separator: "\n")
                 }
                 if isScalar(result) {
                     output.append("\(key) = \(formatValue(result))")
                 }
-                cursor = result!
+                cursor = result
 
             case "iterate":
                 guard let properties = op["properties"] as? [String] else {

@@ -550,13 +550,13 @@ final class AgentViewModel {
     // MARK: - Image snapshot cache (persists across launches)
 
     private static let logImageCacheDir: URL = {
-        let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
+        guard let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else { return URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("Agent/log_images") }
         let dir = caches.appendingPathComponent("Agent/log_images")
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
     }()
 
-    private static let imagePathRegex = try! NSRegularExpression(
+    private static let imagePathRegex: NSRegularExpression? = try? NSRegularExpression(
         pattern: #"(/[^\s"'<>]+\.(?:jpg|jpeg|png|gif|tiff|bmp|webp|heic))"#,
         options: .caseInsensitive
     )
@@ -564,7 +564,7 @@ final class AgentViewModel {
     /// Snapshot any image files found in text to persistent cache, rewriting paths to UUID copies.
     private func snapshotImages(in text: String) -> String {
         let nsText = text as NSString
-        let matches = Self.imagePathRegex.matches(in: text, range: NSRange(location: 0, length: nsText.length))
+        let matches = Self.imagePathRegex?.matches(in: text, range: NSRange(location: 0, length: nsText.length)) ?? []
         guard !matches.isEmpty else { return text }
 
         var result = text
@@ -585,7 +585,7 @@ final class AgentViewModel {
 
             do {
                 try FileManager.default.copyItem(atPath: path, toPath: cachedURL.path)
-                let swiftRange = Range(range, in: result)!
+                guard let swiftRange = Range(range, in: result) else { continue }
                 result.replaceSubrange(swiftRange, with: cachedURL.path)
             } catch {
                 // Copy failed — leave original path
