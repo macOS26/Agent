@@ -257,6 +257,9 @@ final class AgentViewModel {
     var hasAttachments: Bool { !attachedImages.isEmpty }
 
     init() {
+        // Restore ~/Documents/Agent/ folder and bundled resources if missing
+        scriptService.ensurePackage()
+
         // Cancel any orphaned processes from a previous app session
         let defaults = UserDefaults.standard
         if let oldHelperID = defaults.string(forKey: "lastHelperInstanceID") {
