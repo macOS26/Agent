@@ -163,6 +163,21 @@ final class OllamaService {
         - Element arrays: `app.accounts?()` returns SBElementArray, iterate with `.object(at: i) as? Type`
         - Properties are @objc optional: always use `?.` and `??` for defaults
         - Methods like moveTo, delete: `object.moveTo?(target as? SBObject)`
+        - MUSIC: To add tracks to a playlist, use the library playlist's searchFor method to find tracks, \
+        then call duplicateTo on each result to copy it into the target playlist:
+        ```
+        let library = (music.playlists?().object(at: 0) as? MusicLibraryPlaylist)!
+        let results = library.searchFor("Song Name", only: .names)
+        // results is an SBObject acting as an array — iterate with value(forKey:)
+        if let tracks = (results as? SBObject)?.value(forKey: "get") as? [SBObject] {
+            for track in tracks {
+                if let t = track as? MusicTrack, t.artist?.lowercased().contains("artist") == true {
+                    t.duplicateTo?(targetPlaylist as SBObject)
+                }
+            }
+        }
+        ```
+        NEVER iterate all library tracks manually — use searchFor instead (instant vs minutes).
         - For apps not yet in the package, generate a new bridge file using the GenerateBridge script:
           1. Run: `run_agent_script GenerateBridge` with arguments: `/Applications/AppName.app`
           2. The generated file lands in Sources/XCFScriptingBridges/
