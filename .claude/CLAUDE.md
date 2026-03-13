@@ -35,12 +35,21 @@ A macOS SwiftUI app that uses SMAppService + a privileged Launch Daemon to give 
 - Uses `.privileged` option for NSXPCConnection
 
 ### Claude API Integration
-- Uses Anthropic Messages API (v2023-06-01)
-- Tools: `execute_command` (root shell), `task_complete` (signal done)
+- Uses Anthropic Messages API (v2023-06-01) with SSE streaming
+- Tools: `execute_command` (root shell), `execute_user_command`, `task_complete`, `apple_event_query`, `run_agent_script`, etc.
 - Up to 50 iterations per task
+- LLM text streams token-by-token to activity log in real time
 - System prompt warns that ~ = /var/root in daemon context; uses actual user home path
 - Supports vision: screenshots encoded as base64 PNG in content blocks
 - Task history injected into system prompt for memory across tasks
+
+### Scripting Priority (in system prompt)
+1. **apple_event_query** — zero compilation, instant ObjC dispatch for small queries
+2. **run_agent_script** — native Swift AgentScriptingBridge dylibs for persistent automation
+3. **NSAppleScript in scripts** — fallback if AgentScriptingBridge has issues with an app
+4. **osascript via user agent** — last resort for one-off AppleScript
+- Prefer `execute_user_command` for all tasks; only escalate to root when truly needed
+- Chown/chmod files back to user after root operations
 
 ### Important Patterns
 - `@Observable` with stored properties + `didSet` for UserDefaults persistence (NOT computed properties)
