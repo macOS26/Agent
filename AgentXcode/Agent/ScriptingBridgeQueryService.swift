@@ -31,20 +31,21 @@ final class ScriptingBridgeQueryService: @unchecked Sendable {
     private var grantedApps: Set<String> = []
 
     /// Trigger the macOS Automation permission dialog by running osascript.
-    /// Same pattern as XcodeService.grantPermission().
+    /// Uses 'get name' which every scriptable app supports.
     private func grantPermissionViaOsascript(appName: String) {
         if grantedApps.contains(appName) { return }
+        (self as ScriptingBridgeQueryService).grantedApps.insert(appName)
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-        process.arguments = ["-e", "tell application \"\(appName)\" to get name of every window"]
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        process.standardError = pipe
+        process.arguments = ["-e", "tell application \"\(appName)\" to get name"]
+        let outputPipe = Pipe()
+        let errorPipe = Pipe()
+        process.standardOutput = outputPipe
+        process.standardError = errorPipe
         do {
             try process.run()
             process.waitUntilExit()
         } catch { }
-        (self as ScriptingBridgeQueryService).grantedApps.insert(appName)
     }
 
     private func resolveAppName(_ bundleID: String) -> String {
