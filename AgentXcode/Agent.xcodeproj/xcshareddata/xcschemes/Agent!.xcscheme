@@ -35,8 +35,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "DD10000000000000000060"
-               BuildableName = "Agent!Tests.xctest"
-               BlueprintName = "Agent!Tests"
+               BuildableName = "AgentTests.xctest"
+               BlueprintName = "AgentTests"
                ReferencedContainer = "container:Agent.xcodeproj">
             </BuildableReference>
          </TestableReference>

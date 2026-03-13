@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import Agent
+@testable import Agent_
 
 @Suite("Package.swift Auto-Discovery")
 @MainActor
@@ -80,7 +80,6 @@ struct PackageAutoDiscoveryTests {
             #expect(Bool(false), "\(name) not found in targets")
             return
         }
-        // Check dependencies include MusicBridge
         let deps = target["dependencies"] as? [[String: Any]] ?? []
         let depNames = deps.compactMap { dep -> String? in
             if let byName = dep["byName"] as? [Any?] {
@@ -145,7 +144,6 @@ struct PackageAutoDiscoveryTests {
             }
             return nil
         }
-        // Should have no bridge dependencies (Foundation is a system framework, not a target)
         let bridgeDeps = depNames.filter { $0.hasSuffix("Bridge") }
         #expect(bridgeDeps.isEmpty, "Expected no bridge deps but got: \(bridgeDeps)")
     }
