@@ -144,19 +144,10 @@ final class ScriptingBridgeQueryService: @unchecked Sendable {
 
     private func getValue(from object: Any, key: String) -> Any? {
         guard let nsObj = object as? NSObject else { return nil }
-        // Try perform(_:) first for element accessors that return objects
-        let sel = Selector(key)
-        if nsObj.responds(to: sel) {
-            var result: Any?
-            let success = ObjCTry {
-                if let unmanaged = nsObj.perform(sel) {
-                    result = unmanaged.takeUnretainedValue()
-                }
-            }
-            if success, let r = result { return r }
-        }
-        // Fallback to KVC — wraps in ObjC exception handler to avoid crashes
-        // on ScriptingBridge proxy objects that return invalid pointers
+        // Use KVC only — perform(_:) returns raw Unmanaged pointers that can
+        // be invalid (EXC_BAD_ACCESS) for ScriptingBridge proxy objects.
+        // KVC properly boxes primitives and the ObjCTry wrapper catches any
+        // ObjC exceptions from invalid proxy state.
         return safeValueForKey(nsObj, key: key)
     }
 
