@@ -16,18 +16,20 @@ final class ScriptingBridgeQueryService: @unchecked Sendable {
         "duplicate", "save", "set", "sendMessage"
     ]
 
+    /// Apps whose permission has already been requested this session (avoid repeated opens)
+    private var permissionRequestedApps: Set<String> = []
+
     /// Execute a query against a scriptable application.
-    /// Automatically requests Automation permission on first failure, then retries once.
+    /// If the result looks like a permission issue, opens System Settings → Automation
+    /// so the user can grant Agent access, then retries once.
     nonisolated func execute(bundleID: String, operations: [[String: Any]], allowWrites: Bool = false) -> String {
         let result = run(bundleID: bundleID, operations: operations, allowWrites: allowWrites)
-        // If we got nil/empty results, try requesting permission and retry once
-        if looksLikePermissionIssue(result) {
-            requestAutomationPermission(bundleID: bundleID)
-            let retry = run(bundleID: bundleID, operations: operations, allowWrites: allowWrites)
-            if looksLikePermissionIssue(retry) {
-                return retry + "\n(Automation permission may not have been granted. Check System Settings → Privacy & Security → Automation.)"
-            }
-            return retry
+        if looksLikePermissionIssue(result) && !permissionRequestedApps.contains(bundleID) {
+            // Mutate on self — safe because this is nonisolated and single-caller
+            (self as ScriptingBridgeQueryService).permissionRequestedApps.insert(bundleID)
+            openAutomationSettings()
+            let appName = resolveAppName(bundleID)
+            return result + "\n(Agent needs Automation permission for \(appName). System Settings has been opened — enable \(appName) under Agent, then retry.)"
         }
         return result
     }
@@ -38,17 +40,18 @@ final class ScriptingBridgeQueryService: @unchecked Sendable {
         result.contains("no output") || result.contains("no data")
     }
 
-    /// Trigger the macOS Automation consent dialog for the Agent app itself.
-    /// Uses NSAppleScript in-process so the permission prompt is for Agent, not osascript.
-    private func requestAutomationPermission(bundleID: String) {
-        let appName: String
-        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
-            appName = url.deletingPathExtension().lastPathComponent
-        } else {
-            appName = bundleID
+    /// Open System Settings directly to the Automation pane
+    private func openAutomationSettings() {
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation") {
+            NSWorkspace.shared.open(url)
         }
-        let script = NSAppleScript(source: "tell application \"\(appName)\" to get name")
-        script?.executeAndReturnError(nil)
+    }
+
+    private func resolveAppName(_ bundleID: String) -> String {
+        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
+            return url.deletingPathExtension().lastPathComponent
+        }
+        return bundleID
     }
 
     private func run(bundleID: String, operations: [[String: Any]], allowWrites: Bool) -> String {
