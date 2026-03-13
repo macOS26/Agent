@@ -17,7 +17,7 @@ final class OllamaService {
         self.apiKey = apiKey
         self.model = model
         let effectiveEndpoint = endpoint.isEmpty ? "http://localhost:11434/api/chat" : endpoint
-        self.baseURL = URL(string: effectiveEndpoint) ?? URL(string: "http://localhost:11434/api/chat")!
+        self.baseURL = URL(string: effectiveEndpoint) ?? URL(filePath: "/")
         self.supportsVision = supportsVision
         self.historyContext = historyContext
         self.userHome = FileManager.default.homeDirectoryForCurrentUser.path
@@ -183,7 +183,7 @@ final class OllamaService {
         - MUSIC: To add tracks to a playlist, use the library playlist's searchFor method to find tracks, \
         then call duplicateTo on each result to copy it into the target playlist:
         ```
-        let library = (music.playlists?().object(at: 0) as? MusicLibraryPlaylist)!
+        guard let library = music.playlists?().object(at: 0) as? MusicLibraryPlaylist else { return 1 }
         let results = library.searchFor("Song Name", only: .names)
         // results is an SBObject acting as an array — iterate with value(forKey:)
         if let tracks = (results as? SBObject)?.value(forKey: "get") as? [SBObject] {

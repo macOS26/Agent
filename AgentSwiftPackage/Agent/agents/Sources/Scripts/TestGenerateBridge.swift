@@ -155,7 +155,10 @@ func testGenerateBridge() -> Int32 {
     check(generatedMailExists, "Mail.swift output file created")
 
     if generatedMailExists {
-        let generated = try! String(contentsOfFile: generatedMailPath, encoding: .utf8)
+        guard let generated = try? String(contentsOfFile: generatedMailPath, encoding: .utf8) else {
+            check(false, "Could not read generated Mail.swift")
+            return failed > 0 ? 1 : 0
+        }
         let genStats = analyzeBridge(generated)
 
         check(genStats.enumCount == 12, "Mail enums: expected 12, got \(genStats.enumCount)")
@@ -183,8 +186,8 @@ func testGenerateBridge() -> Int32 {
         check(genStats.extensionCount > 0, "Has SBObject extensions (\(genStats.extensionCount) found)")
 
         let referencePath = "\(bridgesDir)/Mail.swift"
-        if FileManager.default.fileExists(atPath: referencePath) {
-            let reference = try! String(contentsOfFile: referencePath, encoding: .utf8)
+        if FileManager.default.fileExists(atPath: referencePath),
+           let reference = try? String(contentsOfFile: referencePath, encoding: .utf8) {
             let refStats = analyzeBridge(reference)
 
             check(genStats.enumCount == refStats.enumCount,
@@ -212,7 +215,10 @@ func testGenerateBridge() -> Int32 {
 
     let generatedSafariPath = "\(tempDir)/Safari.swift"
     if FileManager.default.fileExists(atPath: generatedSafariPath) {
-        let safariContent = try! String(contentsOfFile: generatedSafariPath, encoding: .utf8)
+        guard let safariContent = try? String(contentsOfFile: generatedSafariPath, encoding: .utf8) else {
+            check(false, "Could not read generated Safari.swift")
+            return failed > 0 ? 1 : 0
+        }
         let safariStats = analyzeBridge(safariContent)
 
         check(safariStats.enumCount >= 1, "Safari has at least 1 enum (\(safariStats.enumCount) found)")
@@ -236,7 +242,10 @@ func testGenerateBridge() -> Int32 {
 
     let generatedMsgPath = "\(tempDir)/Messages.swift"
     if FileManager.default.fileExists(atPath: generatedMsgPath) {
-        let msgContent = try! String(contentsOfFile: generatedMsgPath, encoding: .utf8)
+        guard let msgContent = try? String(contentsOfFile: generatedMsgPath, encoding: .utf8) else {
+            check(false, "Could not read generated Messages.swift")
+            return failed > 0 ? 1 : 0
+        }
         let msgStats = analyzeBridge(msgContent)
 
         check(msgStats.enumCount >= 5, "Messages has at least 5 enums (\(msgStats.enumCount) found)")
@@ -247,7 +256,10 @@ func testGenerateBridge() -> Int32 {
 
         let msgRefPath = "\(bridgesDir)/Messages.swift"
         if FileManager.default.fileExists(atPath: msgRefPath) {
-            let msgRef = try! String(contentsOfFile: msgRefPath, encoding: .utf8)
+            guard let msgRef = try? String(contentsOfFile: msgRefPath, encoding: .utf8) else {
+                print("  ⚠ Could not read reference Messages.swift")
+                return failed > 0 ? 1 : 0
+            }
             let msgRefStats = analyzeBridge(msgRef)
             check(msgStats.enumCount == msgRefStats.enumCount,
                    "Messages enum count matches reference (\(msgStats.enumCount) vs \(msgRefStats.enumCount))")
@@ -271,7 +283,10 @@ func testGenerateBridge() -> Int32 {
 
     let generatedFinderPath = "\(tempDir)/Finder.swift"
     if FileManager.default.fileExists(atPath: generatedFinderPath) {
-        let finderContent = try! String(contentsOfFile: generatedFinderPath, encoding: .utf8)
+        guard let finderContent = try? String(contentsOfFile: generatedFinderPath, encoding: .utf8) else {
+            check(false, "Could not read generated Finder.swift")
+            return failed > 0 ? 1 : 0
+        }
         let finderStats = analyzeBridge(finderContent)
 
         check(finderStats.protocolCount >= 10, "Finder has at least 10 protocols (\(finderStats.protocolCount) found)")

@@ -89,7 +89,9 @@ private func convertEnumCase(prefix: String, caseName: String) -> String {
         if next < name.endIndex && name[next].isLowercase && result.count > 0 {
             break
         }
-        result.append(name[i].lowercased().first!)
+        if let ch = name[i].lowercased().first {
+            result.append(ch)
+        }
         i = next
     }
     if i < name.endIndex {
@@ -177,7 +179,8 @@ private func parseProperty(_ line: String) -> ParsedProperty? {
 
     let tokens = rest.components(separatedBy: " ").filter { !$0.isEmpty }
     guard tokens.count >= 2 else { return nil }
-    let name = tokens.last!.replacingOccurrences(of: "*", with: "")
+    guard let lastName = tokens.last else { return nil }
+    let name = lastName.replacingOccurrences(of: "*", with: "")
     let rawType = tokens.dropLast().joined(separator: " ")
     let objc = isObjectType(rawType)
     let swiftType = mapType(rawType)
@@ -512,7 +515,12 @@ func generateBridge() -> Int32 {
         }
 
         let sdefPath = "\(tempDir)/\(appName).sdef"
-        try! sdefResult.output.write(toFile: sdefPath, atomically: true, encoding: .utf8)
+        do {
+            try sdefResult.output.write(toFile: sdefPath, atomically: true, encoding: .utf8)
+        } catch {
+            print("Error writing sdef: \(error.localizedDescription)")
+            return 1
+        }
 
         print("Generating Objective-C header...")
         let sdpResult = runCmd("cd '\(tempDir)' && sdp -fh --basename '\(appName)' '\(sdefPath)' 2>&1")
@@ -534,7 +542,10 @@ func generateBridge() -> Int32 {
     knownEnumNames = []
 
     print("Parsing \(appName).h...")
-    let headerContent = try! String(contentsOfFile: headerPath, encoding: .utf8)
+    guard let headerContent = try? String(contentsOfFile: headerPath, encoding: .utf8) else {
+        print("Error: Could not read header file: \(headerPath)")
+        return 1
+    }
     let (enums, protocols) = parseHeader(headerContent, appName: appName)
 
     print("Generating Swift protocols...")
@@ -542,7 +553,12 @@ func generateBridge() -> Int32 {
 
     let safeFileName = appName.replacingOccurrences(of: " ", with: "")
     let outputPath = "\(outputDir)/\(safeFileName).swift"
-    try! swift.write(toFile: outputPath, atomically: true, encoding: .utf8)
+    do {
+        try swift.write(toFile: outputPath, atomically: true, encoding: .utf8)
+    } catch {
+        print("Error writing output: \(error.localizedDescription)")
+        return 1
+    }
 
     print("Generated \(outputPath)")
     print("  \(enums.count) enums, \(protocols.count) protocols")
