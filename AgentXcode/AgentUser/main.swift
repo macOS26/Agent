@@ -104,7 +104,7 @@ final class UserDelegate: NSObject, NSXPCListenerDelegate {
 }
 
 let delegate = UserDelegate()
-let listener = NSXPCListener(machServiceName: "com.agent.user")
+let listener = NSXPCListener(machServiceName: "Agent.app.toddbruss.user")
 listener.delegate = delegate
 listener.resume()
 RunLoop.current.run()

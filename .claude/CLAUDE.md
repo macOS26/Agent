@@ -26,10 +26,10 @@ A macOS SwiftUI app that uses SMAppService + a privileged Launch Daemon to give 
 - `Agent/HelperProtocol.swift` - Shared XPC protocol definitions
 - `Agent/Models.swift` - AgentError enum + TaskHistory persistence
 - `AgentHelper/main.swift` - Privileged daemon with NSXPCListener
-- `Agent/LaunchDaemons/com.agent.helper.plist` - Daemon configuration
+- `Agent/LaunchDaemons/Agent.app.toddbruss.helper.plist` - Daemon configuration
 
 ### XPC Communication
-- Mach service: `com.agent.helper`
+- Mach service: `Agent.app.toddbruss.helper`
 - HelperToolProtocol: `execute(script:instanceID:withReply:)`, `cancelOperation(instanceID:withReply:)`
 - HelperProgressProtocol: `progressUpdate(_:)` for streaming output
 - Uses `.privileged` option for NSXPCConnection
