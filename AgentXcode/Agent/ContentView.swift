@@ -888,9 +888,13 @@ struct SettingsView: View {
 
             // History settings
             VStack(alignment: .leading, spacing: 6) {
-                Text("History")
-                    .font(.headline)
+                HStack {
+                    Text("History")
+                        .font(.headline)
+                    Spacer()
+                }
                 HStack(alignment: .top, spacing: 16) {
+                    Spacer()
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Summarize after").font(.caption).foregroundStyle(.secondary)
                         Stepper("\(viewModel.maxHistoryBeforeSummary) tasks",
