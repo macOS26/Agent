@@ -754,7 +754,7 @@ struct SettingsView: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
                 .frame(maxWidth: .infinity)
-                .padding(.horizontal, -8)
+                .padding(.horizontal, -20)
             }
 
             Divider()
