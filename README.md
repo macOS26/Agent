@@ -1,9 +1,12 @@
 # Agent!
 
+<img width="340" height="339" alt="image" src="https://github.com/user-attachments/assets/5645d8b8-8ce7-4d56-9ede-5eb58f31f227" />
+
 A native macOS autonomous AI agent built entirely in Swift. Agent takes a different approach than projects like [OpenClaw](https://github.com/openclaw/openclaw) — where OpenClaw is a versatile cross-platform assistant that connects to messaging apps and runs on any OS, Agent is purpose-built for macOS, leveraging Apple-native frameworks to go deeper into the platform than a cross-platform tool can.
 
 Agent uses SwiftUI, XPC, SMAppService, Apple Events, and ScriptingBridge to give an AI agent native access to your Mac. No Electron. No Docker. No npm install. Just a `.app` that speaks macOS.
 
+<img width="1032" height="700" alt="image" src="https://github.com/user-attachments/assets/c9dddedc-3f9a-4cfd-9f13-d556fd1c52af" />
 
 ## Agent! vs. OpenClaw on Mac
 
