@@ -1,7 +1,7 @@
 # Agent! for macOS 26
 Allows you to automate your entire macOS system including controlling nearly every macOS26 Application
 
-Works with Claude API keys, Ollama Cloud API keys (and Local Ollama instances with 64GB RAM Min.) 
+Works with Claude API keys, Ollama Cloud API keys (and Local Ollama Arm64 instances with 64GB RAM Min.) 
 
 For Apple Mac minis, cloud based LLMs are highly recommended.
 
