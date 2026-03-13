@@ -544,8 +544,8 @@ final class AgentViewModel {
     // MARK: - Image snapshot cache (persists across launches)
 
     private static let logImageCacheDir: URL = {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let dir = appSupport.appendingPathComponent("Agent/log_images")
+        let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
+        let dir = caches.appendingPathComponent("Agent/log_images")
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
     }()
