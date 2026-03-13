@@ -1,6 +1,7 @@
 import Foundation
 import ScriptingBridge
 import AppKit
+import ApplicationServices
 
 /// Executes dynamic ScriptingBridge queries using ObjC runtime dispatch.
 /// No compilation needed — walks the object graph via value(forKey:) and perform(_:with:).
@@ -16,35 +17,31 @@ final class ScriptingBridgeQueryService: @unchecked Sendable {
         "duplicate", "save", "set", "sendMessage"
     ]
 
-    /// Apps whose permission has already been requested this session (avoid repeated opens)
-    private var permissionRequestedApps: Set<String> = []
-
     /// Execute a query against a scriptable application.
-    /// If the result looks like a permission issue, opens System Settings → Automation
-    /// so the user can grant Agent access, then retries once.
+    /// Checks Automation permission first and triggers the macOS consent dialog if needed.
     nonisolated func execute(bundleID: String, operations: [[String: Any]], allowWrites: Bool = false) -> String {
-        let result = run(bundleID: bundleID, operations: operations, allowWrites: allowWrites)
-        if looksLikePermissionIssue(result) && !permissionRequestedApps.contains(bundleID) {
-            // Mutate on self — safe because this is nonisolated and single-caller
-            (self as ScriptingBridgeQueryService).permissionRequestedApps.insert(bundleID)
-            openAutomationSettings()
+        // Check/request Automation permission before querying
+        let permStatus = requestAutomationPermission(bundleID: bundleID)
+        if permStatus == errAEEventNotPermitted {
             let appName = resolveAppName(bundleID)
-            return result + "\n(Agent needs Automation permission for \(appName). System Settings has been opened — enable \(appName) under Agent, then retry.)"
+            return "Error: Agent does not have Automation permission for \(appName). Grant it in System Settings → Privacy & Security → Automation, then retry."
         }
-        return result
+        return run(bundleID: bundleID, operations: operations, allowWrites: allowWrites)
     }
 
-    /// Detect results that suggest a permission issue
-    private func looksLikePermissionIssue(_ result: String) -> Bool {
-        result.contains("0 items") || result.contains("the array is empty") ||
-        result.contains("no output") || result.contains("no data")
-    }
-
-    /// Open System Settings directly to the Automation pane
-    private func openAutomationSettings() {
-        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation") {
-            NSWorkspace.shared.open(url)
+    /// Use AEDeterminePermissionToAutomateTarget to check permission and trigger the
+    /// macOS consent dialog if the user hasn't been asked yet. Returns the OSStatus.
+    @discardableResult
+    private func requestAutomationPermission(bundleID: String) -> OSStatus {
+        guard let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first else {
+            return noErr  // App not running — skip check, SBApplication will handle it
         }
+        var pid = app.processIdentifier
+        var targetDesc = AEAddressDesc()
+        AECreateDesc(typeKernelProcessID, &pid, MemoryLayout<pid_t>.size, &targetDesc)
+        defer { AEDisposeDesc(&targetDesc) }
+        // askUserIfNeeded = true → shows the consent dialog if not yet determined
+        return AEDeterminePermissionToAutomateTarget(&targetDesc, typeWildCard, typeWildCard, true)
     }
 
     private func resolveAppName(_ bundleID: String) -> String {
