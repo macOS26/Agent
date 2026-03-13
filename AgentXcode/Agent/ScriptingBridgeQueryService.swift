@@ -144,17 +144,25 @@ final class ScriptingBridgeQueryService: @unchecked Sendable {
 
     private func getValue(from object: Any, key: String) -> Any? {
         guard let nsObj = object as? NSObject else { return nil }
-        // Prefer KVC — it auto-boxes primitives (enums, ints, bools) into NSNumber.
-        // perform(_:) only works for methods returning objects, not primitives.
-        if let result = (nsObj as AnyObject).value(forKey: key) {
-            return result
-        }
-        // Fallback to perform(_:) for method-style element accessors
+        // Try perform(_:) first for element accessors that return objects
         let sel = Selector(key)
         if nsObj.responds(to: sel) {
-            return nsObj.perform(sel)?.takeUnretainedValue()
+            if let unmanaged = nsObj.perform(sel) {
+                return unmanaged.takeUnretainedValue()
+            }
         }
-        return nil
+        // Fallback to KVC — wraps in ObjC exception handler to avoid crashes
+        // on ScriptingBridge proxy objects that return invalid pointers
+        return safeValueForKey(nsObj, key: key)
+    }
+
+    /// Safely call value(forKey:) catching ObjC exceptions
+    private func safeValueForKey(_ obj: NSObject, key: String) -> Any? {
+        var result: Any?
+        let success = ObjCTry {
+            result = obj.value(forKey: key)
+        }
+        return success ? result : nil
     }
 
     private func callMethod(on object: Any, method: String, arg: String?) -> Any? {
