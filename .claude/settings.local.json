@@ -136,7 +136,11 @@
       "Bash(cd /Users/toddbruss/Documents/GitHub/Agent && xcodebuild -workspace Agent.xcworkspace -scheme \"Agent!\" -showBuildSettings 2>&1 | grep -E \"PRODUCT_BUNDLE_IDENTIFIER|CODE_SIGN_IDENTITY|DEVELOPMENT_TEAM|PROVISIONING_PROFILE|CODE_SIGN_STYLE|PRODUCT_NAME\")",
       "Bash(xcodebuild -workspace Agent.xcworkspace -scheme \"Agent!\" -destination \"platform=macOS\" test 2>&1 | tail -80)",
       "Bash(xcodebuild -workspace Agent.xcworkspace -scheme \"Agent!\" -showBuildSettings 2>&1 | grep -E \"PRODUCT_MODULE_NAME|PRODUCT_NAME\" | head -10)",
-      "Bash(xcodebuild -workspace Agent.xcworkspace -scheme \"Agent!\" -destination \"platform=macOS\" test 2>&1 | tail -60)"
+      "Bash(xcodebuild -workspace Agent.xcworkspace -scheme \"Agent!\" -destination \"platform=macOS\" test 2>&1 | tail -60)",
+      "Bash(xcodebuild -workspace Agent.xcworkspace -scheme \"Agent!\" clean 2>&1 | tail -5)",
+      "Bash(open /Users/toddbruss/Documents/GitHub/Agent/AgentXcode/Agent.xcodeproj)",
+      "Bash(tccutil reset:*)",
+      "Bash(sudo rm:*)"
     ]
   }
 }
