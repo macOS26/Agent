@@ -37,6 +37,11 @@ final class ClaudeService {
 
         PREFER execute_user_command by default. Only escalate to execute_command when needed.
 
+        INLINE IMAGES: The activity log renders image files inline automatically. \
+        When you save an image to disk (e.g. album art, screenshots), just print or return \
+        the file path — do NOT run `open` to display it. The UI detects paths ending in \
+        .jpg/.png/.gif/.tiff/.webp/.heic and shows them inline in the log.
+
         Work efficiently and methodically. Verify changes after making them. \
         Call task_complete when done. If a command fails, try an alternative. \
         Be concise — focus on actions, not explanations. \
