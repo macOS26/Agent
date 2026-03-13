@@ -148,35 +148,44 @@ final class OllamaService {
         import TextEditBridge → TextEditApplication → com.apple.TextEdit
         import QuickTimePlayerBridge → QuickTimePlayerApplication → com.apple.QuickTimePlayerX
 
-        ScriptingBridge script pattern:
+        DYLIB SCRIPT FORMAT — ALL scripts MUST use this boilerplate:
         ```
         import Foundation
         import MailBridge
 
-        guard let mail: MailApplication = SBApplication(bundleIdentifier: "com.apple.mail") else {
-            print("Could not connect to Mail")
-            exit(1)
+        @_cdecl("script_main")
+        public func scriptMain() -> Int32 {
+            checkMail()
+            return 0
         }
-        // Element arrays: use .object(at:) and cast to the protocol type
-        guard let accounts = mail.accounts?() else { exit(0) }
-        for i in 0..<accounts.count {
-            guard let acct = accounts.object(at: i) as? MailAccount,
-                  let name = acct.name else { continue }
-            print("Account: \\(name)")
-            // Nested element arrays
-            if let mailboxes = acct.mailboxes?() {
-                for j in 0..<mailboxes.count {
-                    if let mb = mailboxes.object(at: j) as? MailMailbox {
-                        print("  \\(mb.name ?? "?") — \\(mb.unreadCount ?? 0) unread")
+
+        func checkMail() {
+            guard let mail: MailApplication = SBApplication(bundleIdentifier: "com.apple.mail") else {
+                print("Could not connect to Mail")
+                return
+            }
+            guard let accounts = mail.accounts?() else { return }
+            for i in 0..<accounts.count {
+                guard let acct = accounts.object(at: i) as? MailAccount,
+                      let name = acct.name else { continue }
+                print("Account: \\(name)")
+                if let mailboxes = acct.mailboxes?() {
+                    for j in 0..<mailboxes.count {
+                        if let mb = mailboxes.object(at: j) as? MailMailbox {
+                            print("  \\(mb.name ?? "?") — \\(mb.unreadCount ?? 0) unread")
+                        }
                     }
                 }
             }
         }
-        // Methods on SBObject: cast first, e.g. message.moveTo?(target as? SBObject)
         ```
+        CRITICAL: Every script MUST have `@_cdecl("script_main")` and `public func scriptMain() -> Int32`. \
+        Keep scriptMain() thin — call a separate function, struct, or class for the real work. \
+        Return 0 for success, non-zero for error. NEVER use exit() — use return instead. \
+        NEVER put executable code at top level — ALL code must be inside scriptMain() or helper functions.
 
         Key ScriptingBridge patterns:
-        - Connect: `guard let app: ProtocolName = SBApplication(bundleIdentifier: "...") else { exit(1) }`
+        - Connect: `guard let app: ProtocolName = SBApplication(bundleIdentifier: "...") else { return 1 }`
         - Element arrays: `app.accounts?()` returns SBElementArray, iterate with `.object(at: i) as? Type`
         - Properties are @objc optional: always use `?.` and `??` for defaults
         - Methods like moveTo, delete: `object.moveTo?(target as? SBObject)`
