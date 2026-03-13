@@ -105,51 +105,68 @@ final class UserDelegate: NSObject, NSXPCListenerDelegate {
 
 // MARK: - Package.swift auto-sync
 
-/// Sync scriptNames in Package.swift with actual .swift files in Sources/Scripts/
-/// Adds missing scripts and removes stale entries.
-func syncPackageScripts() {
+/// Replace the contents of a named array in Package.swift with the given set of names.
+/// Returns the updated content, or the original if unchanged.
+func syncArray(named marker: String, with diskNames: Set<String>, in content: String) -> String {
+    guard let arrayStart = content.range(of: marker) else { return content }
+    guard let arrayEnd = content[arrayStart.upperBound...].range(of: "]") else { return content }
+
+    let arrayContent = content[arrayStart.upperBound..<arrayEnd.lowerBound]
+    let registered = Set(arrayContent.components(separatedBy: "\n")
+        .map { $0.trimmingCharacters(in: .whitespaces).trimmingCharacters(in: CharacterSet(charactersIn: "\",")) }
+        .filter { !$0.isEmpty })
+
+    guard diskNames != registered else { return content }
+
+    let sorted = diskNames.sorted()
+    let newArray = sorted.map { "    \"\($0)\"," }.joined(separator: "\n")
+    return String(content[..<arrayStart.upperBound]) + "\n" + newArray + "\n" + String(content[arrayEnd.lowerBound...])
+}
+
+/// Sync scriptNames and bridgeNames in Package.swift with actual .swift files on disk.
+func syncPackage() {
     let fm = FileManager.default
     let home = fm.homeDirectoryForCurrentUser
     let agentsDir = home.appendingPathComponent("Documents/Agent/agents")
     let scriptsDir = agentsDir.appendingPathComponent("Sources/Scripts")
+    let bridgesDir = agentsDir.appendingPathComponent("Sources/XCFScriptingBridges")
     let packageURL = agentsDir.appendingPathComponent("Package.swift")
 
-    guard fm.fileExists(atPath: packageURL.path),
-          fm.fileExists(atPath: scriptsDir.path) else { return }
+    guard fm.fileExists(atPath: packageURL.path) else { return }
+    guard var content = try? String(contentsOf: packageURL, encoding: .utf8) else { return }
 
-    // Get actual script files on disk
-    guard let files = try? fm.contentsOfDirectory(atPath: scriptsDir.path) else { return }
-    let diskScripts = Set(files.filter { $0.hasSuffix(".swift") }
-        .map { $0.replacingOccurrences(of: ".swift", with: "") })
+    let original = content
 
-    // Read Package.swift and parse scriptNames array
-    guard let content = try? String(contentsOf: packageURL, encoding: .utf8) else { return }
-    guard let arrayStart = content.range(of: "let scriptNames = [") else { return }
-    guard let arrayEnd = content[arrayStart.upperBound...].range(of: "]") else { return }
+    // Sync scripts
+    if fm.fileExists(atPath: scriptsDir.path),
+       let files = try? fm.contentsOfDirectory(atPath: scriptsDir.path) {
+        let diskScripts = Set(files.filter { $0.hasSuffix(".swift") }
+            .map { $0.replacingOccurrences(of: ".swift", with: "") })
+        content = syncArray(named: "let scriptNames = [", with: diskScripts, in: content)
+    }
 
-    let arrayContent = content[arrayStart.upperBound..<arrayEnd.lowerBound]
-    let registeredScripts = Set(arrayContent.components(separatedBy: "\n")
-        .map { $0.trimmingCharacters(in: .whitespaces).trimmingCharacters(in: CharacterSet(charactersIn: "\",")) }
-        .filter { !$0.isEmpty })
+    // Sync bridges (exclude ScriptingBridgeCommon and AgentScriptingBridge — managed separately)
+    if fm.fileExists(atPath: bridgesDir.path),
+       let files = try? fm.contentsOfDirectory(atPath: bridgesDir.path) {
+        let excluded: Set<String> = ["ScriptingBridgeCommon", "AgentScriptingBridge"]
+        let diskBridges = Set(files.filter { $0.hasSuffix(".swift") }
+            .map { $0.replacingOccurrences(of: ".swift", with: "") })
+            .subtracting(excluded)
+        content = syncArray(named: "let bridgeNames = [", with: diskBridges, in: content)
+    }
 
-    // Check if sync is needed
-    guard diskScripts != registeredScripts else { return }
-
-    // Build new sorted array from disk
-    let sorted = diskScripts.sorted()
-    let newArray = sorted.map { "    \"\($0)\"," }.joined(separator: "\n")
-    let newContent = content[..<arrayStart.upperBound] + "\n" + newArray + "\n" + content[arrayEnd.lowerBound...]
-
-    try? String(newContent).write(to: packageURL, atomically: true, encoding: .utf8)
+    // Only write if something changed
+    guard content != original else { return }
+    try? content.write(to: packageURL, atomically: true, encoding: .utf8)
 }
 
 // Run sync on startup
-syncPackageScripts()
+syncPackage()
 
 // Schedule sync every 20 seconds
 let syncTimer = DispatchSource.makeTimerSource(queue: DispatchQueue.global(qos: .utility))
 syncTimer.schedule(deadline: .now() + 20, repeating: 20)
-syncTimer.setEventHandler { syncPackageScripts() }
+syncTimer.setEventHandler { syncPackage() }
 syncTimer.resume()
 
 let delegate = UserDelegate()
