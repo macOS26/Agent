@@ -493,30 +493,32 @@ struct ActivityLogView: NSViewRepresentable {
 
                 // Wait for images/fonts to actually load (up to 4s, polling every 250ms)
                 // Check naturalWidth > 0 because img.complete is true even for broken images
+                var allImagesLoaded = false
                 for _ in 0..<16 {
                     let ready = try? await webView.evaluateJavaScript("""
                         document.readyState === 'complete' &&
                         Array.from(document.images).every(i => i.complete && i.naturalWidth > 0)
                         """) as? Bool
-                    if ready == true { break }
+                    if ready == true { allImagesLoaded = true; break }
                     try? await Task.sleep(for: .milliseconds(250))
                 }
-                // Extra settle time for CSS animations/fonts
-                try? await Task.sleep(for: .milliseconds(300))
 
-                let snapConfig = WKSnapshotConfiguration()
-                snapConfig.snapshotWidth = 480 as NSNumber
+                if allImagesLoaded {
+                    // Extra settle time for CSS animations/fonts
+                    try? await Task.sleep(for: .milliseconds(300))
 
-                do {
-                    let snapshot = try await webView.takeSnapshot(configuration: snapConfig)
-                    let path = objc_getAssociatedObject(webView, &Self.snapshotPathKey) as? String ?? ""
-                    let fileMtime = (try? FileManager.default.attributesOfItem(atPath: path)[.modificationDate] as? Date) ?? Date()
-                    let dirPath = (path as NSString).deletingLastPathComponent
-                    let dirMtime = (try? FileManager.default.attributesOfItem(atPath: dirPath)[.modificationDate] as? Date) ?? Date()
-                    self.htmlCache[offset] = (image: snapshot, mtime: max(fileMtime, dirMtime))
-                } catch {
-                    // Snapshot failed — allow retry on next render
+                    let snapConfig = WKSnapshotConfiguration()
+                    snapConfig.snapshotWidth = 480 as NSNumber
+
+                    if let snapshot = try? await webView.takeSnapshot(configuration: snapConfig) {
+                        let path = objc_getAssociatedObject(webView, &Self.snapshotPathKey) as? String ?? ""
+                        let fileMtime = (try? FileManager.default.attributesOfItem(atPath: path)[.modificationDate] as? Date) ?? Date()
+                        let dirPath = (path as NSString).deletingLastPathComponent
+                        let dirMtime = (try? FileManager.default.attributesOfItem(atPath: dirPath)[.modificationDate] as? Date) ?? Date()
+                        self.htmlCache[offset] = (image: snapshot, mtime: max(fileMtime, dirMtime))
+                    }
                 }
+                // If images didn't load, don't cache — allow retry on next render
                 self.htmlPending.remove(offset)
                 self.activeWebViews.removeValue(forKey: offset)
                 // Force re-render
