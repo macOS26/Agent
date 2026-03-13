@@ -897,6 +897,7 @@ struct SettingsView: View {
                            onIncrement: { if viewModel.maxHistoryBeforeSummary > 5 { viewModel.maxHistoryBeforeSummary -= 5 } },
                            onDecrement: { if viewModel.maxHistoryBeforeSummary < 50 { viewModel.maxHistoryBeforeSummary += 5 } })
                 }
+                Spacer().frame(width: 16)
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("Visible tasks in chat").font(.caption).foregroundStyle(.secondary)
                     Stepper("\(viewModel.visibleTaskCount)",
