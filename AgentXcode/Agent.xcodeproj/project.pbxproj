@@ -149,7 +149,7 @@
 		DD10000000000000000002 /* ScriptingBridgesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptingBridgesTests.swift; sourceTree = "<group>"; };
 		DD10000000000000000003 /* PackageGenerationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageGenerationTests.swift; sourceTree = "<group>"; };
 		DD10000000000000000004 /* AgentTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AgentTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		FF10000000000000000001 /* PackageAutoDiscoveryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageAutoDiscoveryTests.swift; sourceTree = "<group>"; }; = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AgentTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FF10000000000000000001 /* PackageAutoDiscoveryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageAutoDiscoveryTests.swift; sourceTree = "<group>"; };
 		EAF3666E2F623D6A004B7E38 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		EA37C5532F636B87009D0A23 /* Sources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Sources; path = ../AgentSwiftPackage/Agent/agents/Sources; sourceTree = SOURCE_ROOT; };
 		EA37C5542F636B87009D0A23 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = text; name = Package.swift; path = ../AgentSwiftPackage/Agent/agents/Package.swift; sourceTree = SOURCE_ROOT; };
