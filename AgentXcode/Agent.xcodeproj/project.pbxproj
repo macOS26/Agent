@@ -145,7 +145,7 @@
 		DD10000000000000000001 /* ScriptServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptServiceTests.swift; sourceTree = "<group>"; };
 		DD10000000000000000002 /* ScriptingBridgesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptingBridgesTests.swift; sourceTree = "<group>"; };
 		DD10000000000000000003 /* PackageGenerationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageGenerationTests.swift; sourceTree = "<group>"; };
-		DD10000000000000000004 /* Agent!Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Agent!Tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		DD10000000000000000004 /* AgentTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "AgentTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		EA37C5532F636B87009D0A23 /* Sources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Sources; path = ../AgentSwiftPackage/Agent/agents/Sources; sourceTree = SOURCE_ROOT; };
 		EA37C5542F636B87009D0A23 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = text; name = Package.swift; path = ../AgentSwiftPackage/Agent/agents/Package.swift; sourceTree = SOURCE_ROOT; };
 		EAF3666E2F623D6A004B7E38 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
@@ -239,7 +239,7 @@
 				AA10000000000000000024 /* Agent!.app */,
 				BB1000000000000000001C /* AgentHelper */,
 				CC1000000000000000001C /* AgentUser */,
-				DD10000000000000000004 /* Agent!Tests.xctest */,
+				DD10000000000000000004 /* AgentTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -358,9 +358,9 @@
 			productReference = CC1000000000000000001C /* AgentUser */;
 			productType = "com.apple.product-type.tool";
 		};
-		DD10000000000000000060 /* Agent!Tests */ = {
+		DD10000000000000000060 /* AgentTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = DD10000000000000000090 /* Build configuration list for PBXNativeTarget "Agent!Tests" */;
+			buildConfigurationList = DD10000000000000000090 /* Build configuration list for PBXNativeTarget "AgentTests" */;
 			buildPhases = (
 				DD10000000000000000050 /* Sources */,
 				DD10000000000000000053 /* Frameworks */,
@@ -370,9 +370,9 @@
 			dependencies = (
 				DD10000000000000000071 /* PBXTargetDependency */,
 			);
-			name = "Agent!Tests";
+			name = "AgentTests";
 			productName = AgentTests;
-			productReference = DD10000000000000000004 /* Agent!Tests.xctest */;
+			productReference = DD10000000000000000004 /* AgentTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
@@ -404,7 +404,7 @@
 				AA10000000000000000060 /* Agent! */,
 				BB10000000000000000060 /* AgentHelper */,
 				CC10000000000000000060 /* AgentUser */,
-				DD10000000000000000060 /* Agent!Tests */,
+				DD10000000000000000060 /* AgentTests */,
 			);
 		};
 /* End PBXProject section */
@@ -627,13 +627,11 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Agent/Agent.entitlements;
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = "";
-				"DEVELOPMENT_TEAM[sdk=macosx*]" = 469UCUB275;
+				DEVELOPMENT_TEAM = 469UCUB275;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Agent!";
@@ -646,7 +644,6 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "Agent/Agent-Bridging-Header.h";
 				SWIFT_VERSION = 6.0;
@@ -824,7 +821,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		DD10000000000000000090 /* Build configuration list for PBXNativeTarget "Agent!Tests" */ = {
+		DD10000000000000000090 /* Build configuration list for PBXNativeTarget "AgentTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				DD10000000000000000080 /* Debug */,

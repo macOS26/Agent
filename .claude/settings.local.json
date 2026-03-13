@@ -127,7 +127,16 @@
       "Bash(cd \"/Users/toddbruss/Documents/GitHub/Agent\" && xcodebuild -workspace Agent.xcworkspace -scheme \"Agent!\" -configuration Debug build 2>&1 | tail -10)",
       "Bash(cd \"/Users/toddbruss/Documents/GitHub/Agent\" && xcodebuild -workspace Agent.xcworkspace -scheme \"Agent!\" -configuration Debug build 2>&1 | tail -5)",
       "Bash(cd \"/Users/toddbruss/Documents/GitHub/Agent\" && xcodebuild -workspace Agent.xcworkspace -scheme \"Agent!\" -configuration Debug build 2>&1 | grep -E \"\\(error:|BUILD\\)\" | head -10)",
-      "Bash(cd \"/Users/toddbruss/Documents/GitHub/Agent/AgentXcode\" && xcodebuild -resolvePackageDependencies -project \"Agent.xcodeproj\" 2>&1 | tail -5)"
+      "Bash(cd \"/Users/toddbruss/Documents/GitHub/Agent/AgentXcode\" && xcodebuild -resolvePackageDependencies -project \"Agent.xcodeproj\" 2>&1 | tail -5)",
+      "Bash(security find-identity:*)",
+      "Bash(cat <<'EOF'\nTo automate this, I need to generate a CSR and submit it to Apple's API.\nTwo options:\n\n1. Install fastlane \\(handles everything automatically\\):\n   brew install fastlane\n   fastlane cert --development_team 469UCUB275 --type developer_id_application\n\n2. Manual via CLI:\n   - Generate CSR with openssl\n   - Use App Store Connect API \\(requires API key from developer.apple.com\\)\n\nWhich approach do you prefer?\nEOF)",
+      "Bash(brew install:*)",
+      "Bash(fastlane cert:*)",
+      "Bash(xcodebuild -workspace ../Agent.xcworkspace -list 2>&1)",
+      "Bash(cd /Users/toddbruss/Documents/GitHub/Agent && xcodebuild -workspace Agent.xcworkspace -scheme \"Agent!\" -showBuildSettings 2>&1 | grep -E \"PRODUCT_BUNDLE_IDENTIFIER|CODE_SIGN_IDENTITY|DEVELOPMENT_TEAM|PROVISIONING_PROFILE|CODE_SIGN_STYLE|PRODUCT_NAME\")",
+      "Bash(xcodebuild -workspace Agent.xcworkspace -scheme \"Agent!\" -destination \"platform=macOS\" test 2>&1 | tail -80)",
+      "Bash(xcodebuild -workspace Agent.xcworkspace -scheme \"Agent!\" -showBuildSettings 2>&1 | grep -E \"PRODUCT_MODULE_NAME|PRODUCT_NAME\" | head -10)",
+      "Bash(xcodebuild -workspace Agent.xcworkspace -scheme \"Agent!\" -destination \"platform=macOS\" test 2>&1 | tail -60)"
     ]
   }
 }

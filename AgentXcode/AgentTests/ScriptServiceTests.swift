@@ -1,24 +1,15 @@
 import Testing
 import Foundation
-@testable import Agent
+@testable import Agent_
 
 @Suite("ScriptService")
 @MainActor
 struct ScriptServiceTests {
     let service = ScriptService()
 
-    // Use a temp directory to avoid polluting real agents dir
-    static let testDir: URL = {
-        let dir = FileManager.default.temporaryDirectory
-            .appendingPathComponent("AgentTests_\(UUID().uuidString)")
-            .appendingPathComponent("Sources")
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        return dir
-    }()
-
     // MARK: - Create
 
-    @Test("Create script produces Sources/{name}/main.swift")
+    @Test("Create script produces Sources/Scripts/{name}.swift")
     func createScript() {
         let result = service.createScript(name: "test_hello", content: "print(\"hello\")")
         #expect(result.contains("Created test_hello"))
@@ -26,7 +17,6 @@ struct ScriptServiceTests {
         let source = service.readScript(name: "test_hello")
         #expect(source == "print(\"hello\")")
 
-        // Cleanup
         _ = service.deleteScript(name: "test_hello")
     }
 
@@ -108,39 +98,28 @@ struct ScriptServiceTests {
         _ = service.deleteScript(name: "list_test")
     }
 
-    @Test("List scripts excludes ScriptingBridges")
-    func listExcludesBridges() {
-        let scripts = service.listScripts()
-        let names = scripts.map(\.name)
-        #expect(!names.contains("ScriptingBridges"))
-    }
-
     // MARK: - Compile Command
 
-    @Test("compileAndRunCommand returns swift build command")
+    @Test("compileCommand returns swift build command")
     func compileCommand() {
         _ = service.createScript(name: "cmd_test", content: "print(\"hi\")")
-        let cmd = service.compileAndRunCommand(name: "cmd_test")
+        let cmd = service.compileCommand(name: "cmd_test")
         #expect(cmd != nil)
         #expect(cmd!.contains("swift build --product 'cmd_test'"))
-        #expect(cmd!.contains(".build/debug/'cmd_test'"))
 
         _ = service.deleteScript(name: "cmd_test")
     }
 
-    @Test("compileAndRunCommand returns nil for missing script")
+    @Test("compileCommand returns nil for missing script")
     func compileCommandMissing() {
-        let cmd = service.compileAndRunCommand(name: "no_such_\(UUID().uuidString)")
+        let cmd = service.compileCommand(name: "no_such_\(UUID().uuidString)")
         #expect(cmd == nil)
     }
 
-    @Test("compileAndRunCommand includes arguments")
-    func compileCommandWithArgs() {
-        _ = service.createScript(name: "args_test", content: "// args")
-        let cmd = service.compileAndRunCommand(name: "args_test", arguments: "--verbose foo")
-        #expect(cmd != nil)
-        #expect(cmd!.contains("--verbose foo"))
-
-        _ = service.deleteScript(name: "args_test")
+    @Test("dylibPath returns path with lib prefix and .dylib extension")
+    func dylibPathFormat() {
+        let path = service.dylibPath(name: "MyScript")
+        #expect(path.contains("libMyScript.dylib"))
+        #expect(path.contains(".build/debug/"))
     }
 }

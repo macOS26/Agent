@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import Agent
+@testable import Agent_
 
 @Suite("Package.swift Generation")
 @MainActor
@@ -9,7 +9,6 @@ struct PackageGenerationTests {
 
     @Test("Package.swift exists after ensurePackage via create")
     func packageSwiftCreated() {
-        // Creating a script triggers ensurePackage which generates Package.swift
         _ = service.createScript(name: "pkg_test", content: "print(\"pkg\")")
 
         let packagePath = ScriptService.agentsDir.appendingPathComponent("Package.swift").path
@@ -23,7 +22,7 @@ struct PackageGenerationTests {
         _ = service.deleteScript(name: "pkg_test")
     }
 
-    @Test("Package.swift includes ScriptingBridges target when present")
+    @Test("Package.swift includes XCFScriptingBridges targets when present")
     func packageIncludesBridgesTarget() {
         _ = service.createScript(name: "bridges_pkg_test", content: "// test")
 
@@ -32,16 +31,15 @@ struct PackageGenerationTests {
         #expect(content != nil)
 
         let bridgesDir = ScriptService.agentsDir
-            .appendingPathComponent("Sources/ScriptingBridges").path
+            .appendingPathComponent("Sources/XCFScriptingBridges").path
         if FileManager.default.fileExists(atPath: bridgesDir) {
-            #expect(content!.contains("\"ScriptingBridges\""))
-            #expect(content!.contains(".target(name: \"ScriptingBridges\""))
+            #expect(content!.contains("XCFScriptingBridges"))
         }
 
         _ = service.deleteScript(name: "bridges_pkg_test")
     }
 
-    @Test("Package.swift lists created script as executable target")
+    @Test("Package.swift lists created script as dynamic library target")
     func packageIncludesScriptTarget() {
         _ = service.createScript(name: "target_test", content: "// target")
 
@@ -49,7 +47,6 @@ struct PackageGenerationTests {
         let content = try? String(contentsOfFile: packagePath, encoding: .utf8)
         #expect(content != nil)
         #expect(content!.contains("\"target_test\""))
-        #expect(content!.contains(".executableTarget"))
 
         _ = service.deleteScript(name: "target_test")
     }
@@ -63,22 +60,5 @@ struct PackageGenerationTests {
         let content = try? String(contentsOfFile: packagePath, encoding: .utf8)
         #expect(content != nil)
         #expect(!content!.contains("\"remove_test\""))
-    }
-
-    @Test("Script targets depend on ScriptingBridges")
-    func scriptsDependOnBridges() {
-        _ = service.createScript(name: "dep_test", content: "// dep")
-
-        let packagePath = ScriptService.agentsDir.appendingPathComponent("Package.swift").path
-        let content = try? String(contentsOfFile: packagePath, encoding: .utf8)
-        #expect(content != nil)
-
-        let bridgesDir = ScriptService.agentsDir
-            .appendingPathComponent("Sources/ScriptingBridges").path
-        if FileManager.default.fileExists(atPath: bridgesDir) {
-            #expect(content!.contains("dependencies: [\"ScriptingBridges\"]"))
-        }
-
-        _ = service.deleteScript(name: "dep_test")
     }
 }
