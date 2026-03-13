@@ -567,8 +567,8 @@ final class AgentViewModel {
             let range = match.range(at: 1)
             let path = nsText.substring(with: range)
 
-            // Skip if already a cached path
-            if path.contains("/log_images/") { continue }
+            // Skip if already a cached path (old or new cache dirs)
+            if path.contains("/log_images/") || path.contains("/Caches/Agent/") { continue }
 
             // Skip if file doesn't exist
             guard FileManager.default.fileExists(atPath: path) else { continue }
