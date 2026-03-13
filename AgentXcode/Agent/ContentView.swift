@@ -289,13 +289,12 @@ struct ActivityLogView: NSViewRepresentable {
         let coord = context.coordinator
 
         // Wire up HTML snapshot callback to trigger re-render
-        if coord.onHTMLReady == nil {
-            coord.onHTMLReady = { [weak textView, weak coord] in
-                guard let textView, let coord else { return }
-                let attributed = coord.buildAttributedString(from: textView.string)
-                textView.textStorage?.setAttributedString(attributed)
-                textView.scrollToEndOfDocument(nil)
-            }
+        let currentText = text
+        coord.onHTMLReady = { [weak textView, weak coord] in
+            guard let textView, let coord else { return }
+            let attributed = coord.buildAttributedString(from: currentText)
+            textView.textStorage?.setAttributedString(attributed)
+            textView.scrollToEndOfDocument(nil)
         }
 
         if text.isEmpty {
@@ -333,6 +332,8 @@ struct ActivityLogView: NSViewRepresentable {
         var htmlCache: [Int: NSImage] = [:]
         /// Offsets currently being rendered (prevent duplicate requests)
         var htmlPending: Set<Int> = []
+        /// Retain WKWebViews until snapshot completes
+        var activeWebViews: [Int: WKWebView] = [:]
         /// Callback to trigger re-render when HTML snapshot is ready
         var onHTMLReady: (() -> Void)?
 
@@ -470,6 +471,9 @@ struct ActivityLogView: NSViewRepresentable {
             // Store context for the delegate callback
             objc_setAssociatedObject(webView, "snapshotOffset", offset, .OBJC_ASSOCIATION_RETAIN)
 
+            // Retain the web view until snapshot completes
+            activeWebViews[offset] = webView
+
             webView.loadFileURL(fileURL, allowingReadAccessTo: fileURL.deletingLastPathComponent())
         }
 
@@ -477,7 +481,7 @@ struct ActivityLogView: NSViewRepresentable {
         nonisolated func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             Task { @MainActor in
                 // Brief delay for CSS/images to settle
-                try? await Task.sleep(for: .milliseconds(300))
+                try? await Task.sleep(for: .milliseconds(500))
 
                 let offset = objc_getAssociatedObject(webView, "snapshotOffset") as? Int ?? 0
                 let config = WKSnapshotConfiguration()
@@ -486,6 +490,7 @@ struct ActivityLogView: NSViewRepresentable {
                 if let snapshot = try? await webView.takeSnapshot(configuration: config) {
                     self.htmlCache[offset] = snapshot
                     self.htmlPending.remove(offset)
+                    self.activeWebViews.removeValue(forKey: offset)
                     // Force re-render
                     self.lastLength = 0
                     self.onHTMLReady?()
@@ -497,6 +502,7 @@ struct ActivityLogView: NSViewRepresentable {
             imageCache.removeAll()
             htmlCache.removeAll()
             htmlPending.removeAll()
+            activeWebViews.removeAll()
         }
     }
 }
