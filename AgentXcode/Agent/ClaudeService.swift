@@ -128,7 +128,7 @@ final class ClaudeService {
         import SystemEventsBridge → SystemEventsApplication → com.apple.systemevents
         import TerminalBridge → TerminalApplication → com.apple.Terminal
         import TVBridge → TVApplication → com.apple.TV
-        import XcodeBridge → XcodeApplication → com.apple.dt.Xcode
+        import AgentScriptingBridge → XcodeApplication → com.apple.dt.Xcode
         import SafariBridge → SafariApplication → com.apple.Safari
         import GoogleChromeBridge → GoogleChromeApplication → com.google.Chrome
         import FirefoxBridge → FirefoxApplication → org.mozilla.firefox

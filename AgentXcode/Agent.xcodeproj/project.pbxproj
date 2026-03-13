@@ -35,7 +35,7 @@
 		DD10000000000000000030 /* ScriptServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000001 /* ScriptServiceTests.swift */; };
 		DD10000000000000000031 /* ScriptingBridgesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000002 /* ScriptingBridgesTests.swift */; };
 		DD10000000000000000032 /* PackageGenerationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000003 /* PackageGenerationTests.swift */; };
-		EA37C5522F636B86009D0A23 /* XcodeBridge in Frameworks */ = {isa = PBXBuildFile; productRef = EA37C5512F636B86009D0A23 /* XcodeBridge */; };
+		EA37C5522F636B86009D0A23 /* AgentScriptingBridge in Frameworks */ = {isa = PBXBuildFile; productRef = EA37C5512F636B86009D0A23 /* AgentScriptingBridge */; };
 		EA37C5552F636B87009D0A23 /* Sources in Resources */ = {isa = PBXBuildFile; fileRef = EA37C5532F636B87009D0A23 /* Sources */; };
 		EA37C5562F636B87009D0A23 /* Package.swift in Resources */ = {isa = PBXBuildFile; fileRef = EA37C5542F636B87009D0A23 /* Package.swift */; };
 		EAF3666F2F623D6A004B7E38 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = EAF3666E2F623D6A004B7E38 /* AppIcon.icon */; };
@@ -161,7 +161,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA1000000000000000003E /* ScriptingBridge.framework in Frameworks */,
-				EA37C5522F636B86009D0A23 /* XcodeBridge in Frameworks */,
+				EA37C5522F636B86009D0A23 /* AgentScriptingBridge in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -320,7 +320,7 @@
 			);
 			name = "Agent!";
 			packageProductDependencies = (
-				EA37C5512F636B86009D0A23 /* XcodeBridge */,
+				EA37C5512F636B86009D0A23 /* AgentScriptingBridge */,
 			);
 			productName = Agent;
 			productReference = AA10000000000000000024 /* Agent!.app */;
@@ -831,9 +831,9 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		EA37C5512F636B86009D0A23 /* XcodeBridge */ = {
+		EA37C5512F636B86009D0A23 /* AgentScriptingBridge */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = XcodeBridge;
+			productName = AgentScriptingBridge;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
