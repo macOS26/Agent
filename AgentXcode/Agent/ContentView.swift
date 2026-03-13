@@ -340,6 +340,8 @@ struct ActivityLogView: NSViewRepresentable {
 
             let result = NSMutableAttributedString()
             var lastEnd = 0
+            // Deduplicate: only render one inline image per unique file size per task
+            var renderedSizes: Set<Int> = []
 
             for match in matches {
                 let matchRange = match.range(at: 1)
@@ -349,7 +351,12 @@ struct ActivityLogView: NSViewRepresentable {
                 // Add text before this match
                 if matchRange.location > lastEnd {
                     let beforeRange = NSRange(location: lastEnd, length: matchRange.location - lastEnd)
-                    result.append(NSAttributedString(string: nsText.substring(with: beforeRange), attributes: baseAttrs))
+                    let beforeText = nsText.substring(with: beforeRange)
+                    result.append(NSAttributedString(string: beforeText, attributes: baseAttrs))
+                    // Reset dedup on new task boundary
+                    if beforeText.contains("--- New Task ---") {
+                        renderedSizes.removeAll()
+                    }
                 }
 
                 // Add the path text itself
@@ -358,6 +365,11 @@ struct ActivityLogView: NSViewRepresentable {
 
                 // Try to load and insert the image inline
                 guard FileManager.default.fileExists(atPath: path) else { continue }
+
+                // Deduplicate by file size — same image content = skip
+                let fileSize = (try? FileManager.default.attributesOfItem(atPath: path)[.size] as? Int) ?? 0
+                if fileSize > 0 && renderedSizes.contains(fileSize) { continue }
+                renderedSizes.insert(fileSize)
 
                 // Cache by character offset — each occurrence is a unique snapshot
                 let image: NSImage
