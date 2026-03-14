@@ -228,14 +228,14 @@ struct SettingsView: View {
                     Stepper("\(viewModel.readFilePreviewLines)",
                            onIncrement: {
                                let opts = AgentViewModel.readPreviewOptions
-                               if let i = opts.firstIndex(of: viewModel.readFilePreviewLines), i + 1 < opts.count {
-                                   viewModel.readFilePreviewLines = opts[i + 1]
+                               if let i = opts.firstIndex(of: viewModel.readFilePreviewLines), i > 0 {
+                                   viewModel.readFilePreviewLines = opts[i - 1]
                                }
                            },
                            onDecrement: {
                                let opts = AgentViewModel.readPreviewOptions
-                               if let i = opts.firstIndex(of: viewModel.readFilePreviewLines), i > 0 {
-                                   viewModel.readFilePreviewLines = opts[i - 1]
+                               if let i = opts.firstIndex(of: viewModel.readFilePreviewLines), i + 1 < opts.count {
+                                   viewModel.readFilePreviewLines = opts[i + 1]
                                }
                            })
                 }
