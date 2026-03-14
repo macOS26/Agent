@@ -30,6 +30,9 @@
 		AA1000000000000000004D /* AgentTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000004C /* AgentTools.swift */; };
 		AA1000000000000000004F /* CodingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000004E /* CodingService.swift */; };
 		AA10000000000000000056 /* CodeBlockSyntax.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000055 /* CodeBlockSyntax.swift */; };
+		AA10000000000000000057 /* MCPConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000058 /* MCPConfig.swift */; };
+		AA10000000000000000059 /* MCPServersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000005A /* MCPServersView.swift */; };
+		AA1000000000000000005B /* MCPService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000005C /* MCPService.swift */; };
 		BB10000000000000000030 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001A /* main.swift */; };
 		BB10000000000000000031 /* HelperProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001B /* HelperProtocol.swift */; };
 		BB10000000000000000032 /* Agent.app.toddbruss.helper.plist in Copy Daemon Plist */ = {isa = PBXBuildFile; fileRef = AA10000000000000000023 /* Agent.app.toddbruss.helper.plist */; };
@@ -42,6 +45,7 @@
 		DD10000000000000000031 /* ScriptingBridgesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000002 /* ScriptingBridgesTests.swift */; };
 		DD10000000000000000032 /* PackageGenerationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000003 /* PackageGenerationTests.swift */; };
 		EA37C5522F636B86009D0A23 /* AgentScriptingBridge in Frameworks */ = {isa = PBXBuildFile; productRef = EA37C5512F636B86009D0A23 /* AgentScriptingBridge */; };
+		EA50MCP0000000003 /* MCPClient in Frameworks */ = {isa = PBXBuildFile; productRef = EA50MCP0000000002 /* MCPClient */; };
 		EA37C5552F636B87009D0A23 /* Sources in Resources */ = {isa = PBXBuildFile; fileRef = EA37C5532F636B87009D0A23 /* Sources */; };
 		EA37C5562F636B87009D0A23 /* Package.swift in Resources */ = {isa = PBXBuildFile; fileRef = EA37C5542F636B87009D0A23 /* Package.swift */; };
 		EA50000000000000000001 /* send_message_input.json in Resources */ = {isa = PBXBuildFile; fileRef = EA50000000000000000005 /* send_message_input.json */; };
@@ -153,6 +157,9 @@
 		AA1000000000000000004C /* AgentTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentTools.swift; sourceTree = "<group>"; };
 		AA1000000000000000004E /* CodingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodingService.swift; sourceTree = "<group>"; };
 		AA10000000000000000055 /* CodeBlockSyntax.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeBlockSyntax.swift; sourceTree = "<group>"; };
+		AA10000000000000000058 /* MCPConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPConfig.swift; sourceTree = "<group>"; };
+		AA1000000000000000005A /* MCPServersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPServersView.swift; sourceTree = "<group>"; };
+		AA1000000000000000005C /* MCPService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPService.swift; sourceTree = "<group>"; };
 		BB1000000000000000001A /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		BB1000000000000000001B /* HelperProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperProtocol.swift; sourceTree = "<group>"; };
 		BB1000000000000000001C /* AgentHelper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = AgentHelper; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -184,6 +191,7 @@
 			files = (
 				AA1000000000000000003E /* ScriptingBridge.framework in Frameworks */,
 				EA37C5522F636B86009D0A23 /* AgentScriptingBridge in Frameworks */,
+				EA50MCP0000000003 /* MCPClient in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -243,6 +251,9 @@
 				AA1000000000000000002E /* DependencyOverlay.swift */,
 				AA1000000000000000002F /* AppleEventService.swift */,
 				AA10000000000000000046 /* KeychainService.swift */,
+				AA10000000000000000058 /* MCPConfig.swift */,
+				AA1000000000000000005A /* MCPServersView.swift */,
+				AA1000000000000000005C /* MCPService.swift */,
 				EE10000000000000000001 /* ObjCTry.h */,
 				EE10000000000000000002 /* ObjCTry.m */,
 				EE10000000000000000003 /* Agent-Bridging-Header.h */,
@@ -429,6 +440,7 @@
 			mainGroup = AA10000000000000000040;
 			packageReferences = (
 				EA37C5502F636B85009D0A23 /* XCLocalSwiftPackageReference "../AgentSwiftPackage/Agent/agents" */,
+				EA50MCP0000000001 /* XCLocalSwiftPackageReference "../AgentMCP" */,
 			);
 			productRefGroup = AA10000000000000000042 /* Products */;
 			projectDirPath = "";
@@ -485,6 +497,9 @@
 				AA1000000000000000004D /* AgentTools.swift in Sources */,
 				AA1000000000000000004F /* CodingService.swift in Sources */,
 				AA10000000000000000056 /* CodeBlockSyntax.swift in Sources */,
+				AA10000000000000000057 /* MCPConfig.swift in Sources */,
+				AA10000000000000000059 /* MCPServersView.swift in Sources */,
+				AA1000000000000000005B /* MCPService.swift in Sources */,
 				EE10000000000000000004 /* ObjCTry.m in Sources */,
 				AA10000000000000000036 /* Models.swift in Sources */,
 			);
@@ -882,12 +897,20 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../AgentSwiftPackage/Agent/agents;
 		};
+		EA50MCP0000000001 /* XCLocalSwiftPackageReference "../AgentMCP" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../AgentMCP;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		EA37C5512F636B86009D0A23 /* AgentScriptingBridge */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = AgentScriptingBridge;
+		};
+		EA50MCP0000000002 /* MCPClient */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = MCPClient;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

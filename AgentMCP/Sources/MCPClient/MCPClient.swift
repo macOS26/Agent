@@ -20,6 +20,7 @@ public actor MCPClient {
         public let arguments: [String]
         public let env: [String: String]
         public let enabled: Bool
+        public let autoStart: Bool
         
         public init(
             id: UUID = UUID(),
@@ -27,7 +28,8 @@ public actor MCPClient {
             command: String,
             arguments: [String] = [],
             env: [String: String] = [:],
-            enabled: Bool = true
+            enabled: Bool = true,
+            autoStart: Bool = true
         ) {
             self.id = id
             self.name = name
@@ -35,6 +37,7 @@ public actor MCPClient {
             self.arguments = arguments
             self.env = env
             self.enabled = enabled
+            self.autoStart = autoStart
         }
     }
     
@@ -94,7 +97,27 @@ public actor MCPClient {
         }
     }
     
-    // MARK: - Properties
+    /// Connection state snapshot for UI binding
+    public struct ConnectionState: Sendable {
+        public let connectedServers: [ServerConfig]
+        public let discoveredTools: [DiscoveredTool]
+        public let discoveredResources: [DiscoveredResource]
+        public let errors: [UUID: String]
+        
+        public init(
+            connectedServers: [ServerConfig] = [],
+            discoveredTools: [DiscoveredTool] = [],
+            discoveredResources: [DiscoveredResource] = [],
+            errors: [UUID: String] = [:]
+        ) {
+            self.connectedServers = connectedServers
+            self.discoveredTools = discoveredTools
+            self.discoveredResources = discoveredResources
+            self.errors = errors
+        }
+    }
+    
+    // MARK: - Private Properties
     
     private var clients: [UUID: Client] = [:]
     private var processes: [UUID: Process] = [:]
@@ -102,6 +125,7 @@ public actor MCPClient {
     private var configs: [UUID: ServerConfig] = [:]
     private var discoveredTools: [UUID: [DiscoveredTool]] = [:]
     private var discoveredResources: [UUID: [DiscoveredResource]] = [:]
+    private var errors: [UUID: String] = [:]
     
     public init() {}
     
@@ -136,6 +160,9 @@ public actor MCPClient {
         
         // Discover tools and resources
         try await discoverCapabilities(serverId: config.id, serverName: config.name, client: client)
+        
+        // Clear any previous error
+        errors.removeValue(forKey: config.id)
     }
     
     /// Remove a server connection
@@ -154,11 +181,32 @@ public actor MCPClient {
         configs.removeValue(forKey: serverId)
         discoveredTools.removeValue(forKey: serverId)
         discoveredResources.removeValue(forKey: serverId)
+        errors.removeValue(forKey: serverId)
     }
     
     /// List all configured servers
     public func listServers() -> [ServerConfig] {
         Array(configs.values)
+    }
+    
+    /// Get current connection state snapshot
+    public func getConnectionState() -> ConnectionState {
+        ConnectionState(
+            connectedServers: Array(configs.values),
+            discoveredTools: discoveredTools.values.flatMap { $0 },
+            discoveredResources: discoveredResources.values.flatMap { $0 },
+            errors: errors
+        )
+    }
+    
+    /// Check if a server is connected
+    public func isConnected(_ serverId: UUID) -> Bool {
+        clients[serverId] != nil
+    }
+    
+    /// Get error for a server
+    public func getError(_ serverId: UUID) -> String? {
+        errors[serverId]
     }
     
     // MARK: - Tool Discovery
@@ -235,6 +283,17 @@ public actor MCPClient {
             throw MCPClientError.resourceNotFound(uri)
         }
         return content
+    }
+    
+    /// Start all servers marked with autoStart
+    public func startAutoStartServers(from configs: [ServerConfig]) async {
+        for config in configs where config.autoStart && config.enabled {
+            do {
+                try await addServer(config)
+            } catch {
+                errors[config.id] = error.localizedDescription
+            }
+        }
     }
     
     // MARK: - Private Helpers

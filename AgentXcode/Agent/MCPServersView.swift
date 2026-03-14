@@ -6,6 +6,14 @@ struct MCPServersView: View {
     @State private var editingServer: MCPServerConfig?
     @State private var showingImport = false
     @State private var importText = ""
+    @State private var connectionStatus: [UUID: ConnectionStatus] = [:]
+    
+    enum ConnectionStatus {
+        case disconnected
+        case connecting
+        case connected
+        case error(String)
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -43,7 +51,7 @@ struct MCPServersView: View {
                     Text("No MCP servers configured")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                    Text("Add servers to expose tools to LLM clients")
+                    Text("Add servers to expose tools to Agent!")
                         .font(.caption)
                         .foregroundStyle(.tertiary)
                 }
@@ -55,9 +63,17 @@ struct MCPServersView: View {
                         ForEach(registry.servers) { server in
                             MCPServerRowView(
                                 server: server,
+                                connectionStatus: connectionStatus[server.id] ?? .disconnected,
                                 onEdit: { editingServer = server },
-                                onToggle: { registry.toggleEnabled(server.id) },
-                                onDelete: { registry.remove(at: server.id) }
+                                onToggle: { 
+                                    Task {
+                                        await toggleServerConnection(server)
+                                    }
+                                },
+                                onDelete: { 
+                                    registry.remove(at: server.id)
+                                    connectionStatus.removeValue(forKey: server.id)
+                                }
                             )
                         }
                     }
@@ -68,10 +84,10 @@ struct MCPServersView: View {
             
             // Info text
             VStack(alignment: .leading, spacing: 4) {
-                Text("MCP (Model Context Protocol) servers allow Agent! to expose tools to LLM clients.")
+                Text("MCP (Model Context Protocol) servers provide tools to Agent!")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Text("Configure servers that implement the MCP protocol to make their tools available.")
+                Text("Toggle servers on/off to connect/disconnect.")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }
@@ -104,6 +120,43 @@ struct MCPServersView: View {
         } message: {
             Text("Paste MCP server JSON configuration")
         }
+        .task {
+            // Auto-start servers that have autoStart enabled
+            await MCPService.shared.startAutoStartServers()
+            await refreshConnectionStatus()
+        }
+    }
+    
+    private func toggleServerConnection(_ server: MCPServerConfig) async {
+        if case .connected = connectionStatus[server.id] {
+            // Disconnect
+            connectionStatus[server.id] = .disconnected
+            await MCPService.shared.disconnect(serverId: server.id)
+        } else {
+            // Connect
+            connectionStatus[server.id] = .connecting
+            do {
+                try await MCPService.shared.connect(to: server)
+                connectionStatus[server.id] = .connected
+            } catch {
+                connectionStatus[server.id] = .error(error.localizedDescription)
+            }
+        }
+        
+        // Update registry enabled state
+        registry.toggleEnabled(server.id)
+    }
+    
+    private func refreshConnectionStatus() async {
+        for server in registry.servers {
+            if MCPService.shared.isConnected(server.id) {
+                connectionStatus[server.id] = .connected
+            } else if let error = MCPService.shared.getError(server.id) {
+                connectionStatus[server.id] = .error(error)
+            } else {
+                connectionStatus[server.id] = .disconnected
+            }
+        }
     }
 }
 
@@ -111,19 +164,56 @@ struct MCPServersView: View {
 
 struct MCPServerRowView: View {
     let server: MCPServerConfig
+    let connectionStatus: MCPServersView.ConnectionStatus
     let onEdit: () -> Void
     let onToggle: () -> Void
     let onDelete: () -> Void
     
     var body: some View {
         HStack(spacing: 12) {
-            // Enable toggle
-            Toggle("", isOn: Binding(
-                get: { server.enabled },
-                set: { _ in onToggle() }
-            ))
-            .toggleStyle(.switch)
-            .controlSize(.mini)
+            // Enable/Connect toggle
+            VStack(alignment: .leading, spacing: 2) {
+                Toggle("", isOn: Binding(
+                    get: { server.enabled },
+                    set: { _ in onToggle() }
+                ))
+                .toggleStyle(.switch)
+                .controlSize(.mini)
+                
+                // Connection status indicator
+                HStack(spacing: 3) {
+                    switch connectionStatus {
+                    case .connected:
+                        Circle()
+                            .fill(.green)
+                            .frame(width: 6, height: 6)
+                        Text("Connected")
+                            .font(.caption2)
+                            .foregroundStyle(.green)
+                    case .connecting:
+                        ProgressView()
+                            .controlSize(.mini)
+                        Text("Connecting...")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    case .disconnected:
+                        Circle()
+                            .fill(.secondary)
+                            .frame(width: 6, height: 6)
+                        Text("Disconnected")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    case .error(let message):
+                        Circle()
+                            .fill(.red)
+                            .frame(width: 6, height: 6)
+                        Text(message)
+                            .font(.caption2)
+                            .foregroundStyle(.red)
+                            .lineLimit(1)
+                    }
+                }
+            }
             
             // Server info
             VStack(alignment: .leading, spacing: 2) {
