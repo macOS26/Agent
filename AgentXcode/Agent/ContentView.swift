@@ -563,6 +563,7 @@ struct ActivityLogView: NSViewRepresentable {
                 let codeBlock = NSMutableAttributedString(attributedString: highlighted)
                 codeBlock.addAttribute(.backgroundColor, value: CodeBlockTheme.bg,
                                        range: NSRange(location: 0, length: codeBlock.length))
+                result.append(NSAttributedString(string: "\n", attributes: [.font: font]))
                 result.append(codeBlock)
                 result.append(NSAttributedString(string: "\n", attributes: [.font: font]))
                 lastEnd = match.range.location + match.range.length
