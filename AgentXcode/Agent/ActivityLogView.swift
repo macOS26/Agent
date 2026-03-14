@@ -508,7 +508,7 @@ struct ActivityLogView: NSViewRepresentable {
                 let baseTag = "<base href=\"file://\(directory)/\">"
                 if let headRange = htmlContent.range(of: "<head>", options: .caseInsensitive) {
                     processedHTML = htmlContent.replacingCharacters(in: headRange, with: "<head>\(baseTag)")
-                } else if let bodyRange = htmlContent.range(of: "<body", options: .caseInsensitive) {
+                } else if htmlContent.range(of: "<body", options: .caseInsensitive) != nil {
                     // If no head, prepend base before body
                     processedHTML = "<html><head>\(baseTag)</head>" + htmlContent
                 }
@@ -535,35 +535,36 @@ struct ActivityLogView: NSViewRepresentable {
                 try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
 
                 // Get content height
-                let contentHeight = await webView.evaluateJavaScript("document.body.scrollHeight") as? Double ?? 600
-                let contentWidth = await webView.evaluateJavaScript("document.body.scrollWidth") as? Double ?? 800
+                let contentHeight = (try? await webView.evaluateJavaScript("document.body.scrollHeight")) as? Double ?? 600
+                let contentWidth = (try? await webView.evaluateJavaScript("document.body.scrollWidth")) as? Double ?? 800
 
                 // Take snapshot
                 let config = WKSnapshotConfiguration()
                 config.rect = CGRect(x: 0, y: 0, width: contentWidth, height: min(contentHeight, 2000))
 
-                do {
-                    let image = try await webView.takeSnapshot(with: config)
-                    let scaled = scaleImage(image, maxDimension: 400)
+                webView.takeSnapshot(with: config) { [weak self] image, error in
+                    Task { @MainActor in
+                        guard let self else { return }
+                        if let image {
+                            let scaled = self.scaleImage(image, maxDimension: 400)
 
-                    // Find the path and mtime for this offset
-                    if let (path, _) = findPathForOffset(offset) {
-                        let fileMtime = (try? FileManager.default.attributesOfItem(atPath: path)[.modificationDate] as? Date) ?? .distantPast
-                        let dirPath = (path as NSString).deletingLastPathComponent
-                        let dirMtime = (try? FileManager.default.attributesOfItem(atPath: dirPath)[.modificationDate] as? Date) ?? .distantPast
-                        let effectiveMtime = max(fileMtime, dirMtime)
+                            // Find the path and mtime for this offset
+                            if let (path, _) = self.findPathForOffset(offset) {
+                                let fileMtime = (try? FileManager.default.attributesOfItem(atPath: path)[.modificationDate] as? Date) ?? .distantPast
+                                let dirPath = (path as NSString).deletingLastPathComponent
+                                let dirMtime = (try? FileManager.default.attributesOfItem(atPath: dirPath)[.modificationDate] as? Date) ?? .distantPast
+                                let effectiveMtime = max(fileMtime, dirMtime)
 
-                        htmlCache[offset] = (image: scaled, mtime: effectiveMtime)
+                                self.htmlCache[offset] = (image: scaled, mtime: effectiveMtime)
+                            }
+
+                            // Trigger re-render
+                            self.onHTMLReady?()
+                        }
+
+                        self.htmlPending.remove(offset)
+                        self.activeWebViews.removeValue(forKey: offset)
                     }
-
-                    htmlPending.remove(offset)
-                    activeWebViews.removeValue(forKey: offset)
-
-                    // Trigger re-render
-                    onHTMLReady?()
-                } catch {
-                    htmlPending.remove(offset)
-                    activeWebViews.removeValue(forKey: offset)
                 }
             }
         }
