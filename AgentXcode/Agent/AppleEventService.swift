@@ -20,11 +20,34 @@ final class AppleEventService: @unchecked Sendable {
     /// Runs osascript first to trigger the Automation permission dialog if needed,
     /// then runs the ScriptingBridge query.
     nonisolated func execute(bundleID: String, operations: [[String: Any]], allowWrites: Bool = false) -> String {
-        let appName = resolveAppName(bundleID)
+        // SECURITY: Validate bundle ID to prevent injection attacks
+        let sanitizedBundleID = sanitizeBundleID(bundleID)
+        guard !sanitizedBundleID.isEmpty else {
+            return "Error: Invalid bundle identifier. Must be in reverse-DNS format (e.g., com.apple.Music)"
+        }
+        
+        let appName = resolveAppName(sanitizedBundleID)
         // Run a trivial osascript to trigger the macOS Automation permission dialog.
         // This is what actually makes the "Agent wants to control X" prompt appear.
-        grantPermissionViaOsascript(appName: appName)
-        return run(bundleID: bundleID, operations: operations, allowWrites: allowWrites)
+        grantPermissionViaOsascript(appName: appName, bundleID: sanitizedBundleID)
+        return run(bundleID: sanitizedBundleID, operations: operations, allowWrites: allowWrites)
+    }
+
+    /// Validate and sanitize a bundle identifier.
+    /// Bundle IDs must be in reverse-DNS format: alphanumeric segments separated by dots.
+    /// Returns an empty string if invalid.
+    private func sanitizeBundleID(_ bundleID: String) -> String {
+        let trimmed = bundleID.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return "" }
+        
+        // Bundle IDs contain alphanumeric characters, dots, and hyphens
+        // They must have at least one dot (reverse-DNS format)
+        let validPattern = "^[a-zA-Z0-9.-]+$"
+        guard trimmed.range(of: validPattern, options: .regularExpression) != nil else { return "" }
+        guard trimmed.contains(".") else { return "" }
+        guard trimmed.count <= 255 else { return "" }
+        
+        return trimmed
     }
 
     /// Apps that have already been granted permission this session
@@ -32,12 +55,14 @@ final class AppleEventService: @unchecked Sendable {
 
     /// Trigger the macOS Automation permission dialog by running osascript.
     /// Times out after 10 seconds to avoid blocking if the dialog is dismissed or app is unresponsive.
-    private func grantPermissionViaOsascript(appName: String) {
-        if grantedApps.contains(appName) { return }
-        (self as AppleEventService).grantedApps.insert(appName)
+    private func grantPermissionViaOsascript(appName: String, bundleID: String) {
+        if grantedApps.contains(bundleID) { return }
+        (self as AppleEventService).grantedApps.insert(bundleID)
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-        process.arguments = ["-e", "tell application \"\(appName)\" to get every window"]
+        // Use sanitized app name (derived from bundle ID, not arbitrary input)
+        let safeAppName = appName.isEmpty ? bundleID : appName
+        process.arguments = ["-e", "tell application \"\(safeAppName)\" to get every window"]
         let outputPipe = Pipe()
         let errorPipe = Pipe()
         process.standardOutput = outputPipe
@@ -61,7 +86,7 @@ final class AppleEventService: @unchecked Sendable {
         if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
             return url.deletingPathExtension().lastPathComponent
         }
-        return bundleID
+        return ""
     }
 
     private func run(bundleID: String, operations: [[String: Any]], allowWrites: Bool) -> String {
