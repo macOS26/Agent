@@ -34,7 +34,7 @@ final class AgentViewModel {
     private static let _migrate: Void = {
         let defaults = UserDefaults.standard
         guard !defaults.bool(forKey: "agentMigrationV4") else { return }
-        
+
         // Migration V4: Move API keys from UserDefaults to Keychain
         if let claudeKey = defaults.string(forKey: "agentAPIKey"), !claudeKey.isEmpty {
             KeychainService.shared.setClaudeAPIKey(claudeKey)
@@ -44,13 +44,13 @@ final class AgentViewModel {
             KeychainService.shared.setOllamaAPIKey(ollamaKey)
             defaults.removeObject(forKey: "ollamaAPIKey")
         }
-        
+
         // Legacy migrations from V3
         defaults.removeObject(forKey: "ollamaEndpoint")  // now a constant
         if let model = defaults.string(forKey: "ollamaModel"), model == "llama3.1" {
             defaults.set("", forKey: "ollamaModel")
         }
-        
+
         defaults.set(true, forKey: "agentMigrationV4")
     }()
 
@@ -150,14 +150,14 @@ final class AgentViewModel {
 
     ]
     // MARK: - Claude Models
-    
+
     struct ClaudeModelInfo: Identifiable, Codable {
         let id: String
         let name: String
         let displayName: String
         let createdAt: String?
         let description: String?
-        
+
         var formattedDisplayName: String {
             if let created = createdAt {
                 let dateStr = String(created.prefix(10))
@@ -166,30 +166,9 @@ final class AgentViewModel {
             return displayName
         }
     }
-    
+
     var availableClaudeModels: [ClaudeModelInfo] = []
-    
-    func fetchClaudeModels() async {
-        guard !apiKey.isEmpty else {
-            await MainActor.run {
-                self.availableClaudeModels = Self.defaultClaudeModels
-            }
-            return
-        }
-        
-        do {
-            let models = try await Self.fetchClaudeModelsFromAPI(apiKey: apiKey)
-            await MainActor.run {
-                self.availableClaudeModels = models.isEmpty ? Self.defaultClaudeModels : models
-            }
-        } catch {
-            print("Error fetching Claude models: \(error)")
-            await MainActor.run {
-                self.availableClaudeModels = Self.defaultClaudeModels
-            }
-        }
-    }
-    
+
     private static let defaultClaudeModels: [ClaudeModelInfo] = [
         ClaudeModelInfo(id: "claude-sonnet-4-6", name: "claude-sonnet-4-6", displayName: "Claude Sonnet 4.6", createdAt: "2026-02-17", description: nil),
         ClaudeModelInfo(id: "claude-opus-4-6", name: "claude-opus-4-6", displayName: "Claude Opus 4.6", createdAt: "2026-02-04", description: nil),
@@ -201,74 +180,12 @@ final class AgentViewModel {
         ClaudeModelInfo(id: "claude-sonnet-4-20250514", name: "claude-sonnet-4-20250514", displayName: "Claude Sonnet 4", createdAt: "2025-05-22", description: nil),
         ClaudeModelInfo(id: "claude-3-haiku-20240307", name: "claude-3-haiku-20240307", displayName: "Claude Haiku 3", createdAt: "2024-03-07", description: nil)
     ]
-    
-    private static func fetchClaudeModelsFromAPI(apiKey: String) async throws -> [ClaudeModelInfo] {
-        guard let url = URL(string: "https://api.anthropic.com/v1/models") else {
-            throw AgentError.invalidURL
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
-        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
-        request.timeoutInterval = 10
-        
-        let (data, response) = try await URLSession.shared.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw AgentError.apiError(statusCode: (response as? HTTPURLResponse)?.statusCode ?? 0, message: "API error")
-        }
-        
-        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let modelsData = json["data"] as? [[String: Any]] else {
-            return defaultClaudeModels
-        }
-        
-        let models = modelsData.compactMap { modelData -> ClaudeModelInfo? in
-            guard let id = modelData["id"] as? String else { return nil }
-            let displayName = modelData["display_name"] as? String ?? id
-            let createdAt = modelData["created_at"] as? String
-            let description = modelData["description"] as? String
-            
-            return ClaudeModelInfo(
-                id: id,
-                name: displayName,
-                displayName: displayName,
-                createdAt: createdAt,
-                description: description
-            )
-        }
-        
-        return models.isEmpty ? defaultClaudeModels : models
-    }
-
 
     var ollamaModels: [OllamaModelInfo] = []
     var isFetchingModels = false
 
     var selectedOllamaSupportsVision: Bool {
         ollamaModels.first(where: { $0.name == ollamaModel })?.supportsVision ?? false
-    }
-    func fetchOllamaModels() {
-        let endpoint = ollamaEndpoint
-        let apiKey = ollamaAPIKey
-        isFetchingModels = true
-        Task {
-            defer { isFetchingModels = false }
-            do {
-                let models = try await Self.fetchModels(endpoint: endpoint, apiKey: apiKey)
-                ollamaModels = models.isEmpty ? Self.defaultOllamaModels : models
-                // Auto-select first model if current selection is empty or not in list
-                let names = ollamaModels.map(\.name)
-                if ollamaModel.isEmpty || (!names.isEmpty && !names.contains(ollamaModel)) {
-                    ollamaModel = names.first ?? ""
-                }
-            } catch {
-                appendLog("Failed to fetch models: \(error.localizedDescription)")
-                ollamaModels = Self.defaultOllamaModels
-            }
-        }
     }
 
     // Local Ollama settings
@@ -292,6 +209,286 @@ final class AgentViewModel {
 
     var selectedLocalOllamaSupportsVision: Bool {
         localOllamaModels.first(where: { $0.name == localOllamaModel })?.supportsVision ?? false
+    }
+
+    var attachedImages: [NSImage] = []
+    var attachedImagesBase64: [String] = []
+
+    private var promptHistory: [String] = UserDefaults.standard.stringArray(forKey: "agentPromptHistory") ?? []
+    private var historyIndex = -1
+    private var savedInput = ""
+
+    let helperService = HelperService()
+    let userService = UserService()
+    let scriptService = ScriptService()
+    let history = TaskHistory.shared
+    var isCancelled = false
+    private var runningTask: Task<Void, Never>?
+    @ObservationIgnored private var terminationObserver: Any?
+
+    // MARK: - Logging State
+
+    static let timestampFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "HH:mm:ss"
+        return f
+    }()
+
+    var logBuffer = ""
+    var logFlushTask: Task<Void, Never>?
+    var logPersistTask: Task<Void, Never>?
+    var streamOutputCount = 0
+    var streamTruncated = false
+    static let maxStreamDisplay = 20_000
+
+    // LLM streaming state
+    var streamBuffer = ""
+    var streamFlushTask: Task<Void, Never>?
+    var streamingTextStarted = false
+    static let maxLogSize = 60_000
+    var recentOutputHashes: Set<Int> = []
+
+    // MARK: - Image snapshot cache (persists across launches)
+
+    static let logImageCacheDir: URL = {
+        guard let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else { return URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("Agent/log_images") }
+        let dir = caches.appendingPathComponent("Agent/log_images")
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir
+    }()
+
+    static let imagePathRegex: NSRegularExpression? = try? NSRegularExpression(
+        pattern: #"(/[^\s"'<>]+\.(?:jpg|jpeg|png|gif|tiff|bmp|webp|heic))"#,
+        options: .caseInsensitive
+    )
+
+    // MARK: - Computed Properties
+
+    var daemonReady: Bool { helperService.helperReady }
+    var agentReady: Bool { userService.userReady }
+    var hasAttachments: Bool { !attachedImages.isEmpty }
+
+    // MARK: - Init
+
+    init() {
+        // Restore ~/Documents/Agent/ folder and bundled resources if missing
+        scriptService.ensurePackage()
+
+        // Cancel any orphaned processes from a previous app session
+        let defaults = UserDefaults.standard
+        if let oldHelperID = defaults.string(forKey: "lastHelperInstanceID") {
+            HelperService.cancelProcess(instanceID: oldHelperID)
+        }
+        if let oldUserID = defaults.string(forKey: "lastUserInstanceID") {
+            UserService.cancelProcess(instanceID: oldUserID)
+        }
+        // Persist current instanceIDs so next launch can clean up
+        defaults.set(helperService.instanceID, forKey: "lastHelperInstanceID")
+        defaults.set(userService.instanceID, forKey: "lastUserInstanceID")
+
+        // Cancel running processes on app quit
+        let helperID = helperService.instanceID
+        let userID = userService.instanceID
+        terminationObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.willTerminateNotification,
+            object: nil, queue: .main
+        ) { _ in
+            HelperService.cancelProcess(instanceID: helperID)
+            UserService.cancelProcess(instanceID: userID)
+            UserDefaults.standard.removeObject(forKey: "lastHelperInstanceID")
+            UserDefaults.standard.removeObject(forKey: "lastUserInstanceID")
+        }
+
+        // Auto-fetch models on launch based on provider
+        if selectedProvider == .claude {
+            Task { await fetchClaudeModels() }
+        } else if selectedProvider == .ollama {
+            fetchOllamaModels()
+        } else if selectedProvider == .localOllama {
+            fetchLocalOllamaModels()
+        }
+
+        // Xcode Command Line Tools check is handled by DependencyOverlay in ContentView
+    }
+
+    // MARK: - Registration
+
+    func registerDaemon() {
+        let msg = helperService.registerHelper()
+        appendLog(msg)
+    }
+
+    func registerAgent() {
+        let msg = userService.registerUser()
+        appendLog(msg)
+    }
+
+    // MARK: - Run / Stop
+
+    func run() {
+        let task = taskInput.trimmingCharacters(in: .whitespaces)
+        guard !task.isEmpty else { return }
+
+        // Handle /clear command
+        if task.lowercased() == "/clear" {
+            taskInput = ""
+            clearLog()
+            return
+        }
+
+        // Stop any running task before starting a new one
+        if isRunning {
+            stop(silent: true)
+        }
+
+        promptHistory.append(task)
+        UserDefaults.standard.set(promptHistory, forKey: "agentPromptHistory")
+        historyIndex = -1
+        savedInput = ""
+        taskInput = ""
+
+        runningTask = Task {
+            await executeTask(task)
+        }
+    }
+
+    /// Navigate prompt history. direction: -1 = older (up arrow), 1 = newer (down arrow)
+    func navigatePromptHistory(direction: Int) {
+        guard !promptHistory.isEmpty else { return }
+
+        if historyIndex == -1 {
+            // Starting to browse — save current input
+            savedInput = taskInput
+            if direction == -1 {
+                historyIndex = promptHistory.count - 1
+            } else {
+                return // already at the beginning, nothing newer
+            }
+        } else {
+            historyIndex += direction
+        }
+
+        if historyIndex < 0 {
+            // Went past the oldest — restore saved input
+            historyIndex = -1
+            taskInput = savedInput
+            return
+        }
+
+        if historyIndex >= promptHistory.count {
+            // Back to current input
+            historyIndex = -1
+            taskInput = savedInput
+            return
+        }
+
+        taskInput = promptHistory[historyIndex]
+    }
+
+    func stop(silent: Bool = false) {
+        isCancelled = true
+        runningTask?.cancel()
+        runningTask = nil
+        helperService.cancel()
+        helperService.onOutput = nil
+        userService.cancel()
+        userService.onOutput = nil
+        if !silent {
+            appendLog("Cancelled by user.")
+        }
+        flushLog()
+        persistLogNow()
+        isRunning = false
+        isThinking = false
+        userServiceActive = false
+        rootServiceActive = false
+        userWasActive = false
+        rootWasActive = false
+    }
+
+    // MARK: - Model Fetching
+
+    func fetchClaudeModels() async {
+        guard !apiKey.isEmpty else {
+            await MainActor.run {
+                self.availableClaudeModels = Self.defaultClaudeModels
+            }
+            return
+        }
+
+        do {
+            let models = try await Self.fetchClaudeModelsFromAPI(apiKey: apiKey)
+            await MainActor.run {
+                self.availableClaudeModels = models.isEmpty ? Self.defaultClaudeModels : models
+            }
+        } catch {
+            print("Error fetching Claude models: \(error)")
+            await MainActor.run {
+                self.availableClaudeModels = Self.defaultClaudeModels
+            }
+        }
+    }
+
+    private static func fetchClaudeModelsFromAPI(apiKey: String) async throws -> [ClaudeModelInfo] {
+        guard let url = URL(string: "https://api.anthropic.com/v1/models") else {
+            throw AgentError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        request.timeoutInterval = 10
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw AgentError.apiError(statusCode: (response as? HTTPURLResponse)?.statusCode ?? 0, message: "API error")
+        }
+
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let modelsData = json["data"] as? [[String: Any]] else {
+            return defaultClaudeModels
+        }
+
+        let models = modelsData.compactMap { modelData -> ClaudeModelInfo? in
+            guard let id = modelData["id"] as? String else { return nil }
+            let displayName = modelData["display_name"] as? String ?? id
+            let createdAt = modelData["created_at"] as? String
+            let description = modelData["description"] as? String
+
+            return ClaudeModelInfo(
+                id: id,
+                name: displayName,
+                displayName: displayName,
+                createdAt: createdAt,
+                description: description
+            )
+        }
+
+        return models.isEmpty ? defaultClaudeModels : models
+    }
+
+    func fetchOllamaModels() {
+        let endpoint = ollamaEndpoint
+        let apiKey = ollamaAPIKey
+        isFetchingModels = true
+        Task {
+            defer { isFetchingModels = false }
+            do {
+                let models = try await Self.fetchModels(endpoint: endpoint, apiKey: apiKey)
+                ollamaModels = models.isEmpty ? Self.defaultOllamaModels : models
+                // Auto-select first model if current selection is empty or not in list
+                let names = ollamaModels.map(\.name)
+                if ollamaModel.isEmpty || (!names.isEmpty && !names.contains(ollamaModel)) {
+                    ollamaModel = names.first ?? ""
+                }
+            } catch {
+                appendLog("Failed to fetch models: \(error.localizedDescription)")
+                ollamaModels = Self.defaultOllamaModels
+            }
+        }
     }
 
     func fetchLocalOllamaModels() {
@@ -383,955 +580,5 @@ final class AgentViewModel {
         } catch {
             return false
         }
-    }
-
-    var attachedImages: [NSImage] = []
-    private var attachedImagesBase64: [String] = []
-
-    private var promptHistory: [String] = UserDefaults.standard.stringArray(forKey: "agentPromptHistory") ?? []
-    private var historyIndex = -1
-    private var savedInput = ""
-
-    let helperService = HelperService()
-    let userService = UserService()
-    let scriptService = ScriptService()
-    let history = TaskHistory.shared
-    private var isCancelled = false
-    private var runningTask: Task<Void, Never>?
-    @ObservationIgnored private var terminationObserver: Any?
-
-    var daemonReady: Bool { helperService.helperReady }
-    var agentReady: Bool { userService.userReady }
-    var hasAttachments: Bool { !attachedImages.isEmpty }
-
-    init() {
-        // Restore ~/Documents/Agent/ folder and bundled resources if missing
-        scriptService.ensurePackage()
-
-        // Cancel any orphaned processes from a previous app session
-        let defaults = UserDefaults.standard
-        if let oldHelperID = defaults.string(forKey: "lastHelperInstanceID") {
-            HelperService.cancelProcess(instanceID: oldHelperID)
-        }
-        if let oldUserID = defaults.string(forKey: "lastUserInstanceID") {
-            UserService.cancelProcess(instanceID: oldUserID)
-        }
-        // Persist current instanceIDs so next launch can clean up
-        defaults.set(helperService.instanceID, forKey: "lastHelperInstanceID")
-        defaults.set(userService.instanceID, forKey: "lastUserInstanceID")
-
-        // Cancel running processes on app quit
-        let helperID = helperService.instanceID
-        let userID = userService.instanceID
-        terminationObserver = NotificationCenter.default.addObserver(
-            forName: NSApplication.willTerminateNotification,
-            object: nil, queue: .main
-        ) { _ in
-            HelperService.cancelProcess(instanceID: helperID)
-            UserService.cancelProcess(instanceID: userID)
-            UserDefaults.standard.removeObject(forKey: "lastHelperInstanceID")
-            UserDefaults.standard.removeObject(forKey: "lastUserInstanceID")
-        }
-
-        // Auto-fetch models on launch based on provider
-        if selectedProvider == .claude {
-            Task { await fetchClaudeModels() }
-        } else if selectedProvider == .ollama {
-            fetchOllamaModels()
-        } else if selectedProvider == .localOllama {
-            fetchLocalOllamaModels()
-        }
-
-        // Xcode Command Line Tools check is handled by DependencyOverlay in ContentView
-    }
-
-    func registerDaemon() {
-        let msg = helperService.registerHelper()
-        appendLog(msg)
-    }
-
-    func registerAgent() {
-        let msg = userService.registerUser()
-        appendLog(msg)
-    }
-
-    func run() {
-        let task = taskInput.trimmingCharacters(in: .whitespaces)
-        guard !task.isEmpty else { return }
-
-        // Handle /clear command
-        if task.lowercased() == "/clear" {
-            taskInput = ""
-            clearLog()
-            return
-        }
-
-        // Stop any running task before starting a new one
-        if isRunning {
-            stop(silent: true)
-        }
-
-        promptHistory.append(task)
-        UserDefaults.standard.set(promptHistory, forKey: "agentPromptHistory")
-        historyIndex = -1
-        savedInput = ""
-        taskInput = ""
-
-        runningTask = Task {
-            await executeTask(task)
-        }
-    }
-
-    /// Navigate prompt history. direction: -1 = older (up arrow), 1 = newer (down arrow)
-    func navigatePromptHistory(direction: Int) {
-        guard !promptHistory.isEmpty else { return }
-
-        if historyIndex == -1 {
-            // Starting to browse — save current input
-            savedInput = taskInput
-            if direction == -1 {
-                historyIndex = promptHistory.count - 1
-            } else {
-                return // already at the beginning, nothing newer
-            }
-        } else {
-            historyIndex += direction
-        }
-
-        if historyIndex < 0 {
-            // Went past the oldest — restore saved input
-            historyIndex = -1
-            taskInput = savedInput
-            return
-        }
-
-        if historyIndex >= promptHistory.count {
-            // Back to current input
-            historyIndex = -1
-            taskInput = savedInput
-            return
-        }
-
-        taskInput = promptHistory[historyIndex]
-    }
-
-    func stop(silent: Bool = false) {
-        isCancelled = true
-        runningTask?.cancel()
-        runningTask = nil
-        helperService.cancel()
-        helperService.onOutput = nil
-        userService.cancel()
-        userService.onOutput = nil
-        if !silent {
-            appendLog("Cancelled by user.")
-        }
-        flushLog()
-        persistLogNow()
-        isRunning = false
-        isThinking = false
-        userServiceActive = false
-        rootServiceActive = false
-        userWasActive = false
-        rootWasActive = false
-    }
-
-    func clearLog() {
-        logBuffer = ""
-        logFlushTask?.cancel()
-        logFlushTask = nil
-        activityLog = ""
-        UserDefaults.standard.removeObject(forKey: "agentActivityLog")
-        // Clean up cached image snapshots
-        try? FileManager.default.removeItem(at: Self.logImageCacheDir)
-        try? FileManager.default.createDirectory(at: Self.logImageCacheDir, withIntermediateDirectories: true)
-    }
-
-    // MARK: - Screenshot
-
-    func captureScreenshot() {
-        let tempPath = NSTemporaryDirectory() + "agent_screenshot_\(UUID().uuidString).png"
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-        process.arguments = ["-i", tempPath]  // interactive selection
-
-        do {
-            try process.run()
-            process.waitUntilExit()
-        } catch {
-            appendLog("Screenshot failed: \(error.localizedDescription)")
-            return
-        }
-
-        guard process.terminationStatus == 0,
-              FileManager.default.fileExists(atPath: tempPath),
-              let image = NSImage(contentsOfFile: tempPath),
-              let tiffData = image.tiffRepresentation,
-              let bitmap = NSBitmapImageRep(data: tiffData),
-              let pngData = bitmap.representation(using: .png, properties: [:]) else {
-            // User cancelled the capture or file not found
-            return
-        }
-
-        attachedImages.append(image)
-        attachedImagesBase64.append(pngData.base64EncodedString())
-        try? FileManager.default.removeItem(atPath: tempPath)
-    }
-
-    func removeAttachment(at index: Int) {
-        guard attachedImages.indices.contains(index) else { return }
-        attachedImages.remove(at: index)
-        attachedImagesBase64.remove(at: index)
-    }
-
-    func removeAllAttachments() {
-        attachedImages.removeAll()
-        attachedImagesBase64.removeAll()
-    }
-
-    /// Try all pasteboard formats to grab an image.
-    /// Returns true if image data was found (encoding happens async in background).
-    @discardableResult
-    func pasteImageFromClipboard() -> Bool {
-        let pb = NSPasteboard.general
-
-        var rawData: Data?
-
-        // Try raw data types first (avoids full NSImage deserialization overhead)
-        for type in [NSPasteboard.PasteboardType.png,
-                     NSPasteboard.PasteboardType.tiff,
-                     NSPasteboard.PasteboardType(rawValue: "public.jpeg")] {
-            if let data = pb.data(forType: type) {
-                rawData = data
-                break
-            }
-        }
-
-        // Try NSImage as fallback
-        if rawData == nil,
-           let images = pb.readObjects(forClasses: [NSImage.self]) as? [NSImage],
-           let img = images.first,
-           let tiff = img.tiffRepresentation {
-            rawData = tiff
-        }
-
-        // Try file URLs (e.g. screenshot file copied from Finder)
-        if rawData == nil,
-           let urls = pb.readObjects(forClasses: [NSURL.self]) as? [URL] {
-            for url in urls {
-                let ext = url.pathExtension.lowercased()
-                if ["png", "jpg", "jpeg", "tiff", "bmp", "gif"].contains(ext),
-                   let data = try? Data(contentsOf: url) {
-                    rawData = data
-                    break
-                }
-            }
-        }
-
-        guard let imageData = rawData else { return false }
-
-        // Encode on a background thread to avoid blocking the main thread
-        Task {
-            let base64 = await Self.encodeImageToBase64(imageData)
-            guard let base64 else { return }
-            if let image = NSImage(data: imageData) {
-                attachedImages.append(image)
-                attachedImagesBase64.append(base64)
-            }
-        }
-
-        return true
-    }
-
-    /// Encode image data to a base64 PNG string off the main thread.
-    /// Downscales images larger than 2048px to prevent memory issues.
-    private static nonisolated func encodeImageToBase64(_ data: Data) async -> String? {
-        guard let bitmap = NSBitmapImageRep(data: data) else { return nil }
-
-        let maxDim = 2048
-        let w = bitmap.pixelsWide
-        let h = bitmap.pixelsHigh
-
-        if w > maxDim || h > maxDim {
-            let scale = min(Double(maxDim) / Double(w), Double(maxDim) / Double(h))
-            let newW = Int(Double(w) * scale)
-            let newH = Int(Double(h) * scale)
-
-            guard let cgImage = bitmap.cgImage,
-                  let ctx = CGContext(
-                      data: nil, width: newW, height: newH,
-                      bitsPerComponent: 8, bytesPerRow: 0,
-                      space: CGColorSpaceCreateDeviceRGB(),
-                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-                  ) else { return nil }
-
-            ctx.interpolationQuality = .high
-            ctx.draw(cgImage, in: CGRect(x: 0, y: 0, width: newW, height: newH))
-
-            guard let resizedCG = ctx.makeImage() else { return nil }
-            let resizedBitmap = NSBitmapImageRep(cgImage: resizedCG)
-            guard let pngData = resizedBitmap.representation(using: .png, properties: [:]) else { return nil }
-            return pngData.base64EncodedString()
-        }
-
-        guard let pngData = bitmap.representation(using: .png, properties: [:]) else { return nil }
-        return pngData.base64EncodedString()
-    }
-
-    // MARK: - Log Buffering
-
-    private static let timestampFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "HH:mm:ss"
-        return f
-    }()
-
-    private var logBuffer = ""
-    private var logFlushTask: Task<Void, Never>?
-    private var logPersistTask: Task<Void, Never>?
-    private var streamOutputCount = 0
-    private var streamTruncated = false
-    private static let maxStreamDisplay = 20_000
-
-    // LLM streaming state
-    private var streamBuffer = ""
-    private var streamFlushTask: Task<Void, Never>?
-    private var streamingTextStarted = false
-    private static let maxLogSize = 60_000
-    private var recentOutputHashes: Set<Int> = []
-
-    // MARK: - Image snapshot cache (persists across launches)
-
-    private static let logImageCacheDir: URL = {
-        guard let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else { return URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("Agent/log_images") }
-        let dir = caches.appendingPathComponent("Agent/log_images")
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        return dir
-    }()
-
-    private static let imagePathRegex: NSRegularExpression? = try? NSRegularExpression(
-        pattern: #"(/[^\s"'<>]+\.(?:jpg|jpeg|png|gif|tiff|bmp|webp|heic))"#,
-        options: .caseInsensitive
-    )
-
-    /// Snapshot any image files found in text to persistent cache, rewriting paths to UUID copies.
-    private func snapshotImages(in text: String) -> String {
-        let nsText = text as NSString
-        let matches = Self.imagePathRegex?.matches(in: text, range: NSRange(location: 0, length: nsText.length)) ?? []
-        guard !matches.isEmpty else { return text }
-
-        var result = text
-        // Process in reverse so earlier offsets stay valid
-        for match in matches.reversed() {
-            let range = match.range(at: 1)
-            let path = nsText.substring(with: range)
-
-            // Skip if already a cached path (old or new cache dirs)
-            if path.contains("/log_images/") || path.contains("/Caches/Agent/") { continue }
-
-            // Skip if file doesn't exist
-            guard FileManager.default.fileExists(atPath: path) else { continue }
-
-            let ext = (path as NSString).pathExtension
-            let uuid = UUID().uuidString
-            let cachedURL = Self.logImageCacheDir.appendingPathComponent("\(uuid).\(ext)")
-
-            do {
-                try FileManager.default.copyItem(atPath: path, toPath: cachedURL.path)
-                guard let swiftRange = Range(range, in: result) else { continue }
-                result.replaceSubrange(swiftRange, with: cachedURL.path)
-            } catch {
-                // Copy failed — leave original path
-            }
-        }
-
-        return result
-    }
-
-    private func appendLog(_ message: String) {
-        let timestamp = Self.timestampFormatter.string(from: Date())
-        let cached = snapshotImages(in: message)
-        logBuffer += "[\(timestamp)] \(cached)\n"
-        scheduleLogFlush()
-    }
-
-    private func appendRawOutput(_ text: String) {
-        guard !text.isEmpty else { return }
-        streamOutputCount += text.count
-        // Cap streaming display to prevent UI from choking
-        if streamOutputCount > Self.maxStreamDisplay {
-            if !streamTruncated {
-                streamTruncated = true
-                logBuffer += "...(output truncated for display)...\n"
-                scheduleLogFlush()
-            }
-            return
-        }
-        let cached = snapshotImages(in: text)
-        logBuffer += cached
-        if !cached.hasSuffix("\n") {
-            logBuffer += "\n"
-        }
-        scheduleLogFlush()
-    }
-
-    /// Collapse heredoc bodies in commands to keep the log clean.
-    /// "cat > file.html <<'EOF'\n<html>...\nEOF" → "cat > file.html <<'EOF'\n...(heredoc)...\nEOF"
-    private static func collapseHeredocs(_ command: String) -> String {
-        let lines = command.components(separatedBy: "\n")
-        guard lines.count > 3 else { return command }
-
-        // Find the line containing a heredoc marker: <<'DELIM', <<DELIM, <<"DELIM", <<-'DELIM'
-        let pattern = #"<<-?\s*'?"?(\w+)'?"?"#
-        guard let regex = try? NSRegularExpression(pattern: pattern) else { return command }
-
-        for (i, line) in lines.enumerated() {
-            let nsLine = line as NSString
-            guard let match = regex.firstMatch(in: line, range: NSRange(location: 0, length: nsLine.length)),
-                  match.range(at: 1).location != NSNotFound else { continue }
-            let delimiter = nsLine.substring(with: match.range(at: 1))
-
-            // Find the closing delimiter line after the heredoc start
-            guard let endIdx = lines[(i + 1)...].firstIndex(where: {
-                $0.trimmingCharacters(in: .whitespaces) == delimiter
-            }), endIdx > i + 1 else { continue }
-
-            // Collapse: keep lines before + heredoc line, placeholder, delimiter + remainder
-            var result = Array(lines[...i])
-            result.append("...(\(delimiter) heredoc)...")
-            result.append(contentsOf: lines[endIdx...])
-            return result.joined(separator: "\n")
-        }
-        return command
-    }
-
-    private func resetStreamCounters() {
-        streamOutputCount = 0
-        streamTruncated = false
-    }
-
-    // MARK: - Local Execution (osascript)
-
-    /// Runs a command directly in the Agent app process (not via XPC).
-    /// Used for osascript so it inherits the app's Automation permissions.
-    private nonisolated func executeLocal(command: String) async -> (status: Int32, output: String) {
-        await withCheckedContinuation { continuation in
-            DispatchQueue.global().async {
-                let process = Process()
-                process.executableURL = URL(fileURLWithPath: "/bin/bash")
-                process.arguments = ["-c", command]
-
-                var env = ProcessInfo.processInfo.environment
-                env["HOME"] = FileManager.default.homeDirectoryForCurrentUser.path
-                process.environment = env
-
-                let stdoutPipe = Pipe()
-                let stderrPipe = Pipe()
-                process.standardOutput = stdoutPipe
-                process.standardError = stderrPipe
-
-                do {
-                    try process.run()
-                } catch {
-                    continuation.resume(returning: (-1, "Failed to launch: \(error.localizedDescription)"))
-                    return
-                }
-
-                // Read pipes then wait — osascript output is small, no deadlock risk
-                let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
-                let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-                process.waitUntilExit()
-
-                var output = String(data: stdoutData, encoding: .utf8) ?? ""
-                let errStr = String(data: stderrData, encoding: .utf8) ?? ""
-                if !errStr.isEmpty {
-                    if !output.isEmpty { output += "\n" }
-                    output += errStr
-                }
-
-                continuation.resume(returning: (process.terminationStatus, output))
-            }
-        }
-    }
-
-    /// Returns true if the command contains osascript and should run locally.
-    private nonisolated static func isOsascriptCommand(_ command: String) -> Bool {
-        command.contains("osascript") || command.contains("/usr/bin/osascript")
-    }
-
-    // MARK: - LLM Streaming
-
-    private func appendStreamDelta(_ delta: String) {
-        if !streamingTextStarted {
-            let timestamp = Self.timestampFormatter.string(from: Date())
-            streamBuffer += "[\(timestamp)] "
-            streamingTextStarted = true
-        }
-        streamBuffer += delta
-        scheduleStreamFlush()
-    }
-
-    private func scheduleStreamFlush() {
-        guard streamFlushTask == nil else { return }
-        streamFlushTask = Task {
-            try? await Task.sleep(for: .milliseconds(50))
-            self.streamFlushTask = nil
-            if !self.streamBuffer.isEmpty {
-                self.activityLog += self.streamBuffer
-                self.streamBuffer = ""
-            }
-        }
-    }
-
-    private func flushStreamBuffer() {
-        streamFlushTask?.cancel()
-        streamFlushTask = nil
-        if !streamBuffer.isEmpty {
-            activityLog += streamBuffer
-            streamBuffer = ""
-        }
-        if streamingTextStarted {
-            activityLog += "\n"
-            streamingTextStarted = false
-        }
-    }
-
-    private func scheduleLogFlush() {
-        guard logFlushTask == nil else { return }
-        logFlushTask = Task {
-            try? await Task.sleep(for: .milliseconds(150))
-            flushLog()
-        }
-    }
-
-    private func flushLog() {
-        logFlushTask?.cancel()
-        logFlushTask = nil
-        if !logBuffer.isEmpty {
-            activityLog += logBuffer
-            logBuffer = ""
-            trimToRecentTasks()
-            schedulePersist()
-        }
-    }
-
-    private func schedulePersist() {
-        guard logPersistTask == nil else { return }
-        logPersistTask = Task {
-            try? await Task.sleep(for: .seconds(2))
-            logPersistTask = nil
-            UserDefaults.standard.set(activityLog, forKey: "agentActivityLog")
-        }
-    }
-
-    func persistLogNow() {
-        logPersistTask?.cancel()
-        logPersistTask = nil
-        UserDefaults.standard.set(activityLog, forKey: "agentActivityLog")
-    }
-
-    /// Keep only the last N tasks visible in the chat (controlled by visibleTaskCount preference)
-    private func trimToRecentTasks() {
-        let marker = "--- New Task ---"
-        let parts = activityLog.components(separatedBy: marker)
-        let limit = visibleTaskCount
-        guard parts.count > limit + 1 else { return }
-        let kept = parts.suffix(limit).joined(separator: marker)
-        activityLog = marker + kept
-    }
-
-    // MARK: - Task Execution Loop
-
-    private func executeTask(_ prompt: String) async {
-        isRunning = true
-        userWasActive = false
-        rootWasActive = false
-        recentOutputHashes.removeAll()
-
-        if !activityLog.isEmpty {
-            logBuffer += "\n"
-        }
-        appendLog("--- New Task ---")
-        appendLog("Task: \(prompt)")
-
-        let historyContext = history.contextForPrompt()
-        let provider = selectedProvider
-        let modelName: String
-        let isVision: Bool
-        switch provider {
-        case .claude:
-            modelName = selectedModel
-            isVision = false
-        case .ollama:
-            modelName = ollamaModel
-            isVision = selectedOllamaSupportsVision
-        case .localOllama:
-            modelName = localOllamaModel
-            isVision = selectedLocalOllamaSupportsVision
-        }
-        appendLog("Model: \(provider.displayName) / \(modelName)\(isVision ? " (vision)" : "")")
-        flushLog()
-
-        let claude: ClaudeService? = provider == .claude
-            ? ClaudeService(apiKey: apiKey, model: selectedModel, historyContext: historyContext) : nil
-        let ollama: OllamaService?
-        switch provider {
-        case .ollama:
-            ollama = OllamaService(apiKey: ollamaAPIKey, model: ollamaModel, endpoint: ollamaEndpoint, supportsVision: isVision, historyContext: historyContext)
-        case .localOllama:
-            ollama = OllamaService(apiKey: "", model: localOllamaModel, endpoint: localOllamaEndpoint, supportsVision: isVision, historyContext: historyContext)
-        default:
-            ollama = nil
-        }
-
-        var messages: [[String: Any]]
-
-        if !attachedImagesBase64.isEmpty {
-            appendLog("(\(attachedImagesBase64.count) screenshot(s) attached)")
-            var contentBlocks: [[String: Any]] = attachedImagesBase64.map { base64 in
-                [
-                    "type": "image",
-                    "source": [
-                        "type": "base64",
-                        "media_type": "image/png",
-                        "data": base64
-                    ] as [String: Any]
-                ]
-            }
-            contentBlocks.append(["type": "text", "text": prompt])
-            messages = [["role": "user", "content": contentBlocks]]
-            // Clear attachments after use
-            attachedImages.removeAll()
-            attachedImagesBase64.removeAll()
-        } else {
-            messages = [["role": "user", "content": prompt]]
-        }
-
-        var commandsRun: [String] = []
-        var completionSummary = ""
-        var consecutiveNoTool = 0
-
-        var iterations = 0
-        let maxIterations = self.maxIterations
-
-        while !Task.isCancelled && iterations < maxIterations {
-            iterations += 1
-
-            do {
-                isThinking = true
-                let response: (content: [[String: Any]], stopReason: String)
-                var textWasStreamed = false
-                if let claude {
-                    response = try await claude.sendStreaming(messages: messages) { [weak self] delta in
-                        Task { @MainActor in
-                            self?.isThinking = false
-                            self?.appendStreamDelta(delta)
-                        }
-                    }
-                    textWasStreamed = true
-                    flushStreamBuffer()
-                } else if let ollama {
-                    response = try await ollama.sendStreaming(messages: messages) { [weak self] delta in
-                        Task { @MainActor in
-                            self?.isThinking = false
-                            self?.appendStreamDelta(delta)
-                        }
-                    }
-                    textWasStreamed = true
-                } else {
-                    throw AgentError.noAPIKey
-                }
-                isThinking = false
-                guard !Task.isCancelled else { break }
-
-                var toolResults: [[String: Any]] = []
-                var hasToolUse = false
-
-                for block in response.content {
-                    guard let type = block["type"] as? String else { continue }
-
-                    if type == "text", let text = block["text"] as? String {
-                        if !textWasStreamed { appendLog(text) }
-                    } else if type == "tool_use" {
-                        hasToolUse = true
-                        guard let toolId = block["id"] as? String,
-                              let name = block["name"] as? String,
-                              let input = block["input"] as? [String: Any] else { continue }
-
-                        if name == "task_complete" {
-                            let summary = input["summary"] as? String ?? "Done"
-                            completionSummary = summary
-                            appendLog("Completed: \(summary)")
-                            flushLog()
-                            history.add(TaskRecord(prompt: prompt, summary: summary, commandsRun: commandsRun), maxBeforeSummary: maxHistoryBeforeSummary)
-                            isRunning = false
-                            return
-                        }
-
-                        if name == "execute_command" || name == "execute_user_command" {
-                            let command = input["command"] as? String ?? ""
-                            let isPrivileged = (name == "execute_command") && rootEnabled
-                            commandsRun.append(command)
-                            appendLog("\(isPrivileged ? "#" : "$") \(Self.collapseHeredocs(command))")
-                            flushLog()
-
-                            let result: (status: Int32, output: String)
-                            resetStreamCounters()
-                            if isPrivileged {
-                                rootServiceActive = true
-                                rootWasActive = true
-                                helperService.onOutput = { [weak self] chunk in
-                                    self?.appendRawOutput(chunk)
-                                }
-                                result = await helperService.execute(command: command)
-                                helperService.onOutput = nil
-                                rootServiceActive = false
-                            } else if Self.isOsascriptCommand(command) {
-                                // Run osascript directly in the Agent app process
-                                // so it inherits the app's Automation permissions
-                                userServiceActive = true
-                                userWasActive = true
-                                result = await executeLocal(command: command)
-                                userServiceActive = false
-                            } else {
-                                userServiceActive = true
-                                userWasActive = true
-                                userService.onOutput = { [weak self] chunk in
-                                    self?.appendRawOutput(chunk)
-                                }
-                                result = await userService.execute(command: command)
-                                userService.onOutput = nil
-                                userServiceActive = false
-                            }
-                            flushLog()
-
-                            // Don't log results if task was cancelled
-                            guard !Task.isCancelled else { break }
-
-                            if result.status != 0 {
-                                appendLog("exit code: \(result.status)")
-                            }
-
-                            let toolOutput: String
-                            if result.output.isEmpty {
-                                toolOutput = "(no output, exit code: \(result.status))"
-                            } else {
-                                toolOutput = result.output
-                            }
-
-                            // Deduplicate: skip display if we've seen this exact output before
-                            let outputHash = toolOutput.hashValue
-                            if recentOutputHashes.contains(outputHash) {
-                                appendLog("(same output as before — not shown)")
-                            }
-                            recentOutputHashes.insert(outputHash)
-
-                            // Truncate very long outputs for the API (50K keeps full bridge files)
-                            let truncated = toolOutput.count > 50_000
-                                ? String(toolOutput.prefix(50_000)) + "\n...(truncated)"
-                                : toolOutput
-
-                            toolResults.append([
-                                "type": "tool_result",
-                                "tool_use_id": toolId,
-                                "content": truncated
-                            ])
-                        }
-
-                        // Script management tools
-                        if name == "list_agent_scripts" {
-                            let scripts = scriptService.listScripts()
-                            let output: String
-                            if scripts.isEmpty {
-                                output = "No scripts found in ~/Documents/Agent/agents/"
-                            } else {
-                                output = scripts.map { "\($0.name) (\($0.size) bytes)" }.joined(separator: "\n")
-                            }
-                            appendLog("Scripts: \(scripts.count) found")
-                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
-                        }
-
-                        if name == "read_agent_script" {
-                            let scriptName = input["name"] as? String ?? ""
-                            let output = scriptService.readScript(name: scriptName) ?? "Error: script '\(scriptName)' not found."
-                            appendLog("Read: \(scriptName)")
-                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
-                        }
-
-                        if name == "create_agent_script" {
-                            let scriptName = input["name"] as? String ?? ""
-                            let content = input["content"] as? String ?? ""
-                            let output = scriptService.createScript(name: scriptName, content: content)
-                            appendLog(output)
-                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
-                        }
-
-                        if name == "update_agent_script" {
-                            let scriptName = input["name"] as? String ?? ""
-                            let content = input["content"] as? String ?? ""
-                            let output = scriptService.updateScript(name: scriptName, content: content)
-                            appendLog(output)
-                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
-                        }
-
-                        if name == "delete_agent_script" {
-                            let scriptName = input["name"] as? String ?? ""
-                            let output = scriptService.deleteScript(name: scriptName)
-                            appendLog(output)
-                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
-                        }
-
-                        if name == "run_agent_script" {
-                            let scriptName = input["name"] as? String ?? ""
-                            let arguments = input["arguments"] as? String ?? ""
-                            guard let compileCmd = scriptService.compileCommand(name: scriptName) else {
-                                let err = "Error: script '\(scriptName)' not found."
-                                appendLog(err)
-                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
-                                continue
-                            }
-
-                            // Step 1: Compile the script dylib via UserService
-                            appendLog("Compiling: \(scriptName)")
-                            flushLog()
-
-                            resetStreamCounters()
-                            userServiceActive = true
-                            userWasActive = true
-                            userService.onOutput = { [weak self] chunk in
-                                self?.appendRawOutput(chunk)
-                            }
-                            let compileResult = await userService.execute(command: compileCmd)
-                            userService.onOutput = nil
-                            userServiceActive = false
-                            flushLog()
-
-                            guard !Task.isCancelled else { break }
-
-                            if compileResult.status != 0 {
-                                appendLog("Compile failed (exit code: \(compileResult.status))")
-                                let toolOutput = compileResult.output.isEmpty
-                                    ? "(compile failed, exit code: \(compileResult.status))"
-                                    : compileResult.output
-                                let truncated2 = toolOutput.count > 10000
-                                    ? String(toolOutput.prefix(10000)) + "\n...(truncated)"
-                                    : toolOutput
-                                commandsRun.append("run_agent_script: \(scriptName) (compile failed)")
-                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": truncated2])
-                                continue
-                            }
-
-                            // Step 2: Load and run dylib in Agent!'s process
-                            appendLog("Running: \(scriptName) (in-process)")
-                            flushLog()
-
-                            let runResult = await scriptService.loadAndRunScript(name: scriptName, arguments: arguments)
-
-                            guard !Task.isCancelled else { break }
-
-                            if runResult.status != 0 {
-                                appendLog("exit code: \(runResult.status)")
-                            }
-                            if !runResult.output.isEmpty {
-                                appendLog(runResult.output)
-                            }
-                            let toolOutput = runResult.output.isEmpty
-                                ? "(no output, exit code: \(runResult.status))"
-                                : runResult.output
-                            let truncated2 = toolOutput.count > 10000
-                                ? String(toolOutput.prefix(10000)) + "\n...(truncated)"
-                                : toolOutput
-                            commandsRun.append("run_agent_script: \(scriptName)")
-                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": truncated2])
-                        }
-
-                        // Dynamic Apple Event query tool
-                        if name == "apple_event_query" {
-                            let bundleID = input["bundle_id"] as? String ?? ""
-                            let operations = input["operations"] as? [[String: Any]] ?? []
-                            let allowWrites = input["allow_writes"] as? Bool ?? false
-                            appendLog("AE query: \(bundleID) (\(operations.count) ops)")
-                            flushLog()
-                            let output = AppleEventService.shared.execute(
-                                bundleID: bundleID, operations: operations, allowWrites: allowWrites
-                            )
-                            appendLog(output)
-                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
-                        }
-
-                        // Xcode ScriptingBridge tools
-                        if name == "xcode_grant_permission" {
-                            appendLog("Granting Xcode Automation permission...")
-                            flushLog()
-                            let output = XcodeService.shared.grantPermission()
-                            appendLog(output)
-                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
-                        }
-
-                        if name == "xcode_build" {
-                            let projectPath = input["project_path"] as? String ?? ""
-                            appendLog("Building: \(projectPath)")
-                            flushLog()
-                            let output = XcodeService.shared.buildProject(projectPath: projectPath)
-                            appendLog(output)
-                            commandsRun.append("xcode_build: \(projectPath)")
-                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
-                        }
-
-                        if name == "xcode_run" {
-                            let projectPath = input["project_path"] as? String ?? ""
-                            appendLog("Running: \(projectPath)")
-                            flushLog()
-                            let output = XcodeService.shared.runProject(projectPath: projectPath)
-                            appendLog(output)
-                            commandsRun.append("xcode_run: \(projectPath)")
-                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
-                        }
-                    }
-                }
-
-                // Add assistant response to conversation
-                messages.append(["role": "assistant", "content": response.content])
-
-                if hasToolUse && !toolResults.isEmpty {
-                    messages.append(["role": "user", "content": toolResults])
-                    consecutiveNoTool = 0
-                } else if !hasToolUse {
-                    consecutiveNoTool += 1
-                    // Give the model up to 3 nudges to use tools before giving up
-                    if consecutiveNoTool >= 3 {
-                        appendLog("(model not using tools — stopping)")
-                        break
-                    }
-                    messages.append(["role": "user", "content": "Continue. You must use execute_user_command or execute_command tools to perform actions. Call task_complete when finished."])
-                }
-
-            } catch {
-                if !Task.isCancelled {
-                    appendLog("Error: \(error.localizedDescription)")
-                }
-                break
-            }
-        }
-
-        guard !Task.isCancelled else { return }
-
-        if iterations >= maxIterations {
-            appendLog("Reached maximum iterations (\(maxIterations))")
-        }
-
-        // Save partial history if task didn't call task_complete
-        if completionSummary.isEmpty && !commandsRun.isEmpty {
-            history.add(TaskRecord(prompt: prompt, summary: "(incomplete)", commandsRun: commandsRun), maxBeforeSummary: maxHistoryBeforeSummary)
-        }
-
-        flushLog()
-        persistLogNow()
-        isRunning = false
-        isThinking = false
-        userServiceActive = false
-        rootServiceActive = false
-        userWasActive = false
-        rootWasActive = false
     }
 }

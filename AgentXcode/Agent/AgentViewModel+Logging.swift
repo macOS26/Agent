@@ -1,0 +1,327 @@
+import AppKit
+
+// MARK: - Logging, Streaming & Media
+
+extension AgentViewModel {
+
+    // MARK: - Screenshot
+
+    func captureScreenshot() {
+        let tempPath = NSTemporaryDirectory() + "agent_screenshot_\(UUID().uuidString).png"
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+        process.arguments = ["-i", tempPath]  // interactive selection
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+        } catch {
+            appendLog("Screenshot failed: \(error.localizedDescription)")
+            return
+        }
+
+        guard process.terminationStatus == 0,
+              FileManager.default.fileExists(atPath: tempPath),
+              let image = NSImage(contentsOfFile: tempPath),
+              let tiffData = image.tiffRepresentation,
+              let bitmap = NSBitmapImageRep(data: tiffData),
+              let pngData = bitmap.representation(using: .png, properties: [:]) else {
+            // User cancelled the capture or file not found
+            return
+        }
+
+        attachedImages.append(image)
+        attachedImagesBase64.append(pngData.base64EncodedString())
+        try? FileManager.default.removeItem(atPath: tempPath)
+    }
+
+    func removeAttachment(at index: Int) {
+        guard attachedImages.indices.contains(index) else { return }
+        attachedImages.remove(at: index)
+        attachedImagesBase64.remove(at: index)
+    }
+
+    func removeAllAttachments() {
+        attachedImages.removeAll()
+        attachedImagesBase64.removeAll()
+    }
+
+    /// Try all pasteboard formats to grab an image.
+    /// Returns true if image data was found (encoding happens async in background).
+    @discardableResult
+    func pasteImageFromClipboard() -> Bool {
+        let pb = NSPasteboard.general
+
+        var rawData: Data?
+
+        // Try raw data types first (avoids full NSImage deserialization overhead)
+        for type in [NSPasteboard.PasteboardType.png,
+                     NSPasteboard.PasteboardType.tiff,
+                     NSPasteboard.PasteboardType(rawValue: "public.jpeg")] {
+            if let data = pb.data(forType: type) {
+                rawData = data
+                break
+            }
+        }
+
+        // Try NSImage as fallback
+        if rawData == nil,
+           let images = pb.readObjects(forClasses: [NSImage.self]) as? [NSImage],
+           let img = images.first,
+           let tiff = img.tiffRepresentation {
+            rawData = tiff
+        }
+
+        // Try file URLs (e.g. screenshot file copied from Finder)
+        if rawData == nil,
+           let urls = pb.readObjects(forClasses: [NSURL.self]) as? [URL] {
+            for url in urls {
+                let ext = url.pathExtension.lowercased()
+                if ["png", "jpg", "jpeg", "tiff", "bmp", "gif"].contains(ext),
+                   let data = try? Data(contentsOf: url) {
+                    rawData = data
+                    break
+                }
+            }
+        }
+
+        guard let imageData = rawData else { return false }
+
+        // Encode on a background thread to avoid blocking the main thread
+        Task {
+            let base64 = await Self.encodeImageToBase64(imageData)
+            guard let base64 else { return }
+            if let image = NSImage(data: imageData) {
+                attachedImages.append(image)
+                attachedImagesBase64.append(base64)
+            }
+        }
+
+        return true
+    }
+
+    /// Encode image data to a base64 PNG string off the main thread.
+    /// Downscales images larger than 2048px to prevent memory issues.
+    private static nonisolated func encodeImageToBase64(_ data: Data) async -> String? {
+        guard let bitmap = NSBitmapImageRep(data: data) else { return nil }
+
+        let maxDim = 2048
+        let w = bitmap.pixelsWide
+        let h = bitmap.pixelsHigh
+
+        if w > maxDim || h > maxDim {
+            let scale = min(Double(maxDim) / Double(w), Double(maxDim) / Double(h))
+            let newW = Int(Double(w) * scale)
+            let newH = Int(Double(h) * scale)
+
+            guard let cgImage = bitmap.cgImage,
+                  let ctx = CGContext(
+                      data: nil, width: newW, height: newH,
+                      bitsPerComponent: 8, bytesPerRow: 0,
+                      space: CGColorSpaceCreateDeviceRGB(),
+                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+                  ) else { return nil }
+
+            ctx.interpolationQuality = .high
+            ctx.draw(cgImage, in: CGRect(x: 0, y: 0, width: newW, height: newH))
+
+            guard let resizedCG = ctx.makeImage() else { return nil }
+            let resizedBitmap = NSBitmapImageRep(cgImage: resizedCG)
+            guard let pngData = resizedBitmap.representation(using: .png, properties: [:]) else { return nil }
+            return pngData.base64EncodedString()
+        }
+
+        guard let pngData = bitmap.representation(using: .png, properties: [:]) else { return nil }
+        return pngData.base64EncodedString()
+    }
+
+    // MARK: - Log Buffering
+
+    /// Snapshot any image files found in text to persistent cache, rewriting paths to UUID copies.
+    private func snapshotImages(in text: String) -> String {
+        let nsText = text as NSString
+        let matches = Self.imagePathRegex?.matches(in: text, range: NSRange(location: 0, length: nsText.length)) ?? []
+        guard !matches.isEmpty else { return text }
+
+        var result = text
+        // Process in reverse so earlier offsets stay valid
+        for match in matches.reversed() {
+            let range = match.range(at: 1)
+            let path = nsText.substring(with: range)
+
+            // Skip if already a cached path (old or new cache dirs)
+            if path.contains("/log_images/") || path.contains("/Caches/Agent/") { continue }
+
+            // Skip if file doesn't exist
+            guard FileManager.default.fileExists(atPath: path) else { continue }
+
+            let ext = (path as NSString).pathExtension
+            let uuid = UUID().uuidString
+            let cachedURL = Self.logImageCacheDir.appendingPathComponent("\(uuid).\(ext)")
+
+            do {
+                try FileManager.default.copyItem(atPath: path, toPath: cachedURL.path)
+                guard let swiftRange = Range(range, in: result) else { continue }
+                result.replaceSubrange(swiftRange, with: cachedURL.path)
+            } catch {
+                // Copy failed — leave original path
+            }
+        }
+
+        return result
+    }
+
+    func appendLog(_ message: String) {
+        let timestamp = Self.timestampFormatter.string(from: Date())
+        let cached = snapshotImages(in: message)
+        logBuffer += "[\(timestamp)] \(cached)\n"
+        scheduleLogFlush()
+    }
+
+    func appendRawOutput(_ text: String) {
+        guard !text.isEmpty else { return }
+        streamOutputCount += text.count
+        // Cap streaming display to prevent UI from choking
+        if streamOutputCount > Self.maxStreamDisplay {
+            if !streamTruncated {
+                streamTruncated = true
+                logBuffer += "...(output truncated for display)...\n"
+                scheduleLogFlush()
+            }
+            return
+        }
+        let cached = snapshotImages(in: text)
+        logBuffer += cached
+        if !cached.hasSuffix("\n") {
+            logBuffer += "\n"
+        }
+        scheduleLogFlush()
+    }
+
+    /// Collapse heredoc bodies in commands to keep the log clean.
+    /// "cat > file.html <<'EOF'\n<html>...\nEOF" -> "cat > file.html <<'EOF'\n...(heredoc)...\nEOF"
+    static func collapseHeredocs(_ command: String) -> String {
+        let lines = command.components(separatedBy: "\n")
+        guard lines.count > 3 else { return command }
+
+        // Find the line containing a heredoc marker: <<'DELIM', <<DELIM, <<"DELIM", <<-'DELIM'
+        let pattern = #"<<-?\s*'?"?(\w+)'?"?"#
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return command }
+
+        for (i, line) in lines.enumerated() {
+            let nsLine = line as NSString
+            guard let match = regex.firstMatch(in: line, range: NSRange(location: 0, length: nsLine.length)),
+                  match.range(at: 1).location != NSNotFound else { continue }
+            let delimiter = nsLine.substring(with: match.range(at: 1))
+
+            // Find the closing delimiter line after the heredoc start
+            guard let endIdx = lines[(i + 1)...].firstIndex(where: {
+                $0.trimmingCharacters(in: .whitespaces) == delimiter
+            }), endIdx > i + 1 else { continue }
+
+            // Collapse: keep lines before + heredoc line, placeholder, delimiter + remainder
+            var result = Array(lines[...i])
+            result.append("...(\(delimiter) heredoc)...")
+            result.append(contentsOf: lines[endIdx...])
+            return result.joined(separator: "\n")
+        }
+        return command
+    }
+
+    func resetStreamCounters() {
+        streamOutputCount = 0
+        streamTruncated = false
+    }
+
+    func clearLog() {
+        logBuffer = ""
+        logFlushTask?.cancel()
+        logFlushTask = nil
+        activityLog = ""
+        UserDefaults.standard.removeObject(forKey: "agentActivityLog")
+        // Clean up cached image snapshots
+        try? FileManager.default.removeItem(at: Self.logImageCacheDir)
+        try? FileManager.default.createDirectory(at: Self.logImageCacheDir, withIntermediateDirectories: true)
+    }
+
+    // MARK: - LLM Streaming
+
+    func appendStreamDelta(_ delta: String) {
+        if !streamingTextStarted {
+            let timestamp = Self.timestampFormatter.string(from: Date())
+            streamBuffer += "[\(timestamp)] "
+            streamingTextStarted = true
+        }
+        streamBuffer += delta
+        scheduleStreamFlush()
+    }
+
+    private func scheduleStreamFlush() {
+        guard streamFlushTask == nil else { return }
+        streamFlushTask = Task {
+            try? await Task.sleep(for: .milliseconds(50))
+            self.streamFlushTask = nil
+            if !self.streamBuffer.isEmpty {
+                self.activityLog += self.streamBuffer
+                self.streamBuffer = ""
+            }
+        }
+    }
+
+    func flushStreamBuffer() {
+        streamFlushTask?.cancel()
+        streamFlushTask = nil
+        if !streamBuffer.isEmpty {
+            activityLog += streamBuffer
+            streamBuffer = ""
+        }
+        if streamingTextStarted {
+            activityLog += "\n"
+            streamingTextStarted = false
+        }
+    }
+
+    private func scheduleLogFlush() {
+        guard logFlushTask == nil else { return }
+        logFlushTask = Task {
+            try? await Task.sleep(for: .milliseconds(150))
+            flushLog()
+        }
+    }
+
+    func flushLog() {
+        logFlushTask?.cancel()
+        logFlushTask = nil
+        if !logBuffer.isEmpty {
+            activityLog += logBuffer
+            logBuffer = ""
+            trimToRecentTasks()
+            schedulePersist()
+        }
+    }
+
+    private func schedulePersist() {
+        guard logPersistTask == nil else { return }
+        logPersistTask = Task {
+            try? await Task.sleep(for: .seconds(2))
+            logPersistTask = nil
+            UserDefaults.standard.set(activityLog, forKey: "agentActivityLog")
+        }
+    }
+
+    func persistLogNow() {
+        logPersistTask?.cancel()
+        logPersistTask = nil
+        UserDefaults.standard.set(activityLog, forKey: "agentActivityLog")
+    }
+
+    /// Keep only the last N tasks visible in the chat (controlled by visibleTaskCount preference)
+    private func trimToRecentTasks() {
+        let marker = "--- New Task ---"
+        let parts = activityLog.components(separatedBy: marker)
+        let limit = visibleTaskCount
+        guard parts.count > limit + 1 else { return }
+        let kept = parts.suffix(limit).joined(separator: marker)
+        activityLog = marker + kept
+    }
+}
