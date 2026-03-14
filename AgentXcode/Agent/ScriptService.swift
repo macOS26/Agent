@@ -19,6 +19,11 @@ final class ScriptService {
         let size: Int
     }
 
+    // MARK: - Thread Safety
+    
+    /// Lock to prevent concurrent Package.swift modifications
+    private let packageLock = NSLock()
+
     // MARK: - Bundle paths
 
     private var bundleSources: URL? {
@@ -38,6 +43,9 @@ final class ScriptService {
 
     /// Ensure ~/Documents/Agent/agents/ exists with bridges, scripts, and Package.swift
     func ensurePackage() {
+        packageLock.lock()
+        defer { packageLock.unlock() }
+        
         let fm = FileManager.default
         let agentsPath = Self.agentsDir.path
 
@@ -51,13 +59,14 @@ final class ScriptService {
             copyPackageSwift()
         }
         copyBundledJSONFiles()
-        syncBridgesWithPackage()
-        syncScriptsWithPackage()
+        syncBridgesWithPackageLocked()
+        syncScriptsWithPackageLocked()
     }
 
     /// Sync scriptNames in Package.swift with actual .swift files on disk.
     /// Adds unregistered scripts and removes entries for deleted files.
-    func syncScriptsWithPackage() {
+    /// MUST be called with packageLock held.
+    private func syncScriptsWithPackageLocked() {
         let fm = FileManager.default
         guard fm.fileExists(atPath: scriptsDir.path),
               fm.fileExists(atPath: packageSwiftURL.path) else { return }
@@ -73,7 +82,8 @@ final class ScriptService {
 
     /// Sync bridgeNames in Package.swift with actual .swift files on disk.
     /// Excludes ScriptingBridgeCommon.swift and AgentScriptingBridge.swift (managed separately).
-    func syncBridgesWithPackage() {
+    /// MUST be called with packageLock held.
+    private func syncBridgesWithPackageLocked() {
         let fm = FileManager.default
         guard fm.fileExists(atPath: bridgesDir.path),
               fm.fileExists(atPath: packageSwiftURL.path) else { return }
@@ -282,7 +292,7 @@ final class ScriptService {
         do {
             try fm.createDirectory(at: scriptsDir, withIntermediateDirectories: true)
             try final.write(to: scriptFile, atomically: true, encoding: .utf8)
-            addScriptToPackage(scriptName)
+            addScriptToPackageLocked(scriptName)
             return "Created \(scriptName) (\(final.count) bytes). Registered in Package.swift."
         } catch {
             return "Error creating script: \(error.localizedDescription)"
@@ -320,7 +330,7 @@ final class ScriptService {
 
         do {
             try fm.removeItem(at: scriptFile)
-            removeScriptFromPackage(scriptName)
+            removeScriptFromPackageLocked(scriptName)
             return "Deleted \(scriptName). Removed from Package.swift."
         } catch {
             return "Error deleting script: \(error.localizedDescription)"
@@ -334,7 +344,8 @@ final class ScriptService {
     }
 
     /// Add a script name to the scriptNames array in Package.swift
-    private func addScriptToPackage(_ name: String) {
+    /// MUST be called with packageLock held or from ensurePackage (which holds it).
+    private func addScriptToPackageLocked(_ name: String) {
         guard let content = try? String(contentsOf: packageSwiftURL, encoding: .utf8) else { return }
 
         // Find the scriptNames array and insert the new name in sorted order
@@ -357,7 +368,8 @@ final class ScriptService {
     }
 
     /// Remove a script name from the scriptNames array in Package.swift
-    private func removeScriptFromPackage(_ name: String) {
+    /// MUST be called with packageLock held or from ensurePackage (which holds it).
+    private func removeScriptFromPackageLocked(_ name: String) {
         guard let content = try? String(contentsOf: packageSwiftURL, encoding: .utf8) else { return }
 
         // Find and remove the line containing this script name
