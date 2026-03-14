@@ -48,9 +48,8 @@ struct ScriptingBridgesTests {
         }
         let path = resourcePath + "/Sources/XCFScriptingBridges/ScriptingBridgeCommon.swift"
         let content = try? String(contentsOfFile: path, encoding: .utf8)
-        #expect(content != nil)
-        #expect(content!.contains("SBObjectProtocol"))
-        #expect(content!.contains("SBApplicationProtocol"))
+        #expect(content?.contains("SBObjectProtocol") == true)
+        #expect(content?.contains("SBApplicationProtocol") == true)
     }
 
     // MARK: - Scripts folder

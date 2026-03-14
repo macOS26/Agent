@@ -15,9 +15,8 @@ struct PackageGenerationTests {
         #expect(FileManager.default.fileExists(atPath: packagePath))
 
         let content = try? String(contentsOfFile: packagePath, encoding: .utf8)
-        #expect(content != nil)
-        #expect(content!.contains("swift-tools-version"))
-        #expect(content!.contains("AgentScripts"))
+        #expect(content?.contains("swift-tools-version") == true)
+        #expect(content?.contains("AgentScripts") == true)
 
         _ = service.deleteScript(name: "pkg_test")
     }
@@ -28,12 +27,10 @@ struct PackageGenerationTests {
 
         let packagePath = ScriptService.agentsDir.appendingPathComponent("Package.swift").path
         let content = try? String(contentsOfFile: packagePath, encoding: .utf8)
-        #expect(content != nil)
-
         let bridgesDir = ScriptService.agentsDir
             .appendingPathComponent("Sources/XCFScriptingBridges").path
         if FileManager.default.fileExists(atPath: bridgesDir) {
-            #expect(content!.contains("XCFScriptingBridges"))
+            #expect(content?.contains("XCFScriptingBridges") == true)
         }
 
         _ = service.deleteScript(name: "bridges_pkg_test")
@@ -45,8 +42,7 @@ struct PackageGenerationTests {
 
         let packagePath = ScriptService.agentsDir.appendingPathComponent("Package.swift").path
         let content = try? String(contentsOfFile: packagePath, encoding: .utf8)
-        #expect(content != nil)
-        #expect(content!.contains("\"target_test\""))
+        #expect(content?.contains("\"target_test\"") == true)
 
         _ = service.deleteScript(name: "target_test")
     }
@@ -58,7 +54,6 @@ struct PackageGenerationTests {
 
         let packagePath = ScriptService.agentsDir.appendingPathComponent("Package.swift").path
         let content = try? String(contentsOfFile: packagePath, encoding: .utf8)
-        #expect(content != nil)
-        #expect(!content!.contains("\"remove_test\""))
+        #expect(content?.contains("\"remove_test\"") != true)
     }
 }

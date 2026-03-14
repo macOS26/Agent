@@ -104,8 +104,7 @@ struct ScriptServiceTests {
     func compileCommand() {
         _ = service.createScript(name: "cmd_test", content: "print(\"hi\")")
         let cmd = service.compileCommand(name: "cmd_test")
-        #expect(cmd != nil)
-        #expect(cmd!.contains("swift build --product 'cmd_test'"))
+        #expect(cmd?.contains("swift build --product 'cmd_test'") == true)
 
         _ = service.deleteScript(name: "cmd_test")
     }
@@ -251,8 +250,11 @@ struct ScriptServiceTests {
 
         // Write input JSON
         let input: [String: Any] = ["greeting": "hello", "count": 42]
-        let inputData = try! JSONSerialization.data(withJSONObject: input, options: .prettyPrinted)
-        try! inputData.write(to: URL(fileURLWithPath: inputPath))
+        guard let inputData = try? JSONSerialization.data(withJSONObject: input, options: .prettyPrinted) else {
+            Issue.record("Could not serialize input JSON")
+            return
+        }
+        try? inputData.write(to: URL(fileURLWithPath: inputPath))
 
         // Create script that reads input and writes output
         let script = """
