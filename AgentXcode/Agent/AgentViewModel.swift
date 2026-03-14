@@ -295,13 +295,26 @@ final class AgentViewModel {
 
         // Xcode Command Line Tools check is handled by DependencyOverlay in ContentView
 
-        // Test daemon connectivity on startup via XPC ping (5s timeout)
+        // Test daemon connectivity on startup — auto-fix if not responding
         Task {
             try? await Task.sleep(nanoseconds: 500_000_000)
             appendLog("Warming up the engines...")
-            let userOK = await userService.ping()
+            var userOK = await userService.ping()
+            var daemonOK = await helperService.ping()
+            // Auto-fix: restart services that aren't responding
+            if !userOK {
+                appendLog("User agent: not responding — restarting...")
+                _ = userService.restartAgent()
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                userOK = await userService.ping()
+            }
+            if !daemonOK {
+                appendLog("Launch Daemon: not responding — restarting...")
+                _ = helperService.restartDaemon()
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                daemonOK = await helperService.ping()
+            }
             appendLog("User agent: \(userOK ? "responding" : "NOT responding")")
-            let daemonOK = await helperService.ping()
             appendLog("Launch Daemon: \(daemonOK ? "responding" : "NOT responding")")
             if !userOK || !daemonOK {
                 appendLog("Click Register to restart services")
@@ -324,9 +337,21 @@ final class AgentViewModel {
     func testConnection() {
         appendLog("Testing connections...")
         Task {
-            let userOK = await userService.ping()
+            var userOK = await userService.ping()
+            var daemonOK = await helperService.ping()
+            if !userOK {
+                appendLog("User agent: not responding — restarting...")
+                _ = userService.restartAgent()
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                userOK = await userService.ping()
+            }
+            if !daemonOK {
+                appendLog("Launch Daemon: not responding — restarting...")
+                _ = helperService.restartDaemon()
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                daemonOK = await helperService.ping()
+            }
             appendLog("User agent: \(userOK ? "responding" : "NOT responding")")
-            let daemonOK = await helperService.ping()
             appendLog("Launch Daemon: \(daemonOK ? "responding" : "NOT responding")")
             if !userOK || !daemonOK {
                 appendLog("Click Register to restart services")

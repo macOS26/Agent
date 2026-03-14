@@ -69,7 +69,8 @@ final class HelperService {
     }
 
     /// Kill any stale daemon processes, unregister, and re-register.
-    private func restartDaemon() -> String {
+    @discardableResult
+    func restartDaemon() -> String {
         // Kill any lingering processes
         let kill = Process()
         kill.executableURL = URL(fileURLWithPath: "/usr/bin/pkill")

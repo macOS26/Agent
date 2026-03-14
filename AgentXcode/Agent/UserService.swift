@@ -66,7 +66,8 @@ final class UserService {
     }
 
     /// Kill any stale agent processes, unregister, and re-register.
-    private func restartAgent() -> String {
+    @discardableResult
+    func restartAgent() -> String {
         // Kill any lingering processes
         let kill = Process()
         kill.executableURL = URL(fileURLWithPath: "/usr/bin/pkill")
