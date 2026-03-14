@@ -51,6 +51,7 @@
 		EAF3666F2F623D6A004B7E38 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = EAF3666E2F623D6A004B7E38 /* AppIcon.icon */; };
 		EE10000000000000000004 /* ObjCTry.m in Sources */ = {isa = PBXBuildFile; fileRef = EE10000000000000000002 /* ObjCTry.m */; };
 		FF10000000000000000002 /* PackageAutoDiscoveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000001 /* PackageAutoDiscoveryTests.swift */; };
+		FF10000000000000000004 /* CodingServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000003 /* CodingServiceTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -173,6 +174,7 @@
 		EE10000000000000000002 /* ObjCTry.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ObjCTry.m; sourceTree = "<group>"; };
 		EE10000000000000000003 /* Agent-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Agent-Bridging-Header.h"; sourceTree = "<group>"; };
 		FF10000000000000000001 /* PackageAutoDiscoveryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageAutoDiscoveryTests.swift; sourceTree = "<group>"; };
+		FF10000000000000000003 /* CodingServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodingServiceTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -323,6 +325,7 @@
 				DD10000000000000000002 /* ScriptingBridgesTests.swift */,
 				DD10000000000000000003 /* PackageGenerationTests.swift */,
 				FF10000000000000000001 /* PackageAutoDiscoveryTests.swift */,
+				FF10000000000000000003 /* CodingServiceTests.swift */,
 			);
 			path = AgentTests;
 			sourceTree = "<group>";
@@ -513,6 +516,7 @@
 				DD10000000000000000031 /* ScriptingBridgesTests.swift in Sources */,
 				DD10000000000000000032 /* PackageGenerationTests.swift in Sources */,
 				FF10000000000000000002 /* PackageAutoDiscoveryTests.swift in Sources */,
+				FF10000000000000000004 /* CodingServiceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

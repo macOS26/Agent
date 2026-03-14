@@ -4,6 +4,23 @@
 
 extension AgentViewModel {
 
+    // MARK: - Helpers
+
+    /// Execute a command via UserService XPC with streaming output.
+    private func executeViaUserAgent(command: String) async -> (status: Int32, output: String) {
+        resetStreamCounters()
+        userServiceActive = true
+        userWasActive = true
+        userService.onOutput = { [weak self] chunk in
+            self?.appendRawOutput(chunk)
+        }
+        let result = await userService.execute(command: command)
+        userService.onOutput = nil
+        userServiceActive = false
+        flushLog()
+        return result
+    }
+
     // MARK: - Local Execution (osascript)
 
     /// Runs a command directly in the Agent app process (not via XPC).
@@ -181,8 +198,8 @@ extension AgentViewModel {
                             return
                         }
 
-                        // Coding tools — direct file operations via CodingService
-                        // All CodingService calls run off the main thread to avoid UI beach balls.
+                        // MARK: Pure file I/O tools (CodingService — no processes)
+
                         if name == "read_file" {
                             let filePath = input["file_path"] as? String ?? ""
                             let offset = input["offset"] as? Int
@@ -214,11 +231,24 @@ extension AgentViewModel {
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
+                        // MARK: Process-based tools (routed through UserService XPC)
+
                         if name == "list_files" {
                             let pattern = input["pattern"] as? String ?? "*"
                             let path = input["path"] as? String
-                            appendLog("List: \(pattern)")
-                            let output = await Self.offMain { CodingService.listFiles(pattern: pattern, path: path) }
+                            appendLog("$ find \(path ?? "~") -name '\(pattern)'")
+                            flushLog()
+                            let cmd = CodingService.buildListFilesCommand(pattern: pattern, path: path)
+                            let result = await executeViaUserAgent(command: cmd)
+                            guard !Task.isCancelled else { break }
+                            let output: String
+                            if result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                output = "No files matching '\(pattern)'"
+                                appendLog(output)
+                            } else {
+                                output = result.output
+                            }
+                            flushLog()
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
@@ -226,16 +256,39 @@ extension AgentViewModel {
                             let pattern = input["pattern"] as? String ?? ""
                             let path = input["path"] as? String
                             let include = input["include"] as? String
-                            appendLog("Search: \(pattern)")
-                            let output = await Self.offMain { CodingService.searchFiles(pattern: pattern, path: path, include: include) }
+                            appendLog("$ grep -rn '\(pattern)' \(path ?? "~")\(include.map { " --include=\($0)" } ?? "")")
+                            flushLog()
+                            let cmd = CodingService.buildSearchFilesCommand(pattern: pattern, path: path, include: include)
+                            let result = await executeViaUserAgent(command: cmd)
+                            guard !Task.isCancelled else { break }
+                            let output: String
+                            if result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                output = "No matches for '\(pattern)'"
+                                appendLog(output)
+                            } else {
+                                output = result.output
+                            }
+                            flushLog()
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
-                        // Git tools
+                        // MARK: Git tools (routed through UserService XPC)
+
                         if name == "git_status" {
                             let path = input["path"] as? String
-                            appendLog("Git status")
-                            let output = await Self.offMain { CodingService.gitStatus(path: path) }
+                            appendLog("$ git status\(path.map { " (\($0))" } ?? "")")
+                            flushLog()
+                            let cmd = CodingService.buildGitStatusCommand(path: path)
+                            let result = await executeViaUserAgent(command: cmd)
+                            guard !Task.isCancelled else { break }
+                            let output: String
+                            if result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                output = "(no output, exit code: \(result.status))"
+                                appendLog(output)
+                            } else {
+                                output = result.output
+                            }
+                            flushLog()
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
@@ -243,16 +296,40 @@ extension AgentViewModel {
                             let path = input["path"] as? String
                             let staged = input["staged"] as? Bool ?? false
                             let target = input["target"] as? String
-                            appendLog("Git diff\(staged ? " --cached" : "")\(target.map { " \($0)" } ?? "")")
-                            let output = await Self.offMain { CodingService.gitDiff(path: path, staged: staged, target: target) }
+                            appendLog("$ git diff\(staged ? " --cached" : "")\(target.map { " \($0)" } ?? "")")
+                            flushLog()
+                            let cmd = CodingService.buildGitDiffCommand(path: path, staged: staged, target: target)
+                            let result = await executeViaUserAgent(command: cmd)
+                            guard !Task.isCancelled else { break }
+                            let output: String
+                            if result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                output = staged ? "No staged changes" : "No changes"
+                                appendLog(output)
+                            } else if result.output.count > 50_000 {
+                                output = String(result.output.prefix(50_000)) + "\n...(diff truncated)"
+                            } else {
+                                output = result.output
+                            }
+                            flushLog()
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
                         if name == "git_log" {
                             let path = input["path"] as? String
                             let count = input["count"] as? Int
-                            appendLog("Git log")
-                            let output = await Self.offMain { CodingService.gitLog(path: path, count: count) }
+                            appendLog("$ git log\(path.map { " (\($0))" } ?? "")")
+                            flushLog()
+                            let cmd = CodingService.buildGitLogCommand(path: path, count: count)
+                            let result = await executeViaUserAgent(command: cmd)
+                            guard !Task.isCancelled else { break }
+                            let output: String
+                            if result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                output = "Error: \(result.status == 0 ? "empty log" : "exit code \(result.status)")"
+                                appendLog(output)
+                            } else {
+                                output = result.output
+                            }
+                            flushLog()
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
@@ -261,9 +338,15 @@ extension AgentViewModel {
                             let message = input["message"] as? String ?? ""
                             let files = input["files"] as? [String]
                             appendLog("Git commit: \(message)")
-                            let output = await Self.offMain { CodingService.gitCommit(path: path, message: message, files: files) }
-                            appendLog(output)
+                            flushLog()
+                            let cmd = CodingService.buildGitCommitCommand(path: path, message: message, files: files)
+                            let result = await executeViaUserAgent(command: cmd)
+                            guard !Task.isCancelled else { break }
+                            if !result.output.isEmpty { appendLog(result.output) }
                             commandsRun.append("git_commit: \(message)")
+                            let output = result.output.isEmpty
+                                ? "(no output, exit code: \(result.status))"
+                                : result.output
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
@@ -271,9 +354,22 @@ extension AgentViewModel {
                             let path = input["path"] as? String
                             let patch = input["patch"] as? String ?? ""
                             appendLog("Git apply patch")
-                            let output = await Self.offMain { CodingService.gitApplyPatch(path: path, patch: patch) }
-                            appendLog(output)
+                            flushLog()
+                            // Write patch to temp file, apply, clean up
+                            let tempName = "agent_patch_\(UUID().uuidString).patch"
+                            let tempPath = "/tmp/\(tempName)"
+                            let dir = CodingService.shellEscape(path ?? CodingService.defaultDir)
+                            let cmd = "cat > \(tempPath) << 'AGENT_PATCH_EOF'\n\(patch)\nAGENT_PATCH_EOF\ncd \(dir) && git apply --verbose \(tempPath); STATUS=$?; rm -f \(tempPath); exit $STATUS"
+                            let result = await executeViaUserAgent(command: cmd)
+                            guard !Task.isCancelled else { break }
+                            if !result.output.isEmpty { appendLog(result.output) }
                             commandsRun.append("git_diff_patch")
+                            let output: String
+                            if result.status != 0 {
+                                output = result.output.isEmpty ? "Patch failed (exit code: \(result.status))" : result.output
+                            } else {
+                                output = result.output.isEmpty ? "Patch applied successfully" : result.output
+                            }
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
@@ -282,11 +378,19 @@ extension AgentViewModel {
                             let branchName = input["name"] as? String ?? ""
                             let checkout = input["checkout"] as? Bool ?? true
                             appendLog("Git branch: \(branchName)")
-                            let output = await Self.offMain { CodingService.gitBranch(path: path, name: branchName, checkout: checkout) }
-                            appendLog(output)
+                            flushLog()
+                            let cmd = CodingService.buildGitBranchCommand(path: path, name: branchName, checkout: checkout)
+                            let result = await executeViaUserAgent(command: cmd)
+                            guard !Task.isCancelled else { break }
+                            if !result.output.isEmpty { appendLog(result.output) }
                             commandsRun.append("git_branch: \(branchName)")
+                            let output = result.output.isEmpty
+                                ? (result.status == 0 ? "Created branch '\(branchName)'" : "Error (exit code: \(result.status))")
+                                : result.output
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
+
+                        // MARK: Shell execution tools
 
                         if name == "execute_command" || name == "execute_user_command" {
                             let command = input["command"] as? String ?? ""
@@ -314,14 +418,7 @@ extension AgentViewModel {
                                 result = await executeLocal(command: command)
                                 userServiceActive = false
                             } else {
-                                userServiceActive = true
-                                userWasActive = true
-                                userService.onOutput = { [weak self] chunk in
-                                    self?.appendRawOutput(chunk)
-                                }
-                                result = await userService.execute(command: command)
-                                userService.onOutput = nil
-                                userServiceActive = false
+                                result = await executeViaUserAgent(command: command)
                             }
                             flushLog()
 
@@ -415,16 +512,7 @@ extension AgentViewModel {
                             appendLog("Compiling: \(scriptName)")
                             flushLog()
 
-                            resetStreamCounters()
-                            userServiceActive = true
-                            userWasActive = true
-                            userService.onOutput = { [weak self] chunk in
-                                self?.appendRawOutput(chunk)
-                            }
-                            let compileResult = await userService.execute(command: compileCmd)
-                            userService.onOutput = nil
-                            userServiceActive = false
-                            flushLog()
+                            let compileResult = await executeViaUserAgent(command: compileCmd)
 
                             guard !Task.isCancelled else { break }
 
@@ -486,7 +574,7 @@ extension AgentViewModel {
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
-                        // Xcode ScriptingBridge tools
+                        // Xcode ScriptingBridge tools (in-process, offMain)
                         if name == "xcode_grant_permission" {
                             appendLog("Granting Xcode Automation permission...")
                             flushLog()

@@ -1,20 +1,8 @@
 import Foundation
 
-/// Pure file operations for coding tools — no shell, no escaping issues.
+/// Pure file operations for coding tools — no shell, no Process, no escaping issues.
+/// Process-based tools (list, search, git) route through UserService XPC instead.
 enum CodingService {
-
-    /// Sensible default directory for a GUI app (currentDirectoryPath is "/").
-    private static let defaultDir = FileManager.default.homeDirectoryForCurrentUser.path
-
-    /// Wait for a process with a timeout. Returns true if it exited, false if timed out.
-    private static func waitForProcess(_ process: Process, timeout: TimeInterval) -> Bool {
-        let semaphore = DispatchSemaphore(value: 0)
-        DispatchQueue.global().async {
-            process.waitUntilExit()
-            semaphore.signal()
-        }
-        return semaphore.wait(timeout: .now() + timeout) == .success
-    }
 
     // MARK: - Read File
 
@@ -142,268 +130,72 @@ enum CodingService {
         }
     }
 
-    // MARK: - List Files (glob)
+    // MARK: - Shell Command Builders (testable, executed via UserService XPC)
 
-    /// Find files matching a glob pattern under a directory.
-    static func listFiles(pattern: String, path: String?) -> String {
-        let baseDir = (path ?? Self.defaultDir) as NSString
-        let basePath = baseDir.expandingTildeInPath
+    /// Default directory for tools when no path is provided.
+    static let defaultDir = FileManager.default.homeDirectoryForCurrentUser.path
 
-        // Use /usr/bin/find for glob matching since Foundation doesn't have native glob
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/find")
-        process.arguments = [basePath, "-maxdepth", "10", "-name", pattern,
-                             "-not", "-path", "*/.*", "-not", "-path", "*/.build/*"]
-        process.currentDirectoryURL = URL(fileURLWithPath: basePath)
-
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        process.standardError = Pipe()
-
-        do {
-            try process.run()
-        } catch {
-            return "Error: \(error.localizedDescription)"
-        }
-
-        // Timeout after 15 seconds to prevent runaway searches
-        let completed = waitForProcess(process, timeout: 15)
-        if !completed {
-            process.terminate()
-            return "Error: search timed out in \(basePath). Provide a more specific path."
-        }
-
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        let output = String(data: data, encoding: .utf8) ?? ""
-
-        let files = output.components(separatedBy: "\n")
-            .filter { !$0.isEmpty }
-            .sorted()
-
-        if files.isEmpty {
-            return "No files matching '\(pattern)' in \(basePath)"
-        }
-
-        var result = "Found \(files.count) file(s):\n"
-        for file in files.prefix(200) {
-            result += "\(file)\n"
-        }
-        if files.count > 200 {
-            result += "... (\(files.count - 200) more)"
-        }
-        return result
+    /// Shell-escape a string using single quotes (POSIX safe).
+    static func shellEscape(_ s: String) -> String {
+        "'" + s.replacingOccurrences(of: "'", with: "'\\''") + "'"
     }
 
-    // MARK: - Search Files (grep)
+    static func buildListFilesCommand(pattern: String, path: String?) -> String {
+        let dir = shellEscape(path ?? defaultDir)
+        let pat = shellEscape(pattern)
+        return "find \(dir) -maxdepth 10 -name \(pat) -not -path '*/.*' -not -path '*/.build/*' 2>/dev/null | sort | head -200"
+    }
 
-    /// Search file contents by regex pattern.
-    static func searchFiles(pattern: String, path: String?, include: String?) -> String {
-        let baseDir = (path ?? Self.defaultDir) as NSString
-        let basePath = baseDir.expandingTildeInPath
-
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/grep")
-        var args = ["-rn", "--color=never"]
-
+    static func buildSearchFilesCommand(pattern: String, path: String?, include: String?) -> String {
+        let dir = shellEscape(path ?? defaultDir)
+        let pat = shellEscape(pattern)
+        var cmd = "grep -rn --color=never"
         if let include {
-            args += ["--include=\(include)"]
+            cmd += " --include=\(shellEscape(include))"
         }
-
-        // Exclude common noise
-        args += ["--exclude-dir=.git", "--exclude-dir=.build", "--exclude-dir=node_modules",
-                 "--exclude-dir=DerivedData"]
-        args += [pattern, basePath]
-
-        process.arguments = args
-
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        process.standardError = Pipe()
-
-        do {
-            try process.run()
-        } catch {
-            return "Error: \(error.localizedDescription)"
-        }
-
-        // Timeout after 15 seconds to prevent runaway searches
-        let completed = waitForProcess(process, timeout: 15)
-        if !completed {
-            process.terminate()
-            return "Error: search timed out in \(basePath). Provide a more specific path."
-        }
-
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        let output = String(data: data, encoding: .utf8) ?? ""
-
-        let lines = output.components(separatedBy: "\n").filter { !$0.isEmpty }
-
-        if lines.isEmpty {
-            return "No matches for '\(pattern)' in \(basePath)"
-        }
-
-        var result = "Found \(lines.count) match(es):\n"
-        for line in lines.prefix(100) {
-            result += "\(line)\n"
-        }
-        if lines.count > 100 {
-            result += "... (\(lines.count - 100) more matches)"
-        }
-        return result
+        cmd += " --exclude-dir=.git --exclude-dir=.build --exclude-dir=node_modules --exclude-dir=DerivedData"
+        cmd += " \(pat) \(dir) 2>/dev/null | head -100"
+        return cmd
     }
 
-    // MARK: - Git Operations
-
-    /// Run a git command and return its output.
-    private static func runGit(_ args: [String], in directory: String? = nil) -> (status: Int32, output: String) {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
-        process.arguments = args
-
-        if let dir = directory {
-            process.currentDirectoryURL = URL(fileURLWithPath: (dir as NSString).expandingTildeInPath)
-        }
-
-        let stdoutPipe = Pipe()
-        let stderrPipe = Pipe()
-        process.standardOutput = stdoutPipe
-        process.standardError = stderrPipe
-
-        do {
-            try process.run()
-            process.waitUntilExit()
-        } catch {
-            return (-1, "Error: \(error.localizedDescription)")
-        }
-
-        let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
-        let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-
-        var output = String(data: stdoutData, encoding: .utf8) ?? ""
-        let errStr = String(data: stderrData, encoding: .utf8) ?? ""
-        if !errStr.isEmpty {
-            if !output.isEmpty { output += "\n" }
-            output += errStr
-        }
-
-        return (process.terminationStatus, output)
+    static func buildGitStatusCommand(path: String?) -> String {
+        let dir = shellEscape(path ?? defaultDir)
+        return "cd \(dir) && echo \"Branch: $(git branch --show-current)\" && git status --short"
     }
 
-    /// Git status: branch, staged, unstaged, untracked.
-    static func gitStatus(path: String?) -> String {
-        let dir = path ?? Self.defaultDir
-        let branch = runGit(["branch", "--show-current"], in: dir)
-        let status = runGit(["status", "--short"], in: dir)
-
-        var result = "Branch: \(branch.output.trimmingCharacters(in: .whitespacesAndNewlines))\n"
-        if status.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            result += "Working tree clean"
-        } else {
-            result += status.output
-        }
-        return result
+    static func buildGitDiffCommand(path: String?, staged: Bool, target: String?) -> String {
+        let dir = shellEscape(path ?? defaultDir)
+        var cmd = "cd \(dir) && git diff --stat -p"
+        if staged { cmd += " --cached" }
+        if let target { cmd += " \(shellEscape(target))" }
+        return cmd
     }
 
-    /// Git diff: show changes. Supports staged, unstaged, or between refs.
-    static func gitDiff(path: String?, staged: Bool, target: String?) -> String {
-        let dir = path ?? Self.defaultDir
-        var args = ["diff", "--stat", "-p"]
-        if staged {
-            args.append("--cached")
-        }
-        if let target {
-            args.append(target)
-        }
-        let result = runGit(args, in: dir)
-
-        if result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            return staged ? "No staged changes" : "No changes"
-        }
-
-        // Truncate very large diffs
-        if result.output.count > 50_000 {
-            return String(result.output.prefix(50_000)) + "\n...(diff truncated)"
-        }
-        return result.output
-    }
-
-    /// Git log: recent commit history.
-    static func gitLog(path: String?, count: Int?) -> String {
-        let dir = path ?? Self.defaultDir
+    static func buildGitLogCommand(path: String?, count: Int?) -> String {
+        let dir = shellEscape(path ?? defaultDir)
         let n = min(count ?? 20, 100)
-        let result = runGit(["log", "--oneline", "--no-decorate", "-\(n)"], in: dir)
-
-        if result.status != 0 {
-            return "Error: \(result.output)"
-        }
-        return result.output
+        return "cd \(dir) && git log --oneline --no-decorate -\(n)"
     }
 
-    /// Git commit: stage specified files (or all) and commit.
-    static func gitCommit(path: String?, message: String, files: [String]?) -> String {
-        let dir = path ?? Self.defaultDir
-
-        // Stage files
+    static func buildGitCommitCommand(path: String?, message: String, files: [String]?) -> String {
+        let dir = shellEscape(path ?? defaultDir)
+        var cmd = "cd \(dir)"
         if let files, !files.isEmpty {
-            let addResult = runGit(["add"] + files, in: dir)
-            if addResult.status != 0 {
-                return "Error staging files: \(addResult.output)"
-            }
+            let escaped = files.map { shellEscape($0) }.joined(separator: " ")
+            cmd += " && git add \(escaped)"
         } else {
-            let addResult = runGit(["add", "-A"], in: dir)
-            if addResult.status != 0 {
-                return "Error staging: \(addResult.output)"
-            }
+            cmd += " && git add -A"
         }
-
-        // Check there's something to commit
-        let status = runGit(["diff", "--cached", "--quiet"], in: dir)
-        if status.status == 0 {
-            return "Nothing to commit (no staged changes)"
-        }
-
-        // Commit
-        let result = runGit(["commit", "-m", message], in: dir)
-        if result.status != 0 {
-            return "Commit failed: \(result.output)"
-        }
-        return result.output
+        cmd += " && git diff --cached --quiet && echo 'Nothing to commit (no staged changes)' || git commit -m \(shellEscape(message))"
+        return cmd
     }
 
-    /// Git diff-patch: apply a unified diff patch to a file.
-    static func gitApplyPatch(path: String?, patch: String) -> String {
-        let dir = path ?? Self.defaultDir
-
-        // Write patch to temp file
-        let tempPath = NSTemporaryDirectory() + "agent_patch_\(UUID().uuidString).patch"
-        do {
-            try patch.write(toFile: tempPath, atomically: true, encoding: .utf8)
-        } catch {
-            return "Error writing patch: \(error.localizedDescription)"
-        }
-        defer { try? FileManager.default.removeItem(atPath: tempPath) }
-
-        let result = runGit(["apply", "--verbose", tempPath], in: dir)
-        if result.status != 0 {
-            return "Patch failed: \(result.output)"
-        }
-        return result.output.isEmpty ? "Patch applied successfully" : result.output
-    }
-
-    /// Git create branch and optionally switch to it.
-    static func gitBranch(path: String?, name: String, checkout: Bool) -> String {
-        let dir = path ?? Self.defaultDir
-
+    static func buildGitBranchCommand(path: String?, name: String, checkout: Bool) -> String {
+        let dir = shellEscape(path ?? defaultDir)
         if checkout {
-            let result = runGit(["checkout", "-b", name], in: dir)
-            return result.status == 0
-                ? "Created and switched to branch '\(name)'"
-                : "Error: \(result.output)"
+            return "cd \(dir) && git checkout -b \(shellEscape(name))"
         } else {
-            let result = runGit(["branch", name], in: dir)
-            return result.status == 0
-                ? "Created branch '\(name)'"
-                : "Error: \(result.output)"
+            return "cd \(dir) && git branch \(shellEscape(name))"
         }
     }
 }

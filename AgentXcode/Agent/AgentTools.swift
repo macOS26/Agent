@@ -347,7 +347,7 @@ enum AgentTools {
             description: "Find files matching a glob pattern. Use instead of `find`. Excludes hidden files and .build directories.",
             properties: [
                 "pattern": ["type": "string", "description": "Glob pattern (e.g. \"*.swift\", \"Package.swift\")"],
-                "path": ["type": "string", "description": "Directory to search in (default: current directory)"],
+                "path": ["type": "string", "description": "Directory to search in (default: user home). Always provide a project path for best results."],
             ],
             required: ["pattern"]
         ),
@@ -356,7 +356,7 @@ enum AgentTools {
             description: "Search file contents by regex pattern. Use instead of `grep`. Returns matching lines with file paths and line numbers.",
             properties: [
                 "pattern": ["type": "string", "description": "Regex pattern to search for"],
-                "path": ["type": "string", "description": "Directory to search in (default: current directory)"],
+                "path": ["type": "string", "description": "Directory to search in (default: user home). Always provide a project path for best results."],
                 "include": ["type": "string", "description": "File glob filter (e.g. \"*.swift\", \"*.py\")"],
             ],
             required: ["pattern"]
@@ -366,7 +366,7 @@ enum AgentTools {
             name: "git_status",
             description: "Show current branch, staged/unstaged changes, and untracked files.",
             properties: [
-                "path": ["type": "string", "description": "Repository path (default: current directory)"],
+                "path": ["type": "string", "description": "Repository path (REQUIRED for git operations — provide the project directory)"],
             ],
             required: []
         ),
@@ -374,7 +374,7 @@ enum AgentTools {
             name: "git_diff",
             description: "Show file changes as a unified diff. Can show staged changes, unstaged changes, or diff against a branch/commit.",
             properties: [
-                "path": ["type": "string", "description": "Repository path (default: current directory)"],
+                "path": ["type": "string", "description": "Repository path (REQUIRED for git operations — provide the project directory)"],
                 "staged": ["type": "boolean", "description": "Show staged changes only (default false)"],
                 "target": ["type": "string", "description": "Branch, commit, or ref to diff against (e.g. \"main\", \"HEAD~3\")"],
             ],
@@ -384,7 +384,7 @@ enum AgentTools {
             name: "git_log",
             description: "Show recent commit history as one-line summaries.",
             properties: [
-                "path": ["type": "string", "description": "Repository path (default: current directory)"],
+                "path": ["type": "string", "description": "Repository path (REQUIRED for git operations — provide the project directory)"],
                 "count": ["type": "integer", "description": "Number of commits to show (default 20, max 100)"],
             ],
             required: []
@@ -393,7 +393,7 @@ enum AgentTools {
             name: "git_commit",
             description: "Stage files and create a commit. If no files specified, stages all changes.",
             properties: [
-                "path": ["type": "string", "description": "Repository path (default: current directory)"],
+                "path": ["type": "string", "description": "Repository path (REQUIRED for git operations — provide the project directory)"],
                 "message": ["type": "string", "description": "Commit message"],
                 "files": ["type": "array", "items": ["type": "string"] as [String: Any], "description": "Specific files to stage (default: all changes)"] as [String: Any],
             ],
@@ -403,7 +403,7 @@ enum AgentTools {
             name: "git_diff_patch",
             description: "Apply a unified diff patch to files in the repository. Use for complex multi-line edits that are easier to express as a patch.",
             properties: [
-                "path": ["type": "string", "description": "Repository path (default: current directory)"],
+                "path": ["type": "string", "description": "Repository path (REQUIRED for git operations — provide the project directory)"],
                 "patch": ["type": "string", "description": "Unified diff patch content"],
             ],
             required: ["patch"]
@@ -412,7 +412,7 @@ enum AgentTools {
             name: "git_branch",
             description: "Create a new git branch, optionally switching to it.",
             properties: [
-                "path": ["type": "string", "description": "Repository path (default: current directory)"],
+                "path": ["type": "string", "description": "Repository path (REQUIRED for git operations — provide the project directory)"],
                 "name": ["type": "string", "description": "Branch name to create"],
                 "checkout": ["type": "boolean", "description": "Switch to the new branch (default true)"],
             ],
