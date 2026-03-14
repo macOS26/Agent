@@ -116,6 +116,41 @@ final class AgentViewModel {
         let supportsVision: Bool
     }
 
+    // MARK: - Default Ollama Cloud Models (fallback when API unavailable)
+    
+    private static let defaultOllamaModels: [OllamaModelInfo] = [
+        OllamaModelInfo(id: "nemotron-3-super", name: "nemotron-3-super", supportsVision: false),
+        OllamaModelInfo(id: "qwen3.5:397b", name: "qwen3.5:397b", supportsVision: false),
+        OllamaModelInfo(id: "minimax-m2.5", name: "minimax-m2.5", supportsVision: false),
+        OllamaModelInfo(id: "glm-5", name: "glm-5", supportsVision: false),
+        OllamaModelInfo(id: "kimi-k2.5", name: "kimi-k2.5", supportsVision: false),
+        OllamaModelInfo(id: "glm-4.7", name: "glm-4.7", supportsVision: false),
+        OllamaModelInfo(id: "minimax-m2.1", name: "minimax-m2.1", supportsVision: false),
+        OllamaModelInfo(id: "gemini-3-flash-preview", name: "gemini-3-flash-preview", supportsVision: false),
+        OllamaModelInfo(id: "nemotron-3-nano:30b", name: "nemotron-3-nano:30b", supportsVision: false),
+        OllamaModelInfo(id: "devstral-small-2:24b", name: "devstral-small-2:24b", supportsVision: false),
+        OllamaModelInfo(id: "devstral-2:123b", name: "devstral-2:123b", supportsVision: false),
+        OllamaModelInfo(id: "ministral-3:8b", name: "ministral-3:8b", supportsVision: false),
+        OllamaModelInfo(id: "ministral-3:14b", name: "ministral-3:14b", supportsVision: false),
+        OllamaModelInfo(id: "deepseek-v3.2", name: "deepseek-v3.2", supportsVision: false),
+        OllamaModelInfo(id: "mistral-large-3:675b", name: "mistral-large-3:675b", supportsVision: false),
+        OllamaModelInfo(id: "deepseek-v3.1:671b", name: "deepseek-v3.1:671b", supportsVision: false),
+        OllamaModelInfo(id: "cogito-2.1:671b", name: "cogito-2.1:671b", supportsVision: false),
+        OllamaModelInfo(id: "minimax-m2", name: "minimax-m2", supportsVision: false),
+        OllamaModelInfo(id: "glm-4.6", name: "glm-4.6", supportsVision: false),
+        OllamaModelInfo(id: "qwen3-vl:235b-instruct", name: "qwen3-vl:235b-instruct", supportsVision: true),
+        OllamaModelInfo(id: "qwen3-vl:235b", name: "qwen3-vl:235b", supportsVision: true),
+        OllamaModelInfo(id: "qwen3-next:80b", name: "qwen3-next:80b", supportsVision: false),
+        OllamaModelInfo(id: "kimi-k2:1t", name: "kimi-k2:1t", supportsVision: false),
+        OllamaModelInfo(id: "gpt-oss:120b", name: "gpt-oss:120b", supportsVision: false),
+        OllamaModelInfo(id: "qwen3-coder:480b", name: "qwen3-coder:480b", supportsVision: false),
+        OllamaModelInfo(id: "gemma3:27b", name: "gemma3:27b", supportsVision: false),
+        OllamaModelInfo(id: "gemma3:12b", name: "gemma3:12b", supportsVision: false),
+        OllamaModelInfo(id: "gemma3:4b", name: "gemma3:4b", supportsVision: false),
+        OllamaModelInfo(id: "qwen3-coder-next", name: "qwen3-coder-next", supportsVision: false),
+        OllamaModelInfo(id: "gpt-oss:20b", name: "gpt-oss:20b", supportsVision: false)
+    ]
+
     // MARK: - Claude Models
     
     struct ClaudeModelInfo: Identifiable, Codable {
@@ -217,7 +252,6 @@ final class AgentViewModel {
     var selectedOllamaSupportsVision: Bool {
         ollamaModels.first(where: { $0.name == ollamaModel })?.supportsVision ?? false
     }
-
     func fetchOllamaModels() {
         let endpoint = ollamaEndpoint
         let apiKey = ollamaAPIKey
@@ -226,14 +260,15 @@ final class AgentViewModel {
             defer { isFetchingModels = false }
             do {
                 let models = try await Self.fetchModels(endpoint: endpoint, apiKey: apiKey)
-                ollamaModels = models
+                ollamaModels = models.isEmpty ? Self.defaultOllamaModels : models
                 // Auto-select first model if current selection is empty or not in list
-                let names = models.map(\.name)
+                let names = ollamaModels.map(\.name)
                 if ollamaModel.isEmpty || (!names.isEmpty && !names.contains(ollamaModel)) {
                     ollamaModel = names.first ?? ""
                 }
             } catch {
                 appendLog("Failed to fetch models: \(error.localizedDescription)")
+                ollamaModels = Self.defaultOllamaModels
             }
         }
     }
