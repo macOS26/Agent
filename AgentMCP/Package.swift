@@ -8,7 +8,7 @@ let package = Package(
         .library(name: "MCPServer", type: .dynamic, targets: ["MCPServer"])
     ],
     dependencies: [
-        .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", from: "0.10.0")
+        .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", from: "0.11.0")
     ],
     targets: [
         .target(
