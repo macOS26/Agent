@@ -357,6 +357,50 @@ struct ActivityLogView: NSViewRepresentable {
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
+    /// Clickable copy-to-clipboard button for code blocks.
+    class CopyButtonCell: NSTextAttachmentCell {
+        let codeText: String
+
+        init(codeText: String) {
+            self.codeText = codeText
+            super.init(textCell: "")
+        }
+
+        @available(*, unavailable)
+        required init(coder: NSCoder) { fatalError() }
+
+        override func cellSize() -> NSSize { NSSize(width: 16, height: 14) }
+
+        override func draw(withFrame cellFrame: NSRect, in controlView: NSView?) {
+            if let icon = NSImage(systemSymbolName: "doc.on.doc", accessibilityDescription: "Copy code") {
+                let config = NSImage.SymbolConfiguration(pointSize: 10, weight: .medium)
+                let tinted = (icon.withSymbolConfiguration(config) ?? icon).copy() as! NSImage
+                tinted.isTemplate = true
+                NSColor.secondaryLabelColor.set()
+                tinted.draw(in: cellFrame)
+            }
+        }
+
+        override func wantsToTrackMouse(for theEvent: NSEvent, in cellFrame: NSRect,
+                                         of controlView: NSView?, atCharacterIndex charIndex: Int) -> Bool { true }
+
+        override func trackMouse(with theEvent: NSEvent, in cellFrame: NSRect,
+                                  of controlView: NSView?, atCharacterIndex charIndex: Int,
+                                  untilMouseUp flag: Bool) -> Bool {
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(codeText, forType: .string)
+            // Brief flash feedback
+            if let tv = controlView as? NSTextView {
+                let orig = tv.backgroundColor
+                tv.backgroundColor = NSColor.controlAccentColor.withAlphaComponent(0.1)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    tv.backgroundColor = orig
+                }
+            }
+            return true
+        }
+    }
+
     @MainActor class Coordinator: NSObject, WKNavigationDelegate {
         var lastLength = 0
         var showingPlaceholder = true
@@ -563,7 +607,20 @@ struct ActivityLogView: NSViewRepresentable {
                 let codeBlock = NSMutableAttributedString(attributedString: highlighted)
                 codeBlock.addAttribute(.backgroundColor, value: CodeBlockTheme.bg,
                                        range: NSRange(location: 0, length: codeBlock.length))
+                // Copy button line (right-aligned, same background as code block)
+                let copyAttachment = NSTextAttachment()
+                copyAttachment.attachmentCell = CopyButtonCell(codeText: codeContent)
+                let copyLine = NSMutableAttributedString()
+                let copyStyle = NSMutableParagraphStyle()
+                copyStyle.alignment = .right
+                copyLine.append(NSAttributedString(attachment: copyAttachment))
+                copyLine.addAttributes([
+                    .paragraphStyle: copyStyle,
+                    .backgroundColor: CodeBlockTheme.bg
+                ], range: NSRange(location: 0, length: copyLine.length))
+                copyLine.append(NSAttributedString(string: "\n", attributes: [.font: font, .backgroundColor: CodeBlockTheme.bg]))
                 result.append(NSAttributedString(string: "\n", attributes: [.font: font]))
+                result.append(copyLine)
                 result.append(codeBlock)
                 result.append(NSAttributedString(string: "\n\n", attributes: [.font: font]))
                 lastEnd = match.range.location + match.range.length
