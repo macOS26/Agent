@@ -93,7 +93,8 @@ struct MCPServersView: View {
             }
         }
         .padding(16)
-        .frame(width: 420, maxHeight: 500)
+        .frame(width: 420)
+        .frame(maxHeight: 500)
         .sheet(isPresented: $showingAddServer) {
             MCPServerEditView(server: nil) { newServer in
                 registry.add(newServer)
@@ -149,9 +150,9 @@ struct MCPServersView: View {
     
     private func refreshConnectionStatus() async {
         for server in registry.servers {
-            if MCPService.shared.isConnected(server.id) {
+            if await MCPService.shared.isConnected(server.id) {
                 connectionStatus[server.id] = .connected
-            } else if let error = MCPService.shared.getError(server.id) {
+            } else if let error = await MCPService.shared.getError(server.id) {
                 connectionStatus[server.id] = .error(error)
             } else {
                 connectionStatus[server.id] = .disconnected

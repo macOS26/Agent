@@ -1,4 +1,6 @@
 import Foundation
+import MCPClient
+import MCP
 
 /// Service for managing MCP server connections
 /// Acts as a bridge between the UI (MCPServersView) and the underlying MCP client

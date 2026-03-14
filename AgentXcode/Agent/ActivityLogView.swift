@@ -259,15 +259,100 @@ struct ActivityLogView: NSViewRepresentable {
                 .foregroundColor: NSColor.labelColor
             ]
 
-            // Regex patterns
-            let boldPattern = try? NSRegularExpression(pattern: #"\*\*([^*]+)\*\*"#, options: [])
-            let codePattern = try? NSRegularExpression(pattern: #"`([^`]+)`"#, options: [])
-            let linkPattern = try? NSRegularExpression(pattern: #"\[([^\]]+)\]\(([^)]+)\)"#, options: [])
+            // Handle code fences (```lang\n...\n```) first
+            let fenceRx = try! NSRegularExpression(pattern: #"```(\w*)\n([\s\S]*?)```"#)
+            let nsText = text as NSString
+            let fullRange = NSRange(location: 0, length: nsText.length)
+            let fences = fenceRx.matches(in: text, range: fullRange)
+
+            guard !fences.isEmpty else {
+                return renderInlineMarkdown(text)
+            }
+
+            let result = NSMutableAttributedString()
+            var cursor = 0
+
+            for fence in fences {
+                if fence.range.location > cursor {
+                    let seg = nsText.substring(with: NSRange(location: cursor, length: fence.range.location - cursor))
+                    result.append(renderInlineMarkdown(seg))
+                }
+
+                let lang = fence.range(at: 1).length > 0 ? nsText.substring(with: fence.range(at: 1)) : nil
+                var code = nsText.substring(with: fence.range(at: 2))
+                if code.hasSuffix("\n") { code = String(code.dropLast()) }
+
+                // Copy button
+                let attach = NSTextAttachment()
+                attach.attachmentCell = CopyButtonCell(codeText: code)
+                result.append(NSAttributedString(attachment: attach))
+
+                // Syntax-highlighted code with background
+                let hl = CodeBlockHighlighter.highlight(code: code, language: lang, font: font)
+                let block = NSMutableAttributedString(string: "\n", attributes: baseAttrs)
+                block.append(hl)
+                block.append(NSAttributedString(string: "\n", attributes: baseAttrs))
+                block.addAttribute(.backgroundColor, value: CodeBlockTheme.bg,
+                                   range: NSRange(location: 0, length: block.length))
+                result.append(block)
+
+                cursor = fence.range.location + fence.range.length
+            }
+
+            if cursor < nsText.length {
+                result.append(renderInlineMarkdown(nsText.substring(with: NSRange(location: cursor, length: nsText.length - cursor))))
+            }
+
+            return result
+        }
+
+        private func renderInlineMarkdown(_ text: String) -> NSAttributedString {
+            let baseAttrs: [NSAttributedString.Key: Any] = [
+                .font: font,
+                .foregroundColor: NSColor.labelColor
+            ]
+
+            let result = NSMutableAttributedString()
+            let lines = text.components(separatedBy: "\n")
+
+            for (i, line) in lines.enumerated() {
+                if i > 0 {
+                    result.append(NSAttributedString(string: "\n", attributes: baseAttrs))
+                }
+
+                let trimmed = line.trimmingCharacters(in: .whitespaces)
+
+                if trimmed.hasPrefix("### ") {
+                    let hFont = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize + 2, weight: .bold)
+                    result.append(styledLine(String(trimmed.dropFirst(4)), baseFont: hFont))
+                } else if trimmed.hasPrefix("## ") {
+                    let hFont = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize + 4, weight: .bold)
+                    result.append(styledLine(String(trimmed.dropFirst(3)), baseFont: hFont))
+                } else if trimmed.hasPrefix("# ") {
+                    let hFont = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize + 6, weight: .bold)
+                    result.append(styledLine(String(trimmed.dropFirst(2)), baseFont: hFont))
+                } else {
+                    result.append(styledLine(line, baseFont: font))
+                }
+            }
+
+            return result
+        }
+
+        /// Apply inline **bold**, `code`, and [link](url) formatting to a single line.
+        private func styledLine(_ text: String, baseFont: NSFont) -> NSAttributedString {
+            let baseAttrs: [NSAttributedString.Key: Any] = [
+                .font: baseFont,
+                .foregroundColor: NSColor.labelColor
+            ]
+
+            let boldRx = try! NSRegularExpression(pattern: #"\*\*([^*]+)\*\*"#)
+            let codeRx = try! NSRegularExpression(pattern: #"`([^`]+)`"#)
+            let linkRx = try! NSRegularExpression(pattern: #"\[([^\]]+)\]\(([^)]+)\)"#)
 
             let nsText = text as NSString
             let fullRange = NSRange(location: 0, length: nsText.length)
 
-            // Collect all matches with type and content
             struct Match {
                 let range: NSRange
                 let type: Int // 1=bold, 2=code, 3=link
@@ -276,68 +361,56 @@ struct ActivityLogView: NSViewRepresentable {
             }
             var matches: [Match] = []
 
-            if let boldPattern {
-                for m in boldPattern.matches(in: text, range: fullRange) {
-                    matches.append(Match(range: m.range, type: 1, content: nsText.substring(with: m.range(at: 1)), url: nil))
-                }
+            for m in boldRx.matches(in: text, range: fullRange) {
+                matches.append(Match(range: m.range, type: 1, content: nsText.substring(with: m.range(at: 1)), url: nil))
             }
-            if let codePattern {
-                for m in codePattern.matches(in: text, range: fullRange) {
-                    matches.append(Match(range: m.range, type: 2, content: nsText.substring(with: m.range(at: 1)), url: nil))
-                }
+            for m in codeRx.matches(in: text, range: fullRange) {
+                matches.append(Match(range: m.range, type: 2, content: nsText.substring(with: m.range(at: 1)), url: nil))
             }
-            if let linkPattern {
-                for m in linkPattern.matches(in: text, range: fullRange) {
-                    matches.append(Match(range: m.range, type: 3, content: nsText.substring(with: m.range(at: 1)), url: nsText.substring(with: m.range(at: 2))))
-                }
+            for m in linkRx.matches(in: text, range: fullRange) {
+                matches.append(Match(range: m.range, type: 3, content: nsText.substring(with: m.range(at: 1)), url: nsText.substring(with: m.range(at: 2))))
             }
 
-            // Sort matches by location
             matches.sort { $0.range.location < $1.range.location }
 
             let result = NSMutableAttributedString()
             var lastEnd = 0
 
             for match in matches {
-                // Add text before this match
+                guard match.range.location >= lastEnd else { continue } // Skip overlaps
+
                 if match.range.location > lastEnd {
-                    let beforeRange = NSRange(location: lastEnd, length: match.range.location - lastEnd)
-                    result.append(NSAttributedString(string: nsText.substring(with: beforeRange), attributes: baseAttrs))
+                    let r = NSRange(location: lastEnd, length: match.range.location - lastEnd)
+                    result.append(NSAttributedString(string: nsText.substring(with: r), attributes: baseAttrs))
                 }
 
-                // Add the styled match
                 switch match.type {
                 case 1: // Bold
-                    let attrs: [NSAttributedString.Key: Any] = [
-                        .font: NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .bold),
+                    result.append(NSAttributedString(string: match.content, attributes: [
+                        .font: NSFont.monospacedSystemFont(ofSize: baseFont.pointSize, weight: .bold),
                         .foregroundColor: NSColor.labelColor
-                    ]
-                    result.append(NSAttributedString(string: match.content, attributes: attrs))
-                case 2: // Code
-                    let attrs: [NSAttributedString.Key: Any] = [
-                        .font: font,
+                    ]))
+                case 2: // Inline code
+                    result.append(NSAttributedString(string: match.content, attributes: [
+                        .font: baseFont,
                         .foregroundColor: NSColor.systemBlue,
                         .backgroundColor: NSColor.controlBackgroundColor
-                    ]
-                    result.append(NSAttributedString(string: match.content, attributes: attrs))
+                    ]))
                 case 3: // Link
-                    let attrs: [NSAttributedString.Key: Any] = [
-                        .font: font,
+                    result.append(NSAttributedString(string: match.content, attributes: [
+                        .font: baseFont,
                         .foregroundColor: NSColor.linkColor,
                         .underlineStyle: NSUnderlineStyle.single.rawValue
-                    ]
-                    result.append(NSAttributedString(string: match.content, attributes: attrs))
-                default:
-                    break
+                    ]))
+                default: break
                 }
 
                 lastEnd = match.range.location + match.range.length
             }
 
-            // Add remaining text
             if lastEnd < nsText.length {
-                let remainingRange = NSRange(location: lastEnd, length: nsText.length - lastEnd)
-                result.append(NSAttributedString(string: nsText.substring(with: remainingRange), attributes: baseAttrs))
+                let r = NSRange(location: lastEnd, length: nsText.length - lastEnd)
+                result.append(NSAttributedString(string: nsText.substring(with: r), attributes: baseAttrs))
             }
 
             return result

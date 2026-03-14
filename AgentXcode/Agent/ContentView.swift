@@ -10,6 +10,10 @@ struct ContentView: View {
     @State private var splashOpacity: Double = 0.85
     @State private var dependencyStatus: DependencyStatus?
     @State private var showDependencyOverlay = false
+    @State private var showSearch = false
+    @State private var searchText = ""
+    @State private var currentMatchIndex = 0
+    @State private var totalMatches = 0
 
     var body: some View {
         ZStack {
@@ -103,8 +107,55 @@ struct ContentView: View {
 
             Divider()
 
+            // Search bar
+            if showSearch {
+                HStack(spacing: 6) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundStyle(.secondary)
+                    TextField("Find in log...", text: $searchText)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(maxWidth: 250)
+                        .onSubmit { nextMatch() }
+                    if !searchText.isEmpty {
+                        Text(totalMatches > 0 ? "\(currentMatchIndex + 1)/\(totalMatches)" : "0 results")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .frame(minWidth: 60)
+                        Button { previousMatch() } label: {
+                            Image(systemName: "chevron.up")
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .disabled(totalMatches == 0)
+                        Button { nextMatch() } label: {
+                            Image(systemName: "chevron.down")
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .disabled(totalMatches == 0)
+                    }
+                    Spacer()
+                    Button { showSearch = false; searchText = "" } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 6)
+                Divider()
+            }
+
             // Activity Log
-            ActivityLogView(text: viewModel.activityLog)
+            ActivityLogView(
+                text: viewModel.activityLog,
+                searchText: searchText,
+                currentMatchIndex: currentMatchIndex,
+                onMatchCount: { count in
+                    totalMatches = count
+                    if currentMatchIndex >= count { currentMatchIndex = max(0, count - 1) }
+                }
+            )
 
             Divider()
 
@@ -268,6 +319,21 @@ struct ContentView: View {
                 }
             }
             NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+                // Cmd+F to toggle search bar
+                if event.modifierFlags.contains(.command),
+                   event.charactersIgnoringModifiers == "f" {
+                    showSearch.toggle()
+                    if !showSearch { searchText = "" }
+                    return nil
+                }
+
+                // Escape to close search bar
+                if event.keyCode == 53, showSearch {
+                    showSearch = false
+                    searchText = ""
+                    return nil
+                }
+
                 // Intercept Cmd+V for image paste
                 if event.modifierFlags.contains(.command),
                    event.charactersIgnoringModifiers == "v" {
@@ -297,12 +363,25 @@ struct ContentView: View {
             }
         }
     }
+
+    private func nextMatch() {
+        guard totalMatches > 0 else { return }
+        currentMatchIndex = (currentMatchIndex + 1) % totalMatches
+    }
+
+    private func previousMatch() {
+        guard totalMatches > 0 else { return }
+        currentMatchIndex = (currentMatchIndex - 1 + totalMatches) % totalMatches
+    }
 }
 
 /// NSTextView-backed activity log — avoids SwiftUI Text layout storms on large/streaming content.
 /// Detects image file paths in log output and renders them inline.
 struct ActivityLogView: NSViewRepresentable {
     let text: String
+    var searchText: String = ""
+    var currentMatchIndex: Int = 0
+    var onMatchCount: ((Int) -> Void)? = nil
 
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSTextView.scrollableTextView()
@@ -326,10 +405,14 @@ struct ActivityLogView: NSViewRepresentable {
 
         // Wire up HTML snapshot callback to trigger re-render
         let currentText = text
+        let currentSearch = searchText
+        let currentIndex = currentMatchIndex
+        let matchCallback = onMatchCount
         coord.onHTMLReady = { [weak textView, weak coord] in
             guard let textView, let coord else { return }
             let attributed = coord.buildAttributedString(from: currentText)
             textView.textStorage?.setAttributedString(attributed)
+            coord.applySearchHighlighting(textView: textView, searchText: currentSearch, currentMatch: currentIndex, onMatchCount: matchCallback)
             textView.scrollToEndOfDocument(nil)
         }
 
@@ -341,18 +424,33 @@ struct ActivityLogView: NSViewRepresentable {
             )
             coord.showingPlaceholder = true
             coord.lastLength = 0
+            coord.lastSearch = ""
+            coord.lastMatchIndex = -1
             coord.clearCache()
+            matchCallback?(0)
             return
         }
 
         let len = (text as NSString).length
-        guard len != coord.lastLength || coord.showingPlaceholder else { return }
+        let searchChanged = currentSearch != coord.lastSearch || currentIndex != coord.lastMatchIndex
+        guard len != coord.lastLength || coord.showingPlaceholder || searchChanged else { return }
+
+        let textChanged = len != coord.lastLength || coord.showingPlaceholder
         coord.showingPlaceholder = false
 
-        let attributed = coord.buildAttributedString(from: text)
-        textView.textStorage?.setAttributedString(attributed)
-        coord.lastLength = len
-        textView.scrollToEndOfDocument(nil)
+        if textChanged {
+            let attributed = coord.buildAttributedString(from: text)
+            textView.textStorage?.setAttributedString(attributed)
+            coord.lastLength = len
+        }
+
+        coord.applySearchHighlighting(textView: textView, searchText: currentSearch, currentMatch: currentIndex, onMatchCount: matchCallback)
+        coord.lastSearch = currentSearch
+        coord.lastMatchIndex = currentIndex
+
+        if textChanged {
+            textView.scrollToEndOfDocument(nil)
+        }
     }
 
     func makeCoordinator() -> Coordinator { Coordinator() }
@@ -404,6 +502,8 @@ struct ActivityLogView: NSViewRepresentable {
     @MainActor class Coordinator: NSObject, WKNavigationDelegate {
         var lastLength = 0
         var showingPlaceholder = true
+        var lastSearch = ""
+        var lastMatchIndex = -1
         let font = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
         /// Images keyed by their character offset in the log — each occurrence gets its own
         /// snapshot so the same path (e.g. current_artwork.jpg) shows different art per task.
@@ -419,6 +519,55 @@ struct ActivityLogView: NSViewRepresentable {
 
         // SECURITY: Limit concurrent web views to prevent memory exhaustion
         private static let maxActiveWebViews = 10
+
+        /// Highlight search matches in the text view's text storage
+        func applySearchHighlighting(textView: NSTextView, searchText: String, currentMatch: Int, onMatchCount: ((Int) -> Void)?) {
+            guard let storage = textView.textStorage else { return }
+            let fullRange = NSRange(location: 0, length: storage.length)
+
+            // Remove previous search highlights
+            storage.removeAttribute(.backgroundColor, range: fullRange)
+            // Re-apply code block backgrounds that were removed
+            // (buildAttributedString already handles this, and we only clear .backgroundColor
+            //  on the top layer — but code block bg was set via the same attribute.
+            //  Since we rebuild attributed string on text changes, this is fine for search-only updates.)
+
+            guard !searchText.isEmpty, searchText.count >= 1 else {
+                onMatchCount?(0)
+                return
+            }
+
+            let text = storage.string
+            var matchRanges: [NSRange] = []
+            let searchLower = searchText.lowercased()
+            let textLower = text.lowercased() as NSString
+
+            var searchRange = NSRange(location: 0, length: textLower.length)
+            while searchRange.location < textLower.length {
+                let found = textLower.range(of: searchLower, options: [], range: searchRange)
+                guard found.location != NSNotFound else { break }
+                matchRanges.append(found)
+                searchRange.location = found.location + found.length
+                searchRange.length = textLower.length - searchRange.location
+            }
+
+            onMatchCount?(matchRanges.count)
+
+            let highlightColor = NSColor.systemYellow.withAlphaComponent(0.3)
+            let currentColor = NSColor.systemOrange.withAlphaComponent(0.5)
+
+            for (i, range) in matchRanges.enumerated() {
+                let color = (i == currentMatch) ? currentColor : highlightColor
+                storage.addAttribute(.backgroundColor, value: color, range: range)
+            }
+
+            // Scroll to current match
+            if !matchRanges.isEmpty, currentMatch < matchRanges.count {
+                let targetRange = matchRanges[currentMatch]
+                textView.scrollRangeToVisible(targetRange)
+                textView.showFindIndicator(for: targetRange)
+            }
+        }
 
 
 
@@ -994,6 +1143,8 @@ struct ActivityLogView: NSViewRepresentable {
             htmlCache.removeAll()
             htmlPending.removeAll()
             activeWebViews.removeAll()
+            lastSearch = ""
+            lastMatchIndex = -1
         }
     }
 }
