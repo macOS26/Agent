@@ -1,5 +1,190 @@
 import AppKit
 
+// MARK: - ANSI Escape Code Parser
+
+/// Parses ANSI SGR escape codes and returns a clean string + attributed string with colors applied.
+@MainActor enum ANSIParser {
+
+    /// Standard ANSI 8-color palette (normal intensity)
+    private static let standardColors: [NSColor] = [
+        .black,                                                             // 0 black
+        NSColor(red: 0.8, green: 0.2, blue: 0.2, alpha: 1),                // 1 red
+        NSColor(red: 0.2, green: 0.7, blue: 0.2, alpha: 1),                // 2 green
+        NSColor(red: 0.8, green: 0.7, blue: 0.2, alpha: 1),                // 3 yellow
+        NSColor(red: 0.3, green: 0.5, blue: 0.9, alpha: 1),                // 4 blue
+        NSColor(red: 0.7, green: 0.3, blue: 0.8, alpha: 1),                // 5 magenta
+        NSColor(red: 0.2, green: 0.7, blue: 0.7, alpha: 1),                // 6 cyan
+        NSColor(red: 0.75, green: 0.75, blue: 0.75, alpha: 1),             // 7 white
+    ]
+
+    /// Bright ANSI colors (90-97)
+    private static let brightColors: [NSColor] = [
+        NSColor(red: 0.4, green: 0.4, blue: 0.4, alpha: 1),                // 0 bright black
+        NSColor(red: 1.0, green: 0.4, blue: 0.4, alpha: 1),                // 1 bright red
+        NSColor(red: 0.4, green: 0.9, blue: 0.4, alpha: 1),                // 2 bright green
+        NSColor(red: 1.0, green: 1.0, blue: 0.4, alpha: 1),                // 3 bright yellow
+        NSColor(red: 0.4, green: 0.6, blue: 1.0, alpha: 1),                // 4 bright blue
+        NSColor(red: 0.9, green: 0.5, blue: 0.9, alpha: 1),                // 5 bright magenta
+        NSColor(red: 0.4, green: 0.9, blue: 0.9, alpha: 1),                // 6 bright cyan
+        .white,                                                             // 7 bright white
+    ]
+
+    /// Returns true if the text contains ANSI escape codes.
+    static func containsANSI(_ text: String) -> Bool {
+        text.contains("\u{1b}[")
+    }
+
+    /// Parse ANSI escape codes, returning an attributed string with colors applied and codes stripped.
+    static func parse(_ text: String, font: NSFont) -> NSAttributedString {
+        let result = NSMutableAttributedString()
+        let defaultColor = CodeBlockTheme.text
+
+        var fg: NSColor? = nil
+        var bg: NSColor? = nil
+        var bold = false
+        var italic = false
+        var underline = false
+
+        var i = text.startIndex
+        var segmentStart = i
+
+        while i < text.endIndex {
+            // Look for ESC [ sequence
+            if text[i] == "\u{1b}" {
+                let next = text.index(after: i)
+                if next < text.endIndex, text[next] == "[" {
+                    // Flush text before this escape
+                    if segmentStart < i {
+                        let segment = String(text[segmentStart..<i])
+                        let attrs = buildAttrs(font: font, fg: fg, bg: bg, bold: bold, italic: italic, underline: underline, defaultColor: defaultColor)
+                        result.append(NSAttributedString(string: segment, attributes: attrs))
+                    }
+
+                    // Parse the SGR parameters
+                    let paramStart = text.index(after: next)
+                    var j = paramStart
+                    while j < text.endIndex {
+                        let c = text[j]
+                        if c.isLetter || c == "~" {
+                            // Found the terminator
+                            if c == "m" {
+                                let paramStr = String(text[paramStart..<j])
+                                let codes = paramStr.split(separator: ";").compactMap { Int($0) }
+                                applySDR(codes.isEmpty ? [0] : codes, fg: &fg, bg: &bg, bold: &bold, italic: &italic, underline: &underline)
+                            }
+                            // Skip past the terminator regardless of type
+                            i = text.index(after: j)
+                            segmentStart = i
+                            break
+                        }
+                        j = text.index(after: j)
+                    }
+                    if j >= text.endIndex {
+                        // Unterminated escape — skip ESC[
+                        i = text.index(after: next)
+                        segmentStart = i
+                    }
+                    continue
+                }
+            }
+            i = text.index(after: i)
+        }
+
+        // Flush remaining text
+        if segmentStart < text.endIndex {
+            let segment = String(text[segmentStart...])
+            let attrs = buildAttrs(font: font, fg: fg, bg: bg, bold: bold, italic: italic, underline: underline, defaultColor: defaultColor)
+            result.append(NSAttributedString(string: segment, attributes: attrs))
+        }
+
+        return result
+    }
+
+    private static func buildAttrs(font: NSFont, fg: NSColor?, bg: NSColor?, bold: Bool, italic: Bool, underline: Bool, defaultColor: NSColor) -> [NSAttributedString.Key: Any] {
+        var attrs: [NSAttributedString.Key: Any] = [:]
+        attrs[.foregroundColor] = fg ?? defaultColor
+
+        if bold {
+            attrs[.font] = NSFont.monospacedSystemFont(ofSize: font.pointSize, weight: .bold)
+        } else {
+            attrs[.font] = font
+        }
+
+        if let bg { attrs[.backgroundColor] = bg }
+        if underline { attrs[.underlineStyle] = NSUnderlineStyle.single.rawValue }
+        return attrs
+    }
+
+    /// Apply SGR (Select Graphic Rendition) codes to current state.
+    private static func applySDR(_ codes: [Int], fg: inout NSColor?, bg: inout NSColor?, bold: inout Bool, italic: inout Bool, underline: inout Bool) {
+        var idx = 0
+        while idx < codes.count {
+            let code = codes[idx]
+            switch code {
+            case 0:         // Reset
+                fg = nil; bg = nil; bold = false; italic = false; underline = false
+            case 1: bold = true
+            case 3: italic = true
+            case 4: underline = true
+            case 22: bold = false
+            case 23: italic = false
+            case 24: underline = false
+            case 30...37:   // Standard foreground
+                fg = standardColors[code - 30]
+            case 38:        // Extended foreground
+                fg = parseExtendedColor(codes: codes, idx: &idx)
+            case 39: fg = nil
+            case 40...47:   // Standard background
+                bg = standardColors[code - 40]
+            case 48:        // Extended background
+                bg = parseExtendedColor(codes: codes, idx: &idx)
+            case 49: bg = nil
+            case 90...97:   // Bright foreground
+                fg = brightColors[code - 90]
+            case 100...107: // Bright background
+                bg = brightColors[code - 100]
+            default: break
+            }
+            idx += 1
+        }
+    }
+
+    /// Parse 256-color (38;5;N) and 24-bit (38;2;R;G;B) extended color sequences.
+    private static func parseExtendedColor(codes: [Int], idx: inout Int) -> NSColor? {
+        guard idx + 1 < codes.count else { return nil }
+        let mode = codes[idx + 1]
+        if mode == 5, idx + 2 < codes.count {
+            // 256-color: 38;5;N
+            let n = codes[idx + 2]
+            idx += 2
+            return color256(n)
+        } else if mode == 2, idx + 4 < codes.count {
+            // 24-bit: 38;2;R;G;B
+            let r = codes[idx + 2], g = codes[idx + 3], b = codes[idx + 4]
+            idx += 4
+            return NSColor(red: CGFloat(r) / 255, green: CGFloat(g) / 255, blue: CGFloat(b) / 255, alpha: 1)
+        }
+        return nil
+    }
+
+    /// Convert 256-color index to NSColor.
+    private static func color256(_ n: Int) -> NSColor {
+        if n < 8 { return standardColors[n] }
+        if n < 16 { return brightColors[n - 8] }
+        if n < 232 {
+            // 6x6x6 color cube (indices 16-231)
+            let adjusted = n - 16
+            let r = adjusted / 36
+            let g = (adjusted % 36) / 6
+            let b = adjusted % 6
+            return NSColor(red: CGFloat(r) * 51 / 255, green: CGFloat(g) * 51 / 255, blue: CGFloat(b) * 51 / 255, alpha: 1)
+        }
+        // Grayscale ramp (indices 232-255)
+        let gray = CGFloat((n - 232) * 10 + 8) / 255
+        return NSColor(red: gray, green: gray, blue: gray, alpha: 1)
+    }
+}
+
 // MARK: - Code Block Theme (Xcode Dark/Light palette from JibberJabber)
 
 @MainActor enum CodeBlockTheme {
@@ -75,6 +260,11 @@ private struct LangDef {
     private static let prepRx: NSRegularExpression? = try? NSRegularExpression(pattern: #"^\s*#\s*\w+.*$"#, options: .anchorsMatchLines)
 
     static func highlight(code: String, language: String?, font: NSFont) -> NSAttributedString {
+        // ANSI first pass: if escape codes are present, parse them and skip regex highlighting
+        if ANSIParser.containsANSI(code) {
+            return ANSIParser.parse(code, font: font)
+        }
+
         let bold = NSFont.monospacedSystemFont(ofSize: font.pointSize, weight: .bold)
 
         let effectiveLang = language ?? guessLanguage(from: code)

@@ -30,6 +30,12 @@ final class HelperCommandHandler: NSObject, HelperToolProtocol, @unchecked Senda
         process.executableURL = URL(fileURLWithPath: "/bin/bash")
         process.arguments = ["-c", script]
 
+        // Force color output from CLI tools (ls, grep, git, etc.)
+        var env = ProcessInfo.processInfo.environment
+        env["CLICOLOR_FORCE"] = "1"
+        env["TERM"] = env["TERM"] ?? "xterm-256color"
+        process.environment = env
+
         let pipe = Pipe()
         process.standardOutput = pipe
         process.standardError = pipe
