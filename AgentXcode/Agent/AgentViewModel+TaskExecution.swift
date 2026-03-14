@@ -506,6 +506,21 @@ extension AgentViewModel {
                             commandsRun.append("xcode_run: \(projectPath)")
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
+
+                        if name == "xcode_list_projects" {
+                            appendLog("Listing open Xcode projects...")
+                            let output = XcodeService.shared.listProjects()
+                            appendLog(output)
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        if name == "xcode_select_project" {
+                            let number = input["number"] as? Int ?? 0
+                            appendLog("Selecting project #\(number)")
+                            let output = XcodeService.shared.selectProject(number: number)
+                            appendLog(output)
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
                     }
                 }
 

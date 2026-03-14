@@ -295,7 +295,8 @@ final class OllamaService {
                               "execute_user_command", "execute_command", "task_complete",
                               "list_agent_scripts", "read_agent_script", "create_agent_script",
                               "update_agent_script", "run_agent_script", "delete_agent_script",
-                              "xcode_build", "xcode_run", "xcode_grant_permission"]
+                              "xcode_build", "xcode_run", "xcode_list_projects",
+                              "xcode_select_project", "xcode_grant_permission"]
             var extractedTool = false
 
             for toolName in toolNames {

@@ -45,8 +45,10 @@ enum AgentTools {
         - git_branch: Create a new branch, optionally switching to it.
 
         XCODE INTEGRATION — build and run Xcode projects via ScriptingBridge:
-        - xcode_build: Build the project and get errors/warnings back.
-        - xcode_run: Run the project.
+        - xcode_list_projects: List all open Xcode projects/workspaces with numbers.
+        - xcode_select_project: Select a project by number from the list.
+        - xcode_build: Build the project. Returns errors in file:line:col format with code snippets.
+        - xcode_run: Build first, then run only if clean. Returns errors if build fails.
         - xcode_grant_permission: One-time Automation permission grant.
 
         CODING WORKFLOW — when editing Xcode projects, follow this loop:
@@ -501,7 +503,7 @@ enum AgentTools {
         // --- Xcode ---
         ToolDef(
             name: "xcode_build",
-            description: "Build an Xcode project or workspace via ScriptingBridge. Blocks until build completes and returns errors/warnings.",
+            description: "Build an Xcode project or workspace via ScriptingBridge. Blocks until build completes. Returns errors/warnings in file:line:col format with code snippets for context.",
             properties: [
                 "project_path": ["type": "string", "description": "Path to .xcodeproj or .xcworkspace"],
             ],
@@ -509,11 +511,25 @@ enum AgentTools {
         ),
         ToolDef(
             name: "xcode_run",
-            description: "Run an Xcode project via ScriptingBridge. Triggers run and returns immediately.",
+            description: "Build then run an Xcode project via ScriptingBridge. Builds first — only runs if clean. Returns errors if build fails.",
             properties: [
                 "project_path": ["type": "string", "description": "Path to .xcodeproj or .xcworkspace"],
             ],
             required: ["project_path"]
+        ),
+        ToolDef(
+            name: "xcode_list_projects",
+            description: "List all open Xcode projects and workspaces with numbered indices. Use the number with xcode_select_project to choose one.",
+            properties: [:],
+            required: []
+        ),
+        ToolDef(
+            name: "xcode_select_project",
+            description: "Select an open Xcode project by its number from xcode_list_projects. Returns the project path for use with xcode_build/xcode_run.",
+            properties: [
+                "number": ["type": "integer", "description": "Project number from the list (1-based)"],
+            ],
+            required: ["number"]
         ),
         ToolDef(
             name: "xcode_grant_permission",
