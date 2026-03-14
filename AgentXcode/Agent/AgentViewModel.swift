@@ -237,6 +237,13 @@ final class AgentViewModel {
         options: .caseInsensitive
     )
 
+    // MARK: - Off-Main-Thread Helper
+
+    /// Run synchronous work off the main thread to avoid blocking the UI.
+    static func offMain<T: Sendable>(_ work: @Sendable @escaping () -> T) async -> T {
+        await Task.detached { work() }.value
+    }
+
     // MARK: - Computed Properties
 
     var daemonReady: Bool { helperService.helperReady }

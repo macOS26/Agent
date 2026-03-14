@@ -182,12 +182,13 @@ extension AgentViewModel {
                         }
 
                         // Coding tools — direct file operations via CodingService
+                        // All CodingService calls run off the main thread to avoid UI beach balls.
                         if name == "read_file" {
                             let filePath = input["file_path"] as? String ?? ""
                             let offset = input["offset"] as? Int
                             let limit = input["limit"] as? Int
                             appendLog("Read: \(filePath)")
-                            let output = CodingService.readFile(path: filePath, offset: offset, limit: limit)
+                            let output = await Self.offMain { CodingService.readFile(path: filePath, offset: offset, limit: limit) }
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
@@ -195,7 +196,7 @@ extension AgentViewModel {
                             let filePath = input["file_path"] as? String ?? ""
                             let content = input["content"] as? String ?? ""
                             appendLog("Write: \(filePath)")
-                            let output = CodingService.writeFile(path: filePath, content: content)
+                            let output = await Self.offMain { CodingService.writeFile(path: filePath, content: content) }
                             appendLog(output)
                             commandsRun.append("write_file: \(filePath)")
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
@@ -207,7 +208,7 @@ extension AgentViewModel {
                             let newString = input["new_string"] as? String ?? ""
                             let replaceAll = input["replace_all"] as? Bool ?? false
                             appendLog("Edit: \(filePath)")
-                            let output = CodingService.editFile(path: filePath, oldString: oldString, newString: newString, replaceAll: replaceAll)
+                            let output = await Self.offMain { CodingService.editFile(path: filePath, oldString: oldString, newString: newString, replaceAll: replaceAll) }
                             appendLog(output)
                             commandsRun.append("edit_file: \(filePath)")
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
@@ -217,7 +218,7 @@ extension AgentViewModel {
                             let pattern = input["pattern"] as? String ?? "*"
                             let path = input["path"] as? String
                             appendLog("List: \(pattern)")
-                            let output = CodingService.listFiles(pattern: pattern, path: path)
+                            let output = await Self.offMain { CodingService.listFiles(pattern: pattern, path: path) }
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
@@ -226,7 +227,7 @@ extension AgentViewModel {
                             let path = input["path"] as? String
                             let include = input["include"] as? String
                             appendLog("Search: \(pattern)")
-                            let output = CodingService.searchFiles(pattern: pattern, path: path, include: include)
+                            let output = await Self.offMain { CodingService.searchFiles(pattern: pattern, path: path, include: include) }
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
@@ -234,7 +235,7 @@ extension AgentViewModel {
                         if name == "git_status" {
                             let path = input["path"] as? String
                             appendLog("Git status")
-                            let output = CodingService.gitStatus(path: path)
+                            let output = await Self.offMain { CodingService.gitStatus(path: path) }
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
@@ -243,7 +244,7 @@ extension AgentViewModel {
                             let staged = input["staged"] as? Bool ?? false
                             let target = input["target"] as? String
                             appendLog("Git diff\(staged ? " --cached" : "")\(target.map { " \($0)" } ?? "")")
-                            let output = CodingService.gitDiff(path: path, staged: staged, target: target)
+                            let output = await Self.offMain { CodingService.gitDiff(path: path, staged: staged, target: target) }
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
@@ -251,7 +252,7 @@ extension AgentViewModel {
                             let path = input["path"] as? String
                             let count = input["count"] as? Int
                             appendLog("Git log")
-                            let output = CodingService.gitLog(path: path, count: count)
+                            let output = await Self.offMain { CodingService.gitLog(path: path, count: count) }
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
@@ -260,7 +261,7 @@ extension AgentViewModel {
                             let message = input["message"] as? String ?? ""
                             let files = input["files"] as? [String]
                             appendLog("Git commit: \(message)")
-                            let output = CodingService.gitCommit(path: path, message: message, files: files)
+                            let output = await Self.offMain { CodingService.gitCommit(path: path, message: message, files: files) }
                             appendLog(output)
                             commandsRun.append("git_commit: \(message)")
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
@@ -270,7 +271,7 @@ extension AgentViewModel {
                             let path = input["path"] as? String
                             let patch = input["patch"] as? String ?? ""
                             appendLog("Git apply patch")
-                            let output = CodingService.gitApplyPatch(path: path, patch: patch)
+                            let output = await Self.offMain { CodingService.gitApplyPatch(path: path, patch: patch) }
                             appendLog(output)
                             commandsRun.append("git_diff_patch")
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
@@ -281,7 +282,7 @@ extension AgentViewModel {
                             let branchName = input["name"] as? String ?? ""
                             let checkout = input["checkout"] as? Bool ?? true
                             appendLog("Git branch: \(branchName)")
-                            let output = CodingService.gitBranch(path: path, name: branchName, checkout: checkout)
+                            let output = await Self.offMain { CodingService.gitBranch(path: path, name: branchName, checkout: checkout) }
                             appendLog(output)
                             commandsRun.append("git_branch: \(branchName)")
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
@@ -471,9 +472,16 @@ extension AgentViewModel {
                             let allowWrites = input["allow_writes"] as? Bool ?? false
                             appendLog("AE query: \(bundleID) (\(operations.count) ops)")
                             flushLog()
-                            let output = AppleEventService.shared.execute(
-                                bundleID: bundleID, operations: operations, allowWrites: allowWrites
-                            )
+                            let opsData = try? JSONSerialization.data(withJSONObject: operations)
+                            let output = await Self.offMain {
+                                guard let data = opsData,
+                                      let ops = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+                                    return "Error: failed to process operations"
+                                }
+                                return AppleEventService.shared.execute(
+                                    bundleID: bundleID, operations: ops, allowWrites: allowWrites
+                                )
+                            }
                             appendLog(output)
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
@@ -482,7 +490,7 @@ extension AgentViewModel {
                         if name == "xcode_grant_permission" {
                             appendLog("Granting Xcode Automation permission...")
                             flushLog()
-                            let output = XcodeService.shared.grantPermission()
+                            let output = await Self.offMain { XcodeService.shared.grantPermission() }
                             appendLog(output)
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
@@ -491,7 +499,7 @@ extension AgentViewModel {
                             let projectPath = input["project_path"] as? String ?? ""
                             appendLog("Building: \(projectPath)")
                             flushLog()
-                            let output = XcodeService.shared.buildProject(projectPath: projectPath)
+                            let output = await Self.offMain { XcodeService.shared.buildProject(projectPath: projectPath) }
                             appendLog(output)
                             commandsRun.append("xcode_build: \(projectPath)")
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
@@ -501,7 +509,7 @@ extension AgentViewModel {
                             let projectPath = input["project_path"] as? String ?? ""
                             appendLog("Running: \(projectPath)")
                             flushLog()
-                            let output = XcodeService.shared.runProject(projectPath: projectPath)
+                            let output = await Self.offMain { XcodeService.shared.runProject(projectPath: projectPath) }
                             appendLog(output)
                             commandsRun.append("xcode_run: \(projectPath)")
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
@@ -509,7 +517,7 @@ extension AgentViewModel {
 
                         if name == "xcode_list_projects" {
                             appendLog("Listing open Xcode projects...")
-                            let output = XcodeService.shared.listProjects()
+                            let output = await Self.offMain { XcodeService.shared.listProjects() }
                             appendLog(output)
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
@@ -517,7 +525,7 @@ extension AgentViewModel {
                         if name == "xcode_select_project" {
                             let number = input["number"] as? Int ?? 0
                             appendLog("Selecting project #\(number)")
-                            let output = XcodeService.shared.selectProject(number: number)
+                            let output = await Self.offMain { XcodeService.shared.selectProject(number: number) }
                             appendLog(output)
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }

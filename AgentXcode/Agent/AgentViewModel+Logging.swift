@@ -8,31 +8,37 @@ extension AgentViewModel {
 
     func captureScreenshot() {
         let tempPath = NSTemporaryDirectory() + "agent_screenshot_\(UUID().uuidString).png"
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-        process.arguments = ["-i", tempPath]  // interactive selection
 
-        do {
-            try process.run()
-            process.waitUntilExit()
-        } catch {
-            appendLog("Screenshot failed: \(error.localizedDescription)")
-            return
+        Task {
+            let status = await Self.offMain {
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+                process.arguments = ["-i", tempPath]
+                do {
+                    try process.run()
+                    process.waitUntilExit()
+                    return process.terminationStatus
+                } catch {
+                    return Int32(-1)
+                }
+            }
+
+            guard status == 0,
+                  FileManager.default.fileExists(atPath: tempPath),
+                  let image = NSImage(contentsOfFile: tempPath),
+                  let tiffData = image.tiffRepresentation,
+                  let bitmap = NSBitmapImageRep(data: tiffData),
+                  let pngData = bitmap.representation(using: .png, properties: [:]) else {
+                if status != 0 && status != -1 {
+                    appendLog("Screenshot failed (exit \(status))")
+                }
+                return
+            }
+
+            attachedImages.append(image)
+            attachedImagesBase64.append(pngData.base64EncodedString())
+            try? FileManager.default.removeItem(atPath: tempPath)
         }
-
-        guard process.terminationStatus == 0,
-              FileManager.default.fileExists(atPath: tempPath),
-              let image = NSImage(contentsOfFile: tempPath),
-              let tiffData = image.tiffRepresentation,
-              let bitmap = NSBitmapImageRep(data: tiffData),
-              let pngData = bitmap.representation(using: .png, properties: [:]) else {
-            // User cancelled the capture or file not found
-            return
-        }
-
-        attachedImages.append(image)
-        attachedImagesBase64.append(pngData.base64EncodedString())
-        try? FileManager.default.removeItem(atPath: tempPath)
     }
 
     func removeAttachment(at index: Int) {
