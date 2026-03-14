@@ -300,22 +300,23 @@ final class AgentViewModel {
             try? await Task.sleep(nanoseconds: 500_000_000)
             appendLog("Warming up the engines...")
             var userOK = await userService.ping()
+            appendLog("User agent: \(userOK ? "ping OK" : "no response")")
             var daemonOK = await helperService.ping()
-            // Auto-fix: restart services that aren't responding
+            appendLog("Launch Daemon: \(daemonOK ? "ping OK" : "no response")")
             if !userOK {
-                appendLog("User agent: not responding — restarting...")
+                appendLog("User agent: mending...")
                 _ = userService.restartAgent()
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
                 userOK = await userService.ping()
+                appendLog("User agent: \(userOK ? "mended — ping OK" : "still NOT responding")")
             }
             if !daemonOK {
-                appendLog("Launch Daemon: not responding — restarting...")
+                appendLog("Launch Daemon: mending...")
                 _ = helperService.restartDaemon()
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
                 daemonOK = await helperService.ping()
+                appendLog("Launch Daemon: \(daemonOK ? "mended — ping OK" : "still NOT responding")")
             }
-            appendLog("User agent: \(userOK ? "responding" : "NOT responding")")
-            appendLog("Launch Daemon: \(daemonOK ? "responding" : "NOT responding")")
             if !userOK || !daemonOK {
                 appendLog("Click Register to restart services")
             }
@@ -338,21 +339,23 @@ final class AgentViewModel {
         appendLog("Testing connections...")
         Task {
             var userOK = await userService.ping()
+            appendLog("User agent: \(userOK ? "ping OK" : "no response")")
             var daemonOK = await helperService.ping()
+            appendLog("Launch Daemon: \(daemonOK ? "ping OK" : "no response")")
             if !userOK {
-                appendLog("User agent: not responding — restarting...")
+                appendLog("User agent: mending...")
                 _ = userService.restartAgent()
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
                 userOK = await userService.ping()
+                appendLog("User agent: \(userOK ? "mended — ping OK" : "still NOT responding")")
             }
             if !daemonOK {
-                appendLog("Launch Daemon: not responding — restarting...")
+                appendLog("Launch Daemon: mending...")
                 _ = helperService.restartDaemon()
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
                 daemonOK = await helperService.ping()
+                appendLog("Launch Daemon: \(daemonOK ? "mended — ping OK" : "still NOT responding")")
             }
-            appendLog("User agent: \(userOK ? "responding" : "NOT responding")")
-            appendLog("Launch Daemon: \(daemonOK ? "responding" : "NOT responding")")
             if !userOK || !daemonOK {
                 appendLog("Click Register to restart services")
             }
