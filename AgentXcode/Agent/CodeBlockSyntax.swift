@@ -95,7 +95,8 @@ private struct LangDef {
         let result = NSMutableAttributedString(string: code, attributes: [
             .font: font, .foregroundColor: colText
         ])
-        let def = langDef(for: language)
+        let effectiveLang = language ?? guessLanguage(from: code)
+        let def = langDef(for: effectiveLang)
         let ns = code as NSString
         let r = NSRange(location: 0, length: ns.length)
 
@@ -213,10 +214,37 @@ private struct LangDef {
         "kt": "kotlin", "py": "python", "python3": "python",
     ]
 
+    /// Shell command indicators — if an untagged code block starts with these, use bash highlighting.
+    private static let shellPrefixes = ["$", "#", "cd ", "ls ", "cat ", "echo ", "grep ", "find ",
+        "git ", "brew ", "sudo ", "mkdir ", "rm ", "cp ", "mv ", "curl ", "chmod ", "chown ",
+        "npm ", "pip ", "export ", "source ", "touch ", "tar ", "ssh ", "kill ", "xargs ",
+        "xcodebuild ", "swift ", "swiftc ", "clang ", "make ", "docker ", "pkill ",
+        "FILTER_BRANCH"]
+
     private static func langDef(for language: String?) -> LangDef {
-        guard let l = language?.lowercased().trimmingCharacters(in: .whitespaces), !l.isEmpty else { return genericDef }
+        guard let l = language?.lowercased().trimmingCharacters(in: .whitespaces), !l.isEmpty else {
+            return genericDef
+        }
         let key = aliases[l] ?? l
         return defs[key] ?? genericDef
+    }
+
+    /// Guess language from code content when no language tag is provided.
+    static func guessLanguage(from code: String) -> String? {
+        let firstLine = code.prefix(200).split(separator: "\n").first.map(String.init) ?? code
+        let trimmed = firstLine.trimmingCharacters(in: .whitespaces)
+        // Shell commands
+        if shellPrefixes.contains(where: { trimmed.hasPrefix($0) }) { return "bash" }
+        // Swift indicators
+        if trimmed.hasPrefix("import ") || trimmed.hasPrefix("func ") || trimmed.hasPrefix("let ")
+            || trimmed.hasPrefix("var ") || trimmed.hasPrefix("struct ") || trimmed.hasPrefix("class ")
+            || trimmed.hasPrefix("@") || trimmed.hasPrefix("guard ") || trimmed.hasPrefix("enum ")
+            || trimmed.hasPrefix("protocol ") { return "swift" }
+        // Python
+        if trimmed.hasPrefix("def ") || trimmed.hasPrefix("from ") || trimmed.hasPrefix("print(") { return "python" }
+        // JSON
+        if trimmed.hasPrefix("{") || trimmed.hasPrefix("[") { return "json" }
+        return nil
     }
 
     private static let genericDef = LangDef()
@@ -298,7 +326,10 @@ private struct LangDef {
             sys: ["echo", "printf", "cd", "ls", "cat", "grep", "sed", "awk", "find", "sort",
                   "head", "tail", "wc", "chmod", "chown", "mkdir", "rm", "cp", "mv", "curl",
                   "wget", "git", "npm", "pip", "brew", "sudo", "eval", "exec", "test",
-                  "read", "set", "unset", "trap", "xargs", "tar", "ssh", "kill", "touch"],
+                  "read", "set", "unset", "trap", "xargs", "tar", "ssh", "kill", "touch",
+                  "swift", "swiftc", "xcodebuild", "xcrun", "clang", "make", "docker",
+                  "pkill", "launchctl", "defaults", "open", "pbcopy", "pbpaste", "which",
+                  "env", "basename", "dirname", "date", "diff", "patch", "tee", "uname"],
             comment: "#", blockStart: nil, blockEnd: nil,
             strPat: #""(?:\\.|[^"\\])*"|'[^']*'"#
         ),
