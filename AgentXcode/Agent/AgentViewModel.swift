@@ -29,18 +29,29 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(rootEnabled, forKey: "agentRootEnabled") }
     }
 
-    // One-time migration for stale defaults — runs before property defaults are evaluated
+    // One-time migration for stale defaults and API keys to Keychain — runs before property defaults are evaluated
     @ObservationIgnored
     private static let _migrate: Void = {
         let defaults = UserDefaults.standard
-        guard !defaults.bool(forKey: "agentMigrationV3") else { return }
-        // ollamaEndpoint is now a constant — remove any stale/blank cached value
-        defaults.removeObject(forKey: "ollamaEndpoint")
-        // Clear stale default model so user fetches from cloud
+        guard !defaults.bool(forKey: "agentMigrationV4") else { return }
+        
+        // Migration V4: Move API keys from UserDefaults to Keychain
+        if let claudeKey = defaults.string(forKey: "agentAPIKey"), !claudeKey.isEmpty {
+            KeychainService.shared.setClaudeAPIKey(claudeKey)
+            defaults.removeObject(forKey: "agentAPIKey")
+        }
+        if let ollamaKey = defaults.string(forKey: "ollamaAPIKey"), !ollamaKey.isEmpty {
+            KeychainService.shared.setOllamaAPIKey(ollamaKey)
+            defaults.removeObject(forKey: "ollamaAPIKey")
+        }
+        
+        // Legacy migrations from V3
+        defaults.removeObject(forKey: "ollamaEndpoint")  // now a constant
         if let model = defaults.string(forKey: "ollamaModel"), model == "llama3.1" {
             defaults.set("", forKey: "ollamaModel")
         }
-        defaults.set(true, forKey: "agentMigrationV3")
+        
+        defaults.set(true, forKey: "agentMigrationV4")
     }()
 
     var selectedProvider: APIProvider = { _ = AgentViewModel._migrate; return APIProvider(rawValue: UserDefaults.standard.string(forKey: "agentProvider") ?? "claude") ?? .claude }() {
@@ -55,18 +66,18 @@ final class AgentViewModel {
         }
     }
 
-    // Claude settings
-    var apiKey: String = UserDefaults.standard.string(forKey: "agentAPIKey") ?? "" {
-        didSet { UserDefaults.standard.set(apiKey, forKey: "agentAPIKey") }
+    // Claude settings - stored securely in Keychain
+    var apiKey: String = KeychainService.shared.getClaudeAPIKey() ?? "" {
+        didSet { KeychainService.shared.setClaudeAPIKey(apiKey) }
     }
 
     var selectedModel: String = UserDefaults.standard.string(forKey: "agentModel") ?? "claude-sonnet-4-20250514" {
         didSet { UserDefaults.standard.set(selectedModel, forKey: "agentModel") }
     }
 
-    // Ollama settings
-    var ollamaAPIKey: String = UserDefaults.standard.string(forKey: "ollamaAPIKey") ?? "" {
-        didSet { UserDefaults.standard.set(ollamaAPIKey, forKey: "ollamaAPIKey") }
+    // Ollama settings - API key stored securely in Keychain
+    var ollamaAPIKey: String = KeychainService.shared.getOllamaAPIKey() ?? "" {
+        didSet { KeychainService.shared.setOllamaAPIKey(ollamaAPIKey) }
     }
 
     let ollamaEndpoint = "https://ollama.com/api/chat"

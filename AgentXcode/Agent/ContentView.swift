@@ -363,6 +363,12 @@ struct ActivityLogView: NSViewRepresentable {
         /// Callback to trigger re-render when HTML snapshot is ready
         var onHTMLReady: (() -> Void)?
 
+        // SECURITY: Limit concurrent web views to prevent memory exhaustion
+        private static let maxActiveWebViews = 10
+
+
+
+
         // Matches image files
         private static let imagePathPattern: NSRegularExpression? = try? NSRegularExpression(
             pattern: #"(/[^\s"'<>]+\.(?:jpg|jpeg|png|gif|tiff|bmp|webp|heic|ico|icon))"#,
@@ -681,6 +687,17 @@ struct ActivityLogView: NSViewRepresentable {
         /// Render HTML to image via off-screen WKWebView
         private func snapshotHTML(path: String, offset: Int) {
             let fileURL = URL(fileURLWithPath: path)
+            // SECURITY: Limit concurrent web views to prevent memory exhaustion
+            if activeWebViews.count >= Self.maxActiveWebViews {
+                // Remove oldest pending request if at limit
+                if let oldestOffset = htmlPending.sorted().first {
+                    if let oldWebView = activeWebViews.removeValue(forKey: oldestOffset) {
+                        oldWebView.stopLoading()
+                        oldWebView.navigationDelegate = nil
+                    }
+                    htmlPending.remove(oldestOffset)
+                }
+            }
             let config = WKWebViewConfiguration()
             let webView = WKWebView(frame: CGRect(x: 0, y: 0, width: 480, height: 800), configuration: config)
             webView.navigationDelegate = self
@@ -746,6 +763,11 @@ struct ActivityLogView: NSViewRepresentable {
         }
 
         func clearCache() {
+            // SECURITY: Stop loading on all active web views before removing
+            for (_, webView) in activeWebViews {
+                webView.stopLoading()
+                webView.navigationDelegate = nil
+            }
             imageCache.removeAll()
             htmlCache.removeAll()
             htmlPending.removeAll()
