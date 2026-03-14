@@ -23,6 +23,26 @@ struct ActivityLogView: NSViewRepresentable {
         textView.isAutomaticTextReplacementEnabled = false
         scrollView.hasVerticalScroller = true
         scrollView.drawsBackground = false
+
+        // Observe user scrolling to detect when they scroll away from bottom
+        let coord = context.coordinator
+        let weakScroll = scrollView
+        let weakCoord = coord
+        weakCoord.scrollObserver = NotificationCenter.default.addObserver(
+            forName: NSView.boundsDidChangeNotification,
+            object: scrollView.contentView,
+            queue: .main
+        ) { _ in
+            MainActor.assumeIsolated {
+                guard let textView = weakScroll.documentView as? NSTextView else { return }
+                let visibleBottom = weakScroll.contentView.bounds.origin.y + weakScroll.contentView.bounds.height
+                let contentHeight = textView.frame.height
+                let threshold: CGFloat = 50
+                weakCoord.userScrolledAway = (contentHeight - visibleBottom) > threshold
+            }
+        }
+        scrollView.contentView.postsBoundsChangedNotifications = true
+
         return scrollView
     }
 
@@ -135,6 +155,9 @@ struct ActivityLogView: NSViewRepresentable {
         /// Throttle scrollToEnd to avoid hyper-scrolling during fast streaming
         var lastScrollTime: CFAbsoluteTime = 0
         var pendingScrollWork: DispatchWorkItem?
+        /// Track whether user has scrolled away from bottom — skip auto-scroll if so
+        var userScrolledAway = false
+        var scrollObserver: NSObjectProtocol?
         /// Images keyed by their character offset in the log — each occurrence gets its own
         /// snapshot so the same path (e.g. current_artwork.jpg) shows different art per task.
         var imageCache: [Int: (image: NSImage, mtime: Date)] = [:]
@@ -150,8 +173,9 @@ struct ActivityLogView: NSViewRepresentable {
         // SECURITY: Limit concurrent web views to prevent memory exhaustion
         private static let maxActiveWebViews = 10
 
-        /// Throttled scroll — at most once per 0.3s, with a trailing scroll to catch the final update
+        /// Throttled scroll — at most once per 0.3s, skipped if user scrolled away from bottom
         func throttledScrollToEnd(_ textView: NSTextView) {
+            guard !userScrolledAway else { return }
             let now = CFAbsoluteTimeGetCurrent()
             let interval: CFAbsoluteTime = 0.3
             pendingScrollWork?.cancel()
@@ -161,6 +185,7 @@ struct ActivityLogView: NSViewRepresentable {
             } else {
                 let work = DispatchWorkItem { [weak self, weak textView] in
                     guard let self, let textView else { return }
+                    guard !self.userScrolledAway else { return }
                     self.lastScrollTime = CFAbsoluteTimeGetCurrent()
                     textView.scrollToEndOfDocument(nil)
                 }
