@@ -827,7 +827,7 @@ final class OllamaService {
 
         var fullText = ""
         var contentBlocks: [[String: Any]] = []
-        var stopReason = "end_turn"
+        let stopReason = "end_turn"
 
         // Ollama streaming returns NDJSON: one JSON object per line
         for try await line in bytes.lines {
