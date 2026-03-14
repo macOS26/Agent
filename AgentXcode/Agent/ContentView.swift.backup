@@ -246,10 +246,6 @@ struct ContentView: View {
                 }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
                     showSplash = false
-            }
-            Task {
-                await viewModel.fetchClaudeModels()
-            
                 }
             }
             DispatchQueue.global(qos: .userInitiated).async {
@@ -931,9 +927,9 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Model").font(.caption).foregroundStyle(.secondary)
                         Picker("Model", selection: $viewModel.selectedModel) {
-                            ForEach(viewModel.availableClaudeModels) { model in
-                                Text(model.formattedDisplayName).tag(model.id)
-                            }
+                            Text("Claude Sonnet 4").tag("claude-sonnet-4-20250514")
+                            Text("Claude Opus 4").tag("claude-opus-4-20250514")
+                            Text("Claude Haiku 3.5").tag("claude-haiku-3-5-20241022")
                         }
                         .labelsHidden()
                     }
