@@ -25,6 +25,7 @@ let scriptNames = [
     "RunningApps",
     "SaveImageFromChat",
     "SendMessage",
+    "TestCodingTools",
     "TestGenerateBridge",
     "TodayEvents",
     "WhatsPlaying",

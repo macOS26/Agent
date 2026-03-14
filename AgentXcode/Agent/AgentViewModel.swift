@@ -212,9 +212,12 @@ final class AgentViewModel {
     var logBuffer = ""
     var logFlushTask: Task<Void, Never>?
     var logPersistTask: Task<Void, Never>?
-    var streamOutputCount = 0
+    var streamLineCount = 0
     var streamTruncated = false
-    static let maxStreamDisplay = 20_000
+    static let outputLineOptions = [100, 250, 500, 1000, 1500, 2000, 3000]
+    var maxOutputLines: Int = UserDefaults.standard.object(forKey: "agentMaxOutputLines") as? Int ?? 1000 {
+        didSet { UserDefaults.standard.set(maxOutputLines, forKey: "agentMaxOutputLines") }
+    }
 
     // LLM streaming state
     var streamBuffer = ""

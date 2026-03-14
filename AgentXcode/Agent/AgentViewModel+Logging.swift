@@ -186,12 +186,14 @@ extension AgentViewModel {
 
     func appendRawOutput(_ text: String) {
         guard !text.isEmpty else { return }
-        streamOutputCount += text.count
+        // Count newlines in this chunk
+        let newlines = text.reduce(0) { $0 + ($1 == "\n" ? 1 : 0) }
+        streamLineCount += max(newlines, 1)  // at least 1 line per chunk
         // Cap streaming display to prevent UI from choking
-        if streamOutputCount > Self.maxStreamDisplay {
+        if streamLineCount > maxOutputLines {
             if !streamTruncated {
                 streamTruncated = true
-                logBuffer += "...(output truncated for display)...\n"
+                logBuffer += "...(output truncated at \(maxOutputLines) lines)...\n"
                 scheduleLogFlush()
             }
             return
@@ -235,7 +237,7 @@ extension AgentViewModel {
     }
 
     func resetStreamCounters() {
-        streamOutputCount = 0
+        streamLineCount = 0
         streamTruncated = false
     }
 

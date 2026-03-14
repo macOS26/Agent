@@ -1198,6 +1198,30 @@ struct SettingsView: View {
             }
             Divider()
 
+            // Output lines setting
+            HStack {
+                Text("Output")
+                    .font(.headline)
+                Spacer()
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("Lines before truncated").font(.caption).foregroundStyle(.secondary)
+                    Stepper("\(viewModel.maxOutputLines)",
+                           onIncrement: {
+                               let opts = AgentViewModel.outputLineOptions
+                               if let i = opts.firstIndex(of: viewModel.maxOutputLines), i > 0 {
+                                   viewModel.maxOutputLines = opts[i - 1]
+                               }
+                           },
+                           onDecrement: {
+                               let opts = AgentViewModel.outputLineOptions
+                               if let i = opts.firstIndex(of: viewModel.maxOutputLines), i + 1 < opts.count {
+                                   viewModel.maxOutputLines = opts[i + 1]
+                               }
+                           })
+                }
+            }
+            Divider()
+
             // History settings
             HStack {
                 Text("History")

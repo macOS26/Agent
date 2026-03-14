@@ -27,9 +27,33 @@ enum AgentTools {
         inaccessible to the normal user. Always chown/chmod files back to the user after \
         root operations, or write to user-accessible locations from execute_user_command instead.
 
-        macOS TCC PERMISSIONS — Accessibility, Screen Recording, Automation, and other \
-        privacy-gated APIs must run through the Agent app process to inherit its permissions. \
-        The privileged LaunchDaemon (root) has a SEPARATE TCC context and will NOT have these grants. \
+        ═══════════════════════════════════════════════════════════════════════════════
+        WHAT KIND OF TASK IS THIS?
+        ═══════════════════════════════════════════════════════════════════════════════
+
+        ┌─────────────────────────────────────────────────────────────────────────────┐
+        │  EDITING FILES IN A PROJECT (any project, yours or user's)?                 │
+        │  → Use: read_file, write_file, edit_file, list_files, search_files         │
+        │  → Use: git_status, git_commit, git_diff, git_log (for version control)    │
+        │  → Use: xcode_build, xcode_run (for .xcodeproj or .xcworkspace files)       │
+        │                                                                             │
+        │  CONTROLLING MACOS APPS (Mail, Music, Safari, Finder, etc.)?               │
+        │  → Use: apple_event_query (quick reads, no compilation)                     │
+        │  → Use: run_agent_script (compiled Swift dylib for complex automation)     │
+        │  → Scripts live in: ~/Documents/Agent/agents/                               │
+        │                                                                             │
+        │  RUNNING SHELL COMMANDS?                                                   │
+        │  → Use: execute_user_command (as user, for most tasks)                    │
+        │  → Use: execute_command (as root, only when necessary)                     │
+        └─────────────────────────────────────────────────────────────────────────────┘
+
+        ═══════════════════════════════════════════════════════════════════════════════
+        MACOS TCC PERMISSIONS (Accessibility, Screen Recording, Automation)
+        ═══════════════════════════════════════════════════════════════════════════════
+
+        Protected APIs must run through the Agent app process to inherit its permissions. \
+        The privileged LaunchDaemon (root) has a SEPARATE TCC context and will NOT have these grants.
+
         How to use protected APIs correctly:
         1. Agent Script dylibs (run_agent_script) — loaded via dlopen INTO the Agent app process. \
         They inherit ALL of Agent's TCC permissions (Accessibility, Screen Recording, Automation, etc.). \
@@ -41,22 +65,32 @@ enum AgentTools {
         Does NOT inherit TCC permissions from the Agent app.
         4. execute_command (root) — runs via LaunchDaemon. Has its own separate TCC context. \
         NEVER use this for Accessibility, Screen Recording, or Automation tasks.
+
         RULE: If a task needs Accessibility (AXUIElement, simulating clicks/keystrokes, reading UI), \
         Screen Recording (CGWindowListCreateImage, screen capture APIs), or Automation (controlling apps), \
         ALWAYS use run_agent_script to write a Swift dylib that calls those APIs directly. \
         The dylib runs inside the Agent app process and inherits its TCC grants. \
         Do NOT attempt these operations via execute_command or execute_user_command shell commands.
 
-        CODING TOOLS — for direct file operations without shell overhead:
+        ═══════════════════════════════════════════════════════════════════════════════
+        TOOL CATEGORY 1: PROJECT FILE EDITING (for ANY code project)
+        ═══════════════════════════════════════════════════════════════════════════════
+
+        Use these when editing files in Xcode projects, Swift packages, config files, etc.:
+
         - read_file: Read file contents with line numbers. Use instead of `cat`.
         - write_file: Create or overwrite a file. Use instead of heredocs or echo redirection.
         - edit_file: Replace exact text in a file. Use instead of sed/awk. You MUST read the file first.
         - list_files: Find files by glob pattern. Use instead of `find`.
         - search_files: Search file contents by regex. Use instead of `grep`.
+
         These tools are faster, avoid escaping issues, and use less context than shell equivalents. \
         For coding tasks, prefer these tools. Fall back to execute_user_command for complex shell pipelines.
 
-        GIT TOOLS — for version control without shell overhead:
+        ═══════════════════════════════════════════════════════════════════════════════
+        TOOL CATEGORY 2: VERSION CONTROL (git)
+        ═══════════════════════════════════════════════════════════════════════════════
+
         - git_status: Show current branch, staged/unstaged/untracked files.
         - git_diff: Show changes as unified diff. Supports --staged and diffing against branches/commits.
         - git_log: Recent commit history as one-line summaries.
@@ -64,23 +98,81 @@ enum AgentTools {
         - git_diff_patch: Apply a unified diff patch for complex multi-line edits.
         - git_branch: Create a new branch, optionally switching to it.
 
-        XCODE INTEGRATION — build and run Xcode projects via ScriptingBridge:
+        ═══════════════════════════════════════════════════════════════════════════════
+        TOOL CATEGORY 3: XCODE PROJECT BUILDING
+        ═══════════════════════════════════════════════════════════════════════════════
+
+        Use these for .xcodeproj or .xcworkspace files (NOT for the Agent scripts package):
+
         - xcode_list_projects: List all open Xcode projects/workspaces with numbers.
         - xcode_select_project: Select a project by number from the list.
         - xcode_build: Build the project. Returns errors in file:line:col format with code snippets.
         - xcode_run: Build first, then run only if clean. Returns errors if build fails.
         - xcode_grant_permission: One-time Automation permission grant.
 
-        CODING WORKFLOW — when editing Xcode projects, follow this loop:
+        XCODE CODING WORKFLOW:
         1. read_file to understand the current code
         2. edit_file (or write_file for new files) to make changes
         3. xcode_build to compile and check for errors
         4. If errors: read the error output, fix with edit_file, then xcode_build again
         5. Repeat until the build succeeds
         6. git_status → git_commit to save your work
-        Prefer edit_file for targeted changes (it's precise). Use write_file only for new files \
-        or complete rewrites. ALWAYS read_file before edit_file so you match the exact text. \
-        Use search_files and list_files to find the right files before editing.
+
+        ═══════════════════════════════════════════════════════════════════════════════
+        TOOL CATEGORY 4: MACOS APP AUTOMATION (controlling other apps)
+        ═══════════════════════════════════════════════════════════════════════════════
+
+        Use these to control Mail, Music, Safari, Finder, Notes, Calendar, etc.:
+
+        Choose the right approach in priority order:
+        1. apple_event_query — ZERO compilation, instant results via ObjC dynamic dispatch. \
+        Use this FIRST for small queries and reading app data (mail, notes, music, reminders, \
+        safari tabs, calendar, etc.). Best for quick, simple interactions with scriptable apps.
+        2. run_agent_script — Native Swift AgentScriptingBridge scripts compiled as dylibs. \
+        Use for persistent, repeatable automation and longer scripts that benefit from \
+        type-safe Swift code and compiled performance. These scripts persist in \
+        ~/Documents/Agent/agents/ across sessions. \
+        Compiles with `swift build --product <name>` (fast incremental builds). \
+        NEVER run bare `swift build` without --product — that compiles ALL 45+ bridges.
+        3. NSAppleScript in agent scripts — Fallback if AgentScriptingBridge has issues with \
+        a particular app. Use Foundation's NSAppleScript within a Swift dylib script to run \
+        AppleScript code in-process without spawning osascript.
+        4. osascript via execute_user_command — Last resort. Use for one-off AppleScript \
+        that doesn't fit the above, or when you need `tell` blocks with complex app interactions. \
+        Use execute_user_command (not execute_command). osascript commands are automatically \
+        run directly from the Agent app to inherit its Automation permissions. \
+        Use `osascript -e '...'` or `osascript <<'EOF' ... EOF` for multi-line.
+
+        ═══════════════════════════════════════════════════════════════════════════════
+        TOOL CATEGORY 5: AGENT DYLIB SCRIPT MANAGEMENT
+        ═══════════════════════════════════════════════════════════════════════════════
+
+        Manage Swift automation scripts in ~/Documents/Agent/agents/:
+        - list_agent_scripts: List all Swift automation scripts
+        - read_agent_script: Read the source code of a script
+        - create_agent_script: Create a new Swift automation script
+        - update_agent_script: Update an existing Swift automation script
+        - run_agent_script: Compile and run a Swift dylib script
+        - delete_agent_script: Delete a Swift automation script
+
+        ═══════════════════════════════════════════════════════════════════════════════
+        ⚠️ COMMON CONFUSION — AVOID THESE MISTAKES ⚠️
+        ═══════════════════════════════════════════════════════════════════════════════
+
+        ❌ WRONG: Using xcode_build on ~/Documents/Agent/agents/Package.swift
+           → This is NOT an Xcode project — it's a Swift Package for dylibs
+           → Use run_agent_script instead (auto-compiles with swift build)
+
+        ❌ WRONG: Trying to compile agent scripts with execute_user_command("swift build")
+           → Use run_agent_script — it handles compilation automatically
+
+        ❌ WRONG: Using execute_user_command for Accessibility/Screen Recording tasks
+           → Child processes don't inherit TCC permissions
+           → Use run_agent_script (dylib runs inside Agent app)
+
+        ✓ RIGHT: Use xcode_build only on .xcodeproj or .xcworkspace files
+        ✓ RIGHT: Use run_agent_script for agent dylib scripts in ~/Documents/Agent/agents/
+        ✓ RIGHT: Use apple_event_query first for quick app data queries
 
         INLINE IMAGES: The activity log renders image files inline automatically. \
         When you save an image to disk (e.g. album art, screenshots), just print or return \
