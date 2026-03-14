@@ -70,7 +70,10 @@ final class HelperService {
 
     func execute(command: String) async -> (status: Int32, output: String) {
         if !helperReady {
-            registerHelper()
+            let msg = registerHelper()
+            if !helperReady {
+                return (-1, "Error: Root helper daemon is not running — \(msg). Check System Settings > Login Items.")
+            }
         }
 
         let handler = OutputHandler { [weak self] chunk in
@@ -129,9 +132,9 @@ final class HelperService {
             let timeout = DispatchWorkItem {
                 connection.invalidate()
                 Self.cancelProcess(instanceID: self.instanceID)
-                safeResume((-1, "Error: command timed out after 90 seconds"))
+                safeResume((-1, "Error: command timed out after 30 seconds — root helper may not be running"))
             }
-            DispatchQueue.global().asyncAfter(deadline: .now() + 90, execute: timeout)
+            DispatchQueue.global().asyncAfter(deadline: .now() + 30, execute: timeout)
 
             proxy.execute(script: script, instanceID: self.instanceID) { status, output in
                 timeout.cancel()
