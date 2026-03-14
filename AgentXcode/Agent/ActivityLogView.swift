@@ -94,15 +94,16 @@ struct ActivityLogView: NSViewRepresentable {
         @available(*, unavailable)
         required init(coder: NSCoder) { fatalError() }
 
-        override func cellSize() -> NSSize { NSSize(width: 20, height: 16) }
+        override func cellSize() -> NSSize { NSSize(width: 20, height: 66) }
 
         override func draw(withFrame cellFrame: NSRect, in controlView: NSView?) {
             if let icon = NSImage(systemSymbolName: "doc.on.doc", accessibilityDescription: "Copy code") {
                 let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
                 let tinted = (icon.withSymbolConfiguration(config) ?? icon).copy() as! NSImage
                 tinted.isTemplate = true
-                NSColor.tertiaryLabelColor.set()
-                tinted.draw(in: cellFrame)
+                NSColor.secondaryLabelColor.set()
+                let iconRect = NSRect(x: cellFrame.origin.x, y: cellFrame.origin.y, width: cellFrame.width, height: 16)
+                tinted.draw(in: iconRect)
             }
         }
 
@@ -348,10 +349,23 @@ struct ActivityLogView: NSViewRepresentable {
                 var code = nsText.substring(with: fence.range(at: 2))
                 if code.hasSuffix("\n") { code = String(code.dropLast()) }
 
-                // Copy button
-                let attach = NSTextAttachment()
-                attach.attachmentCell = CopyButtonCell(codeText: code)
-                result.append(NSAttributedString(attachment: attach))
+                // Extra spacing before code block
+                result.append(NSAttributedString(string: "\n", attributes: baseAttrs))
+
+                // Copy button only for actual source code blocks (not shell output or file reads)
+                let shellLangs: Set<String> = ["bash", "sh", "zsh", "shell", "console", "terminal"]
+                let firstLine = code.components(separatedBy: "\n").first ?? ""
+                let looksLikeNumberedOutput = firstLine.range(of: #"^\s*\d+\s+"#, options: .regularExpression) != nil
+                let isSourceCode = lang != nil && !shellLangs.contains(lang!.lowercased()) && !looksLikeNumberedOutput
+                if isSourceCode {
+                    let attach = NSTextAttachment()
+                    attach.attachmentCell = CopyButtonCell(codeText: code)
+                    let rightPara = NSMutableParagraphStyle()
+                    rightPara.alignment = .right
+                    let copyStr = NSMutableAttributedString(attachment: attach)
+                    copyStr.addAttribute(.paragraphStyle, value: rightPara, range: NSRange(location: 0, length: copyStr.length))
+                    result.append(copyStr)
+                }
 
                 // Syntax-highlighted code with background
                 let hl = CodeBlockHighlighter.highlight(code: code, language: lang, font: font)
@@ -361,6 +375,9 @@ struct ActivityLogView: NSViewRepresentable {
                 block.addAttribute(.backgroundColor, value: CodeBlockTheme.bg,
                                    range: NSRange(location: 0, length: block.length))
                 result.append(block)
+
+                // Extra spacing after code block
+                result.append(NSAttributedString(string: "\n", attributes: baseAttrs))
 
                 cursor = fence.range.location + fence.range.length
             }
