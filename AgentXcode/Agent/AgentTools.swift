@@ -36,6 +36,30 @@ enum AgentTools {
         These tools are faster, avoid escaping issues, and use less context than shell equivalents. \
         For coding tasks, prefer these tools. Fall back to execute_user_command for complex shell pipelines.
 
+        GIT TOOLS — for version control without shell overhead:
+        - git_status: Show current branch, staged/unstaged/untracked files.
+        - git_diff: Show changes as unified diff. Supports --staged and diffing against branches/commits.
+        - git_log: Recent commit history as one-line summaries.
+        - git_commit: Stage files and commit with a message.
+        - git_diff_patch: Apply a unified diff patch for complex multi-line edits.
+        - git_branch: Create a new branch, optionally switching to it.
+
+        XCODE INTEGRATION — build and run Xcode projects via ScriptingBridge:
+        - xcode_build: Build the project and get errors/warnings back.
+        - xcode_run: Run the project.
+        - xcode_grant_permission: One-time Automation permission grant.
+
+        CODING WORKFLOW — when editing Xcode projects, follow this loop:
+        1. read_file to understand the current code
+        2. edit_file (or write_file for new files) to make changes
+        3. xcode_build to compile and check for errors
+        4. If errors: read the error output, fix with edit_file, then xcode_build again
+        5. Repeat until the build succeeds
+        6. git_status → git_commit to save your work
+        Prefer edit_file for targeted changes (it's precise). Use write_file only for new files \
+        or complete rewrites. ALWAYS read_file before edit_file so you match the exact text. \
+        Use search_files and list_files to find the right files before editing.
+
         INLINE IMAGES: The activity log renders image files inline automatically. \
         When you save an image to disk (e.g. album art, screenshots), just print or return \
         the file path — do NOT run `open` to display it. The UI detects paths ending in \
