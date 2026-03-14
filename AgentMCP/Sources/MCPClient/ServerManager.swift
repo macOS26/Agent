@@ -15,7 +15,8 @@ public actor ServerManager {
     // MARK: - Initialization
     
     public init() {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support")
         configDirectory = appSupport.appendingPathComponent("Agent!/MCPServers")
         configFile = configDirectory.appendingPathComponent("servers.json")
     }

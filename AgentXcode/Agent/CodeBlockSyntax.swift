@@ -67,15 +67,23 @@ private struct LangDef {
 // MARK: - Highlighter
 
 @MainActor enum CodeBlockHighlighter {
-    private static let wordRx = try! NSRegularExpression(pattern: #"\b(?:[a-zA-Z][a-zA-Z0-9_]*|_[a-zA-Z0-9][a-zA-Z0-9_]*)\b"#)
-    private static let funcRx = try! NSRegularExpression(pattern: #"\b([a-zA-Z_][a-zA-Z0-9_]*)\s*(?=\()"#)
-    private static let propRx = try! NSRegularExpression(pattern: #"\.([a-zA-Z_][a-zA-Z0-9_]*)"#)
-    private static let numRx = try! NSRegularExpression(pattern: #"\b(?:0x[0-9a-fA-F]+|0b[01]+|0o[0-7]+|(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?)\b"#)
-    private static let attrRx = try! NSRegularExpression(pattern: #"@[a-zA-Z_][a-zA-Z0-9_]*"#)
-    private static let prepRx = try! NSRegularExpression(pattern: #"^\s*#\s*\w+.*$"#, options: .anchorsMatchLines)
+    private static let wordRx: NSRegularExpression? = try? NSRegularExpression(pattern: #"\b(?:[a-zA-Z][a-zA-Z0-9_]*|_[a-zA-Z0-9][a-zA-Z0-9_]*)\b"#)
+    private static let funcRx: NSRegularExpression? = try? NSRegularExpression(pattern: #"\b([a-zA-Z_][a-zA-Z0-9_]*)\s*(?=\()"#)
+    private static let propRx: NSRegularExpression? = try? NSRegularExpression(pattern: #"\.([a-zA-Z_][a-zA-Z0-9_]*)"#)
+    private static let numRx: NSRegularExpression? = try? NSRegularExpression(pattern: #"\b(?:0x[0-9a-fA-F]+|0b[01]+|0o[0-7]+|(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?)\b"#)
+    private static let attrRx: NSRegularExpression? = try? NSRegularExpression(pattern: #"@[a-zA-Z_][a-zA-Z0-9_]*"#)
+    private static let prepRx: NSRegularExpression? = try? NSRegularExpression(pattern: #"^\s*#\s*\w+.*$"#, options: .anchorsMatchLines)
 
     static func highlight(code: String, language: String?, font: NSFont) -> NSAttributedString {
         let bold = NSFont.monospacedSystemFont(ofSize: font.pointSize, weight: .bold)
+
+        let effectiveLang = language ?? guessLanguage(from: code)
+        let resolvedLang = effectiveLang.map { aliases[$0.lowercased()] ?? $0.lowercased() }
+
+        // Use terminal highlighter for bash/shell output
+        if resolvedLang == "bash" && looksLikeTerminalOutput(code) {
+            return highlightTerminalOutput(code: code, font: font)
+        }
 
         // Pre-capture theme colors for use in @Sendable enumerateMatches closures
         let colText = CodeBlockTheme.text
@@ -95,22 +103,21 @@ private struct LangDef {
         let result = NSMutableAttributedString(string: code, attributes: [
             .font: font, .foregroundColor: colText
         ])
-        let effectiveLang = language ?? guessLanguage(from: code)
         let def = langDef(for: effectiveLang)
         let ns = code as NSString
         let r = NSRange(location: 0, length: ns.length)
 
         // Identifiers
-        wordRx.enumerateMatches(in: code, range: r) { m, _, _ in
+        wordRx?.enumerateMatches(in: code, range: r) { m, _, _ in
             if let mr = m?.range { result.addAttribute(.foregroundColor, value: colIdent, range: mr) }
         }
         // Function calls
-        funcRx.enumerateMatches(in: code, range: r) { m, _, _ in
+        funcRx?.enumerateMatches(in: code, range: r) { m, _, _ in
             if let mr = m?.range(at: 1) { result.addAttribute(.foregroundColor, value: colFunc, range: mr) }
         }
         // System functions
         if !def.sysFuncs.isEmpty {
-            funcRx.enumerateMatches(in: code, range: r) { m, _, _ in
+            funcRx?.enumerateMatches(in: code, range: r) { m, _, _ in
                 guard let mr = m?.range(at: 1) else { return }
                 if def.sysFuncs.contains(ns.substring(with: mr)) {
                     result.addAttribute(.foregroundColor, value: colSysFunc, range: mr)
@@ -118,12 +125,12 @@ private struct LangDef {
             }
         }
         // Property access
-        propRx.enumerateMatches(in: code, range: r) { m, _, _ in
+        propRx?.enumerateMatches(in: code, range: r) { m, _, _ in
             if let mr = m?.range(at: 1) { result.addAttribute(.foregroundColor, value: colProp, range: mr) }
         }
         // Keywords
         if !def.keywords.isEmpty {
-            wordRx.enumerateMatches(in: code, range: r) { m, _, _ in
+            wordRx?.enumerateMatches(in: code, range: r) { m, _, _ in
                 guard let mr = m?.range else { return }
                 if def.keywords.contains(ns.substring(with: mr)) {
                     result.addAttributes([.foregroundColor: colKeyword, .font: bold], range: mr)
@@ -132,7 +139,7 @@ private struct LangDef {
         }
         // Declaration keywords
         if !def.declKeywords.isEmpty {
-            wordRx.enumerateMatches(in: code, range: r) { m, _, _ in
+            wordRx?.enumerateMatches(in: code, range: r) { m, _, _ in
                 guard let mr = m?.range else { return }
                 if def.declKeywords.contains(ns.substring(with: mr)) {
                     result.addAttributes([.foregroundColor: colKeyword, .font: bold], range: mr)
@@ -141,7 +148,7 @@ private struct LangDef {
         }
         // Type keywords
         if !def.types.isEmpty {
-            wordRx.enumerateMatches(in: code, range: r) { m, _, _ in
+            wordRx?.enumerateMatches(in: code, range: r) { m, _, _ in
                 guard let mr = m?.range else { return }
                 if def.types.contains(ns.substring(with: mr)) {
                     result.addAttributes([.foregroundColor: colType, .font: bold], range: mr)
@@ -150,7 +157,7 @@ private struct LangDef {
         }
         // Self keywords
         if !def.selfKw.isEmpty {
-            wordRx.enumerateMatches(in: code, range: r) { m, _, _ in
+            wordRx?.enumerateMatches(in: code, range: r) { m, _, _ in
                 guard let mr = m?.range else { return }
                 if def.selfKw.contains(ns.substring(with: mr)) {
                     result.addAttribute(.foregroundColor, value: colSelfKw, range: mr)
@@ -159,18 +166,18 @@ private struct LangDef {
         }
         // Attributes (@word)
         if def.hasAttrs {
-            attrRx.enumerateMatches(in: code, range: r) { m, _, _ in
+            attrRx?.enumerateMatches(in: code, range: r) { m, _, _ in
                 if let mr = m?.range { result.addAttributes([.foregroundColor: colAttr, .font: bold], range: mr) }
             }
         }
         // Preprocessor (#directives)
         if def.hasPreproc {
-            prepRx.enumerateMatches(in: code, range: r) { m, _, _ in
+            prepRx?.enumerateMatches(in: code, range: r) { m, _, _ in
                 if let mr = m?.range { result.addAttribute(.foregroundColor, value: colPreproc, range: mr) }
             }
         }
         // Numbers
-        numRx.enumerateMatches(in: code, range: r) { m, _, _ in
+        numRx?.enumerateMatches(in: code, range: r) { m, _, _ in
             if let mr = m?.range { result.addAttribute(.foregroundColor, value: colNumber, range: mr) }
         }
         // Strings (override keywords inside strings)
@@ -500,4 +507,176 @@ private struct LangDef {
         "css": LangDef(comment: nil, blockStart: "/*", blockEnd: "*/",
                         strPat: #""(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'"#),
     ]
+
+    // MARK: - Terminal Output Detection & Highlighting
+
+    /// Detect if bash block is command output (ls, ps, etc.) vs a shell script.
+    private static func looksLikeTerminalOutput(_ code: String) -> Bool {
+        let lines = code.split(separator: "\n", maxSplits: 5, omittingEmptySubsequences: false)
+        guard !lines.isEmpty else { return false }
+        var outputIndicators = 0
+        for line in lines.prefix(5) {
+            let t = line.trimmingCharacters(in: .whitespaces)
+            // ls -la style: permissions string
+            if t.count > 10, let first = t.first, "d-lbcps".contains(first) {
+                let perm = t.prefix(10)
+                if perm.allSatisfy({ "drwx-lbcpsTt@+. ".contains($0) }) { outputIndicators += 2 }
+            }
+            // "total N" line from ls
+            if t.hasPrefix("total ") && t.dropFirst(6).allSatisfy({ $0.isNumber }) { outputIndicators += 2 }
+            // Lines starting with / (paths)
+            if t.hasPrefix("/") { outputIndicators += 1 }
+            // Numeric-heavy lines (ps, df, etc.)
+            let digits = t.filter(\.isNumber).count
+            if t.count > 10 && Double(digits) / Double(t.count) > 0.3 { outputIndicators += 1 }
+        }
+        return outputIndicators >= 2
+    }
+
+    // Terminal output theme colors
+    private static var termDir: NSColor {
+        NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor(red: 0.35, green: 0.7, blue: 1.0, alpha: 1)   // bright blue
+            : NSColor(red: 0.0, green: 0.3, blue: 0.8, alpha: 1)
+    }
+    private static var termExec: NSColor {
+        NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor(red: 0.4, green: 0.9, blue: 0.4, alpha: 1)    // green
+            : NSColor(red: 0.0, green: 0.5, blue: 0.0, alpha: 1)
+    }
+    private static var termSymlink: NSColor {
+        NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor(red: 0.9, green: 0.5, blue: 0.9, alpha: 1)    // magenta
+            : NSColor(red: 0.6, green: 0.0, blue: 0.6, alpha: 1)
+    }
+    private static var termSize: NSColor {
+        NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor(red: 0.85, green: 0.85, blue: 0.5, alpha: 1)  // yellow
+            : NSColor(red: 0.5, green: 0.4, blue: 0.0, alpha: 1)
+    }
+    private static var termDate: NSColor {
+        NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor(red: 0.6, green: 0.6, blue: 0.7, alpha: 1)    // dim
+            : NSColor(red: 0.4, green: 0.4, blue: 0.5, alpha: 1)
+    }
+    private static var termPerm: NSColor {
+        NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor(red: 0.6, green: 0.7, blue: 0.6, alpha: 1)    // muted green
+            : NSColor(red: 0.3, green: 0.4, blue: 0.3, alpha: 1)
+    }
+    private static var termPath: NSColor {
+        NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor(red: 0.4, green: 0.85, blue: 0.85, alpha: 1)  // cyan
+            : NSColor(red: 0.0, green: 0.5, blue: 0.5, alpha: 1)
+    }
+    private static var termError: NSColor {
+        NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor(red: 1.0, green: 0.4, blue: 0.4, alpha: 1)    // red
+            : NSColor(red: 0.8, green: 0.0, blue: 0.0, alpha: 1)
+    }
+
+    // Precompiled regexes for terminal output
+    private static let termPermRx = try! NSRegularExpression(pattern: #"^[d\-lbcps][rwxstTSl\-]{9}[.@+\s]?"#, options: .anchorsMatchLines)
+    private static let termTotalRx = try! NSRegularExpression(pattern: #"^total\s+\d+"#, options: .anchorsMatchLines)
+    private static let termDateRx = try! NSRegularExpression(pattern: #"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}\s+(?:\d{4}|\d{1,2}:\d{2})"#)
+    private static let termPathRx = try! NSRegularExpression(pattern: #"(?:^|\s)((?:/[\w.\-@]+)+/?)"#, options: .anchorsMatchLines)
+    private static let termArrowRx = try! NSRegularExpression(pattern: #"\s->\s.*$"#, options: .anchorsMatchLines)
+    private static let termErrorRx = try! NSRegularExpression(pattern: #"\b(?:error|Error|ERROR|fatal|FATAL|failed|FAILED|No such file|Permission denied|not found|cannot)\b"#)
+    private static let termSizeRx = try! NSRegularExpression(pattern: #"(?<=\s)\d{1,12}(?=\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))"#)
+
+    private static func highlightTerminalOutput(code: String, font: NSFont) -> NSAttributedString {
+        let text = CodeBlockTheme.text
+        let result = NSMutableAttributedString(string: code, attributes: [
+            .font: font, .foregroundColor: text
+        ])
+        let ns = code as NSString
+        let r = NSRange(location: 0, length: ns.length)
+
+        // Permissions (drwxr-xr-x)
+        let colPerm = termPerm
+        termPermRx.enumerateMatches(in: code, range: r) { m, _, _ in
+            guard let mr = m?.range else { return }
+            result.addAttribute(.foregroundColor, value: colPerm, range: mr)
+        }
+
+        // "total N"
+        let colDate = termDate
+        termTotalRx.enumerateMatches(in: code, range: r) { m, _, _ in
+            guard let mr = m?.range else { return }
+            result.addAttribute(.foregroundColor, value: colDate, range: mr)
+        }
+
+        // File sizes (number before date)
+        let colSize = termSize
+        termSizeRx.enumerateMatches(in: code, range: r) { m, _, _ in
+            guard let mr = m?.range else { return }
+            result.addAttribute(.foregroundColor, value: colSize, range: mr)
+        }
+
+        // Dates
+        termDateRx.enumerateMatches(in: code, range: r) { m, _, _ in
+            guard let mr = m?.range else { return }
+            result.addAttribute(.foregroundColor, value: colDate, range: mr)
+        }
+
+        // Paths (/usr/bin/...)
+        let colPath = termPath
+        termPathRx.enumerateMatches(in: code, range: r) { m, _, _ in
+            guard let mr = m?.range(at: 1) else { return }
+            result.addAttribute(.foregroundColor, value: colPath, range: mr)
+        }
+
+        // Symlink arrows (-> target)
+        let colSym = termSymlink
+        termArrowRx.enumerateMatches(in: code, range: r) { m, _, _ in
+            guard let mr = m?.range else { return }
+            result.addAttribute(.foregroundColor, value: colSym, range: mr)
+        }
+
+        // Error keywords
+        let colErr = termError
+        termErrorRx.enumerateMatches(in: code, range: r) { m, _, _ in
+            guard let mr = m?.range else { return }
+            result.addAttribute(.foregroundColor, value: colErr, range: mr)
+        }
+
+        // Color filenames at end of ls lines — directories blue, executables green
+        let lines = code.components(separatedBy: "\n")
+        var lineStart = 0
+        let colDir = termDir
+        let colExec = termExec
+        let bold = NSFont.monospacedSystemFont(ofSize: font.pointSize, weight: .bold)
+        for line in lines {
+            let lineLen = (line as NSString).length
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+
+            // Detect ls -la lines by permissions pattern
+            if trimmed.count > 10 {
+                let first = trimmed.first ?? " "
+                if "d-lbcps".contains(first) {
+                    let perm = String(trimmed.prefix(10))
+                    if perm.allSatisfy({ "drwx-lbcpsTt@+. ".contains($0) }) {
+                        // Find filename after the date (last component)
+                        let dateRx = try! NSRegularExpression(pattern: #"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}\s+(?:\d{4}|\d{1,2}:\d{2})\s+"#)
+                        if let dateMatch = dateRx.firstMatch(in: line, range: NSRange(location: 0, length: lineLen)) {
+                            let nameStart = dateMatch.range.location + dateMatch.range.length
+                            if nameStart < lineLen {
+                                let nameRange = NSRange(location: lineStart + nameStart, length: lineLen - nameStart)
+                                if first == "d" {
+                                    result.addAttributes([.foregroundColor: colDir, .font: bold], range: nameRange)
+                                } else if first == "l" {
+                                    result.addAttribute(.foregroundColor, value: colSym, range: nameRange)
+                                } else if perm.contains("x") {
+                                    result.addAttribute(.foregroundColor, value: colExec, range: nameRange)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            lineStart += lineLen + 1 // +1 for \n
+        }
+
+        return result
+    }
 }

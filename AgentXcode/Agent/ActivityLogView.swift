@@ -99,7 +99,7 @@ struct ActivityLogView: NSViewRepresentable {
         override func draw(withFrame cellFrame: NSRect, in controlView: NSView?) {
             if let icon = NSImage(systemSymbolName: "doc.on.doc", accessibilityDescription: "Copy code") {
                 let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
-                let tinted = (icon.withSymbolConfiguration(config) ?? icon).copy() as! NSImage
+                guard let tinted = (icon.withSymbolConfiguration(config) ?? icon).copy() as? NSImage else { return }
                 tinted.isTemplate = true
                 NSColor.secondaryLabelColor.set()
                 tinted.draw(in: cellFrame)
@@ -326,7 +326,7 @@ struct ActivityLogView: NSViewRepresentable {
             ]
 
             // Handle code fences (```lang\n...\n```) first
-            let fenceRx = try! NSRegularExpression(pattern: #"```(\w*)\n([\s\S]*?)```"#)
+            guard let fenceRx = try? NSRegularExpression(pattern: #"```(\w*)\n([\s\S]*?)```"#) else { return NSAttributedString(string: text, attributes: baseAttrs) }
             let nsText = text as NSString
             let fullRange = NSRange(location: 0, length: nsText.length)
             let fences = fenceRx.matches(in: text, range: fullRange)
@@ -352,7 +352,7 @@ struct ActivityLogView: NSViewRepresentable {
                 let shellLangs: Set<String> = ["bash", "sh", "zsh", "shell", "console", "terminal"]
                 let firstLine = code.components(separatedBy: "\n").first ?? ""
                 let looksLikeNumberedOutput = firstLine.range(of: #"^\s*\d+\s+"#, options: .regularExpression) != nil
-                let isSourceCode = lang != nil && !shellLangs.contains(lang!.lowercased()) && !looksLikeNumberedOutput
+                let isSourceCode = (lang.map { !shellLangs.contains($0.lowercased()) } ?? false) && !looksLikeNumberedOutput
                 if isSourceCode {
                     let attach = NSTextAttachment()
                     attach.attachmentCell = CopyButtonCell(codeText: code)
@@ -422,9 +422,11 @@ struct ActivityLogView: NSViewRepresentable {
                 .foregroundColor: NSColor.labelColor
             ]
 
-            let boldRx = try! NSRegularExpression(pattern: #"\*\*([^*]+)\*\*"#)
-            let codeRx = try! NSRegularExpression(pattern: #"`([^`]+)`"#)
-            let linkRx = try! NSRegularExpression(pattern: #"\[([^\]]+)\]\(([^)]+)\)"#)
+            guard let boldRx = try? NSRegularExpression(pattern: #"\*\*([^*]+)\*\*"#),
+                  let codeRx = try? NSRegularExpression(pattern: #"`([^`]+)`"#),
+                  let linkRx = try? NSRegularExpression(pattern: #"\[([^\]]+)\]\(([^)]+)\)"#) else {
+                return NSAttributedString(string: text, attributes: baseAttrs)
+            }
 
             let nsText = text as NSString
             let fullRange = NSRange(location: 0, length: nsText.length)
