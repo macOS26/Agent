@@ -1,0 +1,445 @@
+import SwiftUI
+import AppKit
+@preconcurrency import WebKit
+
+/// NSTextView-backed activity log — avoids SwiftUI Text layout storms on large/streaming content.
+/// Detects image file paths in log output and renders them inline.
+struct ActivityLogView: NSViewRepresentable {
+    let text: String
+
+    func makeNSView(context: Context) -> NSScrollView {
+        let scrollView = NSTextView.scrollableTextView()
+        guard let textView = scrollView.documentView as? NSTextView else { return scrollView }
+        textView.isEditable = false
+        textView.isSelectable = true
+        textView.font = .monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
+        textView.backgroundColor = .clear
+        textView.textContainerInset = NSSize(width: 12, height: 12)
+        textView.isAutomaticQuoteSubstitutionEnabled = false
+        textView.isAutomaticDashSubstitutionEnabled = false
+        textView.isAutomaticTextReplacementEnabled = false
+        scrollView.hasVerticalScroller = true
+        scrollView.drawsBackground = false
+        return scrollView
+    }
+
+    func updateNSView(_ scrollView: NSScrollView, context: Context) {
+        guard let textView = scrollView.documentView as? NSTextView else { return }
+        let coord = context.coordinator
+
+        // Wire up HTML snapshot callback to trigger re-render
+        let currentText = text
+        coord.onHTMLReady = { [weak textView, weak coord] in
+            guard let textView, let coord else { return }
+            let attributed = coord.buildAttributedString(from: currentText)
+            textView.textStorage?.setAttributedString(attributed)
+            textView.scrollToEndOfDocument(nil)
+        }
+
+        if text.isEmpty {
+            guard !coord.showingPlaceholder else { return }
+            textView.textStorage?.setAttributedString(
+                NSAttributedString(string: "Ready. Enter a task below to begin.",
+                                   attributes: [.font: coord.font, .foregroundColor: NSColor.secondaryLabelColor])
+            )
+            coord.showingPlaceholder = true
+            coord.lastLength = 0
+            coord.clearCache()
+            return
+        }
+
+        let len = (text as NSString).length
+        guard len != coord.lastLength || coord.showingPlaceholder else { return }
+        coord.showingPlaceholder = false
+
+        let attributed = coord.buildAttributedString(from: text)
+        textView.textStorage?.setAttributedString(attributed)
+        coord.lastLength = len
+        textView.scrollToEndOfDocument(nil)
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    /// Clickable copy-to-clipboard button for code blocks.
+    class CopyButtonCell: NSTextAttachmentCell {
+        let codeText: String
+
+        init(codeText: String) {
+            self.codeText = codeText
+            super.init(textCell: "")
+        }
+
+        @available(*, unavailable)
+        required init(coder: NSCoder) { fatalError() }
+
+        override func cellSize() -> NSSize { NSSize(width: 20, height: 16) }
+
+        override func draw(withFrame cellFrame: NSRect, in controlView: NSView?) {
+            if let icon = NSImage(systemSymbolName: "doc.on.doc", accessibilityDescription: "Copy code") {
+                let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
+                let tinted = (icon.withSymbolConfiguration(config) ?? icon).copy() as! NSImage
+                tinted.isTemplate = true
+                NSColor.tertiaryLabelColor.set()
+                tinted.draw(in: cellFrame)
+            }
+        }
+
+        override func wantsToTrackMouse(for theEvent: NSEvent, in cellFrame: NSRect,
+                                         of controlView: NSView?, atCharacterIndex charIndex: Int) -> Bool { true }
+
+        override func trackMouse(with theEvent: NSEvent, in cellFrame: NSRect,
+                                  of controlView: NSView?, atCharacterIndex charIndex: Int,
+                                  untilMouseUp flag: Bool) -> Bool {
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(codeText, forType: .string)
+            // Brief flash feedback
+            if let tv = controlView as? NSTextView {
+                let orig = tv.backgroundColor
+                tv.backgroundColor = NSColor.controlAccentColor.withAlphaComponent(0.1)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    tv.backgroundColor = orig
+                }
+            }
+            return true
+        }
+    }
+
+    @MainActor class Coordinator: NSObject, WKNavigationDelegate {
+        var lastLength = 0
+        var showingPlaceholder = true
+        let font = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
+        /// Images keyed by their character offset in the log — each occurrence gets its own
+        /// snapshot so the same path (e.g. current_artwork.jpg) shows different art per task.
+        var imageCache: [Int: (image: NSImage, mtime: Date)] = [:]
+        /// HTML snapshots keyed by character offset, with file modification time for invalidation
+        var htmlCache: [Int: (image: NSImage, mtime: Date)] = [:]
+        /// Offsets currently being rendered (prevent duplicate requests)
+        var htmlPending: Set<Int> = []
+        /// Retain WKWebViews until snapshot completes
+        var activeWebViews: [Int: WKWebView] = [:]
+        /// Callback to trigger re-render when HTML snapshot is ready
+        var onHTMLReady: (() -> Void)?
+
+        // SECURITY: Limit concurrent web views to prevent memory exhaustion
+        private static let maxActiveWebViews = 10
+
+
+
+
+        // Matches image files
+        private static let imagePathPattern: NSRegularExpression? = try? NSRegularExpression(
+            pattern: #"(/[^\s"'<>]+\.(?:jpg|jpeg|png|gif|tiff|bmp|webp|heic|ico|icon))"#,
+            options: .caseInsensitive
+        )
+        // Matches HTML files
+        private static let htmlPathPattern: NSRegularExpression? = try? NSRegularExpression(
+            pattern: #"(/[^\s"'<>]+\.html?)"#,
+            options: .caseInsensitive
+        )
+
+        func buildAttributedString(from text: String) -> NSAttributedString {
+            let baseAttrs: [NSAttributedString.Key: Any] = [
+                .font: font,
+                .foregroundColor: NSColor.labelColor
+            ]
+
+            let nsText = text as NSString
+            let fullRange = NSRange(location: 0, length: nsText.length)
+            let imageMatches = Self.imagePathPattern?.matches(in: text, range: fullRange) ?? []
+            let htmlMatches = Self.htmlPathPattern?.matches(in: text, range: fullRange) ?? []
+
+            guard !imageMatches.isEmpty || !htmlMatches.isEmpty else {
+                return renderMarkdown(text)
+            }
+
+            // Merge all matches sorted by location
+            struct FileMatch {
+                let range: NSRange
+                let path: String
+                let isHTML: Bool
+            }
+            var allMatches: [FileMatch] = []
+            for m in imageMatches {
+                let r = m.range(at: 1)
+                allMatches.append(FileMatch(range: r, path: nsText.substring(with: r), isHTML: false))
+            }
+            for m in htmlMatches {
+                let r = m.range(at: 1)
+                allMatches.append(FileMatch(range: r, path: nsText.substring(with: r), isHTML: true))
+            }
+            allMatches.sort { $0.range.location < $1.range.location }
+
+            let result = NSMutableAttributedString()
+            var lastEnd = 0
+            var renderedSizes: Set<Int> = []
+
+            for match in allMatches {
+                let offset = match.range.location
+
+                // Add text before this match
+                if match.range.location > lastEnd {
+                    let beforeRange = NSRange(location: lastEnd, length: match.range.location - lastEnd)
+                    let beforeText = nsText.substring(with: beforeRange)
+                    result.append(renderMarkdown(beforeText))
+                    if beforeText.contains("--- New Task ---") {
+                        renderedSizes.removeAll()
+                    }
+                }
+
+                // Add the path text itself
+                result.append(NSAttributedString(string: match.path, attributes: baseAttrs))
+                lastEnd = match.range.location + match.range.length
+
+                let fileAttrs = try? FileManager.default.attributesOfItem(atPath: match.path)
+                guard fileAttrs != nil else { continue }
+                let fileSize = fileAttrs?[.size] as? Int ?? 0
+                let fileMtime = fileAttrs?[.modificationDate] as? Date ?? .distantPast
+                // Also check parent directory mtime — catches sibling resources (e.g. album_art.jpg) created after the HTML
+                let dirPath = (match.path as NSString).deletingLastPathComponent
+                let dirMtime = (try? FileManager.default.attributesOfItem(atPath: dirPath)[.modificationDate] as? Date) ?? .distantPast
+                let effectiveMtime = max(fileMtime, dirMtime)
+
+                if match.isHTML {
+                    // HTML snapshot
+                    if let cached = htmlCache[offset], cached.mtime == effectiveMtime {
+                        // Use cached snapshot
+                        let attachment = NSTextAttachment()
+                        attachment.image = cached.image
+                        let imgStr = NSAttributedString(attachment: attachment)
+                        result.append(imgStr)
+                        result.append(NSAttributedString(string: "\n", attributes: baseAttrs))
+                    } else if !htmlPending.contains(offset) && activeWebViews.count < Self.maxActiveWebViews {
+                        // Render HTML to image
+                        htmlPending.insert(offset)
+                        renderHTMLSnapshot(at: match.path, offset: offset, mtime: effectiveMtime)
+                    }
+                } else {
+                    // Image file
+                    // Skip if we already rendered this size at this offset
+                    guard !renderedSizes.contains(offset) else { continue }
+                    renderedSizes.insert(offset)
+
+                    // Cache check
+                    if let cached = imageCache[offset], cached.mtime == fileMtime {
+                        // Use cached image
+                        let attachment = NSTextAttachment()
+                        attachment.image = cached.image
+                        let imgStr = NSAttributedString(attachment: attachment)
+                        result.append(imgStr)
+                        result.append(NSAttributedString(string: "\n", attributes: baseAttrs))
+                        continue
+                    }
+
+                    // Load and cache image
+                    guard let image = NSImage(contentsOfFile: match.path) else { continue }
+                    let maxDim: CGFloat = min(400, CGFloat(integerLiteral: fileSize / 10))
+                    let scaled = scaleImage(image, maxDimension: max(100, maxDim))
+                    imageCache[offset] = (image: scaled, mtime: fileMtime)
+
+                    let attachment = NSTextAttachment()
+                    attachment.image = scaled
+                    let imgStr = NSAttributedString(attachment: attachment)
+                    result.append(imgStr)
+                    result.append(NSAttributedString(string: "\n", attributes: baseAttrs))
+                }
+            }
+
+            // Add remaining text after last match
+            if lastEnd < nsText.length {
+                let remainingRange = NSRange(location: lastEnd, length: nsText.length - lastEnd)
+                result.append(renderMarkdown(nsText.substring(with: remainingRange)))
+            }
+
+            return result
+        }
+
+        private func renderMarkdown(_ text: String) -> NSAttributedString {
+            let baseAttrs: [NSAttributedString.Key: Any] = [
+                .font: font,
+                .foregroundColor: NSColor.labelColor
+            ]
+
+            // Regex patterns
+            let boldPattern = try? NSRegularExpression(pattern: #"\*\*([^*]+)\*\*"#, options: [])
+            let codePattern = try? NSRegularExpression(pattern: #"`([^`]+)`"#, options: [])
+            let linkPattern = try? NSRegularExpression(pattern: #"\[([^\]]+)\]\(([^)]+)\)"#, options: [])
+
+            let nsText = text as NSString
+            let fullRange = NSRange(location: 0, length: nsText.length)
+
+            // Collect all matches with type and content
+            struct Match {
+                let range: NSRange
+                let type: Int // 1=bold, 2=code, 3=link
+                let content: String
+                let url: String?
+            }
+            var matches: [Match] = []
+
+            if let boldPattern {
+                for m in boldPattern.matches(in: text, range: fullRange) {
+                    matches.append(Match(range: m.range, type: 1, content: nsText.substring(with: m.range(at: 1)), url: nil))
+                }
+            }
+            if let codePattern {
+                for m in codePattern.matches(in: text, range: fullRange) {
+                    matches.append(Match(range: m.range, type: 2, content: nsText.substring(with: m.range(at: 1)), url: nil))
+                }
+            }
+            if let linkPattern {
+                for m in linkPattern.matches(in: text, range: fullRange) {
+                    matches.append(Match(range: m.range, type: 3, content: nsText.substring(with: m.range(at: 1)), url: nsText.substring(with: m.range(at: 2))))
+                }
+            }
+
+            // Sort matches by location
+            matches.sort { $0.range.location < $1.range.location }
+
+            let result = NSMutableAttributedString()
+            var lastEnd = 0
+
+            for match in matches {
+                // Add text before this match
+                if match.range.location > lastEnd {
+                    let beforeRange = NSRange(location: lastEnd, length: match.range.location - lastEnd)
+                    result.append(NSAttributedString(string: nsText.substring(with: beforeRange), attributes: baseAttrs))
+                }
+
+                // Add the styled match
+                switch match.type {
+                case 1: // Bold
+                    let attrs: [NSAttributedString.Key: Any] = [
+                        .font: NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .bold),
+                        .foregroundColor: NSColor.labelColor
+                    ]
+                    result.append(NSAttributedString(string: match.content, attributes: attrs))
+                case 2: // Code
+                    let attrs: [NSAttributedString.Key: Any] = [
+                        .font: font,
+                        .foregroundColor: NSColor.systemBlue,
+                        .backgroundColor: NSColor.controlBackgroundColor
+                    ]
+                    result.append(NSAttributedString(string: match.content, attributes: attrs))
+                case 3: // Link
+                    let attrs: [NSAttributedString.Key: Any] = [
+                        .font: font,
+                        .foregroundColor: NSColor.linkColor,
+                        .underlineStyle: NSUnderlineStyle.single.rawValue
+                    ]
+                    result.append(NSAttributedString(string: match.content, attributes: attrs))
+                default:
+                    break
+                }
+
+                lastEnd = match.range.location + match.range.length
+            }
+
+            // Add remaining text
+            if lastEnd < nsText.length {
+                let remainingRange = NSRange(location: lastEnd, length: nsText.length - lastEnd)
+                result.append(NSAttributedString(string: nsText.substring(with: remainingRange), attributes: baseAttrs))
+            }
+
+            return result
+        }
+
+        private func scaleImage(_ image: NSImage, maxDimension: CGFloat) -> NSImage {
+            let size = image.size
+            guard size.width > 0, size.height > 0 else { return image }
+            let scale = min(maxDimension / size.width, maxDimension / size.height)
+            guard scale < 1 else { return image }
+            let newSize = NSSize(width: size.width * scale, height: size.height * scale)
+            let result = NSImage(size: newSize)
+            result.lockFocus()
+            image.draw(in: NSRect(origin: .zero, size: newSize))
+            result.unlockFocus()
+            return result
+        }
+
+        private func renderHTMLSnapshot(at path: String, offset: Int, mtime: Date) {
+            // Read HTML content
+            guard let htmlContent = try? String(contentsOfFile: path, encoding: .utf8) else { return }
+
+            // Get directory for resolving relative paths
+            let directory = (path as NSString).deletingLastPathComponent
+
+            // Inject base tag for relative URLs
+            var processedHTML = htmlContent
+            if !htmlContent.contains("<base") {
+                let baseTag = "<base href=\"file://\(directory)/\">"
+                if let headRange = htmlContent.range(of: "<head>", options: .caseInsensitive) {
+                    processedHTML = htmlContent.replacingCharacters(in: headRange, with: "<head>\(baseTag)")
+                } else if let bodyRange = htmlContent.range(of: "<body", options: .caseInsensitive) {
+                    // If no head, prepend base before body
+                    processedHTML = "<html><head>\(baseTag)</head>" + htmlContent
+                }
+            }
+
+            // Configure WKWebView
+            let config = WKWebViewConfiguration()
+            config.preferences.setValue(true, forKey: "allowFileAccessFromFileURLs")
+
+            let webView = WKWebView(frame: CGRect(x: 0, y: 0, width: 800, height: 600), configuration: config)
+            webView.loadHTMLString(processedHTML, baseURL: URL(fileURLWithPath: directory))
+            webView.navigationDelegate = self
+
+            activeWebViews[offset] = webView
+        }
+
+        // MARK: - WKNavigationDelegate
+
+        nonisolated func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            Task { @MainActor in
+                guard let offset = activeWebViews.first(where: { $0.value === webView })?.key else { return }
+
+                // Wait for layout to settle
+                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+
+                // Get content height
+                let contentHeight = await webView.evaluateJavaScript("document.body.scrollHeight") as? Double ?? 600
+                let contentWidth = await webView.evaluateJavaScript("document.body.scrollWidth") as? Double ?? 800
+
+                // Take snapshot
+                let config = WKSnapshotConfiguration()
+                config.rect = CGRect(x: 0, y: 0, width: contentWidth, height: min(contentHeight, 2000))
+
+                do {
+                    let image = try await webView.takeSnapshot(with: config)
+                    let scaled = scaleImage(image, maxDimension: 400)
+
+                    // Find the path and mtime for this offset
+                    if let (path, _) = findPathForOffset(offset) {
+                        let fileMtime = (try? FileManager.default.attributesOfItem(atPath: path)[.modificationDate] as? Date) ?? .distantPast
+                        let dirPath = (path as NSString).deletingLastPathComponent
+                        let dirMtime = (try? FileManager.default.attributesOfItem(atPath: dirPath)[.modificationDate] as? Date) ?? .distantPast
+                        let effectiveMtime = max(fileMtime, dirMtime)
+
+                        htmlCache[offset] = (image: scaled, mtime: effectiveMtime)
+                    }
+
+                    htmlPending.remove(offset)
+                    activeWebViews.removeValue(forKey: offset)
+
+                    // Trigger re-render
+                    onHTMLReady?()
+                } catch {
+                    htmlPending.remove(offset)
+                    activeWebViews.removeValue(forKey: offset)
+                }
+            }
+        }
+
+        private func findPathForOffset(_ offset: Int) -> (String, Bool)? {
+            // This is a helper to find the path for a given offset
+            // We'll need to track this differently - for now return nil
+            return nil
+        }
+
+        func clearCache() {
+            imageCache.removeAll()
+            htmlCache.removeAll()
+            htmlPending.removeAll()
+            activeWebViews.removeAll()
+        }
+    }
+}

@@ -13,6 +13,38 @@ extension AgentViewModel {
         return lines.prefix(count).joined(separator: "\n") + "\n..."
     }
 
+    /// Wrap text in a markdown code fence with language tag for syntax highlighting.
+    static func codeFence(_ text: String, language: String = "") -> String {
+        "```\(language)\n\(text.trimmingCharacters(in: .newlines))\n```"
+    }
+
+    /// Guess language from file extension for syntax highlighting.
+    static func langFromPath(_ path: String) -> String {
+        let ext = (path as NSString).pathExtension.lowercased()
+        switch ext {
+        case "swift": return "swift"
+        case "py": return "python"
+        case "js", "jsx": return "javascript"
+        case "ts", "tsx": return "typescript"
+        case "rb": return "ruby"
+        case "go": return "go"
+        case "rs": return "rust"
+        case "c", "h": return "c"
+        case "cpp", "cc", "cxx", "hpp": return "cpp"
+        case "m", "mm": return "objc"
+        case "java": return "java"
+        case "kt": return "kotlin"
+        case "json": return "json"
+        case "yaml", "yml": return "yaml"
+        case "sql": return "sql"
+        case "sh", "bash", "zsh": return "bash"
+        case "html", "htm": return "html"
+        case "css": return "css"
+        case "xml", "plist": return "xml"
+        default: return ""
+        }
+    }
+
     /// Validate that a path exists. Returns an error string if invalid, nil if OK.
     private static func checkPath(_ path: String?) -> String? {
         guard let path, !path.isEmpty else { return nil }
@@ -64,7 +96,8 @@ extension AgentViewModel {
         // Always log a preview so the user sees something came back
         if !result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             let lines = result.output.components(separatedBy: "\n").filter { !$0.isEmpty }
-            appendLog(Self.preview(result.output, lines: 3) + " (\(lines.count) lines)")
+            let preview = Self.preview(result.output, lines: 3)
+            appendLog(Self.codeFence(preview, language: "bash") + " (\(lines.count) lines)")
         } else if result.status != 0 {
             appendLog("exit code: \(result.status)")
         }
@@ -257,7 +290,8 @@ extension AgentViewModel {
                             let limit = input["limit"] as? Int
                             appendLog("Read: \(filePath)")
                             let output = await Self.offMain { CodingService.readFile(path: filePath, offset: offset, limit: limit) }
-                            appendLog(Self.preview(output, lines: 3))
+                            let lang = Self.langFromPath(filePath)
+                            appendLog(Self.codeFence(Self.preview(output, lines: 3), language: lang))
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 

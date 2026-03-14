@@ -1,6 +1,6 @@
 import SwiftUI
 import AppKit
-@preconcurrency import WebKit
+import WebKit
 
 struct ContentView: View {
     @State private var viewModel = AgentViewModel()
