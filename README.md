@@ -7,7 +7,7 @@ A native macOS autonomous AI agent built entirely in Swift. Agent takes a differ
 
 Agent uses SwiftUI, XPC, SMAppService, Apple Events and ScriptingBridge to give an AI agent native access to your Mac. No Electron. No Docker. No npm install. Just a `.app` that speaks macOS. Xcode command line tools are required.
 
-# Screenshot of Agent! enhancing its own Security for the next build
+# Agent! enhancing its own Security for the next build
 <img width="804" height="1009" alt="Screenshot 2026-03-13 at 10 28 51 PM" src="https://github.com/user-attachments/assets/52eb4aed-03bb-4901-b46a-b0802375770d" />
 
 ## Agent! vs. OpenClaw on Mac
