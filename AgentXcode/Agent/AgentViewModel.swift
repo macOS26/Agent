@@ -314,19 +314,20 @@ final class AgentViewModel {
         let rootOK = helperService.helperReady
         appendLog("User agent: \(userOK ? "connected" : "NOT connected")")
         appendLog("Root helper: \(rootOK ? "connected" : "NOT connected")")
-        if userOK && rootOK {
-            // Quick ping via XPC to verify actual responsiveness
-            Task {
+        // Ping both services via XPC to verify actual responsiveness
+        Task {
+            if userOK {
                 let result = await userService.execute(command: "echo ok")
-                if result.status == 0 {
-                    appendLog("User agent: responding")
-                } else {
-                    appendLog("User agent: registered but not responding — \(result.output)")
-                }
+                appendLog("User agent: \(result.status == 0 ? "responding" : "NOT responding — \(result.output)")")
+            } else {
+                appendLog("Try: Register to start the user agent")
             }
-        } else {
-            if !userOK { appendLog("Try: Register to start the user agent") }
-            if !rootOK { appendLog("Try: Register to start the root helper") }
+            if rootOK {
+                let result = await helperService.execute(command: "echo ok")
+                appendLog("Root helper: \(result.status == 0 ? "responding" : "NOT responding — \(result.output)")")
+            } else {
+                appendLog("Try: Register to start the root helper")
+            }
         }
     }
 
