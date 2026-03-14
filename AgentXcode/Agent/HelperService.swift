@@ -89,7 +89,7 @@ final class HelperService {
         if !helperReady {
             let msg = restartDaemon()
             if !helperReady {
-                return (-1, "Error: Root helper daemon is not running — \(msg). Check System Settings > Login Items.")
+                return (-1, "Error: Launch Daemon is not running — \(msg). Check System Settings > Login Items.")
             }
         }
 

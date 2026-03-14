@@ -31,7 +31,7 @@ struct ContentView: View {
                         isBusy: viewModel.isRunning,
                         enabled: viewModel.rootEnabled
                     )
-                    Toggle("Root", isOn: $viewModel.rootEnabled)
+                    Toggle("Daemon", isOn: $viewModel.rootEnabled)
                         .toggleStyle(.switch)
                         .controlSize(.mini)
                         .tint(.green)

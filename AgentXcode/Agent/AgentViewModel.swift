@@ -313,7 +313,7 @@ final class AgentViewModel {
         let userOK = userService.userReady
         let rootOK = helperService.helperReady
         appendLog("User agent: \(userOK ? "connected" : "NOT connected")")
-        appendLog("Root helper: \(rootOK ? "connected" : "NOT connected")")
+        appendLog("Launch Daemon: \(rootOK ? "connected" : "NOT connected")")
         // Ping both services via XPC to verify actual responsiveness
         Task {
             if userOK {
@@ -324,7 +324,7 @@ final class AgentViewModel {
             }
             if rootOK {
                 let result = await helperService.execute(command: "echo ok")
-                appendLog("Root helper: \(result.status == 0 ? "responding" : "NOT responding — \(result.output)")")
+                appendLog("Launch Daemon: \(result.status == 0 ? "responding" : "NOT responding — \(result.output)")")
             } else {
                 appendLog("Try: Register to start the root helper")
             }
