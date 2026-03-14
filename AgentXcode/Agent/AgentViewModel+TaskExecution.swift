@@ -6,6 +6,49 @@ extension AgentViewModel {
 
     // MARK: - Helpers
 
+    /// Show first N lines of output, then "..." if there's more.
+    static func preview(_ text: String, lines count: Int) -> String {
+        let lines = text.split(separator: "\n", omittingEmptySubsequences: false)
+        if lines.count <= count { return text.trimmingCharacters(in: .newlines) }
+        return lines.prefix(count).joined(separator: "\n") + "\n..."
+    }
+
+    /// Validate that a path exists. Returns an error string if invalid, nil if OK.
+    private static func checkPath(_ path: String?) -> String? {
+        guard let path, !path.isEmpty else { return nil }
+        let expanded = (path as NSString).expandingTildeInPath
+        guard FileManager.default.fileExists(atPath: expanded) else {
+            return "Error: path does not exist: \(path) — check for typos"
+        }
+        return nil
+    }
+
+    /// Extract user-directory paths from a shell command for preflight validation.
+    /// Catches typos like "/Users/foo/Documets/..." before running the command.
+    private static func preflightCommand(_ command: String) -> String? {
+        // Match paths under /Users/ or ~/ — most common source of typos
+        guard let regex = try? NSRegularExpression(
+            pattern: #"(?:^|\s)(/Users/[^\s'";&|><$]+|~/[^\s'";&|><$]+)"#
+        ) else { return nil }
+        let nsCmd = command as NSString
+        let matches = regex.matches(in: command, range: NSRange(location: 0, length: nsCmd.length))
+        for match in matches {
+            var path = nsCmd.substring(with: match.range(at: 1))
+                .trimmingCharacters(in: CharacterSet(charactersIn: "'\""))
+            // Strip trailing wildcards/globs for directory validation (e.g. /path/to/*)
+            while path.hasSuffix("*") || path.hasSuffix("?") {
+                path = String(path.dropLast())
+            }
+            if path.hasSuffix("/") { path = String(path.dropLast()) }
+            guard !path.isEmpty else { continue }
+            let expanded = (path as NSString).expandingTildeInPath
+            if !FileManager.default.fileExists(atPath: expanded) {
+                return "Error: path does not exist: \(path) — check for typos in the path"
+            }
+        }
+        return nil
+    }
+
     /// Execute a command via UserService XPC with streaming output.
     private func executeViaUserAgent(command: String) async -> (status: Int32, output: String) {
         resetStreamCounters()
@@ -206,6 +249,7 @@ extension AgentViewModel {
                             let limit = input["limit"] as? Int
                             appendLog("Read: \(filePath)")
                             let output = await Self.offMain { CodingService.readFile(path: filePath, offset: offset, limit: limit) }
+                            appendLog(Self.preview(output, lines: 3))
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
@@ -236,6 +280,11 @@ extension AgentViewModel {
                         if name == "list_files" {
                             let pattern = input["pattern"] as? String ?? "*"
                             let path = input["path"] as? String
+                            if let pathErr = Self.checkPath(path) {
+                                appendLog(pathErr)
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": pathErr])
+                                continue
+                            }
                             appendLog("$ find \(path ?? "~") -name '\(pattern)'")
                             flushLog()
                             let cmd = CodingService.buildListFilesCommand(pattern: pattern, path: path)
@@ -256,6 +305,11 @@ extension AgentViewModel {
                             let pattern = input["pattern"] as? String ?? ""
                             let path = input["path"] as? String
                             let include = input["include"] as? String
+                            if let pathErr = Self.checkPath(path) {
+                                appendLog(pathErr)
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": pathErr])
+                                continue
+                            }
                             appendLog("$ grep -rn '\(pattern)' \(path ?? "~")\(include.map { " --include=\($0)" } ?? "")")
                             flushLog()
                             let cmd = CodingService.buildSearchFilesCommand(pattern: pattern, path: path, include: include)
@@ -276,6 +330,11 @@ extension AgentViewModel {
 
                         if name == "git_status" {
                             let path = input["path"] as? String
+                            if let pathErr = Self.checkPath(path) {
+                                appendLog(pathErr)
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": pathErr])
+                                continue
+                            }
                             appendLog("$ git status\(path.map { " (\($0))" } ?? "")")
                             flushLog()
                             let cmd = CodingService.buildGitStatusCommand(path: path)
@@ -296,6 +355,11 @@ extension AgentViewModel {
                             let path = input["path"] as? String
                             let staged = input["staged"] as? Bool ?? false
                             let target = input["target"] as? String
+                            if let pathErr = Self.checkPath(path) {
+                                appendLog(pathErr)
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": pathErr])
+                                continue
+                            }
                             appendLog("$ git diff\(staged ? " --cached" : "")\(target.map { " \($0)" } ?? "")")
                             flushLog()
                             let cmd = CodingService.buildGitDiffCommand(path: path, staged: staged, target: target)
@@ -317,6 +381,11 @@ extension AgentViewModel {
                         if name == "git_log" {
                             let path = input["path"] as? String
                             let count = input["count"] as? Int
+                            if let pathErr = Self.checkPath(path) {
+                                appendLog(pathErr)
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": pathErr])
+                                continue
+                            }
                             appendLog("$ git log\(path.map { " (\($0))" } ?? "")")
                             flushLog()
                             let cmd = CodingService.buildGitLogCommand(path: path, count: count)
@@ -337,6 +406,11 @@ extension AgentViewModel {
                             let path = input["path"] as? String
                             let message = input["message"] as? String ?? ""
                             let files = input["files"] as? [String]
+                            if let pathErr = Self.checkPath(path) {
+                                appendLog(pathErr)
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": pathErr])
+                                continue
+                            }
                             appendLog("Git commit: \(message)")
                             flushLog()
                             let cmd = CodingService.buildGitCommitCommand(path: path, message: message, files: files)
@@ -377,6 +451,11 @@ extension AgentViewModel {
                             let path = input["path"] as? String
                             let branchName = input["name"] as? String ?? ""
                             let checkout = input["checkout"] as? Bool ?? true
+                            if let pathErr = Self.checkPath(path) {
+                                appendLog(pathErr)
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": pathErr])
+                                continue
+                            }
                             appendLog("Git branch: \(branchName)")
                             flushLog()
                             let cmd = CodingService.buildGitBranchCommand(path: path, name: branchName, checkout: checkout)
@@ -394,6 +473,12 @@ extension AgentViewModel {
 
                         if name == "execute_command" || name == "execute_user_command" {
                             let command = input["command"] as? String ?? ""
+                            // Preflight: catch typos in /Users/ and ~/ paths before running
+                            if let pathErr = Self.preflightCommand(command) {
+                                appendLog(pathErr)
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": pathErr])
+                                continue
+                            }
                             let isPrivileged = (name == "execute_command") && rootEnabled
                             commandsRun.append(command)
                             appendLog("\(isPrivileged ? "#" : "$") \(Self.collapseHeredocs(command))")
