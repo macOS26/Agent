@@ -32,30 +32,8 @@ final class AgentViewModel {
     // One-time migration for stale defaults and API keys to Keychain — runs before property defaults are evaluated
     @ObservationIgnored
     private static let _migrate: Void = {
-        let defaults = UserDefaults.standard
-
-        // Migration V4: Move API keys from UserDefaults to Keychain
-        if !defaults.bool(forKey: "agentMigrationV4") {
-            if let claudeKey = defaults.string(forKey: "agentAPIKey"), !claudeKey.isEmpty {
-                KeychainService.shared.setClaudeAPIKey(claudeKey)
-                defaults.removeObject(forKey: "agentAPIKey")
-            }
-            if let ollamaKey = defaults.string(forKey: "ollamaAPIKey"), !ollamaKey.isEmpty {
-                KeychainService.shared.setOllamaAPIKey(ollamaKey)
-                defaults.removeObject(forKey: "ollamaAPIKey")
-            }
-
-            // Legacy migrations from V3
-            defaults.removeObject(forKey: "ollamaEndpoint")
-            if let model = defaults.string(forKey: "ollamaModel"), model == "llama3.1" {
-                defaults.set("", forKey: "ollamaModel")
-            }
-
-            defaults.set(true, forKey: "agentMigrationV4")
-        }
-
-        // Migration V5: Move keys from legacy keychain → data protection keychain
-        KeychainService.migrateToDataProtectionKeychain()
+        // Clean slate: wipe legacy keychain items and stale migration flags
+        KeychainService.cleanSlate()
     }()
 
     var selectedProvider: APIProvider = { _ = AgentViewModel._migrate; return APIProvider(rawValue: UserDefaults.standard.string(forKey: "agentProvider") ?? "claude") ?? .claude }() {
