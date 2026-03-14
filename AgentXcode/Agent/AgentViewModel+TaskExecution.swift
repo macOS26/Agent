@@ -267,6 +267,27 @@ extension AgentViewModel {
 
                     if type == "text", let text = block["text"] as? String {
                         if !textWasStreamed { appendLog(text) }
+                    } else if type == "server_tool_use" {
+                        // Server-side tool (web search) — executed by the API, just log it
+                        hasToolUse = true
+                        if let input = block["input"] as? [String: Any],
+                           let query = input["query"] as? String {
+                            appendLog("Web search: \(query)")
+                        }
+                    } else if type == "web_search_tool_result" {
+                        // Display search results summary
+                        if let content = block["content"] as? [[String: Any]] {
+                            let results = content.compactMap { result -> String? in
+                                guard result["type"] as? String == "web_search_result",
+                                      let title = result["title"] as? String,
+                                      let url = result["url"] as? String else { return nil }
+                                return "  \(title)\n    \(url)"
+                            }
+                            if !results.isEmpty {
+                                appendLog("Results:\n" + results.prefix(5).joined(separator: "\n"))
+                            }
+                        }
+                        flushLog()
                     } else if type == "tool_use" {
                         hasToolUse = true
                         guard let toolId = block["id"] as? String,
@@ -736,6 +757,10 @@ extension AgentViewModel {
                 if hasToolUse && !toolResults.isEmpty {
                     messages.append(["role": "user", "content": toolResults])
                     consecutiveNoTool = 0
+                } else if hasToolUse && toolResults.isEmpty {
+                    // Server-side tools only (web search) — no client results needed
+                    consecutiveNoTool = 0
+                    messages.append(["role": "user", "content": "Continue with the task. Call task_complete when finished."])
                 } else if !hasToolUse {
                     consecutiveNoTool += 1
                     // Give the model up to 3 nudges to use tools before giving up

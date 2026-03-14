@@ -28,7 +28,14 @@ final class ClaudeService {
         return prompt
     }
 
-    var tools: [[String: Any]] { AgentTools.claudeFormat }
+    var tools: [[String: Any]] {
+        var t = AgentTools.claudeFormat
+        t.append([
+            "type": "web_search_20250305",
+            "name": "web_search"
+        ])
+        return t
+    }
 
     func send(messages: [[String: Any]]) async throws -> (content: [[String: Any]], stopReason: String) {
         guard !apiKey.isEmpty else { throw AgentError.noAPIKey }
@@ -144,6 +151,8 @@ final class ClaudeService {
         var currentToolJson = ""
         var stopReason = ""
         var inToolUse = false
+        var inServerToolUse = false
+        var pendingServerResult: [String: Any]?
 
         for try await line in bytes.lines {
             guard line.hasPrefix("data: ") else { continue }
@@ -159,11 +168,21 @@ final class ClaudeService {
                     if blockType == "text" {
                         currentTextBlock = ""
                         inToolUse = false
+                        inServerToolUse = false
                     } else if blockType == "tool_use" {
                         currentToolId = block["id"] as? String ?? ""
                         currentToolName = block["name"] as? String ?? ""
                         currentToolJson = ""
                         inToolUse = true
+                        inServerToolUse = false
+                    } else if blockType == "server_tool_use" {
+                        currentToolId = block["id"] as? String ?? ""
+                        currentToolName = block["name"] as? String ?? ""
+                        currentToolJson = ""
+                        inToolUse = true
+                        inServerToolUse = true
+                    } else if blockType == "web_search_tool_result" {
+                        pendingServerResult = block
                     }
                 }
 
@@ -186,8 +205,9 @@ final class ClaudeService {
                     } else {
                         input = [:]
                     }
+                    let blockType = inServerToolUse ? "server_tool_use" : "tool_use"
                     contentBlocks.append([
-                        "type": "tool_use",
+                        "type": blockType,
                         "id": currentToolId,
                         "name": currentToolName,
                         "input": input
@@ -196,6 +216,10 @@ final class ClaudeService {
                     currentToolId = ""
                     currentToolJson = ""
                     inToolUse = false
+                    inServerToolUse = false
+                } else if pendingServerResult != nil {
+                    contentBlocks.append(pendingServerResult!)
+                    pendingServerResult = nil
                 } else if !currentTextBlock.isEmpty {
                     contentBlocks.append(["type": "text", "text": currentTextBlock])
                     currentTextBlock = ""
