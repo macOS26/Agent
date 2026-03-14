@@ -102,6 +102,43 @@ final class HelperService {
         return await executeViaXPC(script: command, outputHandler: handler)
     }
 
+    /// Quick connectivity test with 5-second timeout. Returns true if XPC responds.
+    func ping() async -> Bool {
+        let handler = OutputHandler { _ in }
+        return await withCheckedContinuation { continuation in
+            var didResume = false
+            let resumeLock = NSLock()
+            func safeResume(_ value: Bool) {
+                resumeLock.lock()
+                defer { resumeLock.unlock() }
+                guard !didResume else { return }
+                didResume = true
+                continuation.resume(returning: value)
+            }
+
+            let connection = makeConnection(outputHandler: handler)
+            guard let proxy = connection.remoteObjectProxyWithErrorHandler({ _ in
+                safeResume(false)
+            }) as? HelperToolProtocol else {
+                connection.invalidate()
+                safeResume(false)
+                return
+            }
+
+            let timeout = DispatchWorkItem {
+                connection.invalidate()
+                safeResume(false)
+            }
+            DispatchQueue.global().asyncAfter(deadline: .now() + 5, execute: timeout)
+
+            proxy.execute(script: "echo ping", instanceID: UUID().uuidString) { status, _ in
+                timeout.cancel()
+                connection.invalidate()
+                safeResume(status == 0)
+            }
+        }
+    }
+
     func cancel() {
         Self.cancelProcess(instanceID: instanceID)
     }

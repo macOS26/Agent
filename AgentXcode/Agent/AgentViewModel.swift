@@ -295,22 +295,16 @@ final class AgentViewModel {
 
         // Xcode Command Line Tools check is handled by DependencyOverlay in ContentView
 
-        // Test daemon connectivity on startup
+        // Test daemon connectivity on startup via XPC ping (5s timeout)
         Task {
-            // Brief delay so the UI is ready
             try? await Task.sleep(nanoseconds: 500_000_000)
             appendLog("Warming up the engines...")
-            let userOK = userService.userReady
-            let daemonOK = helperService.helperReady
+            let userOK = await userService.ping()
+            appendLog("User agent: \(userOK ? "responding" : "NOT responding")")
+            let daemonOK = await helperService.ping()
+            appendLog("Launch Daemon: \(daemonOK ? "responding" : "NOT responding")")
             if !userOK || !daemonOK {
-                if !userOK { appendLog("User agent: NOT registered") }
-                if !daemonOK { appendLog("Launch Daemon: NOT registered") }
-                appendLog("Click Register to start services")
-            } else {
-                let userResult = await userService.execute(command: "echo ok")
-                appendLog("User agent: \(userResult.status == 0 ? "responding" : "NOT responding")")
-                let daemonResult = await helperService.execute(command: "echo ok")
-                appendLog("Launch Daemon: \(daemonResult.status == 0 ? "responding" : "NOT responding")")
+                appendLog("Click Register to restart services")
             }
         }
     }
@@ -329,23 +323,13 @@ final class AgentViewModel {
 
     func testConnection() {
         appendLog("Testing connections...")
-        let userOK = userService.userReady
-        let rootOK = helperService.helperReady
-        appendLog("User agent: \(userOK ? "connected" : "NOT connected")")
-        appendLog("Launch Daemon: \(rootOK ? "connected" : "NOT connected")")
-        // Ping both services via XPC to verify actual responsiveness
         Task {
-            if userOK {
-                let result = await userService.execute(command: "echo ok")
-                appendLog("User agent: \(result.status == 0 ? "responding" : "NOT responding — \(result.output)")")
-            } else {
-                appendLog("Try: Register to start the user agent")
-            }
-            if rootOK {
-                let result = await helperService.execute(command: "echo ok")
-                appendLog("Launch Daemon: \(result.status == 0 ? "responding" : "NOT responding — \(result.output)")")
-            } else {
-                appendLog("Try: Register to start the root helper")
+            let userOK = await userService.ping()
+            appendLog("User agent: \(userOK ? "responding" : "NOT responding")")
+            let daemonOK = await helperService.ping()
+            appendLog("Launch Daemon: \(daemonOK ? "responding" : "NOT responding")")
+            if !userOK || !daemonOK {
+                appendLog("Click Register to restart services")
             }
         }
     }
