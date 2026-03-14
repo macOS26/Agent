@@ -29,17 +29,7 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(rootEnabled, forKey: "agentRootEnabled") }
     }
 
-    // One-time migration for stale defaults and API keys to Keychain — runs before property defaults are evaluated
-    @ObservationIgnored
-    private static let _migrate: Void = {
-        // Clean slate: wipe legacy keychain items and stale migration flags
-        // Run on background thread — legacy keychain calls can block waiting for auth
-        DispatchQueue.global(qos: .utility).async {
-            KeychainService.cleanSlate()
-        }
-    }()
-
-    var selectedProvider: APIProvider = { _ = AgentViewModel._migrate; return APIProvider(rawValue: UserDefaults.standard.string(forKey: "agentProvider") ?? "claude") ?? .claude }() {
+    var selectedProvider: APIProvider = { APIProvider(rawValue: UserDefaults.standard.string(forKey: "agentProvider") ?? "claude") ?? .claude }() {
         didSet {
             UserDefaults.standard.set(selectedProvider.rawValue, forKey: "agentProvider")
             if selectedProvider == .ollama && ollamaModels.isEmpty {
