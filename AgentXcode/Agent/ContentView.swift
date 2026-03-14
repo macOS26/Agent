@@ -1052,13 +1052,19 @@ struct SettingsView: View {
                 Spacer()
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("Max per task").font(.caption).foregroundStyle(.secondary)
-                    Picker("", selection: $viewModel.maxIterations) {
-                        ForEach(AgentViewModel.iterationOptions, id: \.self) { value in
-                            Text("\(value)").tag(value)
-                        }
-                    }
-                    .labelsHidden()
-                    .frame(width: 80)
+                    Stepper("\(viewModel.maxIterations)",
+                           onIncrement: {
+                               let opts = AgentViewModel.iterationOptions
+                               if let i = opts.firstIndex(of: viewModel.maxIterations), i + 1 < opts.count {
+                                   viewModel.maxIterations = opts[i + 1]
+                               }
+                           },
+                           onDecrement: {
+                               let opts = AgentViewModel.iterationOptions
+                               if let i = opts.firstIndex(of: viewModel.maxIterations), i > 0 {
+                                   viewModel.maxIterations = opts[i - 1]
+                               }
+                           })
                 }
             }
             Divider()
