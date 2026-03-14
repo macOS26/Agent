@@ -642,6 +642,20 @@ struct ActivityLogView: NSViewRepresentable {
         private func renderInlineElements(_ text: String, baseFont: NSFont) -> NSAttributedString {
             guard !text.isEmpty else { return NSAttributedString() }
 
+            let plainAttrs: [NSAttributedString.Key: Any] = [
+                .font: baseFont,
+                .foregroundColor: NSColor.labelColor
+            ]
+
+            // Fast path: skip the markdown parser entirely for lines with no markdown syntax.
+            // AttributedString(markdown:) can crash on certain inputs (e.g. malformed sequences,
+            // unusual Unicode), so only invoke it when there's actually something to parse.
+            let hasMarkdownChars = text.contains("*") || text.contains("_") || text.contains("`")
+                || text.contains("[") || text.contains("~")
+            guard hasMarkdownChars else {
+                return NSAttributedString(string: text, attributes: plainAttrs)
+            }
+
             do {
                 var options = AttributedString.MarkdownParsingOptions()
                 options.interpretedSyntax = .inlineOnlyPreservingWhitespace
@@ -674,10 +688,7 @@ struct ActivityLogView: NSViewRepresentable {
 
                 return nsAttr
             } catch {
-                return NSAttributedString(string: text, attributes: [
-                    .font: baseFont,
-                    .foregroundColor: NSColor.labelColor
-                ])
+                return NSAttributedString(string: text, attributes: plainAttrs)
             }
         }
 
