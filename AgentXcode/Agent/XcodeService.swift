@@ -56,6 +56,11 @@ final class XcodeService: @unchecked Sendable {
 
     /// Build a project via ScriptingBridge. Blocks until build completes.
     nonisolated func buildProject(projectPath: String) -> String {
+        // SECURITY: Validate project path to prevent injection
+        guard isValidProjectPath(projectPath) else {
+            return "Error: Invalid project path. Must be a valid .xcodeproj or .xcworkspace path."
+        }
+        
         guard let xcode: XcodeApplication = SBApplication(bundleIdentifier: Self.xcodeBundleID) else {
             return "Error: Failed to connect to Xcode"
         }
@@ -97,6 +102,11 @@ final class XcodeService: @unchecked Sendable {
 
     /// Run a project via ScriptingBridge. Returns immediately after triggering run.
     nonisolated func runProject(projectPath: String) -> String {
+        // SECURITY: Validate project path to prevent injection
+        guard isValidProjectPath(projectPath) else {
+            return "Error: Invalid project path. Must be a valid .xcodeproj or .xcworkspace path."
+        }
+        
         guard let xcode: XcodeApplication = SBApplication(bundleIdentifier: Self.xcodeBundleID) else {
             return "Error: Failed to connect to Xcode"
         }
@@ -114,6 +124,9 @@ final class XcodeService: @unchecked Sendable {
 
     /// List schemes for a project.
     nonisolated func listSchemes(projectPath: String) -> [String] {
+        // SECURITY: Validate project path
+        guard isValidProjectPath(projectPath) else { return [] }
+        
         guard let xcode: XcodeApplication = SBApplication(bundleIdentifier: Self.xcodeBundleID) else {
             return []
         }
@@ -130,5 +143,18 @@ final class XcodeService: @unchecked Sendable {
             }
         }
         return names
+    }
+    
+    // MARK: - Security Helpers
+    
+    /// Validate a project path to prevent command injection
+    private nonisolated func isValidProjectPath(_ path: String) -> Bool {
+        let trimmed = path.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
+        guard trimmed.hasSuffix(".xcodeproj") || trimmed.hasSuffix(".xcworkspace") else { return false }
+        guard !trimmed.contains("..") else { return false }  // Path traversal prevention
+        guard !trimmed.contains(";") && !trimmed.contains("|") && !trimmed.contains("&") else { return false }
+        guard trimmed.count < 1024 else { return false }
+        return true
     }
 }

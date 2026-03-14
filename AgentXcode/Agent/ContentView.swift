@@ -246,6 +246,10 @@ struct ContentView: View {
                 }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
                     showSplash = false
+            }
+            Task {
+                await viewModel.fetchClaudeModels()
+            
                 }
             }
             DispatchQueue.global(qos: .userInitiated).async {
@@ -362,6 +366,12 @@ struct ActivityLogView: NSViewRepresentable {
         var activeWebViews: [Int: WKWebView] = [:]
         /// Callback to trigger re-render when HTML snapshot is ready
         var onHTMLReady: (() -> Void)?
+
+        // SECURITY: Limit concurrent web views to prevent memory exhaustion
+        private static let maxActiveWebViews = 10
+
+
+
 
         // Matches image files
         private static let imagePathPattern: NSRegularExpression? = try? NSRegularExpression(
@@ -636,6 +646,20 @@ struct ActivityLogView: NSViewRepresentable {
         private func renderInlineElements(_ text: String, baseFont: NSFont) -> NSAttributedString {
             guard !text.isEmpty else { return NSAttributedString() }
 
+            let plainAttrs: [NSAttributedString.Key: Any] = [
+                .font: baseFont,
+                .foregroundColor: NSColor.labelColor
+            ]
+
+            // Fast path: skip the markdown parser entirely for lines with no markdown syntax.
+            // AttributedString(markdown:) can crash on certain inputs (e.g. malformed sequences,
+            // unusual Unicode), so only invoke it when there's actually something to parse.
+            let hasMarkdownChars = text.contains("*") || text.contains("_") || text.contains("`")
+                || text.contains("[") || text.contains("~")
+            guard hasMarkdownChars else {
+                return NSAttributedString(string: text, attributes: plainAttrs)
+            }
+
             do {
                 var options = AttributedString.MarkdownParsingOptions()
                 options.interpretedSyntax = .inlineOnlyPreservingWhitespace
@@ -668,10 +692,7 @@ struct ActivityLogView: NSViewRepresentable {
 
                 return nsAttr
             } catch {
-                return NSAttributedString(string: text, attributes: [
-                    .font: baseFont,
-                    .foregroundColor: NSColor.labelColor
-                ])
+                return NSAttributedString(string: text, attributes: plainAttrs)
             }
         }
 
@@ -681,6 +702,17 @@ struct ActivityLogView: NSViewRepresentable {
         /// Render HTML to image via off-screen WKWebView
         private func snapshotHTML(path: String, offset: Int) {
             let fileURL = URL(fileURLWithPath: path)
+            // SECURITY: Limit concurrent web views to prevent memory exhaustion
+            if activeWebViews.count >= Self.maxActiveWebViews {
+                // Remove oldest pending request if at limit
+                if let oldestOffset = htmlPending.sorted().first {
+                    if let oldWebView = activeWebViews.removeValue(forKey: oldestOffset) {
+                        oldWebView.stopLoading()
+                        oldWebView.navigationDelegate = nil
+                    }
+                    htmlPending.remove(oldestOffset)
+                }
+            }
             let config = WKWebViewConfiguration()
             let webView = WKWebView(frame: CGRect(x: 0, y: 0, width: 480, height: 800), configuration: config)
             webView.navigationDelegate = self
@@ -746,6 +778,11 @@ struct ActivityLogView: NSViewRepresentable {
         }
 
         func clearCache() {
+            // SECURITY: Stop loading on all active web views before removing
+            for (_, webView) in activeWebViews {
+                webView.stopLoading()
+                webView.navigationDelegate = nil
+            }
             imageCache.removeAll()
             htmlCache.removeAll()
             htmlPending.removeAll()
@@ -865,7 +902,7 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 16) {
             // Provider toggle
             VStack(alignment: .leading, spacing: 6) {
-                Text("Provider")
+                Text("Selected Provider")
                     .font(.headline)
                 Picker("Provider", selection: $viewModel.selectedProvider) {
                     ForEach(APIProvider.allCases, id: \.self) { provider in
@@ -894,9 +931,9 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Model").font(.caption).foregroundStyle(.secondary)
                         Picker("Model", selection: $viewModel.selectedModel) {
-                            Text("Claude Sonnet 4").tag("claude-sonnet-4-20250514")
-                            Text("Claude Opus 4").tag("claude-opus-4-20250514")
-                            Text("Claude Haiku 3.5").tag("claude-haiku-3-5-20241022")
+                            ForEach(viewModel.availableClaudeModels) { model in
+                                Text(model.formattedDisplayName).tag(model.id)
+                            }
                         }
                         .labelsHidden()
                     }
@@ -1004,6 +1041,30 @@ struct SettingsView: View {
                             .help("Fetch available local models")
                         }
                     }
+                }
+            }
+            Divider()
+
+            // Iterations setting
+            HStack {
+                Text("Iterations")
+                    .font(.headline)
+                Spacer()
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("Max per task").font(.caption).foregroundStyle(.secondary)
+                    Stepper("\(viewModel.maxIterations)",
+                           onIncrement: {
+                               let opts = AgentViewModel.iterationOptions
+                               if let i = opts.firstIndex(of: viewModel.maxIterations), i > 0 {
+                                   viewModel.maxIterations = opts[i - 1]
+                               }
+                           },
+                           onDecrement: {
+                               let opts = AgentViewModel.iterationOptions
+                               if let i = opts.firstIndex(of: viewModel.maxIterations), i + 1 < opts.count {
+                                   viewModel.maxIterations = opts[i + 1]
+                               }
+                           })
                 }
             }
             Divider()

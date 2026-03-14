@@ -29,18 +29,29 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(rootEnabled, forKey: "agentRootEnabled") }
     }
 
-    // One-time migration for stale defaults — runs before property defaults are evaluated
+    // One-time migration for stale defaults and API keys to Keychain — runs before property defaults are evaluated
     @ObservationIgnored
     private static let _migrate: Void = {
         let defaults = UserDefaults.standard
-        guard !defaults.bool(forKey: "agentMigrationV3") else { return }
-        // ollamaEndpoint is now a constant — remove any stale/blank cached value
-        defaults.removeObject(forKey: "ollamaEndpoint")
-        // Clear stale default model so user fetches from cloud
+        guard !defaults.bool(forKey: "agentMigrationV4") else { return }
+        
+        // Migration V4: Move API keys from UserDefaults to Keychain
+        if let claudeKey = defaults.string(forKey: "agentAPIKey"), !claudeKey.isEmpty {
+            KeychainService.shared.setClaudeAPIKey(claudeKey)
+            defaults.removeObject(forKey: "agentAPIKey")
+        }
+        if let ollamaKey = defaults.string(forKey: "ollamaAPIKey"), !ollamaKey.isEmpty {
+            KeychainService.shared.setOllamaAPIKey(ollamaKey)
+            defaults.removeObject(forKey: "ollamaAPIKey")
+        }
+        
+        // Legacy migrations from V3
+        defaults.removeObject(forKey: "ollamaEndpoint")  // now a constant
         if let model = defaults.string(forKey: "ollamaModel"), model == "llama3.1" {
             defaults.set("", forKey: "ollamaModel")
         }
-        defaults.set(true, forKey: "agentMigrationV3")
+        
+        defaults.set(true, forKey: "agentMigrationV4")
     }()
 
     var selectedProvider: APIProvider = { _ = AgentViewModel._migrate; return APIProvider(rawValue: UserDefaults.standard.string(forKey: "agentProvider") ?? "claude") ?? .claude }() {
@@ -52,21 +63,24 @@ final class AgentViewModel {
             if selectedProvider == .localOllama && localOllamaModels.isEmpty {
                 fetchLocalOllamaModels()
             }
+            if selectedProvider == .claude && availableClaudeModels.isEmpty {
+                Task { await fetchClaudeModels() }
+            }
         }
     }
 
-    // Claude settings
-    var apiKey: String = UserDefaults.standard.string(forKey: "agentAPIKey") ?? "" {
-        didSet { UserDefaults.standard.set(apiKey, forKey: "agentAPIKey") }
+    // Claude settings - stored securely in Keychain
+    var apiKey: String = KeychainService.shared.getClaudeAPIKey() ?? "" {
+        didSet { KeychainService.shared.setClaudeAPIKey(apiKey) }
     }
 
     var selectedModel: String = UserDefaults.standard.string(forKey: "agentModel") ?? "claude-sonnet-4-20250514" {
         didSet { UserDefaults.standard.set(selectedModel, forKey: "agentModel") }
     }
 
-    // Ollama settings
-    var ollamaAPIKey: String = UserDefaults.standard.string(forKey: "ollamaAPIKey") ?? "" {
-        didSet { UserDefaults.standard.set(ollamaAPIKey, forKey: "ollamaAPIKey") }
+    // Ollama settings - API key stored securely in Keychain
+    var ollamaAPIKey: String = KeychainService.shared.getOllamaAPIKey() ?? "" {
+        didSet { KeychainService.shared.setOllamaAPIKey(ollamaAPIKey) }
     }
 
     let ollamaEndpoint = "https://ollama.com/api/chat"
@@ -77,6 +91,12 @@ final class AgentViewModel {
 
     var visibleTaskCount: Int = UserDefaults.standard.object(forKey: "agentVisibleTasks") as? Int ?? 3 {
         didSet { UserDefaults.standard.set(visibleTaskCount, forKey: "agentVisibleTasks") }
+    }
+
+    static let iterationOptions = [25, 50, 75, 100, 150, 200]
+
+    var maxIterations: Int = UserDefaults.standard.object(forKey: "agentMaxIterations") as? Int ?? 50 {
+        didSet { UserDefaults.standard.set(maxIterations, forKey: "agentMaxIterations") }
     }
 
     var ollamaModel: String = UserDefaults.standard.string(forKey: "ollamaModel") ?? "" {
@@ -95,6 +115,95 @@ final class AgentViewModel {
         let name: String
         let supportsVision: Bool
     }
+
+    // MARK: - Claude Models
+    
+    struct ClaudeModelInfo: Identifiable, Codable {
+        let id: String
+        let name: String
+        let displayName: String
+        let createdAt: String?
+        let description: String?
+        
+        var formattedDisplayName: String {
+            if let created = createdAt {
+                let dateStr = String(created.prefix(10))
+                return "\(displayName) (\(dateStr))"
+            }
+            return displayName
+        }
+    }
+    
+    var availableClaudeModels: [ClaudeModelInfo] = []
+    
+    func fetchClaudeModels() async {
+        guard !apiKey.isEmpty else {
+            await MainActor.run {
+                self.availableClaudeModels = Self.defaultClaudeModels
+            }
+            return
+        }
+        
+        do {
+            let models = try await Self.fetchClaudeModelsFromAPI(apiKey: apiKey)
+            await MainActor.run {
+                self.availableClaudeModels = models.isEmpty ? Self.defaultClaudeModels : models
+            }
+        } catch {
+            print("Error fetching Claude models: \(error)")
+            await MainActor.run {
+                self.availableClaudeModels = Self.defaultClaudeModels
+            }
+        }
+    }
+    
+    private static let defaultClaudeModels: [ClaudeModelInfo] = [
+        ClaudeModelInfo(id: "claude-sonnet-4-20250514", name: "claude-sonnet-4-20250514", displayName: "Claude Sonnet 4", createdAt: "2025-05-22", description: nil),
+        ClaudeModelInfo(id: "claude-opus-4-20250514", name: "claude-opus-4-20250514", displayName: "Claude Opus 4", createdAt: "2025-05-22", description: nil),
+        ClaudeModelInfo(id: "claude-3-5-haiku-20241022", name: "claude-3-5-haiku-20241022", displayName: "Claude 3.5 Haiku", createdAt: "2024-10-22", description: nil)
+    ]
+    
+    private static func fetchClaudeModelsFromAPI(apiKey: String) async throws -> [ClaudeModelInfo] {
+        guard let url = URL(string: "https://api.anthropic.com/v1/models") else {
+            throw AgentError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        request.timeoutInterval = 10
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw AgentError.apiError(statusCode: (response as? HTTPURLResponse)?.statusCode ?? 0, message: "API error")
+        }
+        
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let modelsData = json["data"] as? [[String: Any]] else {
+            return defaultClaudeModels
+        }
+        
+        let models = modelsData.compactMap { modelData -> ClaudeModelInfo? in
+            guard let id = modelData["id"] as? String else { return nil }
+            let displayName = modelData["display_name"] as? String ?? id
+            let createdAt = modelData["created_at"] as? String
+            let description = modelData["description"] as? String
+            
+            return ClaudeModelInfo(
+                id: id,
+                name: displayName,
+                displayName: displayName,
+                createdAt: createdAt,
+                description: description
+            )
+        }
+        
+        return models.isEmpty ? defaultClaudeModels : models
+    }
+
 
     var ollamaModels: [OllamaModelInfo] = []
     var isFetchingModels = false
@@ -285,8 +394,10 @@ final class AgentViewModel {
             UserDefaults.standard.removeObject(forKey: "lastUserInstanceID")
         }
 
-        // Auto-fetch Ollama models on launch
-        if selectedProvider == .ollama {
+        // Auto-fetch models on launch based on provider
+        if selectedProvider == .claude {
+            Task { await fetchClaudeModels() }
+        } else if selectedProvider == .ollama {
             fetchOllamaModels()
         } else if selectedProvider == .localOllama {
             fetchLocalOllamaModels()
@@ -862,7 +973,7 @@ final class AgentViewModel {
         var consecutiveNoTool = 0
 
         var iterations = 0
-        let maxIterations = 50
+        let maxIterations = self.maxIterations
 
         while !Task.isCancelled && iterations < maxIterations {
             iterations += 1
@@ -881,7 +992,13 @@ final class AgentViewModel {
                     textWasStreamed = true
                     flushStreamBuffer()
                 } else if let ollama {
-                    response = try await ollama.send(messages: messages)
+                    response = try await ollama.sendStreaming(messages: messages) { [weak self] delta in
+                        Task { @MainActor in
+                            self?.isThinking = false
+                            self?.appendStreamDelta(delta)
+                        }
+                    }
+                    textWasStreamed = true
                 } else {
                     throw AgentError.noAPIKey
                 }
