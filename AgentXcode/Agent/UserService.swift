@@ -126,16 +126,10 @@ final class UserService {
                 return
             }
 
-            // 90-second timeout — cancel and return error if XPC doesn't reply
-            let timeout = DispatchWorkItem {
-                connection.invalidate()
-                Self.cancelProcess(instanceID: self.instanceID)
-                safeResume((-1, "Error: command timed out after 30 seconds — user agent may not be running"))
-            }
-            DispatchQueue.global().asyncAfter(deadline: .now() + 30, execute: timeout)
-
+            // No arbitrary timeout — commands run as long as they need.
+            // Protection: early bailout if agent not running (checked in execute()),
+            // XPC error handler if connection drops, user cancel button.
             proxy.execute(script: script, instanceID: self.instanceID) { status, output in
-                timeout.cancel()
                 connection.invalidate()
                 safeResume((status, output))
             }
