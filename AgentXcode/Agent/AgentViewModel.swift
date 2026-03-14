@@ -294,6 +294,25 @@ final class AgentViewModel {
         }
 
         // Xcode Command Line Tools check is handled by DependencyOverlay in ContentView
+
+        // Test daemon connectivity on startup
+        Task {
+            // Brief delay so the UI is ready
+            try? await Task.sleep(nanoseconds: 500_000_000)
+            appendLog("")
+            let userOK = userService.userReady
+            let daemonOK = helperService.helperReady
+            if !userOK || !daemonOK {
+                if !userOK { appendLog("User agent: NOT registered") }
+                if !daemonOK { appendLog("Launch Daemon: NOT registered") }
+                appendLog("Click Register to start services")
+            } else {
+                let userResult = await userService.execute(command: "echo ok")
+                appendLog("User agent: \(userResult.status == 0 ? "responding" : "NOT responding")")
+                let daemonResult = await helperService.execute(command: "echo ok")
+                appendLog("Launch Daemon: \(daemonResult.status == 0 ? "responding" : "NOT responding")")
+            }
+        }
     }
 
     // MARK: - Registration
