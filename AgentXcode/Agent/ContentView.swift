@@ -1055,14 +1055,14 @@ struct SettingsView: View {
                     Stepper("\(viewModel.maxIterations)",
                            onIncrement: {
                                let opts = AgentViewModel.iterationOptions
-                               if let i = opts.firstIndex(of: viewModel.maxIterations), i + 1 < opts.count {
-                                   viewModel.maxIterations = opts[i + 1]
+                               if let i = opts.firstIndex(of: viewModel.maxIterations), i > 0 {
+                                   viewModel.maxIterations = opts[i - 1]
                                }
                            },
                            onDecrement: {
                                let opts = AgentViewModel.iterationOptions
-                               if let i = opts.firstIndex(of: viewModel.maxIterations), i > 0 {
-                                   viewModel.maxIterations = opts[i - 1]
+                               if let i = opts.firstIndex(of: viewModel.maxIterations), i + 1 < opts.count {
+                                   viewModel.maxIterations = opts[i + 1]
                                }
                            })
                 }
