@@ -6,6 +6,9 @@ import AppKit
 /// Detects image file paths in log output and renders them inline.
 struct ActivityLogView: NSViewRepresentable {
     let text: String
+    var searchText: String = ""
+    var currentMatchIndex: Int = 0
+    var onMatchCount: ((Int) -> Void)? = nil
 
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSTextView.scrollableTextView()
@@ -29,10 +32,14 @@ struct ActivityLogView: NSViewRepresentable {
 
         // Wire up HTML snapshot callback to trigger re-render
         let currentText = text
+        let currentSearch = searchText
+        let currentIndex = currentMatchIndex
+        let matchCallback = onMatchCount
         coord.onHTMLReady = { [weak textView, weak coord] in
             guard let textView, let coord else { return }
             let attributed = coord.buildAttributedString(from: currentText)
             textView.textStorage?.setAttributedString(attributed)
+            coord.applySearchHighlighting(textView: textView, searchText: currentSearch, currentMatch: currentIndex, onMatchCount: matchCallback)
             textView.scrollToEndOfDocument(nil)
         }
 
@@ -44,18 +51,33 @@ struct ActivityLogView: NSViewRepresentable {
             )
             coord.showingPlaceholder = true
             coord.lastLength = 0
+            coord.lastSearch = ""
+            coord.lastMatchIndex = -1
             coord.clearCache()
+            matchCallback?(0)
             return
         }
 
         let len = (text as NSString).length
-        guard len != coord.lastLength || coord.showingPlaceholder else { return }
+        let searchChanged = currentSearch != coord.lastSearch || currentIndex != coord.lastMatchIndex
+        guard len != coord.lastLength || coord.showingPlaceholder || searchChanged else { return }
+
+        let textChanged = len != coord.lastLength || coord.showingPlaceholder
         coord.showingPlaceholder = false
 
-        let attributed = coord.buildAttributedString(from: text)
-        textView.textStorage?.setAttributedString(attributed)
-        coord.lastLength = len
-        textView.scrollToEndOfDocument(nil)
+        if textChanged {
+            let attributed = coord.buildAttributedString(from: text)
+            textView.textStorage?.setAttributedString(attributed)
+            coord.lastLength = len
+        }
+
+        coord.applySearchHighlighting(textView: textView, searchText: currentSearch, currentMatch: currentIndex, onMatchCount: matchCallback)
+        coord.lastSearch = currentSearch
+        coord.lastMatchIndex = currentIndex
+
+        if textChanged {
+            textView.scrollToEndOfDocument(nil)
+        }
     }
 
     func makeCoordinator() -> Coordinator { Coordinator() }
@@ -107,6 +129,8 @@ struct ActivityLogView: NSViewRepresentable {
     @MainActor class Coordinator: NSObject, WKNavigationDelegate {
         var lastLength = 0
         var showingPlaceholder = true
+        var lastSearch = ""
+        var lastMatchIndex = -1
         let font = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
         /// Images keyed by their character offset in the log — each occurrence gets its own
         /// snapshot so the same path (e.g. current_artwork.jpg) shows different art per task.
@@ -123,8 +147,50 @@ struct ActivityLogView: NSViewRepresentable {
         // SECURITY: Limit concurrent web views to prevent memory exhaustion
         private static let maxActiveWebViews = 10
 
+        /// Highlight search matches in the text view's text storage
+        func applySearchHighlighting(textView: NSTextView, searchText: String, currentMatch: Int, onMatchCount: ((Int) -> Void)?) {
+            guard let storage = textView.textStorage else { return }
+            let fullRange = NSRange(location: 0, length: storage.length)
 
+            // Remove previous search highlights
+            storage.removeAttribute(.backgroundColor, range: fullRange)
 
+            guard !searchText.isEmpty else {
+                onMatchCount?(0)
+                return
+            }
+
+            let text = storage.string
+            var matchRanges: [NSRange] = []
+            let searchLower = searchText.lowercased()
+            let textLower = text.lowercased() as NSString
+
+            var searchRange = NSRange(location: 0, length: textLower.length)
+            while searchRange.location < textLower.length {
+                let found = textLower.range(of: searchLower, options: [], range: searchRange)
+                guard found.location != NSNotFound else { break }
+                matchRanges.append(found)
+                searchRange.location = found.location + found.length
+                searchRange.length = textLower.length - searchRange.location
+            }
+
+            onMatchCount?(matchRanges.count)
+
+            let highlightColor = NSColor.systemYellow.withAlphaComponent(0.3)
+            let currentColor = NSColor.systemOrange.withAlphaComponent(0.5)
+
+            for (i, range) in matchRanges.enumerated() {
+                let color = (i == currentMatch) ? currentColor : highlightColor
+                storage.addAttribute(.backgroundColor, value: color, range: range)
+            }
+
+            // Scroll to current match
+            if !matchRanges.isEmpty, currentMatch < matchRanges.count {
+                let targetRange = matchRanges[currentMatch]
+                textView.scrollRangeToVisible(targetRange)
+                textView.showFindIndicator(for: targetRange)
+            }
+        }
 
         // Matches image files
         private static let imagePathPattern: NSRegularExpression? = try? NSRegularExpression(
@@ -513,6 +579,8 @@ struct ActivityLogView: NSViewRepresentable {
             htmlCache.removeAll()
             htmlPending.removeAll()
             activeWebViews.removeAll()
+            lastSearch = ""
+            lastMatchIndex = -1
         }
     }
 }
