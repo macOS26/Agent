@@ -154,7 +154,8 @@
       "WebFetch(domain:preserve.mactech.com)",
       "WebFetch(domain:leopard-adc.pepas.com)",
       "Bash(xcrun swiftc:*)",
-      "Read(//Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/AppKit.framework/Headers/**)"
+      "Read(//Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/AppKit.framework/Headers/**)",
+      "Bash(xcodebuild build:*)"
     ]
   }
 }

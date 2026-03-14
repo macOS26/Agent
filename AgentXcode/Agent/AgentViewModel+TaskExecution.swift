@@ -60,6 +60,14 @@ extension AgentViewModel {
         let result = await userService.execute(command: command)
         userService.onOutput = nil
         userServiceActive = false
+
+        // Always log a preview so the user sees something came back
+        if !result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            let lines = result.output.components(separatedBy: "\n").filter { !$0.isEmpty }
+            appendLog(Self.preview(result.output, lines: 3) + " (\(lines.count) lines)")
+        } else if result.status != 0 {
+            appendLog("exit code: \(result.status)")
+        }
         flushLog()
         return result
     }
@@ -290,14 +298,8 @@ extension AgentViewModel {
                             let cmd = CodingService.buildListFilesCommand(pattern: pattern, path: path)
                             let result = await executeViaUserAgent(command: cmd)
                             guard !Task.isCancelled else { break }
-                            let output: String
-                            if result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                output = "No files matching '\(pattern)'"
-                                appendLog(output)
-                            } else {
-                                output = result.output
-                            }
-                            flushLog()
+                            let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                                ? "No files matching '\(pattern)'" : result.output
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
@@ -315,14 +317,8 @@ extension AgentViewModel {
                             let cmd = CodingService.buildSearchFilesCommand(pattern: pattern, path: path, include: include)
                             let result = await executeViaUserAgent(command: cmd)
                             guard !Task.isCancelled else { break }
-                            let output: String
-                            if result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                output = "No matches for '\(pattern)'"
-                                appendLog(output)
-                            } else {
-                                output = result.output
-                            }
-                            flushLog()
+                            let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                                ? "No matches for '\(pattern)'" : result.output
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
@@ -340,14 +336,8 @@ extension AgentViewModel {
                             let cmd = CodingService.buildGitStatusCommand(path: path)
                             let result = await executeViaUserAgent(command: cmd)
                             guard !Task.isCancelled else { break }
-                            let output: String
-                            if result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                output = "(no output, exit code: \(result.status))"
-                                appendLog(output)
-                            } else {
-                                output = result.output
-                            }
-                            flushLog()
+                            let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                                ? "(no output, exit code: \(result.status))" : result.output
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 

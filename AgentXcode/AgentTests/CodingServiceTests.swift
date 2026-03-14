@@ -292,7 +292,8 @@ struct CodingServiceTests {
         #expect(cmd.contains("find"))
         #expect(cmd.contains("'/tmp/project'"))
         #expect(cmd.contains("-name '*.swift'"))
-        #expect(cmd.contains("-maxdepth 10"))
+        #expect(cmd.contains("-maxdepth 8"))
+        #expect(cmd.contains("Library"))
         #expect(cmd.contains("| sort"))
     }
 
@@ -310,6 +311,7 @@ struct CodingServiceTests {
         #expect(cmd.contains("'/tmp/project'"))
         #expect(cmd.contains("--include='*.swift'"))
         #expect(cmd.contains("--exclude-dir=.git"))
+        #expect(cmd.contains("--exclude-dir=Library"))
     }
 
     @Test("buildSearchFilesCommand works without include")
@@ -385,5 +387,33 @@ struct CodingServiceTests {
         let cmd = CodingService.buildGitBranchCommand(path: "/tmp/repo", name: "bugfix", checkout: false)
         #expect(cmd.contains("git branch 'bugfix'"))
         #expect(!cmd.contains("checkout"))
+    }
+
+    // MARK: - Preview helper
+
+    @Test("preview returns full text when under limit")
+    func previewShort() {
+        let text = "line1\nline2"
+        let result = AgentViewModel.preview(text, lines: 3)
+        #expect(result == "line1\nline2")
+    }
+
+    @Test("preview truncates with ... when over limit")
+    func previewLong() {
+        let text = "line1\nline2\nline3\nline4\nline5"
+        let result = AgentViewModel.preview(text, lines: 3)
+        #expect(result == "line1\nline2\nline3\n...")
+    }
+
+    @Test("preview handles single line")
+    func previewSingle() {
+        let result = AgentViewModel.preview("hello", lines: 3)
+        #expect(result == "hello")
+    }
+
+    @Test("preview handles empty string")
+    func previewEmpty() {
+        let result = AgentViewModel.preview("", lines: 3)
+        #expect(result == "")
     }
 }

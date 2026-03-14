@@ -103,18 +103,38 @@ final class UserService {
 
     nonisolated private func executeViaXPC(script: String, outputHandler: UserOutputHandler) async -> (status: Int32, output: String) {
         await withCheckedContinuation { continuation in
+            var didResume = false
+            let resumeLock = NSLock()
+
+            func safeResume(_ value: (Int32, String)) {
+                resumeLock.lock()
+                defer { resumeLock.unlock() }
+                guard !didResume else { return }
+                didResume = true
+                continuation.resume(returning: value)
+            }
+
             let connection = makeConnection(outputHandler: outputHandler)
             guard let proxy = connection.remoteObjectProxyWithErrorHandler({ error in
-                continuation.resume(returning: (-1, "XPC error: \(error.localizedDescription)"))
+                safeResume((-1, "XPC error: \(error.localizedDescription)"))
             }) as? UserToolProtocol else {
                 connection.invalidate()
-                continuation.resume(returning: (-1, "XPC proxy cast failed"))
+                safeResume((-1, "XPC proxy cast failed"))
                 return
             }
 
-            proxy.execute(script: script, instanceID: self.instanceID) { status, output in
+            // 90-second timeout — cancel and return error if XPC doesn't reply
+            let timeout = DispatchWorkItem {
                 connection.invalidate()
-                continuation.resume(returning: (status, output))
+                Self.cancelProcess(instanceID: self.instanceID)
+                safeResume((-1, "Error: command timed out after 90 seconds"))
+            }
+            DispatchQueue.global().asyncAfter(deadline: .now() + 90, execute: timeout)
+
+            proxy.execute(script: script, instanceID: self.instanceID) { status, output in
+                timeout.cancel()
+                connection.invalidate()
+                safeResume((status, output))
             }
         }
     }
