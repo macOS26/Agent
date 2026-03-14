@@ -264,7 +264,7 @@ enum AgentTools {
         let required: [String]
     }
 
-    private static let commonTools: [ToolDef] = [
+    nonisolated(unsafe) private static let commonTools: [ToolDef] = [
         // --- Coding Tools ---
         ToolDef(
             name: "read_file",
