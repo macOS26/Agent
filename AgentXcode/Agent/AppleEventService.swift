@@ -120,7 +120,11 @@ final class AppleEventService: @unchecked Sendable {
         guard !operations.isEmpty else { return "Error: operations array is empty" }
 
         guard let app = SBApplication(bundleIdentifier: bundleID) else {
-            return "Error: Could not connect to app '\(bundleID)'. Is it installed?"
+            let appName = resolveAppName(bundleID)
+            if appName.isEmpty {
+                return "Error: Could not find app with bundle ID '\(bundleID)'. Is it installed?"
+            }
+            return "Error: Could not connect to '\(appName)' (\(bundleID)). Make sure the app is running."
         }
 
         var cursor: Any = app

@@ -138,6 +138,7 @@ final class UserService {
     }
 
     func cancel() {
+        onOutput = nil  // Clear handler to prevent memory leaks
         Self.cancelProcess(instanceID: instanceID)
     }
 

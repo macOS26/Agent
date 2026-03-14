@@ -153,6 +153,7 @@ final class HelperService {
     }
 
     func cancel() {
+        onOutput = nil  // Clear handler to prevent memory leaks
         Self.cancelProcess(instanceID: instanceID)
     }
 

@@ -23,6 +23,9 @@ final class ScriptService {
     
     /// Lock to prevent concurrent Package.swift modifications
     private let packageLock = NSLock()
+    
+    /// Serial queue for script compilation (prevents concurrent swift build calls)
+    private let compilationQueue = DispatchQueue(label: "com.agent.scriptcompilation", qos: .userInitiated)
 
     // MARK: - Bundle paths
 
@@ -279,7 +282,9 @@ final class ScriptService {
 
     /// Create a new script as Sources/Scripts/{name}.swift and register in Package.swift
     func createScript(name: String, content: String) -> String {
+        // Ensure package exists first (without lock - just creates directories)
         ensurePackage()
+        
         let scriptName = name.replacingOccurrences(of: ".swift", with: "")
         let scriptFile = scriptsDir.appendingPathComponent("\(scriptName).swift")
         let fm = FileManager.default
@@ -292,6 +297,10 @@ final class ScriptService {
         do {
             try fm.createDirectory(at: scriptsDir, withIntermediateDirectories: true)
             try final.write(to: scriptFile, atomically: true, encoding: .utf8)
+            
+            // Hold lock while modifying Package.swift
+            packageLock.lock()
+            defer { packageLock.unlock() }
             addScriptToPackageLocked(scriptName)
             return "Created \(scriptName) (\(final.count) bytes). Registered in Package.swift."
         } catch {
@@ -330,6 +339,10 @@ final class ScriptService {
 
         do {
             try fm.removeItem(at: scriptFile)
+            
+            // Hold lock while modifying Package.swift
+            packageLock.lock()
+            defer { packageLock.unlock() }
             removeScriptFromPackageLocked(scriptName)
             return "Deleted \(scriptName). Removed from Package.swift."
         } catch {
@@ -410,7 +423,7 @@ final class ScriptService {
         let path = dylibPath(name: scriptName)
 
         return await withCheckedContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
+            compilationQueue.async {
                 // Set arguments via environment variable for scripts that need them
                 if !arguments.isEmpty {
                     setenv("AGENT_SCRIPT_ARGS", arguments, 1)
@@ -426,11 +439,13 @@ final class ScriptService {
 
                 // Load dylib
                 guard let handle = dlopen(path, RTLD_NOW) else {
-                    // Restore file descriptors
+                    // Restore file descriptors and cleanup
                     dup2(savedStdout, STDOUT_FILENO)
                     dup2(savedStderr, STDERR_FILENO)
-                    close(pipefd[0]); close(pipefd[1])
-                    close(savedStdout); close(savedStderr)
+                    close(pipefd[0])
+                    close(pipefd[1])
+                    close(savedStdout)
+                    close(savedStderr)
                     unsetenv("AGENT_SCRIPT_ARGS")
                     let err = String(cString: dlerror())
                     continuation.resume(returning: ("dlopen error: \(err)", 1))
@@ -442,8 +457,10 @@ final class ScriptService {
                     dlclose(handle)
                     dup2(savedStdout, STDOUT_FILENO)
                     dup2(savedStderr, STDERR_FILENO)
-                    close(pipefd[0]); close(pipefd[1])
-                    close(savedStdout); close(savedStderr)
+                    close(pipefd[0])
+                    close(pipefd[1])
+                    close(savedStdout)
+                    close(savedStderr)
                     unsetenv("AGENT_SCRIPT_ARGS")
                     continuation.resume(returning: ("dlsym error: script_main not found in \(scriptName)", 1))
                     return

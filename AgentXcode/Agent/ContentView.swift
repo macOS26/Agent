@@ -369,14 +369,14 @@ struct ActivityLogView: NSViewRepresentable {
         @available(*, unavailable)
         required init(coder: NSCoder) { fatalError() }
 
-        override func cellSize() -> NSSize { NSSize(width: 16, height: 14) }
+        override func cellSize() -> NSSize { NSSize(width: 20, height: 16) }
 
         override func draw(withFrame cellFrame: NSRect, in controlView: NSView?) {
             if let icon = NSImage(systemSymbolName: "doc.on.doc", accessibilityDescription: "Copy code") {
-                let config = NSImage.SymbolConfiguration(pointSize: 10, weight: .medium)
+                let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
                 let tinted = (icon.withSymbolConfiguration(config) ?? icon).copy() as! NSImage
                 tinted.isTemplate = true
-                NSColor.secondaryLabelColor.set()
+                NSColor.tertiaryLabelColor.set()
                 tinted.draw(in: cellFrame)
             }
         }
@@ -619,7 +619,6 @@ struct ActivityLogView: NSViewRepresentable {
                     .backgroundColor: CodeBlockTheme.bg
                 ], range: NSRange(location: 0, length: copyLine.length))
                 copyLine.append(NSAttributedString(string: "\n", attributes: [.font: font, .backgroundColor: CodeBlockTheme.bg]))
-                result.append(NSAttributedString(string: "\n", attributes: [.font: font]))
                 result.append(copyLine)
                 result.append(codeBlock)
                 result.append(NSAttributedString(string: "\n\n", attributes: [.font: font]))
@@ -889,7 +888,11 @@ struct ActivityLogView: NSViewRepresentable {
                         }
                         nsAttr.addAttribute(.font, value: styledFont, range: range)
                         if intent.contains(.code) {
-                            nsAttr.addAttribute(.backgroundColor, value: NSColor.quaternaryLabelColor, range: range)
+                            let codeText = nsAttr.attributedSubstring(from: range).string
+                            let highlighted = CodeBlockHighlighter.highlight(
+                                code: codeText, language: "swift", font: baseFont
+                            )
+                            nsAttr.replaceCharacters(in: range, with: highlighted)
                         }
                     }
                 }

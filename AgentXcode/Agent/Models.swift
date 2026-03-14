@@ -148,11 +148,18 @@ final class TaskHistory {
     }
 
     private func save() {
+        // Capture data synchronously on main actor, then write async
+        let data: Data?
         do {
-            let data = try JSONEncoder().encode(records)
-            try data.write(to: fileURL, options: .atomic)
+            data = try JSONEncoder().encode(records)
         } catch {
-            // silent fail
+            data = nil
+        }
+        guard let data else { return }
+        
+        let fileURL = self.fileURL
+        Task.detached(priority: .background) {
+            try? data.write(to: fileURL, options: .atomic)
         }
     }
 }
