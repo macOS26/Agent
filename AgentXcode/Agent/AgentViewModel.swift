@@ -308,6 +308,28 @@ final class AgentViewModel {
         appendLog(msg)
     }
 
+    func testConnection() {
+        appendLog("Testing connections...")
+        let userOK = userService.userReady
+        let rootOK = helperService.helperReady
+        appendLog("User agent: \(userOK ? "connected" : "NOT connected")")
+        appendLog("Root helper: \(rootOK ? "connected" : "NOT connected")")
+        if userOK && rootOK {
+            // Quick ping via XPC to verify actual responsiveness
+            Task {
+                let result = await userService.execute(command: "echo ok")
+                if result.status == 0 {
+                    appendLog("User agent: responding")
+                } else {
+                    appendLog("User agent: registered but not responding — \(result.output)")
+                }
+            }
+        } else {
+            if !userOK { appendLog("Try: Register to start the user agent") }
+            if !rootOK { appendLog("Try: Register to start the root helper") }
+        }
+    }
+
     // MARK: - Run / Stop
 
     func run() {

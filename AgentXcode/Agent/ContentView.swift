@@ -46,6 +46,12 @@ struct ContentView: View {
                 .buttonStyle(.bordered)
                 .controlSize(.small)
 
+                Button("Connect") {
+                    viewModel.testConnection()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+
                 Spacer()
 
                 if viewModel.isThinking {
