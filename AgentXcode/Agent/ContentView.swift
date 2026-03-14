@@ -1045,6 +1045,24 @@ struct SettingsView: View {
             }
             Divider()
 
+            // Iterations setting
+            HStack {
+                Text("Iterations")
+                    .font(.headline)
+                Spacer()
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("Max per task").font(.caption).foregroundStyle(.secondary)
+                    Picker("", selection: $viewModel.maxIterations) {
+                        ForEach(AgentViewModel.iterationOptions, id: \.self) { value in
+                            Text("\(value)").tag(value)
+                        }
+                    }
+                    .labelsHidden()
+                    .frame(width: 80)
+                }
+            }
+            Divider()
+
             // History settings
             HStack {
                 Text("History")
