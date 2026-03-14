@@ -221,7 +221,7 @@ final class AgentViewModel {
     var logPersistTask: Task<Void, Never>?
     var streamLineCount = 0
     var streamTruncated = false
-    static let outputLineOptions = [100, 250, 500, 1000, 1500, 2000, 3000]
+    static let outputLineOptions = [10, 50, 75, 100, 150, 200, 250, 500, 750, 1000, 1500]
     var maxOutputLines: Int = UserDefaults.standard.object(forKey: "agentMaxOutputLines") as? Int ?? 1000 {
         didSet { UserDefaults.standard.set(maxOutputLines, forKey: "agentMaxOutputLines") }
     }
