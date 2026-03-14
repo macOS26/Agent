@@ -218,6 +218,30 @@ struct SettingsView: View {
             }
             Divider()
 
+            // Read file preview lines setting
+            HStack {
+                Text("Read File")
+                    .font(.headline)
+                Spacer()
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("Preview lines").font(.caption).foregroundStyle(.secondary)
+                    Stepper("\(viewModel.readFilePreviewLines)",
+                           onIncrement: {
+                               let opts = AgentViewModel.readPreviewOptions
+                               if let i = opts.firstIndex(of: viewModel.readFilePreviewLines), i + 1 < opts.count {
+                                   viewModel.readFilePreviewLines = opts[i + 1]
+                               }
+                           },
+                           onDecrement: {
+                               let opts = AgentViewModel.readPreviewOptions
+                               if let i = opts.firstIndex(of: viewModel.readFilePreviewLines), i > 0 {
+                                   viewModel.readFilePreviewLines = opts[i - 1]
+                               }
+                           })
+                }
+            }
+            Divider()
+
             // History settings
             HStack {
                 Text("History")

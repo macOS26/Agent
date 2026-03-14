@@ -226,6 +226,11 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(maxOutputLines, forKey: "agentMaxOutputLines") }
     }
 
+    static let readPreviewOptions = [3, 10, 50, 100, 250, 500, 750, 1000]
+    var readFilePreviewLines: Int = UserDefaults.standard.object(forKey: "agentReadFilePreviewLines") as? Int ?? 3 {
+        didSet { UserDefaults.standard.set(readFilePreviewLines, forKey: "agentReadFilePreviewLines") }
+    }
+
     // LLM streaming state
     var streamBuffer = ""
     var streamFlushTask: Task<Void, Never>?

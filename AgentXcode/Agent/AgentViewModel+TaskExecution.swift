@@ -198,7 +198,8 @@ extension AgentViewModel {
             ollama = nil
         }
 
-        var messages: [[String: Any]]
+        // Prepend last task as conversation context so the LLM knows what just happened
+        var messages: [[String: Any]] = history.lastTaskMessages()
 
         if !attachedImagesBase64.isEmpty {
             appendLog("(\(attachedImagesBase64.count) screenshot(s) attached)")
@@ -213,12 +214,12 @@ extension AgentViewModel {
                 ]
             }
             contentBlocks.append(["type": "text", "text": prompt])
-            messages = [["role": "user", "content": contentBlocks]]
+            messages.append(["role": "user", "content": contentBlocks])
             // Clear attachments after use
             attachedImages.removeAll()
             attachedImagesBase64.removeAll()
         } else {
-            messages = [["role": "user", "content": prompt]]
+            messages.append(["role": "user", "content": prompt])
         }
 
         var commandsRun: [String] = []
@@ -277,7 +278,7 @@ extension AgentViewModel {
                             completionSummary = summary
                             appendLog("Completed: \(summary)")
                             flushLog()
-                            history.add(TaskRecord(prompt: prompt, summary: summary, commandsRun: commandsRun), maxBeforeSummary: maxHistoryBeforeSummary)
+                            history.add(TaskRecord(prompt: prompt, summary: summary, commandsRun: commandsRun), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
                             isRunning = false
                             return
                         }
@@ -291,7 +292,7 @@ extension AgentViewModel {
                             appendLog("Read: \(filePath)")
                             let output = await Self.offMain { CodingService.readFile(path: filePath, offset: offset, limit: limit) }
                             let lang = Self.langFromPath(filePath)
-                            appendLog(Self.codeFence(Self.preview(output, lines: 3), language: lang))
+                            appendLog(Self.codeFence(Self.preview(output, lines: readFilePreviewLines), language: lang))
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
@@ -753,15 +754,14 @@ extension AgentViewModel {
             }
         }
 
-        guard !Task.isCancelled else { return }
-
         if iterations >= maxIterations {
             appendLog("Reached maximum iterations (\(maxIterations))")
         }
 
-        // Save partial history if task didn't call task_complete
-        if completionSummary.isEmpty && !commandsRun.isEmpty {
-            history.add(TaskRecord(prompt: prompt, summary: "(incomplete)", commandsRun: commandsRun), maxBeforeSummary: maxHistoryBeforeSummary)
+        // Always save history if task didn't call task_complete
+        if completionSummary.isEmpty {
+            let summary = Task.isCancelled ? "(cancelled)" : commandsRun.isEmpty ? "(no actions)" : "(incomplete)"
+            history.add(TaskRecord(prompt: prompt, summary: summary, commandsRun: commandsRun), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
         }
 
         flushLog()
