@@ -225,4 +225,159 @@ enum CodingService {
         }
         return result
     }
+
+    // MARK: - Git Operations
+
+    /// Run a git command and return its output.
+    private static func runGit(_ args: [String], in directory: String? = nil) -> (status: Int32, output: String) {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
+        process.arguments = args
+
+        if let dir = directory {
+            process.currentDirectoryURL = URL(fileURLWithPath: (dir as NSString).expandingTildeInPath)
+        }
+
+        let stdoutPipe = Pipe()
+        let stderrPipe = Pipe()
+        process.standardOutput = stdoutPipe
+        process.standardError = stderrPipe
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+        } catch {
+            return (-1, "Error: \(error.localizedDescription)")
+        }
+
+        let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+        let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+
+        var output = String(data: stdoutData, encoding: .utf8) ?? ""
+        let errStr = String(data: stderrData, encoding: .utf8) ?? ""
+        if !errStr.isEmpty {
+            if !output.isEmpty { output += "\n" }
+            output += errStr
+        }
+
+        return (process.terminationStatus, output)
+    }
+
+    /// Git status: branch, staged, unstaged, untracked.
+    static func gitStatus(path: String?) -> String {
+        let dir = path ?? FileManager.default.currentDirectoryPath
+        let branch = runGit(["branch", "--show-current"], in: dir)
+        let status = runGit(["status", "--short"], in: dir)
+
+        var result = "Branch: \(branch.output.trimmingCharacters(in: .whitespacesAndNewlines))\n"
+        if status.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            result += "Working tree clean"
+        } else {
+            result += status.output
+        }
+        return result
+    }
+
+    /// Git diff: show changes. Supports staged, unstaged, or between refs.
+    static func gitDiff(path: String?, staged: Bool, target: String?) -> String {
+        let dir = path ?? FileManager.default.currentDirectoryPath
+        var args = ["diff", "--stat", "-p"]
+        if staged {
+            args.append("--cached")
+        }
+        if let target {
+            args.append(target)
+        }
+        let result = runGit(args, in: dir)
+
+        if result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return staged ? "No staged changes" : "No changes"
+        }
+
+        // Truncate very large diffs
+        if result.output.count > 50_000 {
+            return String(result.output.prefix(50_000)) + "\n...(diff truncated)"
+        }
+        return result.output
+    }
+
+    /// Git log: recent commit history.
+    static func gitLog(path: String?, count: Int?) -> String {
+        let dir = path ?? FileManager.default.currentDirectoryPath
+        let n = min(count ?? 20, 100)
+        let result = runGit(["log", "--oneline", "--no-decorate", "-\(n)"], in: dir)
+
+        if result.status != 0 {
+            return "Error: \(result.output)"
+        }
+        return result.output
+    }
+
+    /// Git commit: stage specified files (or all) and commit.
+    static func gitCommit(path: String?, message: String, files: [String]?) -> String {
+        let dir = path ?? FileManager.default.currentDirectoryPath
+
+        // Stage files
+        if let files, !files.isEmpty {
+            let addResult = runGit(["add"] + files, in: dir)
+            if addResult.status != 0 {
+                return "Error staging files: \(addResult.output)"
+            }
+        } else {
+            let addResult = runGit(["add", "-A"], in: dir)
+            if addResult.status != 0 {
+                return "Error staging: \(addResult.output)"
+            }
+        }
+
+        // Check there's something to commit
+        let status = runGit(["diff", "--cached", "--quiet"], in: dir)
+        if status.status == 0 {
+            return "Nothing to commit (no staged changes)"
+        }
+
+        // Commit
+        let result = runGit(["commit", "-m", message], in: dir)
+        if result.status != 0 {
+            return "Commit failed: \(result.output)"
+        }
+        return result.output
+    }
+
+    /// Git diff-patch: apply a unified diff patch to a file.
+    static func gitApplyPatch(path: String?, patch: String) -> String {
+        let dir = path ?? FileManager.default.currentDirectoryPath
+
+        // Write patch to temp file
+        let tempPath = NSTemporaryDirectory() + "agent_patch_\(UUID().uuidString).patch"
+        do {
+            try patch.write(toFile: tempPath, atomically: true, encoding: .utf8)
+        } catch {
+            return "Error writing patch: \(error.localizedDescription)"
+        }
+        defer { try? FileManager.default.removeItem(atPath: tempPath) }
+
+        let result = runGit(["apply", "--verbose", tempPath], in: dir)
+        if result.status != 0 {
+            return "Patch failed: \(result.output)"
+        }
+        return result.output.isEmpty ? "Patch applied successfully" : result.output
+    }
+
+    /// Git create branch and optionally switch to it.
+    static func gitBranch(path: String?, name: String, checkout: Bool) -> String {
+        let dir = path ?? FileManager.default.currentDirectoryPath
+
+        if checkout {
+            let result = runGit(["checkout", "-b", name], in: dir)
+            return result.status == 0
+                ? "Created and switched to branch '\(name)'"
+                : "Error: \(result.output)"
+        } else {
+            let result = runGit(["branch", name], in: dir)
+            return result.status == 0
+                ? "Created branch '\(name)'"
+                : "Error: \(result.output)"
+        }
+    }
 }

@@ -230,6 +230,63 @@ extension AgentViewModel {
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
+                        // Git tools
+                        if name == "git_status" {
+                            let path = input["path"] as? String
+                            appendLog("Git status")
+                            let output = CodingService.gitStatus(path: path)
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        if name == "git_diff" {
+                            let path = input["path"] as? String
+                            let staged = input["staged"] as? Bool ?? false
+                            let target = input["target"] as? String
+                            appendLog("Git diff\(staged ? " --cached" : "")\(target.map { " \($0)" } ?? "")")
+                            let output = CodingService.gitDiff(path: path, staged: staged, target: target)
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        if name == "git_log" {
+                            let path = input["path"] as? String
+                            let count = input["count"] as? Int
+                            appendLog("Git log")
+                            let output = CodingService.gitLog(path: path, count: count)
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        if name == "git_commit" {
+                            let path = input["path"] as? String
+                            let message = input["message"] as? String ?? ""
+                            let files = input["files"] as? [String]
+                            appendLog("Git commit: \(message)")
+                            let output = CodingService.gitCommit(path: path, message: message, files: files)
+                            appendLog(output)
+                            commandsRun.append("git_commit: \(message)")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        if name == "git_diff_patch" {
+                            let path = input["path"] as? String
+                            let patch = input["patch"] as? String ?? ""
+                            appendLog("Git apply patch")
+                            let output = CodingService.gitApplyPatch(path: path, patch: patch)
+                            appendLog(output)
+                            commandsRun.append("git_diff_patch")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        if name == "git_branch" {
+                            let path = input["path"] as? String
+                            let branchName = input["name"] as? String ?? ""
+                            let checkout = input["checkout"] as? Bool ?? true
+                            appendLog("Git branch: \(branchName)")
+                            let output = CodingService.gitBranch(path: path, name: branchName, checkout: checkout)
+                            appendLog(output)
+                            commandsRun.append("git_branch: \(branchName)")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
                         if name == "execute_command" || name == "execute_user_command" {
                             let command = input["command"] as? String ?? ""
                             let isPrivileged = (name == "execute_command") && rootEnabled

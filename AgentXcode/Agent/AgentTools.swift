@@ -315,6 +315,63 @@ enum AgentTools {
             ],
             required: ["pattern"]
         ),
+        // --- Git Tools ---
+        ToolDef(
+            name: "git_status",
+            description: "Show current branch, staged/unstaged changes, and untracked files.",
+            properties: [
+                "path": ["type": "string", "description": "Repository path (default: current directory)"],
+            ],
+            required: []
+        ),
+        ToolDef(
+            name: "git_diff",
+            description: "Show file changes as a unified diff. Can show staged changes, unstaged changes, or diff against a branch/commit.",
+            properties: [
+                "path": ["type": "string", "description": "Repository path (default: current directory)"],
+                "staged": ["type": "boolean", "description": "Show staged changes only (default false)"],
+                "target": ["type": "string", "description": "Branch, commit, or ref to diff against (e.g. \"main\", \"HEAD~3\")"],
+            ],
+            required: []
+        ),
+        ToolDef(
+            name: "git_log",
+            description: "Show recent commit history as one-line summaries.",
+            properties: [
+                "path": ["type": "string", "description": "Repository path (default: current directory)"],
+                "count": ["type": "integer", "description": "Number of commits to show (default 20, max 100)"],
+            ],
+            required: []
+        ),
+        ToolDef(
+            name: "git_commit",
+            description: "Stage files and create a commit. If no files specified, stages all changes.",
+            properties: [
+                "path": ["type": "string", "description": "Repository path (default: current directory)"],
+                "message": ["type": "string", "description": "Commit message"],
+                "files": ["type": "array", "items": ["type": "string"] as [String: Any], "description": "Specific files to stage (default: all changes)"] as [String: Any],
+            ],
+            required: ["message"]
+        ),
+        ToolDef(
+            name: "git_diff_patch",
+            description: "Apply a unified diff patch to files in the repository. Use for complex multi-line edits that are easier to express as a patch.",
+            properties: [
+                "path": ["type": "string", "description": "Repository path (default: current directory)"],
+                "patch": ["type": "string", "description": "Unified diff patch content"],
+            ],
+            required: ["patch"]
+        ),
+        ToolDef(
+            name: "git_branch",
+            description: "Create a new git branch, optionally switching to it.",
+            properties: [
+                "path": ["type": "string", "description": "Repository path (default: current directory)"],
+                "name": ["type": "string", "description": "Branch name to create"],
+                "checkout": ["type": "boolean", "description": "Switch to the new branch (default true)"],
+            ],
+            required: ["name"]
+        ),
         // --- Core Tools ---
         ToolDef(
             name: "apple_event_query",

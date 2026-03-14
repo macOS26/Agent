@@ -290,6 +290,7 @@ final class OllamaService {
         if let text = message["content"] as? String, !text.isEmpty {
             // Check if model wrote a tool call as plain text (common with Ollama models)
             let toolNames = ["read_file", "write_file", "edit_file", "list_files", "search_files",
+                              "git_status", "git_diff", "git_log", "git_commit", "git_diff_patch", "git_branch",
                               "apple_event_query",
                               "execute_user_command", "execute_command", "task_complete",
                               "list_agent_scripts", "read_agent_script", "create_agent_script",
