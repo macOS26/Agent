@@ -26,7 +26,14 @@ final class AgentViewModel {
     var userWasActive = false
     var rootWasActive = false
     var rootEnabled: Bool = UserDefaults.standard.object(forKey: "agentRootEnabled") as? Bool ?? true {
-        didSet { UserDefaults.standard.set(rootEnabled, forKey: "agentRootEnabled") }
+        didSet {
+            UserDefaults.standard.set(rootEnabled, forKey: "agentRootEnabled")
+            if !rootEnabled {
+                // Kill and unregister the daemon for security
+                helperService.shutdownDaemon()
+                appendLog("Launch Daemon: shut down for security")
+            }
+        }
     }
 
     var selectedProvider: APIProvider = { APIProvider(rawValue: UserDefaults.standard.string(forKey: "agentProvider") ?? "ollama") ?? .ollama }() {
@@ -301,8 +308,13 @@ final class AgentViewModel {
             appendLog("Warming up the engines...")
             var userOK = await userService.ping()
             appendLog("User agent: \(userOK ? "ping OK" : "no response")")
-            var daemonOK = await helperService.ping()
-            appendLog("Launch Daemon: \(daemonOK ? "ping OK" : "no response")")
+            var daemonOK = false
+            if rootEnabled {
+                daemonOK = await helperService.ping()
+                appendLog("Launch Daemon: \(daemonOK ? "ping OK" : "no response")")
+            } else {
+                appendLog("Launch Daemon: disabled")
+            }
             if !userOK {
                 appendLog("User agent: mending...")
                 _ = userService.restartAgent()
@@ -310,14 +322,14 @@ final class AgentViewModel {
                 userOK = await userService.ping()
                 appendLog("User agent: \(userOK ? "mended — ping OK" : "still NOT responding")")
             }
-            if !daemonOK {
+            if rootEnabled && !daemonOK {
                 appendLog("Launch Daemon: mending...")
                 _ = helperService.restartDaemon()
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
                 daemonOK = await helperService.ping()
                 appendLog("Launch Daemon: \(daemonOK ? "mended — ping OK" : "still NOT responding")")
             }
-            if !userOK || !daemonOK {
+            if !userOK || (rootEnabled && !daemonOK) {
                 appendLog("Click Register to restart services")
             }
         }

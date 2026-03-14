@@ -68,6 +68,18 @@ final class HelperService {
         }
     }
 
+    /// Completely shut down and unregister the daemon for security.
+    func shutdownDaemon() {
+        let kill = Process()
+        kill.executableURL = URL(fileURLWithPath: "/usr/bin/pkill")
+        kill.arguments = ["-f", "AgentHelper"]
+        try? kill.run()
+        kill.waitUntilExit()
+
+        let service = SMAppService.daemon(plistName: "Agent.app.toddbruss.helper.plist")
+        try? service.unregister()
+    }
+
     /// Kill any stale daemon processes, unregister, and re-register.
     @discardableResult
     func restartDaemon() -> String {
