@@ -68,9 +68,26 @@ final class HelperService {
         }
     }
 
+    /// Kill any stale daemon processes, unregister, and re-register.
+    private func restartDaemon() -> String {
+        // Kill any lingering processes
+        let kill = Process()
+        kill.executableURL = URL(fileURLWithPath: "/usr/bin/pkill")
+        kill.arguments = ["-f", "AgentHelper"]
+        try? kill.run()
+        kill.waitUntilExit()
+
+        // Unregister then re-register
+        let service = SMAppService.daemon(plistName: "Agent.app.toddbruss.helper.plist")
+        try? service.unregister()
+        // Brief pause for launchd to clean up
+        Thread.sleep(forTimeInterval: 0.5)
+        return registerHelper()
+    }
+
     func execute(command: String) async -> (status: Int32, output: String) {
         if !helperReady {
-            let msg = registerHelper()
+            let msg = restartDaemon()
             if !helperReady {
                 return (-1, "Error: Root helper daemon is not running — \(msg). Check System Settings > Login Items.")
             }

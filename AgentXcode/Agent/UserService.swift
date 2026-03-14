@@ -65,9 +65,26 @@ final class UserService {
         }
     }
 
+    /// Kill any stale agent processes, unregister, and re-register.
+    private func restartAgent() -> String {
+        // Kill any lingering processes
+        let kill = Process()
+        kill.executableURL = URL(fileURLWithPath: "/usr/bin/pkill")
+        kill.arguments = ["-f", "AgentUser"]
+        try? kill.run()
+        kill.waitUntilExit()
+
+        // Unregister then re-register
+        let service = SMAppService.agent(plistName: "Agent.app.toddbruss.user.plist")
+        try? service.unregister()
+        // Brief pause for launchd to clean up
+        Thread.sleep(forTimeInterval: 0.5)
+        return registerUser()
+    }
+
     func execute(command: String) async -> (status: Int32, output: String) {
         if !userReady {
-            let msg = registerUser()
+            let msg = restartAgent()
             if !userReady {
                 return (-1, "Error: User agent is not running — \(msg). Check System Settings > Login Items.")
             }
