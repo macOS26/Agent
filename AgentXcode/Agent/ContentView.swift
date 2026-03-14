@@ -544,6 +544,7 @@ struct ActivityLogView: NSViewRepresentable {
                 }
                 let language = nsText.substring(with: match.range(at: 1))
                 let codeContent = nsText.substring(with: match.range(at: 2))
+                    .trimmingCharacters(in: .newlines)
                 let highlighted = CodeBlockHighlighter.highlight(
                     code: codeContent,
                     language: language.isEmpty ? nil : language,
@@ -554,7 +555,6 @@ struct ActivityLogView: NSViewRepresentable {
                                        range: NSRange(location: 0, length: codeBlock.length))
                 result.append(NSAttributedString(string: "\n", attributes: [.font: font]))
                 result.append(codeBlock)
-                result.append(NSAttributedString(string: "\n", attributes: [.font: font]))
                 lastEnd = match.range.location + match.range.length
             }
 
@@ -715,12 +715,16 @@ struct ActivityLogView: NSViewRepresentable {
             let nsLine = line as NSString
             let fullRange = NSRange(location: 0, length: nsLine.length)
 
-            // Horizontal rule (check before bullet since --- could conflict)
+            // Horizontal rule — render as a thin 1px divider line
             if Self.hrPattern?.firstMatch(in: line, range: fullRange) != nil {
-                return NSAttributedString(
-                    string: "────────────────────────────────",
-                    attributes: [.font: font, .foregroundColor: NSColor.separatorColor]
-                )
+                let divider = NSImage(size: NSSize(width: 500, height: 1), flipped: false) { rect in
+                    NSColor.separatorColor.setFill()
+                    rect.fill()
+                    return true
+                }
+                let attachment = NSTextAttachment()
+                attachment.attachmentCell = NSTextAttachmentCell(imageCell: divider)
+                return NSAttributedString(attachment: attachment)
             }
 
             // Header
