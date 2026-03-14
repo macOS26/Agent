@@ -27,6 +27,8 @@
 		AA10000000000000000047 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000046 /* KeychainService.swift */; };
 		AA10000000000000000049 /* AgentViewModel+Logging.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000048 /* AgentViewModel+Logging.swift */; };
 		AA1000000000000000004B /* AgentViewModel+TaskExecution.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000004A /* AgentViewModel+TaskExecution.swift */; };
+		AA1000000000000000004D /* AgentTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000004C /* AgentTools.swift */; };
+		AA1000000000000000004F /* CodingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000004E /* CodingService.swift */; };
 		BB10000000000000000030 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001A /* main.swift */; };
 		BB10000000000000000031 /* HelperProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001B /* HelperProtocol.swift */; };
 		BB10000000000000000032 /* Agent.app.toddbruss.helper.plist in Copy Daemon Plist */ = {isa = PBXBuildFile; fileRef = AA10000000000000000023 /* Agent.app.toddbruss.helper.plist */; };
@@ -146,6 +148,8 @@
 		AA10000000000000000046 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
 		AA10000000000000000048 /* AgentViewModel+Logging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+Logging.swift"; sourceTree = "<group>"; };
 		AA1000000000000000004A /* AgentViewModel+TaskExecution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TaskExecution.swift"; sourceTree = "<group>"; };
+		AA1000000000000000004C /* AgentTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentTools.swift; sourceTree = "<group>"; };
+		AA1000000000000000004E /* CodingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodingService.swift; sourceTree = "<group>"; };
 		BB1000000000000000001A /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		BB1000000000000000001B /* HelperProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperProtocol.swift; sourceTree = "<group>"; };
 		BB1000000000000000001C /* AgentHelper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = AgentHelper; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -222,6 +226,8 @@
 				AA1000000000000000001C /* AgentViewModel.swift */,
 				AA10000000000000000048 /* AgentViewModel+Logging.swift */,
 				AA1000000000000000004A /* AgentViewModel+TaskExecution.swift */,
+				AA1000000000000000004C /* AgentTools.swift */,
+				AA1000000000000000004E /* CodingService.swift */,
 				AA1000000000000000001D /* HelperService.swift */,
 				AA10000000000000000025 /* UserService.swift */,
 				AA1000000000000000001E /* ClaudeService.swift */,
@@ -470,6 +476,8 @@
 				AA10000000000000000047 /* KeychainService.swift in Sources */,
 				AA10000000000000000049 /* AgentViewModel+Logging.swift in Sources */,
 				AA1000000000000000004B /* AgentViewModel+TaskExecution.swift in Sources */,
+				AA1000000000000000004D /* AgentTools.swift in Sources */,
+				AA1000000000000000004F /* CodingService.swift in Sources */,
 				EE10000000000000000004 /* ObjCTry.m in Sources */,
 				AA10000000000000000036 /* Models.swift in Sources */,
 			);
