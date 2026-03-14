@@ -546,7 +546,11 @@ struct ActivityLogView: NSViewRepresentable {
             for match in codeMatches {
                 if match.range.location > lastEnd {
                     let before = nsText.substring(with: NSRange(location: lastEnd, length: match.range.location - lastEnd))
-                    result.append(renderBlockMarkdown(before))
+                        .trimmingCharacters(in: .newlines)
+                    if !before.isEmpty {
+                        result.append(renderBlockMarkdown(before))
+                        result.append(NSAttributedString(string: "\n", attributes: [.font: font]))
+                    }
                 }
                 let language = nsText.substring(with: match.range(at: 1))
                 let codeContent = nsText.substring(with: match.range(at: 2))
@@ -559,14 +563,17 @@ struct ActivityLogView: NSViewRepresentable {
                 let codeBlock = NSMutableAttributedString(attributedString: highlighted)
                 codeBlock.addAttribute(.backgroundColor, value: CodeBlockTheme.bg,
                                        range: NSRange(location: 0, length: codeBlock.length))
-                result.append(NSAttributedString(string: "\n", attributes: [.font: font]))
                 result.append(codeBlock)
+                result.append(NSAttributedString(string: "\n", attributes: [.font: font]))
                 lastEnd = match.range.location + match.range.length
             }
 
             if lastEnd < nsText.length {
                 let remaining = nsText.substring(from: lastEnd)
-                result.append(renderBlockMarkdown(remaining))
+                    .trimmingCharacters(in: .newlines)
+                if !remaining.isEmpty {
+                    result.append(renderBlockMarkdown(remaining))
+                }
             }
 
             return result
