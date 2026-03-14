@@ -29,7 +29,7 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(rootEnabled, forKey: "agentRootEnabled") }
     }
 
-    var selectedProvider: APIProvider = { APIProvider(rawValue: UserDefaults.standard.string(forKey: "agentProvider") ?? "claude") ?? .claude }() {
+    var selectedProvider: APIProvider = { APIProvider(rawValue: UserDefaults.standard.string(forKey: "agentProvider") ?? "ollama") ?? .ollama }() {
         didSet {
             UserDefaults.standard.set(selectedProvider.rawValue, forKey: "agentProvider")
             if selectedProvider == .ollama && ollamaModels.isEmpty {
