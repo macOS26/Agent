@@ -76,8 +76,24 @@ private struct LangDef {
 
     static func highlight(code: String, language: String?, font: NSFont) -> NSAttributedString {
         let bold = NSFont.monospacedSystemFont(ofSize: font.pointSize, weight: .bold)
+
+        // Pre-capture theme colors for use in @Sendable enumerateMatches closures
+        let colText = CodeBlockTheme.text
+        let colIdent = CodeBlockTheme.ident
+        let colFunc = CodeBlockTheme.funcCall
+        let colSysFunc = CodeBlockTheme.sysFunc
+        let colProp = CodeBlockTheme.prop
+        let colKeyword = CodeBlockTheme.keyword
+        let colType = CodeBlockTheme.type
+        let colSelfKw = CodeBlockTheme.selfKw
+        let colAttr = CodeBlockTheme.attr
+        let colPreproc = CodeBlockTheme.preproc
+        let colNumber = CodeBlockTheme.number
+        let colString = CodeBlockTheme.string
+        let colComment = CodeBlockTheme.comment
+
         let result = NSMutableAttributedString(string: code, attributes: [
-            .font: font, .foregroundColor: CodeBlockTheme.text
+            .font: font, .foregroundColor: colText
         ])
         let def = langDef(for: language)
         let ns = code as NSString
@@ -85,31 +101,31 @@ private struct LangDef {
 
         // Identifiers
         wordRx.enumerateMatches(in: code, range: r) { m, _, _ in
-            if let mr = m?.range { result.addAttribute(.foregroundColor, value: CodeBlockTheme.ident, range: mr) }
+            if let mr = m?.range { result.addAttribute(.foregroundColor, value: colIdent, range: mr) }
         }
         // Function calls
         funcRx.enumerateMatches(in: code, range: r) { m, _, _ in
-            if let mr = m?.range(at: 1) { result.addAttribute(.foregroundColor, value: CodeBlockTheme.funcCall, range: mr) }
+            if let mr = m?.range(at: 1) { result.addAttribute(.foregroundColor, value: colFunc, range: mr) }
         }
         // System functions
         if !def.sysFuncs.isEmpty {
             funcRx.enumerateMatches(in: code, range: r) { m, _, _ in
                 guard let mr = m?.range(at: 1) else { return }
                 if def.sysFuncs.contains(ns.substring(with: mr)) {
-                    result.addAttribute(.foregroundColor, value: CodeBlockTheme.sysFunc, range: mr)
+                    result.addAttribute(.foregroundColor, value: colSysFunc, range: mr)
                 }
             }
         }
         // Property access
         propRx.enumerateMatches(in: code, range: r) { m, _, _ in
-            if let mr = m?.range(at: 1) { result.addAttribute(.foregroundColor, value: CodeBlockTheme.prop, range: mr) }
+            if let mr = m?.range(at: 1) { result.addAttribute(.foregroundColor, value: colProp, range: mr) }
         }
         // Keywords
         if !def.keywords.isEmpty {
             wordRx.enumerateMatches(in: code, range: r) { m, _, _ in
                 guard let mr = m?.range else { return }
                 if def.keywords.contains(ns.substring(with: mr)) {
-                    result.addAttributes([.foregroundColor: CodeBlockTheme.keyword, .font: bold], range: mr)
+                    result.addAttributes([.foregroundColor: colKeyword, .font: bold], range: mr)
                 }
             }
         }
@@ -118,7 +134,7 @@ private struct LangDef {
             wordRx.enumerateMatches(in: code, range: r) { m, _, _ in
                 guard let mr = m?.range else { return }
                 if def.declKeywords.contains(ns.substring(with: mr)) {
-                    result.addAttributes([.foregroundColor: CodeBlockTheme.keyword, .font: bold], range: mr)
+                    result.addAttributes([.foregroundColor: colKeyword, .font: bold], range: mr)
                 }
             }
         }
@@ -127,7 +143,7 @@ private struct LangDef {
             wordRx.enumerateMatches(in: code, range: r) { m, _, _ in
                 guard let mr = m?.range else { return }
                 if def.types.contains(ns.substring(with: mr)) {
-                    result.addAttributes([.foregroundColor: CodeBlockTheme.type, .font: bold], range: mr)
+                    result.addAttributes([.foregroundColor: colType, .font: bold], range: mr)
                 }
             }
         }
@@ -136,43 +152,43 @@ private struct LangDef {
             wordRx.enumerateMatches(in: code, range: r) { m, _, _ in
                 guard let mr = m?.range else { return }
                 if def.selfKw.contains(ns.substring(with: mr)) {
-                    result.addAttribute(.foregroundColor, value: CodeBlockTheme.selfKw, range: mr)
+                    result.addAttribute(.foregroundColor, value: colSelfKw, range: mr)
                 }
             }
         }
         // Attributes (@word)
         if def.hasAttrs {
             attrRx.enumerateMatches(in: code, range: r) { m, _, _ in
-                if let mr = m?.range { result.addAttributes([.foregroundColor: CodeBlockTheme.attr, .font: bold], range: mr) }
+                if let mr = m?.range { result.addAttributes([.foregroundColor: colAttr, .font: bold], range: mr) }
             }
         }
         // Preprocessor (#directives)
         if def.hasPreproc {
             prepRx.enumerateMatches(in: code, range: r) { m, _, _ in
-                if let mr = m?.range { result.addAttribute(.foregroundColor, value: CodeBlockTheme.preproc, range: mr) }
+                if let mr = m?.range { result.addAttribute(.foregroundColor, value: colPreproc, range: mr) }
             }
         }
         // Numbers
         numRx.enumerateMatches(in: code, range: r) { m, _, _ in
-            if let mr = m?.range { result.addAttribute(.foregroundColor, value: CodeBlockTheme.number, range: mr) }
+            if let mr = m?.range { result.addAttribute(.foregroundColor, value: colNumber, range: mr) }
         }
         // Strings (override keywords inside strings)
         def.stringRegex?.enumerateMatches(in: code, range: r) { m, _, _ in
-            if let mr = m?.range { result.addAttribute(.foregroundColor, value: CodeBlockTheme.string, range: mr) }
+            if let mr = m?.range { result.addAttribute(.foregroundColor, value: colString, range: mr) }
         }
         // Comments (override everything - LAST)
-        applyComments(result, code: code, def: def, range: r)
+        applyComments(result, code: code, def: def, range: r, color: colComment)
 
         return result
     }
 
-    private static func applyComments(_ result: NSMutableAttributedString, code: String, def: LangDef, range: NSRange) {
+    private static func applyComments(_ result: NSMutableAttributedString, code: String, def: LangDef, range: NSRange, color: NSColor) {
         if let start = def.blockComStart, let end = def.blockComEnd {
             let e1 = NSRegularExpression.escapedPattern(for: start)
             let e2 = NSRegularExpression.escapedPattern(for: end)
             if let rx = try? NSRegularExpression(pattern: "\(e1)[\\s\\S]*?\(e2)", options: .dotMatchesLineSeparators) {
                 rx.enumerateMatches(in: code, range: range) { m, _, _ in
-                    if let r = m?.range { result.addAttribute(.foregroundColor, value: CodeBlockTheme.comment, range: r) }
+                    if let r = m?.range { result.addAttribute(.foregroundColor, value: color, range: r) }
                 }
             }
         }
@@ -180,7 +196,7 @@ private struct LangDef {
             let esc = NSRegularExpression.escapedPattern(for: prefix)
             if let rx = try? NSRegularExpression(pattern: "\(esc).*$", options: .anchorsMatchLines) {
                 rx.enumerateMatches(in: code, range: range) { m, _, _ in
-                    if let r = m?.range { result.addAttribute(.foregroundColor, value: CodeBlockTheme.comment, range: r) }
+                    if let r = m?.range { result.addAttribute(.foregroundColor, value: color, range: r) }
                 }
             }
         }

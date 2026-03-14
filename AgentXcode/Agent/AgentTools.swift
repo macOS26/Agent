@@ -27,6 +27,26 @@ enum AgentTools {
         inaccessible to the normal user. Always chown/chmod files back to the user after \
         root operations, or write to user-accessible locations from execute_user_command instead.
 
+        macOS TCC PERMISSIONS — Accessibility, Screen Recording, Automation, and other \
+        privacy-gated APIs must run through the Agent app process to inherit its permissions. \
+        The privileged LaunchDaemon (root) has a SEPARATE TCC context and will NOT have these grants. \
+        How to use protected APIs correctly:
+        1. Agent Script dylibs (run_agent_script) — loaded via dlopen INTO the Agent app process. \
+        They inherit ALL of Agent's TCC permissions (Accessibility, Screen Recording, Automation, etc.). \
+        Use this for Accessibility API calls (AXUIElement), CGWindowListCreateImage for screenshots, \
+        or any other privacy-gated framework API.
+        2. apple_event_query / osascript — already runs in the Agent app process. \
+        Inherits Automation permissions for controlling other apps.
+        3. execute_user_command — runs as a child process of the user-level agent. \
+        Does NOT inherit TCC permissions from the Agent app.
+        4. execute_command (root) — runs via LaunchDaemon. Has its own separate TCC context. \
+        NEVER use this for Accessibility, Screen Recording, or Automation tasks.
+        RULE: If a task needs Accessibility (AXUIElement, simulating clicks/keystrokes, reading UI), \
+        Screen Recording (CGWindowListCreateImage, screen capture APIs), or Automation (controlling apps), \
+        ALWAYS use run_agent_script to write a Swift dylib that calls those APIs directly. \
+        The dylib runs inside the Agent app process and inherits its TCC grants. \
+        Do NOT attempt these operations via execute_command or execute_user_command shell commands.
+
         CODING TOOLS — for direct file operations without shell overhead:
         - read_file: Read file contents with line numbers. Use instead of `cat`.
         - write_file: Create or overwrite a file. Use instead of heredocs or echo redirection.
