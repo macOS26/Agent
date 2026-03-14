@@ -63,15 +63,17 @@ final class AgentViewModel {
             if selectedProvider == .localOllama && localOllamaModels.isEmpty {
                 fetchLocalOllamaModels()
             }
-            if selectedProvider == .claude && availableClaudeModels.isEmpty {
-                Task { await fetchClaudeModels() }
-            }
         }
     }
 
     // Claude settings - stored securely in Keychain
     var apiKey: String = KeychainService.shared.getClaudeAPIKey() ?? "" {
-        didSet { KeychainService.shared.setClaudeAPIKey(apiKey) }
+        didSet { 
+            KeychainService.shared.setClaudeAPIKey(apiKey)
+            Task {
+                await fetchClaudeModels()
+            }
+        }
     }
 
     var selectedModel: String = UserDefaults.standard.string(forKey: "agentModel") ?? "claude-sonnet-4-20250514" {
@@ -109,7 +111,7 @@ final class AgentViewModel {
         let name: String
         let supportsVision: Bool
     }
-
+    
     // MARK: - Claude Models
     
     struct ClaudeModelInfo: Identifiable, Codable {
@@ -120,84 +122,12 @@ final class AgentViewModel {
         let description: String?
         
         var formattedDisplayName: String {
-            if let created = createdAt {
-                let dateStr = String(created.prefix(10))
-                return "\(displayName) (\(dateStr))"
+            if let desc = description {
+                return "\(displayName) - \(desc)"
             }
             return displayName
         }
     }
-    
-    var availableClaudeModels: [ClaudeModelInfo] = []
-    
-    func fetchClaudeModels() async {
-        guard !apiKey.isEmpty else {
-            await MainActor.run {
-                self.availableClaudeModels = Self.defaultClaudeModels
-            }
-            return
-        }
-        
-        do {
-            let models = try await Self.fetchClaudeModelsFromAPI(apiKey: apiKey)
-            await MainActor.run {
-                self.availableClaudeModels = models.isEmpty ? Self.defaultClaudeModels : models
-            }
-        } catch {
-            print("Error fetching Claude models: \(error)")
-            await MainActor.run {
-                self.availableClaudeModels = Self.defaultClaudeModels
-            }
-        }
-    }
-    
-    private static let defaultClaudeModels: [ClaudeModelInfo] = [
-        ClaudeModelInfo(id: "claude-sonnet-4-20250514", name: "claude-sonnet-4-20250514", displayName: "Claude Sonnet 4", createdAt: "2025-05-22", description: nil),
-        ClaudeModelInfo(id: "claude-opus-4-20250514", name: "claude-opus-4-20250514", displayName: "Claude Opus 4", createdAt: "2025-05-22", description: nil),
-        ClaudeModelInfo(id: "claude-3-5-haiku-20241022", name: "claude-3-5-haiku-20241022", displayName: "Claude 3.5 Haiku", createdAt: "2024-10-22", description: nil)
-    ]
-    
-    private static func fetchClaudeModelsFromAPI(apiKey: String) async throws -> [ClaudeModelInfo] {
-        guard let url = URL(string: "https://api.anthropic.com/v1/models") else {
-            throw AgentError.invalidURL
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
-        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
-        request.timeoutInterval = 10
-        
-        let (data, response) = try await URLSession.shared.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw AgentError.apiError(statusCode: (response as? HTTPURLResponse)?.statusCode ?? 0, message: "API error")
-        }
-        
-        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let modelsData = json["data"] as? [[String: Any]] else {
-            return defaultClaudeModels
-        }
-        
-        let models = modelsData.compactMap { modelData -> ClaudeModelInfo? in
-            guard let id = modelData["id"] as? String else { return nil }
-            let displayName = modelData["display_name"] as? String ?? id
-            let createdAt = modelData["created_at"] as? String
-            let description = modelData["description"] as? String
-            
-            return ClaudeModelInfo(
-                id: id,
-                name: displayName,
-                displayName: displayName,
-                createdAt: createdAt,
-                description: description
-            )
-        }
-        
-        return models.isEmpty ? defaultClaudeModels : models
-    }
-
 
     var ollamaModels: [OllamaModelInfo] = []
     var isFetchingModels = false
@@ -340,6 +270,81 @@ final class AgentViewModel {
         }
     }
 
+    // MARK: - Claude Model Fetching
+    
+    func fetchClaudeModels() async {
+        guard !apiKey.isEmpty else { 
+            await MainActor.run {
+                self.availableClaudeModels = Self.defaultClaudeModels
+            }
+            return 
+        }
+        
+        do {
+            let models = try await Self.fetchClaudeModelsFromAPI(apiKey: apiKey)
+            await MainActor.run {
+                self.availableClaudeModels = models.isEmpty ? Self.defaultClaudeModels : models
+            }
+        } catch {
+            print("Error fetching Claude models: \(error)")
+            await MainActor.run {
+                self.availableClaudeModels = Self.defaultClaudeModels
+            }
+        }
+    }
+    
+    private static let defaultClaudeModels: [ClaudeModelInfo] = [
+        ClaudeModelInfo(id: "claude-3-5-sonnet-20241022", name: "claude-3-5-sonnet-20241022", displayName: "Claude 3.5 Sonnet", createdAt: "2024-10-22", description: "Most intelligent model"),
+        ClaudeModelInfo(id: "claude-3-opus-20240229", name: "claude-3-opus-20240229", displayName: "Claude 3 Opus", createdAt: "2024-02-29", description: "Powerful model for complex tasks"),
+        ClaudeModelInfo(id: "claude-3-5-haiku-20241022", name: "claude-3-5-haiku-20241022", displayName: "Claude 3.5 Haiku", createdAt: "2024-10-22", description: "Fast and efficient")
+    ]
+    
+    private static func fetchClaudeModelsFromAPI(apiKey: String) async throws -> [ClaudeModelInfo] {
+        guard let url = URL(string: "https://api.anthropic.com/v1/models") else {
+            throw AgentError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        request.timeoutInterval = 10
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
+            throw AgentError.apiError(statusCode: (response as? HTTPURLResponse)?.statusCode ?? 0, message: errorBody)
+        }
+        
+        // Parse the models response
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let modelsData = json["data"] as? [[String: Any]] else {
+            // If the API doesn't return models, use defaults
+            return defaultClaudeModels
+        }
+        
+        let models = modelsData.compactMap { modelData -> ClaudeModelInfo? in
+            guard let id = modelData["id"] as? String,
+                  let name = modelData["name"] as? String else { return nil }
+            
+            let displayName = modelData["display_name"] as? String ?? name
+            let createdAt = modelData["created_at"] as? String
+            let description = modelData["description"] as? String
+            
+            return ClaudeModelInfo(
+                id: id,
+                name: name,
+                displayName: displayName,
+                createdAt: createdAt,
+                description: description
+            )
+        }
+        
+        return models.isEmpty ? defaultClaudeModels : models
+    }
+
     var attachedImages: [NSImage] = []
     private var attachedImagesBase64: [String] = []
 
@@ -360,6 +365,8 @@ final class AgentViewModel {
     var hasAttachments: Bool { !attachedImages.isEmpty }
 
     init() {
+        // Initialize with default Claude models
+        self.availableClaudeModels = Self.defaultClaudeModels
         // Restore ~/Documents/Agent/ folder and bundled resources if missing
         scriptService.ensurePackage()
 
@@ -388,10 +395,8 @@ final class AgentViewModel {
             UserDefaults.standard.removeObject(forKey: "lastUserInstanceID")
         }
 
-        // Auto-fetch models on launch based on provider
-        if selectedProvider == .claude {
-            Task { await fetchClaudeModels() }
-        } else if selectedProvider == .ollama {
+        // Auto-fetch Ollama models on launch
+        if selectedProvider == .ollama {
             fetchOllamaModels()
         } else if selectedProvider == .localOllama {
             fetchLocalOllamaModels()

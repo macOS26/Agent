@@ -4,12 +4,14 @@ enum AgentError: Error, LocalizedError {
     case noAPIKey
     case apiError(statusCode: Int, message: String)
     case invalidResponse
+    case invalidURL
 
     var errorDescription: String? {
         switch self {
         case .noAPIKey: "No API key configured. Open Settings to add your Anthropic API key."
         case .apiError(let code, let msg): "API error (\(code)): \(msg)"
         case .invalidResponse: "Invalid response from Claude API"
+        case .invalidURL: "Invalid URL"
         }
     }
 }
