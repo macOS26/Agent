@@ -1,14 +1,50 @@
 import Foundation
 import MCP
 
-/// MCP Server for Agent! for macOS
-/// Implements the Model Context Protocol to expose Agent tools to LLM clients
+// MARK: - MCP Server Configuration (mirrors app's MCPServerConfig)
+
+public struct MCPServerConfig: Codable, Identifiable, Hashable, Sendable {
+    public var id: UUID
+    public var name: String
+    public var command: String
+    public var arguments: [String]
+    public var environment: [String: String]
+    public var enabled: Bool
+    public var autoStart: Bool
+    
+    public init(id: UUID = UUID(), name: String, command: String, arguments: [String] = [], environment: [String: String] = [:], enabled: Bool = true, autoStart: Bool = true) {
+        self.id = id
+        self.name = name
+        self.command = command
+        self.arguments = arguments
+        self.environment = environment
+        self.enabled = enabled
+        self.autoStart = autoStart
+    }
+}
+
+// MARK: - MCP Server Manager for Agent! for macOS
+
+/// MCP Server Manager - handles multiple MCP server connections
+/// The Agent app spawns this process which aggregates tools from configured MCP servers
 public actor MCPServer {
-    public static let serverName = "Agent! for macOS"
+    public static let serverName = "Agent! for macOS MCP"
     public static let serverVersion = "1.0.0"
     
     private var server: Server?
     private var transport: (any Transport)?
+    
+    /// Connected child MCP servers
+    private var childServers: [ChildMCPServer] = []
+    
+    /// Config file location (mirrors app's location)
+    private var configFileURL: URL {
+        guard let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            return URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("mcp_servers.json")
+        }
+        let dir = appSupport.appendingPathComponent("Agent", isDirectory: true)
+        return dir.appendingPathComponent("mcp_servers.json")
+    }
     
     public init() async throws {
         self.transport = StdioTransport()
@@ -20,6 +56,9 @@ public actor MCPServer {
             capabilities: .init(tools: .init(listChanged: false))
         )
         
+        // Load and start configured MCP servers
+        await loadConfiguredServers()
+        
         // Register tool handlers
         await setupHandlers()
     }
@@ -30,20 +69,64 @@ public actor MCPServer {
         await server.waitUntilCompleted()
     }
     
+    // MARK: - Configuration Loading
+    
+    private func loadConfiguredServers() async {
+        guard FileManager.default.fileExists(atPath: configFileURL.path),
+              let data = try? Data(contentsOf: configFileURL),
+              let configs = try? JSONDecoder().decode([MCPServerConfig].self, from: data) else {
+            return
+        }
+        
+        for config in configs where config.enabled {
+            await startChildServer(config: config)
+        }
+    }
+    
+    private func startChildServer(config: MCPServerConfig) async {
+        let child = ChildMCPServer(config: config)
+        await child.start()
+        childServers.append(child)
+    }
+    
     // MARK: - Handler Setup
     
     private func setupHandlers() async {
         guard let server = server else { return }
         
-        // Register tools/list handler
-        await server.withMethodHandler(ListTools.self) { _ in
-            return ListTools.Result(tools: Self.createToolDefinitions())
+        // Register tools/list handler - aggregates built-in + child server tools
+        await server.withMethodHandler(ListTools.self) { [weak self] _ in
+            let builtinTools = Self.createToolDefinitions()
+            let childTools = await self?.getChildServerTools() ?? []
+            return ListTools.Result(tools: builtinTools + childTools)
         }
         
         // Register tools/call handler
-        await server.withMethodHandler(CallTool.self) { params in
-            return await self.handleToolCall(name: params.name, arguments: params.arguments ?? [:])
+        await server.withMethodHandler(CallTool.self) { [weak self] params in
+            return await self?.handleToolCall(name: params.name, arguments: params.arguments ?? [:])
+                ?? CallTool.Result(content: [.text("Server not initialized")], isError: true)
         }
+    }
+    
+    /// Get all tools from child MCP servers
+    private func getChildServerTools() async -> [Tool] {
+        var allTools: [Tool] = []
+        for child in childServers {
+            // Prefix tool names with server name to avoid collisions
+            let serverPrefix = child.config.name.lowercased()
+                .replacingOccurrences(of: " ", with: "-")
+                .replacingOccurrences(of: "_", with: "-")
+            let childTools = await child.tools
+            for tool in childTools {
+                let prefixedTool = Tool(
+                    name: "\(serverPrefix)_\(tool.name)",
+                    description: "[\(child.config.name)] \(tool.description ?? "")",
+                    inputSchema: tool.inputSchema
+                )
+                allTools.append(prefixedTool)
+            }
+        }
+        return allTools
     }
     
     // MARK: - Tool Definitions
@@ -212,6 +295,22 @@ public actor MCPServer {
         do {
             let result: String
             
+            // Check if this is a child server tool (has prefix_)
+            if let underscoreIndex = name.firstIndex(of: "_"),
+               let serverPrefix = String(name[..<underscoreIndex]).nilIfEmpty {
+                let toolName = String(name[name.index(after: underscoreIndex)...])
+                // Find matching child server
+                for child in childServers {
+                    let childPrefix = child.config.name.lowercased()
+                        .replacingOccurrences(of: " ", with: "-")
+                        .replacingOccurrences(of: "_", with: "-")
+                    if childPrefix == serverPrefix {
+                        return await callChildTool(server: child, toolName: toolName, arguments: arguments)
+                    }
+                }
+            }
+            
+            // Built-in tools
             switch name {
             case "read_file":
                 result = try await handleReadFile(arguments: arguments)
@@ -244,6 +343,15 @@ public actor MCPServer {
             return CallTool.Result(content: [.text(result)])
         } catch {
             return CallTool.Result(content: [.text("Error: \(error.localizedDescription)")], isError: true)
+        }
+    }
+    
+    /// Call a tool on a child MCP server
+    private func callChildTool(server child: ChildMCPServer, toolName: String, arguments: [String: Value]) async -> CallTool.Result {
+        do {
+            return try await child.callTool(name: toolName, arguments: arguments)
+        } catch {
+            return CallTool.Result(content: [.text("Error calling \(child.config.name).\(toolName): \(error.localizedDescription)")], isError: true)
         }
     }
     
@@ -489,5 +597,13 @@ struct MCPServerMain {
     static func main() async throws {
         let server = try await MCPServer()
         try await server.run()
+    }
+}
+
+// MARK: - String Extensions
+
+extension String {
+    var nilIfEmpty: String? {
+        isEmpty ? nil : self
     }
 }
