@@ -94,7 +94,7 @@ struct ActivityLogView: NSViewRepresentable {
         @available(*, unavailable)
         required init(coder: NSCoder) { fatalError() }
 
-        override func cellSize() -> NSSize { NSSize(width: 20, height: 66) }
+        override func cellSize() -> NSSize { NSSize(width: 20, height: 16) }
 
         override func draw(withFrame cellFrame: NSRect, in controlView: NSView?) {
             if let icon = NSImage(systemSymbolName: "doc.on.doc", accessibilityDescription: "Copy code") {
@@ -102,8 +102,7 @@ struct ActivityLogView: NSViewRepresentable {
                 let tinted = (icon.withSymbolConfiguration(config) ?? icon).copy() as! NSImage
                 tinted.isTemplate = true
                 NSColor.secondaryLabelColor.set()
-                let iconRect = NSRect(x: cellFrame.origin.x, y: cellFrame.origin.y, width: cellFrame.width, height: 16)
-                tinted.draw(in: iconRect)
+                tinted.draw(in: cellFrame)
             }
         }
 
@@ -349,9 +348,6 @@ struct ActivityLogView: NSViewRepresentable {
                 var code = nsText.substring(with: fence.range(at: 2))
                 if code.hasSuffix("\n") { code = String(code.dropLast()) }
 
-                // Extra spacing before code block
-                result.append(NSAttributedString(string: "\n", attributes: baseAttrs))
-
                 // Copy button only for actual source code blocks (not shell output or file reads)
                 let shellLangs: Set<String> = ["bash", "sh", "zsh", "shell", "console", "terminal"]
                 let firstLine = code.components(separatedBy: "\n").first ?? ""
@@ -375,9 +371,6 @@ struct ActivityLogView: NSViewRepresentable {
                 block.addAttribute(.backgroundColor, value: CodeBlockTheme.bg,
                                    range: NSRange(location: 0, length: block.length))
                 result.append(block)
-
-                // Extra spacing after code block
-                result.append(NSAttributedString(string: "\n", attributes: baseAttrs))
 
                 cursor = fence.range.location + fence.range.length
             }
