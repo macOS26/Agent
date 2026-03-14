@@ -196,7 +196,7 @@ struct ContentView: View {
                                 .padding(40)
 
                             Text("Agent!")
-                                .font(.system(size: 48, weight: .black, design: .rounded))
+                                .font(.system(size: 50, weight: .black, design: .monospaced))
                                 .foregroundStyle(
                                     LinearGradient(
                                         colors: [.white, .blue],
@@ -209,7 +209,7 @@ struct ContentView: View {
                                 .offset(y: 100)
                             
                             Text("macOS26")
-                                .font(.system(size: 48, weight: .black, design: .rounded))
+                                .font(.system(size: 50, weight: .black, design: .monospaced))
                                 .foregroundStyle(
                                     LinearGradient(
                                         colors: [.white, .blue],
@@ -219,10 +219,10 @@ struct ContentView: View {
                                 )
                                 .shadow(color: .blue, radius: 12)
                                 .shadow(color: .blue.opacity(0.7), radius: 24)
-                                .offset(y: 150)
+                                .offset(y: 155)
                             
-                            Text("Github")
-                                .font(.system(size: 48, weight: .black, design: .rounded))
+                            Text("")
+                                .font(.system(size: 125, weight: .black, design: .monospaced))
                                 .foregroundStyle(
                                     LinearGradient(
                                         colors: [.white, .blue],
@@ -232,7 +232,7 @@ struct ContentView: View {
                                 )
                                 .shadow(color: .blue, radius: 12)
                                 .shadow(color: .blue.opacity(0.7), radius: 24)
-                                .offset(y: 200)
+                                .offset(y: 225)
                         }
                     }
                     .opacity(splashOpacity)

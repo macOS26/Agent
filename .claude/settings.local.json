@@ -142,7 +142,15 @@
       "Bash(tccutil reset:*)",
       "Bash(sudo rm:*)",
       "Bash(ls /Users/toddbruss/Documents/GitHub/Agent/AgentSwiftPackage/Agent/*.json 2>/dev/null)",
-      "Bash(xcodebuild -project AgentXcode/Agent.xcodeproj -list 2>&1)"
+      "Bash(xcodebuild -project AgentXcode/Agent.xcodeproj -list 2>&1)",
+      "Bash(ls:*)",
+      "Bash(grep -r \"!\" /Users/toddbruss/Documents/GitHub/Agent/AgentXcode/Agent/*.swift | grep -v \"!=\" | grep -v \"! \" | grep -v \"!/\\\\*\" | grep -v \"/\\\\*.*!\" | grep -v \"\\\\\".*!.*\\\\\"\" | head -20)",
+      "Bash(find /Users/toddbruss/Documents/GitHub/Agent/AgentXcode -type f -name \"*.swift\" 2>/dev/null | sort)",
+      "Bash(find /Users/toddbruss/Documents/GitHub/Agent/AgentSwiftPackage/Agent/agents/Sources/Scripts -type f -name \"*.swift\" 2>/dev/null | sort)",
+      "Bash(grep -r \"try!\" /Users/toddbruss/Documents/GitHub/Agent/AgentXcode --include=\"*.swift\" 2>/dev/null | head -20)",
+      "Bash(find AgentXcode AgentSwiftPackage/Agent/agents/Sources/Scripts -name \"*.swift\" -type f -exec grep -l \"!\" {} \\\\; 2>/dev/null | wc -l)",
+      "Bash(find:*)",
+      "Bash(grep:*)"
     ]
   }
 }
