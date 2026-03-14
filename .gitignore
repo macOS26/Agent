@@ -1,3 +1,4 @@
 *.xcuserstate
 .build/
 .swiftpm/
+agents/build/
