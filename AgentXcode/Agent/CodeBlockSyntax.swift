@@ -1,0 +1,456 @@
+import AppKit
+
+// MARK: - Code Block Theme (Xcode Dark/Light palette from JibberJabber)
+
+@MainActor enum CodeBlockTheme {
+    private static var isDark: Bool {
+        NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+    }
+
+    private static func c(_ d: UInt32, _ l: UInt32) -> NSColor {
+        let h = isDark ? d : l
+        return NSColor(
+            red: CGFloat((h >> 16) & 0xFF) / 255,
+            green: CGFloat((h >> 8) & 0xFF) / 255,
+            blue: CGFloat(h & 0xFF) / 255, alpha: 1
+        )
+    }
+
+    static var keyword: NSColor { c(0xFF7AB2, 0xAD3DA4) }
+    static var string: NSColor { c(0xFC6A5D, 0xD12F1B) }
+    static var number: NSColor { c(0xD9C97C, 0x272AD8) }
+    static var comment: NSColor { c(0x6C9C5A, 0x536579) }
+    static var type: NSColor { c(0xD0A8FF, 0x3E8087) }
+    static var funcCall: NSColor { c(0x67B7A4, 0x316E74) }
+    static var sysFunc: NSColor { c(0xB281EB, 0x6C36A9) }
+    static var preproc: NSColor { c(0xFFA14F, 0x78492A) }
+    static var attr: NSColor { c(0xFD8F3F, 0x643820) }
+    static var prop: NSColor { c(0x4EB0CC, 0x3E8087) }
+    static var selfKw: NSColor { c(0xFF7AB2, 0xAD3DA4) }
+    static var ident: NSColor { c(0xDFDFE0, 0x000000) }
+    static var text: NSColor { c(0xDFDFE0, 0x000000) }
+    static var bg: NSColor { c(0x292A30, 0xF0F0F2) }
+}
+
+// MARK: - Language Definition
+
+private struct LangDef {
+    let keywords: Set<String>
+    let declKeywords: Set<String>
+    let types: Set<String>
+    let selfKw: Set<String>
+    let sysFuncs: Set<String>
+    let commentPrefix: String?
+    let blockComStart: String?
+    let blockComEnd: String?
+    let hasAttrs: Bool
+    let hasPreproc: Bool
+    let stringRegex: NSRegularExpression?
+
+    init(kw: [String] = [], decl: [String] = [], types: [String] = [], selfKw: [String] = [],
+         sys: [String] = [], comment: String? = "//", blockStart: String? = "/*", blockEnd: String? = "*/",
+         attrs: Bool = false, preproc: Bool = false, strPat: String = #""(?:\\.|[^"\\])*""#) {
+        self.keywords = Set(kw)
+        self.declKeywords = Set(decl)
+        self.types = Set(types)
+        self.selfKw = Set(selfKw)
+        self.sysFuncs = Set(sys)
+        self.commentPrefix = comment
+        self.blockComStart = blockStart
+        self.blockComEnd = blockEnd
+        self.hasAttrs = attrs
+        self.hasPreproc = preproc
+        self.stringRegex = try? NSRegularExpression(pattern: strPat)
+    }
+}
+
+// MARK: - Highlighter
+
+@MainActor enum CodeBlockHighlighter {
+    private static let wordRx = try! NSRegularExpression(pattern: #"\b(?:[a-zA-Z][a-zA-Z0-9_]*|_[a-zA-Z0-9][a-zA-Z0-9_]*)\b"#)
+    private static let funcRx = try! NSRegularExpression(pattern: #"\b([a-zA-Z_][a-zA-Z0-9_]*)\s*(?=\()"#)
+    private static let propRx = try! NSRegularExpression(pattern: #"\.([a-zA-Z_][a-zA-Z0-9_]*)"#)
+    private static let numRx = try! NSRegularExpression(pattern: #"\b(?:0x[0-9a-fA-F]+|0b[01]+|0o[0-7]+|(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?)\b"#)
+    private static let attrRx = try! NSRegularExpression(pattern: #"@[a-zA-Z_][a-zA-Z0-9_]*"#)
+    private static let prepRx = try! NSRegularExpression(pattern: #"^\s*#\s*\w+.*$"#, options: .anchorsMatchLines)
+
+    static func highlight(code: String, language: String?, font: NSFont) -> NSAttributedString {
+        let bold = NSFont.monospacedSystemFont(ofSize: font.pointSize, weight: .bold)
+        let result = NSMutableAttributedString(string: code, attributes: [
+            .font: font, .foregroundColor: CodeBlockTheme.text
+        ])
+        let def = langDef(for: language)
+        let ns = code as NSString
+        let r = NSRange(location: 0, length: ns.length)
+
+        // Identifiers
+        wordRx.enumerateMatches(in: code, range: r) { m, _, _ in
+            if let mr = m?.range { result.addAttribute(.foregroundColor, value: CodeBlockTheme.ident, range: mr) }
+        }
+        // Function calls
+        funcRx.enumerateMatches(in: code, range: r) { m, _, _ in
+            if let mr = m?.range(at: 1) { result.addAttribute(.foregroundColor, value: CodeBlockTheme.funcCall, range: mr) }
+        }
+        // System functions
+        if !def.sysFuncs.isEmpty {
+            funcRx.enumerateMatches(in: code, range: r) { m, _, _ in
+                guard let mr = m?.range(at: 1) else { return }
+                if def.sysFuncs.contains(ns.substring(with: mr)) {
+                    result.addAttribute(.foregroundColor, value: CodeBlockTheme.sysFunc, range: mr)
+                }
+            }
+        }
+        // Property access
+        propRx.enumerateMatches(in: code, range: r) { m, _, _ in
+            if let mr = m?.range(at: 1) { result.addAttribute(.foregroundColor, value: CodeBlockTheme.prop, range: mr) }
+        }
+        // Keywords
+        if !def.keywords.isEmpty {
+            wordRx.enumerateMatches(in: code, range: r) { m, _, _ in
+                guard let mr = m?.range else { return }
+                if def.keywords.contains(ns.substring(with: mr)) {
+                    result.addAttributes([.foregroundColor: CodeBlockTheme.keyword, .font: bold], range: mr)
+                }
+            }
+        }
+        // Declaration keywords
+        if !def.declKeywords.isEmpty {
+            wordRx.enumerateMatches(in: code, range: r) { m, _, _ in
+                guard let mr = m?.range else { return }
+                if def.declKeywords.contains(ns.substring(with: mr)) {
+                    result.addAttributes([.foregroundColor: CodeBlockTheme.keyword, .font: bold], range: mr)
+                }
+            }
+        }
+        // Type keywords
+        if !def.types.isEmpty {
+            wordRx.enumerateMatches(in: code, range: r) { m, _, _ in
+                guard let mr = m?.range else { return }
+                if def.types.contains(ns.substring(with: mr)) {
+                    result.addAttributes([.foregroundColor: CodeBlockTheme.type, .font: bold], range: mr)
+                }
+            }
+        }
+        // Self keywords
+        if !def.selfKw.isEmpty {
+            wordRx.enumerateMatches(in: code, range: r) { m, _, _ in
+                guard let mr = m?.range else { return }
+                if def.selfKw.contains(ns.substring(with: mr)) {
+                    result.addAttribute(.foregroundColor, value: CodeBlockTheme.selfKw, range: mr)
+                }
+            }
+        }
+        // Attributes (@word)
+        if def.hasAttrs {
+            attrRx.enumerateMatches(in: code, range: r) { m, _, _ in
+                if let mr = m?.range { result.addAttributes([.foregroundColor: CodeBlockTheme.attr, .font: bold], range: mr) }
+            }
+        }
+        // Preprocessor (#directives)
+        if def.hasPreproc {
+            prepRx.enumerateMatches(in: code, range: r) { m, _, _ in
+                if let mr = m?.range { result.addAttribute(.foregroundColor, value: CodeBlockTheme.preproc, range: mr) }
+            }
+        }
+        // Numbers
+        numRx.enumerateMatches(in: code, range: r) { m, _, _ in
+            if let mr = m?.range { result.addAttribute(.foregroundColor, value: CodeBlockTheme.number, range: mr) }
+        }
+        // Strings (override keywords inside strings)
+        def.stringRegex?.enumerateMatches(in: code, range: r) { m, _, _ in
+            if let mr = m?.range { result.addAttribute(.foregroundColor, value: CodeBlockTheme.string, range: mr) }
+        }
+        // Comments (override everything - LAST)
+        applyComments(result, code: code, def: def, range: r)
+
+        return result
+    }
+
+    private static func applyComments(_ result: NSMutableAttributedString, code: String, def: LangDef, range: NSRange) {
+        if let start = def.blockComStart, let end = def.blockComEnd {
+            let e1 = NSRegularExpression.escapedPattern(for: start)
+            let e2 = NSRegularExpression.escapedPattern(for: end)
+            if let rx = try? NSRegularExpression(pattern: "\(e1)[\\s\\S]*?\(e2)", options: .dotMatchesLineSeparators) {
+                rx.enumerateMatches(in: code, range: range) { m, _, _ in
+                    if let r = m?.range { result.addAttribute(.foregroundColor, value: CodeBlockTheme.comment, range: r) }
+                }
+            }
+        }
+        if let prefix = def.commentPrefix {
+            let esc = NSRegularExpression.escapedPattern(for: prefix)
+            if let rx = try? NSRegularExpression(pattern: "\(esc).*$", options: .anchorsMatchLines) {
+                rx.enumerateMatches(in: code, range: range) { m, _, _ in
+                    if let r = m?.range { result.addAttribute(.foregroundColor, value: CodeBlockTheme.comment, range: r) }
+                }
+            }
+        }
+    }
+
+    // MARK: - Language Resolution
+
+    private static let aliases: [String: String] = [
+        "js": "javascript", "jsx": "javascript", "ts": "typescript", "tsx": "typescript",
+        "sh": "bash", "shell": "bash", "zsh": "bash",
+        "c++": "cpp", "cc": "cpp", "cxx": "cpp", "h": "c", "hpp": "cpp",
+        "objective-c": "objc", "objectivec": "objc", "m": "objc",
+        "golang": "go", "rb": "ruby", "rs": "rust", "yml": "yaml",
+        "kt": "kotlin", "py": "python", "python3": "python",
+    ]
+
+    private static func langDef(for language: String?) -> LangDef {
+        guard let l = language?.lowercased().trimmingCharacters(in: .whitespaces), !l.isEmpty else { return genericDef }
+        let key = aliases[l] ?? l
+        return defs[key] ?? genericDef
+    }
+
+    private static let genericDef = LangDef()
+
+    // MARK: - Language Definitions
+
+    private static let defs: [String: LangDef] = [
+        "swift": LangDef(
+            kw: ["if", "else", "guard", "switch", "case", "default", "for", "while", "repeat",
+                 "break", "continue", "return", "throw", "do", "try", "catch", "where", "in",
+                 "as", "is", "import", "defer", "fallthrough", "some", "any", "async", "await",
+                 "throws", "rethrows", "inout"],
+            decl: ["func", "let", "var", "class", "struct", "enum", "protocol", "extension",
+                   "typealias", "init", "deinit", "subscript", "operator", "associatedtype",
+                   "actor", "macro", "public", "private", "internal", "fileprivate", "open",
+                   "static", "final", "override", "lazy", "weak", "unowned", "mutating",
+                   "nonmutating", "convenience", "required", "dynamic", "indirect",
+                   "nonisolated", "consuming", "borrowing", "sending"],
+            types: ["String", "Int", "Double", "Float", "Bool", "Array", "Dictionary", "Set",
+                    "Optional", "Any", "AnyObject", "Void", "Never", "Result", "URL", "Data",
+                    "Date", "Error", "Task", "MainActor", "Int8", "Int16", "Int32", "Int64",
+                    "UInt", "UInt8", "UInt16", "UInt32", "UInt64", "CGFloat", "NSFont",
+                    "NSColor", "NSImage", "NSView", "NSObject", "Character", "Substring"],
+            selfKw: ["self", "Self", "super", "true", "false", "nil"],
+            sys: ["print", "debugPrint", "dump", "fatalError", "precondition", "assert"],
+            attrs: true,
+            strPat: #""""[\s\S]*?"""|"(?:\\.|[^"\\])*""#
+        ),
+
+        "python": LangDef(
+            kw: ["if", "elif", "else", "for", "while", "break", "continue", "return", "pass",
+                 "raise", "try", "except", "finally", "with", "as", "import", "from", "yield",
+                 "assert", "del", "in", "not", "and", "or", "is", "lambda", "async", "await",
+                 "match", "case"],
+            decl: ["def", "class", "global", "nonlocal"],
+            types: ["int", "float", "str", "bool", "list", "dict", "tuple", "set", "bytes",
+                    "range", "type", "object", "Exception", "complex", "frozenset"],
+            selfKw: ["self", "cls", "True", "False", "None"],
+            sys: ["print", "len", "range", "enumerate", "zip", "map", "filter", "sorted",
+                  "reversed", "isinstance", "hasattr", "getattr", "super", "open", "input"],
+            comment: "#", blockStart: nil, blockEnd: nil,
+            strPat: #""""[\s\S]*?"""|'''[\s\S]*?'''|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'"#
+        ),
+
+        "javascript": LangDef(
+            kw: ["if", "else", "for", "while", "do", "break", "continue", "return", "throw",
+                 "try", "catch", "finally", "switch", "case", "default", "new", "delete",
+                 "typeof", "instanceof", "in", "of", "void", "yield", "async", "await",
+                 "import", "export", "from", "as"],
+            decl: ["function", "const", "let", "var", "class", "extends", "static", "get", "set"],
+            types: ["Array", "Object", "String", "Number", "Boolean", "Symbol", "BigInt",
+                    "Map", "Set", "Promise", "RegExp", "Error", "Date", "JSON", "Math"],
+            selfKw: ["this", "super", "true", "false", "null", "undefined", "NaN", "Infinity"],
+            sys: ["console", "setTimeout", "setInterval", "fetch", "require"],
+            strPat: #""(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`"#
+        ),
+
+        "typescript": LangDef(
+            kw: ["if", "else", "for", "while", "do", "break", "continue", "return", "throw",
+                 "try", "catch", "finally", "switch", "case", "default", "new", "delete",
+                 "typeof", "instanceof", "in", "of", "void", "yield", "async", "await",
+                 "import", "export", "from", "as", "keyof", "readonly", "satisfies"],
+            decl: ["function", "const", "let", "var", "class", "interface", "type", "enum",
+                   "namespace", "module", "declare", "abstract", "implements", "static",
+                   "get", "set", "public", "private", "protected", "extends"],
+            types: ["string", "number", "boolean", "symbol", "bigint", "any", "unknown",
+                    "never", "void", "undefined", "null", "Array", "Object", "Map", "Set",
+                    "Promise", "Record", "Partial", "Required", "Readonly", "Pick", "Omit"],
+            selfKw: ["this", "super", "true", "false", "null", "undefined"],
+            sys: ["console", "setTimeout", "setInterval", "fetch", "require"],
+            strPat: #""(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`"#
+        ),
+
+        "bash": LangDef(
+            kw: ["if", "then", "else", "elif", "fi", "for", "while", "do", "done", "case",
+                 "esac", "in", "until", "select", "break", "continue", "return", "exit"],
+            decl: ["function", "local", "export", "declare", "typeset", "readonly", "source"],
+            selfKw: ["true", "false"],
+            sys: ["echo", "printf", "cd", "ls", "cat", "grep", "sed", "awk", "find", "sort",
+                  "head", "tail", "wc", "chmod", "chown", "mkdir", "rm", "cp", "mv", "curl",
+                  "wget", "git", "npm", "pip", "brew", "sudo", "eval", "exec", "test",
+                  "read", "set", "unset", "trap", "xargs", "tar", "ssh", "kill", "touch"],
+            comment: "#", blockStart: nil, blockEnd: nil,
+            strPat: #""(?:\\.|[^"\\])*"|'[^']*'"#
+        ),
+
+        "c": LangDef(
+            kw: ["if", "else", "for", "while", "do", "switch", "case", "default", "break",
+                 "continue", "return", "goto", "sizeof"],
+            decl: ["typedef", "struct", "union", "enum", "extern", "static", "const",
+                   "volatile", "register", "auto", "inline", "restrict"],
+            types: ["void", "char", "short", "int", "long", "float", "double", "signed",
+                    "unsigned", "size_t", "int8_t", "int16_t", "int32_t", "int64_t",
+                    "uint8_t", "uint16_t", "uint32_t", "uint64_t", "bool", "FILE"],
+            selfKw: ["NULL", "true", "false"],
+            sys: ["printf", "fprintf", "sprintf", "scanf", "malloc", "calloc", "realloc",
+                  "free", "memcpy", "memset", "strlen", "strcmp", "fopen", "fclose", "exit"],
+            preproc: true
+        ),
+
+        "cpp": LangDef(
+            kw: ["if", "else", "for", "while", "do", "switch", "case", "default", "break",
+                 "continue", "return", "goto", "sizeof", "throw", "try", "catch", "new",
+                 "delete", "noexcept", "co_await", "co_yield", "co_return", "requires"],
+            decl: ["typedef", "struct", "union", "enum", "class", "namespace", "using",
+                   "template", "typename", "virtual", "override", "final", "public",
+                   "private", "protected", "extern", "static", "const", "volatile",
+                   "inline", "constexpr", "explicit", "friend", "mutable", "operator",
+                   "auto", "decltype", "concept"],
+            types: ["void", "char", "short", "int", "long", "float", "double", "signed",
+                    "unsigned", "bool", "string", "vector", "map", "set", "unordered_map",
+                    "unordered_set", "pair", "tuple", "shared_ptr", "unique_ptr",
+                    "optional", "variant", "any", "array", "size_t"],
+            selfKw: ["this", "nullptr", "true", "false", "NULL"],
+            sys: ["std", "cout", "cin", "cerr", "endl", "printf", "scanf"],
+            preproc: true
+        ),
+
+        "go": LangDef(
+            kw: ["if", "else", "for", "range", "switch", "case", "default", "break",
+                 "continue", "return", "goto", "fallthrough", "defer", "go", "select", "chan"],
+            decl: ["func", "var", "const", "type", "struct", "interface", "map",
+                   "package", "import"],
+            types: ["string", "int", "int8", "int16", "int32", "int64", "uint", "uint8",
+                    "uint16", "uint32", "uint64", "float32", "float64", "byte", "rune",
+                    "bool", "error", "any", "comparable"],
+            selfKw: ["true", "false", "nil", "iota"],
+            sys: ["fmt", "make", "new", "len", "cap", "append", "copy", "delete", "close",
+                  "panic", "recover", "print", "println"],
+            strPat: #""(?:\\.|[^"\\])*"|`[^`]*`"#
+        ),
+
+        "objc": LangDef(
+            kw: ["if", "else", "for", "while", "do", "switch", "case", "default", "break",
+                 "continue", "return", "goto", "sizeof", "in"],
+            decl: ["typedef", "struct", "union", "enum", "extern", "static", "const",
+                   "volatile", "auto", "inline", "@interface", "@implementation", "@end",
+                   "@protocol", "@property", "@synthesize", "@dynamic", "@class",
+                   "@autoreleasepool", "@try", "@catch", "@finally", "@throw", "@selector"],
+            types: ["void", "char", "short", "int", "long", "float", "double", "signed",
+                    "unsigned", "BOOL", "id", "instancetype", "NSObject", "NSString",
+                    "NSArray", "NSDictionary", "NSNumber", "NSInteger", "NSUInteger",
+                    "CGFloat", "CGRect", "CGPoint", "CGSize", "SEL", "Class"],
+            selfKw: ["self", "super", "nil", "Nil", "NULL", "YES", "NO", "true", "false"],
+            sys: ["NSLog", "alloc", "init", "dealloc"],
+            preproc: true,
+            strPat: #"@?"(?:\\.|[^"\\])*""#
+        ),
+
+        "rust": LangDef(
+            kw: ["if", "else", "for", "while", "loop", "break", "continue", "return",
+                 "match", "in", "as", "ref", "move", "yield", "async", "await", "unsafe", "where"],
+            decl: ["fn", "let", "mut", "const", "static", "struct", "enum", "trait", "impl",
+                   "type", "mod", "use", "pub", "crate", "extern", "dyn", "macro_rules"],
+            types: ["i8", "i16", "i32", "i64", "i128", "isize", "u8", "u16", "u32", "u64",
+                    "u128", "usize", "f32", "f64", "bool", "char", "str", "String", "Vec",
+                    "Box", "Rc", "Arc", "Option", "Result", "HashMap", "HashSet"],
+            selfKw: ["self", "Self", "super", "crate", "true", "false"],
+            sys: ["println", "print", "eprintln", "format", "vec", "todo", "panic",
+                  "assert", "assert_eq", "dbg"],
+            attrs: true
+        ),
+
+        "ruby": LangDef(
+            kw: ["if", "elsif", "else", "unless", "case", "when", "while", "until", "for",
+                 "do", "break", "next", "return", "redo", "retry", "begin", "rescue",
+                 "ensure", "raise", "end", "then", "yield", "in", "and", "or", "not"],
+            decl: ["def", "class", "module", "attr_accessor", "attr_reader", "attr_writer",
+                   "include", "extend", "require", "require_relative", "public", "private",
+                   "protected"],
+            types: ["String", "Integer", "Float", "Array", "Hash", "Symbol", "Proc",
+                    "Regexp", "Range", "IO", "File", "NilClass", "TrueClass", "FalseClass"],
+            selfKw: ["self", "super", "true", "false", "nil"],
+            sys: ["puts", "print", "p", "gets", "each", "map", "select", "reduce"],
+            comment: "#", blockStart: nil, blockEnd: nil,
+            strPat: #""(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'"#
+        ),
+
+        "java": LangDef(
+            kw: ["if", "else", "for", "while", "do", "switch", "case", "default", "break",
+                 "continue", "return", "throw", "try", "catch", "finally", "new",
+                 "instanceof", "assert", "synchronized", "throws"],
+            decl: ["class", "interface", "enum", "extends", "implements", "abstract", "final",
+                   "static", "public", "private", "protected", "package", "import", "native",
+                   "volatile", "transient", "record", "sealed", "var"],
+            types: ["void", "boolean", "byte", "char", "short", "int", "long", "float",
+                    "double", "String", "Object", "Integer", "Long", "Double", "Float",
+                    "Boolean", "List", "Map", "Set", "ArrayList", "HashMap", "Optional"],
+            selfKw: ["this", "super", "true", "false", "null"],
+            sys: ["System", "println", "printf", "Math"],
+            attrs: true
+        ),
+
+        "kotlin": LangDef(
+            kw: ["if", "else", "for", "while", "do", "when", "break", "continue", "return",
+                 "throw", "try", "catch", "finally", "in", "is", "as", "by", "where",
+                 "suspend", "inline", "crossinline", "noinline", "reified"],
+            decl: ["fun", "val", "var", "class", "interface", "object", "enum", "sealed",
+                   "data", "abstract", "open", "override", "final", "companion", "inner",
+                   "import", "package", "typealias", "constructor", "init", "get", "set",
+                   "public", "private", "protected", "internal", "lateinit", "const"],
+            types: ["String", "Int", "Long", "Short", "Byte", "Float", "Double", "Boolean",
+                    "Char", "Unit", "Nothing", "Any", "Array", "List", "MutableList", "Map",
+                    "MutableMap", "Set", "MutableSet", "Pair", "Triple", "Sequence"],
+            selfKw: ["this", "super", "true", "false", "null"],
+            sys: ["println", "print", "require", "check", "error", "listOf", "mapOf", "setOf"],
+            attrs: true,
+            strPat: #""""[\s\S]*?"""|"(?:\\.|[^"\\])*""#
+        ),
+
+        "json": LangDef(
+            selfKw: ["true", "false", "null"],
+            comment: nil, blockStart: nil, blockEnd: nil
+        ),
+
+        "yaml": LangDef(
+            selfKw: ["true", "false", "null", "yes", "no", "on", "off"],
+            comment: "#", blockStart: nil, blockEnd: nil,
+            strPat: #""(?:\\.|[^"\\])*"|'[^']*'"#
+        ),
+
+        "sql": LangDef(
+            kw: ["SELECT", "FROM", "WHERE", "AND", "OR", "NOT", "IN", "BETWEEN", "LIKE",
+                 "IS", "NULL", "ORDER", "BY", "GROUP", "HAVING", "LIMIT", "OFFSET", "UNION",
+                 "ALL", "DISTINCT", "AS", "ON", "JOIN", "LEFT", "RIGHT", "INNER", "OUTER",
+                 "CROSS", "FULL", "CASE", "WHEN", "THEN", "ELSE", "END", "EXISTS",
+                 "select", "from", "where", "and", "or", "not", "in", "between", "like",
+                 "is", "null", "order", "by", "group", "having", "limit", "offset", "union",
+                 "all", "distinct", "as", "on", "join", "left", "right", "inner", "outer",
+                 "cross", "full", "case", "when", "then", "else", "end", "exists"],
+            decl: ["CREATE", "ALTER", "DROP", "INSERT", "UPDATE", "DELETE", "INTO", "VALUES",
+                   "SET", "TABLE", "INDEX", "VIEW", "DATABASE", "PRIMARY", "KEY", "FOREIGN",
+                   "REFERENCES", "UNIQUE", "DEFAULT", "CONSTRAINT",
+                   "create", "alter", "drop", "insert", "update", "delete", "into", "values",
+                   "set", "table", "index", "view", "database", "primary", "key", "foreign",
+                   "references", "unique", "default", "constraint"],
+            types: ["INTEGER", "INT", "BIGINT", "SMALLINT", "DECIMAL", "FLOAT", "REAL",
+                    "VARCHAR", "CHAR", "TEXT", "BLOB", "DATE", "TIMESTAMP", "BOOLEAN",
+                    "integer", "int", "bigint", "smallint", "decimal", "float", "real",
+                    "varchar", "char", "text", "blob", "date", "timestamp", "boolean"],
+            selfKw: ["TRUE", "FALSE", "NULL", "true", "false", "null"],
+            comment: "--",
+            strPat: "'(?:''|[^'])*'"
+        ),
+
+        "html": LangDef(comment: nil, blockStart: "<!--", blockEnd: "-->",
+                         strPat: #""[^"]*"|'[^']*'"#),
+        "xml": LangDef(comment: nil, blockStart: "<!--", blockEnd: "-->",
+                        strPat: #""[^"]*"|'[^']*'"#),
+        "css": LangDef(comment: nil, blockStart: "/*", blockEnd: "*/",
+                        strPat: #""(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'"#),
+    ]
+}

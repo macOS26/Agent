@@ -505,7 +505,7 @@ struct ActivityLogView: NSViewRepresentable {
         // MARK: - Markdown rendering
 
         private static let codeBlockPattern: NSRegularExpression? = try? NSRegularExpression(
-            pattern: "```\\w*\\n?([\\s\\S]*?)```",
+            pattern: "```(\\w*)\\n?([\\s\\S]*?)```",
             options: []
         )
 
@@ -536,21 +536,24 @@ struct ActivityLogView: NSViewRepresentable {
 
             let result = NSMutableAttributedString()
             var lastEnd = 0
-            let codeBg = NSColor.unemphasizedSelectedContentBackgroundColor
 
             for match in codeMatches {
                 if match.range.location > lastEnd {
                     let before = nsText.substring(with: NSRange(location: lastEnd, length: match.range.location - lastEnd))
                     result.append(renderBlockMarkdown(before))
                 }
-                let codeContent = nsText.substring(with: match.range(at: 1))
-                let codeAttrs: [NSAttributedString.Key: Any] = [
-                    .font: font,
-                    .foregroundColor: NSColor.labelColor,
-                    .backgroundColor: codeBg
-                ]
+                let language = nsText.substring(with: match.range(at: 1))
+                let codeContent = nsText.substring(with: match.range(at: 2))
+                let highlighted = CodeBlockHighlighter.highlight(
+                    code: codeContent,
+                    language: language.isEmpty ? nil : language,
+                    font: font
+                )
+                let codeBlock = NSMutableAttributedString(attributedString: highlighted)
+                codeBlock.addAttribute(.backgroundColor, value: CodeBlockTheme.bg,
+                                       range: NSRange(location: 0, length: codeBlock.length))
                 result.append(NSAttributedString(string: "\n", attributes: [.font: font]))
-                result.append(NSAttributedString(string: codeContent, attributes: codeAttrs))
+                result.append(codeBlock)
                 result.append(NSAttributedString(string: "\n", attributes: [.font: font]))
                 lastEnd = match.range.location + match.range.length
             }
