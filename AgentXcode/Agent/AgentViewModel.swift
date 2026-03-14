@@ -93,6 +93,12 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(visibleTaskCount, forKey: "agentVisibleTasks") }
     }
 
+    static let iterationOptions = [25, 50, 75, 100, 150, 200]
+
+    var maxIterations: Int = UserDefaults.standard.object(forKey: "agentMaxIterations") as? Int ?? 50 {
+        didSet { UserDefaults.standard.set(maxIterations, forKey: "agentMaxIterations") }
+    }
+
     var ollamaModel: String = UserDefaults.standard.string(forKey: "ollamaModel") ?? "" {
         didSet {
             UserDefaults.standard.set(ollamaModel, forKey: "ollamaModel")
@@ -967,7 +973,7 @@ final class AgentViewModel {
         var consecutiveNoTool = 0
 
         var iterations = 0
-        let maxIterations = 50
+        let maxIterations = self.maxIterations
 
         while !Task.isCancelled && iterations < maxIterations {
             iterations += 1
