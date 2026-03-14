@@ -150,7 +150,11 @@
       "Bash(grep -r \"try!\" /Users/toddbruss/Documents/GitHub/Agent/AgentXcode --include=\"*.swift\" 2>/dev/null | head -20)",
       "Bash(find AgentXcode AgentSwiftPackage/Agent/agents/Sources/Scripts -name \"*.swift\" -type f -exec grep -l \"!\" {} \\\\; 2>/dev/null | wc -l)",
       "Bash(find:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "WebFetch(domain:preserve.mactech.com)",
+      "WebFetch(domain:leopard-adc.pepas.com)",
+      "Bash(xcrun swiftc:*)",
+      "Read(//Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/AppKit.framework/Headers/**)"
     ]
   }
 }
