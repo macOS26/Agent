@@ -33,25 +33,26 @@ final class AgentViewModel {
     @ObservationIgnored
     private static let _migrate: Void = {
         let defaults = UserDefaults.standard
-        guard !defaults.bool(forKey: "agentMigrationV4") else { return }
 
         // Migration V4: Move API keys from UserDefaults to Keychain
-        if let claudeKey = defaults.string(forKey: "agentAPIKey"), !claudeKey.isEmpty {
-            KeychainService.shared.setClaudeAPIKey(claudeKey)
-            defaults.removeObject(forKey: "agentAPIKey")
-        }
-        if let ollamaKey = defaults.string(forKey: "ollamaAPIKey"), !ollamaKey.isEmpty {
-            KeychainService.shared.setOllamaAPIKey(ollamaKey)
-            defaults.removeObject(forKey: "ollamaAPIKey")
-        }
+        if !defaults.bool(forKey: "agentMigrationV4") {
+            if let claudeKey = defaults.string(forKey: "agentAPIKey"), !claudeKey.isEmpty {
+                KeychainService.shared.setClaudeAPIKey(claudeKey)
+                defaults.removeObject(forKey: "agentAPIKey")
+            }
+            if let ollamaKey = defaults.string(forKey: "ollamaAPIKey"), !ollamaKey.isEmpty {
+                KeychainService.shared.setOllamaAPIKey(ollamaKey)
+                defaults.removeObject(forKey: "ollamaAPIKey")
+            }
 
-        // Legacy migrations from V3
-        defaults.removeObject(forKey: "ollamaEndpoint")  // now a constant
-        if let model = defaults.string(forKey: "ollamaModel"), model == "llama3.1" {
-            defaults.set("", forKey: "ollamaModel")
-        }
+            // Legacy migrations from V3
+            defaults.removeObject(forKey: "ollamaEndpoint")
+            if let model = defaults.string(forKey: "ollamaModel"), model == "llama3.1" {
+                defaults.set("", forKey: "ollamaModel")
+            }
 
-        defaults.set(true, forKey: "agentMigrationV4")
+            defaults.set(true, forKey: "agentMigrationV4")
+        }
 
         // Migration V5: Move keys from legacy keychain → data protection keychain
         KeychainService.migrateToDataProtectionKeychain()
