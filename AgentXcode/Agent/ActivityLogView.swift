@@ -40,7 +40,7 @@ struct ActivityLogView: NSViewRepresentable {
             let attributed = coord.buildAttributedString(from: currentText)
             textView.textStorage?.setAttributedString(attributed)
             coord.applySearchHighlighting(textView: textView, searchText: currentSearch, currentMatch: currentIndex, onMatchCount: matchCallback)
-            textView.scrollToEndOfDocument(nil)
+            coord.throttledScrollToEnd(textView)
         }
 
         if text.isEmpty {
@@ -76,7 +76,7 @@ struct ActivityLogView: NSViewRepresentable {
         coord.lastMatchIndex = currentIndex
 
         if textChanged {
-            textView.scrollToEndOfDocument(nil)
+            coord.throttledScrollToEnd(textView)
         }
     }
 
@@ -132,6 +132,9 @@ struct ActivityLogView: NSViewRepresentable {
         var lastSearch = ""
         var lastMatchIndex = -1
         let font = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
+        /// Throttle scrollToEnd to avoid hyper-scrolling during fast streaming
+        var lastScrollTime: CFAbsoluteTime = 0
+        var pendingScrollWork: DispatchWorkItem?
         /// Images keyed by their character offset in the log — each occurrence gets its own
         /// snapshot so the same path (e.g. current_artwork.jpg) shows different art per task.
         var imageCache: [Int: (image: NSImage, mtime: Date)] = [:]
@@ -146,6 +149,25 @@ struct ActivityLogView: NSViewRepresentable {
 
         // SECURITY: Limit concurrent web views to prevent memory exhaustion
         private static let maxActiveWebViews = 10
+
+        /// Throttled scroll — at most once per 0.3s, with a trailing scroll to catch the final update
+        func throttledScrollToEnd(_ textView: NSTextView) {
+            let now = CFAbsoluteTimeGetCurrent()
+            let interval: CFAbsoluteTime = 0.3
+            pendingScrollWork?.cancel()
+            if now - lastScrollTime >= interval {
+                lastScrollTime = now
+                textView.scrollToEndOfDocument(nil)
+            } else {
+                let work = DispatchWorkItem { [weak self, weak textView] in
+                    guard let self, let textView else { return }
+                    self.lastScrollTime = CFAbsoluteTimeGetCurrent()
+                    textView.scrollToEndOfDocument(nil)
+                }
+                pendingScrollWork = work
+                DispatchQueue.main.asyncAfter(deadline: .now() + interval, execute: work)
+            }
+        }
 
         /// Highlight search matches in the text view's text storage
         func applySearchHighlighting(textView: NSTextView, searchText: String, currentMatch: Int, onMatchCount: ((Int) -> Void)?) {
