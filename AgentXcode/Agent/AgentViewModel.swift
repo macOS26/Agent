@@ -65,6 +65,11 @@ final class AgentViewModel {
         didSet { KeychainService.shared.setOllamaAPIKey(ollamaAPIKey) }
     }
 
+    // Tavily web search API key (for Ollama providers)
+    var tavilyAPIKey: String = KeychainService.shared.getTavilyAPIKey() ?? "" {
+        didSet { KeychainService.shared.setTavilyAPIKey(tavilyAPIKey) }
+    }
+
     let ollamaEndpoint = "https://ollama.com/api/chat"
 
     var maxHistoryBeforeSummary: Int = UserDefaults.standard.object(forKey: "agentMaxHistory") as? Int ?? 10 {

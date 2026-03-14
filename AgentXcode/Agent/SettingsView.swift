@@ -168,6 +168,20 @@ struct SettingsView: View {
                     }
                 }
             }
+
+            // Web Search (Tavily) — for Ollama providers
+            if viewModel.selectedProvider != .claude {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Web Search")
+                        .font(.headline)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Tavily API Key").font(.caption).foregroundStyle(.secondary)
+                        SecureField("tvly-...", text: $viewModel.tavilyAPIKey)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                }
+            }
+
             Divider()
 
             // Iterations setting

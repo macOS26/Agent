@@ -10,12 +10,16 @@ final class KeychainService: Sendable {
 
     private static let claudeAPIKey = "agent.claudeAPIKey"
     private static let ollamaAPIKey = "agent.ollamaAPIKey"
+    private static let tavilyAPIKey = "agent.tavilyAPIKey"
 
     func setClaudeAPIKey(_ key: String) { set(key: Self.claudeAPIKey, value: key) }
     func getClaudeAPIKey() -> String? { get(key: Self.claudeAPIKey) }
 
     func setOllamaAPIKey(_ key: String) { set(key: Self.ollamaAPIKey, value: key) }
     func getOllamaAPIKey() -> String? { get(key: Self.ollamaAPIKey) }
+
+    func setTavilyAPIKey(_ key: String) { set(key: Self.tavilyAPIKey, value: key) }
+    func getTavilyAPIKey() -> String? { get(key: Self.tavilyAPIKey) }
 
     private func set(key: String, value: String) {
         guard let data = value.data(using: .utf8) else { return }

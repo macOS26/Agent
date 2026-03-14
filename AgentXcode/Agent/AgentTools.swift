@@ -692,9 +692,21 @@ enum AgentTools {
         ]
     }
 
-    /// All common tools in Ollama/OpenAI format.
+    /// Tools only available for Ollama providers (client-side web search via Tavily).
+    nonisolated(unsafe) private static let ollamaOnlyTools: [ToolDef] = [
+        ToolDef(
+            name: "web_search",
+            description: "Search the web for current information. Returns relevant web page titles, URLs, and content snippets. Use when you need up-to-date information or facts you're unsure about.",
+            properties: [
+                "query": ["type": "string", "description": "The search query"],
+            ],
+            required: ["query"]
+        ),
+    ]
+
+    /// All common tools + Ollama-specific tools in Ollama/OpenAI format.
     static var ollamaFormat: [[String: Any]] {
-        commonTools.map { tool in
+        (commonTools + ollamaOnlyTools).map { tool in
             ollamaTool(name: tool.name, description: tool.description,
                        properties: tool.properties, required: tool.required)
         }

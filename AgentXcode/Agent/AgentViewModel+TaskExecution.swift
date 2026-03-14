@@ -748,6 +748,16 @@ extension AgentViewModel {
                             appendLog(output)
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
+
+                        // Client-side web search via Tavily (for Ollama providers)
+                        if name == "web_search" {
+                            let query = input["query"] as? String ?? ""
+                            appendLog("Web search: \(query)")
+                            flushLog()
+                            let output = await Self.performTavilySearch(query: query, apiKey: tavilyAPIKey)
+                            appendLog(Self.preview(output, lines: 5))
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
                     }
                 }
 
@@ -797,5 +807,63 @@ extension AgentViewModel {
         rootServiceActive = false
         userWasActive = false
         rootWasActive = false
+    }
+
+    // MARK: - Tavily Web Search
+
+    nonisolated private static func performTavilySearch(query: String, apiKey: String) async -> String {
+        guard !apiKey.isEmpty else {
+            return "Error: Tavily API key not set. Add it in Settings."
+        }
+
+        guard let url = URL(string: "https://api.tavily.com/search") else {
+            return "Error: Invalid Tavily URL"
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 30
+
+        let body: [String: Any] = [
+            "query": query,
+            "max_results": 5
+        ]
+
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+            let (data, response) = try await URLSession.shared.data(for: request)
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                return "Error: Invalid response from Tavily"
+            }
+
+            guard httpResponse.statusCode == 200 else {
+                let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
+                return "Error: Tavily API returned \(httpResponse.statusCode): \(errorBody)"
+            }
+
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let results = json["results"] as? [[String: Any]] else {
+                return "Error: Failed to parse Tavily response"
+            }
+
+            if results.isEmpty {
+                return "No search results found for '\(query)'"
+            }
+
+            var output = ""
+            for (i, result) in results.enumerated() {
+                let title = result["title"] as? String ?? "Untitled"
+                let resultUrl = result["url"] as? String ?? ""
+                let content = result["content"] as? String ?? ""
+                output += "\(i + 1). \(title)\n   \(resultUrl)\n   \(content)\n\n"
+            }
+
+            return output.trimmingCharacters(in: .whitespacesAndNewlines)
+        } catch {
+            return "Error: \(error.localizedDescription)"
+        }
     }
 }
