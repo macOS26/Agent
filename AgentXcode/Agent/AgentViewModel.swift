@@ -52,6 +52,9 @@ final class AgentViewModel {
         }
 
         defaults.set(true, forKey: "agentMigrationV4")
+
+        // Migration V5: Move keys from legacy keychain → data protection keychain
+        KeychainService.migrateToDataProtectionKeychain()
     }()
 
     var selectedProvider: APIProvider = { _ = AgentViewModel._migrate; return APIProvider(rawValue: UserDefaults.standard.string(forKey: "agentProvider") ?? "claude") ?? .claude }() {

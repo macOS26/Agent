@@ -107,27 +107,61 @@ final class KeychainService: Sendable {
         SecItemDelete(query as CFDictionary)
     }
     
+    // MARK: - Legacy Keychain (without data protection)
+
+    /// Read from the old legacy keychain (triggers password prompts on rebuild).
+    private func getLegacy(key: String) -> String? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: key,
+            kSecAttrService as String: "Agent!",
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+            // no kSecUseDataProtectionKeychain — reads from legacy
+        ]
+
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+
+        guard status == errSecSuccess,
+              let data = result as? Data,
+              let value = String(data: data, encoding: .utf8) else {
+            return nil
+        }
+        return value
+    }
+
+    /// Delete from the old legacy keychain.
+    private func deleteLegacy(key: String) {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: key,
+            kSecAttrService as String: "Agent!"
+            // no kSecUseDataProtectionKeychain — targets legacy
+        ]
+        SecItemDelete(query as CFDictionary)
+    }
+
     // MARK: - Migration
-    
-    /// One-time migration from UserDefaults to Keychain
-    /// Call this during app initialization
-    static func migrateFromUserDefaults() {
+
+    /// One-time migration from legacy keychain → data protection keychain.
+    /// Moves keys without requiring the user to re-enter them.
+    static func migrateToDataProtectionKeychain() {
         let defaults = UserDefaults.standard
-        let migrated = defaults.bool(forKey: "agent.keychainMigration")
-        guard !migrated else { return }
-        
-        // Migrate Claude API key
-        if let claudeKey = defaults.string(forKey: "agentAPIKey"), !claudeKey.isEmpty {
-            shared.setClaudeAPIKey(claudeKey)
-            defaults.removeObject(forKey: "agentAPIKey")
+        guard !defaults.bool(forKey: "agent.keychainMigrationV5") else { return }
+
+        // Migrate Claude API key: legacy keychain → data protection keychain
+        if let claudeKey = shared.getLegacy(key: claudeAPIKey), !claudeKey.isEmpty {
+            shared.set(key: claudeAPIKey, value: claudeKey)
+            shared.deleteLegacy(key: claudeAPIKey)
         }
-        
+
         // Migrate Ollama API key
-        if let ollamaKey = defaults.string(forKey: "ollamaAPIKey"), !ollamaKey.isEmpty {
-            shared.setOllamaAPIKey(ollamaKey)
-            defaults.removeObject(forKey: "ollamaAPIKey")
+        if let ollamaKey = shared.getLegacy(key: ollamaAPIKey), !ollamaKey.isEmpty {
+            shared.set(key: ollamaAPIKey, value: ollamaKey)
+            shared.deleteLegacy(key: ollamaAPIKey)
         }
-        
-        defaults.set(true, forKey: "agent.keychainMigration")
+
+        defaults.set(true, forKey: "agent.keychainMigrationV5")
     }
 }
