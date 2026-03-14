@@ -116,17 +116,15 @@ final class AgentViewModel {
         let supportsVision: Bool
     }
 
-    // MARK: - Default Ollama Cloud Models (fallback when API unavailable)
-    
     private static let defaultOllamaModels: [OllamaModelInfo] = [
         OllamaModelInfo(id: "nemotron-3-super", name: "nemotron-3-super", supportsVision: false),
         OllamaModelInfo(id: "qwen3.5:397b", name: "qwen3.5:397b", supportsVision: false),
         OllamaModelInfo(id: "minimax-m2.5", name: "minimax-m2.5", supportsVision: false),
         OllamaModelInfo(id: "glm-5", name: "glm-5", supportsVision: false),
-        OllamaModelInfo(id: "kimi-k2.5", name: "kimi-k2.5", supportsVision: false),
+        OllamaModelInfo(id: "kimi-k2.5", name: "kimi-k2.5", supportsVision: true),
         OllamaModelInfo(id: "glm-4.7", name: "glm-4.7", supportsVision: false),
         OllamaModelInfo(id: "minimax-m2.1", name: "minimax-m2.1", supportsVision: false),
-        OllamaModelInfo(id: "gemini-3-flash-preview", name: "gemini-3-flash-preview", supportsVision: false),
+        OllamaModelInfo(id: "gemini-3-flash-preview", name: "gemini-3-flash-preview", supportsVision: true),
         OllamaModelInfo(id: "nemotron-3-nano:30b", name: "nemotron-3-nano:30b", supportsVision: false),
         OllamaModelInfo(id: "devstral-small-2:24b", name: "devstral-small-2:24b", supportsVision: false),
         OllamaModelInfo(id: "devstral-2:123b", name: "devstral-2:123b", supportsVision: false),
@@ -144,13 +142,13 @@ final class AgentViewModel {
         OllamaModelInfo(id: "kimi-k2:1t", name: "kimi-k2:1t", supportsVision: false),
         OllamaModelInfo(id: "gpt-oss:120b", name: "gpt-oss:120b", supportsVision: false),
         OllamaModelInfo(id: "qwen3-coder:480b", name: "qwen3-coder:480b", supportsVision: false),
-        OllamaModelInfo(id: "gemma3:27b", name: "gemma3:27b", supportsVision: false),
-        OllamaModelInfo(id: "gemma3:12b", name: "gemma3:12b", supportsVision: false),
-        OllamaModelInfo(id: "gemma3:4b", name: "gemma3:4b", supportsVision: false),
+        OllamaModelInfo(id: "gemma3:27b", name: "gemma3:27b", supportsVision: true),
+        OllamaModelInfo(id: "gemma3:12b", name: "gemma3:12b", supportsVision: true),
+        OllamaModelInfo(id: "gemma3:4b", name: "gemma3:4b", supportsVision: true),
         OllamaModelInfo(id: "qwen3-coder-next", name: "qwen3-coder-next", supportsVision: false),
         OllamaModelInfo(id: "gpt-oss:20b", name: "gpt-oss:20b", supportsVision: false)
-    ]
 
+    ]
     // MARK: - Claude Models
     
     struct ClaudeModelInfo: Identifiable, Codable {
