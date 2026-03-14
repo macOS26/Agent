@@ -986,7 +986,13 @@ final class AgentViewModel {
                     textWasStreamed = true
                     flushStreamBuffer()
                 } else if let ollama {
-                    response = try await ollama.send(messages: messages)
+                    response = try await ollama.sendStreaming(messages: messages) { [weak self] delta in
+                        Task { @MainActor in
+                            self?.isThinking = false
+                            self?.appendStreamDelta(delta)
+                        }
+                    }
+                    textWasStreamed = true
                 } else {
                     throw AgentError.noAPIKey
                 }
