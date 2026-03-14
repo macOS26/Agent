@@ -3,6 +3,19 @@ import Foundation
 /// Pure file operations for coding tools — no shell, no escaping issues.
 enum CodingService {
 
+    /// Sensible default directory for a GUI app (currentDirectoryPath is "/").
+    private static let defaultDir = FileManager.default.homeDirectoryForCurrentUser.path
+
+    /// Wait for a process with a timeout. Returns true if it exited, false if timed out.
+    private static func waitForProcess(_ process: Process, timeout: TimeInterval) -> Bool {
+        let semaphore = DispatchSemaphore(value: 0)
+        DispatchQueue.global().async {
+            process.waitUntilExit()
+            semaphore.signal()
+        }
+        return semaphore.wait(timeout: .now() + timeout) == .success
+    }
+
     // MARK: - Read File
 
     /// Read file contents with line numbers (like `cat -n`).
@@ -133,13 +146,14 @@ enum CodingService {
 
     /// Find files matching a glob pattern under a directory.
     static func listFiles(pattern: String, path: String?) -> String {
-        let baseDir = (path ?? FileManager.default.currentDirectoryPath) as NSString
+        let baseDir = (path ?? Self.defaultDir) as NSString
         let basePath = baseDir.expandingTildeInPath
 
         // Use /usr/bin/find for glob matching since Foundation doesn't have native glob
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/find")
-        process.arguments = [basePath, "-name", pattern, "-not", "-path", "*/.*", "-not", "-path", "*/.build/*"]
+        process.arguments = [basePath, "-maxdepth", "10", "-name", pattern,
+                             "-not", "-path", "*/.*", "-not", "-path", "*/.build/*"]
         process.currentDirectoryURL = URL(fileURLWithPath: basePath)
 
         let pipe = Pipe()
@@ -148,9 +162,15 @@ enum CodingService {
 
         do {
             try process.run()
-            process.waitUntilExit()
         } catch {
             return "Error: \(error.localizedDescription)"
+        }
+
+        // Timeout after 15 seconds to prevent runaway searches
+        let completed = waitForProcess(process, timeout: 15)
+        if !completed {
+            process.terminate()
+            return "Error: search timed out in \(basePath). Provide a more specific path."
         }
 
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
@@ -178,7 +198,7 @@ enum CodingService {
 
     /// Search file contents by regex pattern.
     static func searchFiles(pattern: String, path: String?, include: String?) -> String {
-        let baseDir = (path ?? FileManager.default.currentDirectoryPath) as NSString
+        let baseDir = (path ?? Self.defaultDir) as NSString
         let basePath = baseDir.expandingTildeInPath
 
         let process = Process()
@@ -202,9 +222,15 @@ enum CodingService {
 
         do {
             try process.run()
-            process.waitUntilExit()
         } catch {
             return "Error: \(error.localizedDescription)"
+        }
+
+        // Timeout after 15 seconds to prevent runaway searches
+        let completed = waitForProcess(process, timeout: 15)
+        if !completed {
+            process.terminate()
+            return "Error: search timed out in \(basePath). Provide a more specific path."
         }
 
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
@@ -265,7 +291,7 @@ enum CodingService {
 
     /// Git status: branch, staged, unstaged, untracked.
     static func gitStatus(path: String?) -> String {
-        let dir = path ?? FileManager.default.currentDirectoryPath
+        let dir = path ?? Self.defaultDir
         let branch = runGit(["branch", "--show-current"], in: dir)
         let status = runGit(["status", "--short"], in: dir)
 
@@ -280,7 +306,7 @@ enum CodingService {
 
     /// Git diff: show changes. Supports staged, unstaged, or between refs.
     static func gitDiff(path: String?, staged: Bool, target: String?) -> String {
-        let dir = path ?? FileManager.default.currentDirectoryPath
+        let dir = path ?? Self.defaultDir
         var args = ["diff", "--stat", "-p"]
         if staged {
             args.append("--cached")
@@ -303,7 +329,7 @@ enum CodingService {
 
     /// Git log: recent commit history.
     static func gitLog(path: String?, count: Int?) -> String {
-        let dir = path ?? FileManager.default.currentDirectoryPath
+        let dir = path ?? Self.defaultDir
         let n = min(count ?? 20, 100)
         let result = runGit(["log", "--oneline", "--no-decorate", "-\(n)"], in: dir)
 
@@ -315,7 +341,7 @@ enum CodingService {
 
     /// Git commit: stage specified files (or all) and commit.
     static func gitCommit(path: String?, message: String, files: [String]?) -> String {
-        let dir = path ?? FileManager.default.currentDirectoryPath
+        let dir = path ?? Self.defaultDir
 
         // Stage files
         if let files, !files.isEmpty {
@@ -346,7 +372,7 @@ enum CodingService {
 
     /// Git diff-patch: apply a unified diff patch to a file.
     static func gitApplyPatch(path: String?, patch: String) -> String {
-        let dir = path ?? FileManager.default.currentDirectoryPath
+        let dir = path ?? Self.defaultDir
 
         // Write patch to temp file
         let tempPath = NSTemporaryDirectory() + "agent_patch_\(UUID().uuidString).patch"
@@ -366,7 +392,7 @@ enum CodingService {
 
     /// Git create branch and optionally switch to it.
     static func gitBranch(path: String?, name: String, checkout: Bool) -> String {
-        let dir = path ?? FileManager.default.currentDirectoryPath
+        let dir = path ?? Self.defaultDir
 
         if checkout {
             let result = runGit(["checkout", "-b", name], in: dir)
