@@ -299,7 +299,7 @@ final class AgentViewModel {
         Task {
             // Brief delay so the UI is ready
             try? await Task.sleep(nanoseconds: 500_000_000)
-            appendLog("")
+            appendLog("Warming up the engines...")
             let userOK = userService.userReady
             let daemonOK = helperService.helperReady
             if !userOK || !daemonOK {
