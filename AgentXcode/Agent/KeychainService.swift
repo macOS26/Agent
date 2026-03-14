@@ -54,13 +54,15 @@ final class KeychainService: Sendable {
         // First, try to delete any existing value
         delete(key: key)
         
-        // Create the keychain query
+        // Create the keychain query — use data protection keychain to avoid
+        // password prompts on every rebuild during development
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: key,
             kSecAttrService as String: "Agent!",
             kSecValueData as String: data,
-            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlocked
+            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlocked,
+            kSecUseDataProtectionKeychain as String: true
         ]
         
         // Add to keychain
@@ -77,7 +79,8 @@ final class KeychainService: Sendable {
             kSecAttrAccount as String: key,
             kSecAttrService as String: "Agent!",
             kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne
+            kSecMatchLimit as String: kSecMatchLimitOne,
+            kSecUseDataProtectionKeychain as String: true
         ]
         
         var result: AnyObject?
@@ -97,9 +100,10 @@ final class KeychainService: Sendable {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: key,
-            kSecAttrService as String: "Agent!"
+            kSecAttrService as String: "Agent!",
+            kSecUseDataProtectionKeychain as String: true
         ]
-        
+
         SecItemDelete(query as CFDictionary)
     }
     
