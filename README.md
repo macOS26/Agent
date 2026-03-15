@@ -1,6 +1,6 @@
 # Agent!
 
-Agentic AI for your entire  Mac Destkop
+Agentic AI for your entire  Mac Desktop
 
 <img width="1920" height="1036" alt="image" src="https://github.com/user-attachments/assets/b66c1b56-5b15-44d6-b774-a62ce2e80edd" />
 
