@@ -140,14 +140,13 @@ final class ChatHistoryStore {
         }
     }
     
-    /// Build a text representation for the LLM context (like old activityLog format)
+    // MARK: - UI Display (full messages, never summarized)
+
+    /// Build the activity log text for the UI. Always uses full messages — never summaries.
     func buildActivityLogText(maxTasks: Int = 3) -> String {
         let tasks = fetchRecentTasks(limit: maxTasks)
         var result = ""
-        
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm:ss"
-        
+
         for (_, messages) in tasks {
             result += "--- New Task ---\n"
             for msg in messages {
@@ -161,7 +160,60 @@ final class ChatHistoryStore {
                 }
             }
         }
-        
+
+        return result
+    }
+
+    // MARK: - LLM Context (uses summaries for older tasks)
+
+    /// Build a concise context string for the LLM system prompt.
+    /// Recent tasks get full messages; older tasks use their summary if available.
+    func buildLLMContext(recentFullTasks: Int = 1, maxOlderSummaries: Int = 5) -> String {
+        guard let context else { return "" }
+
+        let descriptor = FetchDescriptor<ChatTask>(
+            sortBy: [SortDescriptor(\.startTime, order: .reverse)]
+        )
+
+        guard let allTasks = try? context.fetch(descriptor), !allTasks.isEmpty else { return "" }
+
+        var result = "\n\nChat history (most recent last):\n"
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm:ss"
+
+        // Older tasks: use summary only (skip those without a summary)
+        let olderTasks = allTasks.dropFirst(recentFullTasks).prefix(maxOlderSummaries).reversed()
+        for task in olderTasks {
+            let time = formatter.string(from: task.startTime)
+            if let summary = task.summary, !summary.isEmpty {
+                result += "[\(time)] Task: \(task.prompt) → \(summary)\n"
+            } else {
+                result += "[\(time)] Task: \(task.prompt)\n"
+            }
+        }
+
+        // Most recent task(s): include full messages so the LLM has detailed context
+        let recentTasks = allTasks.prefix(recentFullTasks).reversed()
+        for task in recentTasks {
+            result += "--- Recent Task ---\n"
+            result += "[\(formatter.string(from: task.startTime))] Task: \(task.prompt)\n"
+            let sorted = task.messages.sorted {
+                if $0.ordinal != $1.ordinal { return $0.ordinal < $1.ordinal }
+                return $0.timestamp < $1.timestamp
+            }
+            for msg in sorted {
+                if msg.isStreaming {
+                    result += msg.content
+                } else {
+                    result += "\(msg.content)\n"
+                }
+            }
+            if let summary = task.summary {
+                result += "Result: \(summary)\n"
+            }
+        }
+
         return result
     }
     

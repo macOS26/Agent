@@ -165,7 +165,8 @@ extension AgentViewModel {
         appendLog("--- New Task ---")
         appendLog("Task: \(prompt)")
 
-        let historyContext = history.contextForPrompt()
+        // Use ChatHistoryStore for LLM context (summaries for older tasks, full messages for recent)
+        let historyContext = ChatHistoryStore.shared.buildLLMContext()
         let provider = selectedProvider
         let modelName: String
         let isVision: Bool
