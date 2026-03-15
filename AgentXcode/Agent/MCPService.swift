@@ -1,6 +1,5 @@
 import Foundation
 import MCPClient
-import MCP
 
 /// Service for managing MCP server connections
 /// Acts as a bridge between the UI (MCPServersView) and the underlying MCP client
@@ -8,13 +7,13 @@ import MCP
 @MainActor @Observable
 final class MCPService: @unchecked Sendable {
     static let shared = MCPService()
-    
+
     private let client = MCPClient()
     private(set) var connectedServerIds: Set<UUID> = []
     private(set) var connectionErrors: [UUID: String] = [:]
     private(set) var discoveredTools: [MCPToolInfo] = []
     private(set) var discoveredResources: [MCPResourceInfo] = []
-    
+
     struct MCPToolInfo: Identifiable, Sendable {
         let id: UUID
         let serverId: UUID
@@ -23,7 +22,7 @@ final class MCPService: @unchecked Sendable {
         let description: String
         let inputSchemaJSON: String
     }
-    
+
     struct MCPResourceInfo: Identifiable, Sendable {
         let id: UUID
         let serverId: UUID
@@ -31,9 +30,9 @@ final class MCPService: @unchecked Sendable {
         let uri: String
         let name: String
     }
-    
+
     private init() {}
-    
+
     /// Connect to an MCP server
     /// This launches the server process and establishes stdio communication
     func connect(to config: MCPServerConfig) async throws {
@@ -46,29 +45,29 @@ final class MCPService: @unchecked Sendable {
             enabled: config.enabled,
             autoStart: config.autoStart
         )
-        
+
         try await client.addServer(serverConfig)
         connectedServerIds.insert(config.id)
         connectionErrors.removeValue(forKey: config.id)
-        
+
         // Refresh state
         await refreshState()
     }
-    
+
     /// Disconnect from an MCP server
     func disconnect(serverId: UUID) async {
         await client.removeServer(serverId)
         connectedServerIds.remove(serverId)
         connectionErrors.removeValue(forKey: serverId)
-        
+
         await refreshState()
     }
-    
+
     /// Start all servers marked with autoStart
     func startAutoStartServers() async {
         let autoStartConfigs = MCPServerRegistry.shared.servers
             .filter { $0.autoStart && $0.enabled }
-        
+
         for config in autoStartConfigs {
             do {
                 try await connect(to: config)
@@ -77,21 +76,25 @@ final class MCPService: @unchecked Sendable {
             }
         }
     }
-    
+
     /// Check if a server is connected
     func isConnected(_ serverId: UUID) async -> Bool {
         await client.isConnected(serverId)
     }
-    
+
     /// Get error for a server
     func getError(_ serverId: UUID) async -> String? {
-        await client.getError(serverId)
+        // Check both local errors and client-side errors
+        if let localError = connectionErrors[serverId] {
+            return localError
+        }
+        return await client.getError(serverId)
     }
-    
+
     /// Refresh local state from client
     private func refreshState() async {
         let state = await client.getConnectionState()
-        
+
         discoveredTools = state.discoveredTools.map { tool in
             MCPToolInfo(
                 id: tool.id,
@@ -102,7 +105,7 @@ final class MCPService: @unchecked Sendable {
                 inputSchemaJSON: tool.inputSchemaJSON
             )
         }
-        
+
         discoveredResources = state.discoveredResources.map { resource in
             MCPResourceInfo(
                 id: resource.id,
@@ -113,23 +116,23 @@ final class MCPService: @unchecked Sendable {
             )
         }
     }
-    
+
     /// Call a tool on a specific server
-    func callTool(serverId: UUID, name: String, arguments: [String: Value]) async throws -> MCPClient.ToolResult {
+    func callTool(serverId: UUID, name: String, arguments: [String: JSONValue]) async throws -> MCPClient.ToolResult {
         try await client.callTool(serverId: serverId, name: name, arguments: arguments)
     }
-    
+
     /// Read a resource from a server
-    func readResource(serverId: UUID, uri: String) async throws -> Resource.Content {
+    func readResource(serverId: UUID, uri: String) async throws -> MCPClient.ResourceContent {
         try await client.readResource(serverId: serverId, uri: uri)
     }
-    
+
     /// Refresh a server connection
     func refreshConnection(serverId: UUID) async throws {
         guard let config = MCPServerRegistry.shared.servers.first(where: { $0.id == serverId }) else {
             return
         }
-        
+
         await disconnect(serverId: serverId)
         try await connect(to: config)
     }

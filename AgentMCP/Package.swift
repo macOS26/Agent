@@ -1,30 +1,38 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 5.9
 import PackageDescription
 
 let package = Package(
     name: "AgentMCP",
-    platforms: [.macOS(.v15)],
+    platforms: [.macOS(.v14)],
     products: [
-        .library(name: "MCPServer", type: .dynamic, targets: ["MCPServer"]),
-        .library(name: "MCPClient", type: .dynamic, targets: ["MCPClient"])
+        // MCP Client library - embedded in Agent app to connect TO third-party MCP servers
+        .library(name: "MCPClient", targets: ["MCPClient"]),
+        // Test client for debugging MCP connections
+        .executable(name: "TestClient", targets: ["TestClient"]),
     ],
-    dependencies: [
-        .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", from: "0.11.0")
-    ],
+    dependencies: [],
     targets: [
-        .target(
-            name: "MCPServer",
-            dependencies: [
-                .product(name: "MCP", package: "swift-sdk")
-            ],
-            path: "Sources/MCPServer"
-        ),
+        // MCP Client library for embedding in apps (custom JSON-RPC, no SDK)
         .target(
             name: "MCPClient",
-            dependencies: [
-                .product(name: "MCP", package: "swift-sdk")
-            ],
+            dependencies: [],
             path: "Sources/MCPClient"
+        ),
+        // Test client for debugging MCP connections
+        .executableTarget(
+            name: "TestClient",
+            dependencies: [
+                "MCPClient"
+            ],
+            path: "Sources/TestClient"
+        ),
+        // Unit tests
+        .testTarget(
+            name: "AgentMCPTests",
+            dependencies: [
+                "MCPClient"
+            ],
+            path: "Tests/AgentMCPTests"
         )
     ]
 )

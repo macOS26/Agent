@@ -1,18 +1,224 @@
 import Foundation
-import MCP
 
-#if canImport(System)
-    import System
-#else
-    @preconcurrency import SystemPackage
-#endif
+// MARK: - JSON Value Type (replaces MCP SDK's Value)
 
-/// MCP Client for connecting to third-party MCP servers
-/// Manages server connections, discovers tools/resources, and executes tool calls
+/// Lightweight JSON value enum for MCP tool arguments and schemas
+public enum JSONValue: Codable, Hashable, Sendable {
+    case string(String)
+    case int(Int)
+    case double(Double)
+    case bool(Bool)
+    case null
+    case array([JSONValue])
+    case object([String: JSONValue])
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if let v = try? container.decode(String.self) { self = .string(v) }
+        else if let v = try? container.decode(Bool.self) { self = .bool(v) }
+        else if let v = try? container.decode(Int.self) { self = .int(v) }
+        else if let v = try? container.decode(Double.self) { self = .double(v) }
+        else if let v = try? container.decode([String: JSONValue].self) { self = .object(v) }
+        else if let v = try? container.decode([JSONValue].self) { self = .array(v) }
+        else if container.decodeNil() { self = .null }
+        else { self = .null }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        switch self {
+        case .string(let v): try container.encode(v)
+        case .int(let v): try container.encode(v)
+        case .double(let v): try container.encode(v)
+        case .bool(let v): try container.encode(v)
+        case .null: try container.encodeNil()
+        case .array(let v): try container.encode(v)
+        case .object(let v): try container.encode(v)
+        }
+    }
+
+    /// Convert to Any for JSON serialization
+    public var anyValue: Any {
+        switch self {
+        case .string(let v): return v
+        case .int(let v): return v
+        case .double(let v): return v
+        case .bool(let v): return v
+        case .null: return NSNull()
+        case .array(let v): return v.map(\.anyValue)
+        case .object(let v): return v.mapValues(\.anyValue)
+        }
+    }
+
+    public var stringValue: String? {
+        if case .string(let v) = self { return v }
+        return nil
+    }
+}
+
+extension JSONValue: ExpressibleByStringLiteral {
+    public init(stringLiteral value: String) { self = .string(value) }
+}
+extension JSONValue: ExpressibleByIntegerLiteral {
+    public init(integerLiteral value: Int) { self = .int(value) }
+}
+extension JSONValue: ExpressibleByBooleanLiteral {
+    public init(booleanLiteral value: Bool) { self = .bool(value) }
+}
+extension JSONValue: ExpressibleByFloatLiteral {
+    public init(floatLiteral value: Double) { self = .double(value) }
+}
+extension JSONValue: ExpressibleByDictionaryLiteral {
+    public init(dictionaryLiteral elements: (String, JSONValue)...) {
+        self = .object(Dictionary(uniqueKeysWithValues: elements))
+    }
+}
+extension JSONValue: ExpressibleByArrayLiteral {
+    public init(arrayLiteral elements: JSONValue...) {
+        self = .array(elements)
+    }
+}
+
+// MARK: - Stdio Connection (JSON-RPC over pipes)
+
+/// Manages a server process and JSON-RPC communication via stdio pipes.
+/// Uses readabilityHandler callbacks for fully non-blocking I/O.
+private final class StdioConnection: @unchecked Sendable {
+    let process: Process
+    let writer: FileHandle
+    let reader: FileHandle
+    let errorReader: FileHandle
+    private var nextId: Int = 0
+    private let lock = NSLock()
+
+    // Pending response continuations keyed by request id
+    private var pending: [Int: CheckedContinuation<[String: Any], any Error>] = [:]
+    private var buffer = Data()
+
+    init(process: Process, writer: FileHandle, reader: FileHandle, errorReader: FileHandle) {
+        self.process = process
+        self.writer = writer
+        self.reader = reader
+        self.errorReader = errorReader
+
+        // Set up non-blocking read via readabilityHandler
+        reader.readabilityHandler = { [weak self] handle in
+            let data = handle.availableData
+            guard !data.isEmpty, let self else { return }
+
+            self.lock.lock()
+            self.buffer.append(data)
+
+            // Process complete newline-delimited messages
+            while let newlineIndex = self.buffer.firstIndex(of: UInt8(ascii: "\n")) {
+                let lineData = self.buffer[self.buffer.startIndex..<newlineIndex]
+                self.buffer = self.buffer[(newlineIndex + 1)...]
+
+                guard !lineData.isEmpty,
+                      let json = try? JSONSerialization.jsonObject(with: Data(lineData)) as? [String: Any] else {
+                    continue
+                }
+
+                // Match response to pending request
+                var matchedId: Int?
+                if let rid = json["id"] as? Int {
+                    matchedId = rid
+                } else if let rid = json["id"] as? String, let intId = Int(rid) {
+                    matchedId = intId
+                }
+
+                if let id = matchedId, let continuation = self.pending.removeValue(forKey: id) {
+                    self.lock.unlock()
+                    continuation.resume(returning: json)
+                    self.lock.lock()
+                }
+            }
+            self.lock.unlock()
+        }
+    }
+
+    /// Send a JSON-RPC request and await the response (non-blocking)
+    func sendRequest(method: String, params: [String: Any]? = nil) async throws -> [String: Any] {
+        let id = nextRequestId()
+
+        var request: [String: Any] = [
+            "jsonrpc": "2.0",
+            "id": id,
+            "method": method
+        ]
+        if let params { request["params"] = params }
+
+        let data = try JSONSerialization.data(withJSONObject: request)
+        var message = data
+        message.append(contentsOf: [UInt8(ascii: "\n")])
+
+        return try await withCheckedThrowingContinuation { continuation in
+            // Register pending before writing to avoid race
+            lock.lock()
+            pending[id] = continuation
+            lock.unlock()
+
+            writer.write(message)
+
+            // Timeout after 10 seconds
+            DispatchQueue.global().asyncAfter(deadline: .now() + 10) { [weak self] in
+                guard let self else { return }
+                self.lock.lock()
+                if let cont = self.pending.removeValue(forKey: id) {
+                    self.lock.unlock()
+                    cont.resume(throwing: MCPClientError.connectionFailed("Timeout waiting for \(method)"))
+                } else {
+                    self.lock.unlock()
+                }
+            }
+        }
+    }
+
+    /// Send a JSON-RPC notification (no response expected)
+    func sendNotification(method: String, params: [String: Any]? = nil) throws {
+        var notification: [String: Any] = [
+            "jsonrpc": "2.0",
+            "method": method
+        ]
+        if let params { notification["params"] = params }
+
+        let data = try JSONSerialization.data(withJSONObject: notification)
+        var message = data
+        message.append(contentsOf: [UInt8(ascii: "\n")])
+
+        writer.write(message)
+    }
+
+    func disconnect() {
+        reader.readabilityHandler = nil
+        lock.lock()
+        let leftover = pending
+        pending.removeAll()
+        lock.unlock()
+        for (_, cont) in leftover {
+            cont.resume(throwing: MCPClientError.connectionFailed("Disconnected"))
+        }
+        if process.isRunning {
+            process.terminate()
+        }
+    }
+
+    private func nextRequestId() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        nextId += 1
+        return nextId
+    }
+}
+
+// MARK: - MCP Client
+
+/// MCP Client for connecting to stdio MCP servers
+/// Uses direct JSON-RPC over pipes - no SDK dependency
 public actor MCPClient {
-    
+
     // MARK: - Types
-    
+
     public struct ServerConfig: Codable, Identifiable, Hashable, Sendable {
         public let id: UUID
         public let name: String
@@ -21,7 +227,7 @@ public actor MCPClient {
         public let env: [String: String]
         public let enabled: Bool
         public let autoStart: Bool
-        
+
         public init(
             id: UUID = UUID(),
             name: String,
@@ -40,32 +246,25 @@ public actor MCPClient {
             self.autoStart = autoStart
         }
     }
-    
+
     public struct DiscoveredTool: Codable, Identifiable, Hashable, Sendable {
         public let id: UUID
         public let serverId: UUID
         public let serverName: String
         public let name: String
         public let description: String
-        public let inputSchemaJSON: String // JSON-encoded schema
-        
-        public init(serverId: UUID, serverName: String, name: String, description: String, inputSchema: Value) {
+        public let inputSchemaJSON: String
+
+        public init(serverId: UUID, serverName: String, name: String, description: String, inputSchemaJSON: String) {
             self.id = UUID()
             self.serverId = serverId
             self.serverName = serverName
             self.name = name
             self.description = description
-            
-            // Encode schema to JSON string
-            if let data = try? JSONEncoder().encode(inputSchema),
-               let json = String(data: data, encoding: .utf8) {
-                self.inputSchemaJSON = json
-            } else {
-                self.inputSchemaJSON = "{}"
-            }
+            self.inputSchemaJSON = inputSchemaJSON
         }
     }
-    
+
     public struct DiscoveredResource: Codable, Identifiable, Hashable, Sendable {
         public let id: UUID
         public let serverId: UUID
@@ -74,7 +273,7 @@ public actor MCPClient {
         public let name: String
         public let description: String?
         public let mimeType: String?
-        
+
         public init(serverId: UUID, serverName: String, uri: String, name: String, description: String? = nil, mimeType: String? = nil) {
             self.id = UUID()
             self.serverId = serverId
@@ -85,25 +284,31 @@ public actor MCPClient {
             self.mimeType = mimeType
         }
     }
-    
+
     public struct ToolResult: Codable, Sendable {
         public let content: [ContentBlock]
         public let isError: Bool
-        
+
         public enum ContentBlock: Codable, Sendable {
             case text(String)
             case image(data: String, mimeType: String)
             case resource(uri: String, name: String, mimeType: String?)
         }
     }
-    
+
+    public struct ResourceContent: Sendable {
+        public let uri: String
+        public let text: String?
+        public let mimeType: String?
+    }
+
     /// Connection state snapshot for UI binding
     public struct ConnectionState: Sendable {
         public let connectedServers: [ServerConfig]
         public let discoveredTools: [DiscoveredTool]
         public let discoveredResources: [DiscoveredResource]
         public let errors: [UUID: String]
-        
+
         public init(
             connectedServers: [ServerConfig] = [],
             discoveredTools: [DiscoveredTool] = [],
@@ -116,79 +321,80 @@ public actor MCPClient {
             self.errors = errors
         }
     }
-    
+
     // MARK: - Private Properties
-    
-    private var clients: [UUID: Client] = [:]
-    private var processes: [UUID: Process] = [:]
-    private var pipes: [UUID: (input: Pipe, output: Pipe)] = [:]
+
+    private var connections: [UUID: StdioConnection] = [:]
     private var configs: [UUID: ServerConfig] = [:]
     private var discoveredTools: [UUID: [DiscoveredTool]] = [:]
     private var discoveredResources: [UUID: [DiscoveredResource]] = [:]
     private var errors: [UUID: String] = [:]
-    
+
     public init() {}
-    
+
     // MARK: - Server Management
-    
+
     /// Add and connect to an MCP server
     public func addServer(_ config: ServerConfig) async throws {
         guard config.enabled else {
             throw MCPClientError.serverDisabled(config.name)
         }
-        
-        // Launch the MCP server process
-        let process = try launchServerProcess(config)
-        processes[config.id] = process
+
+        print("[MCPClient] Adding server: \(config.name) at \(config.command)")
+
+        // Launch server process with pipes
+        let connection = try launchServer(config)
+        connections[config.id] = connection
         configs[config.id] = config
-        
-        // Get pipes for stdio communication
-        guard let (inputPipe, outputPipe) = pipes[config.id] else {
-            throw MCPClientError.connectionFailed("Failed to create stdio pipes")
+
+        // MCP handshake: initialize
+        print("[MCPClient] Sending initialize...")
+        let initResponse = try await connection.sendRequest(
+            method: "initialize",
+            params: [
+                "protocolVersion": "2024-11-05",
+                "capabilities": [String: Any](),
+                "clientInfo": [
+                    "name": "Agent!",
+                    "version": "1.0.0"
+                ]
+            ]
+        )
+
+        // Verify we got a valid result
+        guard let result = initResponse["result"] as? [String: Any],
+              let serverInfo = result["serverInfo"] as? [String: Any] else {
+            throw MCPClientError.connectionFailed("Invalid initialize response")
         }
-        
-        // Create stdio transport using file descriptors from pipes
-        let inputFD = FileDescriptor(rawValue: outputPipe.fileHandleForReading.fileDescriptor)
-        let outputFD = FileDescriptor(rawValue: inputPipe.fileHandleForWriting.fileDescriptor)
-        
-        let transport = StdioTransport(input: inputFD, output: outputFD)
-        
-        // Create and connect the client
-        let client = Client(name: "Agent!", version: "1.0.0")
-        try await client.connect(transport: transport)
-        clients[config.id] = client
-        
-        // Discover tools and resources
-        try await discoverCapabilities(serverId: config.id, serverName: config.name, client: client)
-        
-        // Clear any previous error
+
+        let serverName = serverInfo["name"] as? String ?? config.name
+        print("[MCPClient] Connected to: \(serverName)")
+
+        // Send initialized notification
+        try connection.sendNotification(method: "notifications/initialized")
+
+        // Discover tools
+        try await discoverCapabilities(serverId: config.id, serverName: config.name, connection: connection)
+
         errors.removeValue(forKey: config.id)
+        print("[MCPClient] Server \(config.name) ready with \(discoveredTools[config.id]?.count ?? 0) tools")
     }
-    
+
     /// Remove a server connection
-    public func removeServer(_ serverId: UUID) async {
-        if let client = clients[serverId] {
-            await client.disconnect()
-            clients.removeValue(forKey: serverId)
-        }
-        
-        if let process = processes[serverId] {
-            process.terminate()
-            processes.removeValue(forKey: serverId)
-        }
-        
-        pipes.removeValue(forKey: serverId)
+    public func removeServer(_ serverId: UUID) {
+        connections[serverId]?.disconnect()
+        connections.removeValue(forKey: serverId)
         configs.removeValue(forKey: serverId)
         discoveredTools.removeValue(forKey: serverId)
         discoveredResources.removeValue(forKey: serverId)
         errors.removeValue(forKey: serverId)
     }
-    
+
     /// List all configured servers
     public func listServers() -> [ServerConfig] {
         Array(configs.values)
     }
-    
+
     /// Get current connection state snapshot
     public func getConnectionState() -> ConnectionState {
         ConnectionState(
@@ -198,93 +404,131 @@ public actor MCPClient {
             errors: errors
         )
     }
-    
+
     /// Check if a server is connected
     public func isConnected(_ serverId: UUID) -> Bool {
-        clients[serverId] != nil
+        connections[serverId] != nil
     }
-    
+
     /// Get error for a server
     public func getError(_ serverId: UUID) -> String? {
         errors[serverId]
     }
-    
+
     // MARK: - Tool Discovery
-    
+
     /// Get all discovered tools from all connected servers
     public func getAllTools() -> [DiscoveredTool] {
         discoveredTools.values.flatMap { $0 }
     }
-    
+
     /// Get tools from a specific server
     public func getTools(for serverId: UUID) -> [DiscoveredTool] {
         discoveredTools[serverId] ?? []
     }
-    
+
     // MARK: - Tool Execution
-    
+
     /// Call a tool on a specific server
     public func callTool(
         serverId: UUID,
         name: String,
-        arguments: [String: Value] = [:]
+        arguments: [String: JSONValue] = [:]
     ) async throws -> ToolResult {
-        guard let client = clients[serverId] else {
+        guard let connection = connections[serverId] else {
             throw MCPClientError.serverNotConnected(serverId)
         }
-        
-        let (content, isError) = try await client.callTool(name: name, arguments: arguments)
-        
-        let contentBlocks: [ToolResult.ContentBlock] = content.map { item in
-            switch item {
-            case .text(let text):
-                return .text(text)
-            case .image(let data, let mimeType, _):
-                return .image(data: data, mimeType: mimeType)
-            case .resource(let resource, _, _):
-                return .resource(uri: resource.uri, name: resource.text ?? resource.uri, mimeType: resource.mimeType)
-            case .audio(let data, let mimeType):
-                return .text("Audio (\(mimeType)): \(data.prefix(100))...")
-            case .resourceLink(let uri, let name, _, _, let mimeType, _):
-                return .resource(uri: uri, name: name, mimeType: mimeType)
+
+        let args = arguments.mapValues(\.anyValue)
+
+        let response = try await connection.sendRequest(
+            method: "tools/call",
+            params: [
+                "name": name,
+                "arguments": args
+            ]
+        )
+
+        guard let result = response["result"] as? [String: Any] else {
+            if let error = response["error"] as? [String: Any] {
+                let msg = error["message"] as? String ?? "Unknown error"
+                return ToolResult(content: [.text(msg)], isError: true)
+            }
+            throw MCPClientError.invalidResponse
+        }
+
+        let isError = result["isError"] as? Bool ?? false
+        var contentBlocks: [ToolResult.ContentBlock] = []
+
+        if let contentArray = result["content"] as? [[String: Any]] {
+            for item in contentArray {
+                let type = item["type"] as? String ?? "text"
+                switch type {
+                case "text":
+                    let text = item["text"] as? String ?? ""
+                    contentBlocks.append(.text(text))
+                case "image":
+                    let data = item["data"] as? String ?? ""
+                    let mimeType = item["mimeType"] as? String ?? "image/png"
+                    contentBlocks.append(.image(data: data, mimeType: mimeType))
+                case "resource":
+                    let resource = item["resource"] as? [String: Any] ?? [:]
+                    let uri = resource["uri"] as? String ?? ""
+                    let name = resource["name"] as? String ?? uri
+                    let mimeType = resource["mimeType"] as? String
+                    contentBlocks.append(.resource(uri: uri, name: name, mimeType: mimeType))
+                default:
+                    let text = item["text"] as? String ?? "[\(type)]"
+                    contentBlocks.append(.text(text))
+                }
             }
         }
-        
-        return ToolResult(content: contentBlocks, isError: isError ?? false)
+
+        return ToolResult(content: contentBlocks, isError: isError)
     }
-    
+
     /// Call a tool by its discovered ID
     public func callTool(
         toolId: UUID,
-        arguments: [String: Value] = [:]
+        arguments: [String: JSONValue] = [:]
     ) async throws -> ToolResult {
         guard let tool = getAllTools().first(where: { $0.id == toolId }) else {
             throw MCPClientError.toolNotFound(toolId)
         }
-        
         return try await callTool(serverId: tool.serverId, name: tool.name, arguments: arguments)
     }
-    
+
     // MARK: - Resource Operations
-    
+
     /// Get all discovered resources from all connected servers
     public func getAllResources() -> [DiscoveredResource] {
         discoveredResources.values.flatMap { $0 }
     }
-    
+
     /// Read a resource from a server
-    public func readResource(serverId: UUID, uri: String) async throws -> Resource.Content {
-        guard let client = clients[serverId] else {
+    public func readResource(serverId: UUID, uri: String) async throws -> ResourceContent {
+        guard let connection = connections[serverId] else {
             throw MCPClientError.serverNotConnected(serverId)
         }
-        
-        let contents = try await client.readResource(uri: uri)
-        guard let content = contents.first else {
+
+        let response = try await connection.sendRequest(
+            method: "resources/read",
+            params: ["uri": uri]
+        )
+
+        guard let result = response["result"] as? [String: Any],
+              let contents = result["contents"] as? [[String: Any]],
+              let first = contents.first else {
             throw MCPClientError.resourceNotFound(uri)
         }
-        return content
+
+        return ResourceContent(
+            uri: first["uri"] as? String ?? uri,
+            text: first["text"] as? String,
+            mimeType: first["mimeType"] as? String
+        )
     }
-    
+
     /// Start all servers marked with autoStart
     public func startAutoStartServers(from configs: [ServerConfig]) async {
         for config in configs where config.autoStart && config.enabled {
@@ -295,78 +539,92 @@ public actor MCPClient {
             }
         }
     }
-    
+
     // MARK: - Private Helpers
-    
-    private func launchServerProcess(_ config: ServerConfig) throws -> Process {
+
+    private func launchServer(_ config: ServerConfig) throws -> StdioConnection {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: config.command)
         process.arguments = config.arguments
-        
-        // Set up environment
+
         var env = ProcessInfo.processInfo.environment
         for (key, value) in config.env {
             env[key] = value
         }
         process.environment = env
-        
-        // Create pipes for stdio
-        let inputPipe = Pipe()   // We write to this, server reads from it
-        let outputPipe = Pipe()  // Server writes to this, we read from it
-        
-        process.standardInput = inputPipe
-        process.standardOutput = outputPipe
-        process.standardError = FileHandle.nullDevice
-        
-        pipes[config.id] = (input: inputPipe, output: outputPipe)
-        
+
+        let stdinPipe = Pipe()    // We write → server reads
+        let stdoutPipe = Pipe()   // Server writes → we read
+        let stderrPipe = Pipe()
+
+        process.standardInput = stdinPipe
+        process.standardOutput = stdoutPipe
+        process.standardError = stderrPipe
+
         try process.run()
-        return process
+        print("[MCPClient] Launched PID \(process.processIdentifier): \(config.command)")
+
+        return StdioConnection(
+            process: process,
+            writer: stdinPipe.fileHandleForWriting,
+            reader: stdoutPipe.fileHandleForReading,
+            errorReader: stderrPipe.fileHandleForReading
+        )
     }
-    
-    private func discoverCapabilities(
-        serverId: UUID,
-        serverName: String,
-        client: Client
-    ) async throws {
+
+    private func discoverCapabilities(serverId: UUID, serverName: String, connection: StdioConnection) async throws {
         // Discover tools
         do {
-            let (tools, _) = try await client.listTools()
-            discoveredTools[serverId] = tools.map { tool in
-                DiscoveredTool(
-                    serverId: serverId,
-                    serverName: serverName,
-                    name: tool.name,
-                    description: tool.description ?? "",
-                    inputSchema: tool.inputSchema
-                )
+            let response = try await connection.sendRequest(method: "tools/list")
+            if let result = response["result"] as? [String: Any],
+               let tools = result["tools"] as? [[String: Any]] {
+                discoveredTools[serverId] = tools.map { tool in
+                    let name = tool["name"] as? String ?? ""
+                    let description = tool["description"] as? String ?? ""
+                    let schema = tool["inputSchema"] as? [String: Any] ?? [:]
+                    let schemaJSON: String
+                    if let data = try? JSONSerialization.data(withJSONObject: schema),
+                       let json = String(data: data, encoding: .utf8) {
+                        schemaJSON = json
+                    } else {
+                        schemaJSON = "{}"
+                    }
+                    return DiscoveredTool(
+                        serverId: serverId,
+                        serverName: serverName,
+                        name: name,
+                        description: description,
+                        inputSchemaJSON: schemaJSON
+                    )
+                }
             }
         } catch {
-            // Server may not support tools
             discoveredTools[serverId] = []
         }
-        
+
         // Discover resources
         do {
-            let (resources, _) = try await client.listResources()
-            discoveredResources[serverId] = resources.map { resource in
-                DiscoveredResource(
-                    serverId: serverId,
-                    serverName: serverName,
-                    uri: resource.uri,
-                    name: resource.name,
-                    description: resource.description,
-                    mimeType: resource.mimeType
-                )
+            let response = try await connection.sendRequest(method: "resources/list")
+            if let result = response["result"] as? [String: Any],
+               let resources = result["resources"] as? [[String: Any]] {
+                discoveredResources[serverId] = resources.map { resource in
+                    DiscoveredResource(
+                        serverId: serverId,
+                        serverName: serverName,
+                        uri: resource["uri"] as? String ?? "",
+                        name: resource["name"] as? String ?? "",
+                        description: resource["description"] as? String,
+                        mimeType: resource["mimeType"] as? String
+                    )
+                }
             }
         } catch {
-            // Server may not support resources
             discoveredResources[serverId] = []
         }
     }
 }
 
-// MARK: - Supporting Types
+// MARK: - Errors
 
 public enum MCPClientError: LocalizedError {
     case serverDisabled(String)
@@ -375,7 +633,7 @@ public enum MCPClientError: LocalizedError {
     case resourceNotFound(String)
     case connectionFailed(String)
     case invalidResponse
-    
+
     public var errorDescription: String? {
         switch self {
         case .serverDisabled(let name):
