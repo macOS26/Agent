@@ -310,11 +310,8 @@ struct MCPServerEditView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("JSON").font(.caption).foregroundStyle(.secondary)
-                TextEditor(text: $jsonText)
-                    .font(.system(.caption, design: .monospaced))
+                PlainTextEditor(text: $jsonText)
                     .frame(height: 120)
-                    .scrollContentBackground(.hidden)
-                    .background(.secondary.opacity(0.1))
                     .clipShape(RoundedRectangle(cornerRadius: 6))
                     .onChange(of: jsonText) {
                         applyJSON(jsonText)
@@ -398,6 +395,49 @@ struct MCPServerEditView: View {
             }
         }
         return result
+    }
+}
+
+// MARK: - Plain Text Editor (no smart quotes)
+
+private struct PlainTextEditor: NSViewRepresentable {
+    @Binding var text: String
+
+    func makeNSView(context: Context) -> NSScrollView {
+        let scrollView = NSTextView.scrollableTextView()
+        guard let textView = scrollView.documentView as? NSTextView else { return scrollView }
+        textView.font = .monospacedSystemFont(ofSize: NSFont.smallSystemFontSize, weight: .regular)
+        textView.isAutomaticQuoteSubstitutionEnabled = false
+        textView.isAutomaticDashSubstitutionEnabled = false
+        textView.isAutomaticTextReplacementEnabled = false
+        textView.isAutomaticSpellingCorrectionEnabled = false
+        textView.isRichText = false
+        textView.backgroundColor = NSColor.textBackgroundColor.withAlphaComponent(0.05)
+        textView.textContainerInset = NSSize(width: 4, height: 4)
+        textView.delegate = context.coordinator
+        textView.string = text
+        scrollView.hasVerticalScroller = true
+        scrollView.drawsBackground = false
+        return scrollView
+    }
+
+    func updateNSView(_ scrollView: NSScrollView, context: Context) {
+        guard let textView = scrollView.documentView as? NSTextView else { return }
+        if textView.string != text {
+            textView.string = text
+        }
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator(text: $text) }
+
+    class Coordinator: NSObject, NSTextViewDelegate {
+        var text: Binding<String>
+        init(text: Binding<String>) { self.text = text }
+
+        func textDidChange(_ notification: Notification) {
+            guard let tv = notification.object as? NSTextView else { return }
+            text.wrappedValue = tv.string
+        }
     }
 }
 
