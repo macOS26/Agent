@@ -21,15 +21,38 @@ struct MCPServerConfig: Codable, Identifiable, Hashable {
         self.autoStart = autoStart
     }
 
+    // Accept both standard MCP format (args/env) and Agent format (arguments/environment)
+    private enum CodingKeys: String, CodingKey {
+        case id, name, command
+        case arguments, args
+        case environment, env
+        case enabled, autoStart
+    }
+
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
-        name = try c.decode(String.self, forKey: .name)
+        name = try c.decodeIfPresent(String.self, forKey: .name) ?? ""
         command = try c.decode(String.self, forKey: .command)
-        arguments = try c.decodeIfPresent([String].self, forKey: .arguments) ?? []
-        environment = try c.decodeIfPresent([String: String].self, forKey: .environment) ?? [:]
+        // Accept "args" (MCP standard) or "arguments" (Agent)
+        arguments = try c.decodeIfPresent([String].self, forKey: .args)
+            ?? c.decodeIfPresent([String].self, forKey: .arguments) ?? []
+        // Accept "env" (MCP standard) or "environment" (Agent)
+        environment = try c.decodeIfPresent([String: String].self, forKey: .env)
+            ?? c.decodeIfPresent([String: String].self, forKey: .environment) ?? [:]
         enabled = try c.decodeIfPresent(Bool.self, forKey: .enabled) ?? true
         autoStart = try c.decodeIfPresent(Bool.self, forKey: .autoStart) ?? true
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(name, forKey: .name)
+        try c.encode(command, forKey: .command)
+        try c.encode(arguments, forKey: .args)
+        try c.encode(environment, forKey: .env)
+        try c.encode(enabled, forKey: .enabled)
+        try c.encode(autoStart, forKey: .autoStart)
     }
     
     /// Create from a JSON string (for importing)
