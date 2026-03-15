@@ -175,7 +175,8 @@
       "WebFetch(domain:en.wikipedia.org)",
       "Bash(curl:*)",
       "Bash(git checkout:*)",
-      "Bash(xcodebuild:*)"
+      "Bash(xcodebuild:*)",
+      "Bash(defaults write:*)"
     ]
   }
 }
