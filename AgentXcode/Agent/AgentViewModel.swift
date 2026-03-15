@@ -632,45 +632,29 @@ final class AgentViewModel {
         return results
     }
 
-    /// Query all unique recipients (handles) from the Messages database.
-    nonisolated static func queryRecipients() -> [MessageRecipient] {
-        var db: OpaquePointer?
-        guard sqlite3_open_v2(messagesDBPath, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, nil) == SQLITE_OK else { return [] }
-        defer { sqlite3_close(db) }
-
-        let sql = """
-        SELECT h.id, h.service, COALESCE(c.display_name, '') \
-        FROM handle h \
-        LEFT JOIN chat_handle_join chj ON chj.handle_id = h.ROWID \
-        LEFT JOIN chat c ON c.ROWID = chj.chat_id \
-        ORDER BY h.ROWID DESC
-        """
-        var stmt: OpaquePointer?
-        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return [] }
-        defer { sqlite3_finalize(stmt) }
-
-        var seen = Set<String>()
-        var results: [MessageRecipient] = []
-        while sqlite3_step(stmt) == SQLITE_ROW {
-            let handleId = sqlite3_column_text(stmt, 0).map { String(cString: $0) } ?? ""
-            guard !handleId.isEmpty, !seen.contains(handleId) else { continue }
-            seen.insert(handleId)
-
-            let service = sqlite3_column_text(stmt, 1).map { String(cString: $0) } ?? ""
-            let displayName = sqlite3_column_text(stmt, 2).map { String(cString: $0) } ?? ""
-
-            let name = displayName.isEmpty ? handleId : "\(displayName) (\(handleId))"
-            results.append(MessageRecipient(id: handleId, displayName: name, service: service))
-        }
-        return results
+    /// Auto-add a recipient from an incoming message if not already known.
+    private func autoAddRecipient(from row: RawMessage) {
+        guard !row.handleId.isEmpty else { return }
+        if messageRecipients.contains(where: { $0.id == row.handleId }) { return }
+        let recipient = MessageRecipient(id: row.handleId, displayName: row.handleId, service: row.service)
+        messageRecipients.append(recipient)
+        // Persist discovered recipients
+        let ids = messageRecipients.map(\.id)
+        UserDefaults.standard.set(ids, forKey: "agentDiscoveredHandles")
+        let services = messageRecipients.map(\.service)
+        UserDefaults.standard.set(services, forKey: "agentDiscoveredServices")
     }
 
-    /// Refresh the recipients list from the Messages database.
+    /// Reload previously discovered recipients from UserDefaults.
     func refreshMessageRecipients() {
-        Task {
-            let recipients = await Self.offMain({ Self.queryRecipients() })
-            self.messageRecipients = recipients
+        let ids = UserDefaults.standard.stringArray(forKey: "agentDiscoveredHandles") ?? []
+        let services = UserDefaults.standard.stringArray(forKey: "agentDiscoveredServices") ?? []
+        var recipients: [MessageRecipient] = []
+        for (i, id) in ids.enumerated() {
+            let service = i < services.count ? services[i] : ""
+            recipients.append(MessageRecipient(id: id, displayName: id, service: service))
         }
+        messageRecipients = recipients
     }
 
     /// Query for the max ROWID in the Messages database.
@@ -728,12 +712,8 @@ final class AgentViewModel {
         for row in rows {
             lastSeenMessageROWID = row.rowid
 
-            // Dump all IDs for debugging
-            appendLog("msg ROWID=\(row.rowid) handle=\"\(row.handleId)\" handleRow=\(row.handleRowId) chat=\(row.chatId) svc=\(row.service) acct=\(row.account) text=\"\(row.text.prefix(50))\"")
-            if !enabled.isEmpty {
-                appendLog("  enabled=\(enabled.sorted()) match=\(enabled.contains(row.handleId))")
-            }
-            flushLog()
+            // Auto-discover this sender
+            autoAddRecipient(from: row)
 
             guard !row.text.isEmpty else { continue }
 
@@ -742,7 +722,7 @@ final class AgentViewModel {
 
             // Pulse the dot and show incoming message in the log
             flashMessagesDot()
-            appendLog("iMessage: \(row.text)")
+            appendLog("iMessage (\(row.handleId)): \(row.text)")
             flushLog()
 
             // Only act on "Agent!" commands

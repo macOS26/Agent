@@ -15,14 +15,6 @@ struct MessagesView: View {
                     .toggleStyle(.switch)
                     .controlSize(.mini)
                     .tint(.green)
-                Button {
-                    viewModel.refreshMessageRecipients()
-                } label: {
-                    Image(systemName: "arrow.clockwise")
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                .help("Refresh recipients")
             }
 
             Divider()
@@ -32,10 +24,10 @@ struct MessagesView: View {
                     Image(systemName: "message")
                         .font(.system(size: 32))
                         .foregroundStyle(.secondary)
-                    Text("No recipients found")
+                    Text("No recipients yet")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                    Text("Open Messages app and send a message first.")
+                    Text("Recipients appear here as messages arrive.")
                         .font(.caption)
                         .foregroundStyle(.tertiary)
                 }
@@ -43,7 +35,7 @@ struct MessagesView: View {
                 .padding(.vertical, 20)
             } else {
                 HStack {
-                    Text("Select recipients to monitor:")
+                    Text("Check recipients to act on \"Agent!\" commands:")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Spacer()
@@ -53,6 +45,13 @@ struct MessagesView: View {
                     .buttonStyle(.bordered).controlSize(.mini)
                     Button("None") {
                         viewModel.enabledHandleIds.removeAll()
+                    }
+                    .buttonStyle(.bordered).controlSize(.mini)
+                    Button("Clear") {
+                        viewModel.messageRecipients.removeAll()
+                        viewModel.enabledHandleIds.removeAll()
+                        UserDefaults.standard.removeObject(forKey: "agentDiscoveredHandles")
+                        UserDefaults.standard.removeObject(forKey: "agentDiscoveredServices")
                     }
                     .buttonStyle(.bordered).controlSize(.mini)
                 }
@@ -73,7 +72,7 @@ struct MessagesView: View {
                 Text("Send \"Agent! <prompt>\" from a checked recipient to trigger a task.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Text("If none are selected, all incoming messages are monitored.")
+                Text("Unchecked recipients are logged but not acted on. If none are checked, all are acted on.")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }
@@ -83,7 +82,6 @@ struct MessagesView: View {
         .frame(minHeight: 300, maxHeight: 800)
         .onAppear {
             viewModel.refreshMessageRecipients()
-            // Force toggles to re-render with correct thumb after popover appears
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                 renderKey.toggle()
             }
@@ -109,17 +107,16 @@ struct MessagesView: View {
             .controlSize(.mini)
             .tint(.blue)
 
-            VStack(alignment: .leading, spacing: 1) {
-                Text(recipient.displayName)
-                    .font(.subheadline)
-                    .foregroundStyle(isEnabled ? .primary : .secondary)
-                    .lineLimit(1)
-                Text(recipient.service)
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-            }
+            Text(recipient.id)
+                .font(.subheadline)
+                .foregroundStyle(isEnabled ? .primary : .secondary)
+                .lineLimit(1)
 
             Spacer()
+
+            Text(recipient.service)
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
         }
         .padding(.vertical, 4)
         .padding(.horizontal, 8)
