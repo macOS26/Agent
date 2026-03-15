@@ -227,6 +227,9 @@ struct MCPServerEditView: View {
     @State private var environmentText: String
     @State private var enabled: Bool
     @State private var autoStart: Bool
+    @State private var jsonText: String
+    @State private var jsonError: String?
+    @State private var updatingFromJSON = false
 
     @Environment(\.dismiss) private var dismiss
 
@@ -239,6 +242,17 @@ struct MCPServerEditView: View {
         _environmentText = State(initialValue: server?.environment.map { "\($0.key)=\($0.value)" }.joined(separator: "\n") ?? "")
         _enabled = State(initialValue: server?.enabled ?? true)
         _autoStart = State(initialValue: server?.autoStart ?? true)
+        let initial = MCPServerConfig(
+            id: server?.id ?? UUID(),
+            name: server?.name ?? "",
+            command: server?.command ?? "",
+            arguments: server?.arguments ?? [],
+            environment: server?.environment ?? [:],
+            enabled: server?.enabled ?? true,
+            autoStart: server?.autoStart ?? true
+        )
+        _jsonText = State(initialValue: initial.toJSON())
+        _jsonError = State(initialValue: nil)
     }
 
     var body: some View {
@@ -284,25 +298,40 @@ struct MCPServerEditView: View {
                     Toggle("Enabled", isOn: $enabled).toggleStyle(.switch).controlSize(.mini)
                     Toggle("Auto-start", isOn: $autoStart).toggleStyle(.switch).controlSize(.mini)
                 }
+                .onChange(of: name) { if !updatingFromJSON { jsonText = previewJSON } }
+                .onChange(of: command) { if !updatingFromJSON { jsonText = previewJSON } }
+                .onChange(of: argumentsText) { if !updatingFromJSON { jsonText = previewJSON } }
+                .onChange(of: environmentText) { if !updatingFromJSON { jsonText = previewJSON } }
+                .onChange(of: enabled) { if !updatingFromJSON { jsonText = previewJSON } }
+                .onChange(of: autoStart) { if !updatingFromJSON { jsonText = previewJSON } }
             }
 
             Divider()
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("Preview JSON").font(.caption).foregroundStyle(.secondary)
-                ScrollView {
-                    Text(previewJSON)
-                        .font(.system(.caption, design: .monospaced))
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                Text("JSON").font(.caption).foregroundStyle(.secondary)
+                TextEditor(text: $jsonText)
+                    .font(.system(.caption, design: .monospaced))
+                    .frame(height: 120)
+                    .scrollContentBackground(.hidden)
+                    .background(.secondary.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .onChange(of: jsonText) {
+                        applyJSON(jsonText)
+                    }
+                if let jsonError {
+                    Text(jsonError)
+                        .font(.caption2)
+                        .foregroundStyle(.red)
                 }
-                .frame(height: 80)
-                .padding(8)
-                .background(.secondary.opacity(0.05))
-                .clipShape(RoundedRectangle(cornerRadius: 6))
             }
 
             HStack {
+                Button("Revert") {
+                    jsonText = previewJSON
+                    jsonError = nil
+                }
+                .buttonStyle(.bordered).controlSize(.small)
                 Spacer()
                 Button("Save") {
                     let config = MCPServerConfig(
@@ -335,6 +364,29 @@ struct MCPServerEditView: View {
             enabled: enabled,
             autoStart: autoStart
         ).toJSON()
+    }
+
+    /// Parse edited JSON back into the form fields.
+    private func applyJSON(_ json: String) {
+        guard let data = json.data(using: .utf8),
+              let config = try? JSONDecoder().decode(MCPServerConfig.self, from: data) else {
+            jsonError = "Invalid JSON"
+            return
+        }
+        jsonError = nil
+        updatingFromJSON = true
+        name = config.name
+        command = config.command
+        argumentsText = config.arguments.joined(separator: "\n")
+        environmentText = config.environment.map { "\($0.key)=\($0.value)" }.joined(separator: "\n")
+        enabled = config.enabled
+        autoStart = config.autoStart
+        updatingFromJSON = false
+    }
+
+    /// Sync JSON text when form fields change.
+    private func updateJSONFromFields() {
+        jsonText = previewJSON
     }
 
     private func parseEnvironment(_ text: String) -> [String: String] {
