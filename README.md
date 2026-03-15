@@ -2,7 +2,7 @@
 
 [![Swift 6.1](https://img.shields.io/badge/Swift-6.1-orange.svg)](https://swift.org)
 [![Website](https://img.shields.io/badge/website-xcf.ai-blue.svg)](https://xcf.ai)
-[![Version](https://img.shields.io/badge/version-1.0.5-green.svg)](https://github.com/macOS26/Agent)
+[![Version](https://img.shields.io/badge/version-1.0.7-green.svg)](https://github.com/macOS26/Agent)
 [![GitHub downloads](https://img.shields.io/github/downloads/macOS26/Agent/total.svg)](https://github.com/macOS26/Agent/releases)
 [![GitHub stars](https://img.shields.io/github/stars/macOS26/Agent.svg?style=social)](https://github.com/macOS26/Agent/stargazers)
 
@@ -20,6 +20,7 @@ Agent uses SwiftUI, XPC, SMAppService, Apple Events, and ScriptingBridge to give
 
 - [Getting Started](#getting-started)
 - [Security Hardening](#security-hardening)
+- [Messages Monitor](#messages-monitor)
 - [MCP Servers](#mcp-servers)
 - [Architecture](#architecture)
 - [What Agent! Can Do](#what-agent-can-do)
@@ -173,6 +174,59 @@ This provides a clear audit trail of privileged operations.
 
 ---
 
+## Messages Monitor
+
+Agent! includes a built-in **Apple Messages monitor** that lets you control your Mac remotely via iMessage. Send a text message starting with `Agent!` from any approved contact and Agent will execute it as a task — then reply with the result.
+
+### How It Works
+
+1. Toggle **Messages** ON in the toolbar (green switch next to "Messages")
+2. Click the **speech bubble icon** to open the Messages Monitor popover
+3. Send a message starting with `Agent!` from another device or contact (e.g., `Agent! Next Song`)
+4. The sender's handle (phone number or email) appears in the recipients list
+5. Toggle the recipient ON to approve them
+6. Future `Agent!` messages from approved recipients will automatically run as tasks
+7. When the task completes, Agent sends the result (up to 256 characters) back via iMessage
+
+### Message Format
+
+```
+Agent! <your prompt here>
+```
+
+Examples:
+- `Agent! What song is playing?`
+- `Agent! Next Song`
+- `Agent! Check my email`
+- `Agent! Build and run my Xcode project`
+
+### Message Filter
+
+The filter picker controls which messages are monitored:
+
+| Filter | Description |
+|--------|-------------|
+| **From Others** | Only incoming messages from other people (default) |
+| **From Me** | Only your own sent messages (useful for self-testing between your devices) |
+| **Both** | All messages regardless of sender |
+
+### Recipient Approval
+
+Every recipient must be explicitly approved before their `Agent!` commands trigger tasks:
+
+- Recipients are auto-discovered when they send an `Agent!` message
+- Unapproved messages are logged with a "not approved" note but not acted on
+- Use **All** / **None** buttons to bulk-toggle recipients within the current filter
+- Use **Clear** to remove all discovered recipients and start fresh
+
+### How It Reads Messages
+
+Agent reads the macOS Messages database (`~/Library/Messages/chat.db`) directly using the SQLite3 C API. It polls every 5 seconds for new messages. The `attributedBody` blob is decoded using the Objective-C runtime for messages where the `text` column is NULL (common with iMessage).
+
+No external dependencies. No network requests. Everything runs locally on your Mac.
+
+---
+
 ## MCP Servers
 
 Agent! supports **MCP (Model Context Protocol)** servers, allowing you to extend its capabilities with custom tools and resources.
@@ -264,6 +318,7 @@ Agent.app (SwiftUI)
   |-- ScriptService          Swift Package manager for agent scripts
   |-- XcodeService           ScriptingBridge automation for Xcode
   |-- AppleEventService      Dynamic Apple Event queries (zero compilation)
+  |-- Messages Monitor       Polls chat.db for iMessage remote control
   |-- DependencyChecker      Xcode CLT detection + install trigger
   |
   |-- UserService (XPC) --> Agent.app.toddbruss.user    (LaunchAgent, runs as user)
@@ -388,12 +443,13 @@ Agent persists task history to `~/Library/Application Support/Agent/task_history
 | **Xcode automation** | Built-in: build, run, grant permissions | N/A |
 | **Scripting language** | Swift Package-based agent scripts | Python/JS scripts |
 | **MCP support** | Yes (stdio transport) | Yes |
-| **Messaging** | Local app only | WhatsApp, Telegram, Slack, Discord, iMessage, and more |
+| **Messaging** | Native Apple Messages (iMessage/SMS) with per-recipient approval | WhatsApp, Telegram, Slack, Discord, iMessage, and more |
+| **Message reply** | Auto-replies task results via iMessage to approved senders | Platform-specific replies |
 | **Installation** | Open in Xcode, build, run | `openclaw onboard` wizard |
 | **Dependencies** | Xcode Command Line Tools | Node.js + npm ecosystem |
 | **Apple Silicon** | Native ARM64 | Interpreted (Node.js) |
 
-Both tools have their strengths. If you want a personal assistant across every messaging platform, OpenClaw is excellent. If you want an AI agent that can drive Xcode, compile Swift, control Mac apps through ScriptingBridge, and escalate to root through a proper Launch Daemon — Agent is built for that.
+Both tools have their strengths. If you want a personal assistant across every messaging platform, OpenClaw is excellent. If you want an AI agent that reads Apple Messages natively, drives Xcode, compiles Swift, controls Mac apps through ScriptingBridge, and escalates to root through a proper Launch Daemon — Agent is built for that.
 
 ---
 
