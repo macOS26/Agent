@@ -1,184 +1,254 @@
 # Agent! for macOS 26
-Allows you to automate your entire macOS system including controlling nearly every macOS26 Application. Works with Claude API keys, Ollama Cloud API keys and Local Ollama Arm64 instances with at least 64GB RAM. For Apple Mac minis, cloud based LLMs are highly recommended. If trying Agent! for the first time, recommend sandboxing in Virtual Buddy!
 
-<img width="340" height="339" alt="image" src="https://github.com/user-attachments/assets/5645d8b8-8ce7-4d56-9ede-5eb58f31f227" />
+An autonomous AI agent for macOS 26 (Tahoe) that automates your entire system using native Apple frameworks. Works with Claude API, Ollama Cloud API, and local Ollama instances. For Mac minis and devices with limited RAM, cloud-based LLMs are highly recommended.
+
+<img width="340" height="339" alt="Agent! icon" src="https://github.com/user-attachments/assets/5645d8b8-8ce7-4d56-9ede-5eb58f31f227" />
 
 A native macOS autonomous AI agent built entirely in Swift. Agent takes a different approach than projects like [OpenClaw](https://github.com/openclaw/openclaw) — where OpenClaw is a versatile cross-platform assistant that connects to messaging apps and runs on any OS, Agent is purpose-built for macOS, leveraging Apple-native frameworks to go deeper into the platform than a cross-platform tool can.
 
-Agent uses SwiftUI, XPC, SMAppService, Apple Events and ScriptingBridge to give an AI agent native access to your Mac. No Electron. No Docker. No npm install. Just a `.app` that speaks macOS. Xcode command line tools are required.
+Agent uses SwiftUI, XPC, SMAppService, Apple Events, and ScriptingBridge to give an AI agent native access to your Mac. No Electron. No Docker. No npm install. Just a `.app` that speaks macOS. Xcode command line tools are required.
 
-# Agent! enhancing its own Security for the next build
-<img width="804" height="1009" alt="Screenshot 2026-03-13 at 10 28 51 PM" src="https://github.com/user-attachments/assets/52eb4aed-03bb-4901-b46a-b0802375770d" />
+---
 
-## Agent! vs. OpenClaw on Mac
+## Table of Contents
 
-OpenClaw is a great project with broad platform reach and a rich ecosystem of messaging integrations. Agent takes a narrower but deeper approach — trading cross-platform flexibility for native macOS integration.
+- [Getting Started](#getting-started)
+- [Security Hardening](#security-hardening)
+- [MCP Servers](#mcp-servers)
+- [Architecture](#architecture)
+- [What Agent! Can Do](#what-agent-can-do)
+- [Requirements](#requirements)
+- [Agent! vs. OpenClaw on Mac](#agent-vs-openclaw-on-mac)
+- [License](#license)
 
-| | **Agent!** | **OpenClaw** |
-|---|---|---|
-| **Focus** | macOS-native depth | Cross-platform breadth |
-| **Runtime** | Native Swift binary | Node.js server |
-| **UI** | SwiftUI app | Web chat / Telegram / CLI |
-| **Privilege model** | XPC + Launch Daemon (Apple's official pattern) | Shell commands |
-| **macOS integration** | Apple Events, ScriptingBridge, AppleScript, SMAppService | Generic shell access |
-| **Xcode automation** | Built-in: build, run, grant permissions | N/A |
-| **Scripting language** | Swift Package-based agent scripts | Python/JS scripts |
-| **Messaging** | Local app only | WhatsApp, Telegram, Slack, Discord, iMessage, and more |
-| **Installation** | Open in Xcode, build, run | `openclaw onboard` wizard |
-| **Dependencies** | Xcode Command Line Tools | Node.js + npm ecosystem |
-| **Apple Silicon** | Native ARM64 | Interpreted (Node.js) |
+---
 
-Both tools have their strengths. If you want a personal assistant across every messaging platform, OpenClaw is excellent. If you want an AI agent that can drive Xcode, compile Swift, control Mac apps through ScriptingBridge, and escalate to root through a proper Launch Daemon — Agent is built for that.
+## Getting Started
 
-## What Agent! Can Do
+### 1. Prerequisites
 
-### Autonomous Task Execution
-Give Agent! a task in plain English. It figures out the commands, runs them, reads the output, adapts, and keeps going — up to 50 iterations per task. It remembers previous tasks and builds on past results.
+- macOS 26 (Tahoe) or later
+- Xcode Command Line Tools (Agent will prompt to install if missing)
+- An API key for one of the supported providers:
+  - **Claude** (Anthropic API key)
+  - **Ollama Pro Cloud** (Ollama API key)
+  - **Local Ollama** (no API key required, but requires significant RAM)
+
+### 2. Build and Run
+
+1. Open `Agent.xcodeproj` in Xcode
+2. Build and run the **Agent!** target (⌘R)
+3. If prompted, install Xcode Command Line Tools via the system check overlay
+
+### 3. Register Background Services
+
+Click the **Register** button in the toolbar to install the background services:
+
+<img width="300" alt="Register button" src="https://github.com/user-attachments/assets/register-button.png" />
+
+This registers two background services using Apple's SMAppService framework:
+
+1. **User Agent** (`Agent.app.toddbruss.user`) — Runs commands as your user account
+2. **Privileged Daemon** (`Agent.app.toddbruss.helper`) — Runs commands as root when needed
+
+### 4. Approve in System Settings
+
+After clicking Register, macOS will prompt you to approve the background services:
+
+1. **System Settings** → **General** → **Login Items**
+2. Allow both **Agent** and **AgentHelper** (you may see two prompts)
+
+<img width="400" alt="Login Items approval" src="https://github.com/user-attachments/assets/login-items.png" />
+
+The privileged daemon requires explicit approval because it runs as root. Agent follows Apple's recommended XPC + SMAppService pattern for secure privilege escalation.
+
+### 5. Configure Your Provider
+
+Click the **gear icon** (⚙️) to open Settings:
+
+#### Claude API
+1. Select **Claude** from the provider picker
+2. Enter your Anthropic API key (starts with `sk-ant-...`)
+3. Select a model (Sonnet 4, Opus 4, or Haiku 3.5)
+
+#### Ollama Pro Cloud
+1. Select **Ollama Cloud** from the provider picker
+2. Enter your Ollama Pro API key
+3. Select or type a model name
+4. Click the refresh button to fetch available models
+
+#### Local Ollama
+1. Select **Local Ollama** from the provider picker
+2. Enter your Ollama endpoint (default: `http://localhost:11434/api/chat`)
+3. Ensure you have a local Ollama instance running with at least one model pulled
+4. Click the refresh button to fetch available models
+
+> **Note:** Local Ollama requires significant RAM (minimum 32GB, recommended 64-128GB). For Mac minis or devices with limited RAM, cloud-based LLMs are strongly recommended.
+
+### 6. Connect and Run
+
+1. Click **Connect** to test the XPC services
+2. Type a task in natural language
+3. Press **Run** (or ⌘Enter)
+
+Agent will autonomously execute your task using the appropriate tools.
+
+---
+
+## Security Hardening
+
+Agent! implements a comprehensive security model based on Apple's recommended patterns:
 
 ### Dual Privilege Model
+
 Agent runs two XPC services registered through Apple's SMAppService:
 
-- **User Agent** (`Agent.app.toddbruss.user`) — runs commands as your user account. Used for everyday tasks: file editing, git, Homebrew, builds, scripts.
-- **Privileged Daemon** (`Agent.app.toddbruss.helper`) — runs commands as root via a Launch Daemon. Used only when root is truly required: system packages, `/System` or `/Library` modifications, disk operations, launchd services.
+| Service | Identifier | Runs As | Purpose |
+|---------|------------|---------|---------|
+| **User Agent** | `Agent.app.toddbruss.user` | User account | File editing, git, builds, scripts |
+| **Privileged Daemon** | `Agent.app.toddbruss.helper` | Root (via LaunchDaemon) | System packages, /Library, launchd, disk operations |
 
-The AI defaults to user-level execution and only escalates to root when necessary.
+The AI defaults to **user-level execution** and only escalates to root when necessary. This prevents accidental system damage and follows the principle of least privilege.
 
-### Xcode Command Line Tools
-Agent relies on Xcode Command Line Tools (`clang`, `swiftc`, `swift build`) for compiling and running Swift agent scripts. On launch, Agent runs a system check and detects whether CLT is installed. If missing, it presents an overlay with an **Install** button that triggers `xcode-select --install` — Apple's standard installer dialog — so you can get set up without leaving the app.
+### XPC Sandboxing
 
-### AppleScript via osascript
-Agent runs `osascript` commands directly in the app process — not through XPC helpers — so they automatically inherit the app's macOS Automation permissions. This means AppleScript "just works" for controlling any Mac application that supports the Open Scripting Architecture. The same mechanism is used to bootstrap Xcode Automation permissions by triggering the macOS consent dialog.
-
-### Xcode Automation via ScriptingBridge
-Agent controls Xcode directly through Apple's ScriptingBridge framework — the same Objective-C/Swift bridge that powers AppleScript, but called natively without spawning a subprocess:
-
-- **`xcode_build`** — opens a project, triggers a build, polls until completion, and returns all errors and warnings with file paths and line numbers
-- **`xcode_run`** — launches the active scheme
-- **`xcode_grant_permission`** — triggers the macOS Automation consent dialog so Agent can control Xcode
-
-The full ScriptingBridge protocol layer (`XcodeScriptingBridge.swift`) exposes Xcode's workspace documents, schemes, run destinations, build configurations, projects, and devices — all as native Swift types.
-
-### Swift Agent Scripts
-Agent includes a built-in Swift scripting system. Scripts live in `~/Documents/Agent/agents/` as a Swift Package with a flat file layout:
+All privileged operations go through XPC (Inter-Process Communication):
 
 ```
-~/Documents/Agent/agents/
-├── Package.swift
-└── Sources/
-    ├── Scripts/           ← one .swift file per script
-    │   ├── CheckMail.swift
-    │   ├── Hello.swift
-    │   ├── ListNotes.swift
-    │   └── ...
-    └── XCFScriptingBridges/  ← one .swift file per app bridge
-        ├── ScriptingBridgeCommon.swift
-        ├── MailBridge.swift
-        ├── FinderBridge.swift
-        ├── CalendarBridge.swift
-        └── ...
+Agent.app (SwiftUI)
+    |
+    |-- UserService (XPC) → Agent.app.toddbruss.user    (LaunchAgent, runs as user)
+    |-- HelperService (XPC) → Agent.app.toddbruss.helper  (LaunchDaemon, runs as root)
 ```
 
-**Package.swift** ties everything together. It declares two key arrays:
+The XPC boundary ensures:
+- The main app runs with minimal privileges
+- Root operations are isolated to the daemon
+- Each XPC call is a discrete, auditable transaction
+- File permissions are restored to the user after root operations
 
-- `bridgeNames` — lists every bridge target (e.g. `"MailBridge"`, `"FinderBridge"`). Each becomes a `.target` that depends on `ScriptingBridgeCommon` and maps to a single `.swift` file in `Sources/XCFScriptingBridges/`.
-- `scriptTargets` — lists every script as a `(name, [dependencies])` tuple (e.g. `("CheckMail", ["MailBridge"])`). Each becomes an `.executableTarget` mapping to a single `.swift` file in `Sources/Scripts/`.
+### Entitlements
 
-When the AI creates a new script, it writes the `.swift` file **and** adds the corresponding entry to `scriptTargets` in Package.swift. When generating a new bridge, it writes the bridge `.swift` file and adds the name to `bridgeNames`. This keeps Package.swift in sync with the files on disk — `swift build` fails if they diverge.
+Agent uses minimal entitlements:
 
-The AI can create, read, update, delete, compile, and run these scripts autonomously using dedicated tools:
-
-- `list_agent_scripts` — list all scripts
-- `create_agent_script` — write a new script
-- `read_agent_script` — read source code
-- `update_agent_script` — modify an existing script
-- `run_agent_script` — compile with `swift build --product <name>` and execute
-- `delete_agent_script` — remove a script
-
-### Dynamic Apple Event Queries
-
-Agent includes an `apple_event_query` tool that lets the AI query any scriptable Mac app **instantly — with zero compilation**. It uses Objective-C dynamic dispatch (`value(forKey:)`, `perform(_:with:)`) to walk an app's Apple Event object graph at runtime, bypassing the need to compile Swift code entirely.
-
-The tool takes a `bundle_id` and a chain of operations:
-
-| Operation | Description | Example |
-|-----------|-------------|---------|
-| `get` | Access a property via `value(forKey:)` | `{action: "get", key: "currentTrack"}` |
-| `iterate` | Read properties from each item in an array | `{action: "iterate", properties: ["name", "artist"], limit: 10}` |
-| `index` | Pick one item from an array by position | `{action: "index", index: 0}` |
-| `call` | Invoke a method on the current object | `{action: "call", method: "playpause"}` |
-| `filter` | Apply an NSPredicate to filter an array | `{action: "filter", predicate: "name contains 'inbox'"}` |
-
-**Examples:**
-```
-# What's currently playing in Music?
-bundle_id: "com.apple.Music"
-operations: [
-  {action: "get", key: "currentTrack"},
-  {action: "iterate", properties: ["name", "artist", "album"]}
-]
-
-# List Safari windows
-bundle_id: "com.apple.Safari"
-operations: [
-  {action: "get", key: "windows"},
-  {action: "iterate", properties: ["name"], limit: 10}
-]
-
-# First 5 notes
-bundle_id: "com.apple.Notes"
-operations: [
-  {action: "get", key: "notes"},
-  {action: "iterate", properties: ["name"], limit: 5}
-]
+```xml
+<key>com.apple.security.app-sandbox</key>
+<false/>
+<key>com.apple.security.automation.apple-events</key>
+<true/>
 ```
 
-Write operations (`delete`, `close`, `move`, `quit`, etc.) are blocked by default. The AI must explicitly set `allow_writes: true` to permit them.
+- **App Sandbox**: Disabled (required for system automation)
+- **Apple Events**: Enabled (required for AppleScript and ScriptingBridge)
 
-Under the hood, this uses the same Apple Event interface that compiled ScriptingBridge scripts use — just accessed dynamically through `NSObject` instead of through generated Swift protocol types.
+### TCC Permissions (Accessibility, Screen Recording, Automation)
 
-### Execution Priority
+Protected macOS APIs require user approval. Agent handles this correctly:
 
-The AI selects the right scripting approach based on task complexity:
+| Component | How it inherits TCC permissions |
+|-----------|--------------------------------|
+| `run_agent_script` (dylib) | Loaded into Agent app process — inherits ALL TCC grants |
+| `apple_event_query` | Runs in Agent app process — inherits Automation permissions |
+| `execute_user_command` | Child process — does NOT inherit TCC grants |
+| `execute_command` (root) | LaunchDaemon process — has separate TCC context |
 
-| Priority | Method | When to use |
-|----------|--------|-------------|
-| 1. `apple_event_query` | Zero compilation, instant ObjC dispatch | Small queries: reading app data (mail, notes, music, calendar, etc.) |
-| 2. `run_agent_script` | Native Swift dylib via AgentScriptingBridge | Persistent, repeatable automation needing type-safe compiled code |
-| 3. NSAppleScript in scripts | In-process AppleScript fallback | When AgentScriptingBridge has issues with a particular app |
-| 4. `osascript` via Agent app | Shell-based AppleScript (runs in-app for Automation permissions) | Last resort for one-off scripts or complex `tell` blocks |
+**Rule:** For Accessibility, Screen Recording, or Automation tasks, always use `run_agent_script` or `apple_event_query`. Do NOT use shell commands for these operations.
 
-The AI prefers `execute_user_command` for all tasks unless root privileges are truly required. When root is used, files are chown'd back to the user to avoid permission issues.
+### Write Protection
 
-After the first compilation, SPM caches compiled modules so incremental builds only recompile changed files. The `--product` flag ensures only the target script and its bridge dependencies are built — not the entire package. Never run bare `swift build` — it compiles all 45+ bridges and is extremely slow.
+- `apple_event_query` blocks destructive operations (`delete`, `close`, `move`, `quit`) by default
+- The AI must explicitly set `allow_writes: true` to permit them
+- This prevents accidental data loss from misinterpreted commands
 
-### ScriptingBridges Library
-Agent ships with pre-generated Swift protocol definitions for 44 macOS applications, created from each app's scripting dictionary using the [Swift-Scripting](https://github.com/SuperBox64/Swift-Scripting) toolchain. These bridge files live in `Sources/XCFScriptingBridges/` and give scripts type-safe access to:
+### Root Escalation Audit Trail
 
-Adobe Illustrator, Automator, Bluetooth File Exchange, Calendar, Console, Contacts, Database Events, Developer, Final Cut Pro, Finder, Firefox, Folder Actions Setup, Google Chrome, Image Events, Instruments, Keynote, Logic Pro, Mail, Messages, Microsoft Edge, Music, Notes, Numbers, Numbers (Creator Studio), Pages, Pages (Creator Studio), Photos, Pixelmator Pro, Preview, QuickTime Player, Reminders, Safari, Screen Sharing, Script Editor, Shortcuts, Simulator, System Events, System Information, System Settings, Terminal, TextEdit, TV, UTM, VoiceOver, and Xcode.
+When Agent executes commands as root, it logs:
+- The exact command executed
+- The reason for escalation
+- The result
 
-Each bridge is its own Swift module. Scripts import only what they need (e.g. `import MailBridge`), keeping builds fast and isolated. The common types (`SBObjectProtocol`, `SBApplicationProtocol`, `AEKeyword`) live in `ScriptingBridgeCommon`, which every bridge re-exports via `@_exported import`.
+This provides a clear audit trail of privileged operations.
 
-For compiled scripts, ScriptingBridge is the preferred approach — it calls the same Apple Event interface as AppleScript but natively from Swift, without spawning a subprocess. For quick queries, `apple_event_query` accesses the same interface dynamically with zero compilation. AppleScript via `osascript` is still available as a fallback.
+---
 
-To add a bridge for a new app, the AI runs the built-in `GenerateBridge` script with the app path, then adds the new bridge name to `bridgeNames` in Package.swift.
+## MCP Servers
 
-### Streaming & Markdown
-Agent streams Claude's responses token-by-token in real time — no waiting for the full response. The activity log renders markdown inline: **bold**, *italic*, `inline code`, and fenced code blocks with syntax-aware background styling.
+Agent! supports **MCP (Model Context Protocol)** servers, allowing you to extend its capabilities with custom tools and resources.
 
-### Vision: Screenshot and Clipboard Support
-Attach screenshots or paste images directly into Agent. Images are encoded as base64 PNG and sent as vision content blocks. The AI can see what's on your screen and act on it.
+### What is MCP?
 
-- Interactive screenshot capture via `screencapture -i`
-- Clipboard paste (Cmd+V) for PNG, TIFF, JPEG, or image files
-- Automatic downscaling of images larger than 2048px
+MCP is an open protocol that lets AI models interact with external tools, APIs, and data sources. Agent acts as an MCP **client**, connecting to MCP servers that expose tools and resources.
 
-### Multi-Provider Support
-- Cloud based LLMs require a valid API key, each for Claude and Ollama Cloud
-- **Claude** (Anthropic) — Sonnet 4, Opus 4, Haiku 3.5
-- **Ollama** — cloud-hosted Ollama via API key, with automatic vision capability detection. Local Ollama support is coming soon.
+### Adding MCP Servers
 
-### Task Memory
-Agent persists task history to `~/Library/Application Support/Agent/task_history.json`. The last 20 tasks are injected into the system prompt, giving the AI memory across sessions. It knows what it did before and can build on it.
+1. Click the **server icon** ( Rack) in the toolbar
+2. Click the **+** button to add a new server
+3. Configure the server:
+
+| Field | Description | Example |
+|-------|-------------|---------|
+| **Name** | Display name for the server | `HelloWorld` |
+| **Command** | Executable path | `/usr/local/bin/node` |
+| **Arguments** | Command-line arguments | `mcp-server-hello/dist/index.js` |
+| **Environment** | Environment variables | `API_KEY=xxx` |
+| **Auto-start** | Connect on launch | ✓ |
+
+### Example MCP Server Configurations
+
+#### HelloWorld MCP Server
+```json
+{
+  "name": "HelloWorld",
+  "command": "/usr/local/bin/node",
+  "arguments": ["/path/to/mcp-server-hello/dist/index.js"],
+  "enabled": true,
+  "autoStart": true
+}
+```
+
+#### XCF (Xcode Features) Server
+```json
+{
+  "name": "xcf",
+  "command": "/usr/local/bin/node",
+  "arguments": ["/path/to/xcf-server/dist/index.js"],
+  "enabled": true,
+  "autoStart": true
+}
+```
+
+### Importing Server Configurations
+
+You can import server configurations as JSON:
+
+1. Click the **download icon** in the MCP Servers view
+2. Paste your JSON configuration
+3. Click **Import**
+
+### How MCP Tools Work
+
+When connected to an MCP server, Agent:
+
+1. Discovers available tools from the server
+2. Adds tools to its tool registry
+3. Uses them autonomously based on user requests
+4. Returns results through the same MCP protocol
+
+### Transport
+
+Currently supported:
+- **stdio** — Standard input/output pipes (most common)
+
+Coming soon:
+- **HTTP/SSE** — Server-Sent Events over HTTP
+
+### Tool Management
+
+- Enable/disable individual tools per server
+- View tool descriptions and input schemas
+- See connection status and errors in real-time
+
+---
 
 ## Architecture
 
@@ -186,10 +256,12 @@ Agent persists task history to `~/Library/Application Support/Agent/task_history
 Agent.app (SwiftUI)
   |
   |-- AgentViewModel         Orchestrates task loop, screenshots, clipboard
-  |-- ClaudeService          Anthropic Messages API
+  |-- ClaudeService          Anthropic Messages API (streaming)
   |-- OllamaService          Ollama native API (OpenAI-compatible)
+  |-- MCPService             MCP client for external tool servers
   |-- ScriptService          Swift Package manager for agent scripts
   |-- XcodeService           ScriptingBridge automation for Xcode
+  |-- AppleEventService      Dynamic Apple Event queries (zero compilation)
   |-- DependencyChecker      Xcode CLT detection + install trigger
   |
   |-- UserService (XPC) --> Agent.app.toddbruss.user    (LaunchAgent, runs as user)
@@ -202,24 +274,126 @@ Agent.app (SwiftUI)
   |-- Sources/XCFScriptingBridges/  One .swift file per app bridge + Common
 ```
 
+---
+
+## What Agent! Can Do
+
+### Autonomous Task Execution
+
+Give Agent! a task in plain English. It figures out the commands, runs them, reads the output, adapts, and keeps going — up to 50 iterations per task. It remembers previous tasks and builds on past results.
+
+### AppleScript via osascript
+
+Agent runs `osascript` commands directly in the app process — not through XPC helpers — so they automatically inherit the app's macOS Automation permissions. This means AppleScript "just works" for controlling any Mac application that supports the Open Scripting Architecture.
+
+### Xcode Automation via ScriptingBridge
+
+Agent controls Xcode directly through Apple's ScriptingBridge framework:
+
+- **`xcode_build`** — opens a project, triggers a build, polls until completion, returns all errors and warnings
+- **`xcode_run`** — launches the active scheme
+- **`xcode_grant_permission`** — triggers the macOS Automation consent dialog
+
+### Swift Agent Scripts
+
+Agent includes a built-in Swift scripting system. Scripts live in `~/Documents/Agent/agents/` as a Swift Package:
+
+```
+~/Documents/Agent/agents/
+├── Package.swift
+└── Sources/
+    ├── Scripts/           ← one .swift file per script
+    │   ├── CheckMail.swift
+    │   ├── Hello.swift
+    │   └── ...
+    └── XCFScriptingBridges/  ← one .swift file per app bridge
+        ├── ScriptingBridgeCommon.swift
+        ├── MailBridge.swift
+        └── ...
+```
+
+The AI can create, read, update, delete, compile, and run these scripts autonomously:
+
+- `list_agent_scripts` — list all scripts
+- `create_agent_script` — write a new script
+- `read_agent_script` — read source code
+- `update_agent_script` — modify an existing script
+- `run_agent_script` — compile with `swift build --product <name>` and execute
+- `delete_agent_script` — remove a script
+
+### Dynamic Apple Event Queries
+
+Agent includes an `apple_event_query` tool that lets the AI query any scriptable Mac app **instantly — with zero compilation**. It uses Objective-C dynamic dispatch to walk an app's Apple Event object graph at runtime.
+
+| Operation | Description | Example |
+|-----------|-------------|---------|
+| `get` | Access a property | `{action: "get", key: "currentTrack"}` |
+| `iterate` | Read properties from array items | `{action: "iterate", properties: ["name", "artist"], limit: 10}` |
+| `index` | Pick one item from array | `{action: "index", index: 0}` |
+| `call` | Invoke a method | `{action: "call", method: "playpause"}` |
+| `filter` | NSPredicate filter | `{action: "filter", predicate: "name contains 'inbox'"}` |
+
+### ScriptingBridges Library
+
+Agent ships with pre-generated Swift protocol definitions for 44+ macOS applications:
+
+Adobe Illustrator, Automator, Calendar, Contacts, Finder, Firefox, Google Chrome, Mail, Messages, Music, Notes, Numbers, Pages, Photos, Preview, QuickTime Player, Reminders, Safari, Shortcuts, System Events, Terminal, TV, Xcode, and more.
+
+Each bridge is its own Swift module. Scripts import only what they need (e.g. `import MailBridge`), keeping builds fast and isolated.
+
+### Streaming & Markdown
+
+Agent streams responses token-by-token in real time. The activity log renders markdown inline: **bold**, *italic*, `inline code`, and fenced code blocks with syntax highlighting.
+
+### Vision: Screenshot and Clipboard Support
+
+Attach screenshots or paste images directly into Agent. Images are encoded as base64 PNG and sent as vision content blocks. The AI can see what's on your screen and act on it.
+
+### Multi-Provider Support
+
+| Provider | API Key Required | Vision Support | Notes |
+|----------|------------------|----------------|-------|
+| **Claude** | Yes (Anthropic) | ✓ | Sonnet 4, Opus 4, Haiku 3.5 |
+| **Ollama Cloud** | Yes (Ollama Pro) | Auto-detected | Cloud-hosted Ollama |
+| **Local Ollama** | No | Auto-detected | Requires 32-128GB RAM |
+
+### Task Memory
+
+Agent persists task history to `~/Library/Application Support/Agent/task_history.json`. The last 20 tasks are injected into the system prompt, giving the AI memory across sessions.
+
+---
+
 ## Requirements
 
-- macOS 26.0+
-- Xcode Command Line Tools (Agent will prompt to install if missing)
-- An Anthropic API key, or an Ollama Cloud API key.
-- Apple Silcon with Local Ollama support works, but requires lots of RAM. Min 32GB, 64-128GB recommended.
-- If you have a Mac Min, cloud based LLMs are highly recommended. Ollama Pro (Cloud) is a good deal for only $20 a month.
-- We are not responsible if you spend lots of tokens via Claude.
+- **macOS 26.0+** (Tahoe)
+- **Xcode Command Line Tools** (Agent will prompt to install if missing)
+- **API Key** for Claude or Ollama Cloud, OR a local Ollama instance
+- **Apple Silicon** recommended for local Ollama (minimum 32GB RAM, 64-128GB recommended)
 
-## Getting Started
+> **Important:** We are not responsible for token costs incurred via Claude or Ollama Cloud. Monitor your usage.
 
-1. Open `Agent.xcodeproj` in Xcode
-2. Build and run the **Agent** target
-3. If prompted, install Xcode Command Line Tools via the system check overlay
-4. Click **Register** to install the user agent and privileged daemon
-5. Approve in System Settings > Login Items if prompted
-6. Open Settings (gear icon), add your API key
-7. Type a task and hit Run
+---
+
+## Agent! vs. OpenClaw on Mac
+
+| | **Agent!** | **OpenClaw** |
+|---|---|---|
+| **Focus** | macOS-native depth | Cross-platform breadth |
+| **Runtime** | Native Swift binary | Node.js server |
+| **UI** | SwiftUI app | Web chat / Telegram / CLI |
+| **Privilege model** | XPC + Launch Daemon (Apple's official pattern) | Shell commands |
+| **macOS integration** | Apple Events, ScriptingBridge, AppleScript, SMAppService | Generic shell access |
+| **Xcode automation** | Built-in: build, run, grant permissions | N/A |
+| **Scripting language** | Swift Package-based agent scripts | Python/JS scripts |
+| **MCP support** | Yes (stdio transport) | Yes |
+| **Messaging** | Local app only | WhatsApp, Telegram, Slack, Discord, iMessage, and more |
+| **Installation** | Open in Xcode, build, run | `openclaw onboard` wizard |
+| **Dependencies** | Xcode Command Line Tools | Node.js + npm ecosystem |
+| **Apple Silicon** | Native ARM64 | Interpreted (Node.js) |
+
+Both tools have their strengths. If you want a personal assistant across every messaging platform, OpenClaw is excellent. If you want an AI agent that can drive Xcode, compile Swift, control Mac apps through ScriptingBridge, and escalate to root through a proper Launch Daemon — Agent is built for that.
+
+---
 
 ## License
 
