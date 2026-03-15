@@ -40,6 +40,7 @@
 		AA10000000000000000066 /* ActivityLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000061 /* ActivityLogView.swift */; };
 		AA10000000000000000070 /* ChatModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000069 /* ChatModels.swift */; };
 		AA10000000000000000076 /* AccessibilityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000075 /* AccessibilityService.swift */; };
+		AA10000000000000000077 /* MessagesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000078 /* MessagesView.swift */; };
 		BB10000000000000000030 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001A /* main.swift */; };
 		BB10000000000000000031 /* HelperProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001B /* HelperProtocol.swift */; };
 		BB10000000000000000032 /* Agent.app.toddbruss.helper.plist in Copy Daemon Plist */ = {isa = PBXBuildFile; fileRef = AA10000000000000000023 /* Agent.app.toddbruss.helper.plist */; };
@@ -174,6 +175,7 @@
 		AA10000000000000000068 /* StatusDot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusDot.swift; sourceTree = "<group>"; };
 		AA10000000000000000069 /* ChatModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModels.swift; sourceTree = "<group>"; };
 		AA10000000000000000075 /* AccessibilityService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityService.swift; sourceTree = "<group>"; };
+		AA10000000000000000078 /* MessagesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesView.swift; sourceTree = "<group>"; };
 		BB1000000000000000001A /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		BB1000000000000000001B /* HelperProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperProtocol.swift; sourceTree = "<group>"; };
 		BB1000000000000000001C /* AgentHelper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = AgentHelper; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -265,6 +267,7 @@
 				AA1000000000000000002E /* DependencyOverlay.swift */,
 				AA1000000000000000002F /* AppleEventService.swift */,
 				AA10000000000000000075 /* AccessibilityService.swift */,
+				AA10000000000000000078 /* MessagesView.swift */,
 				AA10000000000000000046 /* KeychainService.swift */,
 				AA10000000000000000058 /* MCPConfig.swift */,
 				AA1000000000000000005A /* MCPServersView.swift */,
@@ -513,6 +516,7 @@
 				AA10000000000000000044 /* DependencyOverlay.swift in Sources */,
 				AA10000000000000000045 /* AppleEventService.swift in Sources */,
 				AA10000000000000000076 /* AccessibilityService.swift in Sources */,
+				AA10000000000000000077 /* MessagesView.swift in Sources */,
 				AA10000000000000000047 /* KeychainService.swift in Sources */,
 				AA10000000000000000049 /* AgentViewModel+Logging.swift in Sources */,
 				AA1000000000000000004B /* AgentViewModel+TaskExecution.swift in Sources */,

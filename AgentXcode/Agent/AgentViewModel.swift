@@ -231,6 +231,22 @@ final class AgentViewModel {
     /// ROWID of the last message we've already processed
     private var lastSeenMessageROWID: Int = 0
 
+    /// Chat recipients discovered from Messages database
+    struct MessageRecipient: Identifiable, Hashable {
+        let id: String        // handle id (phone/email)
+        let chatId: Int       // chat ROWID for filtering
+        let displayName: String
+        let service: String   // "iMessage" or "SMS"
+    }
+    var messageRecipients: [MessageRecipient] = []
+    /// Set of chat ROWIDs the user has enabled for monitoring
+    var enabledChatIds: Set<Int> = {
+        let saved = UserDefaults.standard.array(forKey: "agentEnabledChatIds") as? [Int] ?? []
+        return Set(saved)
+    }() {
+        didSet { UserDefaults.standard.set(Array(enabledChatIds), forKey: "agentEnabledChatIds") }
+    }
+
     // MARK: - Logging State
 
     static let timestampFormatter: DateFormatter = {
@@ -503,6 +519,7 @@ final class AgentViewModel {
 
     func startMessagesMonitor() {
         stopMessagesMonitor()
+        refreshMessageRecipients()
         appendLog("Messages monitor: ON")
         flushLog()
 
@@ -527,21 +544,26 @@ final class AgentViewModel {
     nonisolated(unsafe) private static let messagesDBPath = NSHomeDirectory() + "/Library/Messages/chat.db"
 
     /// Read new messages directly from chat.db using SQLite3 C API + NSUnarchiver for attributedBody blobs.
-    private nonisolated static func queryMessages(afterROWID: Int) -> [(rowid: Int, text: String)] {
+    private nonisolated static func queryMessages(afterROWID: Int) -> [(rowid: Int, text: String, chatId: Int)] {
         var db: OpaquePointer?
         guard sqlite3_open_v2(messagesDBPath, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, nil) == SQLITE_OK else { return [] }
         defer { sqlite3_close(db) }
 
-        let sql = "SELECT ROWID, text, attributedBody FROM message WHERE ROWID > ?1 AND is_from_me = 0 ORDER BY ROWID ASC LIMIT 10"
+        let sql = """
+        SELECT m.ROWID, m.text, m.attributedBody, COALESCE(cmj.chat_id, 0) \
+        FROM message m LEFT JOIN chat_message_join cmj ON cmj.message_id = m.ROWID \
+        WHERE m.ROWID > ?1 AND m.is_from_me = 0 ORDER BY m.ROWID ASC LIMIT 10
+        """
         var stmt: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return [] }
         defer { sqlite3_finalize(stmt) }
 
         sqlite3_bind_int64(stmt, 1, Int64(afterROWID))
 
-        var results: [(rowid: Int, text: String)] = []
+        var results: [(rowid: Int, text: String, chatId: Int)] = []
         while sqlite3_step(stmt) == SQLITE_ROW {
             let rowid = Int(sqlite3_column_int64(stmt, 0))
+            let chatId = Int(sqlite3_column_int64(stmt, 3))
 
             // Try the `text` column first
             var text: String?
@@ -560,9 +582,51 @@ final class AgentViewModel {
                 }
             }
 
-            results.append((rowid: rowid, text: text ?? ""))
+            results.append((rowid: rowid, text: text ?? "", chatId: chatId))
         }
         return results
+    }
+
+    /// Query all chat recipients from the Messages database.
+    nonisolated static func queryRecipients() -> [MessageRecipient] {
+        var db: OpaquePointer?
+        guard sqlite3_open_v2(messagesDBPath, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, nil) == SQLITE_OK else { return [] }
+        defer { sqlite3_close(db) }
+
+        let sql = """
+        SELECT c.ROWID, h.id, h.service, COALESCE(c.display_name, '') \
+        FROM chat c \
+        JOIN chat_handle_join chj ON chj.chat_id = c.ROWID \
+        JOIN handle h ON h.ROWID = chj.handle_id \
+        ORDER BY c.ROWID DESC
+        """
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return [] }
+        defer { sqlite3_finalize(stmt) }
+
+        var seen = Set<Int>()
+        var results: [MessageRecipient] = []
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            let chatId = Int(sqlite3_column_int64(stmt, 0))
+            guard !seen.contains(chatId) else { continue }
+            seen.insert(chatId)
+
+            let handleId = sqlite3_column_text(stmt, 1).map { String(cString: $0) } ?? ""
+            let service = sqlite3_column_text(stmt, 2).map { String(cString: $0) } ?? ""
+            let displayName = sqlite3_column_text(stmt, 3).map { String(cString: $0) } ?? ""
+
+            let name = displayName.isEmpty ? handleId : "\(displayName) (\(handleId))"
+            results.append(MessageRecipient(id: handleId, chatId: chatId, displayName: name, service: service))
+        }
+        return results
+    }
+
+    /// Refresh the recipients list from the Messages database.
+    func refreshMessageRecipients() {
+        Task {
+            let recipients = await Self.offMain({ Self.queryRecipients() })
+            self.messageRecipients = recipients
+        }
     }
 
     /// Query for the max ROWID in the Messages database.
@@ -590,7 +654,7 @@ final class AgentViewModel {
         flushLog()
     }
 
-    /// Poll for new incoming messages; log all, act on "Agent!" prefix.
+    /// Poll for new incoming messages; log from enabled chats, act on "Agent!" prefix.
     private func pollMessages() async {
         let after = lastSeenMessageROWID
         let rows = await Self.offMain({ Self.queryMessages(afterROWID: after) })
@@ -601,7 +665,10 @@ final class AgentViewModel {
 
             guard !row.text.isEmpty else { continue }
 
-            // Show every incoming message in the log
+            // Skip messages from chats the user hasn't enabled (if any are selected)
+            if !enabledChatIds.isEmpty && !enabledChatIds.contains(row.chatId) { continue }
+
+            // Show incoming message in the log
             appendLog("iMessage: \(row.text)")
             flushLog()
 

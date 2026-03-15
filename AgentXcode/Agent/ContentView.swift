@@ -15,6 +15,7 @@ struct ContentView: View {
     @State private var currentMatchIndex = 0
     @State private var totalMatches = 0
     @State private var showMCPServers = false
+    @State private var showMessages = false
 
     var body: some View {
         ZStack {
@@ -27,7 +28,7 @@ struct ContentView: View {
                         wasActive: viewModel.userWasActive,
                         isBusy: viewModel.isRunning
                     )
-                    Text("User")
+                    Text("Agent")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     StatusDot(
@@ -42,10 +43,13 @@ struct ContentView: View {
                         .tint(.green)
                         .font(.caption)
                         .foregroundStyle(viewModel.rootEnabled ? .secondary : .tertiary)
-                    Toggle("Messages", isOn: $viewModel.messagesMonitorEnabled)
-                        .toggleStyle(.switch)
-                        .controlSize(.mini)
-                        .tint(.blue)
+                    StatusDot(
+                        isActive: viewModel.messagesMonitorEnabled,
+                        wasActive: viewModel.messagesMonitorEnabled,
+                        isBusy: false,
+                        enabled: viewModel.messagesMonitorEnabled
+                    )
+                    Text("Messages")
                         .font(.caption)
                         .foregroundStyle(viewModel.messagesMonitorEnabled ? .secondary : .tertiary)
                 }
@@ -83,6 +87,15 @@ struct ContentView: View {
                     }
                 }
 
+
+                Button { showMessages.toggle() } label: {
+                    Image(systemName: "message")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .popover(isPresented: $showMessages) {
+                    MessagesView(viewModel: viewModel)
+                }
 
                 Button { showMCPServers.toggle() } label: {
                     Image(systemName: "server.rack")
