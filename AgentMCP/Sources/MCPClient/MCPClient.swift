@@ -373,8 +373,13 @@ public actor MCPClient {
         // Send initialized notification
         try connection.sendNotification(method: "notifications/initialized")
 
-        // Discover tools
-        try await discoverCapabilities(serverId: config.id, serverName: config.name, connection: connection)
+        // Check server capabilities to know what to discover
+        let capabilities = result["capabilities"] as? [String: Any] ?? [:]
+        let hasTools = capabilities["tools"] != nil
+        let hasResources = capabilities["resources"] != nil
+
+        // Discover tools/resources based on capabilities
+        try await discoverCapabilities(serverId: config.id, serverName: config.name, connection: connection, hasTools: hasTools, hasResources: hasResources)
 
         errors.removeValue(forKey: config.id)
         print("[MCPClient] Server \(config.name) ready with \(discoveredTools[config.id]?.count ?? 0) tools")
@@ -572,53 +577,61 @@ public actor MCPClient {
         )
     }
 
-    private func discoverCapabilities(serverId: UUID, serverName: String, connection: StdioConnection) async throws {
-        // Discover tools
-        do {
-            let response = try await connection.sendRequest(method: "tools/list")
-            if let result = response["result"] as? [String: Any],
-               let tools = result["tools"] as? [[String: Any]] {
-                discoveredTools[serverId] = tools.map { tool in
-                    let name = tool["name"] as? String ?? ""
-                    let description = tool["description"] as? String ?? ""
-                    let schema = tool["inputSchema"] as? [String: Any] ?? [:]
-                    let schemaJSON: String
-                    if let data = try? JSONSerialization.data(withJSONObject: schema),
-                       let json = String(data: data, encoding: .utf8) {
-                        schemaJSON = json
-                    } else {
-                        schemaJSON = "{}"
+    private func discoverCapabilities(serverId: UUID, serverName: String, connection: StdioConnection, hasTools: Bool, hasResources: Bool) async throws {
+        // Only discover tools if server advertises tool support
+        if hasTools {
+            do {
+                let response = try await connection.sendRequest(method: "tools/list")
+                if let result = response["result"] as? [String: Any],
+                   let tools = result["tools"] as? [[String: Any]] {
+                    discoveredTools[serverId] = tools.map { tool in
+                        let name = tool["name"] as? String ?? ""
+                        let description = tool["description"] as? String ?? ""
+                        let schema = tool["inputSchema"] as? [String: Any] ?? [:]
+                        let schemaJSON: String
+                        if let data = try? JSONSerialization.data(withJSONObject: schema),
+                           let json = String(data: data, encoding: .utf8) {
+                            schemaJSON = json
+                        } else {
+                            schemaJSON = "{}"
+                        }
+                        return DiscoveredTool(
+                            serverId: serverId,
+                            serverName: serverName,
+                            name: name,
+                            description: description,
+                            inputSchemaJSON: schemaJSON
+                        )
                     }
-                    return DiscoveredTool(
-                        serverId: serverId,
-                        serverName: serverName,
-                        name: name,
-                        description: description,
-                        inputSchemaJSON: schemaJSON
-                    )
                 }
+            } catch {
+                discoveredTools[serverId] = []
             }
-        } catch {
+        } else {
             discoveredTools[serverId] = []
         }
 
-        // Discover resources
-        do {
-            let response = try await connection.sendRequest(method: "resources/list")
-            if let result = response["result"] as? [String: Any],
-               let resources = result["resources"] as? [[String: Any]] {
-                discoveredResources[serverId] = resources.map { resource in
-                    DiscoveredResource(
-                        serverId: serverId,
-                        serverName: serverName,
-                        uri: resource["uri"] as? String ?? "",
-                        name: resource["name"] as? String ?? "",
-                        description: resource["description"] as? String,
-                        mimeType: resource["mimeType"] as? String
-                    )
+        // Only discover resources if server advertises resource support
+        if hasResources {
+            do {
+                let response = try await connection.sendRequest(method: "resources/list")
+                if let result = response["result"] as? [String: Any],
+                   let resources = result["resources"] as? [[String: Any]] {
+                    discoveredResources[serverId] = resources.map { resource in
+                        DiscoveredResource(
+                            serverId: serverId,
+                            serverName: serverName,
+                            uri: resource["uri"] as? String ?? "",
+                            name: resource["name"] as? String ?? "",
+                            description: resource["description"] as? String,
+                            mimeType: resource["mimeType"] as? String
+                        )
                 }
             }
         } catch {
+            discoveredResources[serverId] = []
+        }
+        } else {
             discoveredResources[serverId] = []
         }
     }

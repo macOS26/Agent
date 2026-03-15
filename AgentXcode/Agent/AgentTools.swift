@@ -666,12 +666,21 @@ enum AgentTools {
         ]
     }
 
-    /// All common tools in Claude/Anthropic format.
-    static var claudeFormat: [[String: Any]] {
-        commonTools.map { tool in
+    /// All common tools + MCP tools in Claude/Anthropic format.
+    @MainActor static var claudeFormat: [[String: Any]] {
+        var tools = commonTools.map { tool in
             claudeTool(name: tool.name, description: tool.description,
                        properties: tool.properties, required: tool.required)
         }
+        for tool in MCPService.shared.discoveredTools {
+            let schema = (try? JSONSerialization.jsonObject(with: Data(tool.inputSchemaJSON.utf8))) as? [String: Any]
+            tools.append([
+                "name": "mcp_\(tool.serverName)_\(tool.name)",
+                "description": "[MCP:\(tool.serverName)] \(tool.description)",
+                "input_schema": schema ?? ["type": "object", "properties": [:] as [String: Any]],
+            ] as [String: Any])
+        }
+        return tools
     }
 
     // MARK: - Ollama (OpenAI) Format
@@ -704,11 +713,23 @@ enum AgentTools {
         ),
     ]
 
-    /// All common tools + Ollama-specific tools in Ollama/OpenAI format.
-    static var ollamaFormat: [[String: Any]] {
-        (commonTools + ollamaOnlyTools).map { tool in
+    /// All common tools + Ollama-specific tools + MCP tools in Ollama/OpenAI format.
+    @MainActor static var ollamaFormat: [[String: Any]] {
+        var tools = (commonTools + ollamaOnlyTools).map { tool in
             ollamaTool(name: tool.name, description: tool.description,
                        properties: tool.properties, required: tool.required)
         }
+        for tool in MCPService.shared.discoveredTools {
+            let schema = (try? JSONSerialization.jsonObject(with: Data(tool.inputSchemaJSON.utf8))) as? [String: Any]
+            tools.append([
+                "type": "function",
+                "function": [
+                    "name": "mcp_\(tool.serverName)_\(tool.name)",
+                    "description": "[MCP:\(tool.serverName)] \(tool.description)",
+                    "parameters": schema ?? ["type": "object", "properties": [:] as [String: Any]],
+                ] as [String: Any],
+            ] as [String: Any])
+        }
+        return tools
     }
 }

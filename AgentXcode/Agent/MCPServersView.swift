@@ -101,9 +101,7 @@ struct MCPServersView: View {
         } message: {
             Text("Paste MCP server JSON configuration")
         }
-        .task {
-            await autoStartServers()
-        }
+        // No auto-start here - that happens at app launch in AgentApp
     }
 
     // MARK: - Status (single source of truth: MCPService)
@@ -120,15 +118,6 @@ struct MCPServersView: View {
     }
 
     // MARK: - Actions
-
-    private func autoStartServers() async {
-        let toStart = registry.servers.filter { $0.autoStart && $0.enabled }
-        for server in toStart {
-            connectingIds.insert(server.id)
-        }
-        await mcpService.startAutoStartServers()
-        connectingIds.removeAll()
-    }
 
     private func toggleServer(_ server: MCPServerConfig) async {
         let isOn = mcpService.connectedServerIds.contains(server.id) || connectingIds.contains(server.id)
@@ -157,12 +146,11 @@ struct MCPServersView: View {
     @ViewBuilder
     private func serverRow(_ server: MCPServerConfig) -> some View {
         let status = statusFor(server.id)
-        let isOn = mcpService.connectedServerIds.contains(server.id) || connectingIds.contains(server.id)
 
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 Toggle("", isOn: Binding(
-                    get: { isOn },
+                    get: { mcpService.connectedServerIds.contains(server.id) || connectingIds.contains(server.id) },
                     set: { _ in Task { await toggleServer(server) } }
                 ))
                 .toggleStyle(.switch)

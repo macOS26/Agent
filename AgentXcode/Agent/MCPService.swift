@@ -66,7 +66,7 @@ final class MCPService: @unchecked Sendable {
     /// Start all servers marked with autoStart
     func startAutoStartServers() async {
         let autoStartConfigs = MCPServerRegistry.shared.servers
-            .filter { $0.autoStart && $0.enabled }
+            .filter { $0.autoStart && $0.enabled && !connectedServerIds.contains($0.id) }
 
         for config in autoStartConfigs {
             do {

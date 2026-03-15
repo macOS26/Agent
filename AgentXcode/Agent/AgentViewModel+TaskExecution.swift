@@ -1,4 +1,5 @@
 @preconcurrency import Foundation
+import MCPClient
 
 // MARK: - Task Execution
 
@@ -298,6 +299,53 @@ extension AgentViewModel {
                             history.add(TaskRecord(prompt: prompt, summary: summary, commandsRun: commandsRun), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
                             isRunning = false
                             return
+                        }
+
+                        // MARK: MCP tool calls (mcp_ServerName_toolName)
+
+                        if name.hasPrefix("mcp_") {
+                            let parts = name.dropFirst(4).split(separator: "_", maxSplits: 1)
+                            let serverName = String(parts.first ?? "")
+                            let toolName = String(parts.last ?? "")
+                            appendLog("MCP[\(serverName)]: \(toolName)")
+                            flushLog()
+
+                            var mcpOutput = ""
+                            if let mcpTool = MCPService.shared.discoveredTools.first(where: {
+                                $0.serverName == serverName && $0.name == toolName
+                            }) {
+                                do {
+                                    let args = input.mapValues { value -> JSONValue in
+                                        if let s = value as? String { return .string(s) }
+                                        if let i = value as? Int { return .int(i) }
+                                        if let d = value as? Double { return .double(d) }
+                                        if let b = value as? Bool { return .bool(b) }
+                                        return .string(String(describing: value))
+                                    }
+                                    let result = try await MCPService.shared.callTool(
+                                        serverId: mcpTool.serverId,
+                                        name: toolName,
+                                        arguments: args
+                                    )
+                                    mcpOutput = result.content.compactMap { block -> String? in
+                                        if case .text(let t) = block { return t }
+                                        return nil
+                                    }.joined(separator: "\n")
+                                } catch {
+                                    mcpOutput = "MCP error: \(error.localizedDescription)"
+                                }
+                            } else {
+                                mcpOutput = "MCP tool not found: \(serverName)/\(toolName)"
+                            }
+                            appendLog(mcpOutput)
+                            flushLog()
+                            toolResults.append([
+                                "type": "tool_result",
+                                "tool_use_id": toolId,
+                                "content": mcpOutput,
+                            ])
+                            consecutiveNoTool = 0
+                            continue
                         }
 
                         // MARK: Pure file I/O tools (CodingService — no processes)
