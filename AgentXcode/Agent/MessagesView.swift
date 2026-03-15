@@ -86,7 +86,7 @@ struct MessagesView: View {
         }
         .padding(16)
         .frame(width: 380)
-        .frame(maxHeight: 240)
+        .frame(maxHeight: 480)
         .onAppear {
             viewModel.refreshMessageRecipients()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
