@@ -25,7 +25,7 @@ final class ScriptService {
     private let packageLock = NSLock()
     
     /// Serial queue for script compilation (prevents concurrent swift build calls)
-    private let compilationQueue = DispatchQueue(label: "com.agent.scriptcompilation", qos: .userInitiated)
+    nonisolated(unsafe) private static let compilationQueue = DispatchQueue(label: "com.agent.scriptcompilation", qos: .userInitiated)
 
     // MARK: - Bundle paths
 
@@ -423,7 +423,7 @@ final class ScriptService {
         let path = dylibPath(name: scriptName)
 
         return await withCheckedContinuation { continuation in
-            compilationQueue.async {
+            Self.compilationQueue.async {
                 // Set arguments via environment variable for scripts that need them
                 if !arguments.isEmpty {
                     setenv("AGENT_SCRIPT_ARGS", arguments, 1)
@@ -492,5 +492,11 @@ final class ScriptService {
                 continuation.resume(returning: (output, status))
             }
         }
+    }
+
+    /// Block until any in-flight compilation/script work finishes.
+    /// Call before exit to avoid stdout deadlock in C++ static destructors.
+    nonisolated static func drainCompilationQueue() {
+        compilationQueue.sync {}
     }
 }

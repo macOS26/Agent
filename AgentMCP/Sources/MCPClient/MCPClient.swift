@@ -359,9 +359,6 @@ public actor MCPClient {
     private var discoveredResources: [UUID: [DiscoveredResource]] = [:]
     private var errors: [UUID: String] = [:]
 
-    /// Per-server concurrent request count for rate limiting
-    private var activeRequests: [UUID: Int] = [:]
-    private static let maxConcurrentRequests = 10
 
     public init() {}
 
@@ -505,14 +502,6 @@ public actor MCPClient {
             discoveredTools.removeValue(forKey: serverId)
             throw MCPClientError.connectionFailed("Server process is no longer running")
         }
-
-        // Per-server concurrency limit
-        let active = activeRequests[serverId, default: 0]
-        guard active < Self.maxConcurrentRequests else {
-            throw MCPClientError.connectionFailed("Too many concurrent requests (\(Self.maxConcurrentRequests)) to server")
-        }
-        activeRequests[serverId] = active + 1
-        defer { activeRequests[serverId] = max(0, (activeRequests[serverId] ?? 1) - 1) }
 
         let args = arguments.mapValues(\.anyValue)
 

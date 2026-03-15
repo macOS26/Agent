@@ -216,19 +216,6 @@ struct AccessibilityServiceTests {
         #expect(result.hasPrefix("{"))
     }
     
-    // MARK: - Rate Limiting Tests
-    
-    @Test("Rate limiter allows spaced actions")
-    func rateLimiterAllowsSpacedActions() {
-        // First action should proceed immediately
-        let start = Date()
-        _ = service.typeText("a", at: nil, y: nil)
-        let elapsed = Date().timeIntervalSince(start)
-        
-        // Should complete quickly (no artificial delay in tests)
-        #expect(elapsed < 1.0)
-    }
-    
     // MARK: - Audit Log Tests
     
     @Test("getAuditLog returns string")

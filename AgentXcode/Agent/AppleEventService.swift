@@ -16,11 +16,6 @@ final class AppleEventService: @unchecked Sendable {
         "duplicate", "save", "set", "sendMessage"
     ]
 
-    // SECURITY: Rate limiting to prevent DoS attacks
-    private var lastRequestTime: [String: Date] = [:]
-    private let minRequestInterval: TimeInterval = 0.5  // 500ms between requests per app
-    private let rateLimitLock = NSLock()
-
     /// Execute a query against a scriptable application.
     /// Runs osascript first to trigger the Automation permission dialog if needed,
     /// then runs the ScriptingBridge query.
@@ -30,33 +25,12 @@ final class AppleEventService: @unchecked Sendable {
         guard !sanitizedBundleID.isEmpty else {
             return "Error: Invalid bundle identifier. Must be in reverse-DNS format (e.g., com.apple.Music)"
         }
-        
-        // SECURITY: Rate limiting to prevent DoS
-        if !checkRateLimit(for: sanitizedBundleID) {
-            return "Error: Rate limit exceeded for \(sanitizedBundleID). Please wait before making more requests."
-        }
-        
+
         let appName = resolveAppName(sanitizedBundleID)
         // Run a trivial osascript to trigger the macOS Automation permission dialog.
         // This is what actually makes the "Agent wants to control X" prompt appear.
         grantPermissionViaOsascript(appName: appName, bundleID: sanitizedBundleID)
         return run(bundleID: sanitizedBundleID, operations: operations, allowWrites: allowWrites)
-    }
-
-    /// Check rate limit for an app. Returns false if request should be throttled.
-    private func checkRateLimit(for bundleID: String) -> Bool {
-        rateLimitLock.lock()
-        defer { rateLimitLock.unlock() }
-        
-        let now = Date()
-        if let lastTime = lastRequestTime[bundleID] {
-            let elapsed = now.timeIntervalSince(lastTime)
-            if elapsed < minRequestInterval {
-                return false
-            }
-        }
-        lastRequestTime[bundleID] = now
-        return true
     }
 
     /// Validate and sanitize a bundle identifier.

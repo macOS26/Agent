@@ -636,29 +636,6 @@ final class AccessibilityService: @unchecked Sendable {
         }
     }
     
-    // MARK: - Rate Limiting (Phase 5)
-    
-    private var lastActionTime: Date = .distantPast
-    private let minActionInterval: TimeInterval = 0.05  // 50ms minimum between actions
-    
-    private func checkRateLimit() -> Bool {
-        let now = Date()
-        guard now.timeIntervalSince(lastActionTime) >= minActionInterval else {
-            return false
-        }
-        lastActionTime = now
-        return true
-    }
-    
-    /// Execute an action with rate limiting
-    func withRateLimit<T>(_ action: () -> T) -> T {
-        // Spin-wait if rate limited (short waits are fine for accessibility operations)
-        while !checkRateLimit() {
-            Thread.sleep(forTimeInterval: 0.01)
-        }
-        return action()
-    }
-    
     // MARK: - Audit Logging (Phase 5)
     
     private static nonisolated(unsafe) var auditLog: [String] = []

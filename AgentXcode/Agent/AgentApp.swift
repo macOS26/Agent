@@ -1,8 +1,22 @@
 import SwiftUI
 import SwiftData
 
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        // Drain the script compilation queue before exit to prevent a deadlock
+        // where C++ static destructors (DoIOSInit) try to fflush(stdout) while
+        // the compilation queue holds the flockfile(stdout) lock.
+        DispatchQueue.global().async {
+            ScriptService.drainCompilationQueue()
+            NSApp.reply(toApplicationShouldTerminate: true)
+        }
+        return .terminateLater
+    }
+}
+
 @main
 struct AgentApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     var body: some Scene {
         WindowGroup {
             ContentView()
