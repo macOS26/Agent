@@ -397,6 +397,9 @@ enum AgentTools {
         - Element arrays: `app.accounts?()` returns SBElementArray, iterate with `.object(at: i) as? Type`
         - Properties are @objc optional: always use `?.` and `??` for defaults
         - Methods like moveTo, delete: `object.moveTo?(target as? SBObject)`
+        - NEVER do redundant conditional downcasts on SBObject — `as? SBObject` on a value that is \
+        already `SBObject?` does nothing and produces a compiler warning. Just use optional binding: \
+        `if let container = track.container { ... }` — NOT `if let container = track.container as? SBObject`.
         - MUSIC: To add tracks to a playlist, use the library playlist's searchFor method to find tracks, \
         then call duplicateTo on each result to copy it into the target playlist:
         ```
