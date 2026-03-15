@@ -77,8 +77,8 @@ struct MessagesView: View {
             }
         }
         .padding(16)
-        .frame(width: 380)
-        .frame(maxHeight: 450)
+        .frame(width: 380, height: 600)
+        .frame(minHeight: 300, maxHeight: 800)
         .onAppear {
             viewModel.refreshMessageRecipients()
         }

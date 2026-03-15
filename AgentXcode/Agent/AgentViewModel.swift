@@ -530,14 +530,13 @@ final class AgentViewModel {
             // Seed the last-seen ROWID so we only act on NEW messages
             await self.seedLastSeenROWID()
 
+            // Pulse on startup
+            self.flashMessagesDot()
+
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 5_000_000_000) // poll every 5s
                 guard !Task.isCancelled else { break }
-                self.messagesPolling = true
                 await self.pollMessages()
-                // Keep dot green briefly then turn off
-                try? await Task.sleep(nanoseconds: 500_000_000)
-                self.messagesPolling = false
             }
         }
     }
@@ -545,6 +544,16 @@ final class AgentViewModel {
     func stopMessagesMonitor() {
         messagesMonitorTask?.cancel()
         messagesMonitorTask = nil
+        messagesPolling = false
+    }
+
+    /// Briefly flash the Messages StatusDot green.
+    private func flashMessagesDot() {
+        messagesPolling = true
+        Task {
+            try? await Task.sleep(nanoseconds: 800_000_000)
+            messagesPolling = false
+        }
     }
 
     // Stored outside @MainActor so nonisolated static methods can access it
@@ -684,7 +693,8 @@ final class AgentViewModel {
             // Skip messages from chats the user hasn't enabled (if any are selected)
             if !enabledChatIds.isEmpty && !enabledChatIds.contains(row.chatId) { continue }
 
-            // Show incoming message in the log
+            // Pulse the dot and show incoming message in the log
+            flashMessagesDot()
             appendLog("iMessage: \(row.text)")
             flushLog()
 

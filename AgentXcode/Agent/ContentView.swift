@@ -109,6 +109,15 @@ struct ContentView: View {
                     MCPServersView()
                 }
 
+                Button { showSettings.toggle() } label: {
+                    Image(systemName: "gear")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .popover(isPresented: $showSettings) {
+                    SettingsView(viewModel: viewModel)
+                }
+
                 Button { showHistory.toggle() } label: {
                     Image(systemName: "clock.arrow.circlepath")
                 }
@@ -124,15 +133,6 @@ struct ContentView: View {
                 .buttonStyle(.bordered)
                 .controlSize(.small)
                 .disabled(viewModel.isRunning)
-
-                Button { showSettings.toggle() } label: {
-                    Image(systemName: "gear")
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                .popover(isPresented: $showSettings) {
-                    SettingsView(viewModel: viewModel)
-                }
             }
             .padding(.horizontal)
             .padding(.vertical, 8)
