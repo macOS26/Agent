@@ -178,13 +178,16 @@ extension AgentViewModel {
     }
 
     func appendLog(_ message: String) {
+        // Flush any pending stream content first so it appears before this log entry
+        flushStreamBuffer()
+
         let timestamp = Self.timestampFormatter.string(from: Date())
         let cached = snapshotImages(in: message)
         let formattedMessage = "[\(timestamp)] \(cached)"
-        
+
         // Store in SwiftData
         ChatHistoryStore.shared.appendMessage(formattedMessage)
-        
+
         // Also add to buffer for immediate display
         logBuffer += formattedMessage + "\n"
         scheduleLogFlush()
@@ -192,6 +195,8 @@ extension AgentViewModel {
 
     func appendRawOutput(_ text: String) {
         guard !text.isEmpty else { return }
+        // Flush any pending stream content first so it appears before raw output
+        flushStreamBuffer()
         // Count newlines in this chunk
         let newlines = text.reduce(0) { $0 + ($1 == "\n" ? 1 : 0) }
         streamLineCount += max(newlines, 1)  // at least 1 line per chunk
@@ -308,6 +313,12 @@ extension AgentViewModel {
     func flushLog() {
         logFlushTask?.cancel()
         logFlushTask = nil
+        // Drain stream buffer first so streamed text precedes the log entries
+        if !streamBuffer.isEmpty {
+            ChatHistoryStore.shared.appendStreamingContent(streamBuffer)
+            activityLog += streamBuffer
+            streamBuffer = ""
+        }
         if !logBuffer.isEmpty {
             ChatHistoryStore.shared.save()
             activityLog += logBuffer
