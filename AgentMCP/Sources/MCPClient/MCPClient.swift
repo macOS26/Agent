@@ -516,15 +516,23 @@ public actor MCPClient {
         let isError = result["isError"] as? Bool ?? false
         var contentBlocks: [ToolResult.ContentBlock] = []
 
+        let maxTextSize = 1_024 * 1_024       // 1 MB per text block
+        let maxImageSize = 10 * 1_024 * 1_024  // 10 MB per image (base64)
+        let maxContentBlocks = 100
+
         if let contentArray = result["content"] as? [[String: Any]] {
-            for item in contentArray {
+            for item in contentArray.prefix(maxContentBlocks) {
                 let type = item["type"] as? String ?? "text"
                 switch type {
                 case "text":
                     let text = item["text"] as? String ?? ""
-                    contentBlocks.append(.text(text))
+                    contentBlocks.append(.text(String(text.prefix(maxTextSize))))
                 case "image":
                     let data = item["data"] as? String ?? ""
+                    guard data.count <= maxImageSize else {
+                        contentBlocks.append(.text("[image too large: \(data.count) bytes]"))
+                        break
+                    }
                     let mimeType = item["mimeType"] as? String ?? "image/png"
                     contentBlocks.append(.image(data: data, mimeType: mimeType))
                 case "resource":
@@ -532,10 +540,10 @@ public actor MCPClient {
                     let uri = resource["uri"] as? String ?? ""
                     let name = resource["name"] as? String ?? uri
                     let mimeType = resource["mimeType"] as? String
-                    contentBlocks.append(.resource(uri: uri, name: name, mimeType: mimeType))
+                    contentBlocks.append(.resource(uri: String(uri.prefix(2048)), name: String(name.prefix(256)), mimeType: mimeType))
                 default:
                     let text = item["text"] as? String ?? "[\(type)]"
-                    contentBlocks.append(.text(text))
+                    contentBlocks.append(.text(String(text.prefix(maxTextSize))))
                 }
             }
         }
