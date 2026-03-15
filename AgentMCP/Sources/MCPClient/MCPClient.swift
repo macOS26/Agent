@@ -103,6 +103,11 @@ private final class StdioConnection: @unchecked Sendable {
         self.reader = reader
         self.errorReader = errorReader
 
+        // Drain stderr to prevent the server from blocking on a full pipe (64 KB OS limit)
+        errorReader.readabilityHandler = { handle in
+            _ = handle.availableData
+        }
+
         // Set up non-blocking read via readabilityHandler
         reader.readabilityHandler = { [weak self] handle in
             let data = handle.availableData
@@ -207,6 +212,7 @@ private final class StdioConnection: @unchecked Sendable {
 
     func disconnect() {
         reader.readabilityHandler = nil
+        errorReader.readabilityHandler = nil
         lock.lock()
         let leftover = pending
         pending.removeAll()
