@@ -326,6 +326,18 @@ extension AgentViewModel {
                             flushLog()
 
                             var mcpOutput = ""
+
+                            // Validate total argument size (1 MB cap)
+                            let argData = try? JSONSerialization.data(withJSONObject: input)
+                            if let argData, argData.count > 1_024 * 1_024 {
+                                mcpOutput = "MCP error: arguments exceed 1 MB limit"
+                                appendLog(mcpOutput)
+                                flushLog()
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": mcpOutput])
+                                consecutiveNoTool = 0
+                                continue
+                            }
+
                             if let mcpTool = MCPService.shared.discoveredTools.first(where: {
                                 $0.serverName == serverName && $0.name == toolName
                             }) {
