@@ -30,16 +30,17 @@ struct ActivityLogView: NSViewRepresentable {
         guard let textView = scrollView.documentView as? NSTextView else { return }
         let coord = context.coordinator
 
-        // Wire up HTML snapshot callback to trigger re-render
-        let currentText = text
-        let currentSearch = searchText
-        let currentIndex = currentMatchIndex
-        let matchCallback = onMatchCount
+        // Store latest text in coordinator so HTML snapshot callback always uses fresh data
+        coord.latestText = text
+        coord.latestSearchText = searchText
+        coord.latestMatchIndex = currentMatchIndex
+        coord.latestMatchCallback = onMatchCount
         coord.onHTMLReady = { [weak textView, weak coord] in
             guard let textView, let coord else { return }
-            let attributed = coord.buildAttributedString(from: currentText)
+            let attributed = coord.buildAttributedString(from: coord.latestText)
             textView.textStorage?.setAttributedString(attributed)
-            coord.applySearchHighlighting(textView: textView, searchText: currentSearch, currentMatch: currentIndex, onMatchCount: matchCallback)
+            coord.lastLength = (coord.latestText as NSString).length
+            coord.applySearchHighlighting(textView: textView, searchText: coord.latestSearchText, currentMatch: coord.latestMatchIndex, onMatchCount: coord.latestMatchCallback)
             coord.throttledScrollToEnd(textView)
         }
 
@@ -54,12 +55,12 @@ struct ActivityLogView: NSViewRepresentable {
             coord.lastSearch = ""
             coord.lastMatchIndex = -1
             coord.clearCache()
-            matchCallback?(0)
+            onMatchCount?(0)
             return
         }
 
         let len = (text as NSString).length
-        let searchChanged = currentSearch != coord.lastSearch || currentIndex != coord.lastMatchIndex
+        let searchChanged = searchText != coord.lastSearch || currentMatchIndex != coord.lastMatchIndex
         guard len != coord.lastLength || coord.showingPlaceholder || searchChanged else { return }
 
         let textChanged = len != coord.lastLength || coord.showingPlaceholder
@@ -71,9 +72,9 @@ struct ActivityLogView: NSViewRepresentable {
             coord.lastLength = len
         }
 
-        coord.applySearchHighlighting(textView: textView, searchText: currentSearch, currentMatch: currentIndex, onMatchCount: matchCallback)
-        coord.lastSearch = currentSearch
-        coord.lastMatchIndex = currentIndex
+        coord.applySearchHighlighting(textView: textView, searchText: searchText, currentMatch: currentMatchIndex, onMatchCount: onMatchCount)
+        coord.lastSearch = searchText
+        coord.lastMatchIndex = currentMatchIndex
 
         if textChanged {
             coord.throttledScrollToEnd(textView)
@@ -132,6 +133,11 @@ struct ActivityLogView: NSViewRepresentable {
         var lastSearch = ""
         var lastMatchIndex = -1
         let font = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
+        /// Latest state from updateNSView — used by onHTMLReady to avoid stale captures
+        var latestText = ""
+        var latestSearchText = ""
+        var latestMatchIndex = 0
+        var latestMatchCallback: ((Int) -> Void)?
         /// Throttle scrollToEnd to avoid hyper-scrolling during fast streaming
         var lastScrollTime: CFAbsoluteTime = 0
         var pendingScrollWork: DispatchWorkItem?
@@ -242,10 +248,15 @@ struct ActivityLogView: NSViewRepresentable {
             pattern: #"^(\s*)[-*+]\s+(.*)"#, options: []
         )
         private static let hrPattern: NSRegularExpression? = try? NSRegularExpression(
-            pattern: #"^[-*_]{3,}\s*$"#, options: []
+            pattern: #"^\s*([-*_]\s*){3,}$"#, options: []
         )
         private static let blockquotePattern: NSRegularExpression? = try? NSRegularExpression(
             pattern: #"^>\s?(.*)"#, options: []
+        )
+
+        /// Strip ANSI escape sequences so they don't appear as garbage
+        private static let ansiEscapePattern: NSRegularExpression? = try? NSRegularExpression(
+            pattern: #"\x1B\[[0-9;]*[A-Za-z]"#, options: []
         )
 
         func buildAttributedString(from text: String) -> NSAttributedString {
@@ -254,13 +265,21 @@ struct ActivityLogView: NSViewRepresentable {
                 .foregroundColor: NSColor.labelColor
             ]
 
-            let nsText = text as NSString
+            // Strip ANSI escape codes from the text
+            let cleanText: String
+            if let rx = Self.ansiEscapePattern {
+                cleanText = rx.stringByReplacingMatches(in: text, range: NSRange(location: 0, length: (text as NSString).length), withTemplate: "")
+            } else {
+                cleanText = text
+            }
+
+            let nsText = cleanText as NSString
             let fullRange = NSRange(location: 0, length: nsText.length)
-            let imageMatches = Self.imagePathPattern?.matches(in: text, range: fullRange) ?? []
-            let htmlMatches = Self.htmlPathPattern?.matches(in: text, range: fullRange) ?? []
+            let imageMatches = Self.imagePathPattern?.matches(in: cleanText, range: fullRange) ?? []
+            let htmlMatches = Self.htmlPathPattern?.matches(in: cleanText, range: fullRange) ?? []
 
             guard !imageMatches.isEmpty || !htmlMatches.isEmpty else {
-                return renderMarkdown(text)
+                return renderMarkdown(cleanText)
             }
 
             // Merge all matches sorted by location
@@ -569,11 +588,6 @@ struct ActivityLogView: NSViewRepresentable {
 
         /// Renders a single line, detecting block-level elements first, then inline.
         private func renderMarkdownLine(_ line: String) -> NSAttributedString {
-            // ANSI first pass: if escape codes are present, parse them directly
-            if ANSIParser.containsANSI(line) {
-                return ANSIParser.parse(line, font: font)
-            }
-
             let nsLine = line as NSString
             let fullRange = NSRange(location: 0, length: nsLine.length)
 
