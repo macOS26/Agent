@@ -8,6 +8,8 @@ struct MCPServerConfig: Codable, Identifiable, Hashable {
     var command: String
     var arguments: [String]
     var environment: [String: String]
+
+    // Agent-specific fields — stored in UserDefaults, NOT in JSON
     var enabled: Bool
     var autoStart: Bool
 
@@ -21,40 +23,31 @@ struct MCPServerConfig: Codable, Identifiable, Hashable {
         self.autoStart = autoStart
     }
 
-    // Accept both standard MCP format (args/env) and Agent format (arguments/environment)
+    // Only encode/decode MCP-standard fields in JSON
     private enum CodingKeys: String, CodingKey {
-        case id, name, command
-        case arguments, args
-        case environment, env
-        case enabled, autoStart
+        case name, command, args, env
     }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        id = try c.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
         name = try c.decodeIfPresent(String.self, forKey: .name) ?? ""
         command = try c.decode(String.self, forKey: .command)
-        // Accept "args" (MCP standard) or "arguments" (Agent)
-        arguments = try c.decodeIfPresent([String].self, forKey: .args)
-            ?? c.decodeIfPresent([String].self, forKey: .arguments) ?? []
-        // Accept "env" (MCP standard) or "environment" (Agent)
-        environment = try c.decodeIfPresent([String: String].self, forKey: .env)
-            ?? c.decodeIfPresent([String: String].self, forKey: .environment) ?? [:]
-        enabled = try c.decodeIfPresent(Bool.self, forKey: .enabled) ?? true
-        autoStart = try c.decodeIfPresent(Bool.self, forKey: .autoStart) ?? true
+        arguments = try c.decodeIfPresent([String].self, forKey: .args) ?? []
+        environment = try c.decodeIfPresent([String: String].self, forKey: .env) ?? [:]
+        // Generate ID; load Agent prefs from UserDefaults after decode
+        id = UUID()
+        enabled = true
+        autoStart = true
     }
 
     func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
-        try c.encode(id, forKey: .id)
-        try c.encode(name, forKey: .name)
         try c.encode(command, forKey: .command)
-        try c.encode(arguments, forKey: .args)
-        try c.encode(environment, forKey: .env)
-        try c.encode(enabled, forKey: .enabled)
-        try c.encode(autoStart, forKey: .autoStart)
+        if !arguments.isEmpty { try c.encode(arguments, forKey: .args) }
+        if !environment.isEmpty { try c.encode(environment, forKey: .env) }
+        try c.encode(name, forKey: .name)
     }
-    
+
     /// Create from a JSON string (for importing)
     static func fromJSON(_ jsonString: String) -> MCPServerConfig? {
         guard let data = jsonString.data(using: .utf8),
@@ -63,11 +56,11 @@ struct MCPServerConfig: Codable, Identifiable, Hashable {
         }
         return config
     }
-    
-    /// Export to JSON string
+
+    /// Export to JSON string (MCP-standard fields only)
     func toJSON() -> String {
         let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.outputFormatting = [.prettyPrinted]
         guard let data = try? encoder.encode(self),
               let json = String(data: data, encoding: .utf8) else {
             return "{}"
@@ -76,12 +69,45 @@ struct MCPServerConfig: Codable, Identifiable, Hashable {
     }
 }
 
+// MARK: - Agent Preferences (UserDefaults, keyed by server name)
+
+extension MCPServerConfig {
+    private static let enabledPrefix = "mcp.enabled."
+    private static let autoStartPrefix = "mcp.autoStart."
+
+    /// Load Agent-specific prefs from UserDefaults
+    mutating func loadPrefs() {
+        guard !name.isEmpty else { return }
+        let defs = UserDefaults.standard
+        if defs.object(forKey: Self.enabledPrefix + name) != nil {
+            enabled = defs.bool(forKey: Self.enabledPrefix + name)
+        }
+        if defs.object(forKey: Self.autoStartPrefix + name) != nil {
+            autoStart = defs.bool(forKey: Self.autoStartPrefix + name)
+        }
+    }
+
+    /// Save Agent-specific prefs to UserDefaults
+    func savePrefs() {
+        guard !name.isEmpty else { return }
+        UserDefaults.standard.set(enabled, forKey: Self.enabledPrefix + name)
+        UserDefaults.standard.set(autoStart, forKey: Self.autoStartPrefix + name)
+    }
+
+    /// Remove Agent-specific prefs from UserDefaults
+    func removePrefs() {
+        guard !name.isEmpty else { return }
+        UserDefaults.standard.removeObject(forKey: Self.enabledPrefix + name)
+        UserDefaults.standard.removeObject(forKey: Self.autoStartPrefix + name)
+    }
+}
+
 // MARK: - MCP Server Registry
 
 @MainActor @Observable
 final class MCPServerRegistry {
     static let shared = MCPServerRegistry()
-    
+
     private let configFileURL: URL = {
         guard let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
             return URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("mcp_servers.json")
@@ -90,109 +116,121 @@ final class MCPServerRegistry {
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir.appendingPathComponent("mcp_servers.json")
     }()
-    
+
     private(set) var servers: [MCPServerConfig] = []
-    
+
     private init() {
         load()
     }
-    
+
     // MARK: - CRUD Operations
-    
+
     func add(_ config: MCPServerConfig) {
+        config.savePrefs()
         servers.append(config)
         save()
     }
-    
+
     func update(_ config: MCPServerConfig) {
         if let index = servers.firstIndex(where: { $0.id == config.id }) {
+            config.savePrefs()
             servers[index] = config
             save()
         }
     }
-    
+
     func remove(at id: UUID) {
+        if let server = servers.first(where: { $0.id == id }) {
+            server.removePrefs()
+        }
         servers.removeAll { $0.id == id }
         save()
     }
-    
+
     func toggleEnabled(_ id: UUID) {
         if let index = servers.firstIndex(where: { $0.id == id }) {
             servers[index].enabled.toggle()
-            save()
+            servers[index].savePrefs()
         }
     }
 
     func setEnabled(_ id: UUID, _ enabled: Bool) {
         if let index = servers.firstIndex(where: { $0.id == id }) {
             servers[index].enabled = enabled
-            save()
+            servers[index].savePrefs()
         }
     }
-    
+
     // MARK: - Persistence
-    
+
     private func load() {
         guard FileManager.default.fileExists(atPath: configFileURL.path),
               let data = try? Data(contentsOf: configFileURL),
               let loaded = try? JSONDecoder().decode([MCPServerConfig].self, from: data) else {
-            // Load defaults if no config exists
             servers = Self.defaultServers
             return
         }
-        servers = loaded
+        // Hydrate Agent-specific prefs from UserDefaults
+        servers = loaded.map { var s = $0; s.loadPrefs(); return s }
     }
-    
+
     private func save() {
         let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.outputFormatting = [.prettyPrinted]
         guard let data = try? encoder.encode(servers) else { return }
-        
+
         Task.detached(priority: .background) { [url = configFileURL, data] in
             try? data.write(to: url, options: .atomic)
         }
     }
-    
+
     // MARK: - Default Servers
-    
-    static let defaultServers: [MCPServerConfig] = [
-        // Example: Filesystem MCP server (if installed)
-        // MCPServerConfig(
-        //     name: "Filesystem",
-        //     command: "/usr/local/bin/mcp-filesystem",
-        //     arguments: ["/Users/toddbruss/Documents"],
-        //     environment: [:],
-        //     enabled: false,
-        //     autoStart: false
-        // )
-    ]
-    
+
+    static let defaultServers: [MCPServerConfig] = []
+
     // MARK: - Import/Export
-    
+
     func exportAll() -> String {
         let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.outputFormatting = [.prettyPrinted]
         guard let data = try? encoder.encode(servers),
               let json = String(data: data, encoding: .utf8) else {
             return "[]"
         }
         return json
     }
-    
+
     func importFrom(_ jsonString: String) -> Bool {
-        guard let data = jsonString.data(using: .utf8),
-              let imported = try? JSONDecoder().decode([MCPServerConfig].self, from: data) else {
-            return false
+        guard let data = jsonString.data(using: .utf8) else { return false }
+
+        // Try array of servers
+        if let imported = try? JSONDecoder().decode([MCPServerConfig].self, from: data) {
+            for var config in imported {
+                config.loadPrefs()
+                if let index = servers.firstIndex(where: { $0.name == config.name }) {
+                    config.id = servers[index].id
+                    servers[index] = config
+                } else {
+                    servers.append(config)
+                }
+            }
+            save()
+            return true
         }
-        // Merge: update existing, add new
-        for config in imported {
-            if let index = servers.firstIndex(where: { $0.id == config.id }) {
+
+        // Try single server
+        if var config = try? JSONDecoder().decode(MCPServerConfig.self, from: data) {
+            config.loadPrefs()
+            if let index = servers.firstIndex(where: { $0.name == config.name }) {
+                config.id = servers[index].id
                 servers[index] = config
             } else {
                 servers.append(config)
             }
+            save()
+            return true
         }
-        save()
-        return true
+
+        return false
     }
 }

@@ -69,7 +69,7 @@ struct MCPServersView: View {
                 Text("MCP (Model Context Protocol) servers provide tools to Agent!")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Text("Toggle servers on/off to connect/disconnect.")
+                Text("Only stdio transport servers are currently supported.")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }
