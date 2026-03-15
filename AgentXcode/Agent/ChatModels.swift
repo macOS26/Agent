@@ -7,15 +7,18 @@ final class ChatMessage {
     var timestamp: Date
     var content: String
     var isStreaming: Bool
-    
+    /// Monotonically increasing sequence number — guarantees insertion order when timestamps collide
+    var ordinal: Int
+
     // Relationship to task - many messages belong to one task
     var task: ChatTask?
-    
-    init(timestamp: Date = Date(), content: String, task: ChatTask? = nil, isStreaming: Bool = false) {
+
+    init(timestamp: Date = Date(), content: String, task: ChatTask? = nil, isStreaming: Bool = false, ordinal: Int = 0) {
         self.timestamp = timestamp
         self.content = content
         self.task = task
         self.isStreaming = isStreaming
+        self.ordinal = ordinal
     }
 }
 
@@ -47,8 +50,10 @@ final class ChatHistoryStore {
     
     var container: ModelContainer?
     var context: ModelContext?
-    
+
     private var currentTask: ChatTask?
+    /// Monotonically increasing counter for message ordering within a task
+    private var nextOrdinal: Int = 0
     
     private init() {
         do {
@@ -69,6 +74,7 @@ final class ChatHistoryStore {
         let task = ChatTask(prompt: prompt)
         context?.insert(task)
         currentTask = task
+        nextOrdinal = 0
         try? context?.save()
         return task.id
     }
@@ -90,14 +96,16 @@ final class ChatHistoryStore {
     /// Append a message to the current task
     func appendMessage(_ content: String, timestamp: Date = Date()) {
         guard let task = currentTask else { return }
-        let message = ChatMessage(timestamp: timestamp, content: content, task: task)
+        let message = ChatMessage(timestamp: timestamp, content: content, task: task, ordinal: nextOrdinal)
+        nextOrdinal += 1
         context?.insert(message)
     }
-    
+
     /// Append streaming content (LLM output)
     func appendStreamingContent(_ content: String) {
         guard let task = currentTask else { return }
-        let message = ChatMessage(timestamp: Date(), content: content, task: task, isStreaming: true)
+        let message = ChatMessage(timestamp: Date(), content: content, task: task, isStreaming: true, ordinal: nextOrdinal)
+        nextOrdinal += 1
         context?.insert(message)
     }
     
@@ -119,7 +127,12 @@ final class ChatHistoryStore {
             let recent = Array(tasks.prefix(limit))
             
             return recent.compactMap { task in
-                let sorted = task.messages.sorted { $0.timestamp < $1.timestamp }
+                let sorted = task.messages.sorted {
+                    // Primary: ordinal (monotonic insertion order)
+                    // Fallback: timestamp (for legacy data where ordinal is 0)
+                    if $0.ordinal != $1.ordinal { return $0.ordinal < $1.ordinal }
+                    return $0.timestamp < $1.timestamp
+                }
                 return (task: task, messages: sorted)
             }.reversed().map { $0 } // Reverse to get chronological order
         } catch {
