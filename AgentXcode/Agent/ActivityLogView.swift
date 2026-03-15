@@ -83,6 +83,31 @@ struct ActivityLogView: NSViewRepresentable {
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
+    /// Draws a solid horizontal line for markdown thematic breaks (---).
+    class HRLineCell: NSTextAttachmentCell {
+        let color: NSColor
+
+        init(color: NSColor) {
+            self.color = color
+            super.init(textCell: "")
+        }
+
+        @available(*, unavailable)
+        required init(coder: NSCoder) { fatalError() }
+
+        override func cellSize() -> NSSize { NSSize(width: 400, height: 8) }
+
+        override func draw(withFrame cellFrame: NSRect, in controlView: NSView?) {
+            let lineY = cellFrame.midY
+            let path = NSBezierPath()
+            path.move(to: NSPoint(x: cellFrame.minX, y: lineY))
+            path.line(to: NSPoint(x: cellFrame.maxX, y: lineY))
+            path.lineWidth = 0.5
+            color.setStroke()
+            path.stroke()
+        }
+    }
+
     /// Clickable copy-to-clipboard button for code blocks.
     class CopyButtonCell: NSTextAttachmentCell {
         let codeText: String
@@ -593,10 +618,12 @@ struct ActivityLogView: NSViewRepresentable {
 
             // Horizontal rule (check before bullet since --- could conflict)
             if Self.hrPattern?.firstMatch(in: line, range: fullRange) != nil {
-                return NSAttributedString(
-                    string: "────────────────────────────────",
-                    attributes: [.font: font, .foregroundColor: NSColor.separatorColor]
-                )
+                let result = NSMutableAttributedString(string: "\n", attributes: [.font: font])
+                let attachment = NSTextAttachment()
+                attachment.attachmentCell = HRLineCell(color: .separatorColor)
+                result.append(NSAttributedString(attachment: attachment))
+                result.append(NSAttributedString(string: "\n", attributes: [.font: font]))
+                return result
             }
 
             // Header
