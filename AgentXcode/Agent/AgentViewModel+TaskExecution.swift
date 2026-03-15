@@ -309,6 +309,15 @@ extension AgentViewModel {
                             let parts = name.dropFirst(4).split(separator: "_", maxSplits: 1)
                             let serverName = String(parts.first ?? "")
                             let toolName = String(parts.last ?? "")
+
+                            // Block disabled tools
+                            guard MCPService.shared.isToolEnabled(serverName: serverName, toolName: toolName) else {
+                                let msg = "Tool '\(toolName)' is disabled"
+                                appendLog("MCP[\(serverName)]: \(msg)")
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": msg])
+                                continue
+                            }
+
                             appendLog("MCP[\(serverName)]: \(toolName)")
                             flushLog()
 

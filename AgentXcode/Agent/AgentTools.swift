@@ -672,7 +672,8 @@ enum AgentTools {
             claudeTool(name: tool.name, description: tool.description,
                        properties: tool.properties, required: tool.required)
         }
-        for tool in MCPService.shared.discoveredTools {
+        let mcpService = MCPService.shared
+        for tool in mcpService.discoveredTools where mcpService.isToolEnabled(serverName: tool.serverName, toolName: tool.name) {
             let schema = (try? JSONSerialization.jsonObject(with: Data(tool.inputSchemaJSON.utf8))) as? [String: Any]
             tools.append([
                 "name": "mcp_\(tool.serverName)_\(tool.name)",
@@ -719,7 +720,8 @@ enum AgentTools {
             ollamaTool(name: tool.name, description: tool.description,
                        properties: tool.properties, required: tool.required)
         }
-        for tool in MCPService.shared.discoveredTools {
+        let mcpService = MCPService.shared
+        for tool in mcpService.discoveredTools where mcpService.isToolEnabled(serverName: tool.serverName, toolName: tool.name) {
             let schema = (try? JSONSerialization.jsonObject(with: Data(tool.inputSchemaJSON.utf8))) as? [String: Any]
             tools.append([
                 "type": "function",
