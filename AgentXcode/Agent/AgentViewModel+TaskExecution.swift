@@ -900,6 +900,78 @@ extension AgentViewModel {
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
+                        // Accessibility input simulation tools (Phase 2)
+                        if name == "ax_type_text" {
+                            let text = input["text"] as? String ?? ""
+                            let x = (input["x"] as? Double).map { CGFloat($0) }
+                            let y = (input["y"] as? Double).map { CGFloat($0) }
+                            appendLog("Typing: \(text.count) characters...")
+                            flushLog()
+                            let output = await Self.offMain {
+                                AccessibilityService.shared.typeText(text, at: x, y: y)
+                            }
+                            appendLog(output)
+                            commandsRun.append("ax_type_text")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        if name == "ax_click" {
+                            guard let xVal = input["x"] as? Double,
+                                  let yVal = input["y"] as? Double else {
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Error: x and y coordinates are required"])
+                                continue
+                            }
+                            let x = CGFloat(xVal)
+                            let y = CGFloat(yVal)
+                            let button = input["button"] as? String ?? "left"
+                            let clicks = input["clicks"] as? Int ?? 1
+                            appendLog("Clicking at (\(x), \(y))...")
+                            flushLog()
+                            let output = await Self.offMain {
+                                AccessibilityService.shared.clickAt(x: x, y: y, button: button, clicks: clicks)
+                            }
+                            appendLog(output)
+                            commandsRun.append("ax_click")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        if name == "ax_scroll" {
+                            guard let xVal = input["x"] as? Double,
+                                  let yVal = input["y"] as? Double else {
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Error: x and y coordinates are required"])
+                                continue
+                            }
+                            let x = CGFloat(xVal)
+                            let y = CGFloat(yVal)
+                            let deltaX = input["deltaX"] as? Int ?? 0
+                            let deltaY = input["deltaY"] as? Int ?? 0
+                            appendLog("Scrolling at (\(x), \(y))...")
+                            flushLog()
+                            let output = await Self.offMain {
+                                AccessibilityService.shared.scrollAt(x: x, y: y, deltaX: deltaX, deltaY: deltaY)
+                            }
+                            appendLog(output)
+                            commandsRun.append("ax_scroll")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        if name == "ax_press_key" {
+                            guard let keyCodeVal = input["keyCode"] as? Int else {
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Error: keyCode is required"])
+                                continue
+                            }
+                            let keyCode = UInt16(keyCodeVal)
+                            let modifiers = input["modifiers"] as? [String] ?? []
+                            appendLog("Pressing key code: \(keyCodeVal)...")
+                            flushLog()
+                            let output = await Self.offMain {
+                                AccessibilityService.shared.pressKey(virtualKey: keyCode, modifiers: modifiers)
+                            }
+                            appendLog(output)
+                            commandsRun.append("ax_press_key")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
                         // Client-side web search via Tavily (for Ollama providers)
                         if name == "web_search" {
                             let query = input["query"] as? String ?? ""

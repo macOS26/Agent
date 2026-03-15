@@ -149,18 +149,25 @@ enum AgentTools {
 
         Use these to interact with UI elements via the macOS Accessibility API:
 
+        READ-ONLY TOOLS:
         - ax_list_windows: List all visible windows from all applications with their positions.
         - ax_inspect_element: Inspect accessibility element at a screen coordinate (x, y).
         - ax_get_properties: Get properties of an element by role, title, or position.
-        - ax_perform_action: Perform an accessibility action on an element (click, press, etc.).
         - ax_check_permission: Check if Accessibility permission is granted.
         - ax_request_permission: Request Accessibility permission (shows system prompt).
 
+        INPUT SIMULATION TOOLS (Phase 2):
+        - ax_type_text: Simulate typing text at current cursor or at specific coordinates.
+        - ax_click: Simulate a mouse click at screen coordinates.
+        - ax_scroll: Simulate scroll wheel at screen coordinates.
+        - ax_press_key: Simulate pressing a key with optional modifiers.
+
+        INTERACTION TOOLS (require allowWrites=true):
+        - ax_perform_action: Perform an accessibility action on an element.
+
         SECURITY: Accessibility tools can interact with ANY app's UI, including reading text from
         text fields. They inherit Agent's TCC Accessibility permission. Use responsibly.
-
-        PHASE 1 (current): Read-only window listing and element inspection.
-        PHASE 2 (planned): Keyboard/mouse simulation with additional safeguards.
+        Password fields are blocked from reading. Interaction actions require explicit allowWrites.
 
         ═══════════════════════════════════════════════════════════════════════════════
         TOOL CATEGORY 6: AGENT DYLIB SCRIPT MANAGEMENT
@@ -637,6 +644,48 @@ enum AgentTools {
             description: "Request Accessibility permission. Shows the macOS system prompt for the user to approve.",
             properties: [:],
             required: []
+        ),
+        // --- Accessibility Input Simulation (Phase 2) ---
+        ToolDef(
+            name: "ax_type_text",
+            description: "Simulate typing text at the current cursor position or at specific coordinates. Uses CGEvent keyboard simulation.",
+            properties: [
+                "text": ["type": "string", "description": "Text to type"],
+                "x": ["type": "number", "description": "Optional X coordinate to click first before typing"],
+                "y": ["type": "number", "description": "Optional Y coordinate to click first before typing"],
+            ],
+            required: ["text"]
+        ),
+        ToolDef(
+            name: "ax_click",
+            description: "Simulate a mouse click at screen coordinates.",
+            properties: [
+                "x": ["type": "number", "description": "Screen X coordinate (required)"],
+                "y": ["type": "number", "description": "Screen Y coordinate (required)"],
+                "button": ["type": "string", "description": "Mouse button: 'left' (default), 'right', or 'middle'"],
+                "clicks": ["type": "integer", "description": "Number of clicks: 1 (default) or 2 for double-click"],
+            ],
+            required: ["x", "y"]
+        ),
+        ToolDef(
+            name: "ax_scroll",
+            description: "Simulate scroll wheel at screen coordinates.",
+            properties: [
+                "x": ["type": "number", "description": "Screen X coordinate"],
+                "y": ["type": "number", "description": "Screen Y coordinate"],
+                "deltaX": ["type": "integer", "description": "Horizontal scroll amount (positive = right, negative = left)"],
+                "deltaY": ["type": "integer", "description": "Vertical scroll amount (positive = down, negative = up)"],
+            ],
+            required: ["x", "y"]
+        ),
+        ToolDef(
+            name: "ax_press_key",
+            description: "Simulate pressing a key with optional modifiers (Cmd, Option, Control, Shift).",
+            properties: [
+                "keyCode": ["type": "integer", "description": "macOS virtual key code (e.g., 36=Return, 48=Tab, 51=Delete, 53=Escape, 123-126=Arrow keys)"],
+                "modifiers": ["type": "array", "description": "Array of modifier keys: 'command', 'option', 'control', 'shift'", "items": ["type": "string"]],
+            ],
+            required: ["keyCode"]
         ),
         // --- Script Management ---
         ToolDef(
