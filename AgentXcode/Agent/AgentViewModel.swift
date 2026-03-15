@@ -233,6 +233,17 @@ final class AgentViewModel {
     /// Briefly true during each poll cycle so the StatusDot pulses on the timer
     var messagesPolling = false
 
+    enum MessageFilter: String, CaseIterable {
+        case fromOthers = "From Others"
+        case fromMe = "From Me"
+        case noFilter = "No Filter"
+    }
+    var messageFilter: MessageFilter = {
+        MessageFilter(rawValue: UserDefaults.standard.string(forKey: "agentMessageFilter") ?? "") ?? .fromOthers
+    }() {
+        didSet { UserDefaults.standard.set(messageFilter.rawValue, forKey: "agentMessageFilter") }
+    }
+
     /// Chat recipients discovered from Messages database
     struct MessageRecipient: Identifiable, Hashable {
         let id: String        // handle id (phone/email) — used as stable key for filtering
@@ -581,10 +592,17 @@ final class AgentViewModel {
     }
 
     /// Read new messages directly from chat.db using SQLite3 C API.
-    private nonisolated static func queryMessages(afterROWID: Int) -> [RawMessage] {
+    private nonisolated static func queryMessages(afterROWID: Int, filter: MessageFilter) -> [RawMessage] {
         var db: OpaquePointer?
         guard sqlite3_open_v2(messagesDBPath, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, nil) == SQLITE_OK else { return [] }
         defer { sqlite3_close(db) }
+
+        let whereClause: String
+        switch filter {
+        case .fromOthers: whereClause = "m.ROWID > ?1 AND m.is_from_me = 0"
+        case .fromMe:     whereClause = "m.ROWID > ?1 AND m.is_from_me = 1"
+        case .noFilter:   whereClause = "m.ROWID > ?1"
+        }
 
         let sql = """
         SELECT m.ROWID, m.text, m.attributedBody, \
@@ -593,7 +611,7 @@ final class AgentViewModel {
         FROM message m \
         LEFT JOIN handle h ON h.ROWID = m.handle_id \
         LEFT JOIN chat_message_join cmj ON cmj.message_id = m.ROWID \
-        WHERE m.ROWID > ?1 AND m.is_from_me = 0 ORDER BY m.ROWID ASC LIMIT 10
+        WHERE \(whereClause) ORDER BY m.ROWID ASC LIMIT 10
         """
         var stmt: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return [] }
@@ -706,7 +724,8 @@ final class AgentViewModel {
 
         let after = lastSeenMessageROWID
         let enabled = enabledHandleIds
-        let rows = await Self.offMain({ Self.queryMessages(afterROWID: after) })
+        let filter = messageFilter
+        let rows = await Self.offMain({ Self.queryMessages(afterROWID: after, filter: filter) })
         guard !rows.isEmpty else { return }
 
         for row in rows {
