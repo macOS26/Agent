@@ -310,8 +310,12 @@ extension AgentViewModel {
                             let serverName = String(parts.first ?? "")
                             let toolName = String(parts.last ?? "")
 
+                            // Snapshot disabled state once to avoid TOCTOU races
+                            let disabledSnapshot = MCPService.shared.disabledTools
+                            let toolKey = MCPService.toolKey(serverName: serverName, toolName: toolName)
+
                             // Block disabled tools
-                            guard MCPService.shared.isToolEnabled(serverName: serverName, toolName: toolName) else {
+                            guard !disabledSnapshot.contains(toolKey) else {
                                 let msg = "Tool '\(toolName)' is disabled"
                                 appendLog("MCP[\(serverName)]: \(msg)")
                                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": msg])
@@ -349,9 +353,9 @@ extension AgentViewModel {
                                 mcpOutput = "MCP tool not found: \(serverName)/\(toolName)"
                             }
 
-                            // Strip disabled tool names from MCP output so the LLM never learns about them
+                            // Strip disabled tool names from MCP output (using same snapshot)
                             let disabledNames = MCPService.shared.discoveredTools
-                                .filter { $0.serverName == serverName && !MCPService.shared.isToolEnabled(serverName: $0.serverName, toolName: $0.name) }
+                                .filter { $0.serverName == serverName && disabledSnapshot.contains(MCPService.toolKey(serverName: $0.serverName, toolName: $0.name)) }
                                 .map { $0.name }
                             if !disabledNames.isEmpty {
                                 mcpOutput = mcpOutput.components(separatedBy: "\n")
