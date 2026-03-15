@@ -291,7 +291,7 @@ private struct LangDef {
             selfKw: ["self", "Self", "super", "true", "false", "nil"],
             sys: ["print", "debugPrint", "dump", "fatalError", "precondition", "assert"],
             attrs: true,
-            strPat: #""""[\s\S]*?"""|"(?:\\.|[^"\\])*""#
+            strPat: #""""[\s\S]*?"""|(#+)"[\s\S]*?"\1|"(?:\\.|[^"\\])*""#
         ),
 
         "python": LangDef(

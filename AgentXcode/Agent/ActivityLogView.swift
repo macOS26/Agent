@@ -432,16 +432,17 @@ struct ActivityLogView: NSViewRepresentable {
             ]
 
             // Check if the text is read_file output (strictly matches "NN |" at the start of lines)
-            // Also ensure it does NOT contain fenced code blocks (```) to avoid parsing conflicts
+            // This check MUST come before markdown processing to preserve backticks in code
             let readFilePattern = #"^\s*\d+\s*\|\s"#
-            let isReadFileOutput = text.range(of: readFilePattern, options: .regularExpression) != nil
-                && text.components(separatedBy: "\n").filter { !$0.isEmpty }.allSatisfy { line in
+            let lines = text.components(separatedBy: "\n").filter { !$0.isEmpty }
+            let isReadFileOutput = !lines.isEmpty
+                && lines.allSatisfy { line in
                     line.range(of: readFilePattern, options: .regularExpression) != nil
                 }
-                && !text.contains("```")
 
             if isReadFileOutput {
                 // Render read_file output as a single preformatted block with syntax highlighting
+                // Do NOT process backticks as markdown - they are literal content
                 let hl = CodeBlockHighlighter.highlight(code: text, language: "swift", font: font)
                 let block = NSMutableAttributedString(attributedString: hl)
                 block.addAttribute(.backgroundColor, value: CodeBlockTheme.bg,
@@ -722,6 +723,17 @@ struct ActivityLogView: NSViewRepresentable {
             let hasMarkdownChars = text.contains("*") || text.contains("_") || text.contains("`")
                 || text.contains("[") || text.contains("~")
             guard hasMarkdownChars else {
+                return NSAttributedString(string: text, attributes: plainAttrs)
+            }
+
+            // SAFETY: Skip markdown parsing if text contains Swift raw strings with backticks
+            // (e.g., #"...`..."#). Apple's markdown parser mangles these.
+            // Also skip if text looks like numbered code output (e.g., "1 | code")
+            let hasRawStringWithBacktick = text.contains("#\"") && text.contains("\"#") && text.contains("`")
+            let looksLikeNumberedCode = text.contains(#"\d+\s*\|"#) && text.split(separator: "\n").allSatisfy {
+                $0.trimmingCharacters(in: .whitespaces).isEmpty || $0.range(of: #"^\s*\d+\s*\|"#, options: .regularExpression) != nil
+            }
+            if hasRawStringWithBacktick || looksLikeNumberedCode {
                 return NSAttributedString(string: text, attributes: plainAttrs)
             }
 
