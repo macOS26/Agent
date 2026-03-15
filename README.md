@@ -44,8 +44,6 @@ Agent uses SwiftUI, XPC, SMAppService, Apple Events, and ScriptingBridge to give
 
 Click the **Register** button in the toolbar to install the background services:
 
-<img width="300" alt="Register button" src="https://github.com/user-attachments/assets/register-button.png" />
-
 This registers two background services using Apple's SMAppService framework:
 
 1. **User Agent** (`Agent.app.toddbruss.user`) — Runs commands as your user account
@@ -57,8 +55,6 @@ After clicking Register, macOS will prompt you to approve the background service
 
 1. **System Settings** → **General** → **Login Items**
 2. Allow both **Agent** and **AgentHelper** (you may see two prompts)
-
-<img width="400" alt="Login Items approval" src="https://github.com/user-attachments/assets/login-items.png" />
 
 The privileged daemon requires explicit approval because it runs as root. Agent follows Apple's recommended XPC + SMAppService pattern for secure privilege escalation.
 
