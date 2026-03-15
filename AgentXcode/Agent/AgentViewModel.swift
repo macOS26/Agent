@@ -232,6 +232,8 @@ final class AgentViewModel {
     private var lastSeenMessageROWID: Int = 0
     /// Briefly true during each poll cycle so the StatusDot pulses on the timer
     var messagesPolling = false
+    /// Handle ID to reply to when an Agent! task completes (nil = no reply needed)
+    var agentReplyHandle: String?
 
     enum MessageFilter: String, CaseIterable {
         case fromOthers = "From Others"
@@ -558,6 +560,35 @@ final class AgentViewModel {
         messagesPolling = false
     }
 
+    /// Send a reply via iMessage to the handle that triggered the Agent! task.
+    func sendAgentReply(_ summary: String) {
+        guard let handle = agentReplyHandle else { return }
+        agentReplyHandle = nil
+
+        let reply = String(summary.prefix(256))
+        // Escape for AppleScript
+        let escaped = reply
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+
+        let script = """
+        tell application "Messages"
+            set targetService to 1st account whose service type = iMessage
+            set targetBuddy to participant "\(handle)" of targetService
+            send "\(escaped)" to targetBuddy
+        end tell
+        """
+        Task {
+            let result = await userService.execute(command: "osascript -e '\(script.replacingOccurrences(of: "'", with: "'\\''"))'")
+            if result.status == 0 {
+                appendLog("Agent! reply sent to \(handle)")
+            } else {
+                appendLog("Agent! reply failed: \(result.output.prefix(100))")
+            }
+            flushLog()
+        }
+    }
+
     /// Briefly flash the Messages StatusDot green.
     private func flashMessagesDot() {
         messagesPolling = true
@@ -777,6 +808,7 @@ final class AgentViewModel {
 
             appendLog("Agent! prompt: \(prompt)")
             flushLog()
+            agentReplyHandle = row.handleId
             taskInput = prompt
             run()
         }

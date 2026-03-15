@@ -300,6 +300,8 @@ extension AgentViewModel {
                             history.add(TaskRecord(prompt: prompt, summary: summary, commandsRun: commandsRun), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
                             // End the task in SwiftData chat history
                             ChatHistoryStore.shared.endCurrentTask(summary: summary)
+                            // Reply to the iMessage sender if this was an Agent! prompt
+                            sendAgentReply(summary)
                             isRunning = false
                             return
                         }
