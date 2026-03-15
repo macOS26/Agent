@@ -21,6 +21,7 @@ Agent uses SwiftUI, XPC, SMAppService, Apple Events, and ScriptingBridge to give
 - [Getting Started](#getting-started)
 - [Security Hardening](#security-hardening)
 - [Messages Monitor](#messages-monitor)
+- [Accessibility Integration (Experimental)](#accessibility-integration-experimental)
 - [MCP Servers](#mcp-servers)
 - [Architecture](#architecture)
 - [What Agent! Can Do](#what-agent-can-do)
@@ -224,6 +225,67 @@ Every recipient must be explicitly approved before their `Agent!` commands trigg
 Agent reads the macOS Messages database (`~/Library/Messages/chat.db`) directly using the SQLite3 C API. It polls every 5 seconds for new messages. The `attributedBody` blob is decoded using the Objective-C runtime for messages where the `text` column is NULL (common with iMessage).
 
 No external dependencies. No network requests. Everything runs locally on your Mac.
+
+---
+
+## Accessibility Integration (Experimental)
+
+Agent! includes a full macOS Accessibility API integration that gives the AI the ability to see, inspect, and interact with any application's UI. This feature is **experimental and untested** — it ships with the codebase but has not been validated across apps or workflows.
+
+> **Status:** Experimental. The code is complete and wired up, but real-world testing is limited. Use at your own risk. Feedback welcome.
+
+### Permissions
+
+Accessibility requires explicit user approval in **System Settings > Privacy & Security > Accessibility**. Agent provides two tools to manage this:
+
+- `ax_check_permission` — Check if Accessibility access is granted
+- `ax_request_permission` — Trigger the macOS permission prompt
+
+### Available Tools (12 total)
+
+#### Read-Only Inspection
+
+| Tool | Description |
+|------|-------------|
+| `ax_list_windows` | List all visible windows with positions, sizes, and owner apps |
+| `ax_inspect_element` | Inspect the accessibility element at a screen coordinate (role, title, value, children) |
+| `ax_get_properties` | Get all properties of an element found by role, title, app bundle ID, or position |
+| `ax_screenshot` | Capture a screenshot of a region or specific window |
+| `ax_get_audit_log` | View recent accessibility operations (all actions are audit-logged) |
+
+#### Input Simulation
+
+| Tool | Description |
+|------|-------------|
+| `ax_type_text` | Simulate keyboard typing at the current cursor or specific coordinates |
+| `ax_click` | Simulate mouse clicks (left/right/middle, single/double) at screen coordinates |
+| `ax_scroll` | Simulate scroll wheel at screen coordinates |
+| `ax_press_key` | Simulate key presses with modifiers (Cmd+C, Option+Tab, etc.) |
+
+#### UI Interaction
+
+| Tool | Description |
+|------|-------------|
+| `ax_perform_action` | Perform an accessibility action (AXPress, AXConfirm, etc.) on a UI element |
+
+### Security Safeguards
+
+- **Password fields are always blocked** — the AI cannot read or interact with `AXSecureTextField` or `AXPasswordField` elements
+- **Destructive actions require `allowWrites: true`** — AXPress, AXConfirm, AXActivate and other interaction actions are blocked by default
+- **Audit logging** — Every accessibility operation is logged with timestamps to `~/Documents/Agent/accessibility_audit.log`
+- **TCC boundary** — Accessibility tools only work when run in the Agent app process (via `run_agent_script` or directly). Shell commands via `execute_user_command` do NOT inherit Accessibility permissions.
+
+### Implementation
+
+Built on Apple's native AXUIElement C API and CGEvent framework:
+
+- `AXUIElementCopyElementAtPosition` for coordinate-based element discovery
+- `AXUIElementCopyAttributeValue` for reading element properties (role, title, value, children, position, size)
+- `AXUIElementPerformAction` for triggering UI actions
+- `CGEvent` for keyboard and mouse simulation
+- `CGWindowListCopyWindowInfo` for window enumeration
+
+All 694 lines live in `AccessibilityService.swift` as a self-contained service with no external dependencies.
 
 ---
 
