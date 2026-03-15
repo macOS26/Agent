@@ -48,11 +48,11 @@ struct MessagesView: View {
                         .foregroundStyle(.secondary)
                     Spacer()
                     Button("All") {
-                        viewModel.enabledChatIds = Set(viewModel.messageRecipients.map(\.chatId))
+                        viewModel.enabledHandleIds = Set(viewModel.messageRecipients.map(\.id))
                     }
                     .buttonStyle(.bordered).controlSize(.mini)
                     Button("None") {
-                        viewModel.enabledChatIds.removeAll()
+                        viewModel.enabledHandleIds.removeAll()
                     }
                     .buttonStyle(.bordered).controlSize(.mini)
                 }
@@ -92,16 +92,16 @@ struct MessagesView: View {
 
     @ViewBuilder
     private func recipientRow(_ recipient: AgentViewModel.MessageRecipient) -> some View {
-        let isEnabled = viewModel.enabledChatIds.contains(recipient.chatId)
+        let isEnabled = viewModel.enabledHandleIds.contains(recipient.id)
 
         HStack(spacing: 10) {
             Toggle("", isOn: Binding(
-                get: { viewModel.enabledChatIds.contains(recipient.chatId) },
+                get: { viewModel.enabledHandleIds.contains(recipient.id) },
                 set: { newValue in
                     if newValue {
-                        viewModel.enabledChatIds.insert(recipient.chatId)
+                        viewModel.enabledHandleIds.insert(recipient.id)
                     } else {
-                        viewModel.enabledChatIds.remove(recipient.chatId)
+                        viewModel.enabledHandleIds.remove(recipient.id)
                     }
                 }
             ))
