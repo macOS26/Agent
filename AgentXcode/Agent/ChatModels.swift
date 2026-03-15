@@ -138,8 +138,8 @@ final class ChatHistoryStore {
         for (_, messages) in tasks {
             result += "--- New Task ---\n"
             for msg in messages {
-                let time = formatter.string(from: msg.timestamp)
-                result += "[\(time)] \(msg.content)\n"
+                // Content already includes timestamp from appendLog
+                result += "\(msg.content)\n"
             }
         }
         
