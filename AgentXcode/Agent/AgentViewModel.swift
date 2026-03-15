@@ -523,42 +523,56 @@ final class AgentViewModel {
         messagesMonitorTask = nil
     }
 
-    /// Query the Messages database for the latest ROWID so we ignore all existing messages.
-    private func seedLastSeenROWID() async {
-        let cmd = "sqlite3 ~/Library/Messages/chat.db \"SELECT MAX(ROWID) FROM message;\""
-        let result = await userService.execute(command: cmd)
-        if let rowid = Int(result.output.trimmingCharacters(in: .whitespacesAndNewlines)) {
-            lastSeenMessageROWID = rowid
-        }
+    private var messagesDBPath: String {
+        NSHomeDirectory() + "/Library/Messages/chat.db"
     }
 
-    /// Check for new incoming messages containing "AE!" prefix.
-    private func pollMessages() async {
-        guard !isRunning else { return } // don't interrupt a running task
+    /// Query the Messages database for the latest ROWID so we only act on NEW messages.
+    private func seedLastSeenROWID() async {
+        let cmd = "sqlite3 \"\(messagesDBPath)\" \"SELECT MAX(ROWID) FROM message;\""
+        let result = await userService.execute(command: cmd)
+        let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let rowid = Int(output) {
+            lastSeenMessageROWID = rowid
+            appendLog("Messages monitor: seeded at ROWID \(rowid)")
+        } else {
+            appendLog("Messages monitor: failed to seed — \(result.status) \(result.output)")
+        }
+        flushLog()
+    }
 
-        let cmd = """
-        sqlite3 ~/Library/Messages/chat.db \
-        "SELECT ROWID, text FROM message WHERE ROWID > \(lastSeenMessageROWID) AND is_from_me = 0 AND text LIKE 'AE!%' ORDER BY ROWID ASC LIMIT 1;"
-        """
+    /// Poll for new incoming messages; log all, act on "AE!" prefix.
+    private func pollMessages() async {
+        // Fetch all new incoming messages (not just AE!) so we advance the ROWID cursor
+        let cmd = "sqlite3 \"\(messagesDBPath)\" \"SELECT ROWID, text FROM message WHERE ROWID > \(lastSeenMessageROWID) AND is_from_me = 0 ORDER BY ROWID ASC LIMIT 10;\""
         let result = await userService.execute(command: cmd)
         let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !output.isEmpty, result.status == 0 else { return }
 
-        // Format: ROWID|text
-        let parts = output.components(separatedBy: "|")
-        guard parts.count >= 2, let rowid = Int(parts[0]) else { return }
+        let lines = output.components(separatedBy: "\n")
+        for line in lines {
+            // Format: ROWID|text
+            let parts = line.components(separatedBy: "|")
+            guard parts.count >= 2, let rowid = Int(parts[0]) else { continue }
 
-        lastSeenMessageROWID = rowid
-        let fullText = parts.dropFirst().joined(separator: "|") // rejoin in case text contained |
-        let prompt = String(fullText.dropFirst(3)).trimmingCharacters(in: .whitespaces) // strip "AE!" prefix
-        guard !prompt.isEmpty else { return }
+            lastSeenMessageROWID = rowid
+            let text = parts.dropFirst().joined(separator: "|")
 
-        appendLog("Messages AE: \(prompt)")
-        flushLog()
+            // Show every incoming message in the log
+            appendLog("iMessage: \(text)")
+            flushLog()
 
-        // Inject as a task
-        taskInput = prompt
-        run()
+            // Only act on "Agent!" commands
+            guard text.hasPrefix("Agent!") || text.hasPrefix("Agent! ") else { continue }
+            let prompt = String(text.dropFirst(text.hasPrefix("Agent! ") ? 7 : 6))
+                .trimmingCharacters(in: .whitespaces)
+            guard !prompt.isEmpty, !isRunning else { continue }
+
+            appendLog("Agent! prompt: \(prompt)")
+            flushLog()
+            taskInput = prompt
+            run()
+        }
     }
 
     // MARK: - Model Fetching
