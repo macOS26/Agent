@@ -14,7 +14,6 @@
 		AA10000000000000000034 /* ClaudeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000001E /* ClaudeService.swift */; };
 		AA10000000000000000035 /* HelperProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000001F /* HelperProtocol.swift */; };
 		AA10000000000000000036 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000020 /* Models.swift */; };
-		AA10000000000000000070 /* ChatModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000069 /* ChatModels.swift */; };
 		AA10000000000000000037 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000021 /* Assets.xcassets */; };
 		AA10000000000000000038 /* UserService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000025 /* UserService.swift */; };
 		AA10000000000000000039 /* UserProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000026 /* UserProtocol.swift */; };
@@ -25,7 +24,6 @@
 		AA1000000000000000003F /* DependencyChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002D /* DependencyChecker.swift */; };
 		AA10000000000000000044 /* DependencyOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002E /* DependencyOverlay.swift */; };
 		AA10000000000000000045 /* AppleEventService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002F /* AppleEventService.swift */; };
-		AA10000000000000000076 /* AccessibilityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000075 /* AccessibilityService.swift */; };
 		AA10000000000000000047 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000046 /* KeychainService.swift */; };
 		AA10000000000000000049 /* AgentViewModel+Logging.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000048 /* AgentViewModel+Logging.swift */; };
 		AA1000000000000000004B /* AgentViewModel+TaskExecution.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000004A /* AgentViewModel+TaskExecution.swift */; };
@@ -40,6 +38,8 @@
 		AA10000000000000000064 /* PulseRing.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000005F /* PulseRing.swift */; };
 		AA10000000000000000065 /* StatusDot.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000068 /* StatusDot.swift */; };
 		AA10000000000000000066 /* ActivityLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000061 /* ActivityLogView.swift */; };
+		AA10000000000000000070 /* ChatModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000069 /* ChatModels.swift */; };
+		AA10000000000000000076 /* AccessibilityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000075 /* AccessibilityService.swift */; };
 		BB10000000000000000030 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001A /* main.swift */; };
 		BB10000000000000000031 /* HelperProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001B /* HelperProtocol.swift */; };
 		BB10000000000000000032 /* Agent.app.toddbruss.helper.plist in Copy Daemon Plist */ = {isa = PBXBuildFile; fileRef = AA10000000000000000023 /* Agent.app.toddbruss.helper.plist */; };
@@ -52,13 +52,13 @@
 		DD10000000000000000031 /* ScriptingBridgesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000002 /* ScriptingBridgesTests.swift */; };
 		DD10000000000000000032 /* PackageGenerationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000003 /* PackageGenerationTests.swift */; };
 		EA37C5522F636B86009D0A23 /* AgentScriptingBridge in Frameworks */ = {isa = PBXBuildFile; productRef = EA37C5512F636B86009D0A23 /* AgentScriptingBridge */; };
-		EA50MCP0000000003 /* MCPClient in Frameworks */ = {isa = PBXBuildFile; productRef = EA50MCP0000000002 /* MCPClient */; };
 		EA37C5552F636B87009D0A23 /* Sources in Resources */ = {isa = PBXBuildFile; fileRef = EA37C5532F636B87009D0A23 /* Sources */; };
 		EA37C5562F636B87009D0A23 /* Package.swift in Resources */ = {isa = PBXBuildFile; fileRef = EA37C5542F636B87009D0A23 /* Package.swift */; };
 		EA50000000000000000001 /* send_message_input.json in Resources */ = {isa = PBXBuildFile; fileRef = EA50000000000000000005 /* send_message_input.json */; };
 		EA50000000000000000002 /* send_message_output.json in Resources */ = {isa = PBXBuildFile; fileRef = EA50000000000000000006 /* send_message_output.json */; };
 		EA50000000000000000003 /* send_image_input.json in Resources */ = {isa = PBXBuildFile; fileRef = EA50000000000000000007 /* send_image_input.json */; };
 		EA50000000000000000004 /* send_image_output.json in Resources */ = {isa = PBXBuildFile; fileRef = EA50000000000000000008 /* send_image_output.json */; };
+		EA50MCP0000000003 /* MCPClient in Frameworks */ = {isa = PBXBuildFile; productRef = EA50MCP0000000002 /* MCPClient */; };
 		EAF3666F2F623D6A004B7E38 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = EAF3666E2F623D6A004B7E38 /* AppIcon.icon */; };
 		EE10000000000000000004 /* ObjCTry.m in Sources */ = {isa = PBXBuildFile; fileRef = EE10000000000000000002 /* ObjCTry.m */; };
 		FF10000000000000000002 /* PackageAutoDiscoveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000001 /* PackageAutoDiscoveryTests.swift */; };
@@ -144,7 +144,6 @@
 		AA1000000000000000001E /* ClaudeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeService.swift; sourceTree = "<group>"; };
 		AA1000000000000000001F /* HelperProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperProtocol.swift; sourceTree = "<group>"; };
 		AA10000000000000000020 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
-		AA10000000000000000069 /* ChatModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModels.swift; sourceTree = "<group>"; };
 		AA10000000000000000021 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA10000000000000000022 /* Agent.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Agent.entitlements; sourceTree = "<group>"; };
 		AA10000000000000000023 /* Agent.app.toddbruss.helper.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Agent.app.toddbruss.helper.plist; sourceTree = "<group>"; };
@@ -159,7 +158,6 @@
 		AA1000000000000000002D /* DependencyChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyChecker.swift; sourceTree = "<group>"; };
 		AA1000000000000000002E /* DependencyOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyOverlay.swift; sourceTree = "<group>"; };
 		AA1000000000000000002F /* AppleEventService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleEventService.swift; sourceTree = "<group>"; };
-		AA10000000000000000075 /* AccessibilityService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityService.swift; sourceTree = "<group>"; };
 		AA10000000000000000046 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
 		AA10000000000000000048 /* AgentViewModel+Logging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+Logging.swift"; sourceTree = "<group>"; };
 		AA1000000000000000004A /* AgentViewModel+TaskExecution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TaskExecution.swift"; sourceTree = "<group>"; };
@@ -169,11 +167,13 @@
 		AA10000000000000000058 /* MCPConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPConfig.swift; sourceTree = "<group>"; };
 		AA1000000000000000005A /* MCPServersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPServersView.swift; sourceTree = "<group>"; };
 		AA1000000000000000005C /* MCPService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPService.swift; sourceTree = "<group>"; };
-			AA1000000000000000005D /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-			AA1000000000000000005E /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
-			AA1000000000000000005F /* PulseRing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PulseRing.swift; sourceTree = "<group>"; };
-			AA10000000000000000068 /* StatusDot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusDot.swift; sourceTree = "<group>"; };
-			AA10000000000000000061 /* ActivityLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityLogView.swift; sourceTree = "<group>"; };
+		AA1000000000000000005D /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		AA1000000000000000005E /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
+		AA1000000000000000005F /* PulseRing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PulseRing.swift; sourceTree = "<group>"; };
+		AA10000000000000000061 /* ActivityLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityLogView.swift; sourceTree = "<group>"; };
+		AA10000000000000000068 /* StatusDot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusDot.swift; sourceTree = "<group>"; };
+		AA10000000000000000069 /* ChatModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModels.swift; sourceTree = "<group>"; };
+		AA10000000000000000075 /* AccessibilityService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityService.swift; sourceTree = "<group>"; };
 		BB1000000000000000001A /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		BB1000000000000000001B /* HelperProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperProtocol.swift; sourceTree = "<group>"; };
 		BB1000000000000000001C /* AgentHelper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = AgentHelper; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -716,7 +716,7 @@
 				CODE_SIGN_ENTITLEMENTS = Agent/Agent.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 469UCUB275;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -729,7 +729,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.3;
+				MARKETING_VERSION = 1.0.4;
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -747,7 +747,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 469UCUB275;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -760,7 +760,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.3;
+				MARKETING_VERSION = 1.0.4;
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
