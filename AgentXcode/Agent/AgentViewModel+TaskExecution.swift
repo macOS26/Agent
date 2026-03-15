@@ -366,12 +366,18 @@ extension AgentViewModel {
                             }
 
                             // Strip disabled tool names from MCP output (using same snapshot)
+                            // Use word-boundary regex to avoid false positives (e.g. "rm" matching "format")
                             let disabledNames = MCPService.shared.discoveredTools
                                 .filter { $0.serverName == serverName && disabledSnapshot.contains(MCPService.toolKey(serverName: $0.serverName, toolName: $0.name)) }
                                 .map { $0.name }
                             if !disabledNames.isEmpty {
+                                let patterns = disabledNames.compactMap { name -> NSRegularExpression? in
+                                    try? NSRegularExpression(pattern: "\\b\(NSRegularExpression.escapedPattern(for: name))\\b")
+                                }
                                 mcpOutput = mcpOutput.components(separatedBy: "\n")
-                                    .filter { line in !disabledNames.contains { line.contains($0) } }
+                                    .filter { line in
+                                        !patterns.contains { $0.firstMatch(in: line, range: NSRange(line.startIndex..., in: line)) != nil }
+                                    }
                                     .joined(separator: "\n")
                             }
 
