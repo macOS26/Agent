@@ -147,16 +147,11 @@ struct MCPServersView: View {
     @ViewBuilder
     private func serverRow(_ server: MCPServerConfig) -> some View {
         let status = statusFor(server.id)
-        // Find the server in the registry to ensure reactivity
-        guard let registryServer = registry.servers.first(where: { $0.id == server.id }) else {
-            EmptyView()
-            return
-        }
 
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 Toggle("", isOn: Binding(
-                    get: { registry.servers.first(where: { $0.id == server.id })?.enabled ?? false },
+                    get: { server.enabled },
                     set: { newValue in
                         registry.setEnabled(server.id, newValue)
                         Task { await toggleServer(server) }
