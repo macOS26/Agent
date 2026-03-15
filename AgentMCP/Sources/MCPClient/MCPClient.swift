@@ -629,11 +629,11 @@ public actor MCPClient {
         guard fm.fileExists(atPath: commandURL.path, isDirectory: &isDir), !isDir.boolValue else {
             throw MCPClientError.connectionFailed("Executable not found or is a directory: \(config.command)")
         }
-        // Resolve symlinks and verify the resolved path is the same file
+        // Reject symlinks — the resolved path must match the original
         let resolved = commandURL.resolvingSymlinksInPath().path
         let originalResolved = URL(fileURLWithPath: config.command).standardizedFileURL.path
         if resolved != originalResolved {
-            print("[MCPClient] Warning: \(config.command) is a symlink resolving to \(resolved)")
+            throw MCPClientError.connectionFailed("Refusing to execute symlink: \(config.command) → \(resolved)")
         }
 
         let process = Process()
