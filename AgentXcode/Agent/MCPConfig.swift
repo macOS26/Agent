@@ -130,6 +130,10 @@ final class MCPServerRegistry {
     // MARK: - CRUD Operations
 
     func add(_ config: MCPServerConfig) {
+        guard Self.validateCommandPath(config.command) else {
+            print("[MCPConfig] Refusing to add server: command not found at \(config.command)")
+            return
+        }
         config.savePrefs()
         servers.append(config)
         save()
@@ -137,10 +141,22 @@ final class MCPServerRegistry {
 
     func update(_ config: MCPServerConfig) {
         if let index = servers.firstIndex(where: { $0.id == config.id }) {
+            guard Self.validateCommandPath(config.command) else {
+                print("[MCPConfig] Refusing to update server: command not found at \(config.command)")
+                return
+            }
             config.savePrefs()
             servers[index] = config
             save()
         }
+    }
+
+    /// Validate that a command path exists and is a file (not a directory)
+    private static func validateCommandPath(_ command: String) -> Bool {
+        let fm = FileManager.default
+        var isDir: ObjCBool = false
+        guard fm.fileExists(atPath: command, isDirectory: &isDir) else { return false }
+        return !isDir.boolValue
     }
 
     func remove(at id: UUID) {
@@ -201,6 +217,11 @@ final class MCPServerRegistry {
 
         Task.detached(priority: .background) { [url = configFileURL, data] in
             try? data.write(to: url, options: .atomic)
+            // Set restrictive permissions (owner read/write only)
+            try? FileManager.default.setAttributes(
+                [.posixPermissions: 0o600],
+                ofItemAtPath: url.path
+            )
         }
     }
 

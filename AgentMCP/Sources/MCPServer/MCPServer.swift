@@ -355,12 +355,53 @@ public actor MCPServer {
         }
     }
     
+    // MARK: - Path Validation
+
+    /// Directories that must never be read from or written to
+    private static let blockedPaths: [String] = [
+        "/etc",
+        "/System",
+        "/Library/LaunchDaemons",
+        "/var/root"
+    ]
+
+    /// Validate a file path for safety: blocks path traversal, sensitive directories, and symlinks outside allowed areas
+    private func validatePath(_ filePath: String) throws {
+        // Block path traversal via ".."
+        let normalized = (filePath as NSString).standardizingPath
+        if filePath.contains("..") {
+            throw MCPError.invalidParams("Path traversal ('..') is not allowed: \(filePath)")
+        }
+
+        // Block access to sensitive directories
+        for blocked in Self.blockedPaths {
+            if normalized == blocked || normalized.hasPrefix(blocked + "/") {
+                throw MCPError.invalidParams("Access to \(blocked) is not allowed")
+            }
+        }
+
+        // Block symlinks that resolve outside the original directory
+        let url = URL(fileURLWithPath: normalized)
+        let resolved = url.resolvingSymlinksInPath().path
+        let parentDir = (normalized as NSString).deletingLastPathComponent
+        let resolvedParent = (resolved as NSString).deletingLastPathComponent
+        if resolvedParent != parentDir {
+            // Symlink resolves to a different directory — check it isn't a blocked path
+            for blocked in Self.blockedPaths {
+                if resolved == blocked || resolved.hasPrefix(blocked + "/") {
+                    throw MCPError.invalidParams("Symlink resolves to blocked path: \(resolved)")
+                }
+            }
+        }
+    }
+
     // MARK: - Tool Implementations
-    
+
     private func handleReadFile(arguments: [String: Value]) async throws -> String {
         guard let filePath = arguments["file_path"]?.stringValue else {
             throw MCPError.invalidParams("file_path is required")
         }
+        try validatePath(filePath)
         
         let limit: Int
         if let value = arguments["limit"]?.intValue {
@@ -400,7 +441,8 @@ public actor MCPServer {
               let content = arguments["content"]?.stringValue else {
             throw MCPError.invalidParams("file_path and content are required")
         }
-        
+        try validatePath(filePath)
+
         // Create parent directories if needed
         let url = URL(fileURLWithPath: filePath)
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
@@ -415,7 +457,8 @@ public actor MCPServer {
               let newString = arguments["new_string"]?.stringValue else {
             throw MCPError.invalidParams("file_path, old_string, and new_string are required")
         }
-        
+        try validatePath(filePath)
+
         let replaceAll = arguments["replace_all"]?.boolValue ?? false
         
         var content = try String(contentsOfFile: filePath, encoding: .utf8)
@@ -526,16 +569,21 @@ public actor MCPServer {
               let message = arguments["message"]?.stringValue else {
             throw MCPError.invalidParams("path and message are required")
         }
-        
-        var args = ["commit", "-m", message]
+
+        // Sanitize commit message: strip null bytes and leading dashes that could be interpreted as flags
+        var sanitizedMessage = message.replacingOccurrences(of: "\0", with: "")
+        if sanitizedMessage.hasPrefix("-") {
+            sanitizedMessage = " " + sanitizedMessage
+        }
+
         if let files = arguments["files"]?.arrayValue {
             let fileList = files.compactMap { $0.stringValue }
-            args.append(contentsOf: fileList)
+            // Stage specified files first, then commit
+            _ = try await runGitCommand(in: path, args: ["add", "--"] + fileList)
+            return try await runGitCommand(in: path, args: ["commit", "-m", sanitizedMessage])
         } else {
-            args.insert("-a", at: 1)  // Stage all changes if no files specified
+            return try await runGitCommand(in: path, args: ["commit", "-a", "-m", sanitizedMessage])
         }
-        
-        return try await runGitCommand(in: path, args: args)
     }
     
     private func runGitCommand(in path: String, args: [String]) async throws -> String {
@@ -555,11 +603,18 @@ public actor MCPServer {
         return String(data: data, encoding: .utf8) ?? ""
     }
     
+    /// Maximum command string size (100 KB)
+    private static let maxCommandSize = 100 * 1024
+
     private func handleExecuteUserCommand(arguments: [String: Value]) async throws -> String {
         guard let command = arguments["command"]?.stringValue else {
             throw MCPError.invalidParams("command is required")
         }
-        
+
+        guard command.utf8.count <= Self.maxCommandSize else {
+            throw MCPError.invalidParams("Command exceeds maximum size of \(Self.maxCommandSize) bytes")
+        }
+
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/zsh")
         process.arguments = ["-c", command]

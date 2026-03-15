@@ -94,27 +94,35 @@ actor ChildMCPServer {
         let proc = Process()
         proc.executableURL = URL(fileURLWithPath: config.command)
         proc.arguments = config.arguments
-        
+
         // Set environment
         var env = ProcessInfo.processInfo.environment
         for (key, value) in config.environment {
             env[key] = value
         }
         proc.environment = env
-        
+
         // Create pipes for stdio
         let stdinPipe = Pipe()
         let stdoutPipe = Pipe()
         let stderrPipe = Pipe()
-        
+
         proc.standardInput = stdinPipe
         proc.standardOutput = stdoutPipe
         proc.standardError = stderrPipe
-        
+
         // Store for communication
         inputPipe = stdinPipe.fileHandleForWriting
         outputPipe = stdoutPipe.fileHandleForReading
-        
+
+        // Read and log stderr output
+        let stderrHandle = stderrPipe.fileHandleForReading
+        stderrHandle.readabilityHandler = { [name = config.name] handle in
+            let data = handle.availableData
+            guard !data.isEmpty, let text = String(data: data, encoding: .utf8) else { return }
+            print("[MCP] [\(name)] stderr: \(text)")
+        }
+
         try proc.run()
         process = proc
     }
@@ -203,11 +211,17 @@ actor ChildMCPServer {
         }
     }
     
+    /// Maximum allowed Content-Length (10 MB) to prevent memory exhaustion
+    private static let maxContentLength = 10 * 1024 * 1024
+
+    /// Timeout for reading body data (30 seconds)
+    private static let bodyReadTimeout: TimeInterval = 30
+
     private func readResponse() async throws -> String {
         guard let outputPipe = outputPipe else {
             throw MCPServerError.notConnected
         }
-        
+
         // Read headers
         var headers = ""
         while true {
@@ -220,33 +234,44 @@ actor ChildMCPServer {
                 throw MCPServerError.responseTimeout
             }
         }
-        
-        // Parse Content-Length
+
+        // Parse Content-Length with integer overflow protection
         let lines = headers.components(separatedBy: "\r\n")
         var contentLength = 0
         for line in lines {
             if line.lowercased().hasPrefix("content-length:") {
-                contentLength = Int(line.dropFirst(15).trimmingCharacters(in: .whitespaces)) ?? 0
+                let rawValue = line.dropFirst(15).trimmingCharacters(in: .whitespaces)
+                guard let parsed = Int(rawValue), parsed > 0 else {
+                    throw MCPServerError.invalidResponse
+                }
+                contentLength = parsed
                 break
             }
         }
-        
+
         guard contentLength > 0 else {
             throw MCPServerError.invalidResponse
         }
-        
-        // Read body
-        
-        guard contentLength > 0 else {
-            throw MCPServerError.invalidResponse
+
+        // Cap Content-Length to prevent memory exhaustion
+        guard contentLength <= Self.maxContentLength else {
+            throw MCPServerError.contentTooLarge
         }
-        
+
+        // Read body with timeout
+        let deadline = Date().addingTimeInterval(Self.bodyReadTimeout)
         var body = Data()
         while body.count < contentLength {
+            guard Date() < deadline else {
+                throw MCPServerError.responseTimeout
+            }
             let available = outputPipe.availableData
+            if available.isEmpty {
+                throw MCPServerError.invalidResponse
+            }
             body.append(available)
         }
-        
+
         return String(data: body, encoding: .utf8) ?? ""
     }
 }
@@ -259,4 +284,5 @@ enum MCPServerError: Error {
     case notConnected
     case responseTimeout
     case invalidResponse
+    case contentTooLarge
 }

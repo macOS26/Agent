@@ -334,7 +334,7 @@ public actor MCPClient {
 
     // MARK: - Server Management
 
-    /// Add and connect to an MCP server
+    /// Add and connect to an MCP server (30-second timeout on initialization)
     public func addServer(_ config: ServerConfig) async throws {
         guard config.enabled else {
             throw MCPClientError.serverDisabled(config.name)
@@ -347,39 +347,59 @@ public actor MCPClient {
         connections[config.id] = connection
         configs[config.id] = config
 
-        // MCP handshake: initialize
-        print("[MCPClient] Sending initialize...")
-        let initResponse = try await connection.sendRequest(
-            method: "initialize",
-            params: [
-                "protocolVersion": "2024-11-05",
-                "capabilities": [String: Any](),
-                "clientInfo": [
-                    "name": "Agent!",
-                    "version": "1.0.0"
-                ]
-            ]
-        )
+        // Wrap initialization in a 30-second timeout
+        do {
+            try await withThrowingTaskGroup(of: Void.self) { group in
+                group.addTask {
+                    // MCP handshake: initialize
+                    print("[MCPClient] Sending initialize...")
+                    let initResponse = try await connection.sendRequest(
+                        method: "initialize",
+                        params: [
+                            "protocolVersion": "2024-11-05",
+                            "capabilities": [String: Any](),
+                            "clientInfo": [
+                                "name": "Agent!",
+                                "version": "1.0.0"
+                            ]
+                        ]
+                    )
 
-        // Verify we got a valid result
-        guard let result = initResponse["result"] as? [String: Any],
-              let serverInfo = result["serverInfo"] as? [String: Any] else {
-            throw MCPClientError.connectionFailed("Invalid initialize response")
+                    // Verify we got a valid result
+                    guard let result = initResponse["result"] as? [String: Any],
+                          let serverInfo = result["serverInfo"] as? [String: Any] else {
+                        throw MCPClientError.connectionFailed("Invalid initialize response")
+                    }
+
+                    let serverName = serverInfo["name"] as? String ?? config.name
+                    print("[MCPClient] Connected to: \(serverName)")
+
+                    // Send initialized notification
+                    try connection.sendNotification(method: "notifications/initialized")
+
+                    // Check server capabilities to know what to discover
+                    let capabilities = result["capabilities"] as? [String: Any] ?? [:]
+                    let hasTools = capabilities["tools"] != nil
+                    let hasResources = capabilities["resources"] != nil
+
+                    // Discover tools/resources based on capabilities
+                    try await self.discoverCapabilities(serverId: config.id, serverName: config.name, connection: connection, hasTools: hasTools, hasResources: hasResources)
+                }
+                group.addTask {
+                    try await Task.sleep(nanoseconds: 30_000_000_000) // 30 seconds
+                    throw MCPClientError.connectionFailed("Initialization timed out after 30 seconds")
+                }
+                // Wait for the first task to complete (either init finishes or timeout fires)
+                try await group.next()
+                group.cancelAll()
+            }
+        } catch {
+            // Clean up on failure
+            connections[config.id]?.disconnect()
+            connections.removeValue(forKey: config.id)
+            configs.removeValue(forKey: config.id)
+            throw error
         }
-
-        let serverName = serverInfo["name"] as? String ?? config.name
-        print("[MCPClient] Connected to: \(serverName)")
-
-        // Send initialized notification
-        try connection.sendNotification(method: "notifications/initialized")
-
-        // Check server capabilities to know what to discover
-        let capabilities = result["capabilities"] as? [String: Any] ?? [:]
-        let hasTools = capabilities["tools"] != nil
-        let hasResources = capabilities["resources"] != nil
-
-        // Discover tools/resources based on capabilities
-        try await discoverCapabilities(serverId: config.id, serverName: config.name, connection: connection, hasTools: hasTools, hasResources: hasResources)
 
         errors.removeValue(forKey: config.id)
         print("[MCPClient] Server \(config.name) ready with \(discoveredTools[config.id]?.count ?? 0) tools")
@@ -442,6 +462,15 @@ public actor MCPClient {
     ) async throws -> ToolResult {
         guard let connection = connections[serverId] else {
             throw MCPClientError.serverNotConnected(serverId)
+        }
+
+        // Connection liveness check: verify process is still running
+        guard connection.process.isRunning else {
+            // Clean up stale connection
+            connections.removeValue(forKey: serverId)
+            configs.removeValue(forKey: serverId)
+            discoveredTools.removeValue(forKey: serverId)
+            throw MCPClientError.connectionFailed("Server process is no longer running")
         }
 
         let args = arguments.mapValues(\.anyValue)
@@ -547,13 +576,40 @@ public actor MCPClient {
 
     // MARK: - Private Helpers
 
+    /// Environment variables that must never be set via server config
+    private static let blockedEnvVars: Set<String> = [
+        "DYLD_INSERT_LIBRARIES",
+        "DYLD_LIBRARY_PATH",
+        "LD_PRELOAD",
+        "DYLD_FRAMEWORK_PATH"
+    ]
+
     private func launchServer(_ config: ServerConfig) throws -> StdioConnection {
+        // Validate executable exists and is a regular file (not a symlink to a dangerous location)
+        let commandURL = URL(fileURLWithPath: config.command)
+        let fm = FileManager.default
+        var isDir: ObjCBool = false
+        guard fm.fileExists(atPath: commandURL.path, isDirectory: &isDir), !isDir.boolValue else {
+            throw MCPClientError.connectionFailed("Executable not found or is a directory: \(config.command)")
+        }
+        // Resolve symlinks and verify the resolved path is the same file
+        let resolved = commandURL.resolvingSymlinksInPath().path
+        let originalResolved = URL(fileURLWithPath: config.command).standardizedFileURL.path
+        if resolved != originalResolved {
+            print("[MCPClient] Warning: \(config.command) is a symlink resolving to \(resolved)")
+        }
+
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: config.command)
+        process.executableURL = commandURL
         process.arguments = config.arguments
 
+        // Filter out blocked environment variables
         var env = ProcessInfo.processInfo.environment
         for (key, value) in config.env {
+            if Self.blockedEnvVars.contains(key.uppercased()) {
+                print("[MCPClient] Blocked dangerous environment variable: \(key)")
+                continue
+            }
             env[key] = value
         }
         process.environment = env
