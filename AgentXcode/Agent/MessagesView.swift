@@ -47,11 +47,13 @@ struct MessagesView: View {
                         .foregroundStyle(.secondary)
                     Spacer()
                     Button("All") {
-                        viewModel.enabledHandleIds = Set(viewModel.filteredRecipients.map(\.id))
+                        let filtered = Set(viewModel.filteredRecipients.map(\.id))
+                        viewModel.enabledHandleIds.formUnion(filtered)
                     }
                     .buttonStyle(.bordered).controlSize(.mini)
                     Button("None") {
-                        viewModel.enabledHandleIds.removeAll()
+                        let filtered = Set(viewModel.filteredRecipients.map(\.id))
+                        viewModel.enabledHandleIds.subtract(filtered)
                     }
                     .buttonStyle(.bordered).controlSize(.mini)
                     Button("Clear") {
