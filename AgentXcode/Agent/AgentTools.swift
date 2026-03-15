@@ -666,6 +666,20 @@ enum AgentTools {
         ]
     }
 
+    /// Sanitize an MCP tool name to alphanumeric, underscore, and hyphen only.
+    private static func sanitizeToolName(_ name: String) -> String {
+        String(name.unicodeScalars.filter { CharacterSet.alphanumerics.contains($0) || $0 == "_" || $0 == "-" }.prefix(128))
+    }
+
+    /// Sanitize an MCP tool description: collapse newlines, cap length.
+    private static func sanitizeDescription(_ desc: String, maxLength: Int = 1024) -> String {
+        let cleaned = desc
+            .replacingOccurrences(of: "\r\n", with: " ")
+            .replacingOccurrences(of: "\n", with: " ")
+            .replacingOccurrences(of: "\r", with: " ")
+        return String(cleaned.prefix(maxLength))
+    }
+
     /// All common tools + MCP tools in Claude/Anthropic format.
     @MainActor static var claudeFormat: [[String: Any]] {
         var tools = commonTools.map { tool in
@@ -674,10 +688,12 @@ enum AgentTools {
         }
         let mcpService = MCPService.shared
         for tool in mcpService.discoveredTools where mcpService.isToolEnabled(serverName: tool.serverName, toolName: tool.name) {
+            let safeName = sanitizeToolName("mcp_\(tool.serverName)_\(tool.name)")
+            let safeDesc = sanitizeDescription("[MCP:\(tool.serverName)] \(tool.description)")
             let schema = (try? JSONSerialization.jsonObject(with: Data(tool.inputSchemaJSON.utf8))) as? [String: Any]
             tools.append([
-                "name": "mcp_\(tool.serverName)_\(tool.name)",
-                "description": "[MCP:\(tool.serverName)] \(tool.description)",
+                "name": safeName,
+                "description": safeDesc,
                 "input_schema": schema ?? ["type": "object", "properties": [:] as [String: Any]],
             ] as [String: Any])
         }
@@ -722,12 +738,14 @@ enum AgentTools {
         }
         let mcpService = MCPService.shared
         for tool in mcpService.discoveredTools where mcpService.isToolEnabled(serverName: tool.serverName, toolName: tool.name) {
+            let safeName = sanitizeToolName("mcp_\(tool.serverName)_\(tool.name)")
+            let safeDesc = sanitizeDescription("[MCP:\(tool.serverName)] \(tool.description)")
             let schema = (try? JSONSerialization.jsonObject(with: Data(tool.inputSchemaJSON.utf8))) as? [String: Any]
             tools.append([
                 "type": "function",
                 "function": [
-                    "name": "mcp_\(tool.serverName)_\(tool.name)",
-                    "description": "[MCP:\(tool.serverName)] \(tool.description)",
+                    "name": safeName,
+                    "description": safeDesc,
                     "parameters": schema ?? ["type": "object", "properties": [:] as [String: Any]],
                 ] as [String: Any],
             ] as [String: Any])
