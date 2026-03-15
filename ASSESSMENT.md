@@ -2,7 +2,25 @@
 
 **Branch:** `exp_accessibility`  
 **Date:** March 2026  
-**Status:** Experimental Feature Proposal
+**Status:** Phase 2 Implemented ✅
+
+---
+
+## Implementation Status
+
+### Phase 1: ✅ Complete (Read-Only Operations)
+- `ax_check_permission` — Check Accessibility permission status
+- `ax_request_permission` — Request Accessibility permission from user
+- `ax_list_windows` — List all visible windows with metadata
+- `ax_inspect_element` — Inspect accessibility element at screen coordinates
+- `ax_get_properties` — Get properties of element by role/title/position
+
+### Phase 2: ✅ Complete (Input Simulation)
+- `ax_type_text` — Type text via CGEvent keyboard simulation
+- `ax_click` — Mouse click simulation (left/right/middle, single/double)
+- `ax_scroll` — Scroll wheel simulation at coordinates
+- `ax_press_key` — Key press with optional modifiers (Cmd, Option, Control, Shift)
+- `ax_perform_action` — AXUIElementPerformAction for native accessibility actions (requires `allowWrites=true`)
 
 ---
 
