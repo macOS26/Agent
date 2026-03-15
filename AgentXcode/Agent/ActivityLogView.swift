@@ -280,7 +280,7 @@ struct ActivityLogView: NSViewRepresentable {
         )
 
         private static let fencePattern: NSRegularExpression? = try? NSRegularExpression(
-            pattern: #"```(\w*)\r?\n([\s\S]*?)```"#, options: []
+            pattern: #"```(\w*)\n([\s\S]*?)\n```(?=\n|$)"#, options: []
         )
 
         private static let headerPattern: NSRegularExpression? = try? NSRegularExpression(

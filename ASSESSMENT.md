@@ -2,7 +2,7 @@
 
 **Branch:** `exp_accessibility`  
 **Date:** March 2026  
-**Status:** Phase 5 Complete ✅
+**Status:** Phase 6 In Progress 🔄
 
 ---
 
@@ -251,11 +251,22 @@ func performAction(_ action: AXAction, on element: AXUIElement) -> Bool {
 13. **Audit logging** — Comprehensive operation logging
 14. **Rate limiting** — Prevent abuse
 
-### Phase 6: Testing & Documentation (Estimated: 2-3 days)
-
-15. **Unit tests** — Test permission flows, rate limiting, action filtering
-16. **Integration tests** — Test with real apps (Safari, Finder, Notes)
-17. **Documentation** — Update README, add ACCESSIBILITY.md guide
+### Phase 6: 🔄 In Progress (Testing & Documentation)
+    
+    15. **Unit tests** — ✅ AccessibilityServiceTests.swift created
+        - Permission tests (hasAccessibilityPermission, requestAccessibilityPermission)
+        - Window listing tests (JSON structure, limit, permission handling)
+        - Element inspection tests (coordinates, depth, fallback)
+        - Element properties tests (role/title search, JSON output)
+        - Action tests (blocked actions, target requirements)
+        - Input simulation tests (typeText, clickAt, scrollAt, pressKey)
+        - Screenshot tests (region, window, fullscreen)
+        - Rate limiting tests
+        - Audit log tests
+        - Security tests (blocked roles, blocked actions)
+        - Integration smoke tests
+    16. **Integration tests** — Planned (test with real apps: Safari, Finder, Notes)
+    17. **Documentation** — Planned (README updates, ACCESSIBILITY.md guide)
 
 ---
 
