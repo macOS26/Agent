@@ -541,9 +541,19 @@ final class AgentViewModel {
         messagesMonitorTask = nil
     }
 
-    nonisolated(unsafe) private static let messagesDBPath = NSHomeDirectory() + "/Library/Messages/chat.db"
+    // Stored outside @MainActor so nonisolated static methods can access it
+    private nonisolated static let messagesDBPath = NSHomeDirectory() + "/Library/Messages/chat.db"
 
-    /// Read new messages directly from chat.db using SQLite3 C API + NSUnarchiver for attributedBody blobs.
+    /// Decode attributedBody blob (typedstream format) via dynamic dispatch to avoid deprecation warning.
+    private nonisolated static func decodeAttributedBody(_ data: Data) -> NSAttributedString? {
+        guard let cls = NSClassFromString("NSUnarchiver") as? NSObject.Type else { return nil }
+        let sel = NSSelectorFromString("unarchiveObjectWithData:")
+        guard cls.responds(to: sel) else { return nil }
+        let result = cls.perform(sel, with: data)
+        return result?.takeUnretainedValue() as? NSAttributedString
+    }
+
+    /// Read new messages directly from chat.db using SQLite3 C API.
     private nonisolated static func queryMessages(afterROWID: Int) -> [(rowid: Int, text: String, chatId: Int)] {
         var db: OpaquePointer?
         guard sqlite3_open_v2(messagesDBPath, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, nil) == SQLITE_OK else { return [] }
@@ -576,7 +586,7 @@ final class AgentViewModel {
             if text == nil, let blobPtr = sqlite3_column_blob(stmt, 2) {
                 let blobLen = Int(sqlite3_column_bytes(stmt, 2))
                 let data = Data(bytes: blobPtr, count: blobLen)
-                if let attrStr = NSUnarchiver.unarchiveObject(with: data) as? NSAttributedString {
+                if let attrStr = Self.decodeAttributedBody(data) {
                     let s = attrStr.string
                     if !s.isEmpty { text = s }
                 }

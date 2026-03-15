@@ -25,7 +25,7 @@ final class ScriptService {
     private let packageLock = NSLock()
     
     /// Serial queue for script compilation (prevents concurrent swift build calls)
-    nonisolated(unsafe) private static let compilationQueue = DispatchQueue(label: "com.agent.scriptcompilation", qos: .userInitiated)
+    private nonisolated static let compilationQueue = DispatchQueue(label: "com.agent.scriptcompilation", qos: .userInitiated)
 
     // MARK: - Bundle paths
 
