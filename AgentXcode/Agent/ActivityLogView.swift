@@ -1,9 +1,9 @@
 import SwiftUI
 import AppKit
-@preconcurrency import WebKit
 
 /// NSTextView-backed activity log — avoids SwiftUI Text layout storms on large/streaming content.
-/// Detects image file paths in log output and renders them inline.
+/// Detects image/HTML file paths in log output and shows clickable links that open in Preview/Browser.
+/// Optimized for smooth streaming with incremental updates and debouncing.
 struct ActivityLogView: NSViewRepresentable {
     let text: String
     var searchText: String = ""
@@ -23,6 +23,14 @@ struct ActivityLogView: NSViewRepresentable {
         textView.isAutomaticTextReplacementEnabled = false
         scrollView.hasVerticalScroller = true
         scrollView.drawsBackground = false
+        // Improve text rendering performance
+        textView.usesFontPanel = false
+        textView.usesRuler = false
+        textView.isRichText = false
+        textView.allowsUndo = false
+        // Enable link detection and clicking
+        textView.isAutomaticLinkDetectionEnabled = true
+        textView.checkTextInDocument(nil)
         return scrollView
     }
 
@@ -30,19 +38,11 @@ struct ActivityLogView: NSViewRepresentable {
         guard let textView = scrollView.documentView as? NSTextView else { return }
         let coord = context.coordinator
 
-        // Store latest text in coordinator so HTML snapshot callback always uses fresh data
+        // Store latest text for callbacks
         coord.latestText = text
         coord.latestSearchText = searchText
         coord.latestMatchIndex = currentMatchIndex
         coord.latestMatchCallback = onMatchCount
-        coord.onHTMLReady = { [weak textView, weak coord] in
-            guard let textView, let coord else { return }
-            let attributed = coord.buildAttributedString(from: coord.latestText)
-            textView.textStorage?.setAttributedString(attributed)
-            coord.lastLength = (coord.latestText as NSString).length
-            coord.applySearchHighlighting(textView: textView, searchText: coord.latestSearchText, currentMatch: coord.latestMatchIndex, onMatchCount: coord.latestMatchCallback)
-            coord.throttledScrollToEnd(textView)
-        }
 
         if text.isEmpty {
             guard !coord.showingPlaceholder else { return }
@@ -61,28 +61,47 @@ struct ActivityLogView: NSViewRepresentable {
 
         let len = (text as NSString).length
         let searchChanged = searchText != coord.lastSearch || currentMatchIndex != coord.lastMatchIndex
+
+        // Skip if nothing changed
         guard len != coord.lastLength || coord.showingPlaceholder || searchChanged else { return }
 
         let textChanged = len != coord.lastLength || coord.showingPlaceholder
-        // Rebuild when search is cleared so code block backgrounds are restored
         let searchCleared = searchText.isEmpty && !coord.lastSearch.isEmpty
         coord.showingPlaceholder = false
 
         if textChanged || searchCleared {
-            // Preserve scroll position across full text replacement to prevent blinking
-            let savedOrigin = scrollView.contentView.bounds.origin
-            let wasAtBottom = coord.isNearBottom(textView)
+            // Use incremental update for appending text
+            let isAppending = len > coord.lastLength && coord.lastLength > 0 && !searchCleared
 
-            textView.textStorage?.beginEditing()
-            let attributed = coord.buildAttributedString(from: text)
-            textView.textStorage?.setAttributedString(attributed)
-            textView.textStorage?.endEditing()
-            coord.lastLength = len
+            if isAppending {
+                // Incremental update: only render and append new text
+                // Skip ALL image/HTML processing during incremental updates to prevent jumping
+                let prevLen = coord.lastLength
+                let newText = (text as NSString).substring(from: prevLen)
+                let newAttributed = coord.renderMarkdownOnly(newText)
 
-            // Restore scroll: if user was at bottom, stay there; otherwise hold position
-            if !wasAtBottom {
-                scrollView.contentView.scroll(to: savedOrigin)
-                scrollView.reflectScrolledClipView(scrollView.contentView)
+                textView.textStorage?.beginEditing()
+                textView.textStorage?.append(newAttributed)
+                textView.textStorage?.endEditing()
+                coord.lastLength = len
+                coord.lastRenderedText = text
+            } else {
+                // Full rebuild needed (search change, placeholder transition, or text deletion)
+                let savedOrigin = scrollView.contentView.bounds.origin
+                let wasAtBottom = coord.isNearBottom(textView)
+
+                textView.textStorage?.beginEditing()
+                let attributed = coord.buildAttributedString(from: text)
+                textView.textStorage?.setAttributedString(attributed)
+                textView.textStorage?.endEditing()
+                coord.lastLength = len
+                coord.lastRenderedText = text
+
+                // Restore scroll position if user wasn't at bottom
+                if !wasAtBottom {
+                    scrollView.contentView.scroll(to: savedOrigin)
+                    scrollView.reflectScrolledClipView(scrollView.contentView)
+                }
             }
         }
 
@@ -166,34 +185,24 @@ struct ActivityLogView: NSViewRepresentable {
         }
     }
 
-    @MainActor class Coordinator: NSObject, WKNavigationDelegate {
+    @MainActor class Coordinator: NSObject {
         var lastLength = 0
         var showingPlaceholder = true
         var lastSearch = ""
         var lastMatchIndex = -1
         let font = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
-        /// Latest state from updateNSView — used by onHTMLReady to avoid stale captures
+        /// Latest state from updateNSView
         var latestText = ""
         var latestSearchText = ""
         var latestMatchIndex = 0
         var latestMatchCallback: ((Int) -> Void)?
+        /// Track the last fully rendered text for incremental updates
+        var lastRenderedText = ""
         /// Throttle scrollToEnd to avoid hyper-scrolling during fast streaming
         var lastScrollTime: CFAbsoluteTime = 0
         var pendingScrollWork: DispatchWorkItem?
-        /// Images keyed by their character offset in the log — each occurrence gets its own
-        /// snapshot so the same path (e.g. current_artwork.jpg) shows different art per task.
-        var imageCache: [Int: (image: NSImage, mtime: Date)] = [:]
-        /// HTML snapshots keyed by character offset, with file modification time for invalidation
-        var htmlCache: [Int: (image: NSImage, mtime: Date)] = [:]
-        /// Offsets currently being rendered (prevent duplicate requests)
-        var htmlPending: Set<Int> = []
-        /// Retain WKWebViews until snapshot completes
-        var activeWebViews: [Int: WKWebView] = [:]
-        /// Callback to trigger re-render when HTML snapshot is ready
-        var onHTMLReady: (() -> Void)?
-
-        // SECURITY: Limit concurrent web views to prevent memory exhaustion
-        private static let maxActiveWebViews = 10
+        /// Minimum time between full renders during streaming (ms)
+        private static let minRenderInterval: CFAbsoluteTime = 50
 
         /// Check if scroll view is near the bottom
         func isNearBottom(_ textView: NSTextView) -> Bool {
@@ -203,11 +212,11 @@ struct ActivityLogView: NSViewRepresentable {
             return (contentHeight - visibleBottom) < 50
         }
 
-        /// Throttled scroll — at most once per 0.3s, skipped if user scrolled away from bottom
+        /// Throttled scroll — at most once per 0.15s, skipped if user scrolled away from bottom
         func throttledScrollToEnd(_ textView: NSTextView) {
             guard isNearBottom(textView) else { return }
             let now = CFAbsoluteTimeGetCurrent()
-            let interval: CFAbsoluteTime = 0.3
+            let interval: CFAbsoluteTime = 0.15
             pendingScrollWork?.cancel()
             if now - lastScrollTime >= interval {
                 lastScrollTime = now
@@ -313,6 +322,71 @@ struct ActivityLogView: NSViewRepresentable {
             pattern: #"\x1B\[[0-9;]*[A-Za-z]"#, options: []
         )
 
+        /// Fast render for incremental text updates - detects image/HTML paths and creates clickable links
+        func renderMarkdownOnly(_ text: String) -> NSAttributedString {
+            // Check for image or HTML file paths in this chunk
+            let nsText = text as NSString
+            let fullRange = NSRange(location: 0, length: nsText.length)
+            let imageMatches = Self.imagePathPattern?.matches(in: text, range: fullRange) ?? []
+            let htmlMatches = Self.htmlPathPattern?.matches(in: text, range: fullRange) ?? []
+
+            guard !imageMatches.isEmpty || !htmlMatches.isEmpty else {
+                return renderMarkdown(text)
+            }
+
+            // Same logic as buildAttributedString for path-to-link conversion
+            struct FileMatch {
+                let range: NSRange
+                let path: String
+                let isHTML: Bool
+            }
+            var allMatches: [FileMatch] = []
+            for m in imageMatches {
+                let r = m.range(at: 1)
+                allMatches.append(FileMatch(range: r, path: nsText.substring(with: r), isHTML: false))
+            }
+            for m in htmlMatches {
+                let r = m.range(at: 1)
+                allMatches.append(FileMatch(range: r, path: nsText.substring(with: r), isHTML: true))
+            }
+            allMatches.sort { $0.range.location < $1.range.location }
+
+            let baseAttrs: [NSAttributedString.Key: Any] = [
+                .font: font,
+                .foregroundColor: NSColor.labelColor
+            ]
+            let result = NSMutableAttributedString()
+            var lastEnd = 0
+
+            for match in allMatches {
+                if match.range.location > lastEnd {
+                    let beforeRange = NSRange(location: lastEnd, length: match.range.location - lastEnd)
+                    let beforeText = nsText.substring(with: beforeRange)
+                    result.append(renderMarkdown(beforeText))
+                }
+
+                let path = match.path
+                let linkText = match.isHTML ? "📄 \(path)" : "🖼️ \(path)"
+                let linkAttrs: [NSAttributedString.Key: Any] = [
+                    .font: font,
+                    .foregroundColor: NSColor.linkColor,
+                    .link: URL(fileURLWithPath: path).absoluteString,
+                    .underlineStyle: NSUnderlineStyle.single.rawValue
+                ]
+                result.append(NSAttributedString(string: linkText, attributes: linkAttrs))
+                result.append(NSAttributedString(string: "\n", attributes: baseAttrs))
+                lastEnd = match.range.location + match.range.length
+            }
+
+            if lastEnd < nsText.length {
+                let remainingRange = NSRange(location: lastEnd, length: nsText.length - lastEnd)
+                result.append(renderMarkdown(nsText.substring(with: remainingRange)))
+            }
+
+            return result
+        }
+
+        /// Build attributed string from text. Converts image/HTML paths to clickable links.
         func buildAttributedString(from text: String) -> NSAttributedString {
             let baseAttrs: [NSAttributedString.Key: Any] = [
                 .font: font,
@@ -355,77 +429,27 @@ struct ActivityLogView: NSViewRepresentable {
 
             let result = NSMutableAttributedString()
             var lastEnd = 0
-            var renderedSizes: Set<Int> = []
 
             for match in allMatches {
-                let offset = match.range.location
-
                 // Add text before this match
                 if match.range.location > lastEnd {
                     let beforeRange = NSRange(location: lastEnd, length: match.range.location - lastEnd)
                     let beforeText = nsText.substring(with: beforeRange)
                     result.append(renderMarkdown(beforeText))
-                    if beforeText.contains("--- New Task ---") {
-                        renderedSizes.removeAll()
-                    }
                 }
 
-                // Add the path text itself
-                result.append(NSAttributedString(string: match.path, attributes: baseAttrs))
+                // Add the path as a clickable link
+                let path = match.path
+                let linkText = match.isHTML ? "📄 \(path)" : "🖼️ \(path)"
+                let linkAttrs: [NSAttributedString.Key: Any] = [
+                    .font: font,
+                    .foregroundColor: NSColor.linkColor,
+                    .link: URL(fileURLWithPath: path).absoluteString,
+                    .underlineStyle: NSUnderlineStyle.single.rawValue
+                ]
+                result.append(NSAttributedString(string: linkText, attributes: linkAttrs))
+                result.append(NSAttributedString(string: "\n", attributes: baseAttrs))
                 lastEnd = match.range.location + match.range.length
-
-                let fileAttrs = try? FileManager.default.attributesOfItem(atPath: match.path)
-                guard fileAttrs != nil else { continue }
-                let fileSize = fileAttrs?[.size] as? Int ?? 0
-                let fileMtime = fileAttrs?[.modificationDate] as? Date ?? .distantPast
-                // Also check parent directory mtime — catches sibling resources (e.g. album_art.jpg) created after the HTML
-                let dirPath = (match.path as NSString).deletingLastPathComponent
-                let dirMtime = (try? FileManager.default.attributesOfItem(atPath: dirPath)[.modificationDate] as? Date) ?? .distantPast
-                let effectiveMtime = max(fileMtime, dirMtime)
-
-                if match.isHTML {
-                    // HTML snapshot
-                    if let cached = htmlCache[offset], cached.mtime == effectiveMtime {
-                        // Use cached snapshot
-                        let attachment = NSTextAttachment()
-                        attachment.image = cached.image
-                        let imgStr = NSAttributedString(attachment: attachment)
-                        result.append(imgStr)
-                        result.append(NSAttributedString(string: "\n", attributes: baseAttrs))
-                    } else if !htmlPending.contains(offset) && activeWebViews.count < Self.maxActiveWebViews {
-                        // Render HTML to image
-                        htmlPending.insert(offset)
-                        renderHTMLSnapshot(at: match.path, offset: offset, mtime: effectiveMtime)
-                    }
-                } else {
-                    // Image file
-                    // Skip if we already rendered this size at this offset
-                    guard !renderedSizes.contains(offset) else { continue }
-                    renderedSizes.insert(offset)
-
-                    // Cache check
-                    if let cached = imageCache[offset], cached.mtime == fileMtime {
-                        // Use cached image
-                        let attachment = NSTextAttachment()
-                        attachment.image = cached.image
-                        let imgStr = NSAttributedString(attachment: attachment)
-                        result.append(imgStr)
-                        result.append(NSAttributedString(string: "\n", attributes: baseAttrs))
-                        continue
-                    }
-
-                    // Load and cache image
-                    guard let image = NSImage(contentsOfFile: match.path) else { continue }
-                    let maxDim: CGFloat = min(400, CGFloat(integerLiteral: fileSize / 10))
-                    let scaled = scaleImage(image, maxDimension: max(100, maxDim))
-                    imageCache[offset] = (image: scaled, mtime: fileMtime)
-
-                    let attachment = NSTextAttachment()
-                    attachment.image = scaled
-                    let imgStr = NSAttributedString(attachment: attachment)
-                    result.append(imgStr)
-                    result.append(NSAttributedString(string: "\n", attributes: baseAttrs))
-                }
             }
 
             // Add remaining text after last match
@@ -785,104 +809,7 @@ struct ActivityLogView: NSViewRepresentable {
             }
         }
 
-        private func scaleImage(_ image: NSImage, maxDimension: CGFloat) -> NSImage {
-            let size = image.size
-            guard size.width > 0, size.height > 0 else { return image }
-            let scale = min(maxDimension / size.width, maxDimension / size.height)
-            guard scale < 1 else { return image }
-            let newSize = NSSize(width: size.width * scale, height: size.height * scale)
-            let result = NSImage(size: newSize)
-            result.lockFocus()
-            image.draw(in: NSRect(origin: .zero, size: newSize))
-            result.unlockFocus()
-            return result
-        }
-
-        private func renderHTMLSnapshot(at path: String, offset: Int, mtime: Date) {
-            // Read HTML content
-            guard let htmlContent = try? String(contentsOfFile: path, encoding: .utf8) else { return }
-
-            // Get directory for resolving relative paths
-            let directory = (path as NSString).deletingLastPathComponent
-
-            // Inject base tag for relative URLs
-            var processedHTML = htmlContent
-            if !htmlContent.contains("<base") {
-                let baseTag = "<base href=\"file://\(directory)/\">"
-                if let headRange = htmlContent.range(of: "<head>", options: .caseInsensitive) {
-                    processedHTML = htmlContent.replacingCharacters(in: headRange, with: "<head>\(baseTag)")
-                } else if htmlContent.range(of: "<body", options: .caseInsensitive) != nil {
-                    // If no head, prepend base before body
-                    processedHTML = "<html><head>\(baseTag)</head>" + htmlContent
-                }
-            }
-
-            // Configure WKWebView
-            let config = WKWebViewConfiguration()
-            config.preferences.setValue(true, forKey: "allowFileAccessFromFileURLs")
-
-            let webView = WKWebView(frame: CGRect(x: 0, y: 0, width: 800, height: 600), configuration: config)
-            webView.loadHTMLString(processedHTML, baseURL: URL(fileURLWithPath: directory))
-            webView.navigationDelegate = self
-
-            activeWebViews[offset] = webView
-        }
-
-        // MARK: - WKNavigationDelegate
-
-        nonisolated func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            Task { @MainActor in
-                guard let offset = activeWebViews.first(where: { $0.value === webView })?.key else { return }
-
-                // Wait for layout to settle
-                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
-
-                // Get content height
-                let contentHeight = (try? await webView.evaluateJavaScript("document.body.scrollHeight")) as? Double ?? 600
-                let contentWidth = (try? await webView.evaluateJavaScript("document.body.scrollWidth")) as? Double ?? 800
-
-                // Take snapshot
-                let config = WKSnapshotConfiguration()
-                config.rect = CGRect(x: 0, y: 0, width: contentWidth, height: min(contentHeight, 2000))
-
-                webView.takeSnapshot(with: config) { [weak self] image, error in
-                    Task { @MainActor in
-                        guard let self else { return }
-                        if let image {
-                            let scaled = self.scaleImage(image, maxDimension: 400)
-
-                            // Find the path and mtime for this offset
-                            if let (path, _) = self.findPathForOffset(offset) {
-                                let fileMtime = (try? FileManager.default.attributesOfItem(atPath: path)[.modificationDate] as? Date) ?? .distantPast
-                                let dirPath = (path as NSString).deletingLastPathComponent
-                                let dirMtime = (try? FileManager.default.attributesOfItem(atPath: dirPath)[.modificationDate] as? Date) ?? .distantPast
-                                let effectiveMtime = max(fileMtime, dirMtime)
-
-                                self.htmlCache[offset] = (image: scaled, mtime: effectiveMtime)
-                            }
-
-                            // Trigger re-render
-                            self.onHTMLReady?()
-                        }
-
-                        self.htmlPending.remove(offset)
-                        self.activeWebViews.removeValue(forKey: offset)
-                    }
-                }
-            }
-        }
-
-        private func findPathForOffset(_ offset: Int) -> (String, Bool)? {
-            // This is a helper to find the path for a given offset
-            // We'll need to track this differently - for now return nil
-            return nil
-        }
-
         func clearCache() {
-            imageCache.removeAll()
-            htmlCache.removeAll()
-            htmlPending.removeAll()
-            activeWebViews.removeAll()
             lastSearch = ""
             lastMatchIndex = -1
             lastSearchRanges.removeAll()

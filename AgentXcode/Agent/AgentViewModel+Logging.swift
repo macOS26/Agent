@@ -272,7 +272,8 @@ extension AgentViewModel {
     private func scheduleStreamFlush() {
         guard streamFlushTask == nil else { return }
         streamFlushTask = Task {
-            try? await Task.sleep(for: .milliseconds(50))
+            // Use 150ms debounce for smoother streaming - balances responsiveness with UI performance
+            try? await Task.sleep(for: .milliseconds(150))
             self.streamFlushTask = nil
             if !self.streamBuffer.isEmpty {
                 ChatHistoryStore.shared.appendStreamingContent(self.streamBuffer)
@@ -300,7 +301,8 @@ extension AgentViewModel {
     private func scheduleLogFlush() {
         guard logFlushTask == nil else { return }
         logFlushTask = Task {
-            try? await Task.sleep(for: .milliseconds(150))
+            // Use 200ms debounce for log entries - less frequent updates
+            try? await Task.sleep(for: .milliseconds(200))
             flushLog()
         }
     }

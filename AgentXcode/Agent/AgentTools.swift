@@ -222,11 +222,10 @@ enum AgentTools {
         ✓ RIGHT: Use run_agent_script for agent dylib scripts in ~/Documents/Agent/agents/
         ✓ RIGHT: Use apple_event_query first for quick app data queries
 
-        INLINE IMAGES: The activity log renders image files inline automatically. \
+        INLINE IMAGES: The activity log shows image and HTML file paths as clickable links. \
         When you save an image to disk (e.g. album art, screenshots), just print or return \
-        the file path — do NOT run `open` to display it. The UI detects paths ending in \
-        .jpg/.png/.gif/.tiff/.webp/.heic and shows them inline in the log. \
-        HTML files (.html) are also rendered inline as snapshots — great for rich formatted output.
+        the file path — the UI displays it as a clickable link (🖼️ /path/to/image.jpg). \
+        HTML files show as 📄 /path/to/file.html links. Click to open in Preview or your browser.
 
         Work efficiently and methodically. Verify changes after making them. \
         Call task_complete when done. If a command fails, try an alternative. \
