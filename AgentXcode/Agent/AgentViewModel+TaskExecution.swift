@@ -737,15 +737,16 @@ extension AgentViewModel {
                             appendLog("Running: \(scriptName) (in-process)")
                             flushLog()
 
-                            let runResult = await scriptService.loadAndRunScript(name: scriptName, arguments: arguments)
+                            let runResult = await scriptService.loadAndRunScript(name: scriptName, arguments: arguments) { [weak self] chunk in
+                                Task { @MainActor in
+                                    self?.appendRawOutput(chunk)
+                                }
+                            }
 
                             guard !Task.isCancelled else { break }
 
                             if runResult.status != 0 {
                                 appendLog("exit code: \(runResult.status)")
-                            }
-                            if !runResult.output.isEmpty {
-                                appendLog(runResult.output)
                             }
                             let toolOutput = runResult.output.isEmpty
                                 ? "(no output, exit code: \(runResult.status))"

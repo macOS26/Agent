@@ -418,7 +418,7 @@ final class ScriptService {
     /// Load and run a compiled script dylib in-process via dlopen/dlsym.
     /// Captures stdout/stderr and returns the output + exit status.
     /// Runs on a background thread to avoid blocking the main thread.
-    func loadAndRunScript(name: String, arguments: String = "") async -> (output: String, status: Int32) {
+    func loadAndRunScript(name: String, arguments: String = "", onOutput: (@Sendable (String) -> Void)? = nil) async -> (output: String, status: Int32) {
         let scriptName = name.replacingOccurrences(of: ".swift", with: "")
         let path = dylibPath(name: scriptName)
 
@@ -466,6 +466,38 @@ final class ScriptService {
                     return
                 }
 
+                // Start a reader thread to stream pipe output to LogView
+                final class OutputBuffer: @unchecked Sendable {
+                    private let lock = NSLock()
+                    private var buffer = ""
+                    func append(_ chunk: String) {
+                        lock.lock()
+                        buffer += chunk
+                        lock.unlock()
+                    }
+                    var output: String {
+                        lock.lock()
+                        defer { lock.unlock() }
+                        return buffer
+                    }
+                }
+                let collected = OutputBuffer()
+                let readerQueue = DispatchQueue(label: "com.agent.script-output-reader")
+                let readHandle = FileHandle(fileDescriptor: pipefd[0], closeOnDealloc: false)
+                let readerDone = DispatchSemaphore(value: 0)
+
+                readerQueue.async {
+                    while true {
+                        let data = readHandle.availableData
+                        if data.isEmpty { break }
+                        if let chunk = String(data: data, encoding: .utf8) {
+                            collected.append(chunk)
+                            onOutput?(chunk)
+                        }
+                    }
+                    readerDone.signal()
+                }
+
                 // Call script_main
                 typealias ScriptMainFunc = @convention(c) () -> Int32
                 let scriptMain = unsafeBitCast(sym, to: ScriptMainFunc.self)
@@ -480,16 +512,14 @@ final class ScriptService {
                 close(savedStdout)
                 close(savedStderr)
 
-                // Read captured output
-                let readHandle = FileHandle(fileDescriptor: pipefd[0])
-                let data = readHandle.readDataToEndOfFile()
+                // Wait for reader to finish draining the pipe
+                readerDone.wait()
                 close(pipefd[0])
 
                 dlclose(handle)
                 unsetenv("AGENT_SCRIPT_ARGS")
 
-                let output = String(data: data, encoding: .utf8) ?? ""
-                continuation.resume(returning: (output, status))
+                continuation.resume(returning: (collected.output, status))
             }
         }
     }
