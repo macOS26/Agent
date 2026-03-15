@@ -129,23 +129,27 @@ struct MCPServersView: View {
     }
     
     private func toggleServerConnection(_ server: MCPServerConfig) async {
-        if case .connected = connectionStatus[server.id] {
-            // Disconnect
+        if server.enabled {
+            // Currently enabled → disable and disconnect
+            registry.toggleEnabled(server.id)
             connectionStatus[server.id] = .disconnected
             await MCPService.shared.disconnect(serverId: server.id)
         } else {
-            // Connect
+            // Currently disabled → enable and connect
+            registry.toggleEnabled(server.id)
             connectionStatus[server.id] = .connecting
             do {
-                try await MCPService.shared.connect(to: server)
+                // Re-fetch config after toggle so enabled=true is passed
+                if let updated = registry.servers.first(where: { $0.id == server.id }) {
+                    try await MCPService.shared.connect(to: updated)
+                }
                 connectionStatus[server.id] = .connected
             } catch {
                 connectionStatus[server.id] = .error(error.localizedDescription)
+                // Revert enabled on failure
+                registry.toggleEnabled(server.id)
             }
         }
-        
-        // Update registry enabled state
-        registry.toggleEnabled(server.id)
     }
     
     private func refreshConnectionStatus() async {
