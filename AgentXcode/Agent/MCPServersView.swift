@@ -120,22 +120,22 @@ struct MCPServersView: View {
     // MARK: - Actions
 
     private func toggleServer(_ server: MCPServerConfig) async {
-        let isOn = mcpService.connectedServerIds.contains(server.id) || connectingIds.contains(server.id)
-
-        if isOn {
-            // Turn OFF: disconnect, disable
+        if server.enabled {
+            // Turn OFF: disable first (moves switch left), then disconnect
+            registry.setEnabled(server.id, false)
             connectingIds.remove(server.id)
             await mcpService.disconnect(serverId: server.id)
-            if server.enabled { registry.toggleEnabled(server.id) }
         } else {
-            // Turn ON: enable, connect
-            if !server.enabled { registry.toggleEnabled(server.id) }
+            // Turn ON: enable first (moves switch right), then connect
+            registry.setEnabled(server.id, true)
             guard let updated = registry.servers.first(where: { $0.id == server.id }) else { return }
             connectingIds.insert(server.id)
             do {
                 try await mcpService.connect(to: updated)
             } catch {
                 mcpService.connectionErrors[server.id] = error.localizedDescription
+                // Connection failed: switch back to OFF
+                registry.setEnabled(server.id, false)
             }
             connectingIds.remove(server.id)
         }
@@ -150,7 +150,7 @@ struct MCPServersView: View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 Toggle("", isOn: Binding(
-                    get: { mcpService.connectedServerIds.contains(server.id) || connectingIds.contains(server.id) },
+                    get: { server.enabled },
                     set: { _ in Task { await toggleServer(server) } }
                 ))
                 .toggleStyle(.switch)

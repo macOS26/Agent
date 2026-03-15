@@ -88,6 +88,13 @@ final class MCPServerRegistry {
             save()
         }
     }
+
+    func setEnabled(_ id: UUID, _ enabled: Bool) {
+        if let index = servers.firstIndex(where: { $0.id == id }) {
+            servers[index].enabled = enabled
+            save()
+        }
+    }
     
     // MARK: - Persistence
     
