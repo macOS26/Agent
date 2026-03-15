@@ -179,7 +179,8 @@
       "Bash(defaults write:*)",
       "Bash(git mv:*)",
       "Bash(git:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(sqlite3:*)"
     ]
   }
 }
