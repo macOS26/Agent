@@ -717,13 +717,18 @@ final class AgentViewModel {
 
             guard !row.text.isEmpty else { continue }
 
-            // Skip messages from handles the user hasn't enabled (if any are selected)
-            if !enabled.isEmpty && !enabled.contains(row.handleId) { continue }
+            let approved = enabled.isEmpty || enabled.contains(row.handleId)
 
-            // Pulse the dot and show incoming message in the log
+            // Always show the message in the log
             flashMessagesDot()
-            appendLog("iMessage (\(row.handleId)): \(row.text)")
+            if approved {
+                appendLog("iMessage (\(row.handleId)): \(row.text)")
+            } else {
+                appendLog("iMessage not approved (\(row.handleId)): \(row.text) — select this recipient in the Messages toolbar button")
+            }
             flushLog()
+
+            guard approved else { continue }
 
             // Only act on "Agent!" commands
             guard row.text.hasPrefix("Agent!") else { continue }
