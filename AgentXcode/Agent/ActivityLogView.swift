@@ -64,9 +64,11 @@ struct ActivityLogView: NSViewRepresentable {
         guard len != coord.lastLength || coord.showingPlaceholder || searchChanged else { return }
 
         let textChanged = len != coord.lastLength || coord.showingPlaceholder
+        // Rebuild when search is cleared so code block backgrounds are restored
+        let searchCleared = searchText.isEmpty && !coord.lastSearch.isEmpty
         coord.showingPlaceholder = false
 
-        if textChanged {
+        if textChanged || searchCleared {
             let attributed = coord.buildAttributedString(from: text)
             textView.textStorage?.setAttributedString(attributed)
             coord.lastLength = len
@@ -210,13 +212,26 @@ struct ActivityLogView: NSViewRepresentable {
             }
         }
 
+        /// Track previous search highlight ranges so we can remove only those
+        var lastSearchRanges: [NSRange] = []
+
         /// Highlight search matches in the text view's text storage
         func applySearchHighlighting(textView: NSTextView, searchText: String, currentMatch: Int, onMatchCount: ((Int) -> Void)?) {
             guard let storage = textView.textStorage else { return }
-            let fullRange = NSRange(location: 0, length: storage.length)
 
-            // Remove previous search highlights
-            storage.removeAttribute(.backgroundColor, range: fullRange)
+            // Remove only previous search highlight backgrounds (preserve code block backgrounds)
+            let highlightColor = NSColor.systemYellow.withAlphaComponent(0.3)
+            let currentColor = NSColor.systemOrange.withAlphaComponent(0.5)
+            for range in lastSearchRanges {
+                if range.location + range.length <= storage.length {
+                    let existingColor = storage.attribute(.backgroundColor, at: range.location, effectiveRange: nil) as? NSColor
+                    // Only remove if it's a search highlight color (yellow/orange), not code block background
+                    if let color = existingColor, (color == highlightColor || color == currentColor) {
+                        storage.removeAttribute(.backgroundColor, range: range)
+                    }
+                }
+            }
+            lastSearchRanges.removeAll()
 
             guard !searchText.isEmpty else {
                 onMatchCount?(0)
@@ -238,9 +253,7 @@ struct ActivityLogView: NSViewRepresentable {
             }
 
             onMatchCount?(matchRanges.count)
-
-            let highlightColor = NSColor.systemYellow.withAlphaComponent(0.3)
-            let currentColor = NSColor.systemOrange.withAlphaComponent(0.5)
+            lastSearchRanges = matchRanges
 
             for (i, range) in matchRanges.enumerated() {
                 let color = (i == currentMatch) ? currentColor : highlightColor
@@ -264,6 +277,10 @@ struct ActivityLogView: NSViewRepresentable {
         private static let htmlPathPattern: NSRegularExpression? = try? NSRegularExpression(
             pattern: #"(/[^\s"'<>]+\.html?)"#,
             options: .caseInsensitive
+        )
+
+        private static let fencePattern: NSRegularExpression? = try? NSRegularExpression(
+            pattern: #"```(\w*)\r?\n([\s\S]*?)```"#, options: []
         )
 
         private static let headerPattern: NSRegularExpression? = try? NSRegularExpression(
@@ -415,7 +432,7 @@ struct ActivityLogView: NSViewRepresentable {
             ]
 
             // Handle code fences (```lang\n...\n```) first
-            guard let fenceRx = try? NSRegularExpression(pattern: #"```(\w*)\n([\s\S]*?)```"#) else { return NSAttributedString(string: text, attributes: baseAttrs) }
+            guard let fenceRx = Self.fencePattern else { return NSAttributedString(string: text, attributes: baseAttrs) }
             let nsText = text as NSString
             let fullRange = NSRange(location: 0, length: nsText.length)
             let fences = fenceRx.matches(in: text, range: fullRange)
@@ -826,6 +843,7 @@ struct ActivityLogView: NSViewRepresentable {
             activeWebViews.removeAll()
             lastSearch = ""
             lastMatchIndex = -1
+            lastSearchRanges.removeAll()
         }
     }
 }
