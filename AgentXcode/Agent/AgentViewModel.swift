@@ -215,6 +215,21 @@ final class AgentViewModel {
     private var runningTask: Task<Void, Never>?
     @ObservationIgnored private var terminationObserver: Any?
 
+    // MARK: - Messages Monitor
+    var messagesMonitorEnabled: Bool = UserDefaults.standard.object(forKey: "agentMessagesMonitor") as? Bool ?? false {
+        didSet {
+            UserDefaults.standard.set(messagesMonitorEnabled, forKey: "agentMessagesMonitor")
+            if messagesMonitorEnabled {
+                startMessagesMonitor()
+            } else {
+                stopMessagesMonitor()
+            }
+        }
+    }
+    private var messagesMonitorTask: Task<Void, Never>?
+    /// ROWID of the last message we've already processed
+    private var lastSeenMessageROWID: Int = 0
+
     // MARK: - Logging State
 
     static let timestampFormatter: DateFormatter = {
@@ -313,6 +328,15 @@ final class AgentViewModel {
         }
 
         // Xcode Command Line Tools check is handled by DependencyOverlay in ContentView
+
+        // Resume Messages monitor if it was enabled
+        if messagesMonitorEnabled {
+            // Delay start so UserService is connected first
+            Task {
+                try? await Task.sleep(nanoseconds: 3_000_000_000)
+                startMessagesMonitor()
+            }
+        }
 
         // Test daemon connectivity on startup — auto-fix if not responding
         Task {
@@ -472,6 +496,69 @@ final class AgentViewModel {
         rootServiceActive = false
         userWasActive = false
         rootWasActive = false
+    }
+
+    // MARK: - Messages Monitor
+
+    func startMessagesMonitor() {
+        stopMessagesMonitor()
+        appendLog("Messages monitor: ON")
+        flushLog()
+
+        messagesMonitorTask = Task { [weak self] in
+            guard let self else { return }
+            // Seed the last-seen ROWID so we only act on NEW messages
+            await self.seedLastSeenROWID()
+
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 5_000_000_000) // poll every 5s
+                guard !Task.isCancelled else { break }
+                await self.pollMessages()
+            }
+        }
+    }
+
+    func stopMessagesMonitor() {
+        messagesMonitorTask?.cancel()
+        messagesMonitorTask = nil
+    }
+
+    /// Query the Messages database for the latest ROWID so we ignore all existing messages.
+    private func seedLastSeenROWID() async {
+        let cmd = "sqlite3 ~/Library/Messages/chat.db \"SELECT MAX(ROWID) FROM message;\""
+        let result = await userService.execute(command: cmd)
+        if let rowid = Int(result.output.trimmingCharacters(in: .whitespacesAndNewlines)) {
+            lastSeenMessageROWID = rowid
+        }
+    }
+
+    /// Check for new incoming messages containing "AE!" prefix.
+    private func pollMessages() async {
+        guard !isRunning else { return } // don't interrupt a running task
+
+        let cmd = """
+        sqlite3 ~/Library/Messages/chat.db \
+        "SELECT ROWID, text FROM message WHERE ROWID > \(lastSeenMessageROWID) AND is_from_me = 0 AND text LIKE 'AE!%' ORDER BY ROWID ASC LIMIT 1;"
+        """
+        let result = await userService.execute(command: cmd)
+        let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !output.isEmpty, result.status == 0 else { return }
+
+        // Format: ROWID|text
+        let parts = output.components(separatedBy: "|")
+        guard parts.count >= 2, let rowid = Int(parts[0]) else { return }
+
+        lastSeenMessageROWID = rowid
+        let fullText = parts.dropFirst().joined(separator: "|") // rejoin in case text contained |
+        let prompt = String(fullText.dropFirst(3)).trimmingCharacters(in: .whitespaces) // strip "AE!" prefix
+        guard !prompt.isEmpty else { return }
+
+        appendLog("Messages AE: \(prompt)")
+        flushLog()
+
+        // Inject as a task
+        taskInput = prompt
+        run()
     }
 
     // MARK: - Model Fetching

@@ -42,6 +42,12 @@ struct ContentView: View {
                         .tint(.green)
                         .font(.caption)
                         .foregroundStyle(viewModel.rootEnabled ? .secondary : .tertiary)
+                    Toggle("Messages", isOn: $viewModel.messagesMonitorEnabled)
+                        .toggleStyle(.switch)
+                        .controlSize(.mini)
+                        .tint(.blue)
+                        .font(.caption)
+                        .foregroundStyle(viewModel.messagesMonitorEnabled ? .secondary : .tertiary)
                 }
 
                 Button("Register") {
