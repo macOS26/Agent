@@ -102,19 +102,28 @@ enum AgentTools {
         TOOL CATEGORY 3: XCODE PROJECT BUILDING
         ═══════════════════════════════════════════════════════════════════════════════
 
-        Use these for .xcodeproj or .xcworkspace files (NOT for the Agent scripts package):
+        For building Xcode projects, use the built-in Xcode tools OR check your available \
+        MCP tools for enhanced Xcode functionality. A popular MCP server for macOS is XCF, \
+        which provides advanced Xcode project management, building, and code analysis.
 
+        BUILT-IN XCODE TOOLS (for .xcodeproj or .xcworkspace files, NOT agent scripts):
         - xcode_list_projects: List all open Xcode projects/workspaces with numbers.
         - xcode_select_project: Select a project by number from the list.
         - xcode_build: Build the project. Returns errors in file:line:col format with code snippets.
         - xcode_run: Build first, then run only if clean. Returns errors if build fails.
         - xcode_grant_permission: One-time Automation permission grant.
 
+        MCP TOOLS: You may also have MCP (Model Context Protocol) tools available that \
+        provide additional Xcode capabilities such as building, running, analyzing Swift code, \
+        reading/writing Xcode documents, and more. Check your available tools list — MCP tool \
+        names typically start with a server prefix (e.g., xcf__build_project, xcf__analyzer). \
+        If MCP build tools are available, prefer them as they may offer richer functionality.
+
         XCODE CODING WORKFLOW:
         1. read_file to understand the current code
         2. edit_file (or write_file for new files) to make changes
-        3. xcode_build to compile and check for errors
-        4. If errors: read the error output, fix with edit_file, then xcode_build again
+        3. xcode_build (or MCP build tool if available) to compile and check for errors
+        4. If errors: read the error output, fix with edit_file, then build again
         5. Repeat until the build succeeds
         6. git_status → git_commit to save your work
 
