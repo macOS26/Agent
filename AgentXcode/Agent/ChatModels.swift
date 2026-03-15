@@ -138,8 +138,14 @@ final class ChatHistoryStore {
         for (_, messages) in tasks {
             result += "--- New Task ---\n"
             for msg in messages {
-                // Content already includes timestamp from appendLog
-                result += "\(msg.content)\n"
+                if msg.isStreaming {
+                    // Streaming fragments are partial tokens — concatenate without extra newlines
+                    // (the final newline is stored as its own streaming message by flushStreamBuffer)
+                    result += msg.content
+                } else {
+                    // Non-streaming messages (appendLog, appendRawOutput) are complete lines
+                    result += "\(msg.content)\n"
+                }
             }
         }
         
