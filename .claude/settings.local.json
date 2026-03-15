@@ -96,7 +96,7 @@
       "Bash(git -C /Users/toddbruss/Documents/GitHub/Agent show 7bdaefd:Agent/ScriptService.swift | grep -A 10 \"resourcePath\")",
       "Bash(git -C /Users/toddbruss/Documents/GitHub/Agent ls-tree -r --name-only 7bdaefd | grep -i \"bridge\\\\|example\" | head -30)",
       "Bash(swift package:*)",
-      "Bash(git -C /Users/toddbruss/Documents/GitHub/Agent status -s -- AgentSwiftPackage/)",
+      "Bash(git -C /Users/toddbruss/Documents/GitHub/Agent status -s -- AgentScripts/)",
       "Bash(defaults read:*)",
       "Bash(grep -r \"scripting_bridge_query\" /Users/toddbruss/Documents/Agent/agents/ --include=\"*\" 2>/dev/null | head -50)",
       "Bash(find /Users/toddbruss/Documents/Agent/agents/Sources/Scripts -name \"*.swift\" -type f 2>/dev/null | head -20)",
@@ -116,8 +116,8 @@
       "Bash(ls ~/Documents/Agent/agents/Sources/Scripts/*.swift | xargs -I{} basename {} .swift | sort)",
       "Bash(ls /Users/toddbruss/Documents/Agent/agents/.build/debug/lib* 2>/dev/null | head -20)",
       "Bash(ls /Users/toddbruss/Documents/Agent/agents/.build/debug/Hello* 2>/dev/null)",
-      "Bash(mkdir -p /Users/toddbruss/Documents/GitHub/Agent/AgentSwiftPackage/Agent/agents/Sources && cp -R /Users/toddbruss/Documents/GitHub/Agent/AgentSwiftPackage/Agent/AgentBak/Sources/XCFScriptingBridges /Users/toddbruss/Documents/GitHub/Agent/AgentSwiftPackage/Agent/agents/Sources/ && cp -R /Users/toddbruss/Documents/GitHub/Agent/AgentSwiftPackage/Agent/AgentBak/Sources/Scripts /Users/toddbruss/Documents/GitHub/Agent/AgentSwiftPackage/Agent/agents/Sources/)",
-      "Bash(nm -gU /Users/toddbruss/Documents/GitHub/Agent/AgentSwiftPackage/Agent/agents/.build/debug/libHello.dylib | grep script_main)",
+      "Bash(mkdir -p /Users/toddbruss/Documents/GitHub/Agent/AgentScripts/Agent/agents/Sources && cp -R /Users/toddbruss/Documents/GitHub/Agent/AgentScripts/Agent/AgentBak/Sources/XCFScriptingBridges /Users/toddbruss/Documents/GitHub/Agent/AgentScripts/Agent/agents/Sources/ && cp -R /Users/toddbruss/Documents/GitHub/Agent/AgentScripts/Agent/AgentBak/Sources/Scripts /Users/toddbruss/Documents/GitHub/Agent/AgentScripts/Agent/agents/Sources/)",
+      "Bash(nm -gU /Users/toddbruss/Documents/GitHub/Agent/AgentScripts/Agent/agents/.build/debug/libHello.dylib | grep script_main)",
       "Bash(ls ~/Documents/Agent/agents/Sources/Scripts/*.swift | xargs -I {} basename {} .swift | sort)",
       "Bash(file ~/Documents/Agent/agents/.build/debug/libHello.dylib && nm -gU ~/Documents/Agent/agents/.build/debug/libHello.dylib | grep script_main)",
       "Bash(cd \"/Users/toddbruss/Documents/GitHub/Agent/AgentXcode\" && xcodebuild -resolvePackageDependencies -project \"Agent!.xcodeproj\" 2>&1 | tail -5)",
@@ -141,14 +141,14 @@
       "Bash(open /Users/toddbruss/Documents/GitHub/Agent/AgentXcode/Agent.xcodeproj)",
       "Bash(tccutil reset:*)",
       "Bash(sudo rm:*)",
-      "Bash(ls /Users/toddbruss/Documents/GitHub/Agent/AgentSwiftPackage/Agent/*.json 2>/dev/null)",
+      "Bash(ls /Users/toddbruss/Documents/GitHub/Agent/AgentScripts/Agent/*.json 2>/dev/null)",
       "Bash(xcodebuild -project AgentXcode/Agent.xcodeproj -list 2>&1)",
       "Bash(ls:*)",
       "Bash(grep -r \"!\" /Users/toddbruss/Documents/GitHub/Agent/AgentXcode/Agent/*.swift | grep -v \"!=\" | grep -v \"! \" | grep -v \"!/\\\\*\" | grep -v \"/\\\\*.*!\" | grep -v \"\\\\\".*!.*\\\\\"\" | head -20)",
       "Bash(find /Users/toddbruss/Documents/GitHub/Agent/AgentXcode -type f -name \"*.swift\" 2>/dev/null | sort)",
-      "Bash(find /Users/toddbruss/Documents/GitHub/Agent/AgentSwiftPackage/Agent/agents/Sources/Scripts -type f -name \"*.swift\" 2>/dev/null | sort)",
+      "Bash(find /Users/toddbruss/Documents/GitHub/Agent/AgentScripts/Agent/agents/Sources/Scripts -type f -name \"*.swift\" 2>/dev/null | sort)",
       "Bash(grep -r \"try!\" /Users/toddbruss/Documents/GitHub/Agent/AgentXcode --include=\"*.swift\" 2>/dev/null | head -20)",
-      "Bash(find AgentXcode AgentSwiftPackage/Agent/agents/Sources/Scripts -name \"*.swift\" -type f -exec grep -l \"!\" {} \\\\; 2>/dev/null | wc -l)",
+      "Bash(find AgentXcode AgentScripts/Agent/agents/Sources/Scripts -name \"*.swift\" -type f -exec grep -l \"!\" {} \\\\; 2>/dev/null | wc -l)",
       "Bash(find:*)",
       "Bash(grep:*)",
       "WebFetch(domain:preserve.mactech.com)",
@@ -176,7 +176,9 @@
       "Bash(curl:*)",
       "Bash(git checkout:*)",
       "Bash(xcodebuild:*)",
-      "Bash(defaults write:*)"
+      "Bash(defaults write:*)",
+      "Bash(git mv:*)",
+      "Bash(git:*)"
     ]
   }
 }

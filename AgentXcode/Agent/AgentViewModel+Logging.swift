@@ -264,11 +264,7 @@ extension AgentViewModel {
     // MARK: - LLM Streaming
 
     func appendStreamDelta(_ delta: String) {
-        if !streamingTextStarted {
-            let timestamp = Self.timestampFormatter.string(from: Date())
-            streamBuffer += "[\(timestamp)] "
-            streamingTextStarted = true
-        }
+        streamingTextStarted = true
         streamBuffer += delta
         scheduleStreamFlush()
     }

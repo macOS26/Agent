@@ -182,12 +182,12 @@
 		DD10000000000000000002 /* ScriptingBridgesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptingBridgesTests.swift; sourceTree = "<group>"; };
 		DD10000000000000000003 /* PackageGenerationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageGenerationTests.swift; sourceTree = "<group>"; };
 		DD10000000000000000004 /* AgentTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AgentTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		EA37C5532F636B87009D0A23 /* Sources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Sources; path = ../AgentSwiftPackage/Agent/agents/Sources; sourceTree = SOURCE_ROOT; };
-		EA37C5542F636B87009D0A23 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = text; name = Package.swift; path = ../AgentSwiftPackage/Agent/agents/Package.swift; sourceTree = SOURCE_ROOT; };
-		EA50000000000000000005 /* send_message_input.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = send_message_input.json; path = ../AgentSwiftPackage/Agent/send_message_input.json; sourceTree = SOURCE_ROOT; };
-		EA50000000000000000006 /* send_message_output.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = send_message_output.json; path = ../AgentSwiftPackage/Agent/send_message_output.json; sourceTree = SOURCE_ROOT; };
-		EA50000000000000000007 /* send_image_input.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = send_image_input.json; path = ../AgentSwiftPackage/Agent/send_image_input.json; sourceTree = SOURCE_ROOT; };
-		EA50000000000000000008 /* send_image_output.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = send_image_output.json; path = ../AgentSwiftPackage/Agent/send_image_output.json; sourceTree = SOURCE_ROOT; };
+		EA37C5532F636B87009D0A23 /* Sources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Sources; path = ../AgentScripts/Agent/agents/Sources; sourceTree = SOURCE_ROOT; };
+		EA37C5542F636B87009D0A23 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = text; name = Package.swift; path = ../AgentScripts/Agent/agents/Package.swift; sourceTree = SOURCE_ROOT; };
+		EA50000000000000000005 /* send_message_input.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = send_message_input.json; path = ../AgentScripts/Agent/send_message_input.json; sourceTree = SOURCE_ROOT; };
+		EA50000000000000000006 /* send_message_output.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = send_message_output.json; path = ../AgentScripts/Agent/send_message_output.json; sourceTree = SOURCE_ROOT; };
+		EA50000000000000000007 /* send_image_input.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = send_image_input.json; path = ../AgentScripts/Agent/send_image_input.json; sourceTree = SOURCE_ROOT; };
+		EA50000000000000000008 /* send_image_output.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = send_image_output.json; path = ../AgentScripts/Agent/send_image_output.json; sourceTree = SOURCE_ROOT; };
 		EAF3666E2F623D6A004B7E38 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		EE10000000000000000001 /* ObjCTry.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ObjCTry.h; sourceTree = "<group>"; };
 		EE10000000000000000002 /* ObjCTry.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ObjCTry.m; sourceTree = "<group>"; };
@@ -457,7 +457,7 @@
 			);
 			mainGroup = AA10000000000000000040;
 			packageReferences = (
-				EA37C5502F636B85009D0A23 /* XCLocalSwiftPackageReference "../AgentSwiftPackage/Agent/agents" */,
+				EA37C5502F636B85009D0A23 /* XCLocalSwiftPackageReference "../AgentScripts/Agent/agents" */,
 				EA50MCP0000000001 /* XCLocalSwiftPackageReference "../AgentMCP" */,
 			);
 			productRefGroup = AA10000000000000000042 /* Products */;
@@ -917,9 +917,9 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		EA37C5502F636B85009D0A23 /* XCLocalSwiftPackageReference "../AgentSwiftPackage/Agent/agents" */ = {
+		EA37C5502F636B85009D0A23 /* XCLocalSwiftPackageReference "../AgentScripts/Agent/agents" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../AgentSwiftPackage/Agent/agents;
+			relativePath = ../AgentScripts/Agent/agents;
 		};
 		EA50MCP0000000001 /* XCLocalSwiftPackageReference "../AgentMCP" */ = {
 			isa = XCLocalSwiftPackageReference;
