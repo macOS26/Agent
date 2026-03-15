@@ -780,10 +780,13 @@ final class AgentViewModel {
         for row in rows {
             lastSeenMessageROWID = row.rowid
 
+            guard !row.text.isEmpty else { continue }
+
+            // Only process messages that start with "Agent!"
+            guard row.text.hasPrefix("Agent!") else { continue }
+
             // Auto-discover this sender
             autoAddRecipient(from: row)
-
-            guard !row.text.isEmpty else { continue }
 
             let approved = enabled.contains(row.handleId)
 
