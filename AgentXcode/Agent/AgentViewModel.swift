@@ -1,5 +1,6 @@
 @preconcurrency import Foundation
 import AppKit
+import SQLite3
 
 enum APIProvider: String, CaseIterable {
     case claude = "claude"
@@ -523,49 +524,93 @@ final class AgentViewModel {
         messagesMonitorTask = nil
     }
 
-    private var messagesDBPath: String {
-        NSHomeDirectory() + "/Library/Messages/chat.db"
+    nonisolated(unsafe) private static let messagesDBPath = NSHomeDirectory() + "/Library/Messages/chat.db"
+
+    /// Read new messages directly from chat.db using SQLite3 C API + NSUnarchiver for attributedBody blobs.
+    private nonisolated static func queryMessages(afterROWID: Int) -> [(rowid: Int, text: String)] {
+        var db: OpaquePointer?
+        guard sqlite3_open_v2(messagesDBPath, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, nil) == SQLITE_OK else { return [] }
+        defer { sqlite3_close(db) }
+
+        let sql = "SELECT ROWID, text, attributedBody FROM message WHERE ROWID > ?1 AND is_from_me = 0 ORDER BY ROWID ASC LIMIT 10"
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return [] }
+        defer { sqlite3_finalize(stmt) }
+
+        sqlite3_bind_int64(stmt, 1, Int64(afterROWID))
+
+        var results: [(rowid: Int, text: String)] = []
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            let rowid = Int(sqlite3_column_int64(stmt, 0))
+
+            // Try the `text` column first
+            var text: String?
+            if let cStr = sqlite3_column_text(stmt, 1) {
+                let s = String(cString: cStr)
+                if !s.isEmpty { text = s }
+            }
+
+            // Fall back to decoding attributedBody blob (NSArchiver typedstream format)
+            if text == nil, let blobPtr = sqlite3_column_blob(stmt, 2) {
+                let blobLen = Int(sqlite3_column_bytes(stmt, 2))
+                let data = Data(bytes: blobPtr, count: blobLen)
+                if let attrStr = NSUnarchiver.unarchiveObject(with: data) as? NSAttributedString {
+                    let s = attrStr.string
+                    if !s.isEmpty { text = s }
+                }
+            }
+
+            results.append((rowid: rowid, text: text ?? ""))
+        }
+        return results
     }
 
-    /// Query the Messages database for the latest ROWID so we only act on NEW messages.
+    /// Query for the max ROWID in the Messages database.
+    private nonisolated static func maxMessageROWID() -> Int? {
+        var db: OpaquePointer?
+        guard sqlite3_open_v2(messagesDBPath, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, nil) == SQLITE_OK else { return nil }
+        defer { sqlite3_close(db) }
+
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, "SELECT MAX(ROWID) FROM message", -1, &stmt, nil) == SQLITE_OK else { return nil }
+        defer { sqlite3_finalize(stmt) }
+
+        guard sqlite3_step(stmt) == SQLITE_ROW else { return nil }
+        return Int(sqlite3_column_int64(stmt, 0))
+    }
+
+    /// Seed the ROWID cursor so we only process messages arriving after monitor starts.
     private func seedLastSeenROWID() async {
-        let cmd = "sqlite3 \"\(messagesDBPath)\" \"SELECT MAX(ROWID) FROM message;\""
-        let result = await userService.execute(command: cmd)
-        let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let rowid = Int(output) {
+        if let rowid = await Self.offMain({ Self.maxMessageROWID() }) {
             lastSeenMessageROWID = rowid
             appendLog("Messages monitor: seeded at ROWID \(rowid)")
         } else {
-            appendLog("Messages monitor: failed to seed — \(result.status) \(result.output)")
+            appendLog("Messages monitor: failed to read chat.db")
         }
         flushLog()
     }
 
-    /// Poll for new incoming messages; log all, act on "AE!" prefix.
+    /// Poll for new incoming messages; log all, act on "Agent!" prefix.
     private func pollMessages() async {
-        // Fetch all new incoming messages (not just AE!) so we advance the ROWID cursor
-        let cmd = "sqlite3 \"\(messagesDBPath)\" \"SELECT ROWID, text FROM message WHERE ROWID > \(lastSeenMessageROWID) AND is_from_me = 0 ORDER BY ROWID ASC LIMIT 10;\""
-        let result = await userService.execute(command: cmd)
-        let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !output.isEmpty, result.status == 0 else { return }
+        let after = lastSeenMessageROWID
+        let rows = await Self.offMain({ Self.queryMessages(afterROWID: after) })
+        guard !rows.isEmpty else { return }
 
-        let lines = output.components(separatedBy: "\n")
-        for line in lines {
-            // Format: ROWID|text
-            let parts = line.components(separatedBy: "|")
-            guard parts.count >= 2, let rowid = Int(parts[0]) else { continue }
+        for row in rows {
+            lastSeenMessageROWID = row.rowid
 
-            lastSeenMessageROWID = rowid
-            let text = parts.dropFirst().joined(separator: "|")
+            guard !row.text.isEmpty else { continue }
 
             // Show every incoming message in the log
-            appendLog("iMessage: \(text)")
+            appendLog("iMessage: \(row.text)")
             flushLog()
 
             // Only act on "Agent!" commands
-            guard text.hasPrefix("Agent!") || text.hasPrefix("Agent! ") else { continue }
-            let prompt = String(text.dropFirst(text.hasPrefix("Agent! ") ? 7 : 6))
-                .trimmingCharacters(in: .whitespaces)
+            guard row.text.hasPrefix("Agent!") else { continue }
+            let stripped = row.text.dropFirst(6) // drop "Agent!"
+            let prompt = stripped.hasPrefix(" ")
+                ? String(stripped.dropFirst()).trimmingCharacters(in: .whitespaces)
+                : String(stripped).trimmingCharacters(in: .whitespaces)
             guard !prompt.isEmpty, !isRunning else { continue }
 
             appendLog("Agent! prompt: \(prompt)")
