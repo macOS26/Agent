@@ -135,7 +135,7 @@ final class ChatHistoryStore {
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm:ss"
         
-        for (task, messages) in tasks {
+        for (_, messages) in tasks {
             result += "--- New Task ---\n"
             for msg in messages {
                 let time = formatter.string(from: msg.timestamp)
