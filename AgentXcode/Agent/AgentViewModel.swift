@@ -685,8 +685,18 @@ final class AgentViewModel {
     /// Poll for new incoming messages; log from enabled chats, act on "Agent!" prefix.
     private func pollMessages() async {
         let after = lastSeenMessageROWID
+        let enabled = enabledChatIds
         let rows = await Self.offMain({ Self.queryMessages(afterROWID: after) })
         guard !rows.isEmpty else { return }
+
+        appendLog("Messages poll: \(rows.count) new rows after ROWID \(after)")
+        for row in rows {
+            appendLog("  ROWID=\(row.rowid) chatId=\(row.chatId) text=\"\(row.text.prefix(40))\"")
+        }
+        if !enabled.isEmpty {
+            appendLog("  Enabled chatIds: \(enabled.sorted())")
+        }
+        flushLog()
 
         for row in rows {
             lastSeenMessageROWID = row.rowid
@@ -694,7 +704,7 @@ final class AgentViewModel {
             guard !row.text.isEmpty else { continue }
 
             // Skip messages from chats the user hasn't enabled (if any are selected)
-            if !enabledChatIds.isEmpty && !enabledChatIds.contains(row.chatId) { continue }
+            if !enabled.isEmpty && !enabled.contains(row.chatId) { continue }
 
             // Pulse the dot and show incoming message in the log
             flashMessagesDot()
