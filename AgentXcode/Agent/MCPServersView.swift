@@ -190,12 +190,28 @@ struct MCPServersView: View {
                 }
                 Text(server.command).font(.caption).foregroundStyle(.secondary)
                     .lineLimit(1).truncationMode(.middle)
-                // Show discovered tools when connected
+                // Show discovered tools as toggleable tags
                 let tools = mcpService.discoveredTools.filter { $0.serverId == server.id }
                 if !tools.isEmpty {
-                    Text(tools.map(\.name).joined(separator: ", "))
-                        .font(.caption2).foregroundStyle(.tertiary)
-                        .lineLimit(2)
+                    FlowLayout(spacing: 4) {
+                        ForEach(tools) { tool in
+                            let enabled = mcpService.isToolEnabled(serverName: server.name, toolName: tool.name)
+                            Button {
+                                mcpService.toggleTool(serverName: server.name, toolName: tool.name)
+                            } label: {
+                                Text(tool.name)
+                                    .font(.caption2)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(enabled ? Color.accentColor.opacity(0.2) : Color.secondary.opacity(0.1))
+                                    .foregroundStyle(enabled ? .primary : .tertiary)
+                                    .clipShape(Capsule())
+                                    .overlay(Capsule().stroke(enabled ? Color.accentColor.opacity(0.5) : Color.clear, lineWidth: 0.5))
+                            }
+                            .buttonStyle(.plain)
+                            .help(tool.description)
+                        }
+                    }
                 }
             }
 
@@ -445,6 +461,53 @@ private struct PlainTextEditor: NSViewRepresentable {
             guard let tv = notification.object as? NSTextView else { return }
             text.wrappedValue = tv.string
         }
+    }
+}
+
+// MARK: - Flow Layout (wrapping horizontal layout for tool tags)
+
+private struct FlowLayout: Layout {
+    var spacing: CGFloat = 4
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let rows = computeRows(proposal: proposal, subviews: subviews)
+        var height: CGFloat = 0
+        for (i, row) in rows.enumerated() {
+            let rowHeight = row.map { $0.sizeThatFits(.unspecified).height }.max() ?? 0
+            height += rowHeight + (i > 0 ? spacing : 0)
+        }
+        return CGSize(width: proposal.width ?? 0, height: height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let rows = computeRows(proposal: proposal, subviews: subviews)
+        var y = bounds.minY
+        for row in rows {
+            let rowHeight = row.map { $0.sizeThatFits(.unspecified).height }.max() ?? 0
+            var x = bounds.minX
+            for subview in row {
+                let size = subview.sizeThatFits(.unspecified)
+                subview.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
+                x += size.width + spacing
+            }
+            y += rowHeight + spacing
+        }
+    }
+
+    private func computeRows(proposal: ProposedViewSize, subviews: Subviews) -> [[LayoutSubviews.Element]] {
+        let maxWidth = proposal.width ?? .infinity
+        var rows: [[LayoutSubviews.Element]] = [[]]
+        var x: CGFloat = 0
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if x + size.width > maxWidth && !rows[rows.count - 1].isEmpty {
+                rows.append([])
+                x = 0
+            }
+            rows[rows.count - 1].append(subview)
+            x += size.width + spacing
+        }
+        return rows
     }
 }
 

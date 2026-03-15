@@ -13,6 +13,41 @@ final class MCPService: @unchecked Sendable {
     var connectionErrors: [UUID: String] = [:]
     private(set) var discoveredTools: [MCPToolInfo] = []
     private(set) var discoveredResources: [MCPResourceInfo] = []
+    /// Tool names disabled by the user, keyed by server name. Stored in UserDefaults.
+    var disabledTools: Set<String> = [] {
+        didSet { saveDisabledTools() }
+    }
+
+    private static let disabledToolsKey = "mcp.disabledTools"
+
+    private func loadDisabledTools() {
+        let arr = UserDefaults.standard.stringArray(forKey: Self.disabledToolsKey) ?? []
+        disabledTools = Set(arr)
+    }
+
+    private func saveDisabledTools() {
+        UserDefaults.standard.set(Array(disabledTools), forKey: Self.disabledToolsKey)
+    }
+
+    /// Unique key for a tool: "serverName.toolName"
+    static func toolKey(serverName: String, toolName: String) -> String {
+        "\(serverName).\(toolName)"
+    }
+
+    /// Check if a tool is enabled
+    func isToolEnabled(serverName: String, toolName: String) -> Bool {
+        !disabledTools.contains(Self.toolKey(serverName: serverName, toolName: toolName))
+    }
+
+    /// Toggle a tool's enabled state
+    func toggleTool(serverName: String, toolName: String) {
+        let key = Self.toolKey(serverName: serverName, toolName: toolName)
+        if disabledTools.contains(key) {
+            disabledTools.remove(key)
+        } else {
+            disabledTools.insert(key)
+        }
+    }
 
     struct MCPToolInfo: Identifiable, Sendable {
         let id: UUID
@@ -31,7 +66,7 @@ final class MCPService: @unchecked Sendable {
         let name: String
     }
 
-    private init() {}
+    private init() { loadDisabledTools() }
 
     /// Connect to an MCP server
     /// This launches the server process and establishes stdio communication
