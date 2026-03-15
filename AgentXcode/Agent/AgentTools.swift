@@ -756,6 +756,30 @@ enum AgentTools {
         return String(cleaned.prefix(maxLength))
     }
 
+    /// Recursively remove NSNull values and ensure schema validity
+    private static func sanitizeSchema(_ value: Any) -> Any {
+        if let dict = value as? [String: Any] {
+            // Filter out NSNull values and sanitize recursively
+            var result: [String: Any] = [:]
+            for (key, val) in dict {
+                if !(val is NSNull) {
+                    result[key] = sanitizeSchema(val)
+                }
+            }
+            // Ensure "properties" is always an object if present
+            if result["properties"] == nil {
+                result["properties"] = [:] as [String: Any]
+            }
+            return result
+        } else if let arr = value as? [Any] {
+            return arr.map { sanitizeSchema($0) }
+        } else if value is NSNull {
+            // Replace NSNull with empty object for schema fields, or empty string for others
+            return "" as Any
+        }
+        return value
+    }
+
     /// All common tools + MCP tools in Claude/Anthropic format.
     @MainActor static var claudeFormat: [[String: Any]] {
         var tools = commonTools.map { tool in
@@ -766,11 +790,18 @@ enum AgentTools {
         for tool in mcpService.discoveredTools where mcpService.isToolEnabled(serverName: tool.serverName, toolName: tool.name) {
             let safeName = sanitizeToolName("mcp_\(tool.serverName)_\(tool.name)")
             let safeDesc = sanitizeDescription("[MCP:\(tool.serverName)] \(tool.description)")
-            let schema = (try? JSONSerialization.jsonObject(with: Data(tool.inputSchemaJSON.utf8))) as? [String: Any]
+            let rawSchema = (try? JSONSerialization.jsonObject(with: Data(tool.inputSchemaJSON.utf8))) as? [String: Any]
+            let schema = rawSchema.map { sanitizeSchema($0) as? [String: Any] } ?? nil
+            let validSchema: [String: Any]
+            if let s = schema, !s.isEmpty {
+                validSchema = s
+            } else {
+                validSchema = ["type": "object", "properties": [:] as [String: Any]]
+            }
             tools.append([
                 "name": safeName,
                 "description": safeDesc,
-                "input_schema": schema ?? ["type": "object", "properties": [:] as [String: Any]],
+                "input_schema": validSchema,
             ] as [String: Any])
         }
         return tools
@@ -816,13 +847,20 @@ enum AgentTools {
         for tool in mcpService.discoveredTools where mcpService.isToolEnabled(serverName: tool.serverName, toolName: tool.name) {
             let safeName = sanitizeToolName("mcp_\(tool.serverName)_\(tool.name)")
             let safeDesc = sanitizeDescription("[MCP:\(tool.serverName)] \(tool.description)")
-            let schema = (try? JSONSerialization.jsonObject(with: Data(tool.inputSchemaJSON.utf8))) as? [String: Any]
+            let rawSchema = (try? JSONSerialization.jsonObject(with: Data(tool.inputSchemaJSON.utf8))) as? [String: Any]
+            let schema = rawSchema.map { sanitizeSchema($0) as? [String: Any] } ?? nil
+            let validSchema: [String: Any]
+            if let s = schema, !s.isEmpty {
+                validSchema = s
+            } else {
+                validSchema = ["type": "object", "properties": [:] as [String: Any]]
+            }
             tools.append([
                 "type": "function",
                 "function": [
                     "name": safeName,
                     "description": safeDesc,
-                    "parameters": schema ?? ["type": "object", "properties": [:] as [String: Any]],
+                    "parameters": validSchema,
                 ] as [String: Any],
             ] as [String: Any])
         }

@@ -710,14 +710,22 @@ public actor MCPClient {
                             return nil
                         }
 
-                        let schema = tool["inputSchema"] as? [String: Any] ?? [:]
+                        var schema = tool["inputSchema"] as? [String: Any] ?? [:]
+                        // Ensure "properties" is never null - must be an object
+                        if schema["properties"] == nil || schema["properties"] is NSNull {
+                            schema["properties"] = [:] as [String: Any]
+                        }
+                        // Ensure "type" is set
+                        if schema["type"] == nil {
+                            schema["type"] = "object"
+                        }
                         let schemaJSON: String
                         if let data = try? JSONSerialization.data(withJSONObject: schema),
                            data.count <= 100_000,
                            let json = String(data: data, encoding: .utf8) {
                             schemaJSON = json
                         } else {
-                            schemaJSON = "{}"
+                            schemaJSON = "{\"type\":\"object\",\"properties\":{}}"
                         }
                         return DiscoveredTool(
                             serverId: serverId,
