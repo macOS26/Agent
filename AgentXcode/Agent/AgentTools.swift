@@ -200,6 +200,11 @@ enum AgentTools {
         ⚠️ COMMON CONFUSION — AVOID THESE MISTAKES ⚠️
         ═══════════════════════════════════════════════════════════════════════════════
 
+        ❌ NEVER: Run `xcodebuild` via execute_command or execute_user_command. \
+           → NEVER use shell xcodebuild directly. It wastes tokens, produces noisy output, \
+             and bypasses the structured error reporting of built-in and MCP tools.
+           → Use xcode_build or an MCP build tool (e.g., XCF) instead.
+
         ❌ WRONG: Using xcode_build on ~/Documents/Agent/agents/Package.swift
            → This is NOT an Xcode project — it's a Swift Package for dylibs
            → Use run_agent_script instead (auto-compiles with swift build)
@@ -211,7 +216,7 @@ enum AgentTools {
            → Child processes don't inherit TCC permissions
            → Use run_agent_script (dylib runs inside Agent app)
 
-        ✓ RIGHT: Use xcode_build only on .xcodeproj or .xcworkspace files
+        ✓ RIGHT: Use xcode_build or MCP build tools to build Xcode projects
         ✓ RIGHT: Use run_agent_script for agent dylib scripts in ~/Documents/Agent/agents/
         ✓ RIGHT: Use apple_event_query first for quick app data queries
 
