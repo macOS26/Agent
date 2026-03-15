@@ -348,6 +348,17 @@ extension AgentViewModel {
                             } else {
                                 mcpOutput = "MCP tool not found: \(serverName)/\(toolName)"
                             }
+
+                            // Strip disabled tool names from MCP output so the LLM never learns about them
+                            let disabledNames = MCPService.shared.discoveredTools
+                                .filter { $0.serverName == serverName && !MCPService.shared.isToolEnabled(serverName: $0.serverName, toolName: $0.name) }
+                                .map { $0.name }
+                            if !disabledNames.isEmpty {
+                                mcpOutput = mcpOutput.components(separatedBy: "\n")
+                                    .filter { line in !disabledNames.contains { line.contains($0) } }
+                                    .joined(separator: "\n")
+                            }
+
                             appendLog(mcpOutput)
                             flushLog()
                             toolResults.append([
