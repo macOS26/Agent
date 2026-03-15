@@ -49,7 +49,10 @@ struct ContentView: View {
                         isBusy: false,
                         enabled: viewModel.messagesMonitorEnabled
                     )
-                    Text("Messages")
+                    Toggle("Messages", isOn: $viewModel.messagesMonitorEnabled)
+                        .toggleStyle(.switch)
+                        .controlSize(.mini)
+                        .tint(.green)
                         .font(.caption)
                         .foregroundStyle(viewModel.messagesMonitorEnabled ? .secondary : .tertiary)
                 }
