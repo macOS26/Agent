@@ -101,7 +101,15 @@ struct MCPServersView: View {
         } message: {
             Text("Paste MCP server JSON configuration")
         }
-        // No auto-start here - that happens at app launch in AgentApp
+        .onAppear {
+            // Sync toggle state with actual connection state
+            for server in registry.servers {
+                let isConnected = mcpService.connectedServerIds.contains(server.id)
+                if server.enabled != isConnected {
+                    registry.setEnabled(server.id, isConnected)
+                }
+            }
+        }
     }
 
     // MARK: - Status (single source of truth: MCPService)
