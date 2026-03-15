@@ -28,8 +28,7 @@ struct SettingsView: View {
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("API Key").font(.caption).foregroundStyle(.secondary)
-                        SecureField("sk-ant-...", text: $viewModel.apiKey)
-                            .textFieldStyle(.roundedBorder)
+                        LockedSecureField(text: $viewModel.apiKey, placeholder: "sk-ant-...", lockKey: "lock.claudeAPIKey")
                     }
 
                     VStack(alignment: .leading, spacing: 4) {
@@ -50,8 +49,7 @@ struct SettingsView: View {
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("API Key").font(.caption).foregroundStyle(.secondary)
-                        SecureField("Required for cloud", text: $viewModel.ollamaAPIKey)
-                            .textFieldStyle(.roundedBorder)
+                        LockedSecureField(text: $viewModel.ollamaAPIKey, placeholder: "Required for cloud", lockKey: "lock.ollamaAPIKey")
                     }
 
                     VStack(alignment: .leading, spacing: 4) {
@@ -155,8 +153,7 @@ struct SettingsView: View {
                         .font(.headline)
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Tavily API Key").font(.caption).foregroundStyle(.secondary)
-                        SecureField("tvly-...", text: $viewModel.tavilyAPIKey)
-                            .textFieldStyle(.roundedBorder)
+                        LockedSecureField(text: $viewModel.tavilyAPIKey, placeholder: "tvly-...", lockKey: "lock.tavilyAPIKey")
                     }
                 }
             }
@@ -257,5 +254,43 @@ struct SettingsView: View {
         }
         .padding(20)
         .frame(width: 360)
+    }
+}
+
+// MARK: - Locked Secure Field
+
+/// A SecureField with a lock/unlock button. When locked, the field is disabled.
+/// Lock state persists in UserDefaults via the lockKey.
+struct LockedSecureField: View {
+    @Binding var text: String
+    let placeholder: String
+    let lockKey: String
+    @State private var isLocked: Bool
+
+    init(text: Binding<String>, placeholder: String, lockKey: String) {
+        self._text = text
+        self.placeholder = placeholder
+        self.lockKey = lockKey
+        _isLocked = State(initialValue: UserDefaults.standard.bool(forKey: lockKey))
+    }
+
+    var body: some View {
+        HStack(spacing: 4) {
+            SecureField(placeholder, text: $text)
+                .textFieldStyle(.roundedBorder)
+                .disabled(isLocked)
+                .opacity(isLocked ? 0.6 : 1)
+
+            Button {
+                isLocked.toggle()
+                UserDefaults.standard.set(isLocked, forKey: lockKey)
+            } label: {
+                Image(systemName: isLocked ? "lock.fill" : "lock.open")
+                    .foregroundStyle(isLocked ? .orange : .secondary)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .help(isLocked ? "Unlock to edit" : "Lock to protect")
+        }
     }
 }
