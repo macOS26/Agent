@@ -422,13 +422,29 @@ struct ActivityLogView: NSViewRepresentable {
 
             let result = NSMutableAttributedString()
             let lines = text.components(separatedBy: "\n")
+            var i = 0
 
-            for (i, line) in lines.enumerated() {
+            while i < lines.count {
                 if i > 0 {
                     result.append(NSAttributedString(string: "\n", attributes: baseAttrs))
                 }
 
-                let trimmed = line.trimmingCharacters(in: .whitespaces)
+                // Detect markdown table blocks (consecutive lines starting with |)
+                let trimmed = lines[i].trimmingCharacters(in: .whitespaces)
+                if trimmed.hasPrefix("|") {
+                    var tableLines: [String] = []
+                    var j = i
+                    while j < lines.count && lines[j].trimmingCharacters(in: .whitespaces).hasPrefix("|") {
+                        tableLines.append(lines[j])
+                        j += 1
+                    }
+                    if tableLines.count >= 3, isTableSeparator(tableLines[1]),
+                       let tableAttr = renderMarkdownTable(tableLines) {
+                        result.append(tableAttr)
+                        i = j
+                        continue
+                    }
+                }
 
                 if trimmed.hasPrefix("### ") {
                     let hFont = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize + 2, weight: .bold)
@@ -440,11 +456,115 @@ struct ActivityLogView: NSViewRepresentable {
                     let hFont = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize + 6, weight: .bold)
                     result.append(styledLine(String(trimmed.dropFirst(2)), baseFont: hFont))
                 } else {
-                    result.append(styledLine(line, baseFont: font))
+                    result.append(styledLine(lines[i], baseFont: font))
+                }
+                i += 1
+            }
+
+            return result
+        }
+
+        // MARK: - Markdown Table Rendering (NSTextTable)
+
+        private func isTableSeparator(_ line: String) -> Bool {
+            let t = line.trimmingCharacters(in: .whitespaces)
+            guard t.hasPrefix("|") else { return false }
+            var inner = t[t.index(after: t.startIndex)...]
+            if inner.hasSuffix("|") { inner = inner.dropLast() }
+            let cells = inner.split(separator: "|", omittingEmptySubsequences: false)
+            guard !cells.isEmpty else { return false }
+            return cells.allSatisfy { cell in
+                let s = cell.trimmingCharacters(in: .whitespaces)
+                return !s.isEmpty && s.allSatisfy { $0 == "-" || $0 == ":" }
+            }
+        }
+
+        private func parseTableRow(_ line: String) -> [String] {
+            let t = line.trimmingCharacters(in: .whitespaces)
+            guard t.hasPrefix("|") else { return [] }
+            var inner = t[t.index(after: t.startIndex)...]
+            if inner.hasSuffix("|") { inner = inner.dropLast() }
+            return inner.split(separator: "|", omittingEmptySubsequences: false)
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+        }
+
+        private func renderMarkdownTable(_ lines: [String]) -> NSAttributedString? {
+            let headerCells = parseTableRow(lines[0])
+            guard !headerCells.isEmpty else { return nil }
+
+            let sepCells = parseTableRow(lines[1])
+            let alignments: [NSTextAlignment] = sepCells.map { cell in
+                let left = cell.hasPrefix(":")
+                let right = cell.hasSuffix(":")
+                if left && right { return .center }
+                if right { return .right }
+                return .left
+            }
+
+            var dataRows: [[String]] = []
+            for idx in 2..<lines.count {
+                let cells = parseTableRow(lines[idx])
+                if !cells.isEmpty { dataRows.append(cells) }
+            }
+
+            let colCount = headerCells.count
+            let table = NSTextTable()
+            table.numberOfColumns = colCount
+            table.layoutAlgorithm = .automaticLayoutAlgorithm
+            table.collapsesBorders = true
+            table.hidesEmptyCells = false
+
+            let result = NSMutableAttributedString()
+            let borderColor = NSColor.separatorColor
+            let headerBg = NSColor.controlAccentColor.withAlphaComponent(0.15)
+            let boldFont = NSFont.monospacedSystemFont(ofSize: font.pointSize, weight: .bold)
+
+            for (col, cell) in headerCells.prefix(colCount).enumerated() {
+                let align = col < alignments.count ? alignments[col] : .left
+                result.append(makeTableCell(
+                    text: cell, table: table, row: 0, column: col,
+                    bg: headerBg, cellFont: boldFont, align: align, border: borderColor))
+            }
+
+            let evenBg = NSColor.controlBackgroundColor
+            let oddBg = NSColor.windowBackgroundColor
+            for (rowIdx, row) in dataRows.enumerated() {
+                let bg = (rowIdx % 2 == 0) ? evenBg : oddBg
+                for col in 0..<colCount {
+                    let cellText = col < row.count ? row[col] : ""
+                    let align = col < alignments.count ? alignments[col] : .left
+                    result.append(makeTableCell(
+                        text: cellText, table: table, row: rowIdx + 1, column: col,
+                        bg: bg, cellFont: font, align: align, border: borderColor))
                 }
             }
 
             return result
+        }
+
+        private func makeTableCell(
+            text: String, table: NSTextTable, row: Int, column: Int,
+            bg: NSColor, cellFont: NSFont, align: NSTextAlignment, border: NSColor
+        ) -> NSAttributedString {
+            let block = NSTextTableBlock(
+                table: table, startingRow: row, rowSpan: 1,
+                startingColumn: column, columnSpan: 1)
+            block.backgroundColor = bg
+            block.setBorderColor(border)
+            block.setWidth(0.5, type: .absoluteValueType, for: .border)
+            block.setWidth(5.0, type: .absoluteValueType, for: .padding)
+
+            let style = NSMutableParagraphStyle()
+            style.textBlocks = [block]
+            style.alignment = align
+
+            return NSAttributedString(
+                string: text + "\n",
+                attributes: [
+                    .paragraphStyle: style,
+                    .font: cellFont,
+                    .foregroundColor: NSColor.labelColor
+                ])
         }
 
         /// Apply inline **bold**, `code`, and [link](url) formatting to a single line.
