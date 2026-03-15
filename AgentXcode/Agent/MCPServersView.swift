@@ -2,7 +2,7 @@ import SwiftUI
 
 struct MCPServersView: View {
     @Bindable var registry = MCPServerRegistry.shared
-    var mcpService = MCPService.shared
+    @Bindable var mcpService = MCPService.shared
     @State private var showingAddServer = false
     @State private var editingServer: MCPServerConfig?
     @State private var showingImport = false
