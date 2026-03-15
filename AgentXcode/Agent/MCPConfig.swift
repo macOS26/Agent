@@ -24,17 +24,17 @@ struct MCPServerConfig: Codable, Identifiable, Hashable {
     }
 
     // Only encode/decode MCP-standard fields in JSON
+    // Only MCP-standard fields in JSON; name is the dictionary key, not a field
     private enum CodingKeys: String, CodingKey {
-        case name, command, args, env
+        case command, args, env
     }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        name = try c.decodeIfPresent(String.self, forKey: .name) ?? ""
         command = try c.decode(String.self, forKey: .command)
         arguments = try c.decodeIfPresent([String].self, forKey: .args) ?? []
         environment = try c.decodeIfPresent([String: String].self, forKey: .env) ?? [:]
-        // Generate ID; load Agent prefs from UserDefaults after decode
+        name = ""
         id = UUID()
         enabled = true
         autoStart = true
@@ -45,7 +45,6 @@ struct MCPServerConfig: Codable, Identifiable, Hashable {
         try c.encode(command, forKey: .command)
         if !arguments.isEmpty { try c.encode(arguments, forKey: .args) }
         if !environment.isEmpty { try c.encode(environment, forKey: .env) }
-        try c.encode(name, forKey: .name)
     }
 
     /// Create from a JSON string (for importing)
@@ -57,12 +56,17 @@ struct MCPServerConfig: Codable, Identifiable, Hashable {
         return config
     }
 
-    /// Export to JSON string (MCP-standard fields only)
+    /// Export as MCP-standard dict: { "ServerName": { "command": ..., "args": ..., "env": ... } }
     func toJSON() -> String {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted]
         guard let data = try? encoder.encode(self),
-              let json = String(data: data, encoding: .utf8) else {
+              let inner = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return "{}"
+        }
+        let wrapper: [String: Any] = [name: inner]
+        guard let wrapperData = try? JSONSerialization.data(withJSONObject: wrapper, options: [.prettyPrinted]),
+              let json = String(data: wrapperData, encoding: .utf8) else {
             return "{}"
         }
         return json
@@ -166,18 +170,34 @@ final class MCPServerRegistry {
     private func load() {
         guard FileManager.default.fileExists(atPath: configFileURL.path),
               let data = try? Data(contentsOf: configFileURL),
-              let loaded = try? JSONDecoder().decode([MCPServerConfig].self, from: data) else {
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let mcpServers = json["mcpServers"] as? [String: Any] else {
             servers = Self.defaultServers
             return
         }
-        // Hydrate Agent-specific prefs from UserDefaults
-        servers = loaded.map { var s = $0; s.loadPrefs(); return s }
+        var result: [MCPServerConfig] = []
+        for (name, value) in mcpServers {
+            guard let serverDict = value as? [String: Any],
+                  let serverData = try? JSONSerialization.data(withJSONObject: serverDict),
+                  var config = try? JSONDecoder().decode(MCPServerConfig.self, from: serverData) else { continue }
+            config.name = name
+            config.loadPrefs()
+            result.append(config)
+        }
+        servers = result.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
     private func save() {
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted]
-        guard let data = try? encoder.encode(servers) else { return }
+        var mcpServers: [String: Any] = [:]
+        for server in servers {
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.prettyPrinted]
+            guard let data = try? encoder.encode(server),
+                  let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { continue }
+            mcpServers[server.name] = dict
+        }
+        let root: [String: Any] = ["mcpServers": mcpServers]
+        guard let data = try? JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .sortedKeys]) else { return }
 
         Task.detached(priority: .background) { [url = configFileURL, data] in
             try? data.write(to: url, options: .atomic)
@@ -191,46 +211,48 @@ final class MCPServerRegistry {
     // MARK: - Import/Export
 
     func exportAll() -> String {
+        var mcpServers: [String: Any] = [:]
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted]
-        guard let data = try? encoder.encode(servers),
-              let json = String(data: data, encoding: .utf8) else {
-            return "[]"
+        for server in servers {
+            guard let data = try? encoder.encode(server),
+                  let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { continue }
+            mcpServers[server.name] = dict
         }
+        let root: [String: Any] = ["mcpServers": mcpServers]
+        guard let data = try? JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .sortedKeys]),
+              let json = String(data: data, encoding: .utf8) else { return "{}" }
         return json
     }
 
     func importFrom(_ jsonString: String) -> Bool {
-        guard let data = jsonString.data(using: .utf8) else { return false }
+        guard let data = jsonString.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return false }
 
-        // Try array of servers
-        if let imported = try? JSONDecoder().decode([MCPServerConfig].self, from: data) {
-            for var config in imported {
-                config.loadPrefs()
-                if let index = servers.firstIndex(where: { $0.name == config.name }) {
-                    config.id = servers[index].id
-                    servers[index] = config
-                } else {
-                    servers.append(config)
-                }
-            }
-            save()
-            return true
+        // Accept { "mcpServers": { ... } } or { "name": { ... } } directly
+        let serverDict: [String: Any]
+        if let mcp = json["mcpServers"] as? [String: Any] {
+            serverDict = mcp
+        } else {
+            // Treat top-level keys as server names
+            serverDict = json.filter { $0.value is [String: Any] }
         }
+        guard !serverDict.isEmpty else { return false }
 
-        // Try single server
-        if var config = try? JSONDecoder().decode(MCPServerConfig.self, from: data) {
+        for (name, value) in serverDict {
+            guard let entry = value as? [String: Any],
+                  let entryData = try? JSONSerialization.data(withJSONObject: entry),
+                  var config = try? JSONDecoder().decode(MCPServerConfig.self, from: entryData) else { continue }
+            config.name = name
             config.loadPrefs()
-            if let index = servers.firstIndex(where: { $0.name == config.name }) {
+            if let index = servers.firstIndex(where: { $0.name == name }) {
                 config.id = servers[index].id
                 servers[index] = config
             } else {
                 servers.append(config)
             }
-            save()
-            return true
         }
-
-        return false
+        save()
+        return true
     }
 }
