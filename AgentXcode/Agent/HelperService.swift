@@ -52,6 +52,7 @@ final class HelperService {
             }
             if afterStatus == .requiresApproval {
                 SMAppService.openSystemSettingsLoginItems()
+                NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.LoginItems-Settings.extension")!)
                 return "Please approve Agent in System Settings > Login Items. (was: \(statusName))"
             }
             // Try unregister + re-register if it was already registered
