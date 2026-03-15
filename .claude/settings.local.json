@@ -155,7 +155,25 @@
       "WebFetch(domain:leopard-adc.pepas.com)",
       "Bash(xcrun swiftc:*)",
       "Read(//Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/AppKit.framework/Headers/**)",
-      "Bash(xcodebuild build:*)"
+      "Bash(xcodebuild build:*)",
+      "Bash(plutil:*)",
+      "WebFetch(domain:mikhail.io)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "WebFetch(domain:help.apiyi.com)",
+      "Bash(echo:*)",
+      "Bash(timeout:*)",
+      "Bash(gtimeout:*)",
+      "WebFetch(domain:api.duckduckgo.com)",
+      "WebFetch(domain:docs.searxng.org)",
+      "WebFetch(domain:developers.google.com)",
+      "WebFetch(domain:brave.com)",
+      "WebFetch(domain:docs.tavily.com)",
+      "Bash(xxd)",
+      "Bash(swift test:*)",
+      "WebFetch(domain:lite.duckduckgo.com)",
+      "WebFetch(domain:html.duckduckgo.com)",
+      "WebFetch(domain:en.wikipedia.org)",
+      "Bash(curl:*)"
     ]
   }
 }

@@ -152,8 +152,10 @@ struct ContentView: View {
                 searchText: searchText,
                 currentMatchIndex: currentMatchIndex,
                 onMatchCount: { count in
-                    totalMatches = count
-                    if currentMatchIndex >= count { currentMatchIndex = max(0, count - 1) }
+                    DispatchQueue.main.async {
+                        totalMatches = count
+                        if currentMatchIndex >= count { currentMatchIndex = max(0, count - 1) }
+                    }
                 }
             )
 
@@ -278,8 +280,8 @@ struct ContentView: View {
                                 .shadow(color: .blue.opacity(0.7), radius: 24)
                                 .offset(y: 155)
 
-                            Text("")
-                                .font(.system(size: 125, weight: .black, design: .monospaced))
+                            Text("")
+                                .font(.system(size: 115, weight: .black, design: .monospaced))
                                 .foregroundStyle(
                                     LinearGradient(
                                         colors: [.white, .blue],
@@ -289,7 +291,7 @@ struct ContentView: View {
                                 )
                                 .shadow(color: .blue, radius: 12)
                                 .shadow(color: .blue.opacity(0.7), radius: 24)
-                                .offset(y: 225)
+                                .offset(y: 220)
                         }
                     }
                     .opacity(splashOpacity)

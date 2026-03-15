@@ -102,13 +102,7 @@ struct MCPServersView: View {
             Text("Paste MCP server JSON configuration")
         }
         .onAppear {
-            // Sync toggle state with actual connection state
-            for server in registry.servers {
-                let isConnected = mcpService.connectedServerIds.contains(server.id)
-                if server.enabled != isConnected {
-                    registry.setEnabled(server.id, isConnected)
-                }
-            }
+            // No-op: Switch position should reflect user intent (enabled state), not connection status.
         }
     }
 
@@ -142,8 +136,7 @@ struct MCPServersView: View {
                 try await mcpService.connect(to: updated)
             } catch {
                 mcpService.connectionErrors[server.id] = error.localizedDescription
-                // Connection failed: switch back to OFF
-                registry.setEnabled(server.id, false)
+                // Connection failed: switch remains ON, status shows error
             }
             connectingIds.remove(server.id)
         }
@@ -158,8 +151,11 @@ struct MCPServersView: View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 Toggle("", isOn: Binding(
-                    get: { server.enabled },
-                    set: { _ in Task { await toggleServer(server) } }
+                    get: { registry.servers.first(where: { $0.id == server.id })?.enabled ?? false },
+                    set: { newValue in
+                        registry.setEnabled(server.id, newValue)
+                        Task { await toggleServer(server) }
+                    }
                 ))
                 .toggleStyle(.switch)
                 .controlSize(.mini)
