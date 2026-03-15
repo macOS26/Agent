@@ -178,9 +178,6 @@ extension AgentViewModel {
     }
 
     func appendLog(_ message: String) {
-        // Flush any pending stream content first so it appears before this log entry
-        flushStreamBuffer()
-
         let timestamp = Self.timestampFormatter.string(from: Date())
         let cached = snapshotImages(in: message)
         let formattedMessage = "[\(timestamp)] \(cached)"
@@ -195,8 +192,6 @@ extension AgentViewModel {
 
     func appendRawOutput(_ text: String) {
         guard !text.isEmpty else { return }
-        // Flush any pending stream content first so it appears before raw output
-        flushStreamBuffer()
         // Count newlines in this chunk
         let newlines = text.reduce(0) { $0 + ($1 == "\n" ? 1 : 0) }
         streamLineCount += max(newlines, 1)  // at least 1 line per chunk

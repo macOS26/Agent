@@ -69,9 +69,21 @@ struct ActivityLogView: NSViewRepresentable {
         coord.showingPlaceholder = false
 
         if textChanged || searchCleared {
+            // Preserve scroll position across full text replacement to prevent blinking
+            let savedOrigin = scrollView.contentView.bounds.origin
+            let wasAtBottom = coord.isNearBottom(textView)
+
+            textView.textStorage?.beginEditing()
             let attributed = coord.buildAttributedString(from: text)
             textView.textStorage?.setAttributedString(attributed)
+            textView.textStorage?.endEditing()
             coord.lastLength = len
+
+            // Restore scroll: if user was at bottom, stay there; otherwise hold position
+            if !wasAtBottom {
+                scrollView.contentView.scroll(to: savedOrigin)
+                scrollView.reflectScrolledClipView(scrollView.contentView)
+            }
         }
 
         coord.applySearchHighlighting(textView: textView, searchText: searchText, currentMatch: currentMatchIndex, onMatchCount: onMatchCount)
@@ -184,7 +196,7 @@ struct ActivityLogView: NSViewRepresentable {
         private static let maxActiveWebViews = 10
 
         /// Check if scroll view is near the bottom
-        private func isNearBottom(_ textView: NSTextView) -> Bool {
+        func isNearBottom(_ textView: NSTextView) -> Bool {
             guard let scrollView = textView.enclosingScrollView else { return true }
             let visibleBottom = scrollView.contentView.bounds.origin.y + scrollView.contentView.bounds.height
             let contentHeight = textView.frame.height
