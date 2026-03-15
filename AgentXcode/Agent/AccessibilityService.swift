@@ -255,8 +255,7 @@ final class AccessibilityService: @unchecked Sendable {
         if let s = value as? String { return s }
         if let n = value as? NSNumber { return n }
         if CFGetTypeID(value) == AXValueGetTypeID() {
-            // swiftlint:disable:next force_cast
-            let av = value as! AXValue
+            let av = unsafeDowncast(value, to: AXValue.self)
             switch AXValueGetType(av) {
             case .cgPoint:
                 var pt = CGPoint.zero
@@ -361,7 +360,7 @@ final class AccessibilityService: @unchecked Sendable {
                 }
             default:
                 // Regular character - use UniChar array for keyboardSetUnicodeString
-                let scalar = char.unicodeScalars.first!
+                guard let scalar = char.unicodeScalars.first else { continue }
                 var uniChars = [UniChar(scalar.value)]
                 if let event = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: true) {
                     event.keyboardSetUnicodeString(stringLength: 1, unicodeString: &uniChars)
