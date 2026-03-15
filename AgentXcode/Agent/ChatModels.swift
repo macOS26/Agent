@@ -156,7 +156,10 @@ final class ChatHistoryStore {
                     result += msg.content
                 } else {
                     // Non-streaming messages (appendLog, appendRawOutput) are complete lines
-                    result += "\(msg.content)\n"
+                    result += msg.content
+                    if !msg.content.hasSuffix("\n") {
+                        result += "\n"
+                    }
                 }
             }
         }
@@ -206,7 +209,10 @@ final class ChatHistoryStore {
                 if msg.isStreaming {
                     result += msg.content
                 } else {
-                    result += "\(msg.content)\n"
+                    result += msg.content
+                    if !msg.content.hasSuffix("\n") {
+                        result += "\n"
+                    }
                 }
             }
             if let summary = task.summary {
