@@ -662,12 +662,22 @@ public actor MCPClient {
                 let response = try await connection.sendRequest(method: "tools/list")
                 if let result = response["result"] as? [String: Any],
                    let tools = result["tools"] as? [[String: Any]] {
-                    discoveredTools[serverId] = tools.map { tool in
+                    discoveredTools[serverId] = tools.compactMap { tool in
                         let name = tool["name"] as? String ?? ""
                         let description = tool["description"] as? String ?? ""
+
+                        // Validate tool name: must be non-empty, alphanumeric/underscore/hyphen, max 128 chars
+                        guard !name.isEmpty,
+                              name.count <= 128,
+                              name.allSatisfy({ $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "_" || $0 == "-") }) else {
+                            print("[MCPClient] Skipping tool with invalid name: '\(name.prefix(64))'")
+                            return nil
+                        }
+
                         let schema = tool["inputSchema"] as? [String: Any] ?? [:]
                         let schemaJSON: String
                         if let data = try? JSONSerialization.data(withJSONObject: schema),
+                           data.count <= 100_000,
                            let json = String(data: data, encoding: .utf8) {
                             schemaJSON = json
                         } else {
@@ -677,7 +687,7 @@ public actor MCPClient {
                             serverId: serverId,
                             serverName: serverName,
                             name: name,
-                            description: description,
+                            description: String(description.prefix(2048)),
                             inputSchemaJSON: schemaJSON
                         )
                     }
