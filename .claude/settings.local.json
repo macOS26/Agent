@@ -173,7 +173,9 @@
       "WebFetch(domain:lite.duckduckgo.com)",
       "WebFetch(domain:html.duckduckgo.com)",
       "WebFetch(domain:en.wikipedia.org)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(git checkout:*)",
+      "Bash(xcodebuild:*)"
     ]
   }
 }

@@ -297,6 +297,8 @@ extension AgentViewModel {
                             appendLog("Completed: \(summary)")
                             flushLog()
                             history.add(TaskRecord(prompt: prompt, summary: summary, commandsRun: commandsRun), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
+                            // End the task in SwiftData chat history
+                            ChatHistoryStore.shared.endCurrentTask(summary: summary)
                             isRunning = false
                             return
                         }
@@ -843,6 +845,9 @@ extension AgentViewModel {
             history.add(TaskRecord(prompt: prompt, summary: summary, commandsRun: commandsRun), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
         }
 
+        // End the task in SwiftData chat history
+        ChatHistoryStore.shared.endCurrentTask(summary: completionSummary.isEmpty ? nil : completionSummary, cancelled: Task.isCancelled)
+        
         flushLog()
         persistLogNow()
         isRunning = false

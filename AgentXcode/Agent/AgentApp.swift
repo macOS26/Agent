@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 @main
 struct AgentApp: App {
@@ -6,6 +7,9 @@ struct AgentApp: App {
         WindowGroup {
             ContentView()
                 .task {
+                    // Initialize SwiftData chat history store
+                    ChatHistoryStore.shared.migrateFromUserDefaults()
+                    
                     await MCPService.shared.startAutoStartServers()
                     // Sync registry enabled flags with actual connection state
                     let registry = MCPServerRegistry.shared
