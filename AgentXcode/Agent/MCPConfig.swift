@@ -10,7 +10,7 @@ struct MCPServerConfig: Codable, Identifiable, Hashable {
     var environment: [String: String]
     var enabled: Bool
     var autoStart: Bool
-    
+
     init(id: UUID = UUID(), name: String, command: String, arguments: [String] = [], environment: [String: String] = [:], enabled: Bool = true, autoStart: Bool = true) {
         self.id = id
         self.name = name
@@ -19,6 +19,17 @@ struct MCPServerConfig: Codable, Identifiable, Hashable {
         self.environment = environment
         self.enabled = enabled
         self.autoStart = autoStart
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        name = try c.decode(String.self, forKey: .name)
+        command = try c.decode(String.self, forKey: .command)
+        arguments = try c.decodeIfPresent([String].self, forKey: .arguments) ?? []
+        environment = try c.decodeIfPresent([String: String].self, forKey: .environment) ?? [:]
+        enabled = try c.decodeIfPresent(Bool.self, forKey: .enabled) ?? true
+        autoStart = try c.decodeIfPresent(Bool.self, forKey: .autoStart) ?? true
     }
     
     /// Create from a JSON string (for importing)
