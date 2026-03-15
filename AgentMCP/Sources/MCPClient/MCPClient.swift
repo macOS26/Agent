@@ -222,6 +222,13 @@ private final class StdioConnection: @unchecked Sendable {
         }
         if process.isRunning {
             process.terminate()
+            // Force-kill after 2 seconds if the server ignores SIGTERM
+            let proc = process
+            DispatchQueue.global().asyncAfter(deadline: .now() + 2) {
+                if proc.isRunning {
+                    kill(proc.processIdentifier, SIGKILL)
+                }
+            }
         }
     }
 
