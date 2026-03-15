@@ -431,6 +431,24 @@ struct ActivityLogView: NSViewRepresentable {
                 .foregroundColor: NSColor.labelColor
             ]
 
+            // Check if the text is read_file output (strictly matches "NN |" at the start of lines)
+            // Also ensure it does NOT contain fenced code blocks (```) to avoid parsing conflicts
+            let readFilePattern = #"^\s*\d+\s*\|\s"#
+            let isReadFileOutput = text.range(of: readFilePattern, options: .regularExpression) != nil
+                && text.components(separatedBy: "\n").filter { !$0.isEmpty }.allSatisfy { line in
+                    line.range(of: readFilePattern, options: .regularExpression) != nil
+                }
+                && !text.contains("```")
+
+            if isReadFileOutput {
+                // Render read_file output as a single preformatted block with syntax highlighting
+                let hl = CodeBlockHighlighter.highlight(code: text, language: "swift", font: font)
+                let block = NSMutableAttributedString(attributedString: hl)
+                block.addAttribute(.backgroundColor, value: CodeBlockTheme.bg,
+                                   range: NSRange(location: 0, length: block.length))
+                return block
+            }
+
             // Handle code fences (```lang\n...\n```) first
             guard let fenceRx = Self.fencePattern else { return NSAttributedString(string: text, attributes: baseAttrs) }
             let nsText = text as NSString
