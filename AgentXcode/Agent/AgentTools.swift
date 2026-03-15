@@ -144,7 +144,26 @@ enum AgentTools {
         Use `osascript -e '...'` or `osascript <<'EOF' ... EOF` for multi-line.
 
         ═══════════════════════════════════════════════════════════════════════════════
-        TOOL CATEGORY 5: AGENT DYLIB SCRIPT MANAGEMENT
+        TOOL CATEGORY 5: ACCESSIBILITY AUTOMATION (UI interaction)
+        ═══════════════════════════════════════════════════════════════════════════════
+
+        Use these to interact with UI elements via the macOS Accessibility API:
+
+        - ax_list_windows: List all visible windows from all applications with their positions.
+        - ax_inspect_element: Inspect accessibility element at a screen coordinate (x, y).
+        - ax_get_properties: Get properties of an element by role, title, or position.
+        - ax_perform_action: Perform an accessibility action on an element (click, press, etc.).
+        - ax_check_permission: Check if Accessibility permission is granted.
+        - ax_request_permission: Request Accessibility permission (shows system prompt).
+
+        SECURITY: Accessibility tools can interact with ANY app's UI, including reading text from
+        text fields. They inherit Agent's TCC Accessibility permission. Use responsibly.
+
+        PHASE 1 (current): Read-only window listing and element inspection.
+        PHASE 2 (planned): Keyboard/mouse simulation with additional safeguards.
+
+        ═══════════════════════════════════════════════════════════════════════════════
+        TOOL CATEGORY 6: AGENT DYLIB SCRIPT MANAGEMENT
         ═══════════════════════════════════════════════════════════════════════════════
 
         Manage Swift automation scripts in ~/Documents/Agent/agents/:
@@ -561,6 +580,63 @@ enum AgentTools {
                 "summary": ["type": "string", "description": "Brief summary of what was accomplished"],
             ],
             required: ["summary"]
+        ),
+        // --- Accessibility Tools ---
+        ToolDef(
+            name: "ax_list_windows",
+            description: "List all visible windows from all applications with their positions and sizes. Returns JSON array with window ID, owner PID, owner name, window name, and bounds.",
+            properties: [
+                "limit": ["type": "integer", "description": "Maximum number of windows to return (default 50)"],
+            ],
+            required: []
+        ),
+        ToolDef(
+            name: "ax_inspect_element",
+            description: "Inspect accessibility element at a screen coordinate. Returns the accessibility hierarchy for the element at position (x, y).",
+            properties: [
+                "x": ["type": "number", "description": "Screen X coordinate"],
+                "y": ["type": "number", "description": "Screen Y coordinate"],
+                "depth": ["type": "integer", "description": "How deep to traverse the hierarchy (default 3)"],
+            ],
+            required: ["x", "y"]
+        ),
+        ToolDef(
+            name: "ax_get_properties",
+            description: "Get all properties of an accessibility element. Can find by role/title or by screen position.",
+            properties: [
+                "role": ["type": "string", "description": "Accessibility role to find (e.g., 'AXButton', 'AXTextField')"],
+                "title": ["type": "string", "description": "Title or name to match (partial match)"],
+                "appBundleId": ["type": "string", "description": "Optional bundle ID to search within a specific app"],
+                "x": ["type": "number", "description": "Screen X coordinate for position-based lookup"],
+                "y": ["type": "number", "description": "Screen Y coordinate for position-based lookup"],
+            ],
+            required: []
+        ),
+        ToolDef(
+            name: "ax_perform_action",
+            description: "Perform an accessibility action on an element. SECURITY: Interaction actions (click, press) require allowWrites=true. Password fields are always blocked.",
+            properties: [
+                "role": ["type": "string", "description": "Accessibility role to find"],
+                "title": ["type": "string", "description": "Title to match"],
+                "appBundleId": ["type": "string", "description": "Bundle ID of the target app"],
+                "x": ["type": "number", "description": "Screen X coordinate for position-based lookup"],
+                "y": ["type": "number", "description": "Screen Y coordinate for position-based lookup"],
+                "action": ["type": "string", "description": "Accessibility action to perform (e.g., 'AXPress', 'AXConfirm')"],
+                "allowWrites": ["type": "boolean", "description": "Allow interaction actions (default false)"],
+            ],
+            required: ["action"]
+        ),
+        ToolDef(
+            name: "ax_check_permission",
+            description: "Check if Accessibility permission is granted to Agent.",
+            properties: [:],
+            required: []
+        ),
+        ToolDef(
+            name: "ax_request_permission",
+            description: "Request Accessibility permission. Shows the macOS system prompt for the user to approve.",
+            properties: [:],
+            required: []
         ),
         // --- Script Management ---
         ToolDef(

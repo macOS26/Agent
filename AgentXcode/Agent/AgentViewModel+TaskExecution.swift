@@ -821,6 +821,85 @@ extension AgentViewModel {
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
+                        // Accessibility API tools (in-process, offMain)
+                        if name == "ax_check_permission" {
+                            let hasPermission = AccessibilityService.hasAccessibilityPermission()
+                            let output = hasPermission ? "Accessibility permission: granted" : "Accessibility permission: NOT granted. Use ax_request_permission to prompt the user."
+                            appendLog(output)
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        if name == "ax_request_permission" {
+                            appendLog("Requesting Accessibility permission...")
+                            let granted = AccessibilityService.requestAccessibilityPermission()
+                            let output = granted ? "Accessibility permission granted!" : "Accessibility permission denied. Please enable it in System Settings > Privacy & Security > Accessibility."
+                            appendLog(output)
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        if name == "ax_list_windows" {
+                            let limit = input["limit"] as? Int ?? 50
+                            appendLog("Listing windows (limit: \(limit))...")
+                            flushLog()
+                            let output = await Self.offMain { AccessibilityService.shared.listWindows(limit: limit) }
+                            appendLog(Self.preview(output, lines: 20))
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        if name == "ax_inspect_element" {
+                            guard let xVal = input["x"] as? Double,
+                                  let yVal = input["y"] as? Double else {
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Error: x and y coordinates are required"])
+                                continue
+                            }
+                            let x = CGFloat(xVal)
+                            let y = CGFloat(yVal)
+                            let depth = input["depth"] as? Int ?? 3
+                            appendLog("Inspecting element at (\(x), \(y))...")
+                            flushLog()
+                            let output = await Self.offMain { AccessibilityService.shared.inspectElementAt(x: x, y: y, depth: depth) }
+                            appendLog(Self.preview(output, lines: 30))
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        if name == "ax_get_properties" {
+                            let role = input["role"] as? String
+                            let title = input["title"] as? String
+                            let appBundleId = input["appBundleId"] as? String
+                            let x = (input["x"] as? Double).map { CGFloat($0) }
+                            let y = (input["y"] as? Double).map { CGFloat($0) }
+                            appendLog("Getting element properties...")
+                            flushLog()
+                            let output = await Self.offMain {
+                                AccessibilityService.shared.getElementProperties(
+                                    role: role, title: title, appBundleId: appBundleId, x: x, y: y
+                                )
+                            }
+                            appendLog(Self.preview(output, lines: 30))
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        if name == "ax_perform_action" {
+                            let action = input["action"] as? String ?? ""
+                            let role = input["role"] as? String
+                            let title = input["title"] as? String
+                            let appBundleId = input["appBundleId"] as? String
+                            let x = (input["x"] as? Double).map { CGFloat($0) }
+                            let y = (input["y"] as? Double).map { CGFloat($0) }
+                            let allowWrites = input["allowWrites"] as? Bool ?? false
+                            appendLog("Performing action: \(action)...")
+                            flushLog()
+                            let output = await Self.offMain {
+                                AccessibilityService.shared.performAction(
+                                    role: role, title: title, appBundleId: appBundleId, x: x, y: y,
+                                    action: action, allowWrites: allowWrites
+                                )
+                            }
+                            appendLog(output)
+                            commandsRun.append("ax_perform_action: \(action)")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
                         // Client-side web search via Tavily (for Ollama providers)
                         if name == "web_search" {
                             let query = input["query"] as? String ?? ""

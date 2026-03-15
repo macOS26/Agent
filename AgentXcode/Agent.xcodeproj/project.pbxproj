@@ -25,6 +25,7 @@
 		AA1000000000000000003F /* DependencyChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002D /* DependencyChecker.swift */; };
 		AA10000000000000000044 /* DependencyOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002E /* DependencyOverlay.swift */; };
 		AA10000000000000000045 /* AppleEventService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002F /* AppleEventService.swift */; };
+		AA10000000000000000076 /* AccessibilityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000075 /* AccessibilityService.swift */; };
 		AA10000000000000000047 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000046 /* KeychainService.swift */; };
 		AA10000000000000000049 /* AgentViewModel+Logging.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000048 /* AgentViewModel+Logging.swift */; };
 		AA1000000000000000004B /* AgentViewModel+TaskExecution.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000004A /* AgentViewModel+TaskExecution.swift */; };
@@ -158,6 +159,7 @@
 		AA1000000000000000002D /* DependencyChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyChecker.swift; sourceTree = "<group>"; };
 		AA1000000000000000002E /* DependencyOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyOverlay.swift; sourceTree = "<group>"; };
 		AA1000000000000000002F /* AppleEventService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleEventService.swift; sourceTree = "<group>"; };
+		AA10000000000000000075 /* AccessibilityService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityService.swift; sourceTree = "<group>"; };
 		AA10000000000000000046 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
 		AA10000000000000000048 /* AgentViewModel+Logging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+Logging.swift"; sourceTree = "<group>"; };
 		AA1000000000000000004A /* AgentViewModel+TaskExecution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TaskExecution.swift"; sourceTree = "<group>"; };
@@ -262,6 +264,7 @@
 				AA1000000000000000002D /* DependencyChecker.swift */,
 				AA1000000000000000002E /* DependencyOverlay.swift */,
 				AA1000000000000000002F /* AppleEventService.swift */,
+				AA10000000000000000075 /* AccessibilityService.swift */,
 				AA10000000000000000046 /* KeychainService.swift */,
 				AA10000000000000000058 /* MCPConfig.swift */,
 				AA1000000000000000005A /* MCPServersView.swift */,
@@ -509,6 +512,7 @@
 				AA1000000000000000003F /* DependencyChecker.swift in Sources */,
 				AA10000000000000000044 /* DependencyOverlay.swift in Sources */,
 				AA10000000000000000045 /* AppleEventService.swift in Sources */,
+				AA10000000000000000076 /* AccessibilityService.swift in Sources */,
 				AA10000000000000000047 /* KeychainService.swift in Sources */,
 				AA10000000000000000049 /* AgentViewModel+Logging.swift in Sources */,
 				AA1000000000000000004B /* AgentViewModel+TaskExecution.swift in Sources */,
