@@ -754,7 +754,7 @@ final class AgentViewModel {
 
             guard !row.text.isEmpty else { continue }
 
-            let approved = enabled.isEmpty || enabled.contains(row.handleId)
+            let approved = enabled.contains(row.handleId)
 
             // Always show the message in the log
             flashMessagesDot()

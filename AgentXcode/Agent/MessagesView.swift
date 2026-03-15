@@ -80,7 +80,7 @@ struct MessagesView: View {
                 Text("Send \"Agent! <prompt>\" from a checked recipient to trigger a task.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Text("Unchecked recipients are logged but not acted on. If none are checked, all are acted on.")
+                Text("Unchecked recipients are logged but not acted on. Each recipient must be approved.")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }
