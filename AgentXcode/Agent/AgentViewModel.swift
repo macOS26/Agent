@@ -671,17 +671,37 @@ final class AgentViewModel {
 
     /// Seed the ROWID cursor so we only process messages arriving after monitor starts.
     private func seedLastSeenROWID() async {
-        if let rowid = await Self.offMain({ Self.maxMessageROWID() }) {
-            lastSeenMessageROWID = rowid
-            appendLog("Messages monitor: seeded at ROWID \(rowid)")
-        } else {
-            appendLog("Messages monitor: failed to read chat.db")
+        // Retry up to 3 times with a delay (macOS may need a moment to grant DB access)
+        for attempt in 1...3 {
+            if let rowid = await Self.offMain({ Self.maxMessageROWID() }) {
+                lastSeenMessageROWID = rowid
+                appendLog("Messages monitor: seeded at ROWID \(rowid)")
+                flushLog()
+                return
+            }
+            if attempt < 3 {
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+            }
         }
+        // Last resort: set to Int.max so the first poll finds nothing,
+        // then the next poll will use the correct latest ROWID
+        lastSeenMessageROWID = Int.max
+        appendLog("Messages monitor: could not read chat.db, will sync on next poll")
         flushLog()
     }
 
     /// Poll for new incoming messages; log from enabled handles, act on "Agent!" prefix.
     private func pollMessages() async {
+        // If seed failed, try to reseed now
+        if lastSeenMessageROWID == Int.max {
+            if let rowid = await Self.offMain({ Self.maxMessageROWID() }) {
+                lastSeenMessageROWID = rowid
+                appendLog("Messages monitor: reseeded at ROWID \(rowid)")
+                flushLog()
+            }
+            return
+        }
+
         let after = lastSeenMessageROWID
         let enabled = enabledHandleIds
         let rows = await Self.offMain({ Self.queryMessages(afterROWID: after) })
