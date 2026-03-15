@@ -8,6 +8,7 @@ struct MCPServersView: View {
     @State private var showingImport = false
     @State private var importText = ""
     @State private var connectingIds: Set<UUID> = []
+    @State private var renderKey = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -59,6 +60,7 @@ struct MCPServersView: View {
                         }
                     }
                 }
+                .id(renderKey)
             }
 
             Divider()
@@ -102,7 +104,10 @@ struct MCPServersView: View {
             Text("Paste MCP server JSON configuration")
         }
         .onAppear {
-            // No-op: Switch position should reflect user intent (enabled state), not connection status.
+            // Force toggles to re-render with correct thumb after popover appears
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                renderKey.toggle()
+            }
         }
     }
 
