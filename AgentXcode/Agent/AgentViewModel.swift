@@ -18,25 +18,9 @@ enum APIProvider: String, CaseIterable {
 @MainActor @Observable
 final class AgentViewModel {
     var taskInput = ""
-    var activityLog: String = {
-        let saved = UserDefaults.standard.string(forKey: "agentActivityLog") ?? ""
-        // Trim old tasks on startup to prevent UI bloat
-        let marker = "--- New Task ---"
-        let parts = saved.components(separatedBy: marker)
-        let maxTasks = UserDefaults.standard.object(forKey: "agentVisibleTasks") as? Int ?? 3
-        guard parts.count > maxTasks + 1 else { return saved }
-        // Keep only the last maxTasks sections
-        let trimmed = marker + parts.suffix(maxTasks).joined(separator: marker)
-        return trimmed
-    }() {
-        didSet {
-            // Persist changes off main thread
-            let current = activityLog
-            Task.detached(priority: .background) {
-                UserDefaults.standard.set(current, forKey: "agentActivityLog")
-            }
-        }
-    }
+    
+    // Stored property drives live UI; ChatHistoryStore persists across launches via SwiftData
+    var activityLog = ChatHistoryStore.shared.buildActivityLogText(maxTasks: 3)
     var isRunning = false
     var isThinking = false
     var userServiceActive = false
@@ -420,6 +404,9 @@ final class AgentViewModel {
             stop(silent: true)
         }
 
+        // Start a new task in SwiftData chat history
+        ChatHistoryStore.shared.startNewTask(prompt: task)
+        
         promptHistory.append(task)
         UserDefaults.standard.set(promptHistory, forKey: "agentPromptHistory")
         historyIndex = -1
@@ -477,6 +464,8 @@ final class AgentViewModel {
         }
         flushLog()
         persistLogNow()
+        // End the current task in chat history
+        ChatHistoryStore.shared.endCurrentTask(cancelled: !silent)
         isRunning = false
         isThinking = false
         userServiceActive = false

@@ -254,8 +254,8 @@ extension AgentViewModel {
         logBuffer = ""
         logFlushTask?.cancel()
         logFlushTask = nil
+        activityLog = ""
         ChatHistoryStore.shared.clearAll()
-
         // Clean up cached image snapshots
         try? FileManager.default.removeItem(at: Self.logImageCacheDir)
         try? FileManager.default.createDirectory(at: Self.logImageCacheDir, withIntermediateDirectories: true)
@@ -279,11 +279,9 @@ extension AgentViewModel {
             try? await Task.sleep(for: .milliseconds(50))
             self.streamFlushTask = nil
             if !self.streamBuffer.isEmpty {
-                // Store in SwiftData
                 ChatHistoryStore.shared.appendStreamingContent(self.streamBuffer)
+                self.activityLog += self.streamBuffer
                 self.streamBuffer = ""
-                // Trigger UI refresh
-        
             }
         }
     }
@@ -293,13 +291,14 @@ extension AgentViewModel {
         streamFlushTask = nil
         if !streamBuffer.isEmpty {
             ChatHistoryStore.shared.appendStreamingContent(streamBuffer)
+            activityLog += streamBuffer
             streamBuffer = ""
         }
         if streamingTextStarted {
             ChatHistoryStore.shared.appendStreamingContent("\n")
+            activityLog += "\n"
             streamingTextStarted = false
         }
-
     }
 
     private func scheduleLogFlush() {
@@ -314,16 +313,36 @@ extension AgentViewModel {
         logFlushTask?.cancel()
         logFlushTask = nil
         if !logBuffer.isEmpty {
-            // Already stored in appendLog/appendRawOutput
-            // Save to database
             ChatHistoryStore.shared.save()
+            activityLog += logBuffer
             logBuffer = ""
-            // Trigger UI refresh
-    
+            trimToRecentTasks()
+            schedulePersist()
         }
     }
 
+    private func schedulePersist() {
+        guard logPersistTask == nil else { return }
+        logPersistTask = Task {
+            try? await Task.sleep(for: .seconds(2))
+            logPersistTask = nil
+            ChatHistoryStore.shared.save()
+        }
+    }
+
+    /// Keep only the last N tasks visible in the chat (controlled by visibleTaskCount preference)
+    private func trimToRecentTasks() {
+        let marker = "--- New Task ---"
+        let parts = activityLog.components(separatedBy: marker)
+        let limit = visibleTaskCount
+        guard parts.count > limit + 1 else { return }
+        let kept = parts.suffix(limit).joined(separator: marker)
+        activityLog = marker + kept
+    }
+
     func persistLogNow() {
+        logPersistTask?.cancel()
+        logPersistTask = nil
         ChatHistoryStore.shared.save()
     }
 }
