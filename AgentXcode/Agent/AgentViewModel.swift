@@ -570,15 +570,29 @@ final class AgentViewModel {
         return f(cls, sel, data as NSData) as? NSAttributedString
     }
 
+    struct RawMessage: Sendable {
+        let rowid: Int
+        let text: String
+        let handleId: String
+        let handleRowId: Int
+        let chatId: Int
+        let service: String
+        let account: String
+    }
+
     /// Read new messages directly from chat.db using SQLite3 C API.
-    private nonisolated static func queryMessages(afterROWID: Int) -> [(rowid: Int, text: String, handleId: String)] {
+    private nonisolated static func queryMessages(afterROWID: Int) -> [RawMessage] {
         var db: OpaquePointer?
         guard sqlite3_open_v2(messagesDBPath, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, nil) == SQLITE_OK else { return [] }
         defer { sqlite3_close(db) }
 
         let sql = """
-        SELECT m.ROWID, m.text, m.attributedBody, COALESCE(h.id, '') \
-        FROM message m LEFT JOIN handle h ON h.ROWID = m.handle_id \
+        SELECT m.ROWID, m.text, m.attributedBody, \
+        COALESCE(h.id, ''), m.handle_id, COALESCE(cmj.chat_id, 0), \
+        COALESCE(m.service, ''), COALESCE(m.account, '') \
+        FROM message m \
+        LEFT JOIN handle h ON h.ROWID = m.handle_id \
+        LEFT JOIN chat_message_join cmj ON cmj.message_id = m.ROWID \
         WHERE m.ROWID > ?1 AND m.is_from_me = 0 ORDER BY m.ROWID ASC LIMIT 10
         """
         var stmt: OpaquePointer?
@@ -587,10 +601,14 @@ final class AgentViewModel {
 
         sqlite3_bind_int64(stmt, 1, Int64(afterROWID))
 
-        var results: [(rowid: Int, text: String, handleId: String)] = []
+        var results: [RawMessage] = []
         while sqlite3_step(stmt) == SQLITE_ROW {
             let rowid = Int(sqlite3_column_int64(stmt, 0))
             let handleId = sqlite3_column_text(stmt, 3).map { String(cString: $0) } ?? ""
+            let handleRowId = Int(sqlite3_column_int64(stmt, 4))
+            let chatId = Int(sqlite3_column_int64(stmt, 5))
+            let service = sqlite3_column_text(stmt, 6).map { String(cString: $0) } ?? ""
+            let account = sqlite3_column_text(stmt, 7).map { String(cString: $0) } ?? ""
 
             // Try the `text` column first
             var text: String?
@@ -609,7 +627,7 @@ final class AgentViewModel {
                 }
             }
 
-            results.append((rowid: rowid, text: text ?? "", handleId: handleId))
+            results.append(RawMessage(rowid: rowid, text: text ?? "", handleId: handleId, handleRowId: handleRowId, chatId: chatId, service: service, account: account))
         }
         return results
     }
@@ -709,6 +727,13 @@ final class AgentViewModel {
 
         for row in rows {
             lastSeenMessageROWID = row.rowid
+
+            // Dump all IDs for debugging
+            appendLog("msg ROWID=\(row.rowid) handle=\"\(row.handleId)\" handleRow=\(row.handleRowId) chat=\(row.chatId) svc=\(row.service) acct=\(row.account) text=\"\(row.text.prefix(50))\"")
+            if !enabled.isEmpty {
+                appendLog("  enabled=\(enabled.sorted()) match=\(enabled.contains(row.handleId))")
+            }
+            flushLog()
 
             guard !row.text.isEmpty else { continue }
 
