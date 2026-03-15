@@ -94,6 +94,8 @@ private final class StdioConnection: @unchecked Sendable {
     // Pending response continuations keyed by request id
     private var pending: [Int: CheckedContinuation<[String: Any], any Error>] = [:]
     private var buffer = Data()
+    /// Maximum buffer size (10 MB) — disconnect server if exceeded
+    private static let maxBufferSize = 10 * 1024 * 1024
 
     init(process: Process, writer: FileHandle, reader: FileHandle, errorReader: FileHandle) {
         self.process = process
@@ -108,6 +110,20 @@ private final class StdioConnection: @unchecked Sendable {
 
             self.lock.lock()
             self.buffer.append(data)
+
+            // Guard against unbounded buffer growth from malicious servers
+            if self.buffer.count > Self.maxBufferSize {
+                print("[MCPClient] Buffer exceeded \(Self.maxBufferSize) bytes — disconnecting server")
+                self.buffer.removeAll()
+                let pendingCopy = self.pending
+                self.pending.removeAll()
+                self.lock.unlock()
+                for (_, continuation) in pendingCopy {
+                    continuation.resume(throwing: MCPClientError.bufferOverflow)
+                }
+                self.disconnect()
+                return
+            }
 
             // Process complete newline-delimited messages
             while let newlineIndex = self.buffer.firstIndex(of: UInt8(ascii: "\n")) {
@@ -702,6 +718,7 @@ public enum MCPClientError: LocalizedError {
     case resourceNotFound(String)
     case connectionFailed(String)
     case invalidResponse
+    case bufferOverflow
 
     public var errorDescription: String? {
         switch self {
@@ -717,6 +734,8 @@ public enum MCPClientError: LocalizedError {
             return "Connection failed: \(reason)"
         case .invalidResponse:
             return "Invalid response from MCP server"
+        case .bufferOverflow:
+            return "MCP server exceeded maximum buffer size"
         }
     }
 }
