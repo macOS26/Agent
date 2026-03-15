@@ -589,13 +589,13 @@ private struct LangDef {
     }
 
     // Precompiled regexes for terminal output
-    private static let termPermRx = try! NSRegularExpression(pattern: #"^[d\-lbcps][rwxstTSl\-]{9}[.@+\s]?"#, options: .anchorsMatchLines)
-    private static let termTotalRx = try! NSRegularExpression(pattern: #"^total\s+\d+"#, options: .anchorsMatchLines)
-    private static let termDateRx = try! NSRegularExpression(pattern: #"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}\s+(?:\d{4}|\d{1,2}:\d{2})"#)
-    private static let termPathRx = try! NSRegularExpression(pattern: #"(?:^|\s)((?:/[\w.\-@]+)+/?)"#, options: .anchorsMatchLines)
-    private static let termArrowRx = try! NSRegularExpression(pattern: #"\s->\s.*$"#, options: .anchorsMatchLines)
-    private static let termErrorRx = try! NSRegularExpression(pattern: #"\b(?:error|Error|ERROR|fatal|FATAL|failed|FAILED|No such file|Permission denied|not found|cannot)\b"#)
-    private static let termSizeRx = try! NSRegularExpression(pattern: #"(?<=\s)\d{1,12}(?=\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))"#)
+    private static let termPermRx: NSRegularExpression? = try? NSRegularExpression(pattern: #"^[d\-lbcps][rwxstTSl\-]{9}[.@+\s]?"#, options: .anchorsMatchLines)
+    private static let termTotalRx: NSRegularExpression? = try? NSRegularExpression(pattern: #"^total\s+\d+"#, options: .anchorsMatchLines)
+    private static let termDateRx: NSRegularExpression? = try? NSRegularExpression(pattern: #"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}\s+(?:\d{4}|\d{1,2}:\d{2})"#)
+    private static let termPathRx: NSRegularExpression? = try? NSRegularExpression(pattern: #"(?:^|\s)((?:/[\w.\-@]+)+/?)"#, options: .anchorsMatchLines)
+    private static let termArrowRx: NSRegularExpression? = try? NSRegularExpression(pattern: #"\s->\s.*$"#, options: .anchorsMatchLines)
+    private static let termErrorRx: NSRegularExpression? = try? NSRegularExpression(pattern: #"\b(?:error|Error|ERROR|fatal|FATAL|failed|FAILED|No such file|Permission denied|not found|cannot)\b"#)
+    private static let termSizeRx: NSRegularExpression? = try? NSRegularExpression(pattern: #"(?<=\s)\d{1,12}(?=\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))"#)
 
     private static func highlightTerminalOutput(code: String, font: NSFont) -> NSAttributedString {
         let text = CodeBlockTheme.text
@@ -607,48 +607,48 @@ private struct LangDef {
 
         // Permissions (drwxr-xr-x)
         let colPerm = termPerm
-        termPermRx.enumerateMatches(in: code, range: r) { m, _, _ in
+        termPermRx?.enumerateMatches(in: code, range: r) { m, _, _ in
             guard let mr = m?.range else { return }
             result.addAttribute(.foregroundColor, value: colPerm, range: mr)
         }
 
         // "total N"
         let colDate = termDate
-        termTotalRx.enumerateMatches(in: code, range: r) { m, _, _ in
+        termTotalRx?.enumerateMatches(in: code, range: r) { m, _, _ in
             guard let mr = m?.range else { return }
             result.addAttribute(.foregroundColor, value: colDate, range: mr)
         }
 
         // File sizes (number before date)
         let colSize = termSize
-        termSizeRx.enumerateMatches(in: code, range: r) { m, _, _ in
+        termSizeRx?.enumerateMatches(in: code, range: r) { m, _, _ in
             guard let mr = m?.range else { return }
             result.addAttribute(.foregroundColor, value: colSize, range: mr)
         }
 
         // Dates
-        termDateRx.enumerateMatches(in: code, range: r) { m, _, _ in
+        termDateRx?.enumerateMatches(in: code, range: r) { m, _, _ in
             guard let mr = m?.range else { return }
             result.addAttribute(.foregroundColor, value: colDate, range: mr)
         }
 
         // Paths (/usr/bin/...)
         let colPath = termPath
-        termPathRx.enumerateMatches(in: code, range: r) { m, _, _ in
+        termPathRx?.enumerateMatches(in: code, range: r) { m, _, _ in
             guard let mr = m?.range(at: 1) else { return }
             result.addAttribute(.foregroundColor, value: colPath, range: mr)
         }
 
         // Symlink arrows (-> target)
         let colSym = termSymlink
-        termArrowRx.enumerateMatches(in: code, range: r) { m, _, _ in
+        termArrowRx?.enumerateMatches(in: code, range: r) { m, _, _ in
             guard let mr = m?.range else { return }
             result.addAttribute(.foregroundColor, value: colSym, range: mr)
         }
 
         // Error keywords
         let colErr = termError
-        termErrorRx.enumerateMatches(in: code, range: r) { m, _, _ in
+        termErrorRx?.enumerateMatches(in: code, range: r) { m, _, _ in
             guard let mr = m?.range else { return }
             result.addAttribute(.foregroundColor, value: colErr, range: mr)
         }
@@ -670,7 +670,7 @@ private struct LangDef {
                     let perm = String(trimmed.prefix(10))
                     if perm.allSatisfy({ "drwx-lbcpsTt@+. ".contains($0) }) {
                         // Find filename after the date (last component)
-                        let dateRx = try! NSRegularExpression(pattern: #"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}\s+(?:\d{4}|\d{1,2}:\d{2})\s+"#)
+                        guard let dateRx = try? NSRegularExpression(pattern: #"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}\s+(?:\d{4}|\d{1,2}:\d{2})\s+"#) else { continue }
                         if let dateMatch = dateRx.firstMatch(in: line, range: NSRange(location: 0, length: lineLen)) {
                             let nameStart = dateMatch.range.location + dateMatch.range.length
                             if nameStart < lineLen {
