@@ -236,7 +236,7 @@ final class AgentViewModel {
     enum MessageFilter: String, CaseIterable {
         case fromOthers = "From Others"
         case fromMe = "From Me"
-        case noFilter = "No Filter"
+        case noFilter = "All"
     }
     var messageFilter: MessageFilter = {
         MessageFilter(rawValue: UserDefaults.standard.string(forKey: "agentMessageFilter") ?? "") ?? .fromOthers
