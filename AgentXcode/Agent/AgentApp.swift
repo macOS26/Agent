@@ -8,7 +8,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // the compilation queue holds the flockfile(stdout) lock.
         DispatchQueue.global().async {
             ScriptService.drainCompilationQueue()
-            NSApp.reply(toApplicationShouldTerminate: true)
+            DispatchQueue.main.async {
+                NSApp.reply(toApplicationShouldTerminate: true)
+            }
         }
         return .terminateLater
     }
