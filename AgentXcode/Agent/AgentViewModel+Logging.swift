@@ -246,7 +246,6 @@ extension AgentViewModel {
         logFlushTask?.cancel()
         logFlushTask = nil
         activityLog = ""
-        UserDefaults.standard.removeObject(forKey: "agentActivityLog")
         // Clean up cached image snapshots
         try? FileManager.default.removeItem(at: Self.logImageCacheDir)
         try? FileManager.default.createDirectory(at: Self.logImageCacheDir, withIntermediateDirectories: true)
@@ -309,18 +308,11 @@ extension AgentViewModel {
     }
 
     private func schedulePersist() {
-        guard logPersistTask == nil else { return }
-        logPersistTask = Task {
-            try? await Task.sleep(for: .seconds(2))
-            logPersistTask = nil
-            UserDefaults.standard.set(activityLog, forKey: "agentActivityLog")
-        }
+        // No longer needed - activityLog didSet handles persistence
     }
 
     func persistLogNow() {
-        logPersistTask?.cancel()
-        logPersistTask = nil
-        UserDefaults.standard.set(activityLog, forKey: "agentActivityLog")
+        // activityLog didSet handles persistence automatically
     }
 
     /// Keep only the last N tasks visible in the chat (controlled by visibleTaskCount preference)

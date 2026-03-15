@@ -18,7 +18,25 @@ enum APIProvider: String, CaseIterable {
 @MainActor @Observable
 final class AgentViewModel {
     var taskInput = ""
-    var activityLog = UserDefaults.standard.string(forKey: "agentActivityLog") ?? ""
+    var activityLog: String = {
+        let saved = UserDefaults.standard.string(forKey: "agentActivityLog") ?? ""
+        // Trim old tasks on startup to prevent UI bloat
+        let marker = "--- New Task ---"
+        let parts = saved.components(separatedBy: marker)
+        let maxTasks = UserDefaults.standard.object(forKey: "agentVisibleTasks") as? Int ?? 3
+        guard parts.count > maxTasks + 1 else { return saved }
+        // Keep only the last maxTasks sections
+        let trimmed = marker + parts.suffix(maxTasks).joined(separator: marker)
+        return trimmed
+    }() {
+        didSet {
+            // Persist changes off main thread
+            let current = activityLog
+            Task.detached(priority: .background) {
+                UserDefaults.standard.set(current, forKey: "agentActivityLog")
+            }
+        }
+    }
     var isRunning = false
     var isThinking = false
     var userServiceActive = false

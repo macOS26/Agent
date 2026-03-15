@@ -122,23 +122,35 @@ struct MCPServersView: View {
     // MARK: - Actions
 
     private func toggleServer(_ server: MCPServerConfig) async {
+        print("[MCP] Toggle server: \(server.name) (ID: \(server.id)), current enabled: \(server.enabled)")
+        
         if server.enabled {
             // Turn OFF: disable first (moves switch left), then disconnect
+            print("[MCP] Turning OFF server: \(server.name)")
             registry.setEnabled(server.id, false)
             connectingIds.remove(server.id)
             await mcpService.disconnect(serverId: server.id)
+            print("[MCP] Server \(server.name) turned OFF. New enabled state: \(registry.servers.first { $0.id == server.id }?.enabled ?? false)")
         } else {
             // Turn ON: enable first (moves switch right), then connect
+            print("[MCP] Turning ON server: \(server.name)")
             registry.setEnabled(server.id, true)
-            guard let updated = registry.servers.first(where: { $0.id == server.id }) else { return }
+            guard let updated = registry.servers.first(where: { $0.id == server.id }) else {
+                print("[MCP] ERROR: Server \(server.name) not found in registry after enabling!")
+                return
+            }
             connectingIds.insert(server.id)
             do {
+                print("[MCP] Connecting to server: \(updated.name)")
                 try await mcpService.connect(to: updated)
+                print("[MCP] Successfully connected to server: \(updated.name)")
             } catch {
                 mcpService.connectionErrors[server.id] = error.localizedDescription
+                print("[MCP] ERROR connecting to server \(server.name): \(error.localizedDescription)")
                 // Connection failed: switch remains ON, status shows error
             }
             connectingIds.remove(server.id)
+            print("[MCP] Server \(server.name) toggle complete. New enabled state: \(registry.servers.first { $0.id == server.id }?.enabled ?? false)")
         }
     }
 
