@@ -559,13 +559,16 @@ final class AgentViewModel {
     // Stored outside @MainActor so nonisolated static methods can access it
     private nonisolated static let messagesDBPath = NSHomeDirectory() + "/Library/Messages/chat.db"
 
-    /// Decode attributedBody blob (typedstream format) via dynamic dispatch to avoid deprecation warning.
+    /// Decode attributedBody blob (typedstream/NSArchiver format).
+    /// NSUnarchiver is the only way to decode the typedstream format used by the Messages database.
     private nonisolated static func decodeAttributedBody(_ data: Data) -> NSAttributedString? {
-        guard let cls = NSClassFromString("NSUnarchiver") as? NSObject.Type else { return nil }
+        guard let cls = NSClassFromString("NSUnarchiver") else { return nil }
         let sel = NSSelectorFromString("unarchiveObjectWithData:")
-        guard cls.responds(to: sel) else { return nil }
-        let result = cls.perform(sel, with: data)
-        return result?.takeUnretainedValue() as? NSAttributedString
+        guard let method = class_getClassMethod(cls, sel) else { return nil }
+        typealias Fn = @convention(c) (AnyClass, Selector, NSData) -> AnyObject?
+        let imp = method_getImplementation(method)
+        let f = unsafeBitCast(imp, to: Fn.self)
+        return f(cls, sel, data as NSData) as? NSAttributedString
     }
 
     /// Read new messages directly from chat.db using SQLite3 C API.

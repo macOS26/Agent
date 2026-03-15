@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MessagesView: View {
     @Bindable var viewModel: AgentViewModel
+    @State private var renderKey = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -63,6 +64,7 @@ struct MessagesView: View {
                         }
                     }
                 }
+                .id(renderKey)
             }
 
             Divider()
@@ -81,6 +83,10 @@ struct MessagesView: View {
         .frame(minHeight: 300, maxHeight: 800)
         .onAppear {
             viewModel.refreshMessageRecipients()
+            // Force toggles to re-render with correct thumb after popover appears
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                renderKey.toggle()
+            }
         }
     }
 
