@@ -44,7 +44,7 @@ struct ContentView: View {
                         .font(.caption)
                         .foregroundStyle(viewModel.rootEnabled ? .secondary : .tertiary)
                     StatusDot(
-                        isActive: viewModel.messagesMonitorEnabled,
+                        isActive: viewModel.messagesPolling,
                         wasActive: viewModel.messagesMonitorEnabled,
                         isBusy: false,
                         enabled: viewModel.messagesMonitorEnabled

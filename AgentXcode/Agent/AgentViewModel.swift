@@ -230,6 +230,8 @@ final class AgentViewModel {
     private var messagesMonitorTask: Task<Void, Never>?
     /// ROWID of the last message we've already processed
     private var lastSeenMessageROWID: Int = 0
+    /// Briefly true during each poll cycle so the StatusDot pulses on the timer
+    var messagesPolling = false
 
     /// Chat recipients discovered from Messages database
     struct MessageRecipient: Identifiable, Hashable {
@@ -531,7 +533,11 @@ final class AgentViewModel {
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 5_000_000_000) // poll every 5s
                 guard !Task.isCancelled else { break }
+                self.messagesPolling = true
                 await self.pollMessages()
+                // Keep dot green briefly then turn off
+                try? await Task.sleep(nanoseconds: 500_000_000)
+                self.messagesPolling = false
             }
         }
     }
