@@ -2,7 +2,7 @@
 
 **Branch:** `exp_accessibility`  
 **Date:** March 2026  
-**Status:** Phase 2 Implemented ✅
+**Status:** Phase 5 Complete ✅
 
 ---
 
@@ -21,6 +21,18 @@
 - `ax_scroll` — Scroll wheel simulation at coordinates
 - `ax_press_key` — Key press with optional modifiers (Cmd, Option, Control, Shift)
 - `ax_perform_action` — AXUIElementPerformAction for native accessibility actions (requires `allowWrites=true`)
+
+### Phase 4: ✅ Complete (Screenshot Integration)
+- `ax_screenshot` — Capture screen region or window (requires Screen Recording permission)
+  - Supports fullscreen capture, window capture by ID, and region capture by coordinates
+  - Returns path to PNG file for inline display in activity log
+
+### Phase 5: ✅ Complete (Security Hardening)
+- Rate limiting — 50ms minimum interval between accessibility actions
+- Audit logging — All accessibility operations logged to `~/Documents/Agent/accessibility_audit.log`
+- `ax_get_audit_log` — Retrieve recent audit log entries
+- Password field blocking — Secure text fields are protected from reading/interaction
+- Action filtering — Dangerous operations blocked without `allowWrites=true`
 
 ---
 

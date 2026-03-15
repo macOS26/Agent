@@ -972,6 +972,55 @@ extension AgentViewModel {
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
+                        // Accessibility screenshot tool (Phase 4)
+                        if name == "ax_screenshot" {
+                            let x = (input["x"] as? Double).map { CGFloat($0) }
+                            let y = (input["y"] as? Double).map { CGFloat($0) }
+                            let width = (input["width"] as? Double).map { CGFloat($0) }
+                            let height = (input["height"] as? Double).map { CGFloat($0) }
+                            let windowId = input["windowId"] as? Int
+                            
+                            appendLog("Capturing screenshot...")
+                            flushLog()
+                            
+                            let output: String
+                            if let wid = windowId, wid > 0 {
+                                output = await Self.offMain {
+                                    AccessibilityService.shared.captureScreenshot(windowID: wid)
+                                }
+                            } else if let x = x, let y = y, let w = width, let h = height {
+                                output = await Self.offMain {
+                                    AccessibilityService.shared.captureScreenshot(x: x, y: y, width: w, height: h)
+                                }
+                            } else {
+                                // Fullscreen capture
+                                output = await Self.offMain {
+                                    AccessibilityService.shared.captureAllWindows()
+                                }
+                            }
+                            
+                            // Check if output contains a path - if so, it's an image that can be displayed inline
+                            if output.contains("\"path\"") {
+                                appendLog("Screenshot captured successfully")
+                            } else {
+                                appendLog(output)
+                            }
+                            commandsRun.append("ax_screenshot")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        // Accessibility audit log tool (Phase 5)
+                        if name == "ax_get_audit_log" {
+                            let limit = input["limit"] as? Int ?? 50
+                            appendLog("Getting accessibility audit log...")
+                            flushLog()
+                            let output = await Self.offMain {
+                                AccessibilityService.shared.getAuditLog(limit: limit)
+                            }
+                            appendLog(Self.preview(output, lines: 30))
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
                         // Client-side web search via Tavily (for Ollama providers)
                         if name == "web_search" {
                             let query = input["query"] as? String ?? ""

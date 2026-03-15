@@ -178,7 +178,8 @@
       "Bash(xcodebuild:*)",
       "Bash(defaults write:*)",
       "Bash(git mv:*)",
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "Bash(git log:*)"
     ]
   }
 }

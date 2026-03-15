@@ -156,7 +156,7 @@ enum AgentTools {
         - ax_check_permission: Check if Accessibility permission is granted.
         - ax_request_permission: Request Accessibility permission (shows system prompt).
 
-        INPUT SIMULATION TOOLS (Phase 2):
+        INPUT SIMULATION TOOLS:
         - ax_type_text: Simulate typing text at current cursor or at specific coordinates.
         - ax_click: Simulate a mouse click at screen coordinates.
         - ax_scroll: Simulate scroll wheel at screen coordinates.
@@ -164,6 +164,12 @@ enum AgentTools {
 
         INTERACTION TOOLS (require allowWrites=true):
         - ax_perform_action: Perform an accessibility action on an element.
+
+        SCREENSHOT TOOL:
+        - ax_screenshot: Capture a screen region, window, or fullscreen. Returns path to PNG.
+
+        AUDIT TOOL:
+        - ax_get_audit_log: Retrieve recent accessibility operation log entries.
 
         SECURITY: Accessibility tools can interact with ANY app's UI, including reading text from
         text fields. They inherit Agent's TCC Accessibility permission. Use responsibly.
@@ -686,6 +692,28 @@ enum AgentTools {
                 "modifiers": ["type": "array", "description": "Array of modifier keys: 'command', 'option', 'control', 'shift'", "items": ["type": "string"]],
             ],
             required: ["keyCode"]
+        ),
+        // --- Accessibility Screenshots (Phase 4) ---
+        ToolDef(
+            name: "ax_screenshot",
+            description: "Capture a screenshot of a screen region or specific window. Requires Screen Recording permission. Returns the path to the saved PNG file.",
+            properties: [
+                "x": ["type": "number", "description": "X coordinate of region (optional, required for region capture)"],
+                "y": ["type": "number", "description": "Y coordinate of region (optional, required for region capture)"],
+                "width": ["type": "number", "description": "Width of region (optional, required for region capture)"],
+                "height": ["type": "number", "description": "Height of region (optional, required for region capture)"],
+                "windowId": ["type": "integer", "description": "Window ID to capture (optional, from ax_list_windows)"],
+            ],
+            required: []
+        ),
+        // --- Accessibility Audit Log (Phase 5) ---
+        ToolDef(
+            name: "ax_get_audit_log",
+            description: "Get recent accessibility audit log entries. Shows recent accessibility operations performed by the agent.",
+            properties: [
+                "limit": ["type": "integer", "description": "Maximum number of entries to return (default 50)"],
+            ],
+            required: []
         ),
         // --- Script Management ---
         ToolDef(

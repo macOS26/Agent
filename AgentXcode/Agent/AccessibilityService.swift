@@ -534,6 +534,170 @@ final class AccessibilityService: @unchecked Sendable {
         ])
     }
     
+    // MARK: - Screenshot (Phase 4)
+    
+    /// Capture a screenshot of a region or window. Requires Screen Recording permission.
+    /// Returns the path to the saved PNG file, or an error message.
+    func captureScreenshot(x: CGFloat? = nil, y: CGFloat? = nil, width: CGFloat? = nil, height: CGFloat? = nil, windowID: Int? = nil) -> String {
+        // Check Accessibility permission (Screen Recording is same TCC category on macOS)
+        guard Self.hasAccessibilityPermission() else {
+            return errorJSON("Accessibility/Screen Recording permission required.")
+        }
+        
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        let fileName = "screenshot_\(UUID().uuidString).png"
+        let outputPath = home.appendingPathComponent("Documents/Agent/\(fileName)").path
+        
+        // Ensure output directory exists
+        try? FileManager.default.createDirectory(atPath: home.appendingPathComponent("Documents/Agent").path, withIntermediateDirectories: true)
+        
+        // Build screencapture command
+        var args = ["-x", "-t", "png"]  // -x: no sound, -t png: format
+        
+        if let wid = windowID, wid > 0 {
+            // Capture specific window by ID
+            args.append("-l")
+            args.append("\(wid)")
+        } else if let x = x, let y = y, let w = width, let h = height {
+            // Capture region
+            args.append("-R")
+            args.append("\(Int(x)),\(Int(y)),\(Int(w)),\(Int(h))")
+        }
+        
+        args.append(outputPath)
+        
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+        process.arguments = args
+        
+        do {
+            try process.run()
+            process.waitUntilExit()
+            
+            if process.terminationStatus != 0 {
+                return errorJSON("screencapture failed with exit code \(process.terminationStatus)")
+            }
+            
+            guard FileManager.default.fileExists(atPath: outputPath) else {
+                return errorJSON("Screenshot file not created at \(outputPath)")
+            }
+            
+            // Get file size for confirmation
+            let attrs = try FileManager.default.attributesOfItem(atPath: outputPath)
+            let fileSize = attrs[.size] as? Int64 ?? 0
+            
+            return successJSON([
+                "path": outputPath,
+                "size": fileSize,
+                "message": "Screenshot saved to \(outputPath)"
+            ])
+        } catch {
+            return errorJSON("Failed to capture screenshot: \(error.localizedDescription)")
+        }
+    }
+    
+    /// Capture a screenshot of all visible windows (requires Screen Recording permission)
+    func captureAllWindows() -> String {
+        guard Self.hasAccessibilityPermission() else {
+            return errorJSON("Accessibility/Screen Recording permission required.")
+        }
+        
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        let fileName = "screenshot_\(UUID().uuidString).png"
+        let outputPath = home.appendingPathComponent("Documents/Agent/\(fileName)").path
+        
+        try? FileManager.default.createDirectory(atPath: home.appendingPathComponent("Documents/Agent").path, withIntermediateDirectories: true)
+        
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+        process.arguments = ["-x", "-t", "png", outputPath]
+        
+        do {
+            try process.run()
+            process.waitUntilExit()
+            
+            if process.terminationStatus != 0 {
+                return errorJSON("screencapture failed with exit code \(process.terminationStatus)")
+            }
+            
+            guard FileManager.default.fileExists(atPath: outputPath) else {
+                return errorJSON("Screenshot file not created")
+            }
+            
+            let attrs = try FileManager.default.attributesOfItem(atPath: outputPath)
+            let fileSize = attrs[.size] as? Int64 ?? 0
+            
+            return successJSON([
+                "path": outputPath,
+                "size": fileSize,
+                "message": "Fullscreen screenshot saved to \(outputPath)"
+            ])
+        } catch {
+            return errorJSON("Failed to capture screenshot: \(error.localizedDescription)")
+        }
+    }
+    
+    // MARK: - Rate Limiting (Phase 5)
+    
+    private var lastActionTime: Date = .distantPast
+    private let minActionInterval: TimeInterval = 0.05  // 50ms minimum between actions
+    
+    private func checkRateLimit() -> Bool {
+        let now = Date()
+        guard now.timeIntervalSince(lastActionTime) >= minActionInterval else {
+            return false
+        }
+        lastActionTime = now
+        return true
+    }
+    
+    /// Execute an action with rate limiting
+    func withRateLimit<T>(_ action: () -> T) -> T {
+        // Spin-wait if rate limited (short waits are fine for accessibility operations)
+        while !checkRateLimit() {
+            Thread.sleep(forTimeInterval: 0.01)
+        }
+        return action()
+    }
+    
+    // MARK: - Audit Logging (Phase 5)
+    
+    private static nonisolated(unsafe) var auditLog: [String] = []
+    private static let auditLogLock = NSLock()
+    private static let auditLogFile = FileManager.default.homeDirectoryForCurrentUser
+        .appendingPathComponent("Documents/Agent/accessibility_audit.log")
+    
+    private static func logAudit(_ message: String) {
+        let timestamp = ISO8601DateFormatter().string(from: Date())
+        let entry = "[\(timestamp)] \(message)"
+        
+        auditLogLock.lock()
+        defer { auditLogLock.unlock() }
+        
+        auditLog.append(entry)
+        
+        // Keep last 1000 entries in memory
+        if auditLog.count > 1000 {
+            auditLog.removeFirst(100)
+        }
+        
+        // Append to file asynchronously
+        let fileURL = auditLogFile
+        DispatchQueue.global().async {
+            if let data = (entry + "\n").data(using: .utf8) {
+                try? data.write(to: fileURL, options: .atomic)
+            }
+        }
+    }
+    
+    /// Get recent audit log entries
+    func getAuditLog(limit: Int = 50) -> String {
+        Self.auditLogLock.lock()
+        defer { Self.auditLogLock.unlock() }
+        let entries = Array(Self.auditLog.suffix(limit))
+        return entries.joined(separator: "\n")
+    }
+    
     // MARK: - Helpers
     
     private func getProcessName(pid: pid_t) -> String? {
