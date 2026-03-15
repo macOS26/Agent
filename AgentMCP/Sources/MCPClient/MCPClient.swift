@@ -526,7 +526,9 @@ public actor MCPClient {
 
         guard let result = response["result"] as? [String: Any] else {
             if let error = response["error"] as? [String: Any] {
-                let msg = error["message"] as? String ?? "Unknown error"
+                let raw = error["message"] as? String ?? "Unknown error"
+                // Cap error message length and strip newlines to limit injection surface
+                let msg = String(raw.replacingOccurrences(of: "\n", with: " ").prefix(512))
                 return ToolResult(content: [.text(msg)], isError: true)
             }
             throw MCPClientError.invalidResponse
