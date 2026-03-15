@@ -162,6 +162,7 @@ extension AgentViewModel {
         if !activityLog.isEmpty {
             logBuffer += "\n"
         }
+        trimToRecentTasks()
         appendLog("--- New Task ---")
         appendLog("Task: \(prompt)")
 

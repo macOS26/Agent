@@ -323,7 +323,6 @@ extension AgentViewModel {
             ChatHistoryStore.shared.save()
             activityLog += logBuffer
             logBuffer = ""
-            trimToRecentTasks()
             schedulePersist()
         }
     }
@@ -338,7 +337,7 @@ extension AgentViewModel {
     }
 
     /// Keep only the last N tasks visible in the chat (controlled by visibleTaskCount preference)
-    private func trimToRecentTasks() {
+    func trimToRecentTasks() {
         let marker = "--- New Task ---"
         let parts = activityLog.components(separatedBy: marker)
         let limit = visibleTaskCount

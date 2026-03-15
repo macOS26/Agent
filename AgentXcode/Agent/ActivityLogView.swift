@@ -78,7 +78,7 @@ struct ActivityLogView: NSViewRepresentable {
         coord.lastSearch = searchText
         coord.lastMatchIndex = currentMatchIndex
 
-        if textChanged {
+        if textChanged && len > coord.lastLength {
             coord.throttledScrollToEnd(textView)
         }
     }
