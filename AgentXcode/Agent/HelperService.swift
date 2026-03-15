@@ -118,7 +118,13 @@ final class HelperService {
     /// Quick connectivity test with 5-second timeout. Returns true if XPC responds.
     func ping() async -> Bool {
         let handler = OutputHandler { _ in }
-        return await withCheckedContinuation { continuation in
+        let conn = makeConnection(outputHandler: handler)
+        return await Self.performPing(connection: conn)
+    }
+
+    /// Runs XPC ping off the main actor so continuation can be resumed from any thread.
+    private nonisolated static func performPing(connection: NSXPCConnection) async -> Bool {
+        await withCheckedContinuation { continuation in
             var didResume = false
             let resumeLock = NSLock()
             func safeResume(_ value: Bool) {
@@ -129,7 +135,6 @@ final class HelperService {
                 continuation.resume(returning: value)
             }
 
-            let connection = makeConnection(outputHandler: handler)
             guard let proxy = connection.remoteObjectProxyWithErrorHandler({ _ in
                 safeResume(false)
             }) as? HelperToolProtocol else {
