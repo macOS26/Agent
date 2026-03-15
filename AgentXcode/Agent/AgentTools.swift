@@ -193,7 +193,9 @@ enum AgentTools {
         - read_agent_script: Read the source code of a script
         - create_agent_script: Create a new Swift automation script
         - update_agent_script: Update an existing Swift automation script
-        - run_agent_script: Compile and run a Swift dylib script
+        - run_agent_script: Compile and run a Swift dylib script. \
+        Output from the script is streamed live to the activity log — the user sees it in real time. \
+        Do NOT repeat or summarize the script's stdout output after it runs; it is already visible.
         - delete_agent_script: Delete a Swift automation script
 
         ═══════════════════════════════════════════════════════════════════════════════
@@ -764,7 +766,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: "run_agent_script",
-            description: "Compile and run a Swift dylib script from ~/Documents/Agent/agents/. For structured data, write a JSON input file first via execute_user_command, then run the script.",
+            description: "Compile and run a Swift dylib script from ~/Documents/Agent/agents/. Output is streamed live to the activity log — do NOT repeat or summarize stdout output. For structured data, write a JSON input file first via execute_user_command, then run the script.",
             properties: [
                 "name": ["type": "string", "description": "Script filename (without .swift)"],
                 "arguments": ["type": "string", "description": "Simple string passed via AGENT_SCRIPT_ARGS env var. For complex data, use JSON files instead."],
