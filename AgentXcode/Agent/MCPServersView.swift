@@ -156,7 +156,7 @@ struct MCPServersView: View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 Toggle("", isOn: Binding(
-                    get: { registryServer.enabled },
+                    get: { registry.servers.first(where: { $0.id == server.id })?.enabled ?? false },
                     set: { newValue in
                         registry.setEnabled(server.id, newValue)
                         Task { await toggleServer(server) }
