@@ -30,6 +30,7 @@ struct ActivityLogView: NSViewRepresentable {
         textView.allowsUndo = false
         // Enable link detection and clicking
         textView.isAutomaticLinkDetectionEnabled = true
+        textView.delegate = context.coordinator
         textView.checkTextInDocument(nil)
         return scrollView
     }
@@ -185,7 +186,7 @@ struct ActivityLogView: NSViewRepresentable {
         }
     }
 
-    @MainActor class Coordinator: NSObject {
+    @MainActor class Coordinator: NSObject, NSTextViewDelegate {
         var lastLength = 0
         var showingPlaceholder = true
         var lastSearch = ""
@@ -807,6 +808,27 @@ struct ActivityLogView: NSViewRepresentable {
             } catch {
                 return NSAttributedString(string: text, attributes: plainAttrs)
             }
+        }
+
+        // Open image and HTML file links in the default web browser
+        func textView(_ textView: NSTextView, clickedOnLink link: Any, at charIndex: Int) -> Bool {
+            let urlString: String
+            if let url = link as? URL {
+                urlString = url.absoluteString
+            } else if let str = link as? String {
+                urlString = str
+            } else {
+                return false
+            }
+            guard let url = URL(string: urlString), url.isFileURL else { return false }
+            // Open in the user's default web browser
+            if let browserURL = NSWorkspace.shared.urlForApplication(toOpen: URL(string: "https://example.com")!) {
+                let config = NSWorkspace.OpenConfiguration()
+                NSWorkspace.shared.open([url], withApplicationAt: browserURL, configuration: config)
+            } else {
+                NSWorkspace.shared.open(url)
+            }
+            return true
         }
 
         func clearCache() {
