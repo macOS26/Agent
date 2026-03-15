@@ -43,8 +43,8 @@ struct MCPServerConfig: Codable, Identifiable, Hashable {
     func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(command, forKey: .command)
-        if !arguments.isEmpty { try c.encode(arguments, forKey: .args) }
-        if !environment.isEmpty { try c.encode(environment, forKey: .env) }
+        try c.encode(arguments, forKey: .args)
+        try c.encode(environment, forKey: .env)
     }
 
     /// Create from a JSON string (for importing)

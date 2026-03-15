@@ -190,6 +190,13 @@ struct MCPServersView: View {
                 }
                 Text(server.command).font(.caption).foregroundStyle(.secondary)
                     .lineLimit(1).truncationMode(.middle)
+                // Show discovered tools when connected
+                let tools = mcpService.discoveredTools.filter { $0.serverId == server.id }
+                if !tools.isEmpty {
+                    Text(tools.map(\.name).joined(separator: ", "))
+                        .font(.caption2).foregroundStyle(.tertiary)
+                        .lineLimit(2)
+                }
             }
 
             Spacer()
