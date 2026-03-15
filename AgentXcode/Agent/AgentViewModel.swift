@@ -249,6 +249,7 @@ final class AgentViewModel {
         let id: String        // handle id (phone/email) — used as stable key for filtering
         let displayName: String
         let service: String   // "iMessage" or "SMS"
+        let fromMe: Bool      // true if discovered from a sent message
     }
     var messageRecipients: [MessageRecipient] = []
     /// Set of handle IDs (phone/email) the user has enabled for monitoring
@@ -654,25 +655,42 @@ final class AgentViewModel {
     private func autoAddRecipient(from row: RawMessage) {
         guard !row.handleId.isEmpty else { return }
         if messageRecipients.contains(where: { $0.id == row.handleId }) { return }
-        let recipient = MessageRecipient(id: row.handleId, displayName: row.handleId, service: row.service)
+        let fromMe = messageFilter == .fromMe
+        let recipient = MessageRecipient(id: row.handleId, displayName: row.handleId, service: row.service, fromMe: fromMe)
         messageRecipients.append(recipient)
-        // Persist discovered recipients
+        persistRecipients()
+    }
+
+    private func persistRecipients() {
         let ids = messageRecipients.map(\.id)
-        UserDefaults.standard.set(ids, forKey: "agentDiscoveredHandles")
         let services = messageRecipients.map(\.service)
+        let fromMes = messageRecipients.map(\.fromMe)
+        UserDefaults.standard.set(ids, forKey: "agentDiscoveredHandles")
         UserDefaults.standard.set(services, forKey: "agentDiscoveredServices")
+        UserDefaults.standard.set(fromMes, forKey: "agentDiscoveredFromMe")
     }
 
     /// Reload previously discovered recipients from UserDefaults.
     func refreshMessageRecipients() {
         let ids = UserDefaults.standard.stringArray(forKey: "agentDiscoveredHandles") ?? []
         let services = UserDefaults.standard.stringArray(forKey: "agentDiscoveredServices") ?? []
+        let fromMes = UserDefaults.standard.array(forKey: "agentDiscoveredFromMe") as? [Bool] ?? []
         var recipients: [MessageRecipient] = []
         for (i, id) in ids.enumerated() {
             let service = i < services.count ? services[i] : ""
-            recipients.append(MessageRecipient(id: id, displayName: id, service: service))
+            let fromMe = i < fromMes.count ? fromMes[i] : false
+            recipients.append(MessageRecipient(id: id, displayName: id, service: service, fromMe: fromMe))
         }
         messageRecipients = recipients
+    }
+
+    /// Recipients filtered by the current message filter setting.
+    var filteredRecipients: [MessageRecipient] {
+        switch messageFilter {
+        case .fromOthers: return messageRecipients.filter { !$0.fromMe }
+        case .fromMe:     return messageRecipients.filter { $0.fromMe }
+        case .noFilter:   return messageRecipients
+        }
     }
 
     /// Query for the max ROWID in the Messages database.

@@ -26,7 +26,7 @@ struct MessagesView: View {
 
             Divider()
 
-            if viewModel.messageRecipients.isEmpty {
+            if viewModel.filteredRecipients.isEmpty {
                 VStack(spacing: 12) {
                     Image(systemName: "message")
                         .font(.system(size: 32))
@@ -47,7 +47,7 @@ struct MessagesView: View {
                         .foregroundStyle(.secondary)
                     Spacer()
                     Button("All") {
-                        viewModel.enabledHandleIds = Set(viewModel.messageRecipients.map(\.id))
+                        viewModel.enabledHandleIds = Set(viewModel.filteredRecipients.map(\.id))
                     }
                     .buttonStyle(.bordered).controlSize(.mini)
                     Button("None") {
@@ -59,13 +59,14 @@ struct MessagesView: View {
                         viewModel.enabledHandleIds.removeAll()
                         UserDefaults.standard.removeObject(forKey: "agentDiscoveredHandles")
                         UserDefaults.standard.removeObject(forKey: "agentDiscoveredServices")
+                        UserDefaults.standard.removeObject(forKey: "agentDiscoveredFromMe")
                     }
                     .buttonStyle(.bordered).controlSize(.mini)
                 }
 
                 ScrollView {
                     LazyVStack(spacing: 4) {
-                        ForEach(viewModel.messageRecipients) { recipient in
+                        ForEach(viewModel.filteredRecipients) { recipient in
                             recipientRow(recipient)
                         }
                     }
