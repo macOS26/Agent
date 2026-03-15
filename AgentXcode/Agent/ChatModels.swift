@@ -1,0 +1,252 @@
+import Foundation
+import SwiftData
+
+/// A single log entry in the chat history
+@Model
+final class ChatMessage {
+    var timestamp: Date
+    var content: String
+    var isStreaming: Bool
+    
+    // Relationship to task - many messages belong to one task
+    var task: ChatTask?
+    
+    init(timestamp: Date = Date(), content: String, task: ChatTask? = nil, isStreaming: Bool = false) {
+        self.timestamp = timestamp
+        self.content = content
+        self.task = task
+        self.isStreaming = isStreaming
+    }
+}
+
+/// A task grouping - represents one "New Task" section
+@Model
+final class ChatTask {
+    var id: UUID
+    var startTime: Date
+    var endTime: Date?
+    var prompt: String
+    var summary: String?
+    var isCancelled: Bool
+    
+    @Relationship(deleteRule: .cascade)
+    var messages: [ChatMessage] = []
+    
+    init(id: UUID = UUID(), startTime: Date = Date(), prompt: String = "") {
+        self.id = id
+        self.startTime = startTime
+        self.prompt = prompt
+        self.isCancelled = false
+    }
+}
+
+/// Manages chat history storage with SwiftData
+@MainActor
+final class ChatHistoryStore {
+    static let shared = ChatHistoryStore()
+    
+    var container: ModelContainer?
+    var context: ModelContext?
+    
+    private var currentTask: ChatTask?
+    
+    private init() {
+        do {
+            let schema = Schema([ChatMessage.self, ChatTask.self])
+            let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+            container = try ModelContainer(for: schema, configurations: config)
+            context = container?.mainContext
+        } catch {
+            print("Failed to initialize SwiftData: \(error)")
+        }
+    }
+    
+    // MARK: - Task Management
+    
+    /// Start a new task grouping
+    @discardableResult
+    func startNewTask(prompt: String) -> UUID {
+        let task = ChatTask(prompt: prompt)
+        context?.insert(task)
+        currentTask = task
+        try? context?.save()
+        return task.id
+    }
+    
+    /// End current task with optional summary
+    func endCurrentTask(summary: String? = nil, cancelled: Bool = false) {
+        currentTask?.endTime = Date()
+        currentTask?.summary = summary
+        currentTask?.isCancelled = cancelled
+        try? context?.save()
+        currentTask = nil
+    }
+    
+    /// Get the current active task
+    var activeTask: ChatTask? { currentTask }
+    
+    // MARK: - Message Operations
+    
+    /// Append a message to the current task
+    func appendMessage(_ content: String, timestamp: Date = Date()) {
+        guard let task = currentTask else { return }
+        let message = ChatMessage(timestamp: timestamp, content: content, task: task)
+        context?.insert(message)
+    }
+    
+    /// Append streaming content (LLM output)
+    func appendStreamingContent(_ content: String) {
+        guard let task = currentTask else { return }
+        let message = ChatMessage(timestamp: Date(), content: content, task: task, isStreaming: true)
+        context?.insert(message)
+    }
+    
+    /// Save pending changes
+    func save() {
+        try? context?.save()
+    }
+    
+    /// Fetch recent tasks with their messages
+    func fetchRecentTasks(limit: Int = 3) -> [(task: ChatTask, messages: [ChatMessage])] {
+        guard let context else { return [] }
+        
+        let descriptor = FetchDescriptor<ChatTask>(
+            sortBy: [SortDescriptor(\.startTime, order: .reverse)]
+        )
+        
+        do {
+            let tasks = try context.fetch(descriptor)
+            let recent = Array(tasks.prefix(limit))
+            
+            return recent.compactMap { task in
+                let sorted = task.messages.sorted { $0.timestamp < $1.timestamp }
+                return (task: task, messages: sorted)
+            }.reversed().map { $0 } // Reverse to get chronological order
+        } catch {
+            return []
+        }
+    }
+    
+    /// Build a text representation for the LLM context (like old activityLog format)
+    func buildActivityLogText(maxTasks: Int = 3) -> String {
+        let tasks = fetchRecentTasks(limit: maxTasks)
+        var result = ""
+        
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm:ss"
+        
+        for (task, messages) in tasks {
+            result += "--- New Task ---\n"
+            for msg in messages {
+                let time = formatter.string(from: msg.timestamp)
+                result += "[\(time)] \(msg.content)\n"
+            }
+        }
+        
+        return result
+    }
+    
+    /// Clear all history
+    func clearAll() {
+        guard let context else { return }
+        
+        do {
+            try context.delete(model: ChatMessage.self)
+            try context.delete(model: ChatTask.self)
+            try context.save()
+        } catch {
+            print("Failed to clear history: \(error)")
+        }
+        
+        currentTask = nil
+    }
+    
+    /// Count total tasks
+    func taskCount() -> Int {
+        guard let context else { return 0 }
+        do {
+            return try context.fetchCount(FetchDescriptor<ChatTask>())
+        } catch {
+            return 0
+        }
+    }
+    
+    /// Count total messages
+    func messageCount() -> Int {
+        guard let context else { return 0 }
+        do {
+            return try context.fetchCount(FetchDescriptor<ChatMessage>())
+        } catch {
+            return 0
+        }
+    }
+    
+    /// Migrate old UserDefaults data to SwiftData (one-time)
+    func migrateFromUserDefaults() {
+        let key = "agentActivityLog"
+        guard let saved = UserDefaults.standard.string(forKey: key),
+              !saved.isEmpty else { return }
+        
+        // Check if we've already migrated
+        if UserDefaults.standard.bool(forKey: "agentActivityLogMigrated") {
+            return
+        }
+        
+        // Don't migrate if we already have tasks in SwiftData
+        if taskCount() > 0 {
+            UserDefaults.standard.set(true, forKey: "agentActivityLogMigrated")
+            return
+        }
+        
+        let marker = "--- New Task ---"
+        let sections = saved.components(separatedBy: marker)
+        
+        let timestampPattern = #"^\[(\d{2}:\d{2}:\d{2})\]\s*(.*)$"#
+        guard let regex = try? NSRegularExpression(pattern: timestampPattern) else { return }
+        
+        for section in sections where !section.isEmpty {
+            let lines = section.components(separatedBy: "\n")
+            var taskPrompt = "Migrated task"
+            
+            // First non-timestamp line might be the task description
+            for line in lines.prefix(3) {
+                let trimmed = line.trimmingCharacters(in: .whitespaces)
+                if !trimmed.isEmpty, !trimmed.hasPrefix("[") {
+                    taskPrompt = trimmed
+                    break
+                }
+            }
+            
+            let task = ChatTask(prompt: taskPrompt)
+            context?.insert(task)
+            
+            for line in lines {
+                let nsLine = line as NSString
+                let range = NSRange(location: 0, length: nsLine.length)
+                
+                if let match = regex.firstMatch(in: line, range: range) {
+                    let timeStr = nsLine.substring(with: match.range(at: 1))
+                    let content = nsLine.substring(with: match.range(at: 2))
+                    
+                    // Parse time and create date
+                    let parts = timeStr.components(separatedBy: ":")
+                    var date = Date()
+                    if parts.count == 3,
+                       let hour = Int(parts[0]),
+                       let minute = Int(parts[1]),
+                       let second = Int(parts[2]) {
+                        let cal = Calendar.current
+                        date = cal.date(bySettingHour: hour, minute: minute, second: second, of: Date()) ?? Date()
+                    }
+                    
+                    let message = ChatMessage(timestamp: date, content: content, task: task)
+                    context?.insert(message)
+                }
+            }
+        }
+        
+        try? context?.save()
+        UserDefaults.standard.set(true, forKey: "agentActivityLogMigrated")
+        print("Migrated chat history to SwiftData")
+    }
+}

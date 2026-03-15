@@ -14,6 +14,7 @@
 		AA10000000000000000034 /* ClaudeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000001E /* ClaudeService.swift */; };
 		AA10000000000000000035 /* HelperProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000001F /* HelperProtocol.swift */; };
 		AA10000000000000000036 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000020 /* Models.swift */; };
+		AA10000000000000000070 /* ChatModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000069 /* ChatModels.swift */; };
 		AA10000000000000000037 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000021 /* Assets.xcassets */; };
 		AA10000000000000000038 /* UserService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000025 /* UserService.swift */; };
 		AA10000000000000000039 /* UserProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000026 /* UserProtocol.swift */; };
@@ -142,6 +143,7 @@
 		AA1000000000000000001E /* ClaudeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeService.swift; sourceTree = "<group>"; };
 		AA1000000000000000001F /* HelperProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperProtocol.swift; sourceTree = "<group>"; };
 		AA10000000000000000020 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		AA10000000000000000069 /* ChatModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModels.swift; sourceTree = "<group>"; };
 		AA10000000000000000021 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA10000000000000000022 /* Agent.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Agent.entitlements; sourceTree = "<group>"; };
 		AA10000000000000000023 /* Agent.app.toddbruss.helper.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Agent.app.toddbruss.helper.plist; sourceTree = "<group>"; };
@@ -275,6 +277,7 @@
 				AA1000000000000000001F /* HelperProtocol.swift */,
 				AA10000000000000000026 /* UserProtocol.swift */,
 				AA10000000000000000020 /* Models.swift */,
+				AA10000000000000000069 /* ChatModels.swift */,
 				EAF3666E2F623D6A004B7E38 /* AppIcon.icon */,
 				AA10000000000000000021 /* Assets.xcassets */,
 				AA10000000000000000022 /* Agent.entitlements */,
@@ -522,6 +525,7 @@
 				AA10000000000000000066 /* ActivityLogView.swift in Sources */,
 				EE10000000000000000004 /* ObjCTry.m in Sources */,
 				AA10000000000000000036 /* Models.swift in Sources */,
+				AA10000000000000000070 /* ChatModels.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -180,7 +180,13 @@ extension AgentViewModel {
     func appendLog(_ message: String) {
         let timestamp = Self.timestampFormatter.string(from: Date())
         let cached = snapshotImages(in: message)
-        logBuffer += "[\(timestamp)] \(cached)\n"
+        let formattedMessage = "[\(timestamp)] \(cached)"
+        
+        // Store in SwiftData
+        ChatHistoryStore.shared.appendMessage(formattedMessage)
+        
+        // Also add to buffer for immediate display
+        logBuffer += formattedMessage + "\n"
         scheduleLogFlush()
     }
 
@@ -193,12 +199,15 @@ extension AgentViewModel {
         if streamLineCount > maxOutputLines {
             if !streamTruncated {
                 streamTruncated = true
-                logBuffer += "...(output truncated at \(maxOutputLines) lines)...\n"
+                let truncatedMsg = "...(output truncated at \(maxOutputLines) lines)..."
+                ChatHistoryStore.shared.appendMessage(truncatedMsg)
+                logBuffer += truncatedMsg + "\n"
                 scheduleLogFlush()
             }
             return
         }
         let cached = snapshotImages(in: text)
+        ChatHistoryStore.shared.appendMessage(cached)
         logBuffer += cached
         if !cached.hasSuffix("\n") {
             logBuffer += "\n"
@@ -245,7 +254,8 @@ extension AgentViewModel {
         logBuffer = ""
         logFlushTask?.cancel()
         logFlushTask = nil
-        activityLog = ""
+        ChatHistoryStore.shared.clearAll()
+
         // Clean up cached image snapshots
         try? FileManager.default.removeItem(at: Self.logImageCacheDir)
         try? FileManager.default.createDirectory(at: Self.logImageCacheDir, withIntermediateDirectories: true)
@@ -269,8 +279,11 @@ extension AgentViewModel {
             try? await Task.sleep(for: .milliseconds(50))
             self.streamFlushTask = nil
             if !self.streamBuffer.isEmpty {
-                self.activityLog += self.streamBuffer
+                // Store in SwiftData
+                ChatHistoryStore.shared.appendStreamingContent(self.streamBuffer)
                 self.streamBuffer = ""
+                // Trigger UI refresh
+        
             }
         }
     }
@@ -279,13 +292,14 @@ extension AgentViewModel {
         streamFlushTask?.cancel()
         streamFlushTask = nil
         if !streamBuffer.isEmpty {
-            activityLog += streamBuffer
+            ChatHistoryStore.shared.appendStreamingContent(streamBuffer)
             streamBuffer = ""
         }
         if streamingTextStarted {
-            activityLog += "\n"
+            ChatHistoryStore.shared.appendStreamingContent("\n")
             streamingTextStarted = false
         }
+
     }
 
     private func scheduleLogFlush() {
@@ -300,28 +314,16 @@ extension AgentViewModel {
         logFlushTask?.cancel()
         logFlushTask = nil
         if !logBuffer.isEmpty {
-            activityLog += logBuffer
+            // Already stored in appendLog/appendRawOutput
+            // Save to database
+            ChatHistoryStore.shared.save()
             logBuffer = ""
-            trimToRecentTasks()
-            schedulePersist()
+            // Trigger UI refresh
+    
         }
     }
 
-    private func schedulePersist() {
-        // No longer needed - activityLog didSet handles persistence
-    }
-
     func persistLogNow() {
-        // activityLog didSet handles persistence automatically
-    }
-
-    /// Keep only the last N tasks visible in the chat (controlled by visibleTaskCount preference)
-    private func trimToRecentTasks() {
-        let marker = "--- New Task ---"
-        let parts = activityLog.components(separatedBy: marker)
-        let limit = visibleTaskCount
-        guard parts.count > limit + 1 else { return }
-        let kept = parts.suffix(limit).joined(separator: marker)
-        activityLog = marker + kept
+        ChatHistoryStore.shared.save()
     }
 }
