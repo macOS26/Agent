@@ -632,7 +632,12 @@ public actor MCPClient {
         "DYLD_INSERT_LIBRARIES",
         "DYLD_LIBRARY_PATH",
         "LD_PRELOAD",
-        "DYLD_FRAMEWORK_PATH"
+        "DYLD_FRAMEWORK_PATH",
+        "DYLD_FALLBACK_LIBRARY_PATH",
+        "DYLD_FALLBACK_FRAMEWORK_PATH",
+        "DYLD_ROOT_PATH",
+        "DYLD_SHARED_REGION",
+        "DYLD_PRINT_TO_FILE",
     ]
 
     private func launchServer(_ config: ServerConfig) throws -> StdioConnection {
@@ -657,7 +662,9 @@ public actor MCPClient {
         // Filter out blocked environment variables
         var env = ProcessInfo.processInfo.environment
         for (key, value) in config.env {
-            if Self.blockedEnvVars.contains(key.uppercased()) {
+            let upper = key.uppercased()
+            // Block all DYLD_* vars (dylib injection vectors) and other dangerous vars
+            if Self.blockedEnvVars.contains(upper) || upper.hasPrefix("DYLD_") {
                 print("[MCPClient] Blocked dangerous environment variable: \(key)")
                 continue
             }
