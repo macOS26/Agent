@@ -10,7 +10,7 @@ final class MCPService: @unchecked Sendable {
 
     private let client = MCPClient()
     private(set) var connectedServerIds: Set<UUID> = []
-    private(set) var connectionErrors: [UUID: String] = [:]
+    var connectionErrors: [UUID: String] = [:]
     private(set) var discoveredTools: [MCPToolInfo] = []
     private(set) var discoveredResources: [MCPResourceInfo] = []
 

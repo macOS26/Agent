@@ -2,19 +2,13 @@ import SwiftUI
 
 struct MCPServersView: View {
     @Bindable var registry = MCPServerRegistry.shared
+    var mcpService = MCPService.shared
     @State private var showingAddServer = false
     @State private var editingServer: MCPServerConfig?
     @State private var showingImport = false
     @State private var importText = ""
-    @State private var connectionStatus: [UUID: ConnectionStatus] = [:]
-    
-    enum ConnectionStatus {
-        case disconnected
-        case connecting
-        case connected
-        case error(String)
-    }
-    
+    @State private var connectingIds: Set<UUID> = []
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Header
@@ -30,7 +24,7 @@ struct MCPServersView: View {
                 .buttonStyle(.bordered)
                 .controlSize(.small)
                 .help("Import server configuration")
-                
+
                 Button {
                     showingAddServer = true
                 } label: {
@@ -40,9 +34,9 @@ struct MCPServersView: View {
                 .controlSize(.small)
                 .help("Add MCP server")
             }
-            
+
             Divider()
-            
+
             if registry.servers.isEmpty {
                 VStack(spacing: 12) {
                     Image(systemName: "server.rack")
@@ -61,28 +55,14 @@ struct MCPServersView: View {
                 ScrollView {
                     LazyVStack(spacing: 8) {
                         ForEach(registry.servers) { server in
-                            MCPServerRowView(
-                                server: server,
-                                connectionStatus: connectionStatus[server.id] ?? .disconnected,
-                                onEdit: { editingServer = server },
-                                onToggle: { 
-                                    Task {
-                                        await toggleServerConnection(server)
-                                    }
-                                },
-                                onDelete: { 
-                                    registry.remove(at: server.id)
-                                    connectionStatus.removeValue(forKey: server.id)
-                                }
-                            )
+                            serverRow(server)
                         }
                     }
                 }
             }
-            
+
             Divider()
-            
-            // Info text
+
             VStack(alignment: .leading, spacing: 4) {
                 Text("MCP (Model Context Protocol) servers provide tools to Agent!")
                     .font(.caption)
@@ -122,163 +102,118 @@ struct MCPServersView: View {
             Text("Paste MCP server JSON configuration")
         }
         .task {
-            // Auto-start servers that have autoStart enabled
-            await MCPService.shared.startAutoStartServers()
-            await refreshConnectionStatus()
+            await autoStartServers()
         }
     }
-    
-    private func toggleServerConnection(_ server: MCPServerConfig) async {
-        if server.enabled {
-            // Currently enabled → disable and disconnect
-            registry.toggleEnabled(server.id)
-            connectionStatus[server.id] = .disconnected
-            await MCPService.shared.disconnect(serverId: server.id)
+
+    // MARK: - Status (single source of truth: MCPService)
+
+    private func statusFor(_ id: UUID) -> ServerStatus {
+        if connectingIds.contains(id) { return .connecting }
+        if mcpService.connectedServerIds.contains(id) { return .connected }
+        if let err = mcpService.connectionErrors[id] { return .error(err) }
+        return .disconnected
+    }
+
+    enum ServerStatus {
+        case disconnected, connecting, connected, error(String)
+    }
+
+    // MARK: - Actions
+
+    private func autoStartServers() async {
+        let toStart = registry.servers.filter { $0.autoStart && $0.enabled }
+        for server in toStart {
+            connectingIds.insert(server.id)
+        }
+        await mcpService.startAutoStartServers()
+        connectingIds.removeAll()
+    }
+
+    private func toggleServer(_ server: MCPServerConfig) async {
+        let isOn = mcpService.connectedServerIds.contains(server.id) || connectingIds.contains(server.id)
+
+        if isOn {
+            // Turn OFF: disconnect, disable
+            connectingIds.remove(server.id)
+            await mcpService.disconnect(serverId: server.id)
+            if server.enabled { registry.toggleEnabled(server.id) }
         } else {
-            // Currently disabled → enable and connect
-            registry.toggleEnabled(server.id)
-            connectionStatus[server.id] = .connecting
+            // Turn ON: enable, connect
+            if !server.enabled { registry.toggleEnabled(server.id) }
+            guard let updated = registry.servers.first(where: { $0.id == server.id }) else { return }
+            connectingIds.insert(server.id)
             do {
-                // Re-fetch config after toggle so enabled=true is passed
-                if let updated = registry.servers.first(where: { $0.id == server.id }) {
-                    try await MCPService.shared.connect(to: updated)
-                }
-                connectionStatus[server.id] = .connected
+                try await mcpService.connect(to: updated)
             } catch {
-                connectionStatus[server.id] = .error(error.localizedDescription)
-                // Revert enabled on failure
-                registry.toggleEnabled(server.id)
+                mcpService.connectionErrors[server.id] = error.localizedDescription
             }
+            connectingIds.remove(server.id)
         }
     }
-    
-    private func refreshConnectionStatus() async {
-        for server in registry.servers {
-            if await MCPService.shared.isConnected(server.id) {
-                connectionStatus[server.id] = .connected
-            } else if let error = await MCPService.shared.getError(server.id) {
-                connectionStatus[server.id] = .error(error)
-            } else {
-                connectionStatus[server.id] = .disconnected
-            }
-        }
-    }
-}
 
-// MARK: - Server Row View
+    // MARK: - Row
 
-struct MCPServerRowView: View {
-    let server: MCPServerConfig
-    let connectionStatus: MCPServersView.ConnectionStatus
-    let onEdit: () -> Void
-    let onToggle: () -> Void
-    let onDelete: () -> Void
-    
-    var body: some View {
+    @ViewBuilder
+    private func serverRow(_ server: MCPServerConfig) -> some View {
+        let status = statusFor(server.id)
+        let isOn = mcpService.connectedServerIds.contains(server.id) || connectingIds.contains(server.id)
+
         HStack(spacing: 12) {
-            // Enable/Connect toggle
             VStack(alignment: .leading, spacing: 2) {
                 Toggle("", isOn: Binding(
-                    get: { server.enabled },
-                    set: { _ in onToggle() }
+                    get: { isOn },
+                    set: { _ in Task { await toggleServer(server) } }
                 ))
                 .toggleStyle(.switch)
                 .controlSize(.mini)
-                
-                // Connection status indicator
+
                 HStack(spacing: 3) {
-                    switch connectionStatus {
+                    switch status {
                     case .connected:
-                        Circle()
-                            .fill(.green)
-                            .frame(width: 6, height: 6)
-                        Text("Connected")
-                            .font(.caption2)
-                            .foregroundStyle(.green)
+                        Circle().fill(.green).frame(width: 6, height: 6)
+                        Text("Connected").font(.caption2).foregroundStyle(.green)
                     case .connecting:
-                        ProgressView()
-                            .controlSize(.mini)
-                        Text("Connecting...")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+                        ProgressView().controlSize(.mini)
+                        Text("Connecting...").font(.caption2).foregroundStyle(.secondary)
                     case .disconnected:
-                        Circle()
-                            .fill(.secondary)
-                            .frame(width: 6, height: 6)
-                        Text("Disconnected")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+                        Circle().fill(.secondary).frame(width: 6, height: 6)
+                        Text("Disconnected").font(.caption2).foregroundStyle(.secondary)
                     case .error(let message):
-                        Circle()
-                            .fill(.red)
-                            .frame(width: 6, height: 6)
-                        Text(message)
-                            .font(.caption2)
-                            .foregroundStyle(.red)
-                            .lineLimit(1)
+                        Circle().fill(.red).frame(width: 6, height: 6)
+                        Text(message).font(.caption2).foregroundStyle(.red).lineLimit(1)
                     }
                 }
             }
-            
-            // Server info
+
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
-                    Text(server.name)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                    
+                    Text(server.name).font(.subheadline).fontWeight(.medium)
                     if server.autoStart {
-                        Text("auto")
-                            .font(.caption2)
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 4)
-                            .padding(.vertical, 1)
-                            .background(.blue)
-                            .clipShape(Capsule())
+                        Text("auto").font(.caption2).foregroundStyle(.white)
+                            .padding(.horizontal, 4).padding(.vertical, 1)
+                            .background(.blue).clipShape(Capsule())
                     }
                 }
-                
-                Text(server.command)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-                
-                if !server.arguments.isEmpty {
-                    HStack(spacing: 2) {
-                        ForEach(server.arguments.prefix(3), id: \.self) { arg in
-                            Text(arg)
-                                .font(.caption2)
-                                .foregroundStyle(.tertiary)
-                                .padding(.horizontal, 4)
-                                .padding(.vertical, 1)
-                                .background(.secondary.opacity(0.1))
-                                .clipShape(RoundedRectangle(cornerRadius: 3))
-                        }
-                        if server.arguments.count > 3 {
-                            Text("+\(server.arguments.count - 3)")
-                                .font(.caption2)
-                                .foregroundStyle(.tertiary)
-                        }
-                    }
-                }
+                Text(server.command).font(.caption).foregroundStyle(.secondary)
+                    .lineLimit(1).truncationMode(.middle)
             }
-            
+
             Spacer()
-            
-            // Actions
+
             HStack(spacing: 4) {
-                Button(action: onEdit) {
+                Button { editingServer = server } label: {
                     Image(systemName: "pencil")
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.mini)
-                
-                Button(role: .destructive, action: onDelete) {
+                .buttonStyle(.bordered).controlSize(.mini)
+
+                Button(role: .destructive) {
+                    Task { await mcpService.disconnect(serverId: server.id) }
+                    registry.remove(at: server.id)
+                } label: {
                     Image(systemName: "trash")
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.mini)
+                .buttonStyle(.bordered).controlSize(.mini)
             }
         }
         .padding(8)
@@ -292,20 +227,19 @@ struct MCPServerRowView: View {
 struct MCPServerEditView: View {
     let server: MCPServerConfig?
     let onSave: (MCPServerConfig) -> Void
-    
+
     @State private var name: String
     @State private var command: String
     @State private var argumentsText: String
     @State private var environmentText: String
     @State private var enabled: Bool
     @State private var autoStart: Bool
-    
+
     @Environment(\.dismiss) private var dismiss
-    
+
     init(server: MCPServerConfig?, onSave: @escaping (MCPServerConfig) -> Void) {
         self.server = server
         self.onSave = onSave
-        
         _name = State(initialValue: server?.name ?? "")
         _command = State(initialValue: server?.command ?? "")
         _argumentsText = State(initialValue: server?.arguments.joined(separator: "\n") ?? "")
@@ -313,7 +247,7 @@ struct MCPServerEditView: View {
         _enabled = State(initialValue: server?.enabled ?? true)
         _autoStart = State(initialValue: server?.autoStart ?? true)
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
@@ -321,28 +255,20 @@ struct MCPServerEditView: View {
                     .font(.headline)
                 Spacer()
                 Button("Cancel") { dismiss() }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
+                    .buttonStyle(.bordered).controlSize(.small)
             }
-            
+
             Divider()
-            
+
             VStack(alignment: .leading, spacing: 12) {
-                // Name
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Name").font(.caption).foregroundStyle(.secondary)
-                    TextField("My MCP Server", text: $name)
-                        .textFieldStyle(.roundedBorder)
+                    TextField("My MCP Server", text: $name).textFieldStyle(.roundedBorder)
                 }
-                
-                // Command
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Command").font(.caption).foregroundStyle(.secondary)
-                    TextField("/usr/local/bin/my-mcp-server", text: $command)
-                        .textFieldStyle(.roundedBorder)
+                    TextField("/usr/local/bin/my-mcp-server", text: $command).textFieldStyle(.roundedBorder)
                 }
-                
-                // Arguments
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Arguments (one per line)").font(.caption).foregroundStyle(.secondary)
                     TextEditor(text: $argumentsText)
@@ -352,8 +278,6 @@ struct MCPServerEditView: View {
                         .background(.secondary.opacity(0.1))
                         .clipShape(RoundedRectangle(cornerRadius: 6))
                 }
-                
-                // Environment
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Environment Variables (KEY=value, one per line)").font(.caption).foregroundStyle(.secondary)
                     TextEditor(text: $environmentText)
@@ -363,22 +287,14 @@ struct MCPServerEditView: View {
                         .background(.secondary.opacity(0.1))
                         .clipShape(RoundedRectangle(cornerRadius: 6))
                 }
-                
-                // Toggles
                 HStack(spacing: 20) {
-                    Toggle("Enabled", isOn: $enabled)
-                        .toggleStyle(.switch)
-                        .controlSize(.mini)
-                    
-                    Toggle("Auto-start", isOn: $autoStart)
-                        .toggleStyle(.switch)
-                        .controlSize(.mini)
+                    Toggle("Enabled", isOn: $enabled).toggleStyle(.switch).controlSize(.mini)
+                    Toggle("Auto-start", isOn: $autoStart).toggleStyle(.switch).controlSize(.mini)
                 }
             }
-            
+
             Divider()
-            
-            // Preview
+
             VStack(alignment: .leading, spacing: 4) {
                 Text("Preview JSON").font(.caption).foregroundStyle(.secondary)
                 ScrollView {
@@ -392,7 +308,7 @@ struct MCPServerEditView: View {
                 .background(.secondary.opacity(0.05))
                 .clipShape(RoundedRectangle(cornerRadius: 6))
             }
-            
+
             HStack {
                 Spacer()
                 Button("Save") {
@@ -408,17 +324,16 @@ struct MCPServerEditView: View {
                     onSave(config)
                     dismiss()
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
+                .buttonStyle(.borderedProminent).controlSize(.small)
                 .disabled(name.isEmpty || command.isEmpty)
             }
         }
         .padding(16)
         .frame(width: 400)
     }
-    
+
     private var previewJSON: String {
-        let config = MCPServerConfig(
+        MCPServerConfig(
             id: server?.id ?? UUID(),
             name: name,
             command: command,
@@ -426,10 +341,9 @@ struct MCPServerEditView: View {
             environment: parseEnvironment(environmentText),
             enabled: enabled,
             autoStart: autoStart
-        )
-        return config.toJSON()
+        ).toJSON()
     }
-    
+
     private func parseEnvironment(_ text: String) -> [String: String] {
         var result: [String: String] = [:]
         for line in text.split(separator: "\n") {
