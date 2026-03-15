@@ -2,7 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @Bindable var viewModel: AgentViewModel
-    @State private var showMCPServers = false
+
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -19,27 +19,6 @@ struct SettingsView: View {
                 .labelsHidden()
                 .frame(maxWidth: .infinity)
             }
-
-            // MCP Servers button
-            Button {
-                showMCPServers = true
-            } label: {
-                HStack {
-                    Image(systemName: "server.rack")
-                    Text("MCP Servers")
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-            .popover(isPresented: $showMCPServers) {
-                MCPServersView()
-            }
-
-            Divider()
 
             if viewModel.selectedProvider == .claude {
                 // Claude settings

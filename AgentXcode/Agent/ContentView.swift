@@ -14,6 +14,7 @@ struct ContentView: View {
     @State private var searchText = ""
     @State private var currentMatchIndex = 0
     @State private var totalMatches = 0
+    @State private var showMCPServers = false
 
     var body: some View {
         ZStack {
@@ -76,6 +77,15 @@ struct ContentView: View {
                     }
                 }
 
+
+                Button { showMCPServers.toggle() } label: {
+                    Image(systemName: "server.rack")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .popover(isPresented: $showMCPServers) {
+                    MCPServersView()
+                }
 
                 Button { showHistory.toggle() } label: {
                     Image(systemName: "clock.arrow.circlepath")
