@@ -93,12 +93,8 @@ extension AgentViewModel {
         userService.onOutput = nil
         userServiceActive = false
 
-        // Always log a preview so the user sees something came back
-        if !result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            let lines = result.output.components(separatedBy: "\n").filter { !$0.isEmpty }
-            let preview = Self.preview(result.output, lines: 3)
-            appendLog(Self.codeFence(preview, language: "bash") + " (\(lines.count) lines)")
-        } else if result.status != 0 {
+        // Only show exit code on failure; streaming already displayed the output
+        if result.status != 0 {
             appendLog("exit code: \(result.status)")
         }
         flushLog()
