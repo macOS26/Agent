@@ -1,0 +1,77 @@
+import Foundation
+
+/// Thread-safe boolean flag for cross-thread cancellation checks.
+final class AtomicFlag: @unchecked Sendable {
+    private let lock = NSLock()
+    private var _value = false
+    var value: Bool { lock.lock(); defer { lock.unlock() }; return _value }
+    func set() { lock.lock(); _value = true; lock.unlock() }
+}
+
+@MainActor @Observable
+final class ScriptTab: Identifiable {
+    let id = UUID()
+    let scriptName: String
+    var activityLog: String = ""
+    var isRunning: Bool = true
+    var isCancelled: Bool = false {
+        didSet { if isCancelled { _cancelFlag.set() } }
+    }
+    var exitCode: Int32?
+    var cancelHandler: (() -> Void)?
+
+    /// Thread-safe flag readable from any thread (for Sendable closures)
+    nonisolated let _cancelFlag = AtomicFlag()
+
+    // Log buffering (mirrors AgentViewModel pattern)
+    var logBuffer = ""
+    var logFlushTask: Task<Void, Never>?
+    var streamLineCount = 0
+    var streamTruncated = false
+
+    init(scriptName: String) {
+        self.scriptName = scriptName
+    }
+
+    // MARK: - Logging
+
+    func appendOutput(_ text: String) {
+        guard !text.isEmpty else { return }
+        let newlines = text.reduce(0) { $0 + ($1 == "\n" ? 1 : 0) }
+        streamLineCount += max(newlines, 1)
+        if streamLineCount > 1000 {
+            if !streamTruncated {
+                streamTruncated = true
+                logBuffer += "...(output truncated at 1000 lines)...\n"
+                scheduleFlush()
+            }
+            return
+        }
+        logBuffer += text
+        if !text.hasSuffix("\n") { logBuffer += "\n" }
+        scheduleFlush()
+    }
+
+    func appendLog(_ message: String) {
+        let timestamp = AgentViewModel.timestampFormatter.string(from: Date())
+        logBuffer += "[\(timestamp)] \(message)\n"
+        scheduleFlush()
+    }
+
+    private func scheduleFlush() {
+        guard logFlushTask == nil else { return }
+        logFlushTask = Task {
+            try? await Task.sleep(for: .milliseconds(200))
+            flush()
+        }
+    }
+
+    func flush() {
+        logFlushTask?.cancel()
+        logFlushTask = nil
+        if !logBuffer.isEmpty {
+            activityLog += logBuffer
+            logBuffer = ""
+        }
+    }
+}

@@ -724,16 +724,32 @@ extension AgentViewModel {
                                 continue
                             }
 
-                            // Step 1: Compile the script dylib via UserService
-                            appendLog("Compiling: \(scriptName)")
+                            // Open a script tab for this execution
+                            let tab = openScriptTab(scriptName: scriptName)
+
+                            // Brief note in main log
+                            appendLog("Running \(scriptName)... (see tab)")
                             flushLog()
+
+                            // Step 1: Compile the script dylib via UserService
+                            tab.appendLog("Compiling: \(scriptName)")
+                            tab.flush()
 
                             let compileResult = await executeViaUserAgent(command: compileCmd)
 
-                            guard !Task.isCancelled else { break }
+                            guard !Task.isCancelled && !tab.isCancelled else {
+                                tab.isRunning = false
+                                tab.appendLog("Cancelled.")
+                                tab.flush()
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Script cancelled by user"])
+                                break
+                            }
 
                             if compileResult.status != 0 {
-                                appendLog("Compile failed (exit code: \(compileResult.status))")
+                                tab.appendLog("Compile failed (exit code: \(compileResult.status))")
+                                tab.appendOutput(compileResult.output)
+                                tab.flush()
+                                tab.isRunning = false
                                 let toolOutput = compileResult.output.isEmpty
                                     ? "(compile failed, exit code: \(compileResult.status))"
                                     : compileResult.output
@@ -746,20 +762,34 @@ extension AgentViewModel {
                             }
 
                             // Step 2: Load and run dylib in Agent!'s process
-                            appendLog("Running: \(scriptName) (in-process)")
-                            flushLog()
+                            tab.appendLog("Running: \(scriptName) (in-process)")
+                            tab.flush()
 
-                            let runResult = await scriptService.loadAndRunScript(name: scriptName, arguments: arguments) { [weak self] chunk in
+                            let cancelFlag = tab._cancelFlag
+                            let runResult = await scriptService.loadAndRunScript(
+                                name: scriptName,
+                                arguments: arguments,
+                                isCancelled: { cancelFlag.value }
+                            ) { [weak tab] chunk in
                                 Task { @MainActor in
-                                    self?.appendRawOutput(chunk)
+                                    tab?.appendOutput(chunk)
                                 }
                             }
 
-                            guard !Task.isCancelled else { break }
+                            tab.isRunning = false
+                            tab.exitCode = runResult.status
+                            tab.flush()
 
-                            if runResult.status != 0 {
-                                appendLog("exit code: \(runResult.status)")
+                            guard !Task.isCancelled && !tab.isCancelled else {
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Script cancelled by user"])
+                                break
                             }
+
+                            // Summary back in main log
+                            let statusNote = runResult.status == 0 ? "completed" : "exit code: \(runResult.status)"
+                            appendLog("\(scriptName) \(statusNote)")
+                            flushLog()
+
                             let toolOutput = runResult.output.isEmpty
                                 ? "(no output, exit code: \(runResult.status))"
                                 : runResult.output

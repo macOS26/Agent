@@ -216,18 +216,51 @@ struct ContentView: View {
                 Divider()
             }
 
-            // Activity Log
-            ActivityLogView(
-                text: viewModel.activityLog,
-                searchText: searchText,
-                currentMatchIndex: currentMatchIndex,
-                onMatchCount: { count in
-                    DispatchQueue.main.async {
-                        totalMatches = count
-                        if currentMatchIndex >= count { currentMatchIndex = max(0, count - 1) }
+            // Tab bar (only when script tabs exist)
+            if !viewModel.scriptTabs.isEmpty {
+                TabBarView(viewModel: viewModel)
+                Divider()
+            }
+
+            // Activity Log — switches between main and script tab
+            if let selectedId = viewModel.selectedTabId,
+               let tab = viewModel.scriptTabs.first(where: { $0.id == selectedId }) {
+                ZStack(alignment: .bottomTrailing) {
+                    ActivityLogView(
+                        text: tab.activityLog,
+                        searchText: searchText,
+                        currentMatchIndex: currentMatchIndex,
+                        onMatchCount: { count in
+                            DispatchQueue.main.async {
+                                totalMatches = count
+                                if currentMatchIndex >= count { currentMatchIndex = max(0, count - 1) }
+                            }
+                        }
+                    )
+                    if tab.isRunning {
+                        Button { viewModel.cancelScriptTab(id: tab.id) } label: {
+                            Label("Cancel", systemImage: "xmark.circle.fill")
+                                .font(.caption)
+                                .foregroundStyle(.red)
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .padding(12)
                     }
                 }
-            )
+            } else {
+                ActivityLogView(
+                    text: viewModel.activityLog,
+                    searchText: searchText,
+                    currentMatchIndex: currentMatchIndex,
+                    onMatchCount: { count in
+                        DispatchQueue.main.async {
+                            totalMatches = count
+                            if currentMatchIndex >= count { currentMatchIndex = max(0, count - 1) }
+                        }
+                    }
+                )
+            }
 
             Divider()
 

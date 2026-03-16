@@ -418,7 +418,7 @@ final class ScriptService {
     /// Load and run a compiled script dylib in-process via dlopen/dlsym.
     /// Captures stdout/stderr and returns the output + exit status.
     /// Runs on a background thread to avoid blocking the main thread.
-    func loadAndRunScript(name: String, arguments: String = "", onOutput: (@Sendable (String) -> Void)? = nil) async -> (output: String, status: Int32) {
+    func loadAndRunScript(name: String, arguments: String = "", isCancelled: (@Sendable () -> Bool)? = nil, onOutput: (@Sendable (String) -> Void)? = nil) async -> (output: String, status: Int32) {
         let scriptName = name.replacingOccurrences(of: ".swift", with: "")
         let path = dylibPath(name: scriptName)
 
@@ -501,6 +501,25 @@ final class ScriptService {
                         }
                     }
                     readerDone.signal()
+                }
+
+                // Check cancellation before running
+                if isCancelled?() == true {
+                    dlclose(handle)
+                    fflush(stdout)
+                    fflush(stderr)
+                    close(pipefd[1])
+                    dup2(savedStdout, STDOUT_FILENO)
+                    dup2(savedStderr, STDERR_FILENO)
+                    setvbuf(stdout, nil, _IOFBF, 0)
+                    setvbuf(stderr, nil, _IOFBF, 0)
+                    close(savedStdout)
+                    close(savedStderr)
+                    readerDone.wait()
+                    close(pipefd[0])
+                    unsetenv("AGENT_SCRIPT_ARGS")
+                    continuation.resume(returning: ("Cancelled before execution", -1))
+                    return
                 }
 
                 // Call script_main

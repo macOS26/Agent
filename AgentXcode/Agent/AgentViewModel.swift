@@ -266,6 +266,43 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(Array(enabledHandleIds), forKey: "agentEnabledHandleIds") }
     }
 
+    // MARK: - Script Tabs
+
+    var scriptTabs: [ScriptTab] = []
+    var selectedTabId: UUID?   // nil = Main tab
+
+    func openScriptTab(scriptName: String) -> ScriptTab {
+        let tab = ScriptTab(scriptName: scriptName)
+        scriptTabs.append(tab)
+        selectedTabId = tab.id
+        return tab
+    }
+
+    func closeScriptTab(id: UUID) {
+        if let tab = scriptTabs.first(where: { $0.id == id }) {
+            if tab.isRunning {
+                tab.isCancelled = true
+                tab.cancelHandler?()
+                tab.isRunning = false
+            }
+        }
+        scriptTabs.removeAll { $0.id == id }
+        if selectedTabId == id {
+            selectedTabId = nil
+        }
+    }
+
+    func cancelScriptTab(id: UUID) {
+        guard let tab = scriptTabs.first(where: { $0.id == id }) else { return }
+        tab.isCancelled = true
+        tab.cancelHandler?()
+        tab.isRunning = false
+    }
+
+    func selectMainTab() {
+        selectedTabId = nil
+    }
+
     // MARK: - Logging State
 
     static let timestampFormatter: DateFormatter = {
@@ -519,6 +556,12 @@ final class AgentViewModel {
         helperService.onOutput = nil
         userService.cancel()
         userService.onOutput = nil
+        // Cancel all running script tabs
+        for tab in scriptTabs where tab.isRunning {
+            tab.isCancelled = true
+            tab.cancelHandler?()
+            tab.isRunning = false
+        }
         if !silent {
             appendLog("Cancelled by user.")
         }
