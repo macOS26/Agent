@@ -576,7 +576,7 @@ extension AgentViewModel {
                 $0.serverName == serverName && $0.name == toolName
             }) {
                 do {
-                    let args = input.mapValues { value -> MCPClient.JSONValue in
+                    let args = input.mapValues { value -> JSONValue in
                         if let s = value as? String { return .string(s) }
                         if let i = value as? Int { return .int(i) }
                         if let d = value as? Double { return .double(d) }
