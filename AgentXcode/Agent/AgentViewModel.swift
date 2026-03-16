@@ -538,6 +538,9 @@ final class AgentViewModel {
         let task = taskInput.trimmingCharacters(in: .whitespaces)
         guard !task.isEmpty else { return }
 
+        // Switch to main tab so user sees the task output
+        selectMainTab()
+
         // Handle /clear command
         if task.lowercased() == "/clear" {
             taskInput = ""
