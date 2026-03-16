@@ -29,7 +29,7 @@ struct TabBarView: View {
                         onSelect: { viewModel.selectedTabId = tab.id },
                         onClose: { viewModel.closeScriptTab(id: tab.id) }
                     )
-                    .opacity(draggingTabId == tab.id ? 0.4 : 1)
+                    .opacity(draggingTabId == tab.id ? 0 : 1)
                     .onDrag {
                         draggingTabId = tab.id
                         return NSItemProvider(object: tab.id.uuidString as NSString)
