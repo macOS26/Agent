@@ -128,7 +128,7 @@ final class ScriptService {
         return home.appendingPathComponent("Documents/Agent")
     }()
 
-    /// Copy any bundled .json files to ~/Documents/Agent/ if they don't already exist
+    /// Copy any bundled .json files to ~/Documents/Agent/json/ if they don't already exist
     private func copyBundledJSONFiles() {
         let fm = FileManager.default
         guard let bundleURL = Bundle.main.resourceURL else { return }
@@ -140,9 +140,10 @@ final class ScriptService {
             try? fm.createDirectory(at: Self.agentDir.appendingPathComponent(sub), withIntermediateDirectories: true)
         }
 
+        let jsonDir = Self.agentDir.appendingPathComponent("json")
         guard let items = try? fm.contentsOfDirectory(atPath: bundleURL.path) else { return }
         for item in items where item.hasSuffix(".json") {
-            let dst = Self.agentDir.appendingPathComponent(item)
+            let dst = jsonDir.appendingPathComponent(item)
             if !fm.fileExists(atPath: dst.path) {
                 let src = bundleURL.appendingPathComponent(item)
                 try? fm.copyItem(at: src, to: dst)
