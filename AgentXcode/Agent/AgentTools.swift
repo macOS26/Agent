@@ -103,6 +103,10 @@ enum AgentTools {
 
         IMAGE PATHS: Print file paths — UI renders clickable links.
 
+        MCP TOOLS: Your available MCP tools are the mcp_* functions provided to you.
+        NEVER call a server's list/tools command to discover tools — your tool list IS the truth.
+        Disabled tools are already filtered out. Only use what you see in your function definitions.
+
         NEVER DO:
         - xcodebuild or swift build via shell → use xcode_build / run_agent_script
         - xcode_build on ~/Documents/Agent/agents/ → use run_agent_script
