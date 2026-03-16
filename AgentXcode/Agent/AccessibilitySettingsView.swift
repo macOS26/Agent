@@ -1,14 +1,13 @@
 import SwiftUI
 
 /// Manages which accessibility / Apple Event safety restrictions are active.
-/// Restrictions default to ON (enforced). User can opt out per-item.
+/// All restrictions default to ENABLED (enforced). User can disable per-item.
 @MainActor @Observable
 final class AccessibilityRestrictions {
     static let shared = AccessibilityRestrictions()
 
-    // MARK: - AX Actions (blocked unless user disables the restriction)
+    // MARK: - Discoverable Restrictions
 
-    /// All discoverable AX action restrictions
     static let axActions: [(id: String, label: String)] = [
         ("AXPress", "AXPress"),
         ("AXConfirm", "AXConfirm"),
@@ -21,14 +20,12 @@ final class AccessibilityRestrictions {
         ("AXCollapse", "AXCollapse"),
     ]
 
-    /// All discoverable AX role restrictions
     static let axRoles: [(id: String, label: String)] = [
         ("AXSecureTextField", "AXSecureTextField"),
         ("AXPasswordField", "AXPasswordField"),
         ("AXSecureText", "AXSecureText"),
     ]
 
-    /// All discoverable Apple Event write selector restrictions
     static let aeWriteSelectors: [(id: String, label: String)] = [
         ("delete", "delete"),
         ("close", "close"),
@@ -42,32 +39,46 @@ final class AccessibilityRestrictions {
         ("sendMessage", "sendMessage"),
     ]
 
+    /// All known restriction IDs
+    static let allIds: Set<String> = {
+        Set(axActions.map(\.id) + axRoles.map(\.id) + aeWriteSelectors.map(\.id))
+    }()
+
     // MARK: - State
 
-    private static let key = "ax.disabledRestrictions"
+    private static let key = "ax.enabledRestrictions"
 
-    /// Items the user has opted OUT of (restriction removed).
-    var disabledRestrictions: Set<String> = [] {
-        didSet { UserDefaults.standard.set(Array(disabledRestrictions), forKey: Self.key) }
+    /// Restrictions the user has left ON (enforced). Defaults to ALL.
+    var enabledRestrictions: Set<String> {
+        didSet { UserDefaults.standard.set(Array(enabledRestrictions), forKey: Self.key) }
     }
 
     private init() {
-        let arr = UserDefaults.standard.stringArray(forKey: Self.key) ?? []
-        disabledRestrictions = Set(arr)
+        if let arr = UserDefaults.standard.stringArray(forKey: Self.key) {
+            enabledRestrictions = Set(arr)
+        } else {
+            // First launch — all restrictions enabled
+            enabledRestrictions = Self.allIds
+        }
     }
 
-    // MARK: - Queries (used by services)
+    // MARK: - Queries
 
-    /// Returns true if the restriction is active (i.e. the item is blocked).
+    /// Returns true if the restriction is active (item is blocked).
     func isRestricted(_ id: String) -> Bool {
-        !disabledRestrictions.contains(id)
+        enabledRestrictions.contains(id)
+    }
+
+    /// Returns true if the restriction is enabled (same as isRestricted, for UI clarity).
+    func isEnabled(_ id: String) -> Bool {
+        enabledRestrictions.contains(id)
     }
 
     func toggle(_ id: String) {
-        if disabledRestrictions.contains(id) {
-            disabledRestrictions.remove(id)
+        if enabledRestrictions.contains(id) {
+            enabledRestrictions.remove(id)
         } else {
-            disabledRestrictions.insert(id)
+            enabledRestrictions.insert(id)
         }
     }
 }
@@ -82,7 +93,7 @@ struct AccessibilitySettingsView: View {
             Text("Accessibility Restrictions")
                 .font(.headline)
 
-            Text("Restrictions are ON by default. Click to opt out.")
+            Text("Enabled restrictions block actions. Click to disable.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
@@ -111,7 +122,7 @@ struct AccessibilitySettingsView: View {
 
             FlowLayout(spacing: 4) {
                 ForEach(items, id: \.id) { item in
-                    let restricted = restrictions.isRestricted(item.id)
+                    let enabled = restrictions.isEnabled(item.id)
                     Button {
                         restrictions.toggle(item.id)
                     } label: {
@@ -119,13 +130,13 @@ struct AccessibilitySettingsView: View {
                             .font(.caption2)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(restricted ? Color.orange.opacity(0.2) : Color.secondary.opacity(0.1))
-                            .foregroundStyle(restricted ? .primary : .tertiary)
+                            .background(enabled ? Color.accentColor.opacity(0.2) : Color.secondary.opacity(0.1))
+                            .foregroundStyle(enabled ? .primary : .tertiary)
                             .clipShape(Capsule())
-                            .overlay(Capsule().stroke(restricted ? Color.orange.opacity(0.5) : Color.clear, lineWidth: 0.5))
+                            .overlay(Capsule().stroke(enabled ? Color.accentColor.opacity(0.5) : Color.clear, lineWidth: 0.5))
                     }
                     .buttonStyle(.plain)
-                    .help(restricted ? "\(item.label): restricted (click to allow)" : "\(item.label): allowed (click to restrict)")
+                    .help(enabled ? "\(item.label): enabled (click to disable)" : "\(item.label): disabled (click to enable)")
                 }
             }
         }
