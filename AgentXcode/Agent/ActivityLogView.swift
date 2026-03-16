@@ -80,13 +80,39 @@ struct ActivityLogView: NSViewRepresentable {
                 // Skip ALL image/HTML processing during incremental updates to prevent jumping
                 let prevLen = coord.lastLength
                 let newText = (text as NSString).substring(from: prevLen)
-                let newAttributed = coord.renderMarkdownOnly(newText)
 
-                textView.textStorage?.beginEditing()
-                textView.textStorage?.append(newAttributed)
-                textView.textStorage?.endEditing()
-                coord.lastLength = len
-                coord.lastRenderedText = text
+                // Check if new text or tail of previous text contains table rows (|)
+                // Tables need full rebuild so all rows are visible to renderMarkdownTable
+                let newLines = newText.components(separatedBy: "\n")
+                let hasTableLines = newLines.contains { $0.trimmingCharacters(in: .whitespaces).hasPrefix("|") }
+                let prevTail = (text as NSString).substring(to: prevLen).components(separatedBy: "\n").suffix(3)
+                let prevHasTableLines = prevTail.contains { $0.trimmingCharacters(in: .whitespaces).hasPrefix("|") }
+
+                if hasTableLines || prevHasTableLines {
+                    // Full rebuild for proper NSTextTable rendering
+                    let savedOrigin = scrollView.contentView.bounds.origin
+                    let wasAtBottom = coord.isNearBottom(textView)
+
+                    textView.textStorage?.beginEditing()
+                    let attributed = coord.buildAttributedString(from: text)
+                    textView.textStorage?.setAttributedString(attributed)
+                    textView.textStorage?.endEditing()
+                    coord.lastLength = len
+                    coord.lastRenderedText = text
+
+                    if !wasAtBottom {
+                        scrollView.contentView.scroll(to: savedOrigin)
+                        scrollView.reflectScrolledClipView(scrollView.contentView)
+                    }
+                } else {
+                    let newAttributed = coord.renderMarkdownOnly(newText)
+
+                    textView.textStorage?.beginEditing()
+                    textView.textStorage?.append(newAttributed)
+                    textView.textStorage?.endEditing()
+                    coord.lastLength = len
+                    coord.lastRenderedText = text
+                }
             } else {
                 // Full rebuild needed (search change, placeholder transition, or text deletion)
                 let savedOrigin = scrollView.contentView.bounds.origin
@@ -692,11 +718,10 @@ struct ActivityLogView: NSViewRepresentable {
 
             // Horizontal rule (check before bullet since --- could conflict)
             if Self.hrPattern?.firstMatch(in: line, range: fullRange) != nil {
-                let result = NSMutableAttributedString(string: "\n", attributes: [.font: font])
+                let result = NSMutableAttributedString()
                 let attachment = NSTextAttachment()
                 attachment.attachmentCell = HRLineCell(color: .separatorColor)
                 result.append(NSAttributedString(attachment: attachment))
-                result.append(NSAttributedString(string: "\n", attributes: [.font: font]))
                 return result
             }
 

@@ -270,7 +270,44 @@ struct ContentView: View {
                     .controlSize(.regular)
                     .disabled(viewModel.taskInput.isEmpty || (viewModel.selectedProvider == .claude && viewModel.apiKey.isEmpty))
             }
-            .padding()
+            .padding(.horizontal)
+            .padding(.top, 8)
+
+            // Project folder/file
+            HStack(spacing: 6) {
+                Button {
+                    let panel = NSOpenPanel()
+                    panel.canChooseFiles = true
+                    panel.canChooseDirectories = true
+                    panel.allowsMultipleSelection = false
+                    panel.message = "Select a project folder or file"
+                    if panel.runModal() == .OK, let url = panel.url {
+                        viewModel.projectFolder = url.path
+                    }
+                } label: {
+                    Image(systemName: "folder")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .help("Pick project folder or file")
+
+                TextField("Project folder or file...", text: $viewModel.projectFolder)
+                    .textFieldStyle(.roundedBorder)
+                    .font(.caption)
+
+                if !viewModel.projectFolder.isEmpty {
+                    Button {
+                        viewModel.projectFolder = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Clear project folder")
+                }
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 8)
         }
 
             DependencyOverlay(status: dependencyStatus, isVisible: $showDependencyOverlay)

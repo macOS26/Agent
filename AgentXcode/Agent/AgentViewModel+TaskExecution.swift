@@ -200,6 +200,14 @@ extension AgentViewModel {
         // Prepend last task as conversation context so the LLM knows what just happened
         var messages: [[String: Any]] = history.lastTaskMessages()
 
+        // Prepend project folder context if set
+        let effectivePrompt: String
+        if !projectFolder.isEmpty {
+            effectivePrompt = "project folder: \(projectFolder)\n\n\(prompt)"
+        } else {
+            effectivePrompt = prompt
+        }
+
         if !attachedImagesBase64.isEmpty {
             appendLog("(\(attachedImagesBase64.count) screenshot(s) attached)")
             var contentBlocks: [[String: Any]] = attachedImagesBase64.map { base64 in
@@ -212,13 +220,13 @@ extension AgentViewModel {
                     ] as [String: Any]
                 ]
             }
-            contentBlocks.append(["type": "text", "text": prompt])
+            contentBlocks.append(["type": "text", "text": effectivePrompt])
             messages.append(["role": "user", "content": contentBlocks])
             // Clear attachments after use
             attachedImages.removeAll()
             attachedImagesBase64.removeAll()
         } else {
-            messages.append(["role": "user", "content": prompt])
+            messages.append(["role": "user", "content": effectivePrompt])
         }
 
         var commandsRun: [String] = []

@@ -201,6 +201,10 @@ final class AgentViewModel {
         localOllamaModels.first(where: { $0.name == localOllamaModel })?.supportsVision ?? false
     }
 
+    var projectFolder: String = UserDefaults.standard.string(forKey: "agentProjectFolder") ?? "" {
+        didSet { UserDefaults.standard.set(projectFolder, forKey: "agentProjectFolder") }
+    }
+
     var attachedImages: [NSImage] = []
     var attachedImagesBase64: [String] = []
 
