@@ -99,7 +99,7 @@ struct AccessibilitySettingsView: View {
 
             Divider()
 
-            section(title: "AX Actions (require allowWrites)", items: AccessibilityRestrictions.axActions)
+            section(title: "AX Actions", items: AccessibilityRestrictions.axActions)
 
             Divider()
 

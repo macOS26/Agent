@@ -104,9 +104,10 @@ struct AccessibilityServiceTests {
     
     // MARK: - Action Tests
     
-    @Test("performAction rejects blocked actions without allowWrites")
-    func performActionBlocksDangerousActions() {
-        // Test with a blocked action
+    @Test("performAction allows enabled actions without allowWrites")
+    func performActionAllowsEnabledActions() {
+        // AXPress is enabled by default — should not be blocked by restrictions
+        // (may still fail due to "element not found" which is fine)
         let result = service.performAction(
             role: nil,
             title: nil,
@@ -116,7 +117,8 @@ struct AccessibilityServiceTests {
             action: "AXPress",
             allowWrites: false
         )
-        #expect(result.contains("\"success\": false") || result.contains("blocked"))
+        // Should NOT be restricted — may fail for "not found" reasons instead
+        #expect(!result.contains("restricted"))
     }
     
     @Test("performAction requires coordinates or role/title")
@@ -261,11 +263,9 @@ struct AccessibilityServiceTests {
     
     // MARK: - Security Tests
     
-    @Test("Blocked roles are defined")
-    func blockedRolesExist() {
-        // Verify that password fields are blocked
-        // Access via the service's internal blockedRoles (through public API)
-        // The service should block AXSecureTextField
+    @Test("Enabled roles are not restricted")
+    func enabledRolesNotRestricted() {
+        // AXSecureTextField is enabled by default — should not be restricted
         let result = service.performAction(
             role: "AXSecureTextField",
             title: nil,
@@ -275,13 +275,14 @@ struct AccessibilityServiceTests {
             action: "AXPress",
             allowWrites: true
         )
-        // Should fail because element not found, not because of role check
-        // Role check happens after finding element
+        // Should fail because element not found, not because of role restriction
         #expect(result.contains("not found") || result.contains("error"))
+        #expect(!result.contains("restricted"))
     }
-    
-    @Test("Blocked actions require allowWrites")
-    func blockedActionsRequireAllowWrites() {
+
+    @Test("Enabled actions are allowed without allowWrites")
+    func enabledActionsAllowed() {
+        // All actions enabled by default — should not be restricted
         let actions = ["AXPress", "AXConfirm", "AXShowMenu"]
         for action in actions {
             let result = service.performAction(
@@ -293,7 +294,7 @@ struct AccessibilityServiceTests {
                 action: action,
                 allowWrites: false
             )
-            #expect(result.contains("blocked") || result.contains("error"))
+            #expect(!result.contains("restricted"), "Expected \(action) to not be restricted")
         }
     }
     
