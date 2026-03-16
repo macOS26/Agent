@@ -290,6 +290,7 @@ final class AgentViewModel {
         if selectedTabId == id {
             selectedTabId = nil
         }
+        persistScriptTabs()
     }
 
     func cancelScriptTab(id: UUID) {
@@ -307,12 +308,11 @@ final class AgentViewModel {
 
     /// Save open script tabs: order/selected to UserDefaults, log data to SwiftData.
     func persistScriptTabs() {
+        for tab in scriptTabs { tab.flush() }
+
         let ids = scriptTabs.map { $0.id.uuidString }
         UserDefaults.standard.set(ids, forKey: "agentScriptTabIds")
         UserDefaults.standard.set(selectedTabId?.uuidString, forKey: "agentSelectedTabId")
-
-        // Flush any pending log buffers before saving
-        for tab in scriptTabs { tab.flush() }
 
         let tabData = scriptTabs.map { tab in
             (id: tab.id, scriptName: tab.scriptName, activityLog: tab.activityLog, exitCode: tab.exitCode)
@@ -433,7 +433,7 @@ final class AgentViewModel {
             forName: NSApplication.willTerminateNotification,
             object: nil, queue: .main
         ) { [weak self] _ in
-            self?.persistScriptTabs()
+            MainActor.assumeIsolated { self?.persistScriptTabs() }
             HelperService.cancelProcess(instanceID: helperID)
             UserService.cancelProcess(instanceID: userID)
             UserDefaults.standard.removeObject(forKey: "lastHelperInstanceID")

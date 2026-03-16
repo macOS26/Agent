@@ -780,6 +780,7 @@ extension AgentViewModel {
                             tab.isRunning = false
                             tab.exitCode = runResult.status
                             tab.flush()
+                            persistScriptTabs()
 
                             guard !Task.isCancelled && !tab.isCancelled else {
                                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Script cancelled by user"])
