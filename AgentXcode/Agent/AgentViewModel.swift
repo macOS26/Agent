@@ -303,6 +303,47 @@ final class AgentViewModel {
         selectedTabId = nil
     }
 
+    // MARK: - Script Tab Persistence
+
+    /// Save open script tabs: order/selected to UserDefaults, log data to SwiftData.
+    func persistScriptTabs() {
+        let ids = scriptTabs.map { $0.id.uuidString }
+        UserDefaults.standard.set(ids, forKey: "agentScriptTabIds")
+        UserDefaults.standard.set(selectedTabId?.uuidString, forKey: "agentSelectedTabId")
+
+        // Flush any pending log buffers before saving
+        for tab in scriptTabs { tab.flush() }
+
+        let tabData = scriptTabs.map { tab in
+            (id: tab.id, scriptName: tab.scriptName, activityLog: tab.activityLog, exitCode: tab.exitCode)
+        }
+        ChatHistoryStore.shared.saveScriptTabs(tabData)
+    }
+
+    /// Restore script tabs from UserDefaults (order) + SwiftData (data).
+    private func restoreScriptTabs() {
+        guard let ids = UserDefaults.standard.stringArray(forKey: "agentScriptTabIds"),
+              !ids.isEmpty else { return }
+
+        let records = ChatHistoryStore.shared.fetchScriptTabs()
+        let recordMap = Dictionary(uniqueKeysWithValues: records.compactMap { r in
+            (r.tabId, r)
+        })
+
+        for idStr in ids {
+            guard let uuid = UUID(uuidString: idStr),
+                  let record = recordMap[uuid] else { continue }
+            let tab = ScriptTab(record: record)
+            scriptTabs.append(tab)
+        }
+
+        if let selStr = UserDefaults.standard.string(forKey: "agentSelectedTabId"),
+           let selId = UUID(uuidString: selStr),
+           scriptTabs.contains(where: { $0.id == selId }) {
+            selectedTabId = selId
+        }
+    }
+
     // MARK: - Logging State
 
     static let timestampFormatter: DateFormatter = {
@@ -382,13 +423,17 @@ final class AgentViewModel {
         defaults.set(helperService.instanceID, forKey: "lastHelperInstanceID")
         defaults.set(userService.instanceID, forKey: "lastUserInstanceID")
 
-        // Cancel running processes on app quit
+        // Restore persisted script tabs
+        restoreScriptTabs()
+
+        // Cancel running processes and persist script tabs on app quit
         let helperID = helperService.instanceID
         let userID = userService.instanceID
         terminationObserver = NotificationCenter.default.addObserver(
             forName: NSApplication.willTerminateNotification,
             object: nil, queue: .main
-        ) { _ in
+        ) { [weak self] _ in
+            self?.persistScriptTabs()
             HelperService.cancelProcess(instanceID: helperID)
             UserService.cancelProcess(instanceID: userID)
             UserDefaults.standard.removeObject(forKey: "lastHelperInstanceID")

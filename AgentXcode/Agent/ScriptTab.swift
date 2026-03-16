@@ -10,7 +10,7 @@ final class AtomicFlag: @unchecked Sendable {
 
 @MainActor @Observable
 final class ScriptTab: Identifiable {
-    let id = UUID()
+    let id: UUID
     let scriptName: String
     var activityLog: String = ""
     var isRunning: Bool = true
@@ -29,8 +29,18 @@ final class ScriptTab: Identifiable {
     var streamLineCount = 0
     var streamTruncated = false
 
-    init(scriptName: String) {
+    init(scriptName: String, id: UUID = UUID()) {
+        self.id = id
         self.scriptName = scriptName
+    }
+
+    /// Restore a tab from persisted SwiftData record.
+    init(record: ScriptTabRecord) {
+        self.id = record.tabId
+        self.scriptName = record.scriptName
+        self.activityLog = record.activityLog
+        self.exitCode = record.exitCode == -999 ? nil : Int32(record.exitCode)
+        self.isRunning = false
     }
 
     // MARK: - Logging

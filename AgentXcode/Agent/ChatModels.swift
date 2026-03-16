@@ -43,6 +43,22 @@ final class ChatTask {
     }
 }
 
+/// Persisted script tab log data
+@Model
+final class ScriptTabRecord {
+    var tabId: UUID
+    var scriptName: String
+    var activityLog: String
+    var exitCode: Int  // -999 = nil (SwiftData doesn't support optional Int32)
+
+    init(tabId: UUID, scriptName: String, activityLog: String, exitCode: Int = -999) {
+        self.tabId = tabId
+        self.scriptName = scriptName
+        self.activityLog = activityLog
+        self.exitCode = exitCode
+    }
+}
+
 /// Manages chat history storage with SwiftData
 @MainActor
 final class ChatHistoryStore {
@@ -56,7 +72,7 @@ final class ChatHistoryStore {
     private var nextOrdinal: Int = 0
     
     private init() {
-        let schema = Schema([ChatMessage.self, ChatTask.self])
+        let schema = Schema([ChatMessage.self, ChatTask.self, ScriptTabRecord.self])
         do {
             let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
             container = try ModelContainer(for: schema, configurations: config)
@@ -245,6 +261,43 @@ final class ChatHistoryStore {
         return result
     }
     
+    // MARK: - Script Tab Persistence
+
+    /// Save script tab data to SwiftData. Replaces any existing records.
+    func saveScriptTabs(_ tabs: [(id: UUID, scriptName: String, activityLog: String, exitCode: Int32?)]) {
+        guard let context else { return }
+        // Delete old records
+        try? context.delete(model: ScriptTabRecord.self)
+        // Insert new
+        for tab in tabs {
+            let record = ScriptTabRecord(
+                tabId: tab.id,
+                scriptName: tab.scriptName,
+                activityLog: tab.activityLog,
+                exitCode: tab.exitCode.map { Int($0) } ?? -999
+            )
+            context.insert(record)
+        }
+        try? context.save()
+    }
+
+    /// Restore script tab data from SwiftData keyed by tab UUID.
+    func fetchScriptTabs() -> [ScriptTabRecord] {
+        guard let context else { return [] }
+        do {
+            return try context.fetch(FetchDescriptor<ScriptTabRecord>())
+        } catch {
+            return []
+        }
+    }
+
+    /// Clear persisted script tab records.
+    func clearScriptTabs() {
+        guard let context else { return }
+        try? context.delete(model: ScriptTabRecord.self)
+        try? context.save()
+    }
+
     /// Clear all history
     func clearAll() {
         guard let context else { return }
