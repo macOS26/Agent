@@ -10,9 +10,12 @@ final class AppleEventService: @unchecked Sendable {
     private static let maxOutputLines = 500
     private static let defaultLimit = 50
 
-    /// Check whether a write selector is currently restricted (user-configurable).
-    @MainActor private static func isSelectorRestricted(_ selector: String) -> Bool {
-        AccessibilityRestrictions.shared.isRestricted(selector)
+    /// Check whether a write selector is restricted. Reads UserDefaults directly (thread-safe).
+    private static func isSelectorRestricted(_ selector: String) -> Bool {
+        guard let enabled = UserDefaults.standard.stringArray(forKey: "ax.enabledRestrictions") else {
+            return false // First launch — all enabled
+        }
+        return !enabled.contains(selector)
     }
 
     /// Execute a query against a scriptable application.
@@ -176,8 +179,7 @@ final class AppleEventService: @unchecked Sendable {
                     output.append("Error at step \(i): 'call' requires 'method'")
                     return output.joined(separator: "\n")
                 }
-                let selectorRestricted = MainActor.assumeIsolated { Self.isSelectorRestricted(method) }
-                if !allowWrites && selectorRestricted {
+                if !allowWrites && Self.isSelectorRestricted(method) {
                     output.append("Error at step \(i): '\(method)' is restricted. Set allow_writes=true or disable in Accessibility Settings.")
                     return output.joined(separator: "\n")
                 }

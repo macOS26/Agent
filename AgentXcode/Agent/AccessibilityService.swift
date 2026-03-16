@@ -23,14 +23,13 @@ final class AccessibilityService: @unchecked Sendable {
         return AXIsProcessTrustedWithOptions(options as CFDictionary)
     }
     
-    /// Check whether an AX action is currently restricted (user-configurable).
-    @MainActor private static func isActionRestricted(_ action: String) -> Bool {
-        AccessibilityRestrictions.shared.isRestricted(action)
-    }
-
-    /// Check whether an AX role is currently restricted (user-configurable).
-    @MainActor private static func isRoleRestricted(_ role: String) -> Bool {
-        AccessibilityRestrictions.shared.isRestricted(role)
+    /// Check whether an ID is restricted. Reads UserDefaults directly (thread-safe).
+    private static func isRestricted(_ id: String) -> Bool {
+        guard let enabled = UserDefaults.standard.stringArray(forKey: "ax.enabledRestrictions") else {
+            // First launch — all enabled (not restricted)
+            return false
+        }
+        return !enabled.contains(id)
     }
     
     // MARK: - Window Listing
@@ -278,11 +277,8 @@ final class AccessibilityService: @unchecked Sendable {
             return errorJSON("Accessibility permission required.")
         }
         
-        if !allowWrites {
-            let restricted = MainActor.assumeIsolated { Self.isActionRestricted(action) }
-            if restricted {
-                return errorJSON("Action '\(action)' restricted. Set allowWrites=true or disable in Accessibility Settings.")
-            }
+        if !allowWrites && Self.isRestricted(action) {
+            return errorJSON("Action '\(action)' restricted. Enable in Accessibility Access or set allowWrites=true.")
         }
         
         var element: AXUIElement?
@@ -307,11 +303,8 @@ final class AccessibilityService: @unchecked Sendable {
         // Check for restricted roles
         var roleRef: CFTypeRef?
         if AXUIElementCopyAttributeValue(found, kAXRoleAttribute as CFString, &roleRef) == .success,
-           let elRole = roleRef as? String {
-            let restricted = MainActor.assumeIsolated { Self.isRoleRestricted(elRole) }
-            if restricted {
-                return errorJSON("Cannot interact with \(elRole) elements (restricted in Accessibility Settings)")
-            }
+           let elRole = roleRef as? String, Self.isRestricted(elRole) {
+            return errorJSON("Cannot interact with \(elRole) — disabled in Accessibility Access")
         }
         
         let result = AXUIElementPerformAction(found, action as CFString)
