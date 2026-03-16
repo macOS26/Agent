@@ -274,7 +274,7 @@ struct ContentView: View {
             .padding(.top, 8)
 
             // Project folder/file
-            HStack(spacing: 6) {
+            HStack(spacing: 4) {
                 Button {
                     let panel = NSOpenPanel()
                     panel.canChooseFiles = true
@@ -293,18 +293,18 @@ struct ContentView: View {
 
                 TextField("Project folder or file...", text: $viewModel.projectFolder)
                     .textFieldStyle(.roundedBorder)
-                    .font(.caption)
+                    .controlSize(.small)
 
-                if !viewModel.projectFolder.isEmpty {
-                    Button {
-                        viewModel.projectFolder = ""
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                    .help("Clear project folder")
+                Button {
+                    viewModel.projectFolder = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
                 }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .help("Clear project folder")
+                .disabled(viewModel.projectFolder.isEmpty)
             }
             .padding(.horizontal)
             .padding(.bottom, 8)
