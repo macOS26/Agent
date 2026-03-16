@@ -8,7 +8,10 @@ let scriptNames = [
     "CheckMail",
     "CloseAllExceptEssential",
     "CloseAllExceptXcodeAgentTerminal",
+    "CreateDMG",
+    "CurrentPlaylist",
     "DebugArtwork",
+    "EmailAccounts",
     "ExtractAlbumArt",
     "GenerateBridge",
     "Hello",
@@ -23,9 +26,12 @@ let scriptNames = [
     "PlayPlaylist",
     "PlayRandomFromCurrent",
     "RunningApps",
+    "SafariSearch",
     "SaveImageFromChat",
+    "SendGroupMessage",
     "SendMessage",
     "TestCodingTools",
+    "TestEnvVars",
     "TestGenerateBridge",
     "TodayEvents",
     "WhatsPlaying",
@@ -141,5 +147,7 @@ let package = Package(
         .target(name: "AgentScriptingBridge", dependencies: [common], path: bridge,
                 exclude: allBridgeFiles.filter { $0 != "AgentScriptingBridge.swift" },
                 sources: ["AgentScriptingBridge.swift"]),
-    ] + bridgeTargets + scriptTargets
+    ] + bridgeTargets + scriptTargets + [
+        .testTarget(name: "AgentScriptsTests", dependencies: ["ScriptingBridgeCommon"]),
+    ]
 )

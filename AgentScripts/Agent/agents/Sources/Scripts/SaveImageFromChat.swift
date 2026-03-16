@@ -1,21 +1,31 @@
 import Foundation
 import AppKit
 
-// This script saves an image from the clipboard (if available) to a file.
-// In this case, the image is assumed to be in the clipboard from the chat interface.
-let outputPath = "/Users/toddbruss/Desktop/Agent/andrew_avatar_circle.png"
+@_cdecl("script_main")
+public func scriptMain() -> Int32 {
+    saveImageFromClipboard()
+    return 0
+}
 
-if let image = NSPasteboard.general.image {
-    if let tiffData = image.tiffRepresentation,
-       let bitmapImage = NSBitmapImageRep(data: tiffData),
-       let pngData = bitmapImage.representation(using: .png, properties: [:]) {
-        do {
-            try pngData.write(to: URL(fileURLWithPath: outputPath))
-            print("Image saved to \(outputPath)")
-        } catch {
-            print("Failed to save image: \(error)")
-        }
+func saveImageFromClipboard() {
+    let outputPath = "/Users/toddbruss/Desktop/Agent/andrew_avatar_circle.png"
+
+    guard let image = NSPasteboard.general.readObjects(forClasses: [NSImage.self], options: nil)?.first as? NSImage else {
+        print("No image found in clipboard.")
+        return
     }
-} else {
-    print("No image found in clipboard.")
+
+    guard let tiffData = image.tiffRepresentation,
+          let bitmapImage = NSBitmapImageRep(data: tiffData),
+          let pngData = bitmapImage.representation(using: .png, properties: [:]) else {
+        print("Failed to convert image to PNG")
+        return
+    }
+
+    do {
+        try pngData.write(to: URL(fileURLWithPath: outputPath))
+        print("Image saved to \(outputPath)")
+    } catch {
+        print("Failed to save image: \(error)")
+    }
 }

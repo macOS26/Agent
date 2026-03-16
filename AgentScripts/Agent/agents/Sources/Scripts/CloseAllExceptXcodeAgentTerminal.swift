@@ -1,27 +1,25 @@
 import Foundation
 import AppKit
 
-@MainActor
-func quitAllExceptExcluded() {
-    // List of apps to exclude from quitting
-    let excludedApps = ["Xcode", "Agent", "Terminal"]
+@_cdecl("script_main")
+public func scriptMain() -> Int32 {
+    quitAllExceptExcluded()
+    return 0
+}
 
-    // Get list of all running applications
+func quitAllExceptExcluded() {
+    let excludedApps = ["Xcode", "Agent", "Terminal"]
     let workspace = NSWorkspace.shared
     let runningApps = workspace.runningApplications
 
-    // Filter out excluded apps and system processes
     let appsToQuit = runningApps.filter { app in
         guard let appName = app.localizedName else { return false }
-        // Skip excluded apps and system processes
         if excludedApps.contains(appName) || appName.hasPrefix("com.apple.") {
             return false
         }
-        // Only quit user-facing apps
         return app.activationPolicy == .regular
     }
 
-    // Quit each app
     for app in appsToQuit {
         guard let appName = app.localizedName else { continue }
         print("Quitting: \(appName)")
@@ -29,9 +27,4 @@ func quitAllExceptExcluded() {
     }
 
     print("Done. Only excluded apps remain running.")
-}
-
-// Entry point
-autoreleasepool {
-    quitAllExceptExcluded()
 }

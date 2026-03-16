@@ -180,7 +180,8 @@
       "Bash(git mv:*)",
       "Bash(git:*)",
       "Bash(git log:*)",
-      "Bash(sqlite3:*)"
+      "Bash(sqlite3:*)",
+      "Bash(wc:*)"
     ]
   }
 }
