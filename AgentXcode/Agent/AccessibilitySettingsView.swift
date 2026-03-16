@@ -103,7 +103,7 @@ struct AccessibilitySettingsView: View {
 
             Divider()
 
-            section(title: "AX Blocked Roles", items: AccessibilityRestrictions.axRoles)
+            section(title: "AX Enabled Roles", items: AccessibilityRestrictions.axRoles)
 
             Divider()
 
