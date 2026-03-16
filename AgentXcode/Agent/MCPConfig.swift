@@ -5,13 +5,23 @@ import Foundation
 struct MCPServerConfig: Codable, Identifiable, Hashable {
     var id: UUID
     var name: String
+    // Stdio transport
     var command: String
     var arguments: [String]
     var environment: [String: String]
+    // HTTP transport
+    var url: String?
+    var headers: [String: String]
 
     // Agent-specific fields — stored in UserDefaults, NOT in JSON
     var enabled: Bool
     var autoStart: Bool
+
+    /// True if this server uses HTTP/HTTPS transport
+    var isHTTP: Bool { url != nil && !(url!.isEmpty) }
+
+    /// Display string for the server's connection target
+    var displayAddress: String { isHTTP ? (url ?? "") : command }
 
     init(id: UUID = UUID(), name: String, command: String, arguments: [String] = [], environment: [String: String] = [:], enabled: Bool = true, autoStart: Bool = true) {
         self.id = id
@@ -19,6 +29,20 @@ struct MCPServerConfig: Codable, Identifiable, Hashable {
         self.command = command
         self.arguments = arguments
         self.environment = environment
+        self.url = nil
+        self.headers = [:]
+        self.enabled = enabled
+        self.autoStart = autoStart
+    }
+
+    init(id: UUID = UUID(), name: String, url: String, headers: [String: String] = [:], enabled: Bool = true, autoStart: Bool = true) {
+        self.id = id
+        self.name = name
+        self.command = ""
+        self.arguments = []
+        self.environment = [:]
+        self.url = url
+        self.headers = headers
         self.enabled = enabled
         self.autoStart = autoStart
     }
@@ -26,14 +50,16 @@ struct MCPServerConfig: Codable, Identifiable, Hashable {
     // Only encode/decode MCP-standard fields in JSON
     // Only MCP-standard fields in JSON; name is the dictionary key, not a field
     private enum CodingKeys: String, CodingKey {
-        case command, args, env
+        case command, args, env, url, headers
     }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        command = try c.decode(String.self, forKey: .command)
+        command = try c.decodeIfPresent(String.self, forKey: .command) ?? ""
         arguments = try c.decodeIfPresent([String].self, forKey: .args) ?? []
         environment = try c.decodeIfPresent([String: String].self, forKey: .env) ?? [:]
+        url = try c.decodeIfPresent(String.self, forKey: .url)
+        headers = try c.decodeIfPresent([String: String].self, forKey: .headers) ?? [:]
         name = ""
         id = UUID()
         enabled = true
@@ -42,9 +68,17 @@ struct MCPServerConfig: Codable, Identifiable, Hashable {
 
     func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
-        try c.encode(command, forKey: .command)
-        try c.encode(arguments, forKey: .args)
-        try c.encode(environment, forKey: .env)
+        if !command.isEmpty {
+            try c.encode(command, forKey: .command)
+            try c.encode(arguments, forKey: .args)
+            try c.encode(environment, forKey: .env)
+        }
+        if let url, !url.isEmpty {
+            try c.encode(url, forKey: .url)
+            if !headers.isEmpty {
+                try c.encode(headers, forKey: .headers)
+            }
+        }
     }
 
     /// Create from a JSON string (for importing)
@@ -130,9 +164,16 @@ final class MCPServerRegistry {
     // MARK: - CRUD Operations
 
     func add(_ config: MCPServerConfig) {
-        guard Self.validateCommandPath(config.command) else {
-            print("[MCPConfig] Refusing to add server: command not found at \(config.command)")
-            return
+        if config.isHTTP {
+            guard let url = URL(string: config.url ?? ""), url.scheme != nil, url.host != nil else {
+                print("[MCPConfig] Refusing to add server: invalid URL \(config.url ?? "")")
+                return
+            }
+        } else {
+            guard Self.validateCommandPath(config.command) else {
+                print("[MCPConfig] Refusing to add server: command not found at \(config.command)")
+                return
+            }
         }
         config.savePrefs()
         servers.append(config)
@@ -141,9 +182,16 @@ final class MCPServerRegistry {
 
     func update(_ config: MCPServerConfig) {
         if let index = servers.firstIndex(where: { $0.id == config.id }) {
-            guard Self.validateCommandPath(config.command) else {
-                print("[MCPConfig] Refusing to update server: command not found at \(config.command)")
-                return
+            if config.isHTTP {
+                guard let url = URL(string: config.url ?? ""), url.scheme != nil, url.host != nil else {
+                    print("[MCPConfig] Refusing to update server: invalid URL \(config.url ?? "")")
+                    return
+                }
+            } else {
+                guard Self.validateCommandPath(config.command) else {
+                    print("[MCPConfig] Refusing to update server: command not found at \(config.command)")
+                    return
+                }
             }
             config.savePrefs()
             servers[index] = config

@@ -68,18 +68,29 @@ final class MCPService: @unchecked Sendable {
 
     private init() { loadDisabledTools() }
 
-    /// Connect to an MCP server
-    /// This launches the server process and establishes stdio communication
+    /// Connect to an MCP server (stdio or HTTP)
     func connect(to config: MCPServerConfig) async throws {
-        let serverConfig = MCPClient.ServerConfig(
-            id: config.id,
-            name: config.name,
-            command: config.command,
-            arguments: config.arguments,
-            env: config.environment,
-            enabled: config.enabled,
-            autoStart: config.autoStart
-        )
+        let serverConfig: MCPClient.ServerConfig
+        if config.isHTTP {
+            serverConfig = MCPClient.ServerConfig(
+                id: config.id,
+                name: config.name,
+                url: config.url ?? "",
+                headers: config.headers,
+                enabled: config.enabled,
+                autoStart: config.autoStart
+            )
+        } else {
+            serverConfig = MCPClient.ServerConfig(
+                id: config.id,
+                name: config.name,
+                command: config.command,
+                arguments: config.arguments,
+                env: config.environment,
+                enabled: config.enabled,
+                autoStart: config.autoStart
+            )
+        }
 
         try await client.addServer(serverConfig)
         connectedServerIds.insert(config.id)

@@ -72,6 +72,67 @@ final class MCPClientTests: XCTestCase {
         XCTAssertEqual(set.count, 2)
     }
 
+    // MARK: - HTTP ServerConfig Tests
+
+    func testHTTPServerConfigInitialization() {
+        let config = MCPClient.ServerConfig(
+            name: "RemoteServer",
+            url: "https://example.com/mcp",
+            headers: ["Authorization": "Bearer token123"],
+            enabled: true,
+            autoStart: true
+        )
+
+        XCTAssertEqual(config.name, "RemoteServer")
+        XCTAssertEqual(config.url, "https://example.com/mcp")
+        XCTAssertEqual(config.headers["Authorization"], "Bearer token123")
+        XCTAssertTrue(config.isHTTP)
+        XCTAssertTrue(config.command.isEmpty)
+        XCTAssertTrue(config.arguments.isEmpty)
+        XCTAssertTrue(config.env.isEmpty)
+    }
+
+    func testStdioServerConfigIsNotHTTP() {
+        let config = MCPClient.ServerConfig(
+            name: "StdioServer",
+            command: "/usr/local/bin/test-server"
+        )
+
+        XCTAssertFalse(config.isHTTP)
+        XCTAssertNil(config.url)
+    }
+
+    func testHTTPServerConfigCodable() throws {
+        let original = MCPClient.ServerConfig(
+            name: "CodableHTTP",
+            url: "https://api.example.com/mcp",
+            headers: ["X-API-Key": "abc123"],
+            enabled: true,
+            autoStart: false
+        )
+
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(MCPClient.ServerConfig.self, from: data)
+
+        XCTAssertEqual(decoded.id, original.id)
+        XCTAssertEqual(decoded.name, original.name)
+        XCTAssertEqual(decoded.url, original.url)
+        XCTAssertEqual(decoded.headers, original.headers)
+        XCTAssertTrue(decoded.isHTTP)
+        XCTAssertEqual(decoded.enabled, original.enabled)
+        XCTAssertEqual(decoded.autoStart, original.autoStart)
+    }
+
+    func testHTTPServerConfigDefaultHeaders() {
+        let config = MCPClient.ServerConfig(
+            name: "NoHeaders",
+            url: "https://example.com/mcp"
+        )
+
+        XCTAssertTrue(config.headers.isEmpty)
+        XCTAssertTrue(config.isHTTP)
+    }
+
     // MARK: - JSONValue Tests
 
     func testJSONValueStringLiteral() {
@@ -295,6 +356,17 @@ final class MCPClientTests: XCTestCase {
         await client.removeServer(UUID())
         let servers = await client.listServers()
         XCTAssertTrue(servers.isEmpty)
+    }
+
+    func testAddHTTPServerDisabled() async {
+        let client = MCPClient()
+        let config = MCPClient.ServerConfig(name: "Off", url: "https://example.com/mcp", enabled: false)
+        do {
+            try await client.addServer(config)
+            XCTFail("Should throw")
+        } catch let error as MCPClientError {
+            if case .serverDisabled = error { } else { XCTFail("Wrong error") }
+        } catch { XCTFail("Unexpected: \(error)") }
     }
 
     // MARK: - Integration Test (requires hello_world server)

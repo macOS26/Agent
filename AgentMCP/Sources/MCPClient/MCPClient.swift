@@ -79,11 +79,21 @@ extension JSONValue: ExpressibleByArrayLiteral {
     }
 }
 
+// MARK: - Connection Protocol
+
+/// Protocol for MCP transport connections (stdio or HTTP)
+private protocol MCPConnection: AnyObject, Sendable {
+    func sendRequest(method: String, params: [String: Any]?) async throws -> [String: Any]
+    func sendNotification(method: String, params: [String: Any]?) throws
+    func disconnect()
+    var isAlive: Bool { get }
+}
+
 // MARK: - Stdio Connection (JSON-RPC over pipes)
 
 /// Manages a server process and JSON-RPC communication via stdio pipes.
 /// Uses readabilityHandler callbacks for fully non-blocking I/O.
-private final class StdioConnection: @unchecked Sendable {
+private final class StdioConnection: @unchecked Sendable, MCPConnection {
     let process: Process
     let writer: FileHandle
     let reader: FileHandle
@@ -210,6 +220,8 @@ private final class StdioConnection: @unchecked Sendable {
         writer.write(message)
     }
 
+    var isAlive: Bool { process.isRunning }
+
     func disconnect() {
         reader.readabilityHandler = nil
         errorReader.readabilityHandler = nil
@@ -240,9 +252,199 @@ private final class StdioConnection: @unchecked Sendable {
     }
 }
 
+// MARK: - HTTP Connection (JSON-RPC over HTTP/HTTPS)
+
+/// Manages MCP communication via HTTP POST requests (Streamable HTTP transport).
+/// Supports both direct JSON responses and SSE-streamed responses.
+private final class HTTPConnection: @unchecked Sendable, MCPConnection {
+    private let serverURL: URL
+    private let customHeaders: [String: String]
+    private let session: URLSession
+    private var sessionId: String?
+    private var nextId: Int = 0
+    private let lock = NSLock()
+    private var alive = true
+
+    init(url: URL, headers: [String: String]) {
+        self.serverURL = url
+        self.customHeaders = headers
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 30
+        config.timeoutIntervalForResource = 120
+        self.session = URLSession(configuration: config)
+    }
+
+    var isAlive: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return alive
+    }
+
+    func sendRequest(method: String, params: [String: Any]?) async throws -> [String: Any] {
+        guard isAlive else {
+            throw MCPClientError.connectionFailed("HTTP connection is closed")
+        }
+
+        let id = nextRequestId()
+
+        var body: [String: Any] = [
+            "jsonrpc": "2.0",
+            "id": id,
+            "method": method
+        ]
+        if let params { body["params"] = params }
+
+        let bodyData = try JSONSerialization.data(withJSONObject: body)
+
+        var request = URLRequest(url: serverURL)
+        request.httpMethod = "POST"
+        request.httpBody = bodyData
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json, text/event-stream", forHTTPHeaderField: "Accept")
+
+        // Add custom headers (Authorization, API keys, etc.)
+        for (key, value) in customHeaders {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+
+        // Add session ID for session continuity
+        lock.lock()
+        if let sid = sessionId {
+            request.setValue(sid, forHTTPHeaderField: "Mcp-Session-Id")
+        }
+        lock.unlock()
+
+        let (data, response) = try await session.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw MCPClientError.connectionFailed("Invalid HTTP response")
+        }
+
+        // Capture session ID from server
+        if let sid = httpResponse.value(forHTTPHeaderField: "Mcp-Session-Id") {
+            lock.lock()
+            sessionId = sid
+            lock.unlock()
+        }
+
+        // Handle HTTP errors
+        guard (200...299).contains(httpResponse.statusCode) else {
+            let body = String(data: data.prefix(512), encoding: .utf8) ?? ""
+            throw MCPClientError.connectionFailed("HTTP \(httpResponse.statusCode): \(body)")
+        }
+
+        // Parse response based on content type
+        let contentType = httpResponse.value(forHTTPHeaderField: "Content-Type") ?? ""
+
+        if contentType.contains("text/event-stream") {
+            return try parseSSEResponse(data, expectedId: id)
+        } else {
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                throw MCPClientError.invalidResponse
+            }
+            return json
+        }
+    }
+
+    func sendNotification(method: String, params: [String: Any]?) throws {
+        guard isAlive else { return }
+
+        var body: [String: Any] = [
+            "jsonrpc": "2.0",
+            "method": method
+        ]
+        if let params { body["params"] = params }
+
+        let bodyData = try JSONSerialization.data(withJSONObject: body)
+
+        var request = URLRequest(url: serverURL)
+        request.httpMethod = "POST"
+        request.httpBody = bodyData
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        for (key, value) in customHeaders {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+
+        lock.lock()
+        if let sid = sessionId {
+            request.setValue(sid, forHTTPHeaderField: "Mcp-Session-Id")
+        }
+        lock.unlock()
+
+        // Fire-and-forget for notifications
+        let task = session.dataTask(with: request)
+        task.resume()
+    }
+
+    func disconnect() {
+        lock.lock()
+        alive = false
+        let sid = sessionId
+        lock.unlock()
+
+        // Send DELETE to close session if we have one
+        if sid != nil {
+            var request = URLRequest(url: serverURL)
+            request.httpMethod = "DELETE"
+            if let sid {
+                request.setValue(sid, forHTTPHeaderField: "Mcp-Session-Id")
+            }
+            for (key, value) in customHeaders {
+                request.setValue(value, forHTTPHeaderField: key)
+            }
+            let task = session.dataTask(with: request)
+            task.resume()
+        }
+
+        session.invalidateAndCancel()
+    }
+
+    private func nextRequestId() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        nextId += 1
+        return nextId
+    }
+
+    /// Parse an SSE response body into a JSON-RPC response dict.
+    /// SSE format: lines starting with "data:" contain JSON payloads.
+    private func parseSSEResponse(_ data: Data, expectedId: Int) throws -> [String: Any] {
+        guard let text = String(data: data, encoding: .utf8) else {
+            throw MCPClientError.invalidResponse
+        }
+
+        var lastJSON: [String: Any]?
+
+        for line in text.components(separatedBy: "\n") {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            guard trimmed.hasPrefix("data:") else { continue }
+
+            let jsonStr = String(trimmed.dropFirst(5)).trimmingCharacters(in: .whitespaces)
+            guard !jsonStr.isEmpty,
+                  let jsonData = jsonStr.data(using: .utf8),
+                  let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else {
+                continue
+            }
+
+            // Prefer the response matching our request ID
+            if let rid = json["id"] as? Int, rid == expectedId {
+                return json
+            }
+            if let rid = json["id"] as? String, let intId = Int(rid), intId == expectedId {
+                return json
+            }
+            lastJSON = json
+        }
+
+        if let last = lastJSON { return last }
+        throw MCPClientError.invalidResponse
+    }
+}
+
 // MARK: - MCP Client
 
-/// MCP Client for connecting to stdio MCP servers
+/// MCP Client for connecting to MCP servers via stdio or HTTP
 /// Uses direct JSON-RPC over pipes - no SDK dependency
 public actor MCPClient {
 
@@ -251,12 +453,21 @@ public actor MCPClient {
     public struct ServerConfig: Codable, Identifiable, Hashable, Sendable {
         public let id: UUID
         public let name: String
+        // Stdio transport
         public let command: String
         public let arguments: [String]
         public let env: [String: String]
+        // HTTP transport
+        public let url: String?
+        public let headers: [String: String]
+        // Common
         public let enabled: Bool
         public let autoStart: Bool
 
+        /// True if this server uses HTTP/HTTPS transport
+        public var isHTTP: Bool { url != nil && !(url!.isEmpty) }
+
+        /// Stdio transport initializer
         public init(
             id: UUID = UUID(),
             name: String,
@@ -271,6 +482,28 @@ public actor MCPClient {
             self.command = command
             self.arguments = arguments
             self.env = env
+            self.url = nil
+            self.headers = [:]
+            self.enabled = enabled
+            self.autoStart = autoStart
+        }
+
+        /// HTTP transport initializer
+        public init(
+            id: UUID = UUID(),
+            name: String,
+            url: String,
+            headers: [String: String] = [:],
+            enabled: Bool = true,
+            autoStart: Bool = true
+        ) {
+            self.id = id
+            self.name = name
+            self.command = ""
+            self.arguments = []
+            self.env = [:]
+            self.url = url
+            self.headers = headers
             self.enabled = enabled
             self.autoStart = autoStart
         }
@@ -353,7 +586,7 @@ public actor MCPClient {
 
     // MARK: - Private Properties
 
-    private var connections: [UUID: StdioConnection] = [:]
+    private var connections: [UUID: any MCPConnection] = [:]
     private var configs: [UUID: ServerConfig] = [:]
     private var discoveredTools: [UUID: [DiscoveredTool]] = [:]
     private var discoveredResources: [UUID: [DiscoveredResource]] = [:]
@@ -370,10 +603,15 @@ public actor MCPClient {
             throw MCPClientError.serverDisabled(config.name)
         }
 
-        print("[MCPClient] Adding server: \(config.name) at \(config.command)")
-
-        // Launch server process with pipes
-        let connection = try launchServer(config)
+        // Create connection based on transport type
+        let connection: any MCPConnection
+        if config.isHTTP {
+            print("[MCPClient] Adding HTTP server: \(config.name) at \(config.url ?? "")")
+            connection = try connectHTTP(config)
+        } else {
+            print("[MCPClient] Adding server: \(config.name) at \(config.command)")
+            connection = try launchServer(config)
+        }
         connections[config.id] = connection
         configs[config.id] = config
 
@@ -405,7 +643,7 @@ public actor MCPClient {
                     print("[MCPClient] Connected to: \(serverName)")
 
                     // Send initialized notification
-                    try connection.sendNotification(method: "notifications/initialized")
+                    try connection.sendNotification(method: "notifications/initialized", params: nil)
 
                     // Check server capabilities to know what to discover
                     let capabilities = result["capabilities"] as? [String: Any] ?? [:]
@@ -494,8 +732,8 @@ public actor MCPClient {
             throw MCPClientError.serverNotConnected(serverId)
         }
 
-        // Connection liveness check: verify process is still running
-        guard connection.process.isRunning else {
+        // Connection liveness check
+        guard connection.isAlive else {
             // Clean up stale connection
             connections.removeValue(forKey: serverId)
             configs.removeValue(forKey: serverId)
@@ -680,14 +918,41 @@ public actor MCPClient {
         )
     }
 
-    private func discoverCapabilities(serverId: UUID, serverName: String, connection: StdioConnection, hasTools: Bool, hasResources: Bool) async throws {
+    /// Validate and create an HTTP connection for a remote MCP server
+    private func connectHTTP(_ config: ServerConfig) throws -> HTTPConnection {
+        guard let urlString = config.url, !urlString.isEmpty else {
+            throw MCPClientError.connectionFailed("No URL specified for HTTP server")
+        }
+
+        guard let url = URL(string: urlString) else {
+            throw MCPClientError.connectionFailed("Invalid URL: \(urlString)")
+        }
+
+        let scheme = url.scheme?.lowercased()
+        guard scheme == "https" || scheme == "http" else {
+            throw MCPClientError.connectionFailed("Only HTTP/HTTPS URLs are supported, got: \(scheme ?? "none")")
+        }
+
+        // Enforce TLS for remote servers — plain HTTP only for localhost
+        if scheme == "http" {
+            let host = url.host?.lowercased() ?? ""
+            guard host == "localhost" || host == "127.0.0.1" || host == "::1" else {
+                throw MCPClientError.connectionFailed("Plain HTTP only allowed for localhost. Use HTTPS for remote servers.")
+            }
+        }
+
+        print("[MCPClient] Creating HTTP connection to \(urlString)")
+        return HTTPConnection(url: url, headers: config.headers)
+    }
+
+    private func discoverCapabilities(serverId: UUID, serverName: String, connection: any MCPConnection, hasTools: Bool, hasResources: Bool) async throws {
         // Only discover tools if server advertises tool support
         if hasTools {
             do {
-                let response = try await connection.sendRequest(method: "tools/list")
+                let response = try await connection.sendRequest(method: "tools/list", params: nil)
                 if let result = response["result"] as? [String: Any],
                    let tools = result["tools"] as? [[String: Any]] {
-                    discoveredTools[serverId] = tools.compactMap { tool in
+                    discoveredTools[serverId] = tools.compactMap { tool -> DiscoveredTool? in
                         let name = tool["name"] as? String ?? ""
                         let description = tool["description"] as? String ?? ""
 
@@ -735,7 +1000,7 @@ public actor MCPClient {
         // Only discover resources if server advertises resource support
         if hasResources {
             do {
-                let response = try await connection.sendRequest(method: "resources/list")
+                let response = try await connection.sendRequest(method: "resources/list", params: nil)
                 if let result = response["result"] as? [String: Any],
                    let resources = result["resources"] as? [[String: Any]] {
                     discoveredResources[serverId] = resources.map { resource in
