@@ -367,11 +367,11 @@ struct ContentView: View {
                         .textFieldStyle(.roundedBorder)
                         .onSubmit {
                             if !tab.taskInput.isEmpty {
-                                viewModel.runTabTask(tab: tab)
+                                vm.runTabTask(tab: t)
                             }
                         }
 
-                    Button("Run") { viewModel.runTabTask(tab: tab) }
+                    Button("Run") { vm.runTabTask(tab: t) }
                         .buttonStyle(.borderedProminent)
                         .controlSize(.regular)
                         .disabled(tab.taskInput.isEmpty || (viewModel.selectedProvider == .claude && viewModel.apiKey.isEmpty))
