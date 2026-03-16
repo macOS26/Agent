@@ -8,15 +8,14 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 16) {
             // Provider toggle
             VStack(alignment: .leading, spacing: 6) {
-                Text("Selected Provider")
+                Text("LLM Provider")
                     .font(.headline)
-                Picker("Provider", selection: $viewModel.selectedProvider) {
+                Picker("Active", selection: $viewModel.selectedProvider) {
                     ForEach(APIProvider.allCases, id: \.self) { provider in
                         Text(provider.displayName).tag(provider)
                     }
                 }
                 .pickerStyle(.segmented)
-                .labelsHidden()
                 .frame(maxWidth: .infinity)
             }
 

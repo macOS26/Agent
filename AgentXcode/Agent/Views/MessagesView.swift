@@ -17,7 +17,7 @@ struct MessagesView: View {
                     .tint(.green)
             }
 
-            Picker("Filter", selection: $viewModel.messageFilter) {
+            Picker("Active", selection: $viewModel.messageFilter) {
                 ForEach(AgentViewModel.MessageFilter.allCases, id: \.self) { filter in
                     Text(filter.rawValue).tag(filter)
                 }
