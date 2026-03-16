@@ -1,18 +1,20 @@
 # Agent!
 
-[![Swift 6.1](https://img.shields.io/badge/Swift-6.1-orange.svg)](https://swift.org)
-[![Website](https://img.shields.io/badge/website-xcf.ai-blue.svg)](https://xcf.ai)
-[![Version](https://img.shields.io/badge/version-1.0.7-green.svg)](https://github.com/macOS26/Agent)
+[![Swift 6.0](https://img.shields.io/badge/Swift-6.0-orange.svg)](https://swift.org)
+[![Website](https://img.shields.io/badge/website-agent.macos26.app-blue.svg)](https://agent.macos26.apo)
+[![Version](https://img.shields.io/badge/version-1.0.8-red.svg)](https://github.com/macOS26/Agent)
 [![GitHub downloads](https://img.shields.io/github/downloads/macOS26/Agent/total.svg?v=2)](https://github.com/macOS26/Agent/releases)
 [![GitHub stars](https://img.shields.io/github/stars/macOS26/Agent.svg?style=social)](https://github.com/macOS26/Agent/stargazers)
 
-Agent!c A! for your entire  Mac Desktop
+Agent!c A! for your  Mac Desktop
 
 <img width="340" height="339" alt="Agent! icon" src="https://github.com/user-attachments/assets/5645d8b8-8ce7-4d56-9ede-5eb58f31f227" />
 
 A native macOS autonomous AI agent built entirely in Swift.
 
 Agent uses SwiftUI, XPC, SMAppService, Apple Events, and ScriptingBridge to give an AI agent native access to your Mac. It's an `.app` that speaks macOS natively. Xcode command line tools are required which is Agent!'s only dependency.
+
+<img width="999" height="940" alt="Screenshot 2026-03-15 at 9 10 10 PM" src="https://github.com/user-attachments/assets/07ee3881-563a-4360-b07f-961a17d6f16d" />
 
 ---
 
@@ -30,6 +32,7 @@ Agent uses SwiftUI, XPC, SMAppService, Apple Events, and ScriptingBridge to give
 - [License](#license)
 
 ---
+
 
 ## Getting Started
 
@@ -507,7 +510,7 @@ Agent persists task history to `~/Library/Application Support/Agent/task_history
 | **MCP support** | Yes (stdio transport) | Yes |
 | **Messaging** | Native Apple Messages (iMessage/SMS) with per-recipient approval | WhatsApp, Telegram, Slack, Discord, iMessage, and more |
 | **Message reply** | Auto-replies task results via iMessage to approved senders | Platform-specific replies |
-| **Installation** | Open in Xcode, build, run | `openclaw onboard` wizard |
+| **Installation** | Run the .app, install XCT | `openclaw onboard` wizard |
 | **Dependencies** | Xcode Command Line Tools | Node.js + npm ecosystem |
 | **Apple Silicon** | Native ARM64 | Interpreted (Node.js) |
 
