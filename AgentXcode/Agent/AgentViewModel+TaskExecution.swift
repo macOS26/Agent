@@ -687,6 +687,7 @@ extension AgentViewModel {
                             let scriptName = input["name"] as? String ?? ""
                             let output = scriptService.readScript(name: scriptName) ?? "Error: script '\(scriptName)' not found."
                             appendLog("Read: \(scriptName)")
+                            appendLog(Self.codeFence(Self.preview(output, lines: readFilePreviewLines), language: "swift"))
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
