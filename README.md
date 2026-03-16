@@ -510,7 +510,7 @@ Agent persists task history to `~/Library/Application Support/Agent/task_history
 | **MCP support** | Yes (stdio transport) | Yes |
 | **Messaging** | Native Apple Messages (iMessage/SMS) with per-recipient approval | WhatsApp, Telegram, Slack, Discord, iMessage, and more |
 | **Message reply** | Auto-replies task results via iMessage to approved senders | Platform-specific replies |
-| **Installation** | Open in Xcode, build, run | `openclaw onboard` wizard |
+| **Installation** | Run the .app, install XCT | `openclaw onboard` wizard |
 | **Dependencies** | Xcode Command Line Tools | Node.js + npm ecosystem |
 | **Apple Silicon** | Native ARM64 | Interpreted (Node.js) |
 
