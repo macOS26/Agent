@@ -67,6 +67,7 @@ struct ActivityLogView: NSViewRepresentable {
         guard len != coord.lastLength || coord.showingPlaceholder || searchChanged else { return }
 
         let textChanged = len != coord.lastLength || coord.showingPlaceholder
+        let textGrew = len > coord.lastLength
         let searchCleared = searchText.isEmpty && !coord.lastSearch.isEmpty
         coord.showingPlaceholder = false
 
@@ -110,7 +111,7 @@ struct ActivityLogView: NSViewRepresentable {
         coord.lastSearch = searchText
         coord.lastMatchIndex = currentMatchIndex
 
-        if textChanged && len > coord.lastLength {
+        if textGrew {
             coord.throttledScrollToEnd(textView)
         }
     }
