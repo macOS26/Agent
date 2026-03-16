@@ -543,10 +543,10 @@ final class AccessibilityService: @unchecked Sendable {
         
         let home = FileManager.default.homeDirectoryForCurrentUser
         let fileName = "screenshot_\(UUID().uuidString).png"
-        let outputPath = home.appendingPathComponent("Documents/Agent/\(fileName)").path
-        
+        let outputPath = home.appendingPathComponent("Documents/Agent/screenshots/\(fileName)").path
+
         // Ensure output directory exists
-        try? FileManager.default.createDirectory(atPath: home.appendingPathComponent("Documents/Agent").path, withIntermediateDirectories: true)
+        try? FileManager.default.createDirectory(atPath: home.appendingPathComponent("Documents/Agent/screenshots").path, withIntermediateDirectories: true)
         
         // Build screencapture command
         var args = ["-x", "-t", "png"]  // -x: no sound, -t png: format

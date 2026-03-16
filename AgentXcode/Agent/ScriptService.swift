@@ -135,6 +135,11 @@ final class ScriptService {
 
         try? fm.createDirectory(at: Self.agentDir, withIntermediateDirectories: true)
 
+        // Create organized output subfolders
+        for sub in ["json", "photos", "images", "screenshots", "html"] {
+            try? fm.createDirectory(at: Self.agentDir.appendingPathComponent(sub), withIntermediateDirectories: true)
+        }
+
         guard let items = try? fm.contentsOfDirectory(atPath: bundleURL.path) else { return }
         for item in items where item.hasSuffix(".json") {
             let dst = Self.agentDir.appendingPathComponent(item)
