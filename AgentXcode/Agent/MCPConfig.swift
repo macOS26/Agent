@@ -50,16 +50,21 @@ struct MCPServerConfig: Codable, Identifiable, Hashable {
     // Only encode/decode MCP-standard fields in JSON
     // Only MCP-standard fields in JSON; name is the dictionary key, not a field
     private enum CodingKeys: String, CodingKey {
-        case command, args, env, url, headers
+        case transport, command, args, env, url, headers
     }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
+        let transport = try c.decodeIfPresent(String.self, forKey: .transport)
         command = try c.decodeIfPresent(String.self, forKey: .command) ?? ""
         arguments = try c.decodeIfPresent([String].self, forKey: .args) ?? []
         environment = try c.decodeIfPresent([String: String].self, forKey: .env) ?? [:]
         url = try c.decodeIfPresent(String.self, forKey: .url)
         headers = try c.decodeIfPresent([String: String].self, forKey: .headers) ?? [:]
+        // If transport is explicitly "http"/"https" but url is missing, clear command
+        if let transport, (transport == "http" || transport == "https"), url != nil {
+            command = ""
+        }
         name = ""
         id = UUID()
         enabled = true
@@ -68,16 +73,17 @@ struct MCPServerConfig: Codable, Identifiable, Hashable {
 
     func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
-        if !command.isEmpty {
-            try c.encode(command, forKey: .command)
-            try c.encode(arguments, forKey: .args)
-            try c.encode(environment, forKey: .env)
-        }
-        if let url, !url.isEmpty {
+        if isHTTP {
+            try c.encode("http", forKey: .transport)
             try c.encode(url, forKey: .url)
             if !headers.isEmpty {
                 try c.encode(headers, forKey: .headers)
             }
+        } else {
+            try c.encode("stdio", forKey: .transport)
+            try c.encode(command, forKey: .command)
+            try c.encode(arguments, forKey: .args)
+            try c.encode(environment, forKey: .env)
         }
     }
 
