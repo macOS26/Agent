@@ -90,10 +90,10 @@ struct AccessibilitySettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Accessibility Restrictions")
+            Text("Accessibility Access")
                 .font(.headline)
 
-            Text("Enabled accessibility calls are allowed. Click to disable.")
+            Text("Enabled calls are allowed. Click to disable.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
