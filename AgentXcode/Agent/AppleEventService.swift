@@ -10,11 +10,10 @@ final class AppleEventService: @unchecked Sendable {
     private static let maxOutputLines = 500
     private static let defaultLimit = 50
 
-    /// Destructive selectors blocked unless allow_writes is true
-    private static let writeSelectors: Set<String> = [
-        "delete", "close", "remove", "quit", "move", "moveTo",
-        "duplicate", "save", "set", "sendMessage"
-    ]
+    /// Check whether a write selector is currently restricted (user-configurable).
+    @MainActor private static func isSelectorRestricted(_ selector: String) -> Bool {
+        AccessibilityRestrictions.shared.isRestricted(selector)
+    }
 
     /// Execute a query against a scriptable application.
     /// Runs osascript first to trigger the Automation permission dialog if needed,
@@ -177,8 +176,9 @@ final class AppleEventService: @unchecked Sendable {
                     output.append("Error at step \(i): 'call' requires 'method'")
                     return output.joined(separator: "\n")
                 }
-                if !allowWrites && Self.writeSelectors.contains(method) {
-                    output.append("Error at step \(i): '\(method)' is a write operation. Set allow_writes=true to permit.")
+                let selectorRestricted = MainActor.assumeIsolated { Self.isSelectorRestricted(method) }
+                if !allowWrites && selectorRestricted {
+                    output.append("Error at step \(i): '\(method)' is restricted. Set allow_writes=true or disable in Accessibility Settings.")
                     return output.joined(separator: "\n")
                 }
                 let result = callMethod(on: cursor, method: method, arg: op["arg"] as? String)

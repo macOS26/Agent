@@ -23,16 +23,15 @@ final class AccessibilityService: @unchecked Sendable {
         return AXIsProcessTrustedWithOptions(options as CFDictionary)
     }
     
-    /// Actions that are blocked by default for safety
-    private static let blockedActions: Set<String> = [
-        "AXConfirm", "AXPress", "AXShowMenu", "AXIncrement", "AXDecrement",
-        "AXActivate", "AXCancel", "AXExpand", "AXCollapse"
-    ]
-    
-    /// Roles that are blocked from interaction (password fields, secure text)
-    private static let blockedRoles: Set<String> = [
-        "AXSecureTextField", "AXPasswordField", "AXSecureText"
-    ]
+    /// Check whether an AX action is currently restricted (user-configurable).
+    @MainActor private static func isActionRestricted(_ action: String) -> Bool {
+        AccessibilityRestrictions.shared.isRestricted(action)
+    }
+
+    /// Check whether an AX role is currently restricted (user-configurable).
+    @MainActor private static func isRoleRestricted(_ role: String) -> Bool {
+        AccessibilityRestrictions.shared.isRestricted(role)
+    }
     
     // MARK: - Window Listing
     
@@ -279,8 +278,11 @@ final class AccessibilityService: @unchecked Sendable {
             return errorJSON("Accessibility permission required.")
         }
         
-        if !allowWrites && Self.blockedActions.contains(action) {
-            return errorJSON("Action '\(action)' blocked. Set allowWrites=true.")
+        if !allowWrites {
+            let restricted = MainActor.assumeIsolated { Self.isActionRestricted(action) }
+            if restricted {
+                return errorJSON("Action '\(action)' restricted. Set allowWrites=true or disable in Accessibility Settings.")
+            }
         }
         
         var element: AXUIElement?
@@ -302,11 +304,14 @@ final class AccessibilityService: @unchecked Sendable {
             return errorJSON("Element not found")
         }
         
-        // Check for blocked roles
+        // Check for restricted roles
         var roleRef: CFTypeRef?
         if AXUIElementCopyAttributeValue(found, kAXRoleAttribute as CFString, &roleRef) == .success,
-           let elRole = roleRef as? String, Self.blockedRoles.contains(elRole) {
-            return errorJSON("Cannot interact with \(elRole) elements")
+           let elRole = roleRef as? String {
+            let restricted = MainActor.assumeIsolated { Self.isRoleRestricted(elRole) }
+            if restricted {
+                return errorJSON("Cannot interact with \(elRole) elements (restricted in Accessibility Settings)")
+            }
         }
         
         let result = AXUIElementPerformAction(found, action as CFString)

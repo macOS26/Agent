@@ -16,6 +16,7 @@ struct ContentView: View {
     @State private var totalMatches = 0
     @State private var showMCPServers = false
     @State private var showMessages = false
+    @State private var showAccessibility = false
 
     var body: some View {
         ZStack {
@@ -98,6 +99,15 @@ struct ContentView: View {
                 .controlSize(.small)
                 .popover(isPresented: $showMessages) {
                     MessagesView(viewModel: viewModel)
+                }
+
+                Button { showAccessibility.toggle() } label: {
+                    Image(systemName: "hand.raised")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .popover(isPresented: $showAccessibility) {
+                    AccessibilitySettingsView()
                 }
 
                 Button { showMCPServers.toggle() } label: {

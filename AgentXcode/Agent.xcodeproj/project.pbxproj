@@ -43,6 +43,7 @@
 		AA10000000000000000077 /* MessagesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000078 /* MessagesView.swift */; };
 		AA10000000000000000079 /* ScriptTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000007A /* ScriptTab.swift */; };
 		AA1000000000000000007B /* TabBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000007C /* TabBarView.swift */; };
+		AA1000000000000000007E /* AccessibilitySettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000007D /* AccessibilitySettingsView.swift */; };
 		BB10000000000000000030 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001A /* main.swift */; };
 		BB10000000000000000031 /* HelperProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001B /* HelperProtocol.swift */; };
 		BB10000000000000000032 /* Agent.app.toddbruss.helper.plist in Copy Daemon Plist */ = {isa = PBXBuildFile; fileRef = AA10000000000000000023 /* Agent.app.toddbruss.helper.plist */; };
@@ -180,6 +181,7 @@
 		AA10000000000000000078 /* MessagesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesView.swift; sourceTree = "<group>"; };
 		AA1000000000000000007A /* ScriptTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptTab.swift; sourceTree = "<group>"; };
 		AA1000000000000000007C /* TabBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarView.swift; sourceTree = "<group>"; };
+		AA1000000000000000007D /* AccessibilitySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilitySettingsView.swift; sourceTree = "<group>"; };
 		BB1000000000000000001A /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		BB1000000000000000001B /* HelperProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperProtocol.swift; sourceTree = "<group>"; };
 		BB1000000000000000001C /* AgentHelper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = AgentHelper; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -271,6 +273,7 @@
 				AA1000000000000000002E /* DependencyOverlay.swift */,
 				AA1000000000000000002F /* AppleEventService.swift */,
 				AA10000000000000000075 /* AccessibilityService.swift */,
+				AA1000000000000000007D /* AccessibilitySettingsView.swift */,
 				AA10000000000000000078 /* MessagesView.swift */,
 				AA1000000000000000007A /* ScriptTab.swift */,
 				AA1000000000000000007C /* TabBarView.swift */,
@@ -522,6 +525,7 @@
 				AA10000000000000000044 /* DependencyOverlay.swift in Sources */,
 				AA10000000000000000045 /* AppleEventService.swift in Sources */,
 				AA10000000000000000076 /* AccessibilityService.swift in Sources */,
+				AA1000000000000000007E /* AccessibilitySettingsView.swift in Sources */,
 				AA10000000000000000077 /* MessagesView.swift in Sources */,
 				AA10000000000000000047 /* KeychainService.swift in Sources */,
 				AA10000000000000000049 /* AgentViewModel+Logging.swift in Sources */,
