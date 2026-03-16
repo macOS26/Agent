@@ -64,9 +64,9 @@ final class AccessibilityRestrictions {
 
     // MARK: - Queries
 
-    /// Returns true if the restriction is active (item is blocked).
+    /// Returns true if the call is blocked (user disabled it).
     func isRestricted(_ id: String) -> Bool {
-        enabledRestrictions.contains(id)
+        !enabledRestrictions.contains(id)
     }
 
     /// Returns true if the restriction is enabled (same as isRestricted, for UI clarity).
