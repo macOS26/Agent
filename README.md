@@ -14,6 +14,8 @@ A native macOS autonomous AI agent built entirely in Swift.
 
 Agent uses SwiftUI, XPC, SMAppService, Apple Events, and ScriptingBridge to give an AI agent native access to your Mac. It's an `.app` that speaks macOS natively. Xcode command line tools are required which is Agent!'s only dependency.
 
+<img width="999" height="940" alt="Screenshot 2026-03-15 at 9 10 10 PM" src="https://github.com/user-attachments/assets/07ee3881-563a-4360-b07f-961a17d6f16d" />
+
 ---
 
 ## Table of Contents
@@ -30,6 +32,7 @@ Agent uses SwiftUI, XPC, SMAppService, Apple Events, and ScriptingBridge to give
 - [License](#license)
 
 ---
+
 
 ## Getting Started
 
