@@ -93,7 +93,7 @@ struct AccessibilitySettingsView: View {
             Text("Accessibility Restrictions")
                 .font(.headline)
 
-            Text("Enabled restrictions block actions. Click to disable.")
+            Text("Enabled accessibility calls are allowed. Click to disable.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
