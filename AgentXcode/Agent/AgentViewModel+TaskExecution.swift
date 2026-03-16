@@ -47,7 +47,7 @@ extension AgentViewModel {
     }
 
     /// Validate that a path exists. Returns an error string if invalid, nil if OK.
-    private static func checkPath(_ path: String?) -> String? {
+    static func checkPath(_ path: String?) -> String? {
         guard let path, !path.isEmpty else { return nil }
         let expanded = (path as NSString).expandingTildeInPath
         guard FileManager.default.fileExists(atPath: expanded) else {
@@ -58,7 +58,7 @@ extension AgentViewModel {
 
     /// Extract user-directory paths from a shell command for preflight validation.
     /// Catches typos like "/Users/foo/Documets/..." before running the command.
-    private static func preflightCommand(_ command: String) -> String? {
+    static func preflightCommand(_ command: String) -> String? {
         // Match paths under /Users/ or ~/ — most common source of typos
         guard let regex = try? NSRegularExpression(
             pattern: #"(?:^|\s)(/Users/[^\s'";&|><$]+|~/[^\s'";&|><$]+)"#
@@ -106,7 +106,7 @@ extension AgentViewModel {
 
     /// Runs a command directly in the Agent app process (not via XPC).
     /// Used for osascript so it inherits the app's Automation permissions.
-    private nonisolated func executeLocal(command: String) async -> (status: Int32, output: String) {
+    nonisolated func executeLocal(command: String) async -> (status: Int32, output: String) {
         await withCheckedContinuation { continuation in
             DispatchQueue.global().async {
                 let process = Process()
@@ -147,7 +147,7 @@ extension AgentViewModel {
     }
 
     /// Returns true if the command contains osascript and should run locally.
-    private nonisolated static func isOsascriptCommand(_ command: String) -> Bool {
+    nonisolated static func isOsascriptCommand(_ command: String) -> Bool {
         command.contains("osascript") || command.contains("/usr/bin/osascript")
     }
 

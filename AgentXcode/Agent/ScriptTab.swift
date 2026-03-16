@@ -29,6 +29,19 @@ final class ScriptTab: Identifiable {
     var streamLineCount = 0
     var streamTruncated = false
 
+    // MARK: - LLM Conversation State
+
+    var taskInput: String = ""
+    var isLLMRunning: Bool = false
+    var isLLMThinking: Bool = false
+    var runningLLMTask: Task<Void, Never>?
+    var llmMessages: [[String: Any]] = []
+
+    // LLM streaming state
+    var llmStreamBuffer: String = ""
+    var llmStreamFlushTask: Task<Void, Never>?
+    var llmStreamingStarted: Bool = false
+
     init(scriptName: String, id: UUID = UUID()) {
         self.id = id
         self.scriptName = scriptName
@@ -83,5 +96,39 @@ final class ScriptTab: Identifiable {
             activityLog += logBuffer
             logBuffer = ""
         }
+    }
+
+    // MARK: - LLM Streaming
+
+    func appendStreamDelta(_ delta: String) {
+        if !llmStreamingStarted {
+            llmStreamingStarted = true
+            llmStreamBuffer = ""
+        }
+        llmStreamBuffer += delta
+        scheduleLLMStreamFlush()
+    }
+
+    func flushStreamBuffer() {
+        llmStreamFlushTask?.cancel()
+        llmStreamFlushTask = nil
+        if !llmStreamBuffer.isEmpty {
+            appendOutput(llmStreamBuffer)
+            llmStreamBuffer = ""
+        }
+        llmStreamingStarted = false
+    }
+
+    private func scheduleLLMStreamFlush() {
+        guard llmStreamFlushTask == nil else { return }
+        llmStreamFlushTask = Task {
+            try? await Task.sleep(for: .milliseconds(100))
+            flushStreamBuffer()
+        }
+    }
+
+    func resetLLMStreamCounters() {
+        streamLineCount = 0
+        streamTruncated = false
     }
 }

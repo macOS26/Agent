@@ -247,16 +247,29 @@ struct ContentView: View {
                             }
                         }
                     )
-                    if tab.isRunning {
-                        Button { viewModel.cancelScriptTab(id: tab.id) } label: {
-                            Label("Cancel", systemImage: "xmark.circle.fill")
-                                .font(.caption)
-                                .foregroundStyle(.red)
+                    VStack(spacing: 4) {
+                        if tab.isRunning {
+                            Button { viewModel.cancelScriptTab(id: tab.id) } label: {
+                                Label("Cancel Script", systemImage: "xmark.circle.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(.red)
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
-                        .padding(12)
+                        if tab.isLLMRunning {
+                            let vm = viewModel
+                            let t = tab
+                            Button { vm.stopTabTask(tab: t) } label: {
+                                Label("Cancel LLM", systemImage: "xmark.circle.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(.orange)
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                        }
                     }
+                    .padding(12)
                 }
             } else {
                 ActivityLogView(
@@ -312,46 +325,100 @@ struct ContentView: View {
                 }
             }
 
-            // Input — always enabled so user can override a running task
-            HStack {
-                Button { viewModel.stop() } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.red)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.regular)
-                .help("Cancel running task")
-                .opacity(viewModel.isRunning ? 1 : 0)
-                .disabled(!viewModel.isRunning)
+            // Input — switches between main and tab input
+            if let selectedId = viewModel.selectedTabId,
+               let tab = viewModel.scriptTabs.first(where: { $0.id == selectedId }) {
+                // Tab input
+                HStack {
+                    let vm = viewModel
+                    let t = tab
+                    Button { vm.stopTabTask(tab: t) } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.orange)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.regular)
+                    .help("Cancel tab LLM task")
+                    .opacity(tab.isLLMRunning ? 1 : 0)
+                    .disabled(!tab.isLLMRunning)
 
-                Button { viewModel.captureScreenshot() } label: {
-                    Image(systemName: "camera")
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.regular)
-                .help("Take a screenshot to attach")
-
-                Button { viewModel.pasteImageFromClipboard() } label: {
-                    Image(systemName: "photo.on.rectangle.angled")
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.regular)
-                .help("Paste image from clipboard")
-
-                TextField("Enter task...", text: $viewModel.taskInput)
-                    .textFieldStyle(.roundedBorder)
-                    .onSubmit {
-                        if !viewModel.taskInput.isEmpty {
-                            viewModel.run()
+                    if tab.isLLMThinking {
+                        HStack(spacing: 4) {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text("Thinking...")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } else if tab.isLLMRunning {
+                        HStack(spacing: 4) {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text("Running...")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
                     }
 
-                Button("Run") { viewModel.run() }
-                    .buttonStyle(.borderedProminent)
+                    TextField("Ask about \(tab.scriptName)...", text: Binding(
+                        get: { tab.taskInput },
+                        set: { tab.taskInput = $0 }
+                    ))
+                        .textFieldStyle(.roundedBorder)
+                        .onSubmit {
+                            if !tab.taskInput.isEmpty {
+                                viewModel.runTabTask(tab: tab)
+                            }
+                        }
+
+                    Button("Run") { viewModel.runTabTask(tab: tab) }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.regular)
+                        .disabled(tab.taskInput.isEmpty || (viewModel.selectedProvider == .claude && viewModel.apiKey.isEmpty))
+                }
+                .padding()
+            } else {
+                // Main tab input
+                HStack {
+                    Button { viewModel.stop() } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.red)
+                    }
+                    .buttonStyle(.bordered)
                     .controlSize(.regular)
-                    .disabled(viewModel.taskInput.isEmpty || (viewModel.selectedProvider == .claude && viewModel.apiKey.isEmpty))
+                    .help("Cancel running task")
+                    .opacity(viewModel.isRunning ? 1 : 0)
+                    .disabled(!viewModel.isRunning)
+
+                    Button { viewModel.captureScreenshot() } label: {
+                        Image(systemName: "camera")
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.regular)
+                    .help("Take a screenshot to attach")
+
+                    Button { viewModel.pasteImageFromClipboard() } label: {
+                        Image(systemName: "photo.on.rectangle.angled")
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.regular)
+                    .help("Paste image from clipboard")
+
+                    TextField("Enter task...", text: $viewModel.taskInput)
+                        .textFieldStyle(.roundedBorder)
+                        .onSubmit {
+                            if !viewModel.taskInput.isEmpty {
+                                viewModel.run()
+                            }
+                        }
+
+                    Button("Run") { viewModel.run() }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.regular)
+                        .disabled(viewModel.taskInput.isEmpty || (viewModel.selectedProvider == .claude && viewModel.apiKey.isEmpty))
+                }
+                .padding()
             }
-            .padding()
         }
 
             DependencyOverlay(status: dependencyStatus, isVisible: $showDependencyOverlay)
