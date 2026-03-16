@@ -56,13 +56,35 @@ final class ChatHistoryStore {
     private var nextOrdinal: Int = 0
     
     private init() {
+        let schema = Schema([ChatMessage.self, ChatTask.self])
         do {
-            let schema = Schema([ChatMessage.self, ChatTask.self])
             let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
             container = try ModelContainer(for: schema, configurations: config)
             context = container?.mainContext
+            // Test fetch to verify tables exist (catches stale schema)
+            _ = try context?.fetchCount(FetchDescriptor<ChatTask>())
         } catch {
-            print("Failed to initialize SwiftData: \(error)")
+            print("SwiftData schema stale or corrupt — recreating: \(error)")
+            deleteStoreFiles()
+            do {
+                let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+                container = try ModelContainer(for: schema, configurations: config)
+                context = container?.mainContext
+            } catch {
+                print("Failed to initialize SwiftData after reset: \(error)")
+            }
+        }
+    }
+
+    private func deleteStoreFiles() {
+        container = nil
+        context = nil
+        guard let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return }
+        let fm = FileManager.default
+        // SwiftData default store files
+        for suffix in ["default.store", "default.store-shm", "default.store-wal"] {
+            let url = appSupport.appendingPathComponent(suffix)
+            try? fm.removeItem(at: url)
         }
     }
     

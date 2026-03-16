@@ -326,6 +326,10 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(readFilePreviewLines, forKey: "agentReadFilePreviewLines") }
     }
 
+    var scriptCaptureStderr: Bool = UserDefaults.standard.object(forKey: "agentScriptCaptureStderr") as? Bool ?? false {
+        didSet { UserDefaults.standard.set(scriptCaptureStderr, forKey: "agentScriptCaptureStderr") }
+    }
+
     // LLM streaming state
     var streamBuffer = ""
     var streamFlushTask: Task<Void, Never>?

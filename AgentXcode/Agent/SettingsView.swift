@@ -232,6 +232,17 @@ struct SettingsView: View {
             }
             Divider()
 
+            // AgentScript stderr
+            HStack {
+                Text("AgentScript")
+                    .font(.headline)
+                Spacer()
+                Toggle("Capture stderr", isOn: $viewModel.scriptCaptureStderr)
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+            }
+            Divider()
+
             // History settings
             HStack {
                 Text("History")

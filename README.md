@@ -1,8 +1,8 @@
 # Agent!
 
 [![Swift 6.0](https://img.shields.io/badge/Swift-6.0-orange.svg)](https://swift.org)
-[![Website](https://img.shields.io/badge/website-agent.macos26.app-blue.svg)](https://agent.macos26.apo)
-[![Version](https://img.shields.io/badge/version-1.0.8-red.svg)](https://github.com/macOS26/Agent)
+[![Website](https://img.shields.io/badge/website-agent.macos26.app-blue.svg)](https://agent.macos26.app)
+[![Version](https://img.shields.io/badge/version-1.0.10-red.svg)](https://github.com/macOS26/Agent)
 [![GitHub downloads](https://img.shields.io/github/downloads/macOS26/Agent/total.svg?v=2)](https://github.com/macOS26/Agent/releases)
 [![GitHub stars](https://img.shields.io/github/stars/macOS26/Agent.svg?style=social)](https://github.com/macOS26/Agent/stargazers)
 
@@ -481,7 +481,7 @@ Attach screenshots or paste images directly into Agent. Images are encoded as ba
 
 ### Task Memory
 
-Agent persists task history to `~/Library/Application Support/Agent/task_history.json`. The last 20 tasks are injected into the system prompt, giving the AI memory across sessions.
+Agent persists task history using SwiftData. Recent task messages and older task summaries are injected into the system prompt, giving the AI memory across sessions.
 
 ---
 

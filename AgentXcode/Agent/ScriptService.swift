@@ -416,9 +416,9 @@ final class ScriptService {
     }
 
     /// Load and run a compiled script dylib in-process via dlopen/dlsym.
-    /// Captures stdout/stderr and returns the output + exit status.
+    /// Captures stdout (and optionally stderr) and returns the output + exit status.
     /// Runs on a background thread to avoid blocking the main thread.
-    func loadAndRunScript(name: String, arguments: String = "", isCancelled: (@Sendable () -> Bool)? = nil, onOutput: (@Sendable (String) -> Void)? = nil) async -> (output: String, status: Int32) {
+    func loadAndRunScript(name: String, arguments: String = "", captureStderr: Bool = false, isCancelled: (@Sendable () -> Bool)? = nil, onOutput: (@Sendable (String) -> Void)? = nil) async -> (output: String, status: Int32) {
         let scriptName = name.replacingOccurrences(of: ".swift", with: "")
         let path = dylibPath(name: scriptName)
 
@@ -429,28 +429,38 @@ final class ScriptService {
                     setenv("AGENT_SCRIPT_ARGS", arguments, 1)
                 }
 
-                // Create pipe to capture stdout/stderr
+                // Create pipe to capture stdout (and optionally stderr)
                 var pipefd: [Int32] = [0, 0]
                 pipe(&pipefd)
                 let savedStdout = dup(STDOUT_FILENO)
-                let savedStderr = dup(STDERR_FILENO)
+                let savedStderr = captureStderr ? dup(STDERR_FILENO) : -1
                 dup2(pipefd[1], STDOUT_FILENO)
-                dup2(pipefd[1], STDERR_FILENO)
+                if captureStderr {
+                    dup2(pipefd[1], STDERR_FILENO)
+                }
 
                 // Force line-buffered stdout so print() in dylibs flushes on each newline
                 // (pipes default to full buffering which delays output until script exits)
                 setvbuf(stdout, nil, _IOLBF, 0)
-                setvbuf(stderr, nil, _IONBF, 0)
+                if captureStderr {
+                    setvbuf(stderr, nil, _IONBF, 0)
+                }
+
+                /// Restore stdout (and stderr if captured) to their original file descriptors.
+                func restoreFDs() {
+                    dup2(savedStdout, STDOUT_FILENO)
+                    if captureStderr { dup2(savedStderr, STDERR_FILENO) }
+                    setvbuf(stdout, nil, _IOFBF, 0)
+                    if captureStderr { setvbuf(stderr, nil, _IOFBF, 0) }
+                    close(savedStdout)
+                    if captureStderr { close(savedStderr) }
+                }
 
                 // Load dylib
                 guard let handle = dlopen(path, RTLD_NOW) else {
-                    // Restore file descriptors and cleanup
-                    dup2(savedStdout, STDOUT_FILENO)
-                    dup2(savedStderr, STDERR_FILENO)
+                    restoreFDs()
                     close(pipefd[0])
                     close(pipefd[1])
-                    close(savedStdout)
-                    close(savedStderr)
                     unsetenv("AGENT_SCRIPT_ARGS")
                     let err = String(cString: dlerror())
                     continuation.resume(returning: ("dlopen error: \(err)", 1))
@@ -460,12 +470,9 @@ final class ScriptService {
                 // Find entry point
                 guard let sym = dlsym(handle, "script_main") else {
                     dlclose(handle)
-                    dup2(savedStdout, STDOUT_FILENO)
-                    dup2(savedStderr, STDERR_FILENO)
+                    restoreFDs()
                     close(pipefd[0])
                     close(pipefd[1])
-                    close(savedStdout)
-                    close(savedStderr)
                     unsetenv("AGENT_SCRIPT_ARGS")
                     continuation.resume(returning: ("dlsym error: script_main not found in \(scriptName)", 1))
                     return
@@ -507,14 +514,9 @@ final class ScriptService {
                 if isCancelled?() == true {
                     dlclose(handle)
                     fflush(stdout)
-                    fflush(stderr)
+                    if captureStderr { fflush(stderr) }
                     close(pipefd[1])
-                    dup2(savedStdout, STDOUT_FILENO)
-                    dup2(savedStderr, STDERR_FILENO)
-                    setvbuf(stdout, nil, _IOFBF, 0)
-                    setvbuf(stderr, nil, _IOFBF, 0)
-                    close(savedStdout)
-                    close(savedStderr)
+                    restoreFDs()
                     readerDone.wait()
                     close(pipefd[0])
                     unsetenv("AGENT_SCRIPT_ARGS")
@@ -529,16 +531,9 @@ final class ScriptService {
 
                 // Flush and restore
                 fflush(stdout)
-                fflush(stderr)
+                if captureStderr { fflush(stderr) }
                 close(pipefd[1])
-                dup2(savedStdout, STDOUT_FILENO)
-                dup2(savedStderr, STDERR_FILENO)
-
-                // Restore default full buffering now that stdout/stderr point to normal FDs
-                setvbuf(stdout, nil, _IOFBF, 0)
-                setvbuf(stderr, nil, _IOFBF, 0)
-                close(savedStdout)
-                close(savedStderr)
+                restoreFDs()
 
                 // Wait for reader to finish draining the pipe
                 readerDone.wait()

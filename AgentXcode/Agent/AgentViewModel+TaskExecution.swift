@@ -769,6 +769,7 @@ extension AgentViewModel {
                             let runResult = await scriptService.loadAndRunScript(
                                 name: scriptName,
                                 arguments: arguments,
+                                captureStderr: scriptCaptureStderr,
                                 isCancelled: { cancelFlag.value }
                             ) { [weak tab] chunk in
                                 Task { @MainActor in
