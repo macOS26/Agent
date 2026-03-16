@@ -437,6 +437,11 @@ final class ScriptService {
                 dup2(pipefd[1], STDOUT_FILENO)
                 dup2(pipefd[1], STDERR_FILENO)
 
+                // Force line-buffered stdout so print() in dylibs flushes on each newline
+                // (pipes default to full buffering which delays output until script exits)
+                setvbuf(stdout, nil, _IOLBF, 0)
+                setvbuf(stderr, nil, _IONBF, 0)
+
                 // Load dylib
                 guard let handle = dlopen(path, RTLD_NOW) else {
                     // Restore file descriptors and cleanup
@@ -509,6 +514,10 @@ final class ScriptService {
                 close(pipefd[1])
                 dup2(savedStdout, STDOUT_FILENO)
                 dup2(savedStderr, STDERR_FILENO)
+
+                // Restore default full buffering now that stdout/stderr point to normal FDs
+                setvbuf(stdout, nil, _IOFBF, 0)
+                setvbuf(stderr, nil, _IOFBF, 0)
                 close(savedStdout)
                 close(savedStderr)
 
