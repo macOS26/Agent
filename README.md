@@ -460,11 +460,11 @@ flowchart TD
     K -- Yes --> L[In-Process Streaming\nInherits ALL TCC\nOpens in tab]
     K -- No --> M[UserService XPC\nLaunchAgent\nRuns as user]
 
-    style G fill:#f96,stroke:#333
-    style I fill:#6b6,stroke:#333
-    style L fill:#6b6,stroke:#333
-    style J fill:#69f,stroke:#333
-    style M fill:#69f,stroke:#333
+    style G fill:#f96,stroke:#333,color:#000
+    style I fill:#6b6,stroke:#333,color:#000
+    style L fill:#6b6,stroke:#333,color:#000
+    style J fill:#69f,stroke:#333,color:#000
+    style M fill:#69f,stroke:#333,color:#000
 ```
 
 | Path | Service | Runs As | TCC | Used For |
