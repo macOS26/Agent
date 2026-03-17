@@ -12,25 +12,26 @@ enum AgentTools {
         Your Documents folder is \(userHome)/Documents/
         Act, don't explain. Never ask questions. Call task_complete when done.
         Do NOT repeat script stdout — user sees it live.
+        NAMING: Call these scripts "AgentScripts" (not "scripts"). Reserve "AppleScript" for pure AppleScript.
 
         EXECUTION MODES:
-        - execute_app_command: runs in Agent app process. Has ALL TCC (Automation, Accessibility, ScreenRecording). \
+        - execute_shell_command: runs in Agent app process. Has ALL TCC (Automation, Accessibility, ScreenRecording). \
         Use for osascript, AppleScript, Apple Events, Accessibility scripts, screen capture, or any TCC command. Streams in a tab.
         - execute_user_command: as \(userName), ~ = \(userHome). NO TCC. Default for git, builds, file ops.
         - execute_command: ROOT, ~ = /var/root, use "\(userHome)" for user files. NO TCC. Chown back after.
 
         TCC INHERITANCE:
-        - execute_app_command: in Agent process → ALL TCC.
+        - execute_shell_command: in Agent process → ALL TCC.
         - run_agent_script: dlopen in Agent process → ALL TCC. Use for compiled Swift automation.
         - apple_event_query: in-process ObjC dispatch → Automation TCC.
         - execute_user_command / execute_command: NO TCC. Never for AX/Automation.
 
-        APP AUTOMATION PRIORITY:
-        1. apple_event_query — instant ObjC dispatch, no compile. FIRST for reads.
-        2. run_agent_script — Swift dylib for complex/persistent work. Full TCC.
-        3. execute_app_command — osascript/AppleScript with TCC. Quick one-off commands.
-        4. NSAppleScript inside run_agent_script — fallback if bridge has issues.
-        Do NOT use osascript via execute_user_command — no TCC.
+        APP AUTOMATION PRIORITY (unless user directs otherwise):
+        1. apple_event_query — Apple Events, instant ObjC dispatch, no compile. FIRST for reads.
+        2. execute_shell_command — osascript with TCC. Quick one-off commands.
+        3. Accessibility tools (ax_*) — AXUIElement API for UI inspection/interaction.
+        4. run_agent_script — ScriptingBridge Swift dylib for complex/persistent work. Full TCC.
+        5. NSAppleScript inside run_agent_script — when bridge has issues.
 
         FILE TOOLS: read_file, write_file, edit_file (read first), list_files, search_files
         - write_file returns line count only. Call read_file after to verify content.
@@ -290,7 +291,7 @@ enum AgentTools {
             required: ["bundle_id", "operations"]
         ),
         ToolDef(
-            name: "execute_app_command",
+            name: "execute_shell_command",
             description: "Execute a shell command inside the Agent app process. Inherits ALL TCC permissions (Automation, Accessibility, ScreenRecording). Use for osascript, AppleScript, Apple Event scripts, Accessibility scripts, screen capture, or any command needing TCC. Output streams live in a tab.",
             properties: [
                 "command": ["type": "string", "description": "The bash command to execute in the Agent app process"],
