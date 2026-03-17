@@ -442,23 +442,23 @@ Every shell command follows one of three execution paths based on privilege need
 
 ```mermaid
 flowchart TD
-    A[Shell Command] --> B{Which tool?}
-    B --> C[execute_command]
-    B --> D[execute_user_command]
-    B --> E[execute_shell_command]
+    A[Command] --> B{Tool?}
+    B --> C[exec_cmd]
+    B --> D[exec_user]
+    B --> E[exec_shell]
 
-    C --> F{Root enabled?}
-    F -- Yes --> G(LaunchDaemon\nRoot)
-    F -- No --> H{osascript?}
+    C --> F{Root?}
+    F -- Y --> G(Daemon)
+    F -- N --> H{osa?}
 
     D --> H
 
-    H -- Yes --> I(In-Process\nTCC)
-    H -- No --> J(LaunchAgent\nUser)
+    H -- Y --> I(App TCC)
+    H -- N --> J(Agent)
 
-    E --> K{Needs TCC?}
-    K -- Yes --> L(In-Process\nTCC + Tab)
-    K -- No --> M(LaunchAgent\nUser)
+    E --> K{TCC?}
+    K -- Y --> L(App TCC)
+    K -- N --> M(Agent)
 
     style G fill:#f96,stroke:#333,color:#000
     style I fill:#6b6,stroke:#333,color:#000
