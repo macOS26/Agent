@@ -96,8 +96,15 @@ final class FoundationModelService {
             return ([["type": "text", "text": "(empty prompt)"]], "end_turn")
         }
         var fullText = ""
-        for try await snapshot in s.streamResponse(to: prompt) {
-            fullText = snapshot.content
+        do {
+            for try await snapshot in s.streamResponse(to: prompt) {
+                fullText = snapshot.content
+            }
+        } catch {
+            // Foundation Models may throw a locale/language error mid-session.
+            // Reset the session so the next task starts clean.
+            self.session = nil
+            throw error
         }
         // Parse first. If it's a tool call, emit any text written before it.
         let result = parseResponse(fullText, session: s)
@@ -121,6 +128,7 @@ final class FoundationModelService {
     // MARK: - Helpers
 
     /// Extract only the last user message — the session maintains prior turns internally.
+    /// Tool results are formatted as plain text so the on-device model understands them.
     private func extractLastUserPrompt(from messages: [[String: Any]]) -> String {
         for msg in messages.reversed() {
             guard let role = msg["role"] as? String, role == "user" else { continue }
@@ -128,11 +136,11 @@ final class FoundationModelService {
             if let blocks = msg["content"] as? [[String: Any]] {
                 let isToolResults = blocks.first?["type"] as? String == "tool_result"
                 if isToolResults {
-                    return blocks.compactMap { block -> String? in
-                        guard let id = block["tool_use_id"] as? String,
-                              let content = block["content"] as? String else { return nil }
-                        return "Tool result [\(id)]: \(content)"
-                    }.joined(separator: "\n---\n")
+                    // Format tool results naturally — Foundation Models doesn't understand UUIDs
+                    let output = blocks.compactMap { block -> String? in
+                        block["content"] as? String
+                    }.joined(separator: "\n")
+                    return "The command output was:\n\(output)\n\nNow reply in English with this information, then call task_complete."
                 }
                 return blocks.compactMap { block -> String? in
                     guard block["type"] as? String == "text" else { return nil }
