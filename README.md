@@ -776,7 +776,7 @@ Scripts inherit Agent's TCC permissions (Automation, Accessibility, Screen Recor
 | **Xcode automation** | Built-in: build, run, grant permissions | N/A |
 | **Accessibility** | Full AXUIElement API integration | Limited |
 | **Scripting language** | Swift Package-based AgentScripts | Python/JS scripts |
-| **MCP support** | Yes (stdio transport) | Yes |
+| **MCP support** | Yes (stdio, HTTP/SSE) | Yes |
 | **Messaging** | Native Apple Messages (iMessage/SMS) with per-recipient approval | WhatsApp, Telegram, Slack, Discord, iMessage, and more |
 | **Message reply** | Auto-replies task results via iMessage to approved senders | Platform-specific replies |
 | **App size** | 13.3 MB (v1.0.11) | ~90.5 MB unpacked (npm) |
