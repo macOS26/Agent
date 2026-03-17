@@ -15,7 +15,7 @@ enum AgentTools {
 
         EXECUTION MODES:
         - execute_app_command: runs in Agent app process. Has ALL TCC (Automation, Accessibility, ScreenRecording). \
-        Use for osascript, AppleScript, Accessibility scripts, screen capture, or any TCC command. Streams in a tab.
+        Use for osascript, AppleScript, Apple Events, Accessibility scripts, screen capture, or any TCC command. Streams in a tab.
         - execute_user_command: as \(userName), ~ = \(userHome). NO TCC. Default for git, builds, file ops.
         - execute_command: ROOT, ~ = /var/root, use "\(userHome)" for user files. NO TCC. Chown back after.
 
@@ -291,7 +291,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: "execute_app_command",
-            description: "Execute a shell command inside the Agent app process. Inherits ALL TCC permissions (Automation, Accessibility, ScreenRecording). Use for osascript, AppleScript, Accessibility scripts, screen capture, or any command needing TCC. Output streams live in a tab.",
+            description: "Execute a shell command inside the Agent app process. Inherits ALL TCC permissions (Automation, Accessibility, ScreenRecording). Use for osascript, AppleScript, Apple Event scripts, Accessibility scripts, screen capture, or any command needing TCC. Output streams live in a tab.",
             properties: [
                 "command": ["type": "string", "description": "The bash command to execute in the Agent app process"],
             ],
