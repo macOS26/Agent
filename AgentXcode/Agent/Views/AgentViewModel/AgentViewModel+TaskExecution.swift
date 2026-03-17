@@ -146,6 +146,50 @@ extension AgentViewModel {
         }
     }
 
+    /// Run a command in the Agent app process with streaming output.
+    /// Inherits Agent's TCC permissions (Automation, Accessibility, ScreenRecording).
+    nonisolated func executeLocalStreaming(command: String, onOutput: @escaping @Sendable (String) -> Void) async -> (status: Int32, output: String) {
+        await withCheckedContinuation { continuation in
+            DispatchQueue.global().async {
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: "/bin/bash")
+                process.arguments = ["-c", command]
+
+                var env = ProcessInfo.processInfo.environment
+                env["HOME"] = FileManager.default.homeDirectoryForCurrentUser.path
+                process.environment = env
+
+                let pipe = Pipe()
+                process.standardOutput = pipe
+                process.standardError = pipe
+
+                do {
+                    try process.run()
+                } catch {
+                    let msg = "Failed to launch: \(error.localizedDescription)"
+                    onOutput(msg)
+                    continuation.resume(returning: (-1, msg))
+                    return
+                }
+
+                // Stream output chunks as they arrive
+                var collected = ""
+                let handle = pipe.fileHandleForReading
+                while true {
+                    let data = handle.availableData
+                    if data.isEmpty { break }
+                    if let chunk = String(data: data, encoding: .utf8) {
+                        collected += chunk
+                        onOutput(chunk)
+                    }
+                }
+                process.waitUntilExit()
+
+                continuation.resume(returning: (process.terminationStatus, collected))
+            }
+        }
+    }
+
     /// Returns true if the command contains osascript and should run locally.
     nonisolated static func isOsascriptCommand(_ command: String) -> Bool {
         command.contains("osascript") || command.contains("/usr/bin/osascript")
@@ -799,6 +843,53 @@ extension AgentViewModel {
                                 ? String(toolOutput.prefix(10000)) + "\n...(truncated)"
                                 : toolOutput
                             commandsRun.append("run_agent_script: \(scriptName)")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": truncated2])
+                        }
+
+                        // In-process shell with TCC (Automation, Accessibility, ScreenRecording)
+                        if name == "execute_app_command" {
+                            let command = input["command"] as? String ?? ""
+
+                            // Label for tab
+                            let label: String
+                            if command.contains("osascript") {
+                                label = "osascript"
+                            } else {
+                                let words = command.prefix(30).components(separatedBy: " ")
+                                label = words.first ?? "app_cmd"
+                            }
+
+                            let tab = openScriptTab(scriptName: label)
+                            appendLog("App command... (see tab)")
+                            flushLog()
+
+                            tab.appendLog("$ \(AgentViewModel.collapseHeredocs(command))")
+                            tab.flush()
+
+                            let result = await executeLocalStreaming(command: command) { [weak tab] chunk in
+                                Task { @MainActor in
+                                    tab?.appendOutput(chunk)
+                                }
+                            }
+
+                            tab.isRunning = false
+                            tab.exitCode = result.status
+                            tab.flush()
+                            persistScriptTabs()
+
+                            guard !Task.isCancelled else { break }
+
+                            let statusNote = result.status == 0 ? "completed" : "exit code: \(result.status)"
+                            appendLog("\(label) \(statusNote)")
+                            flushLog()
+
+                            let toolOutput = result.output.isEmpty
+                                ? "(no output, exit code: \(result.status))"
+                                : result.output
+                            let truncated2 = toolOutput.count > 10000
+                                ? String(toolOutput.prefix(10000)) + "\n...(truncated)"
+                                : toolOutput
+                            commandsRun.append("execute_app_command: \(label)")
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": truncated2])
                         }
 

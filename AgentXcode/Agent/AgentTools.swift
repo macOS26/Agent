@@ -13,23 +13,24 @@ enum AgentTools {
         Act, don't explain. Never ask questions. Call task_complete when done.
         Do NOT repeat script stdout — user sees it live.
 
-        EXECUTION (prefer user, escalate only when needed):
-        - execute_user_command: as \(userName), ~ = \(userHome). Default.
-        - execute_command: ROOT, ~ = /var/root, use "\(userHome)" for user files. Chown back after.
+        EXECUTION MODES:
+        - execute_app_command: runs in Agent app process. Has ALL TCC (Automation, AX, ScreenRecording). \
+        Use for osascript, AppleScript, or any command needing TCC. Output streams in a tab.
+        - execute_user_command: as \(userName), ~ = \(userHome). NO TCC. Default for git, builds, file ops.
+        - execute_command: ROOT, ~ = /var/root, use "\(userHome)" for user files. NO TCC. Chown back after.
 
-        TCC (Accessibility/ScreenRecording/Automation need Agent app process):
-        - run_agent_script: dlopen in Agent process → inherits ALL TCC. USE THIS for AX, ScreenRecording, Automation.
-        - apple_event_query: in-process ObjC dispatch → inherits Automation TCC.
-        - execute_user_command: child process, NO TCC. Not for AX/Automation.
-        - execute_command: root daemon, NO TCC. Never for AX/Automation.
-        - osascript via execute_user_command: NO TCC (different process tree).
-        - osascript inside run_agent_script: OK — use NSAppleScript or Process("/usr/bin/osascript") from dylib.
+        TCC INHERITANCE:
+        - execute_app_command: in Agent process → ALL TCC.
+        - run_agent_script: dlopen in Agent process → ALL TCC. Use for compiled Swift automation.
+        - apple_event_query: in-process ObjC dispatch → Automation TCC.
+        - execute_user_command / execute_command: NO TCC. Never for AX/Automation.
 
         APP AUTOMATION PRIORITY:
         1. apple_event_query — instant ObjC dispatch, no compile. FIRST for reads.
-        2. run_agent_script — Swift dylib for complex/persistent work. Has full TCC.
-        3. NSAppleScript or osascript inside run_agent_script — fallback if bridge has issues. Has TCC.
-        Do NOT use osascript via execute_user_command — no TCC, use options 1-3 instead.
+        2. run_agent_script — Swift dylib for complex/persistent work. Full TCC.
+        3. execute_app_command — osascript/AppleScript with TCC. Quick one-off commands.
+        4. NSAppleScript inside run_agent_script — fallback if bridge has issues.
+        Do NOT use osascript via execute_user_command — no TCC.
 
         FILE TOOLS: read_file, write_file, edit_file (read first), list_files, search_files
         - write_file returns line count only. Call read_file after to verify content.
@@ -289,8 +290,16 @@ enum AgentTools {
             required: ["bundle_id", "operations"]
         ),
         ToolDef(
+            name: "execute_app_command",
+            description: "Execute a shell command inside the Agent app process. Inherits ALL TCC permissions (Automation, Accessibility, ScreenRecording). Use for osascript, AppleScript, or any command needing TCC. Output streams live in a tab. Prefer apple_event_query for simple reads, run_agent_script for compiled Swift.",
+            properties: [
+                "command": ["type": "string", "description": "The bash command to execute in the Agent app process"],
+            ],
+            required: ["command"]
+        ),
+        ToolDef(
             name: "execute_user_command",
-            description: "Execute a shell command as the current user (no root). Use this for most tasks: git, builds, scripts, homebrew, etc.",
+            description: "Execute a shell command as the current user (no root). NO TCC permissions. Use for git, builds, file ops, homebrew, etc.",
             properties: [
                 "command": ["type": "string", "description": "The bash command to execute as the current user"],
             ],
@@ -298,7 +307,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: "execute_command",
-            description: "Execute a shell command with ROOT privileges via the privileged daemon. Only use when root is required: system packages, /System or /Library modifications, disk operations, launchd services, or changing ownership outside user home.",
+            description: "Execute a shell command with ROOT privileges via the privileged daemon. NO TCC. Only use when root is required: system packages, /System or /Library modifications, disk operations.",
             properties: [
                 "command": ["type": "string", "description": "The bash command to execute as root"],
             ],
