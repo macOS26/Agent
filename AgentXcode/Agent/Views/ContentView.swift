@@ -6,10 +6,8 @@ struct ContentView: View {
     @State private var viewModel = AgentViewModel()
     @State private var showSettings = false
     @State private var showHistory = false
-    @State private var showSplash = true
-    @State private var splashOpacity: Double = 0.85
     @State private var dependencyStatus: DependencyStatus?
-    @State private var showDependencyOverlay = false
+    @State private var showDependencyOverlay = true
     @State private var showSearch = false
     @State private var searchText = ""
     @State private var currentMatchIndex = 0
@@ -21,7 +19,6 @@ struct ContentView: View {
     @State private var showClearConfirm = false
 
     var body: some View {
-        ZStack {
         VStack(spacing: 0) {
             // Header
             HStack {
@@ -455,64 +452,10 @@ struct ContentView: View {
                 .padding()
             }
         }
-
-            DependencyOverlay(status: dependencyStatus, isVisible: $showDependencyOverlay)
-
-            if showSplash {
-                Color(.windowBackgroundColor)
-                    .overlay {
-                        ZStack {
-                            Image("AgentIcon")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .shadow(color: .blue.opacity(0.6), radius: 40)
-                                .shadow(color: .blue.opacity(0.3), radius: 80)
-                                .padding(40)
-
-                            Text("Agent!")
-                                .font(.system(size: 50, weight: .black, design: .monospaced))
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [.white, .blue],
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    )
-                                )
-                                .shadow(color: .blue, radius: 12)
-                                .shadow(color: .blue.opacity(0.7), radius: 24)
-                                .offset(y: 100)
-
-                            Text("macOS26")
-                                .font(.system(size: 50, weight: .black, design: .monospaced))
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [.white, .blue],
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    )
-                                )
-                                .shadow(color: .blue, radius: 12)
-                                .shadow(color: .blue.opacity(0.7), radius: 24)
-                                .offset(y: 155)
-
-                            Text("")
-                                .font(.system(size: 115, weight: .black, design: .monospaced))
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [.white, .blue],
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    )
-                                )
-                                .shadow(color: .blue, radius: 12)
-                                .shadow(color: .blue.opacity(0.7), radius: 24)
-                                .offset(y: 220)
-                        }
-                    }
-                    .opacity(splashOpacity)
-            }
-        }
         .frame(minWidth: 700, minHeight: 500)
+        .overlay {
+            DependencyOverlay(status: dependencyStatus, isVisible: $showDependencyOverlay)
+        }
         .alert("Quit Agent?", isPresented: $showQuitConfirm) {
             Button("Quit", role: .destructive) { NSApplication.shared.terminate(nil) }
             Button("Cancel", role: .cancel) { }
@@ -520,25 +463,13 @@ struct ContentView: View {
             Text("Are you sure you want to close the window and quit?")
         }
         .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                withAnimation(.easeOut(duration: 0.6)) {
-                    splashOpacity = 0
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
-                    showSplash = false
-            }
             Task {
                 await viewModel.fetchClaudeModels()
-
-                }
             }
             DispatchQueue.global(qos: .userInitiated).async {
                 let status = DependencyChecker.check()
                 DispatchQueue.main.async {
                     dependencyStatus = status
-                    if !status.allGood {
-                        showDependencyOverlay = true
-                    }
                 }
             }
             NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in

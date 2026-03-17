@@ -6,7 +6,7 @@
 [![GitHub downloads](https://img.shields.io/github/downloads/macOS26/Agent/total.svg?v=2)](https://github.com/macOS26/Agent/releases)
 [![GitHub stars](https://img.shields.io/github/stars/macOS26/Agent.svg?style=social)](https://github.com/macOS26/Agent/stargazers)
 
-Agent!c A! for your  Mac Desktop
+Agent! — AI for your  Mac Desktop
 
 <img width="340" height="339" alt="Agent! icon" src="https://github.com/user-attachments/assets/5645d8b8-8ce7-4d56-9ede-5eb58f31f227" />
 
@@ -300,6 +300,28 @@ Agent! supports **MCP (Model Context Protocol)** servers, allowing you to extend
 
 MCP is an open protocol that lets AI models interact with external tools, APIs, and data sources. Agent acts as an MCP **client**, connecting to MCP servers that expose tools and resources.
 
+### Available MCP Servers
+
+Agent! includes support for several MCP servers out of the box:
+
+#### HelloWorld MCP Server
+A simple demonstration server providing a basic greeting tool:
+- `mcp_HelloWorld_hello` — Say hello to someone
+
+#### XCF (Xcode Features) MCP Server
+Comprehensive Xcode automation and Swift development tools:
+- Project management (`list_projects`, `select_project`, `show_current_project`)
+- Build automation (`build_project`, `run_project`)
+- Code analysis (`snippet`, `analyzer`, `analyze_swift_code`)
+- File operations (`read_dir`, etc.)
+- Environment utilities (`show_env`, `show_folder`)
+
+#### DemoHttp MCP Server
+HTTP-based demonstration server with utility functions:
+- `get_time` — Get current date and time
+- `calculate` — Evaluate math expressions (add, subtract, multiply, divide)
+- `reverse_string` — Reverse a text string
+
 ### Adding MCP Servers
 
 1. Click the **server icon** ( Rack) in the toolbar
@@ -398,6 +420,121 @@ Agent.app (SwiftUI)
 
 ---
 
+## Available Tools
+
+Agent! provides 50+ tools across multiple categories for autonomous task execution.
+
+### File Operations (5 tools)
+
+| Tool | Description |
+|------|-------------|
+| `read_file` | Read file contents with line numbers |
+| `write_file` | Create or overwrite a file |
+| `edit_file` | Replace exact text in a file |
+| `list_files` | Find files matching a glob pattern |
+| `search_files` | Search file contents by regex pattern |
+
+### Git Operations (6 tools)
+
+| Tool | Description |
+|------|-------------|
+| `git_status` | Show current branch, staged/unstaged changes |
+| `git_diff` | Show file changes as unified diff |
+| `git_log` | Show recent commit history |
+| `git_commit` | Stage files and create a commit |
+| `git_diff_patch` | Apply a unified diff patch |
+| `git_branch` | Create a new git branch |
+
+### Command Execution (2 tools)
+
+| Tool | Description |
+|------|-------------|
+| `execute_user_command` | Execute shell command as current user (default) |
+| `execute_command` | Execute shell command as ROOT (privileged) |
+
+### Apple Event Query (1 tool)
+
+| Tool | Description |
+|------|-------------|
+| `apple_event_query` | Query any scriptable Mac app dynamically via ScriptingBridge (zero compilation) |
+
+### Accessibility Tools (12 tools)
+
+| Tool | Description |
+|------|-------------|
+| `ax_list_windows` | List all visible windows with positions and sizes |
+| `ax_inspect_element` | Inspect accessibility element at screen coordinates |
+| `ax_get_properties` | Get all properties of an accessibility element |
+| `ax_type_text` | Simulate typing text at cursor or coordinates |
+| `ax_click` | Simulate mouse click at screen coordinates |
+| `ax_scroll` | Simulate scroll wheel at coordinates |
+| `ax_press_key` | Simulate key press with modifiers |
+| `ax_perform_action` | Perform accessibility action (AXPress, AXConfirm, etc.) |
+| `ax_screenshot` | Capture screenshot of region or window |
+| `ax_check_permission` | Check if Accessibility permission is granted |
+| `ax_request_permission` | Request Accessibility permission |
+| `ax_get_audit_log` | Get recent accessibility audit log entries |
+
+### Agent Scripts (6 tools)
+
+| Tool | Description |
+|------|-------------|
+| `list_agent_scripts` | List all Swift automation scripts |
+| `read_agent_script` | Read source code of a script |
+| `create_agent_script` | Create a new Swift script |
+| `update_agent_script` | Update an existing script |
+| `run_agent_script` | Compile and run a Swift dylib script |
+| `delete_agent_script` | Delete a script |
+
+### Xcode Automation (5 tools)
+
+| Tool | Description |
+|------|-------------|
+| `xcode_build` | Build an Xcode project/workspace |
+| `xcode_run` | Build and run an Xcode project |
+| `xcode_list_projects` | List all open Xcode projects |
+| `xcode_select_project` | Select a project by number |
+| `xcode_grant_permission` | Grant macOS Automation permission for Xcode |
+
+### Web (1 tool)
+
+| Tool | Description |
+|------|-------------|
+| `web_search` | Search the web for current information |
+
+### Task Management (1 tool)
+
+| Tool | Description |
+|------|-------------|
+| `task_complete` | Signal that a task has been completed |
+
+### MCP Tools
+
+Agent! also supports MCP (Model Context Protocol) servers for extended functionality. Available MCP tools depend on configured servers:
+
+**HelloWorld MCP** — Simple greeting tool
+- `mcp_HelloWorld_hello` — Say hello to someone
+
+**XCF MCP** — Xcode Features (17 tools)
+- `mcp_xcf_xcf` — Execute xcf actions
+- `mcp_xcf_help` / `mcp_xcf_xcf_help` / `mcp_xcf_show_help` — Help information
+- `mcp_xcf_snippet` — Extract code snippets from files
+- `mcp_xcf_analyzer` / `mcp_xcf_analyze_swift_code` — Analyze Swift code
+- `mcp_xcf_read_dir` — List directory contents
+- `mcp_xcf_use_xcf` — Activate XCF mode
+- `mcp_xcf_tools` — Show detailed tool reference
+- `mcp_xcf_grant_permission` — Grant Xcode automation permissions
+- `mcp_xcf_run_project` / `mcp_xcf_build_project` — Run/build project
+- `mcp_xcf_show_current_project` / `mcp_xcf_list_projects` / `mcp_xcf_select_project` — Project management
+- `mcp_xcf_show_env` / `mcp_xcf_show_folder` — Environment info
+
+**DemoHttp MCP** — HTTP demo server (3 tools)
+- `mcp_DemoHttp_get_time` — Get current date and time
+- `mcp_DemoHttp_calculate` — Evaluate math expressions
+- `mcp_DemoHttp_reverse_string` — Reverse a string
+
+---
+
 ## What Agent! Can Do
 
 ### Autonomous Task Execution
@@ -457,9 +594,16 @@ Agent includes an `apple_event_query` tool that lets the AI query any scriptable
 
 ### ScriptingBridges Library
 
-Agent ships with pre-generated Swift protocol definitions for 44+ macOS applications:
+Agent ships with pre-generated Swift protocol definitions for **54 macOS applications**:
 
-Adobe Illustrator, Automator, Calendar, Contacts, Finder, Firefox, Google Chrome, Mail, Messages, Music, Notes, Numbers, Pages, Photos, Preview, QuickTime Player, Reminders, Safari, Shortcuts, System Events, Terminal, TV, Xcode, and more.
+| Category | Applications |
+|----------|--------------|
+| **Apple Apps** | Automator, Calendar, Contacts, Finder, Mail, Messages, Music, Notes, Numbers, Pages, Photos, Preview, QuickTime Player, Reminders, Safari, Script Editor, Shortcuts, System Events, Terminal, TextEdit, TV |
+| **Developer Tools** | Xcode, Developer Tools, Instruments, Simulator |
+| **Creative Apps** | Keynote, Logic Pro, Final Cut Pro, Adobe Illustrator, Pixelmator Pro |
+| **Browsers** | Google Chrome, Firefox, Microsoft Edge |
+| **System** | System Settings, System Information, Screen Sharing, Bluetooth File Exchange, Console, Database Events, Folder Actions Setup, Voice Over, UTM |
+| **Legacy** | Pages Creator Studio, Numbers Creator Studio, Logic Pro Creator Studio, Final Cut Pro Creator Studio |
 
 Each bridge is its own Swift module. Scripts import only what they need (e.g. `import MailBridge`), keeping builds fast and isolated.
 
