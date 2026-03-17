@@ -591,6 +591,36 @@ extension AgentViewModel {
             )
         }
 
+        // lookup_sdef
+        if name == "lookup_sdef" {
+            let bundleID = input["bundle_id"] as? String ?? ""
+            let className = input["class_name"] as? String
+
+            let output: String
+            if bundleID == "list" {
+                let names = SDEFService.shared.availableSDEFs()
+                output = "Available SDEFs (\(names.count)):\n" + names.joined(separator: "\n")
+            } else if let cls = className {
+                let props = SDEFService.shared.properties(for: bundleID, className: cls)
+                let elems = SDEFService.shared.elements(for: bundleID, className: cls)
+                var lines = ["\(cls) properties:"]
+                for p in props {
+                    let ro = p.readonly == true ? " (readonly)" : ""
+                    lines.append("  .\(p.name): \(p.type ?? "any")\(ro)\(p.description.map { " — \($0)" } ?? "")")
+                }
+                if !elems.isEmpty { lines.append("elements: \(elems.joined(separator: ", "))") }
+                output = lines.isEmpty ? "No class '\(cls)' found for \(bundleID)" : lines.joined(separator: "\n")
+            } else {
+                output = SDEFService.shared.summary(for: bundleID)
+            }
+            tab.appendLog("📖 SDEF: \(bundleID)\(className.map { " → \($0)" } ?? "")")
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+        }
+
         // apple_event_query
         if name == "apple_event_query" {
             let bundleID = input["bundle_id"] as? String ?? ""
