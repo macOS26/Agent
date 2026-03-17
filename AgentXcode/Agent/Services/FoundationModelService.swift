@@ -175,23 +175,31 @@ final class FoundationModelService {
         return toolUseResult(name: toolName, input: input)
     }
 
-    /// Parse plain text format: tool_name {"param": value, ...}
+    /// Parse plain text format: tool_name {"param": value, ...} or bare tool_name / tool_name.
     private func parseTextFormat(_ text: String) -> (content: [[String: Any]], stopReason: String)? {
         for toolName in AgentTools.toolNames {
             guard let nameRange = text.range(of: toolName) else { continue }
             let afterName = text[nameRange.upperBound...].trimmingCharacters(in: .whitespaces)
-            guard afterName.hasPrefix("{") else { continue }
-            var depth = 0
-            var end = afterName.startIndex
-            for (i, ch) in afterName.enumerated() {
-                if ch == "{" { depth += 1 } else if ch == "}" { depth -= 1 }
-                if depth == 0 { end = afterName.index(afterName.startIndex, offsetBy: i); break }
+            if afterName.hasPrefix("{") {
+                // Has JSON args — extract matching braces
+                var depth = 0
+                var end = afterName.startIndex
+                for (i, ch) in afterName.enumerated() {
+                    if ch == "{" { depth += 1 } else if ch == "}" { depth -= 1 }
+                    if depth == 0 { end = afterName.index(afterName.startIndex, offsetBy: i); break }
+                }
+                let jsonStr = String(afterName[afterName.startIndex...end])
+                if let data = jsonStr.data(using: .utf8),
+                   let input = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                    return toolUseResult(name: toolName, input: input)
+                }
+            } else {
+                // No JSON args (e.g. "task_complete." or "task_complete") — call with empty input
+                let nextChar = afterName.first
+                if nextChar == nil || nextChar == "." || nextChar == "\n" || nextChar == " " {
+                    return toolUseResult(name: toolName, input: [:])
+                }
             }
-            let jsonStr = String(afterName[afterName.startIndex...end])
-            guard let data = jsonStr.data(using: .utf8),
-                  let input = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
-            else { continue }
-            return toolUseResult(name: toolName, input: input)
         }
         return nil
     }
