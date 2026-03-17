@@ -441,6 +441,7 @@ Agent.app (SwiftUI)
 Every shell command follows one of three execution paths based on privilege needs and TCC requirements:
 
 ```mermaid
+%%{init: {"flowchart": {"htmlLabels": false}} }%%
 flowchart TD
     A[Command] --> B{Tool?}
     B --> C[exec_cmd]
