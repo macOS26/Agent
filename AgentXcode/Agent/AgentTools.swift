@@ -59,6 +59,8 @@ enum AgentTools {
         read_agent_script — read script source
         run_agent_script — compile and run script
         ALWAYS list first — update existing, don't duplicate.
+        To remove a script, use delete_agent_script — it deletes the file. \
+        NEVER manually edit Package.swift to remove scripts — a sync timer re-adds them from disk.
 
         SCRIPT CAPABILITIES:
         Scripts can use any Swift 6 framework: Foundation, AppKit, SwiftUI, WebKit, CoreImage, etc.
