@@ -253,11 +253,6 @@ extension AgentViewModel {
         }
         let foundationModel: FoundationModelService? = provider == .foundationModel
             ? FoundationModelService(historyContext: historyContext, projectFolder: projectFolder) : nil
-        if let fm = foundationModel {
-            let names = fm.enabledToolNames
-            appendLog("Apple AI tools (\(names.count)): \(names.joined(separator: ", "))")
-        }
-
         // Prepend last task as conversation context so the LLM knows what just happened
         var messages: [[String: Any]] = history.lastTaskMessages()
 
