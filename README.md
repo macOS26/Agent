@@ -440,29 +440,31 @@ Agent.app (SwiftUI)
 
 Every shell command follows one of three execution paths based on privilege needs and TCC requirements:
 
-```
-                        ┌─────────────────────┐
-                        │   Shell Command      │
-                        └──────────┬──────────┘
-                                   │
-                    ┌──────────────┼──────────────┐
-                    ▼              ▼              ▼
-            execute_command  execute_user   execute_shell
-            (root)           _command       _command
-                    │              │              │
-                    ▼              │         needsTCC?
-              rootEnabled?         │        ┌────┴────┐
-             ┌────┴────┐          │       Yes        No
-            Yes        No         │        │          │
-             │          │         │        ▼          ▼
-             ▼          │    osascript?  In-Process  UserService
-        HelperService   │   ┌────┴────┐ (streaming)    XPC
-        XPC (root)      │  Yes        No    TCC     (LaunchAgent)
-        LaunchDaemon    │   │          │
-                        │   ▼          ▼
-                     In-Process   UserService
-                     (TCC)         XPC
-                                 (LaunchAgent)
+```mermaid
+flowchart TD
+    A[Shell Command] --> B{Which tool?}
+    B --> C[execute_command\nroot]
+    B --> D[execute_user_command]
+    B --> E[execute_shell_command]
+
+    C --> F{Root enabled?}
+    F -- Yes --> G[HelperService XPC\nLaunchDaemon\nRuns as root]
+    F -- No --> H{osascript?}
+
+    D --> H
+
+    H -- Yes --> I[In-Process\nInherits ALL TCC]
+    H -- No --> J[UserService XPC\nLaunchAgent\nRuns as user]
+
+    E --> K{Needs TCC?\nosascript / screencapture\napplescript / accessibility}
+    K -- Yes --> L[In-Process Streaming\nInherits ALL TCC\nOpens in tab]
+    K -- No --> M[UserService XPC\nLaunchAgent\nRuns as user]
+
+    style G fill:#f96,stroke:#333
+    style I fill:#6b6,stroke:#333
+    style L fill:#6b6,stroke:#333
+    style J fill:#69f,stroke:#333
+    style M fill:#69f,stroke:#333
 ```
 
 | Path | Service | Runs As | TCC | Used For |
