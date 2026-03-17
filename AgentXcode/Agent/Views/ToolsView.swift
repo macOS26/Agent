@@ -29,11 +29,25 @@ struct ToolsView: View {
 
             // Tag cloud
             ScrollView {
-                TagCloudView(
-                    tools: AgentTools.tools(for: selectedProvider),
-                    provider: selectedProvider,
-                    prefs: prefs
-                )
+                FlowLayout(spacing: 4) {
+                    ForEach(AgentTools.tools(for: selectedProvider), id: \.name) { tool in
+                        let enabled = prefs.isEnabled(selectedProvider, tool.name)
+                        Button {
+                            prefs.toggle(selectedProvider, tool.name)
+                        } label: {
+                            Text(tool.name)
+                                .font(.caption2)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(enabled ? Color.accentColor.opacity(0.2) : Color.secondary.opacity(0.1))
+                                .foregroundStyle(enabled ? .primary : .tertiary)
+                                .clipShape(Capsule())
+                                .overlay(Capsule().stroke(enabled ? Color.accentColor.opacity(0.5) : Color.clear, lineWidth: 0.5))
+                        }
+                        .buttonStyle(.plain)
+                        .help(tool.description.components(separatedBy: ". ").first ?? tool.description)
+                    }
+                }
                 .padding()
             }
 
@@ -43,7 +57,7 @@ struct ToolsView: View {
             HStack {
                 let all = AgentTools.tools(for: selectedProvider)
                 let enabledCount = all.filter { prefs.isEnabled(selectedProvider, $0.name) }.count
-                Text("\(enabledCount) of \(all.count) enabled for \(selectedProvider.displayName)")
+                Text("\(enabledCount) of \(all.count) enabled")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
@@ -62,59 +76,12 @@ struct ToolsView: View {
             }
             .padding()
         }
-        .frame(width: 460, height: 480)
-    }
-}
-
-// MARK: - Tag Cloud
-
-private struct TagCloudView: View {
-    let tools: [AgentTools.ToolDef]
-    let provider: APIProvider
-    let prefs: ToolPreferencesService
-
-    var body: some View {
-        FlowLayout(spacing: 8) {
-            ForEach(tools, id: \.name) { tool in
-                ToolTagView(tool: tool, provider: provider, prefs: prefs)
-            }
-        }
-    }
-}
-
-// MARK: - Tool Tag
-
-private struct ToolTagView: View {
-    let tool: AgentTools.ToolDef
-    let provider: APIProvider
-    let prefs: ToolPreferencesService
-
-    private var isEnabled: Bool { prefs.isEnabled(provider, tool.name) }
-
-    var body: some View {
-        Text(tool.name)
-            .font(.system(.caption, design: .monospaced))
-            .fontWeight(isEnabled ? .semibold : .regular)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(isEnabled ? Color.accentColor.opacity(0.85) : Color.clear)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(isEnabled ? Color.clear : Color.secondary.opacity(0.4), lineWidth: 1)
-            )
-            .foregroundStyle(isEnabled ? .white : .secondary)
-            .help(tool.description.components(separatedBy: ". ").first ?? tool.description)
-            .onTapGesture { prefs.toggle(provider, tool.name) }
-            .animation(.easeInOut(duration: 0.15), value: isEnabled)
+        .frame(width: 460, height: 460)
     }
 }
 
 // MARK: - Flow Layout
 
-/// Wrapping horizontal layout — places items left-to-right, wrapping to the next line.
 private struct FlowLayout: Layout {
     var spacing: CGFloat = 8
 
