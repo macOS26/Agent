@@ -244,7 +244,7 @@ enum AgentTools {
         // --- Core Tools ---
         ToolDef(
             name: "apple_event_query",
-            description: "Query any scriptable Mac app dynamically via ScriptingBridge. No compilation needed. Walks the object graph using ObjC dynamic dispatch. Use this FIRST for reading app data (mail, notes, music, safari, calendar, reminders, etc.).",
+            description: "Query a scriptable Mac app via ObjC dynamic dispatch. No compilation. Priority 4 — prefer run_agent_script first. Use for simple property reads only.",
             properties: [
                 "bundle_id": ["type": "string", "description": "App bundle identifier (e.g. com.apple.Music)"],
                 "operations": [
@@ -271,7 +271,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: "execute_shell_command",
-            description: "Execute a shell command. TCC commands (osascript, screencapture, etc.) run in the Agent app process with full TCC permissions and stream in a tab. Non-TCC commands route through the UserService LaunchAgent (same as execute_user_command).",
+            description: "Execute a shell command. TCC commands (osascript, screencapture) run in-process with full TCC in a tab. Non-TCC commands route through UserService LaunchAgent. Priority 3 for app automation — prefer run_agent_script first.",
             properties: [
                 "command": ["type": "string", "description": "The bash command to execute in the Agent app process"],
             ],
@@ -457,7 +457,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: "run_agent_script",
-            description: "Compile and run a Swift dylib script from ~/Documents/Agent/agents/. Output is streamed live to the activity log — do NOT repeat or summarize stdout output. For structured data, write a JSON input file first via execute_user_command, then run the script.",
+            description: "PRIORITY 1 for app automation. Compile and run a Swift dylib script with full TCC. Use existing scripts first (list_agent_scripts), create new ones for complex tasks. NSAppleScript fallback if ScriptingBridge has issues. Output streams live — do NOT repeat stdout.",
             properties: [
                 "name": ["type": "string", "description": "Script filename (without .swift)"],
                 "arguments": ["type": "string", "description": "Simple string passed via AGENT_SCRIPT_ARGS env var. For complex data, use JSON files instead."],
