@@ -1,7 +1,8 @@
 import Foundation
 
 /// Manages which internal tools are enabled per LLM provider.
-/// All tools are enabled by default. Preferences persist to UserDefaults.
+/// Claude/Ollama: all tools on by default.
+/// Apple AI: only core tools on by default (context window is too small for 40+).
 @MainActor @Observable
 final class ToolPreferencesService {
     static let shared = ToolPreferencesService()
@@ -11,10 +12,31 @@ final class ToolPreferencesService {
     }
 
     private static let udKey = "agent.disabledTools"
+    private static let appleAISeededKey = "agent.appleAISeeded"
+
+    /// Tools enabled by default for Apple Intelligence (small context window).
+    static let appleAIDefaults: Set<String> = [
+        "execute_user_command", "execute_command",
+        "read_file", "write_file", "edit_file", "list_files",
+        "task_complete"
+    ]
 
     private init() {
         let arr = UserDefaults.standard.stringArray(forKey: Self.udKey) ?? []
         disabledTools = Set(arr)
+        seedAppleAIDefaults()
+    }
+
+    /// On first launch, disable all Apple AI tools not in the core default set.
+    private func seedAppleAIDefaults() {
+        guard !UserDefaults.standard.bool(forKey: Self.appleAISeededKey) else { return }
+        UserDefaults.standard.set(true, forKey: Self.appleAISeededKey)
+        let all = AgentTools.tools(for: .foundationModel).map { $0.name }
+        var updated = disabledTools
+        for name in all where !Self.appleAIDefaults.contains(name) {
+            updated.insert(toolKey(.foundationModel, name))
+        }
+        disabledTools = updated  // single persist
     }
 
     private func persist() {
