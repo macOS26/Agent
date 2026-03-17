@@ -195,6 +195,14 @@ extension AgentViewModel {
         command.contains("osascript") || command.contains("/usr/bin/osascript")
     }
 
+    /// Returns true if the command needs TCC permissions and should open in a tab.
+    nonisolated static func needsTCCTab(_ command: String) -> Bool {
+        let lower = command.lowercased()
+        return lower.contains("osascript") || lower.contains("screencapture")
+            || lower.contains("applescript") || lower.contains("accessibility")
+            || lower.contains("tccutil") || lower.contains("automator")
+    }
+
     // MARK: - Task Execution Loop
 
     func executeTask(_ prompt: String) async {
@@ -848,47 +856,78 @@ extension AgentViewModel {
                         if name == "execute_shell_command" {
                             let command = input["command"] as? String ?? ""
 
-                            // Label for tab
-                            let label: String
-                            if command.contains("osascript") {
-                                label = "osascript"
-                            } else {
-                                let words = command.prefix(30).components(separatedBy: " ")
-                                label = words.first ?? "app_cmd"
-                            }
-
-                            let tab = openScriptTab(scriptName: label)
-                            appendLog("App command... (see tab)")
-                            flushLog()
-
-                            tab.appendLog("🐣 $ \(AgentViewModel.collapseHeredocs(command))")
-                            tab.flush()
-
-                            let result = await executeLocalStreaming(command: command) { [weak tab] chunk in
-                                Task { @MainActor in
-                                    tab?.appendOutput(chunk)
+                            if Self.needsTCCTab(command) {
+                                // TCC command — open in a tab for streaming output
+                                let label: String
+                                if command.contains("osascript") {
+                                    label = "osascript"
+                                } else {
+                                    let words = command.prefix(30).components(separatedBy: " ")
+                                    label = words.first ?? "app_cmd"
                                 }
+
+                                let tab = openScriptTab(scriptName: label)
+                                appendLog("App command... (see tab)")
+                                flushLog()
+
+                                tab.appendLog("🐣 $ \(AgentViewModel.collapseHeredocs(command))")
+                                tab.flush()
+
+                                let result = await executeLocalStreaming(command: command) { [weak tab] chunk in
+                                    Task { @MainActor in
+                                        tab?.appendOutput(chunk)
+                                    }
+                                }
+
+                                tab.isRunning = false
+                                tab.exitCode = result.status
+                                tab.flush()
+                                persistScriptTabs()
+
+                                guard !Task.isCancelled else { break }
+
+                                let statusNote = result.status == 0 ? "completed" : "exit code: \(result.status)"
+                                appendLog("\(label) \(statusNote)")
+                                flushLog()
+
+                                let toolOutput = result.output.isEmpty
+                                    ? "(no output, exit code: \(result.status))"
+                                    : result.output
+                                let truncated2 = toolOutput.count > 10000
+                                    ? String(toolOutput.prefix(10000)) + "\n...(truncated)"
+                                    : toolOutput
+                                commandsRun.append("execute_shell_command: \(label)")
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": truncated2])
+                            } else {
+                                // Simple command — run inline, output to activity log
+                                let collapsed = Self.collapseHeredocs(command)
+                                appendLog("🐣 $ \(collapsed)")
+                                flushLog()
+
+                                let result = await executeLocal(command: command)
+
+                                guard !Task.isCancelled else { break }
+
+                                if result.status != 0 {
+                                    appendLog("exit code: \(result.status)")
+                                }
+
+                                let toolOutput = result.output.isEmpty
+                                    ? "(no output, exit code: \(result.status))"
+                                    : result.output
+                                let truncated2 = toolOutput.count > 10000
+                                    ? String(toolOutput.prefix(10000)) + "\n...(truncated)"
+                                    : toolOutput
+
+                                let preview = Self.preview(result.output, lines: 10)
+                                if !preview.isEmpty { appendLog(preview) }
+                                flushLog()
+
+                                let words = command.prefix(30).components(separatedBy: " ")
+                                let label = words.first ?? "app_cmd"
+                                commandsRun.append("execute_shell_command: \(label)")
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": truncated2])
                             }
-
-                            tab.isRunning = false
-                            tab.exitCode = result.status
-                            tab.flush()
-                            persistScriptTabs()
-
-                            guard !Task.isCancelled else { break }
-
-                            let statusNote = result.status == 0 ? "completed" : "exit code: \(result.status)"
-                            appendLog("\(label) \(statusNote)")
-                            flushLog()
-
-                            let toolOutput = result.output.isEmpty
-                                ? "(no output, exit code: \(result.status))"
-                                : result.output
-                            let truncated2 = toolOutput.count > 10000
-                                ? String(toolOutput.prefix(10000)) + "\n...(truncated)"
-                                : toolOutput
-                            commandsRun.append("execute_shell_command: \(label)")
-                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": truncated2])
                         }
 
                         // Dynamic Apple Event query tool
