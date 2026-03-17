@@ -2,8 +2,8 @@
 
 [![Swift 6.0](https://img.shields.io/badge/Swift-6.0-orange.svg)](https://swift.org)
 [![Website](https://img.shields.io/badge/website-agent.macos26.app-blue.svg)](https://agent.macos26.app)
-[![Version](https://img.shields.io/badge/version-1.0.10-red.svg)](https://github.com/macOS26/Agent)
-[![GitHub downloads](https://img.shields.io/github/downloads/macOS26/Agent/total.svg?v=2)](https://github.com/macOS26/Agent/releases)
+[![Version](https://img.shields.io/badge/version-1.0.11-red.svg)](https://github.com/macOS26/Agent)
+[![GitHub downloads](https://img.shields.io/github/downloads/macOS26/Agent/total.svg?v=3)](https://github.com/macOS26/Agent/releases)
 [![GitHub stars](https://img.shields.io/github/stars/macOS26/Agent.svg?style=social)](https://github.com/macOS26/Agent/stargazers)
 
 Agent! — AI for your  Mac Desktop
@@ -12,9 +12,9 @@ Agent! — AI for your  Mac Desktop
 
 A native macOS autonomous AI agent built entirely in Swift.
 
-Agent uses SwiftUI, XPC, SMAppService, Apple Events, and ScriptingBridge to give an AI agent native access to your Mac. It's an `.app` that speaks macOS natively. Xcode command line tools are required which is Agent!'s only dependency.
+Agent uses SwiftUI, XPC, SMAppService, Apple Events, ScriptingBridge, Accessibility APIs, and MCP to give an AI agent native access to your Mac. It's an `.app` that speaks macOS natively. Xcode command line tools are required which is Agent!'s only dependency.
 
-<img width="562" height="734" alt="Screenshot 2026-03-16 at 10 25 16 AM" src="https://github.com/user-attachments/assets/f33f2d6c-8b91-44eb-989c-00b249cd9a7e" />
+<img width="562" height="734" alt="Agent! screenshot" src="https://github.com/user-attachments/assets/f33f2d6c-8b91-44eb-989c-00b249cd9a7e" />
 
 ---
 
@@ -23,16 +23,17 @@ Agent uses SwiftUI, XPC, SMAppService, Apple Events, and ScriptingBridge to give
 - [Getting Started](#getting-started)
 - [Security Hardening](#security-hardening)
 - [Messages Monitor](#messages-monitor)
-- [Accessibility Integration (Experimental)](#accessibility-integration-experimental)
+- [Accessibility Integration](#accessibility-integration)
 - [MCP Servers](#mcp-servers)
 - [Architecture](#architecture)
+- [Available Tools](#available-tools)
+- [AgentScripts](#agentscripts)
 - [What Agent! Can Do](#what-agent-can-do)
 - [Requirements](#requirements)
 - [Agent! vs. OpenClaw on Mac](#agent-vs-openclaw-on-mac)
 - [License](#license)
 
 ---
-
 
 ## Getting Started
 
@@ -231,15 +232,13 @@ No external dependencies. No network requests. Everything runs locally on your M
 
 ---
 
-## Accessibility Integration (Experimental)
+## Accessibility Integration
 
-Agent! includes a full macOS Accessibility API integration that gives the AI the ability to see, inspect, and interact with any application's UI. This feature is **experimental and untested** — it ships with the codebase but has not been validated across apps or workflows.
-
-> **Status:** Experimental. The code is complete and wired up, but real-world testing is limited. Use at your own risk. Feedback welcome.
+Agent! includes a full macOS Accessibility API integration that gives the AI the ability to see, inspect, and interact with any application's UI. This enables automation of apps that don't support AppleScript or ScriptingBridge.
 
 ### Permissions
 
-Accessibility requires explicit user approval in **System Settings > Privacy & Security > Accessibility**. Agent provides two tools to manage this:
+Accessibility requires explicit user approval in **System Settings > Privacy & Security > Accessibility**. Agent provides tools to manage this:
 
 - `ax_check_permission` — Check if Accessibility access is granted
 - `ax_request_permission` — Trigger the macOS permission prompt
@@ -288,7 +287,7 @@ Built on Apple's native AXUIElement C API and CGEvent framework:
 - `CGEvent` for keyboard and mouse simulation
 - `CGWindowListCopyWindowInfo` for window enumeration
 
-All 694 lines live in `AccessibilityService.swift` as a self-contained service with no external dependencies.
+All code lives in `AccessibilityService.swift` as a self-contained service with no external dependencies.
 
 ---
 
@@ -324,7 +323,7 @@ HTTP-based demonstration server with utility functions:
 
 ### Adding MCP Servers
 
-1. Click the **server icon** ( Rack) in the toolbar
+1. Click the **server icon** (rack) in the toolbar
 2. Click the **+** button to add a new server
 3. Configure the server:
 
@@ -405,6 +404,7 @@ Agent.app (SwiftUI)
   |-- ScriptService          Swift Package manager for agent scripts
   |-- XcodeService           ScriptingBridge automation for Xcode
   |-- AppleEventService      Dynamic Apple Event queries (zero compilation)
+  |-- AccessibilityService   AXUIElement API for UI automation
   |-- Messages Monitor       Polls chat.db for iMessage remote control
   |-- DependencyChecker      Xcode CLT detection + install trigger
   |
@@ -422,7 +422,7 @@ Agent.app (SwiftUI)
 
 ## Available Tools
 
-Agent! provides 50+ tools across multiple categories for autonomous task execution.
+Agent! provides **60+ tools** across multiple categories for autonomous task execution.
 
 ### File Operations (5 tools)
 
@@ -445,11 +445,12 @@ Agent! provides 50+ tools across multiple categories for autonomous task executi
 | `git_diff_patch` | Apply a unified diff patch |
 | `git_branch` | Create a new git branch |
 
-### Command Execution (2 tools)
+### Command Execution (3 tools)
 
 | Tool | Description |
 |------|-------------|
-| `execute_user_command` | Execute shell command as current user (default) |
+| `execute_shell_command` | Execute shell command in Agent app process (has TCC) |
+| `execute_user_command` | Execute shell command as current user (no TCC) |
 | `execute_command` | Execute shell command as ROOT (privileged) |
 
 ### Apple Event Query (1 tool)
@@ -475,7 +476,7 @@ Agent! provides 50+ tools across multiple categories for autonomous task executi
 | `ax_request_permission` | Request Accessibility permission |
 | `ax_get_audit_log` | Get recent accessibility audit log entries |
 
-### Agent Scripts (6 tools)
+### AgentScripts (6 tools)
 
 | Tool | Description |
 |------|-------------|
@@ -535,27 +536,9 @@ Agent! also supports MCP (Model Context Protocol) servers for extended functiona
 
 ---
 
-## What Agent! Can Do
+## AgentScripts
 
-### Autonomous Task Execution
-
-Give Agent! a task in plain English. It figures out the commands, runs them, reads the output, adapts, and keeps going — up to 50 iterations per task. It remembers previous tasks and builds on past results.
-
-### AppleScript via osascript
-
-Agent runs `osascript` commands directly in the app process — not through XPC helpers — so they automatically inherit the app's macOS Automation permissions. This means AppleScript "just works" for controlling any Mac application that supports the Open Scripting Architecture.
-
-### Xcode Automation via ScriptingBridge
-
-Agent controls Xcode directly through Apple's ScriptingBridge framework:
-
-- **`xcode_build`** — opens a project, triggers a build, polls until completion, returns all errors and warnings
-- **`xcode_run`** — launches the active scheme
-- **`xcode_grant_permission`** — triggers the macOS Automation consent dialog
-
-### Swift Agent Scripts
-
-Agent includes a built-in Swift scripting system. Scripts live in `~/Documents/Agent/agents/` as a Swift Package:
+Agent! includes a built-in Swift scripting system. Scripts live in `~/Documents/Agent/agents/` as a Swift Package:
 
 ```
 ~/Documents/Agent/agents/
@@ -570,6 +553,44 @@ Agent includes a built-in Swift scripting system. Scripts live in `~/Documents/A
         ├── MailBridge.swift
         └── ...
 ```
+
+### Core Scripts (bundled)
+
+The following scripts come pre-compiled in Agent.app/Contents/Resources/:
+
+| Script | Description |
+|--------|-------------|
+| `AXDemo` | Accessibility API demonstration |
+| `CapturePhoto` | Capture photo from camera |
+| `CheckMail` | Check for new email messages |
+| `CreateDMG` | Create a DMG disk image |
+| `CurrentPlaylist` | Get current Music playlist |
+| `EmailAccounts` | List email accounts |
+| `ExtractAlbumArt` | Extract album artwork from Music |
+| `GenerateBridge` | Generate ScriptingBridge for any app |
+| `Hello` | Simple hello world script |
+| `ListHomeContents` | List home directory contents |
+| `ListNotes` | List Apple Notes |
+| `ListReminders` | List Reminders |
+| `MusicScriptingExamples` | Music app scripting examples |
+| `NowPlaying` | Get currently playing track |
+| `NowPlayingHTML` | Now playing info as HTML |
+| `OrganizeEmails` | Organize email into folders |
+| `OrganizeOtherSubcategories` | Organize email subcategories |
+| `PlayPlaylist` | Play a Music playlist |
+| `PlayRandomFromCurrent` | Play random track from current playlist |
+| `QuitApps` | Quit running applications |
+| `RunningApps` | List running applications |
+| `SafariSearch` | Search in Safari |
+| `SaveImageFromChat` | Save image from chat |
+| `SaveImageFromClipboard` | Save image from clipboard |
+| `SendGroupMessage` | Send group iMessage |
+| `SendMessage` | Send iMessage |
+| `TestCodingTools` | Test coding utilities |
+| `TestEnvVars` | Test environment variables |
+| `TestGenerateBridge` | Test bridge generation |
+| `TodayEvents` | Get today's calendar events |
+| `WhatsPlaying` | What's playing info |
 
 The AI can create, read, update, delete, compile, and run these scripts autonomously:
 
@@ -594,7 +615,7 @@ Agent includes an `apple_event_query` tool that lets the AI query any scriptable
 
 ### ScriptingBridges Library
 
-Agent ships with pre-generated Swift protocol definitions for **54 macOS applications**:
+Agent ships with pre-generated Swift protocol definitions for **54+ macOS applications**:
 
 | Category | Applications |
 |----------|--------------|
@@ -629,6 +650,54 @@ Agent persists task history using SwiftData. Recent task messages and older task
 
 ---
 
+## What Agent! Can Do
+
+### Autonomous Task Execution
+
+Give Agent! a task in plain English. It figures out the commands, runs them, reads the output, adapts, and keeps going — up to 50 iterations per task. It remembers previous tasks and builds on past results.
+
+### AppleScript via osascript
+
+Agent runs `osascript` commands directly in the app process — not through XPC helpers — so they automatically inherit the app's macOS Automation permissions. This means AppleScript "just works" for controlling any Mac application that supports the Open Scripting Architecture.
+
+### Xcode Automation via ScriptingBridge
+
+Agent controls Xcode directly through Apple's ScriptingBridge framework:
+
+- **`xcode_build`** — opens a project, triggers a build, polls until completion, returns all errors and warnings
+- **`xcode_run`** — launches the active scheme
+- **`xcode_grant_permission`** — triggers the macOS Automation consent dialog
+
+### Swift AgentScripts
+
+Create custom automation scripts in Swift that compile to dylibs and run in-process:
+
+```swift
+import Foundation
+import MailBridge
+
+@_cdecl("script_main") public func scriptMain() -> Int32 {
+    guard let app: MailApplication = SBApplication(bundleIdentifier: "com.apple.mail") else {
+        return 1
+    }
+    
+    // Your automation code here
+    return 0
+}
+```
+
+Scripts inherit Agent's TCC permissions (Automation, Accessibility, Screen Recording).
+
+### Keyboard Shortcuts
+
+- **⌘W** — Close current tab (or quit if no tabs)
+- **⌘F** — Toggle search bar
+- **Escape** — Cancel running task or close search
+- **⌘V** — Paste image from clipboard (auto-detected)
+- **↑/↓** — Navigate prompt history
+
+---
+
 ## Requirements
 
 - **macOS 26.0+** (Tahoe)
@@ -648,9 +717,10 @@ Agent persists task history using SwiftData. Recent task messages and older task
 | **Runtime** | Native Swift binary | Node.js server |
 | **UI** | SwiftUI app | Web chat / Telegram / CLI |
 | **Privilege model** | XPC + Launch Daemon (Apple's official pattern) | Shell commands |
-| **macOS integration** | Apple Events, ScriptingBridge, AppleScript, SMAppService | Generic shell access |
+| **macOS integration** | Apple Events, ScriptingBridge, AppleScript, SMAppService, Accessibility | Generic shell access |
 | **Xcode automation** | Built-in: build, run, grant permissions | N/A |
-| **Scripting language** | Swift Package-based agent scripts | Python/JS scripts |
+| **Accessibility** | Full AXUIElement API integration | Limited |
+| **Scripting language** | Swift Package-based AgentScripts | Python/JS scripts |
 | **MCP support** | Yes (stdio transport) | Yes |
 | **Messaging** | Native Apple Messages (iMessage/SMS) with per-recipient approval | WhatsApp, Telegram, Slack, Discord, iMessage, and more |
 | **Message reply** | Auto-replies task results via iMessage to approved senders | Platform-specific replies |
