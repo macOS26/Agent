@@ -458,7 +458,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: "run_agent_script",
-            description: "PRIORITY 1 for app automation. Compile and run a Swift dylib with full TCC. Use existing scripts first (list_agent_scripts), create new ones for complex tasks. Use lookup_sdef to check app dictionaries. NSAppleScript fallback if ScriptingBridge has issues. Output streams live — do NOT repeat stdout.",
+            description: "PRIORITY 1 for app automation. Compile and run a Swift dylib with full TCC using ScriptingBridge. Use existing scripts first (list_agent_scripts), create new ones with ScriptingBridge protocols. Use lookup_sdef and read_agent_script to check app dictionaries and bridge Swift files. NSAppleScript fallback if ScriptingBridge has issues. Output streams live — do NOT repeat stdout.",
             properties: [
                 "name": ["type": "string", "description": "Script filename (without .swift)"],
                 "arguments": ["type": "string", "description": "Simple string passed via AGENT_SCRIPT_ARGS env var. For complex data, use JSON files instead."],
