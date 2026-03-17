@@ -774,8 +774,15 @@ extension AgentViewModel {
                                 continue
                             }
 
-                            // Open a script tab for this execution
-                            let tab = openScriptTab(scriptName: scriptName)
+                            // Reuse existing tab for this script, or create one
+                            let tab: ScriptTab
+                            if let existing = scriptTabs.first(where: { $0.scriptName == scriptName }) {
+                                tab = existing
+                                selectedTabId = tab.id
+                                tab.isRunning = true
+                            } else {
+                                tab = openScriptTab(scriptName: scriptName)
+                            }
 
                             // Brief note in main log
                             appendLog("Running \(scriptName)... (see tab)")
