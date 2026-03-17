@@ -11,7 +11,10 @@ final class FoundationModelService {
     let userName: String
     let projectFolder: String
 
-    private var session: LanguageModelSession?
+    private(set) var session: LanguageModelSession?
+
+    /// Call to force a new session (e.g. after prompt changes).
+    func resetSession() { session = nil }
 
     // MARK: - Availability
 

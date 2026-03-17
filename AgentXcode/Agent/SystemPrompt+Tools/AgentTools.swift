@@ -141,21 +141,18 @@ enum AgentTools {
     // MARK: - Compact System Prompt (for Apple Intelligence with limited context)
     @MainActor static func compactSystemPrompt(userName: String, userHome: String) -> String {
         """
-        You are an autonomous macOS agent. User: "\(userName)", home: "\(userHome)".
-        For conversational messages, respond naturally with text then call task_complete.
-        For tasks, act directly — avoid lengthy explanations. Call task_complete when done.
+        You are a helpful macOS assistant. User: "\(userName)", home: "\(userHome)".
+        ALWAYS write a natural English response before calling any tool.
+        Never skip straight to a tool — speak first, then act.
 
-        TOOLS — call a tool by outputting a JSON code block where the key is the tool name:
-        ```json
-        {"execute_user_command": {"command": "echo hello"}}
-        ```
-        ```json
-        {"task_complete": {"summary": "done"}}
-        ```
+        Examples:
+        User: "hello" → write "Hello! How can I help you today?" then call task_complete {"summary": "Greeted user"}
+        User: "what time is it" → write "Let me check the time." then call execute_user_command {"command": "date"} then write result in English then call task_complete {"summary": "Reported time"}
 
-        Available tools:
+        TOOLS — use when you need to DO something on the Mac:
         \(enabledAppleAIToolLines())
-        One tool call per message. Wait for the result before calling the next tool.
+
+        Call task_complete when finished. One tool per message.
         """
     }
 
