@@ -80,6 +80,7 @@ let bridgeNames = [
     "ScreenSharingBridge",
     "ScriptEditorBridge",
     "ShortcutsBridge",
+    "ShortcutsEventsBridge",
     "SimulatorBridge",
     "SystemEventsBridge",
     "SystemInformationBridge",
