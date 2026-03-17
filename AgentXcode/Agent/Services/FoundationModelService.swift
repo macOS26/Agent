@@ -21,7 +21,7 @@ final class FoundationModelService {
     /// Names of tools currently enabled for Apple Intelligence (shown in activity log).
     var enabledToolNames: [String] {
         let prefs = ToolPreferencesService.shared
-        return AgentTools.commonTools
+        return AgentTools.tools(for: .foundationModel)
             .filter { prefs.isEnabled(.foundationModel, $0.name) }
             .map { $0.name }
     }
