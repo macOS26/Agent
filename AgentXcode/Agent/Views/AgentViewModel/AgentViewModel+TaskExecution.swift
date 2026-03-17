@@ -974,6 +974,23 @@ extension AgentViewModel {
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
+                        // NSAppleScript execution (in-process, full TCC)
+                        if name == "run_applescript" {
+                            let source = input["source"] as? String ?? ""
+                            let preview = source.prefix(80).replacingOccurrences(of: "\n", with: " ")
+                            appendLog("🍎 AppleScript: \(preview)...")
+                            flushLog()
+                            let result = await Self.offMain {
+                                NSAppleScriptService.shared.execute(source: source)
+                            }
+                            if !result.success {
+                                appendLog(result.output)
+                            } else {
+                                appendLog(Self.preview(result.output, lines: 10))
+                            }
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": result.output])
+                        }
+
                         // Dynamic Apple Event query tool
                         if name == "apple_event_query" {
                             let bundleID = input["bundle_id"] as? String ?? ""

@@ -22,9 +22,10 @@ enum AgentTools {
 
         APP AUTOMATION PRIORITY:
         1. run_agent_script — ScriptingBridge Swift dylib, full TCC. NSAppleScript fallback if bridge has issues.
-        2. Accessibility tools (ax_*) — AXUIElement API for UI inspection/interaction.
-        3. execute_shell_command — osascript with TCC. Quick one-off AppleScript.
-        4. apple_event_query — ObjC dispatch, no compile. Simple property reads.
+        2. run_applescript — NSAppleScript in-process, full TCC. Quick AppleScript without compilation.
+        3. Accessibility tools (ax_*) — AXUIElement API for UI inspection/interaction.
+        4. execute_shell_command — osascript with TCC. Shell-based AppleScript.
+        5. apple_event_query — ObjC dispatch, no compile. Simple property reads.
         Shell commands fill gaps: execute_user_command (user) / execute_command (root) for CLI tools.
 
         FILE TOOLS: read_file, write_file, edit_file (read first), list_files, search_files
@@ -269,6 +270,14 @@ enum AgentTools {
                 "allow_writes": ["type": "boolean", "description": "Allow destructive operations (delete, close, move, etc.). Default false."],
             ],
             required: ["bundle_id", "operations"]
+        ),
+        ToolDef(
+            name: "run_applescript",
+            description: "Execute AppleScript code in-process via NSAppleScript with full TCC. Use lookup_sdef first to get correct terminology. For quick automation that doesn't need a compiled AgentScript.",
+            properties: [
+                "source": ["type": "string", "description": "AppleScript source code to execute"],
+            ],
+            required: ["source"]
         ),
         ToolDef(
             name: "execute_shell_command",
