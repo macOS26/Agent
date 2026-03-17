@@ -83,6 +83,10 @@ final class ScriptTab: Identifiable {
 
     func appendLog(_ message: String) {
         let timestamp = AgentViewModel.timestampFormatter.string(from: Date())
+        // Ensure timestamp always starts on a new line
+        if !logBuffer.isEmpty && !logBuffer.hasSuffix("\n") {
+            logBuffer += "\n"
+        }
         logBuffer += "[\(timestamp)] \(message)\n"
         scheduleFlush()
     }

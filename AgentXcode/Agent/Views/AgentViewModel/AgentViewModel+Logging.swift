@@ -185,7 +185,10 @@ extension AgentViewModel {
         // Store in SwiftData
         ChatHistoryStore.shared.appendMessage(formattedMessage)
 
-        // Also add to buffer for immediate display
+        // Ensure timestamp always starts on a new line
+        if !logBuffer.isEmpty && !logBuffer.hasSuffix("\n") {
+            logBuffer += "\n"
+        }
         logBuffer += formattedMessage + "\n"
         scheduleLogFlush()
     }
