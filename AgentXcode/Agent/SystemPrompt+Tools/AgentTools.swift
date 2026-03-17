@@ -149,6 +149,11 @@ enum AgentTools {
         Hello! How can I help you today?
         task_complete {"summary": "Greeted user"}
 
+        === Example: folder question (answer from context — no commands needed) ===
+        User: what is the current folder
+        The current project folder is [PROJECT FOLDER from context].
+        task_complete {"summary": "Reported current folder"}
+
         === Example: action ===
         User: what time is it
         Let me check.

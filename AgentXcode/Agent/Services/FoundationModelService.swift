@@ -121,7 +121,7 @@ final class FoundationModelService {
         if result.stopReason == "tool_use" {
             let pre = textBeforeFirstToolCall(fullText)
             if !pre.isEmpty {
-                onTextDelta(pre + "\n")
+                onTextDelta(normalizeNewlines(pre) + "\n")
             } else if let toolUse = result.content.first,
                       toolUse["name"] as? String == "task_complete",
                       let input = toolUse["input"] as? [String: Any],
@@ -130,12 +130,21 @@ final class FoundationModelService {
                 onTextDelta(summary)
             }
         } else {
-            onTextDelta(fullText)
+            onTextDelta(normalizeNewlines(fullText))
         }
         return result
     }
 
     // MARK: - Helpers
+
+    /// Collapse two or more consecutive newlines into one to avoid double-spaced output.
+    private func normalizeNewlines(_ text: String) -> String {
+        // Replace 2+ newlines with a single newline
+        let pattern = try? NSRegularExpression(pattern: "\\n{2,}")
+        return pattern?.stringByReplacingMatches(
+            in: text, range: NSRange(text.startIndex..., in: text), withTemplate: "\n"
+        ) ?? text
+    }
 
     /// Prefix injected into every user message so Apple Intelligence sees the project folder
     /// immediately in context (system prompt alone is often ignored due to small context window).
