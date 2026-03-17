@@ -448,17 +448,17 @@ flowchart TD
     B --> E[execute_shell_command]
 
     C --> F{Root enabled?}
-    F -- Yes --> G[HelperService XPC\nLaunchDaemon\nRuns as root]
+    F -- Yes --> G(HelperService XPC\nLaunchDaemon\nRuns as root)
     F -- No --> H{osascript?}
 
     D --> H
 
-    H -- Yes --> I[In-Process\nInherits ALL TCC]
-    H -- No --> J[UserService XPC\nLaunchAgent\nRuns as user]
+    H -- Yes --> I(In-Process\nInherits ALL TCC)
+    H -- No --> J(UserService XPC\nLaunchAgent\nRuns as user)
 
     E --> K{Needs TCC?\nosascript / screencapture\napplescript / accessibility}
-    K -- Yes --> L[In-Process Streaming\nInherits ALL TCC\nOpens in tab]
-    K -- No --> M[UserService XPC\nLaunchAgent\nRuns as user]
+    K -- Yes --> L(In-Process Streaming\nInherits ALL TCC\nOpens in tab)
+    K -- No --> M(UserService XPC\nLaunchAgent\nRuns as user)
 
     style G fill:#f96,stroke:#333,color:#000
     style I fill:#6b6,stroke:#333,color:#000
