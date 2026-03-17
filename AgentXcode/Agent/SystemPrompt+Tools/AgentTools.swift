@@ -103,10 +103,14 @@ enum AgentTools {
         New bridge: run_agent_script GenerateBridge with args /Applications/App.app
 
         BRIDGES (import→protocol→bundleID):
+        AppleScriptUtilityBridge→AppleScriptUtilityApplication→com.apple.AppleScriptUtility
         AutomatorBridge→AutomatorApplication→com.apple.Automator
         CalendarBridge→CalendarApplication→com.apple.iCal
         ContactsBridge→ContactsApplication→com.apple.AddressBook
+        ConsoleBridge→ConsoleApplication→com.apple.Console
+        DatabaseEventsBridge→DatabaseEventsApplication→com.apple.databaseevents
         FinderBridge→FinderApplication→com.apple.finder
+        ImageEventsBridge→ImageEventsApplication→com.apple.imageevents
         MailBridge→MailApplication→com.apple.mail
         MessagesBridge→MessagesApplication→com.apple.MobileSMS
         MusicBridge→MusicApplication→com.apple.Music
@@ -114,26 +118,39 @@ enum AgentTools {
         NumbersBridge→NumbersApplication→com.apple.Numbers
         PagesBridge→PagesApplication→com.apple.Pages
         PhotosBridge→PhotosApplication→com.apple.Photos
+        PreviewBridge→PreviewApplication→com.apple.Preview
+        QuickTimePlayerBridge→QuickTimePlayerApplication→com.apple.QuickTimePlayerX
         RemindersBridge→RemindersApplication→com.apple.reminders
         SafariBridge→SafariApplication→com.apple.Safari
-        SystemEventsBridge→SystemEventsApplication→com.apple.systemevents
-        TerminalBridge→TerminalApplication→com.apple.Terminal
-        GoogleChromeBridge→GoogleChromeApplication→com.google.Chrome
-        FirefoxBridge→FirefoxApplication→org.mozilla.firefox
-        KeynoteBridge→KeynoteApplication→com.apple.Keynote
-        PreviewBridge→PreviewApplication→com.apple.Preview
-        TextEditBridge→TextEditApplication→com.apple.TextEdit
-        TVBridge→TVApplication→com.apple.TV
-        AgentScriptingBridge→XcodeApplication→com.apple.dt.Xcode
-        ImageEventsBridge→ImageEventsApplication→com.apple.systemevents
         ScriptEditorBridge→ScriptEditorApplication→com.apple.ScriptEditor2
         ShortcutsBridge→ShortcutsApplication→com.apple.shortcuts
-        QuickTimePlayerBridge→QuickTimePlayerApplication→com.apple.QuickTimePlayerX
+        ShortcutsEventsBridge→ShortcutsEventsApplication→com.apple.shortcuts.events
+        SystemEventsBridge→SystemEventsApplication→com.apple.systemevents
+        SystemSettingsBridge→SystemSettingsApplication→com.apple.systempreferences
+        TerminalBridge→TerminalApplication→com.apple.Terminal
+        TextEditBridge→TextEditApplication→com.apple.TextEdit
+        TVBridge→TVApplication→com.apple.TV
+        VoiceOverBridge→VoiceOverApplication→com.apple.VoiceOver
+        AgentScriptingBridge→XcodeApplication→com.apple.dt.Xcode
+        GoogleChromeBridge→GoogleChromeApplication→com.google.Chrome
+        FirefoxBridge→FirefoxApplication→org.mozilla.firefox
+        MicrosoftEdgeBridge→MicrosoftEdgeApplication→com.microsoft.edgemac
+        KeynoteBridge→KeynoteApplication→com.apple.Keynote
+        WishBridge→WishApplication→com.tcltk.wish
+        UTMBridge→UTMApplication→com.utmapp.UTM
 
         APPLE EVENT QUERY (zero compilation):
         Pass bundle_id + operations array:
         get {key} | iterate {properties, limit} | index {index} | call {method, arg} | filter {predicate}
         Writes blocked by default; set allow_writes=true.
+
+        SDEF LOOKUP (51 app dictionaries bundled as JSON):
+        Use lookup_sdef before writing osascript, NSAppleScript, apple_event_query, or ScriptingBridge code. \
+        Returns commands, classes, properties, elements, and enums for any scriptable app. \
+        lookup_sdef with bundle_id="list" shows all available apps. \
+        lookup_sdef with class_name drills into a specific class. \
+        ScriptingBridges also have native Swift protocol files in Sources/XCFScriptingBridges/ — \
+        read those via read_agent_script for Swift property/method names when writing AgentScripts.
 
         IMAGE PATHS: Print file paths — UI renders clickable links.
 
@@ -495,6 +512,16 @@ enum AgentTools {
                 "name": ["type": "string", "description": "Script filename"],
             ],
             required: ["name"]
+        ),
+        // --- SDEF Lookup ---
+        ToolDef(
+            name: "lookup_sdef",
+            description: "Look up an app's scripting dictionary. Returns commands, classes, properties, elements, and enums. Use before writing osascript, NSAppleScript, apple_event_query, or ScriptingBridge code to get correct terminology.",
+            properties: [
+                "bundle_id": ["type": "string", "description": "App bundle identifier (e.g. com.apple.Music). Use 'list' to see all available SDEFs."],
+                "class_name": ["type": "string", "description": "Optional: get details for a specific class (e.g. 'track', 'application')"],
+            ],
+            required: ["bundle_id"]
         ),
         // --- Xcode ---
         ToolDef(
