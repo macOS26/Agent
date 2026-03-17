@@ -93,7 +93,13 @@ Click the **gear icon** (⚙️) to open Settings:
 
 > **Note:** Local Ollama requires significant RAM (minimum 32GB, recommended 64-128GB). For Mac minis or devices with limited RAM, cloud-based LLMs are strongly recommended.
 
-### 6. Connect and Run
+### 6. Set a Project Folder (optional)
+
+Click the **folder icon** in the toolbar to select a project folder or file. This sets a default working directory that the AI uses as context for all commands and file operations. The project folder is included in the system prompt on every API call, so the AI always knows your workspace context — even across multi-step tasks. You can change it at any time between tasks.
+
+The AI is not restricted to this folder — it can look outside it when needed to complete a task.
+
+### 7. Connect and Run
 
 1. Click **Connect** to test the XPC services
 2. Type a task in natural language
@@ -157,7 +163,9 @@ Protected macOS APIs require user approval. Agent handles this correctly:
 |-----------|--------------------------------|
 | `run_agent_script` (dylib) | Loaded into Agent app process — inherits ALL TCC grants |
 | `apple_event_query` | Runs in Agent app process — inherits Automation permissions |
-| `execute_user_command` | Child process — does NOT inherit TCC grants |
+| `execute_shell_command` (TCC) | osascript/screencapture run in Agent app process — inherits ALL TCC grants |
+| `execute_shell_command` (non-TCC) | Routes through UserService LaunchAgent — does NOT inherit TCC grants |
+| `execute_user_command` | LaunchAgent process — does NOT inherit TCC grants |
 | `execute_command` (root) | LaunchDaemon process — has separate TCC context |
 
 **Rule:** For Accessibility, Screen Recording, or Automation tasks, always use `run_agent_script` or `apple_event_query`. Do NOT use shell commands for these operations.
@@ -397,9 +405,11 @@ Coming soon:
 ```
 Agent.app (SwiftUI)
   |
-  |-- AgentViewModel         Orchestrates task loop, screenshots, clipboard
-  |-- ClaudeService          Anthropic Messages API (streaming)
-  |-- OllamaService          Ollama native API (OpenAI-compatible)
+  |-- AgentViewModel         Orchestrates task loop, screenshots, clipboard, project folder
+  |-- ClaudeService          Anthropic Messages API (streaming), project folder in system prompt
+  |-- OllamaService          Ollama native API (OpenAI-compatible), project folder in system prompt
+  |-- ChatHistoryStore       SwiftData-backed task memory with summaries for older tasks
+  |-- CodingService          File read/write/edit/search operations for LLM tools
   |-- MCPService             MCP client for external tool servers
   |-- ScriptService          Swift Package manager for agent scripts
   |-- XcodeService           ScriptingBridge automation for Xcode
@@ -449,9 +459,9 @@ Agent! provides **60+ tools** across multiple categories for autonomous task exe
 
 | Tool | Description |
 |------|-------------|
-| `execute_shell_command` | Execute shell command in Agent app process (has TCC) |
-| `execute_user_command` | Execute shell command as current user (no TCC) |
-| `execute_command` | Execute shell command as ROOT (privileged) |
+| `execute_shell_command` | Smart routing: TCC commands (osascript, screencapture) run in-process with full TCC permissions and stream in a tab; non-TCC commands route through the UserService LaunchAgent |
+| `execute_user_command` | Execute shell command as current user via LaunchAgent (no TCC) |
+| `execute_command` | Execute shell command as ROOT via privileged LaunchDaemon |
 
 ### Apple Event Query (1 tool)
 
