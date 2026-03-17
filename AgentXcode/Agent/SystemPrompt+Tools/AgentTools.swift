@@ -126,8 +126,20 @@ enum AgentTools {
         """
     }
 
+    // MARK: - Tool List per Provider (for ToolsView)
+
+    /// Returns the tools available for a given provider.
+    static func tools(for provider: APIProvider) -> [ToolDef] {
+        switch provider {
+        case .ollama, .localOllama:
+            return commonTools + ollamaOnlyTools
+        default:
+            return commonTools
+        }
+    }
+
     // MARK: - Compact System Prompt (for Apple Intelligence with limited context)
-    static func compactSystemPrompt(userName: String, userHome: String) -> String {
+    @MainActor static func compactSystemPrompt(userName: String, userHome: String) -> String {
         """
         You are an autonomous macOS agent. User: "\(userName)", home: "\(userHome)".
         Act, don't explain. Never ask questions. Call task_complete when done.
@@ -141,16 +153,21 @@ enum AgentTools {
         ```
 
         Available tools:
-        - execute_user_command {"command": string} — run shell command as user
-        - execute_command {"command": string} — run shell command as root
-        - read_file {"file_path": string} — read file contents
-        - write_file {"file_path": string, "content": string} — write file
-        - edit_file {"file_path": string, "old_string": string, "new_string": string} — edit file
-        - list_files {"pattern": string, "path"?: string} — find files
-        - task_complete {"summary": string} — REQUIRED when done
-
+        \(enabledAppleAIToolLines())
         One tool call per message. Wait for the result before calling the next tool.
         """
+    }
+
+    @MainActor private static func enabledAppleAIToolLines() -> String {
+        let prefs = ToolPreferencesService.shared
+        return commonTools
+            .filter { prefs.isEnabled(.foundationModel, $0.name) }
+            .map { tool in
+                let req = tool.required.map { "\($0): string" }.joined(separator: ", ")
+                let short = tool.description.components(separatedBy: ". ").first ?? tool.description
+                return "- \(tool.name) {\(req)} — \(short)"
+            }
+            .joined(separator: "\n        ")
     }
 
     // MARK: - Tool Definitions (internal, format-neutral)
@@ -656,10 +673,13 @@ enum AgentTools {
 
     /// All common tools + MCP tools in Claude/Anthropic format.
     @MainActor static var claudeFormat: [[String: Any]] {
-        var tools = commonTools.map { tool in
-            claudeTool(name: tool.name, description: tool.description,
-                       properties: tool.properties, required: tool.required)
-        }
+        let prefs = ToolPreferencesService.shared
+        var tools = commonTools
+            .filter { prefs.isEnabled(.claude, $0.name) }
+            .map { tool in
+                claudeTool(name: tool.name, description: tool.description,
+                           properties: tool.properties, required: tool.required)
+            }
         let mcpService = MCPService.shared
         for tool in mcpService.discoveredTools where mcpService.isToolEnabled(serverName: tool.serverName, toolName: tool.name) {
             let safeName = sanitizeToolName("mcp_\(tool.serverName)_\(tool.name)")
@@ -711,12 +731,15 @@ enum AgentTools {
         ),
     ]
 
-    /// All common tools + Ollama-specific tools + MCP tools in Ollama/OpenAI format.
-    @MainActor static var ollamaFormat: [[String: Any]] {
-        var tools = (commonTools + ollamaOnlyTools).map { tool in
-            ollamaTool(name: tool.name, description: tool.description,
-                       properties: tool.properties, required: tool.required)
-        }
+    /// Provider-aware Ollama/OpenAI format — filters tools by per-provider preferences.
+    @MainActor static func ollamaTools(for provider: APIProvider) -> [[String: Any]] {
+        let prefs = ToolPreferencesService.shared
+        var tools = (commonTools + ollamaOnlyTools)
+            .filter { prefs.isEnabled(provider, $0.name) }
+            .map { tool in
+                ollamaTool(name: tool.name, description: tool.description,
+                           properties: tool.properties, required: tool.required)
+            }
         let mcpService = MCPService.shared
         for tool in mcpService.discoveredTools where mcpService.isToolEnabled(serverName: tool.serverName, toolName: tool.name) {
             let safeName = sanitizeToolName("mcp_\(tool.serverName)_\(tool.name)")
@@ -740,6 +763,9 @@ enum AgentTools {
         }
         return tools
     }
+
+    /// Backward-compat alias — defaults to Ollama Cloud preferences.
+    @MainActor static var ollamaFormat: [[String: Any]] { ollamaTools(for: .ollama) }
 }
 
 // MARK: - Native Foundation Models Tool Wrapper

@@ -6,6 +6,7 @@ final class OllamaService {
     let model: String
     let baseURL: URL
     let supportsVision: Bool
+    let provider: APIProvider
 
     var onStreamText: (@MainActor @Sendable (String) -> Void)?
 
@@ -14,12 +15,13 @@ final class OllamaService {
     let userName: String
     let projectFolder: String
 
-    init(apiKey: String, model: String, endpoint: String, supportsVision: Bool = false, historyContext: String = "", projectFolder: String = "") {
+    init(apiKey: String, model: String, endpoint: String, supportsVision: Bool = false, historyContext: String = "", projectFolder: String = "", provider: APIProvider = .ollama) {
         self.apiKey = apiKey
         self.model = model
         let effectiveEndpoint = endpoint.isEmpty ? "http://localhost:11434/api/chat" : endpoint
         self.baseURL = URL(string: effectiveEndpoint) ?? URL(filePath: "/")
         self.supportsVision = supportsVision
+        self.provider = provider
         self.historyContext = historyContext
         self.userHome = FileManager.default.homeDirectoryForCurrentUser.path
         self.userName = NSUserName()
@@ -40,7 +42,7 @@ final class OllamaService {
         return prompt
     }
 
-    var tools: [[String: Any]] { AgentTools.ollamaFormat }
+    var tools: [[String: Any]] { AgentTools.ollamaTools(for: provider) }
 
     /// Send messages via OpenAI-compatible chat completions API.
     /// Translates response into the same format as ClaudeService for the task loop.

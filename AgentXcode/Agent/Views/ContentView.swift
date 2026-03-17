@@ -13,6 +13,7 @@ struct ContentView: View {
     @State private var currentMatchIndex = 0
     @State private var totalMatches = 0
     @State private var showMCPServers = false
+    @State private var showTools = false
     @State private var showMessages = false
     @State private var showAccessibility = false
     @State private var showQuitConfirm = false
@@ -97,6 +98,15 @@ struct ContentView: View {
                 .controlSize(.small)
                 .popover(isPresented: $showMCPServers) {
                     MCPServersView()
+                }
+
+                Button { showTools.toggle() } label: {
+                    Image(systemName: "wrench.and.screwdriver")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .popover(isPresented: $showTools) {
+                    ToolsView(initialProvider: viewModel.selectedProvider)
                 }
 
                 Button { showSettings.toggle() } label: {

@@ -10,11 +10,12 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("LLM Provider")
                     .font(.headline)
-                Picker("Active", selection: $viewModel.selectedProvider) {
+                Picker("AI", selection: $viewModel.selectedProvider) {
                     ForEach(APIProvider.allCases, id: \.self) { provider in
                         Text(provider.displayName).tag(provider)
                     }
                 }
+                .labelsHidden()
                 .pickerStyle(.segmented)
                 .frame(maxWidth: .infinity)
             }

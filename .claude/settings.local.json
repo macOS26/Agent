@@ -187,7 +187,12 @@
       "Bash(mkdir -p ~/Documents/Agent/json ~/Documents/Agent/photos ~/Documents/Agent/images ~/Documents/Agent/screenshots ~/Documents/Agent/html)",
       "Read(//Users/toddbruss/Documents/Agent/**)",
       "Bash(mv:*)",
-      "Bash(npm view:*)"
+      "Bash(npm view:*)",
+      "Bash(osascript:*)",
+      "Bash(swift:*)",
+      "Bash(xargs -I{} basename {} Bridge.swift)",
+      "WebFetch(domain:dev.to)",
+      "WebFetch(domain:azamsharp.com)"
     ]
   }
 }
