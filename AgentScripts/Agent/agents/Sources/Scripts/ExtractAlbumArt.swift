@@ -1,8 +1,10 @@
 import Foundation
 import MusicBridge
+import AppKit
 
 // ============================================================================
 // ExtractAlbumArt - Extract album artwork from current track in Music.app
+// Falls back to iTunes Search API for URL tracks without local artwork
 //
 // INPUT OPTIONS:
 //   Option 1: AGENT_SCRIPT_ARGS environment variable
@@ -98,29 +100,6 @@ func extractAlbumArt() {
     print("Album: \(album)")
     print("")
     
-    // Get artwork
-    guard let artworks = track.artworks?() else {
-        print("❌ No artwork available")
-        writeOutput(jsonOutputPath, success: false, error: "No artwork available", outputJSON: outputJSON)
-        return
-    }
-    
-    // Find artwork with data
-    var artworkData: Data? = nil
-    for i in 0..<artworks.count {
-        guard let artwork = artworks.object(at: i) as? MusicArtwork else { continue }
-        if let data = artwork.data as? Data {
-            artworkData = data
-            break
-        }
-    }
-    
-    guard let data = artworkData else {
-        print("❌ Artwork found but no data available")
-        writeOutput(jsonOutputPath, success: false, error: "Artwork found but no data available", outputJSON: outputJSON)
-        return
-    }
-    
     // Set default output path if not specified
     let sanitizedTrack = trackName.replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: ":", with: "-")
     let imagesDir = "\(home)/Documents/Agent/images"
@@ -134,47 +113,131 @@ func extractAlbumArt() {
     }
     
     let finalPath = outputPath ?? "\(imagesDir)/\(sanitizedTrack).\(extension_)"
-    
-    // Ensure directory exists
     let dir = (finalPath as NSString).deletingLastPathComponent
     try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
     
-    // Save the artwork
-    do {
-        try data.write(to: URL(fileURLWithPath: finalPath))
-        let fileSize = data.count
+    var artworkSaved = false
+    
+    // Method 1: Try to get artwork from ScriptingBridge (local tracks)
+    if let artworks = track.artworks?(), artworks.count > 0 {
+        print("📷 Found \(artworks.count) artwork(s) via ScriptingBridge...")
         
-        print("✅ Album art saved successfully")
-        print("   Format: \(extension_)")
-        print("   Size: \(fileSize) bytes")
-        print("")
-        print("📁 \(finalPath)")
-        
-        // Write JSON output if requested
-        if outputJSON {
-            let trackInfo: [String: Any] = [
-                "name": trackName,
-                "artist": artist,
-                "album": album
-            ]
+        for i in 0..<artworks.count {
+            guard let artwork = artworks.object(at: i) as? SBObject else { continue }
             
-            let result: [String: Any] = [
-                "success": true,
-                "timestamp": ISO8601DateFormatter().string(from: Date()),
-                "outputPath": finalPath,
-                "track": trackInfo,
-                "fileSize": fileSize
-            ]
+            // Try to get NSImage data
+            if let nsImage = artwork.value(forKey: "data") as? NSImage {
+                print("   Found NSImage: \(Int(nsImage.size.width))x\(Int(nsImage.size.height))")
+                
+                if let tiffData = nsImage.tiffRepresentation,
+                   let bitmap = NSBitmapImageRep(data: tiffData) {
+                    
+                    let imageData: Data?
+                    switch extension_ {
+                    case "png":
+                        imageData = bitmap.representation(using: .png, properties: [:])
+                    case "tiff":
+                        imageData = bitmap.representation(using: .tiff, properties: [:])
+                    default:
+                        imageData = bitmap.representation(using: .jpeg, properties: [.compressionFactor: 0.9])
+                    }
+                    
+                    if let data = imageData {
+                        do {
+                            try data.write(to: URL(fileURLWithPath: finalPath))
+                            let fileSize = data.count
+                            print("   ✅ Saved from ScriptingBridge: \(fileSize) bytes")
+                            artworkSaved = true
+                            break
+                        } catch {
+                            print("   ❌ Error saving: \(error)")
+                        }
+                    }
+                }
+            }
             
-            try? FileManager.default.createDirectory(atPath: (jsonOutputPath as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
-            if let out = try? JSONSerialization.data(withJSONObject: result, options: .prettyPrinted) {
-                try? out.write(to: URL(fileURLWithPath: jsonOutputPath))
-                print("\n📄 JSON saved to: \(jsonOutputPath)")
+            // Try raw data
+            if let raw = artwork.value(forKey: "data") as? Data {
+                do {
+                    try raw.write(to: URL(fileURLWithPath: finalPath))
+                    print("   ✅ Saved raw data: \(raw.count) bytes")
+                    artworkSaved = true
+                    break
+                } catch {
+                    print("   ❌ Error saving raw data: \(error)")
+                }
             }
         }
-    } catch {
-        print("❌ Error saving artwork: \(error)")
-        writeOutput(jsonOutputPath, success: false, error: "Error saving artwork: \(error)", outputJSON: outputJSON)
+    }
+    
+    // Method 2: Fallback to iTunes Search API (for URL/Apple Music tracks)
+    if !artworkSaved {
+        print("📱 No local artwork - searching iTunes API...")
+        
+        let searchTerm = "\(artist) \(album)".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        let iTunesURL = "https://itunes.apple.com/search?term=\(searchTerm)&media=music&entity=album&limit=5"
+        
+        if let url = URL(string: iTunesURL),
+           let data = try? Data(contentsOf: url),
+           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let results = json["results"] as? [[String: Any]] {
+            
+            // Find best matching album
+            for result in results {
+                if let artworkURL100 = result["artworkUrl100"] as? String {
+                    // Get high-res artwork (replace 100x100 with larger size)
+                    let artworkURL = artworkURL100.replacingOccurrences(of: "100x100", with: "600x600")
+                    print("   Found: \(artworkURL)")
+                    
+                    if let artURL = URL(string: artworkURL),
+                       let artData = try? Data(contentsOf: artURL) {
+                        do {
+                            try artData.write(to: URL(fileURLWithPath: finalPath))
+                            print("   ✅ Saved from iTunes: \(artData.count) bytes")
+                            artworkSaved = true
+                            break
+                        } catch {
+                            print("   ❌ Error saving iTunes artwork: \(error)")
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    if !artworkSaved {
+        print("❌ Could not extract artwork from any source")
+        writeOutput(jsonOutputPath, success: false, error: "Could not extract artwork", outputJSON: outputJSON)
+        return
+    }
+    
+    // Get file size
+    let fileSize = (try? FileManager.default.attributesOfItem(atPath: finalPath)[.size] as? Int) ?? 0
+    
+    print("")
+    print("📁 \(finalPath)")
+    
+    // Write JSON output if requested
+    if outputJSON {
+        let trackInfo: [String: Any] = [
+            "name": trackName,
+            "artist": artist,
+            "album": album
+        ]
+        
+        let result: [String: Any] = [
+            "success": true,
+            "timestamp": ISO8601DateFormatter().string(from: Date()),
+            "outputPath": finalPath,
+            "track": trackInfo,
+            "fileSize": fileSize
+        ]
+        
+        try? FileManager.default.createDirectory(atPath: (jsonOutputPath as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
+        if let out = try? JSONSerialization.data(withJSONObject: result, options: .prettyPrinted) {
+            try? out.write(to: URL(fileURLWithPath: jsonOutputPath))
+            print("\n📄 JSON saved to: \(jsonOutputPath)")
+        }
     }
 }
 
