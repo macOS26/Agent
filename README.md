@@ -386,11 +386,8 @@ When connected to an MCP server, Agent:
 
 ### Transport
 
-Currently supported:
 - **stdio** — Standard input/output pipes (most common)
-
-Coming soon:
-- **HTTP/SSE** — Server-Sent Events over HTTP
+- **HTTP/SSE** — Streamable HTTP and Server-Sent Events
 
 ### Tool Management
 
