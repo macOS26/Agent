@@ -22,13 +22,14 @@ enum AgentTools {
         - apple_event_query: in-process ObjC dispatch → inherits Automation TCC.
         - execute_user_command: child process, NO TCC. Not for AX/Automation.
         - execute_command: root daemon, NO TCC. Never for AX/Automation.
-        - osascript: avoid. Use apple_event_query or run_agent_script with NSAppleScript instead.
+        - osascript via execute_user_command: NO TCC (different process tree).
+        - osascript inside run_agent_script: OK — use NSAppleScript or Process("/usr/bin/osascript") from dylib.
 
         APP AUTOMATION PRIORITY:
         1. apple_event_query — instant ObjC dispatch, no compile. FIRST for reads.
         2. run_agent_script — Swift dylib for complex/persistent work. Has full TCC.
-        3. NSAppleScript inside run_agent_script — fallback if bridge has issues. Still has TCC.
-        NEVER use osascript via execute_user_command — no TCC, use options 1-3 instead.
+        3. NSAppleScript or osascript inside run_agent_script — fallback if bridge has issues. Has TCC.
+        Do NOT use osascript via execute_user_command — no TCC, use options 1-3 instead.
 
         FILE TOOLS: read_file, write_file, edit_file (read first), list_files, search_files
         - write_file returns line count only. Call read_file after to verify content.
