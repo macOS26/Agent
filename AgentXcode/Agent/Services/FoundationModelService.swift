@@ -137,12 +137,19 @@ final class FoundationModelService {
 
     // MARK: - Helpers
 
+    /// Prefix injected into every user message so Apple Intelligence sees the project folder
+    /// immediately in context (system prompt alone is often ignored due to small context window).
+    private var projectFolderPrefix: String {
+        guard !projectFolder.isEmpty else { return "" }
+        return "PROJECT FOLDER: \(projectFolder) — cd here before running any shell commands.\n\n"
+    }
+
     /// Extract only the last user message — the session maintains prior turns internally.
     /// Tool results are formatted as plain text so the on-device model understands them.
     private func extractLastUserPrompt(from messages: [[String: Any]]) -> String {
         for msg in messages.reversed() {
             guard let role = msg["role"] as? String, role == "user" else { continue }
-            if let text = msg["content"] as? String { return text }
+            if let text = msg["content"] as? String { return projectFolderPrefix + text }
             if let blocks = msg["content"] as? [[String: Any]] {
                 let isToolResults = blocks.first?["type"] as? String == "tool_result"
                 if isToolResults {
@@ -152,10 +159,11 @@ final class FoundationModelService {
                     }.joined(separator: "\n")
                     return "The command output was:\n\(output)\n\nNow reply in English with this information, then call task_complete."
                 }
-                return blocks.compactMap { block -> String? in
+                let text = blocks.compactMap { block -> String? in
                     guard block["type"] as? String == "text" else { return nil }
                     return block["text"] as? String
                 }.joined(separator: "\n")
+                return projectFolderPrefix + text
             }
         }
         return ""
