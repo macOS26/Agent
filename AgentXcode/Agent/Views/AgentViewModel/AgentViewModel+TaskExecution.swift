@@ -857,16 +857,26 @@ extension AgentViewModel {
                             let command = input["command"] as? String ?? ""
 
                             if Self.needsTCCTab(command) {
-                                // TCC command — open in a tab for streaming output
+                                // TCC command — reuse existing tab per type, or create one
                                 let label: String
                                 if command.contains("osascript") {
                                     label = "osascript"
+                                } else if command.contains("screencapture") {
+                                    label = "screencapture"
                                 } else {
                                     let words = command.prefix(30).components(separatedBy: " ")
                                     label = words.first ?? "app_cmd"
                                 }
 
-                                let tab = openScriptTab(scriptName: label)
+                                // Reuse existing tab for this label, or create a new one
+                                let tab: ScriptTab
+                                if let existing = scriptTabs.first(where: { $0.scriptName == label }) {
+                                    tab = existing
+                                    selectedTabId = tab.id
+                                    tab.isRunning = true
+                                } else {
+                                    tab = openScriptTab(scriptName: label)
+                                }
                                 appendLog("App command... (see tab)")
                                 flushLog()
 
