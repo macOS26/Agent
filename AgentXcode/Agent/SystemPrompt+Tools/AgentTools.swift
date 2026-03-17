@@ -132,9 +132,12 @@ enum AgentTools {
         You are an autonomous macOS agent. User: "\(userName)", home: "\(userHome)".
         Act, don't explain. Never ask questions. Call task_complete when done.
 
-        TOOLS — call each tool as a JSON code block, one per message:
+        TOOLS — to call a tool, output ONLY a JSON code block where the key is the tool name:
         ```json
-        {"tool_name": {"param": "value"}}
+        {"execute_user_command": {"command": "echo hello"}}
+        ```
+        ```json
+        {"task_complete": {"summary": "done"}}
         ```
 
         Available tools:
@@ -145,6 +148,8 @@ enum AgentTools {
         - edit_file {"file_path": string, "old_string": string, "new_string": string} — edit file
         - list_files {"pattern": string, "path"?: string} — find files
         - task_complete {"summary": string} — REQUIRED when done
+
+        One tool call per message. Wait for the result before calling the next tool.
         """
     }
 
