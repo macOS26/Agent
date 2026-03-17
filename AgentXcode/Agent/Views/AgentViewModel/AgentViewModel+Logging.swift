@@ -261,6 +261,22 @@ extension AgentViewModel {
         try? FileManager.default.createDirectory(at: Self.logImageCacheDir, withIntermediateDirectories: true)
     }
 
+    /// Clear the selected tab's log, or main log if no tab selected.
+    func clearSelectedLog() {
+        if let selectedId = selectedTabId,
+           let tab = scriptTabs.first(where: { $0.id == selectedId }) {
+            tab.activityLog = ""
+            tab.logBuffer = ""
+            tab.logFlushTask?.cancel()
+            tab.logFlushTask = nil
+            tab.streamLineCount = 0
+            tab.streamTruncated = false
+            persistScriptTabs()
+        } else {
+            clearLog()
+        }
+    }
+
     // MARK: - LLM Streaming
 
     func appendStreamDelta(_ delta: String) {

@@ -10,6 +10,19 @@ extension AgentViewModel {
         let task = tab.taskInput.trimmingCharacters(in: .whitespaces)
         guard !task.isEmpty else { return }
 
+        // Handle /clear in tab context
+        if task.lowercased() == "/clear" {
+            tab.taskInput = ""
+            tab.activityLog = ""
+            tab.logBuffer = ""
+            tab.logFlushTask?.cancel()
+            tab.logFlushTask = nil
+            tab.streamLineCount = 0
+            tab.streamTruncated = false
+            persistScriptTabs()
+            return
+        }
+
         if tab.isLLMRunning {
             stopTabTask(tab: tab)
         }
@@ -182,7 +195,7 @@ extension AgentViewModel {
         // task_complete
         if name == "task_complete" {
             let summary = input["summary"] as? String ?? "Done"
-            tab.appendLog("Completed: \(summary)")
+            tab.appendLog("✅ Completed: \(summary)")
             tab.flush()
             return TabToolResult(toolResult: nil, isComplete: true)
         }
@@ -192,7 +205,7 @@ extension AgentViewModel {
             let filePath = input["file_path"] as? String ?? ""
             let offset = input["offset"] as? Int
             let limit = input["limit"] as? Int
-            tab.appendLog("Read: \(filePath)")
+            tab.appendLog("📖 Read: \(filePath)")
             let output = await Self.offMain { CodingService.readFile(path: filePath, offset: offset, limit: limit) }
             let lang = Self.langFromPath(filePath)
             tab.appendLog(Self.codeFence(Self.preview(output, lines: readFilePreviewLines), language: lang))
@@ -207,7 +220,7 @@ extension AgentViewModel {
         if name == "write_file" {
             let filePath = input["file_path"] as? String ?? ""
             let content = input["content"] as? String ?? ""
-            tab.appendLog("Write: \(filePath)")
+            tab.appendLog("📝 Write: \(filePath)")
             let output = await Self.offMain { CodingService.writeFile(path: filePath, content: content) }
             tab.appendLog(output)
             tab.flush()
@@ -223,7 +236,7 @@ extension AgentViewModel {
             let oldString = input["old_string"] as? String ?? ""
             let newString = input["new_string"] as? String ?? ""
             let replaceAll = input["replace_all"] as? Bool ?? false
-            tab.appendLog("Edit: \(filePath)")
+            tab.appendLog("📝 Edit: \(filePath)")
             let output = await Self.offMain { CodingService.editFile(path: filePath, oldString: oldString, newString: newString, replaceAll: replaceAll) }
             tab.appendLog(output)
             tab.flush()
@@ -237,7 +250,7 @@ extension AgentViewModel {
         if name == "list_files" {
             let pattern = input["pattern"] as? String ?? "*"
             let path = input["path"] as? String
-            tab.appendLog("$ find \(path ?? "~") -name '\(pattern)'")
+            tab.appendLog("🔍 $ find \(path ?? "~") -name '\(pattern)'")
             tab.flush()
             let cmd = CodingService.buildListFilesCommand(pattern: pattern, path: path)
             let result = await executeForTab(command: cmd)
@@ -255,7 +268,7 @@ extension AgentViewModel {
             let pattern = input["pattern"] as? String ?? ""
             let path = input["path"] as? String
             let include = input["include"] as? String
-            tab.appendLog("$ grep -rn '\(pattern)' \(path ?? "~")")
+            tab.appendLog("🔍 $ grep -rn '\(pattern)' \(path ?? "~")")
             tab.flush()
             let cmd = CodingService.buildSearchFilesCommand(pattern: pattern, path: path, include: include)
             let result = await executeForTab(command: cmd)
@@ -271,7 +284,7 @@ extension AgentViewModel {
         // git_status
         if name == "git_status" {
             let path = input["path"] as? String
-            tab.appendLog("$ git status")
+            tab.appendLog("🔀 $ git status")
             tab.flush()
             let cmd = CodingService.buildGitStatusCommand(path: path)
             let result = await executeForTab(command: cmd)
@@ -289,7 +302,7 @@ extension AgentViewModel {
             let path = input["path"] as? String
             let staged = input["staged"] as? Bool ?? false
             let target = input["target"] as? String
-            tab.appendLog("$ git diff\(staged ? " --cached" : "")")
+            tab.appendLog("🔀 $ git diff\(staged ? " --cached" : "")")
             tab.flush()
             let cmd = CodingService.buildGitDiffCommand(path: path, staged: staged, target: target)
             let result = await executeForTab(command: cmd)
@@ -312,7 +325,7 @@ extension AgentViewModel {
         if name == "git_log" {
             let path = input["path"] as? String
             let count = input["count"] as? Int
-            tab.appendLog("$ git log")
+            tab.appendLog("🔀 $ git log")
             tab.flush()
             let cmd = CodingService.buildGitLogCommand(path: path, count: count)
             let result = await executeForTab(command: cmd)
@@ -330,7 +343,7 @@ extension AgentViewModel {
             let path = input["path"] as? String
             let message = input["message"] as? String ?? ""
             let files = input["files"] as? [String]
-            tab.appendLog("Git commit: \(message)")
+            tab.appendLog("🔀 Git commit: \(message)")
             tab.flush()
             let cmd = CodingService.buildGitCommitCommand(path: path, message: message, files: files)
             let result = await executeForTab(command: cmd)
@@ -345,10 +358,10 @@ extension AgentViewModel {
             )
         }
 
-        // execute_app_command — in-process shell with ALL TCC
-        if name == "execute_app_command" {
+        // execute_shell_command — in-process shell with ALL TCC
+        if name == "execute_shell_command" {
             let command = input["command"] as? String ?? ""
-            tab.appendLog("🔒 \(Self.collapseHeredocs(command))")
+            tab.appendLog("🐣 \(Self.collapseHeredocs(command))")
             tab.flush()
 
             let result = await executeLocalStreaming(command: command) { [weak tab] chunk in
@@ -389,7 +402,7 @@ extension AgentViewModel {
                 )
             }
             let isPrivileged = (name == "execute_command") && rootEnabled
-            tab.appendLog("\(isPrivileged ? "#" : "$") \(Self.collapseHeredocs(command))")
+            tab.appendLog("\(isPrivileged ? "🔴 #" : "🔧 $") \(Self.collapseHeredocs(command))")
             tab.flush()
 
             let result: (status: Int32, output: String)
@@ -430,7 +443,7 @@ extension AgentViewModel {
             let scripts = scriptService.listScripts()
             let output = scripts.isEmpty
                 ? "No scripts found" : scripts.map { "\($0.name) (\($0.size) bytes)" }.joined(separator: "\n")
-            tab.appendLog("Scripts: \(scripts.count) found")
+            tab.appendLog("🦾 Scripts: \(scripts.count) found")
             tab.flush()
             return TabToolResult(
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
@@ -442,7 +455,7 @@ extension AgentViewModel {
         if name == "read_agent_script" {
             let scriptName = input["name"] as? String ?? ""
             let output = scriptService.readScript(name: scriptName) ?? "Error: script '\(scriptName)' not found."
-            tab.appendLog("Read: \(scriptName)")
+            tab.appendLog("📖 Read: \(scriptName)")
             tab.appendLog(Self.codeFence(Self.preview(output, lines: readFilePreviewLines), language: "swift"))
             tab.flush()
             return TabToolResult(
@@ -503,7 +516,7 @@ extension AgentViewModel {
                 )
             }
 
-            tab.appendLog("Compiling: \(scriptName)")
+            tab.appendLog("🦾 Compiling: \(scriptName)")
             tab.flush()
 
             let compileResult = await executeForTab(command: compileCmd)
@@ -527,7 +540,7 @@ extension AgentViewModel {
                 )
             }
 
-            tab.appendLog("Running: \(scriptName)")
+            tab.appendLog("🦾 Running: \(scriptName)")
             tab.flush()
 
             tab.resetLLMStreamCounters()
@@ -562,7 +575,7 @@ extension AgentViewModel {
             let bundleID = input["bundle_id"] as? String ?? ""
             let operations = input["operations"] as? [[String: Any]] ?? []
             let allowWrites = input["allow_writes"] as? Bool ?? false
-            tab.appendLog("AE query: \(bundleID) (\(operations.count) ops)")
+            tab.appendLog("🍎 AE query: \(bundleID) (\(operations.count) ops)")
             tab.flush()
             let opsData = try? JSONSerialization.data(withJSONObject: operations)
             let output = await Self.offMain {
@@ -592,7 +605,7 @@ extension AgentViewModel {
             let toolKey = MCPService.toolKey(serverName: serverName, toolName: toolName)
             guard !disabledSnapshot.contains(toolKey) else {
                 let msg = "Tool '\(toolName)' is disabled"
-                tab.appendLog("MCP[\(serverName)]: \(msg)")
+                tab.appendLog("🖥️ MCP[\(serverName)]: \(msg)")
                 tab.flush()
                 return TabToolResult(
                     toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": msg],
@@ -600,7 +613,7 @@ extension AgentViewModel {
                 )
             }
 
-            tab.appendLog("MCP[\(serverName)]: \(toolName)")
+            tab.appendLog("🖥️ MCP[\(serverName)]: \(toolName)")
             tab.flush()
 
             var mcpOutput = ""

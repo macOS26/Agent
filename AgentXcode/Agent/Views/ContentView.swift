@@ -123,11 +123,13 @@ struct ContentView: View {
                 .buttonStyle(.bordered)
                 .controlSize(.small)
                 .disabled(viewModel.isRunning)
-                .alert("Clear Task History", isPresented: $showClearConfirm) {
-                    Button("Clear", role: .destructive) { viewModel.clearLog() }
+                .alert("Clear Log", isPresented: $showClearConfirm) {
+                    Button("Clear", role: .destructive) { viewModel.clearSelectedLog() }
                     Button("Cancel", role: .cancel) { }
                 } message: {
-                    Text("Are you sure you want to clear all task history?")
+                    Text(viewModel.selectedTabId != nil
+                         ? "Clear this tab's log?"
+                         : "Clear all task history?")
                 }
             }
             .padding(.horizontal)
