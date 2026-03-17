@@ -135,12 +135,39 @@ final class FoundationModelService {
         return ""
     }
 
-    /// Parse response from Foundation Models. Tools are disabled for Apple Intelligence
-    /// (context window too small), so we return plain text only.
+    /// Parse response from Foundation Models.
+    /// Apple Intelligence outputs tool calls as JSON code blocks: ```json\n{"tool_name": {params}}\n```
+    /// We extract the first such call and return it as a tool_use block.
     private func parseResponse(_ text: String, session: LanguageModelSession) -> (content: [[String: Any]], stopReason: String) {
+        // Look for ```json ... ``` blocks containing {"tool_name": {params}}
+        let codeBlockPattern = "```(?:json)?\\s*\\n?([\\s\\S]*?)\\n?```"
+        if let regex = try? NSRegularExpression(pattern: codeBlockPattern),
+           let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
+           let jsonRange = Range(match.range(at: 1), in: text) {
+            let jsonStr = String(text[jsonRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+            if let result = parseToolCallJSON(jsonStr) { return result }
+        }
+        // Also try parsing the entire text as bare JSON (no code block)
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.hasPrefix("{"), let result = parseToolCallJSON(trimmed) { return result }
+
         if text.isEmpty {
             return ([["type": "text", "text": "I'll continue with the task."]], "end_turn")
         }
         return ([["type": "text", "text": text]], "end_turn")
+    }
+
+    /// Parse {"tool_name": {params}} or {"tool_name": {"param": value}} JSON into a tool_use block.
+    private func parseToolCallJSON(_ json: String) -> (content: [[String: Any]], stopReason: String)? {
+        guard let data = json.data(using: .utf8),
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              obj.count == 1,
+              let toolName = obj.keys.first,
+              AgentTools.toolNames.contains(toolName) else { return nil }
+        let input = (obj[toolName] as? [String: Any]) ?? [:]
+        return (
+            [["type": "tool_use", "id": UUID().uuidString, "name": toolName, "input": input]],
+            "tool_use"
+        )
     }
 }
