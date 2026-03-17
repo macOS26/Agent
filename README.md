@@ -143,17 +143,27 @@ The XPC boundary ensures:
 
 ### Entitlements
 
-Agent uses minimal entitlements:
+Agent's entitlements (`Agent.entitlements`):
 
-```xml
-<key>com.apple.security.app-sandbox</key>
-<false/>
-<key>com.apple.security.automation.apple-events</key>
-<true/>
-```
-
-- **App Sandbox**: Disabled (required for system automation)
-- **Apple Events**: Enabled (required for AppleScript and ScriptingBridge)
+| Entitlement | Purpose |
+|-------------|---------|
+| `automation.apple-events` | AppleScript and ScriptingBridge automation |
+| `cs.allow-unsigned-executable-memory` | Required for dlopen'd AgentScript dylibs |
+| `cs.disable-library-validation` | Load user-compiled script dylibs at runtime |
+| `assets.music.read-write` | Music library access via MusicBridge |
+| `device.audio-input` | Microphone access for audio scripts |
+| `device.bluetooth` | Bluetooth device interaction |
+| `device.camera` | Camera capture (CapturePhoto script) |
+| `device.usb` | USB device access |
+| `files.downloads.read-write` | Read/write Downloads folder |
+| `files.user-selected.read-write` | Read/write user-selected files |
+| `network.client` | Outbound connections (API calls, web search) |
+| `network.server` | Inbound connections (MCP HTTP/SSE transport) |
+| `personal-information.addressbook` | Contacts access via ContactsBridge |
+| `personal-information.calendars` | Calendar access via CalendarBridge |
+| `personal-information.location` | Location services |
+| `personal-information.photos-library` | Photos access via PhotosBridge |
+| `keychain-access-groups` | Secure API key storage |
 
 ### TCC Permissions (Accessibility, Screen Recording, Automation)
 
