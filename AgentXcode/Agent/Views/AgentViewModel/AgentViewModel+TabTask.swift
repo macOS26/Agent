@@ -185,6 +185,10 @@ extension AgentViewModel {
                     consecutiveNoTool = 0
                 } else if !hasToolUse {
                     consecutiveNoTool += 1
+                    // Apple Intelligence: text-only = final answer, stop immediately
+                    if provider == .foundationModel {
+                        break
+                    }
                     if consecutiveNoTool >= 3 {
                         tab.appendLog("(model not using tools — stopping)")
                         break

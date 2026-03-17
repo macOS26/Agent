@@ -1301,7 +1301,11 @@ extension AgentViewModel {
                     messages.append(["role": "user", "content": "Continue with the task. Call task_complete when finished."])
                 } else if !hasToolUse {
                     consecutiveNoTool += 1
-                    // Give the model up to 3 nudges to use tools before giving up
+                    // Apple Intelligence: text-only = final answer, stop immediately
+                    if provider == .foundationModel {
+                        break
+                    }
+                    // Give other models up to 3 nudges to use tools before giving up
                     if consecutiveNoTool >= 3 {
                         appendLog("(model not using tools — stopping)")
                         break
