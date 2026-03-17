@@ -202,7 +202,29 @@ final class ScriptService {
 
     // MARK: - Install new scripts
 
+    // MARK: - Deleted scripts blocklist
+
+    /// Scripts the user has explicitly deleted — don't re-copy from bundle
+    private static let deletedScriptsKey = "agentDeletedScripts"
+
+    private var deletedScripts: Set<String> {
+        Set(UserDefaults.standard.stringArray(forKey: Self.deletedScriptsKey) ?? [])
+    }
+
+    func markScriptDeleted(_ name: String) {
+        var deleted = deletedScripts
+        deleted.insert(name)
+        UserDefaults.standard.set(Array(deleted), forKey: Self.deletedScriptsKey)
+    }
+
+    func unmarkScriptDeleted(_ name: String) {
+        var deleted = deletedScripts
+        deleted.remove(name)
+        UserDefaults.standard.set(Array(deleted), forKey: Self.deletedScriptsKey)
+    }
+
     /// Copy bundled scripts that don't already exist (preserve user modifications)
+    /// Skips scripts the user has explicitly deleted via delete_agent_script.
     private func installNewScripts() {
         let fm = FileManager.default
 
@@ -213,10 +235,12 @@ final class ScriptService {
             try? fm.createDirectory(at: scriptsDir, withIntermediateDirectories: true)
         }
 
+        let blocked = deletedScripts
         guard let files = try? fm.contentsOfDirectory(atPath: bundleDir.path) else { return }
         for file in files where file.hasSuffix(".swift") {
+            let name = file.replacingOccurrences(of: ".swift", with: "")
             let dst = scriptsDir.appendingPathComponent(file)
-            if !fm.fileExists(atPath: dst.path) {
+            if !fm.fileExists(atPath: dst.path) && !blocked.contains(name) {
                 let src = bundleDir.appendingPathComponent(file)
                 try? fm.copyItem(at: src, to: dst)
             }
@@ -303,7 +327,8 @@ final class ScriptService {
         do {
             try fm.createDirectory(at: scriptsDir, withIntermediateDirectories: true)
             try final.write(to: scriptFile, atomically: true, encoding: .utf8)
-            
+            unmarkScriptDeleted(scriptName)
+
             // Hold lock while modifying Package.swift
             packageLock.lock()
             defer { packageLock.unlock() }
@@ -345,7 +370,8 @@ final class ScriptService {
 
         do {
             try fm.removeItem(at: scriptFile)
-            
+            markScriptDeleted(scriptName)
+
             // Hold lock while modifying Package.swift
             packageLock.lock()
             defer { packageLock.unlock() }
