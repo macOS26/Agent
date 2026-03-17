@@ -123,16 +123,14 @@ final class ChatHistoryStore {
             currentTask = nil
             return
         }
-        // Guard against faulted/deleted objects that cause Core Data crashes
-        if context.hasChanges {
+        // ObjCTry catches CoreData ObjC exceptions that Swift do/catch cannot
+        let ok = ObjCTry {
             task.endTime = Date()
             task.summary = summary
             task.isCancelled = cancelled
+            try? context.save()
         }
-        do {
-            try context.save()
-        } catch {
-            // Context in bad state — rollback to prevent cascading crashes
+        if !ok {
             context.rollback()
         }
         currentTask = nil
@@ -159,23 +157,17 @@ final class ChatHistoryStore {
         context?.insert(message)
     }
     
-    /// Save pending changes
+    /// Save pending changes — catches both Swift errors and ObjC exceptions
     func save() {
-        do {
-            try context?.save()
-        } catch {
-            context?.rollback()
+        guard let context else { return }
+        let ok = ObjCTry {
+            try? context.save()
         }
+        if !ok { context.rollback() }
     }
 
-    /// Safe save that won't propagate exceptions
-    private func safeSave() {
-        do {
-            try context?.save()
-        } catch {
-            context?.rollback()
-        }
-    }
+    /// Alias for save()
+    private func safeSave() { save() }
     
     /// Fetch recent tasks with their messages
     func fetchRecentTasks(limit: Int = 3) -> [(task: ChatTask, messages: [ChatMessage])] {
@@ -325,17 +317,18 @@ final class ChatHistoryStore {
 
     /// Clear all history
     func clearAll() {
-        guard let context else { return }
-        
-        do {
-            try context.delete(model: ChatMessage.self)
-            try context.delete(model: ChatTask.self)
-            try context.save()
-        } catch {
-            print("Failed to clear history: \(error)")
-        }
-        
         currentTask = nil
+        // Nuke the store files and recreate — batch deletes trigger CoreData
+        // ObjC exceptions on inverse relationships that Swift can't catch
+        deleteStoreFiles()
+        let schema = Schema([ChatMessage.self, ChatTask.self, ScriptTabRecord.self])
+        do {
+            let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+            container = try ModelContainer(for: schema, configurations: config)
+            context = container?.mainContext
+        } catch {
+            print("Failed to recreate store after clear: \(error)")
+        }
     }
     
     /// Count total tasks
