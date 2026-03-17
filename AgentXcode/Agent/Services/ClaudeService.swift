@@ -42,6 +42,26 @@ final class ClaudeService {
         return t
     }
 
+    /// Prepend project folder to the last user message so it's always visible in context.
+    private func withFolderPrefix(_ messages: [[String: Any]]) -> [[String: Any]] {
+        guard !projectFolder.isEmpty else { return messages }
+        let prefix = "PROJECT FOLDER: \(projectFolder)\n"
+        var result = messages
+        for i in stride(from: result.count - 1, through: 0, by: -1) {
+            guard result[i]["role"] as? String == "user" else { continue }
+            if let text = result[i]["content"] as? String {
+                result[i]["content"] = prefix + text
+            } else if var blocks = result[i]["content"] as? [[String: Any]],
+                      let first = blocks.first, first["type"] as? String == "text",
+                      let existing = first["text"] as? String {
+                blocks[0]["text"] = prefix + existing
+                result[i]["content"] = blocks
+            }
+            break
+        }
+        return result
+    }
+
     func send(messages: [[String: Any]]) async throws -> (content: [[String: Any]], stopReason: String) {
         guard !apiKey.isEmpty else { throw AgentError.noAPIKey }
 
@@ -50,7 +70,7 @@ final class ClaudeService {
             "max_tokens": 8192,
             "system": systemPrompt,
             "tools": tools,
-            "messages": messages
+            "messages": withFolderPrefix(messages)
         ]
 
         // Serialize on main actor, then offload network I/O + response parsing
@@ -108,7 +128,7 @@ final class ClaudeService {
             "max_tokens": 8192,
             "system": systemPrompt,
             "tools": tools,
-            "messages": messages,
+            "messages": withFolderPrefix(messages),
             "stream": true
         ]
 

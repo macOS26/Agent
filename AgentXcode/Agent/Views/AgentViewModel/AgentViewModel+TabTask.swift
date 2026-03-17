@@ -394,8 +394,8 @@ extension AgentViewModel {
             )
         }
 
-        // execute_shell_command — in-process shell with ALL TCC
-        if name == "execute_shell_command" {
+        // run_osascript — in-process shell with ALL TCC
+        if name == "run_osascript" {
             let command = input["command"] as? String ?? ""
             tab.appendLog("🐣 \(Self.collapseHeredocs(command))")
             tab.flush()

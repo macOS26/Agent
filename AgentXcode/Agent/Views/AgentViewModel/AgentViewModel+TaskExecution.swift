@@ -895,7 +895,7 @@ extension AgentViewModel {
                         }
 
                         // In-process shell with TCC (Automation, Accessibility, ScreenRecording)
-                        if name == "execute_shell_command" {
+                        if name == "run_osascript" {
                             let command = input["command"] as? String ?? ""
 
                             if Self.needsTCCTab(command) {
@@ -948,7 +948,7 @@ extension AgentViewModel {
                                 let truncated2 = toolOutput.count > 10000
                                     ? String(toolOutput.prefix(10000)) + "\n...(truncated)"
                                     : toolOutput
-                                commandsRun.append("execute_shell_command: \(label)")
+                                commandsRun.append("run_osascript: \(label)")
                                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": truncated2])
                             } else {
                                 // Non-TCC command — route through XPC services
@@ -978,7 +978,7 @@ extension AgentViewModel {
 
                                 let words = command.prefix(30).components(separatedBy: " ")
                                 let label = words.first ?? "app_cmd"
-                                commandsRun.append("execute_shell_command: \(label)")
+                                commandsRun.append("run_osascript: \(label)")
                                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": truncated2])
                             }
                         }
