@@ -782,7 +782,8 @@ Scripts inherit Agent's TCC permissions (Automation, Accessibility, Screen Recor
 | **MCP support** | Yes (stdio transport) | Yes |
 | **Messaging** | Native Apple Messages (iMessage/SMS) with per-recipient approval | WhatsApp, Telegram, Slack, Discord, iMessage, and more |
 | **Message reply** | Auto-replies task results via iMessage to approved senders | Platform-specific replies |
-| **Installation** | Run the .app, install XCT | `openclaw onboard` wizard |
+| **App size** | 13.3 MB (v1.0.11) | ~90.5 MB unpacked (npm) |
+| **Installation** | Run the .app, install Xcode Command Line Tools (`xcode-select --install`) | `openclaw onboard` wizard |
 | **Dependencies** | Xcode Command Line Tools | Node.js + npm ecosystem |
 | **Apple Silicon** | Native ARM64 | Interpreted (Node.js) |
 
