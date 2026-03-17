@@ -72,8 +72,18 @@ struct ActivityLogView: NSViewRepresentable {
         coord.showingPlaceholder = false
 
         if textChanged || searchCleared {
-            // Use incremental update for appending text
-            let isAppending = len > coord.lastLength && coord.lastLength > 0 && !searchCleared
+            // Detect tab switch: if existing text prefix doesn't match, force full rebuild
+            let prefixMatches: Bool
+            if coord.lastLength > 0 && len >= coord.lastLength && !searchCleared {
+                let oldPrefix = (coord.lastRenderedText as NSString).substring(to: min(coord.lastLength, 200))
+                let newPrefix = (text as NSString).substring(to: min(coord.lastLength, 200))
+                prefixMatches = (oldPrefix == newPrefix)
+            } else {
+                prefixMatches = false
+            }
+
+            // Use incremental update only when genuinely appending to same content
+            let isAppending = len > coord.lastLength && coord.lastLength > 0 && !searchCleared && prefixMatches
 
             if isAppending {
                 // Incremental update: only render and append new text
