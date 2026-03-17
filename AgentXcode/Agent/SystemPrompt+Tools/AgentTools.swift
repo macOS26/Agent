@@ -5,7 +5,7 @@ import Foundation
 /// while retaining the ability to augment with provider-specific additions.
 enum AgentTools {
 
-    // MARK: - System Prompt
+    // MARK: - System Prompt (full version for Claude/Ollama)
     static func systemPrompt(userName: String, userHome: String) -> String {
         """
         You are an autonomous macOS agent. User: "\(userName)", home: "\(userHome)".
@@ -126,9 +126,25 @@ enum AgentTools {
         """
     }
 
+    // MARK: - Compact System Prompt (for Apple Intelligence with limited context)
+    static func compactSystemPrompt(userName: String, userHome: String) -> String {
+        """
+        You are an autonomous macOS agent. User: "\(userName)", home: "\(userHome)".
+        Act, don't explain. Never ask questions. Call task_complete when done.
+
+        TOOLS (use these directly):
+        - read_file/write_file/edit_file/list_files/search_files: File operations
+        - execute_user_command: Run shell commands as user (git, builds, CLI)
+        - execute_command: Run shell commands as root (system modifications)
+        - task_complete: Signal task completion with summary
+
+        Call tools using JSON format: tool_name {"param": value}
+        """
+    }
+
     // MARK: - Tool Definitions (internal, format-neutral)
 
-    private struct ToolDef {
+    struct ToolDef {
         let name: String
         let description: String
         let properties: [String: [String: Any]]
@@ -531,6 +547,16 @@ enum AgentTools {
         ),
     ]
 
+    // MARK: - Foundation Models Native Tools
+
+    /// Create native FoundationModels.Tool objects for on-device Apple Intelligence.
+    /// Each tool returns GeneratedContent as arguments, which the model populates with parameters.
+    @MainActor static func nativeTools() -> [any Tool] {
+        commonTools.map { toolDef in
+            NativeAgentTool(toolDef: toolDef)
+        }
+    }
+
     // MARK: - Plain-Text Format (for Foundation Models / text-based providers)
 
     /// All tool names derived from commonTools. Use instead of hardcoded lists.
@@ -702,5 +728,81 @@ enum AgentTools {
             ] as [String: Any])
         }
         return tools
+    }
+}
+
+// MARK: - Native Foundation Models Tool Wrapper
+
+import FoundationModels
+
+/// Output from tool execution - must be PromptRepresentable.
+@Generable
+struct AgentToolOutput: PromptRepresentable {
+    let result: String
+}
+
+/// Native FoundationModels.Tool implementation that wraps Agent tool definitions.
+/// When the model calls this tool, the framework invokes the call() method.
+struct NativeAgentTool: Tool {
+    typealias Arguments = GeneratedContent
+    typealias Output = AgentToolOutput
+
+    let name: String
+    let description: String
+    let parameters: GenerationSchema
+
+    init(toolDef: AgentTools.ToolDef) {
+        self.name = toolDef.name
+        self.description = toolDef.description
+
+        // Build GenerationSchema from tool's properties
+        var props: [GenerationSchema.Property] = []
+        for (key, schema) in toolDef.properties {
+            let isRequired = toolDef.required.contains(key)
+            let desc = (schema["description"] as? String) ?? ""
+            let typeStr = (schema["type"] as? String) ?? "string"
+
+            // Create property based on type
+            let prop: GenerationSchema.Property
+            switch typeStr {
+            case "integer":
+                prop = isRequired
+                    ? GenerationSchema.Property(name: key, description: desc, type: Int.self)
+                    : GenerationSchema.Property(name: key, description: desc, type: Int?.self)
+            case "number":
+                prop = isRequired
+                    ? GenerationSchema.Property(name: key, description: desc, type: Double.self)
+                    : GenerationSchema.Property(name: key, description: desc, type: Double?.self)
+            case "boolean":
+                prop = isRequired
+                    ? GenerationSchema.Property(name: key, description: desc, type: Bool.self)
+                    : GenerationSchema.Property(name: key, description: desc, type: Bool?.self)
+            case "array":
+                // Arrays - use [String] as generic array type
+                prop = isRequired
+                    ? GenerationSchema.Property(name: key, description: desc, type: [String].self)
+                    : GenerationSchema.Property(name: key, description: desc, type: [String]?.self)
+            default: // "string" or "object"
+                prop = isRequired
+                    ? GenerationSchema.Property(name: key, description: desc, type: String.self)
+                    : GenerationSchema.Property(name: key, description: desc, type: String?.self)
+            }
+            props.append(prop)
+        }
+
+        // Create schema with all properties - use type: Never for object schemas
+        self.parameters = GenerationSchema(type: String.self, description: toolDef.description, properties: props)
+    }
+
+    func call(arguments: GeneratedContent) async throws -> AgentToolOutput {
+        // This is called by Foundation Models when the tool is invoked.
+        // The actual tool execution happens in TaskExecution.swift, which handles
+        // the tool_use blocks from the parsed response.
+        // We return a placeholder here - the real execution flow is:
+        // 1. Model generates tool calls in transcript
+        // 2. FoundationModelService.parseResponse extracts tool_calls from transcript
+        // 3. TaskExecution.swift processes the tool_use blocks
+        // This design allows us to reuse the existing tool execution infrastructure.
+        return AgentToolOutput(result: "Tool \(name) queued for execution")
     }
 }
