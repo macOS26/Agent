@@ -727,7 +727,7 @@ extension AgentViewModel {
                             } else {
                                 output = scripts.map { "\($0.name) (\($0.size) bytes)" }.joined(separator: "\n")
                             }
-                            appendLog("🦾 Scripts: \(scripts.count) found")
+                            appendLog("🦾 AgentScripts: \(scripts.count) found")
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 

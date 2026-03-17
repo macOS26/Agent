@@ -446,7 +446,7 @@ extension AgentViewModel {
             let scripts = scriptService.listScripts()
             let output = scripts.isEmpty
                 ? "No scripts found" : scripts.map { "\($0.name) (\($0.size) bytes)" }.joined(separator: "\n")
-            tab.appendLog("🦾 Scripts: \(scripts.count) found")
+            tab.appendLog("🦾 AgentScripts: \(scripts.count) found")
             tab.flush()
             return TabToolResult(
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
@@ -591,6 +591,262 @@ extension AgentViewModel {
                 )
             }
             tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+        }
+
+        // ax_check_permission
+        if name == "ax_check_permission" {
+            let hasPermission = AccessibilityService.hasAccessibilityPermission()
+            let output = hasPermission ? "Accessibility permission: granted" : "Accessibility permission: NOT granted. Use ax_request_permission to prompt the user."
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+        }
+
+        // ax_request_permission
+        if name == "ax_request_permission" {
+            tab.appendLog("♿️ Requesting Accessibility permission...")
+            let granted = AccessibilityService.requestAccessibilityPermission()
+            let output = granted ? "Accessibility permission granted!" : "Accessibility permission denied. Please enable it in System Settings > Privacy & Security > Accessibility."
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+        }
+
+        // ax_list_windows
+        if name == "ax_list_windows" {
+            let limit = input["limit"] as? Int ?? 50
+            tab.appendLog("Listing windows (limit: \(limit))...")
+            tab.flush()
+            let output = await Self.offMain { AccessibilityService.shared.listWindows(limit: limit) }
+            tab.appendLog(Self.preview(output, lines: 20))
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+        }
+
+        // ax_inspect_element
+        if name == "ax_inspect_element" {
+            guard let xVal = input["x"] as? Double,
+                  let yVal = input["y"] as? Double else {
+                return TabToolResult(
+                    toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": "Error: x and y coordinates are required"],
+                    isComplete: false
+                )
+            }
+            let x = CGFloat(xVal)
+            let y = CGFloat(yVal)
+            let depth = input["depth"] as? Int ?? 3
+            tab.appendLog("♿️ Inspecting element at (\(x), \(y))...")
+            tab.flush()
+            let output = await Self.offMain { AccessibilityService.shared.inspectElementAt(x: x, y: y, depth: depth) }
+            tab.appendLog(Self.preview(output, lines: 30))
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+        }
+
+        // ax_get_properties
+        if name == "ax_get_properties" {
+            let role = input["role"] as? String
+            let title = input["title"] as? String
+            let appBundleId = input["appBundleId"] as? String
+            let x = (input["x"] as? Double).map { CGFloat($0) }
+            let y = (input["y"] as? Double).map { CGFloat($0) }
+            tab.appendLog("Getting element properties...")
+            tab.flush()
+            let output = await Self.offMain {
+                AccessibilityService.shared.getElementProperties(
+                    role: role, title: title, appBundleId: appBundleId, x: x, y: y
+                )
+            }
+            tab.appendLog(Self.preview(output, lines: 30))
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+        }
+
+        // ax_perform_action
+        if name == "ax_perform_action" {
+            let action = input["action"] as? String ?? ""
+            let role = input["role"] as? String
+            let title = input["title"] as? String
+            let appBundleId = input["appBundleId"] as? String
+            let x = (input["x"] as? Double).map { CGFloat($0) }
+            let y = (input["y"] as? Double).map { CGFloat($0) }
+            let allowWrites = input["allowWrites"] as? Bool ?? false
+            tab.appendLog("Performing action: \(action)...")
+            tab.flush()
+            let output = await Self.offMain {
+                AccessibilityService.shared.performAction(
+                    role: role, title: title, appBundleId: appBundleId, x: x, y: y,
+                    action: action, allowWrites: allowWrites
+                )
+            }
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+        }
+
+        // ax_type_text
+        if name == "ax_type_text" {
+            let text = input["text"] as? String ?? ""
+            let x = (input["x"] as? Double).map { CGFloat($0) }
+            let y = (input["y"] as? Double).map { CGFloat($0) }
+            tab.appendLog("Typing: \(text.count) characters...")
+            tab.flush()
+            let output = await Self.offMain {
+                AccessibilityService.shared.typeText(text, at: x, y: y)
+            }
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+        }
+
+        // ax_click
+        if name == "ax_click" {
+            guard let xVal = input["x"] as? Double,
+                  let yVal = input["y"] as? Double else {
+                return TabToolResult(
+                    toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": "Error: x and y coordinates are required"],
+                    isComplete: false
+                )
+            }
+            let x = CGFloat(xVal)
+            let y = CGFloat(yVal)
+            let button = input["button"] as? String ?? "left"
+            let clicks = input["clicks"] as? Int ?? 1
+            tab.appendLog("♿️ Clicking at (\(x), \(y))...")
+            tab.flush()
+            let output = await Self.offMain {
+                AccessibilityService.shared.clickAt(x: x, y: y, button: button, clicks: clicks)
+            }
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+        }
+
+        // ax_scroll
+        if name == "ax_scroll" {
+            guard let xVal = input["x"] as? Double,
+                  let yVal = input["y"] as? Double else {
+                return TabToolResult(
+                    toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": "Error: x and y coordinates are required"],
+                    isComplete: false
+                )
+            }
+            let x = CGFloat(xVal)
+            let y = CGFloat(yVal)
+            let deltaX = input["deltaX"] as? Int ?? 0
+            let deltaY = input["deltaY"] as? Int ?? 0
+            tab.appendLog("♿️ Scrolling at (\(x), \(y))...")
+            tab.flush()
+            let output = await Self.offMain {
+                AccessibilityService.shared.scrollAt(x: x, y: y, deltaX: deltaX, deltaY: deltaY)
+            }
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+        }
+
+        // ax_press_key
+        if name == "ax_press_key" {
+            guard let keyCodeVal = input["keyCode"] as? Int else {
+                return TabToolResult(
+                    toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": "Error: keyCode is required"],
+                    isComplete: false
+                )
+            }
+            let keyCode = UInt16(keyCodeVal)
+            let modifiers = input["modifiers"] as? [String] ?? []
+            tab.appendLog("♿️ Pressing key code: \(keyCodeVal)...")
+            tab.flush()
+            let output = await Self.offMain {
+                AccessibilityService.shared.pressKey(virtualKey: keyCode, modifiers: modifiers)
+            }
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+        }
+
+        // ax_screenshot
+        if name == "ax_screenshot" {
+            let x = (input["x"] as? Double).map { CGFloat($0) }
+            let y = (input["y"] as? Double).map { CGFloat($0) }
+            let width = (input["width"] as? Double).map { CGFloat($0) }
+            let height = (input["height"] as? Double).map { CGFloat($0) }
+            let windowId = input["windowId"] as? Int
+
+            tab.appendLog("Capturing screenshot...")
+            tab.flush()
+
+            let output: String
+            if let wid = windowId, wid > 0 {
+                output = await Self.offMain {
+                    AccessibilityService.shared.captureScreenshot(windowID: wid)
+                }
+            } else if let x = x, let y = y, let w = width, let h = height {
+                output = await Self.offMain {
+                    AccessibilityService.shared.captureScreenshot(x: x, y: y, width: w, height: h)
+                }
+            } else {
+                output = await Self.offMain {
+                    AccessibilityService.shared.captureAllWindows()
+                }
+            }
+
+            if output.contains("\"path\"") {
+                tab.appendLog("♿️ Screenshot captured successfully")
+            } else {
+                tab.appendLog(output)
+            }
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+        }
+
+        // ax_get_audit_log
+        if name == "ax_get_audit_log" {
+            let limit = input["limit"] as? Int ?? 50
+            tab.appendLog("Getting accessibility audit log...")
+            tab.flush()
+            let output = await Self.offMain {
+                AccessibilityService.shared.getAuditLog(limit: limit)
+            }
+            tab.appendLog(Self.preview(output, lines: 30))
             tab.flush()
             return TabToolResult(
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
