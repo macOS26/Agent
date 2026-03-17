@@ -156,6 +156,7 @@ struct ContentView: View {
                 .help("Pick project folder or file")
 
                 TextField("Project folder or file...", text: $viewModel.projectFolder)
+                    .textContentType(.none)
                     .textFieldStyle(.roundedBorder)
                     .controlSize(.small)
 

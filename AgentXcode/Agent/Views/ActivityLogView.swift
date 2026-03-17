@@ -332,12 +332,12 @@ struct ActivityLogView: NSViewRepresentable {
 
         // Matches image files
         private static let imagePathPattern: NSRegularExpression? = try? NSRegularExpression(
-            pattern: #"(/[^\s"'<>]+\.(?:jpg|jpeg|png|gif|tiff|bmp|webp|heic|ico|icon))"#,
+            pattern: #"(/[^\n"'<>]+\.(?:jpg|jpeg|png|gif|tiff|bmp|webp|heic|ico|icon))"#,
             options: .caseInsensitive
         )
         // Matches HTML files
         private static let htmlPathPattern: NSRegularExpression? = try? NSRegularExpression(
-            pattern: #"(/[^\s"'<>]+\.html?)"#,
+            pattern: #"(/[^\n"'<>]+\.html?)"#,
             options: .caseInsensitive
         )
 
@@ -867,7 +867,7 @@ struct ActivityLogView: NSViewRepresentable {
             }
         }
 
-        // Open image and HTML file links in the default web browser
+        // Open image/HTML file links — images in default app (Preview), HTML in browser
         func textView(_ textView: NSTextView, clickedOnLink link: Any, at charIndex: Int) -> Bool {
             let urlString: String
             if let url = link as? URL {
@@ -878,11 +878,18 @@ struct ActivityLogView: NSViewRepresentable {
                 return false
             }
             guard let url = URL(string: urlString), url.isFileURL else { return false }
-            // Open in the user's default web browser
-            if let browserURL = NSWorkspace.shared.urlForApplication(toOpen: URL(string: "https://example.com")!) {
-                let config = NSWorkspace.OpenConfiguration()
-                NSWorkspace.shared.open([url], withApplicationAt: browserURL, configuration: config)
+            let ext = url.pathExtension.lowercased()
+            let htmlExtensions: Set<String> = ["html", "htm"]
+            if htmlExtensions.contains(ext) {
+                // HTML → open in default browser
+                if let browserURL = NSWorkspace.shared.urlForApplication(toOpen: URL(string: "https://example.com")!) {
+                    let config = NSWorkspace.OpenConfiguration()
+                    NSWorkspace.shared.open([url], withApplicationAt: browserURL, configuration: config)
+                } else {
+                    NSWorkspace.shared.open(url)
+                }
             } else {
+                // Images → open in default app (Preview)
                 NSWorkspace.shared.open(url)
             }
             return true
