@@ -281,10 +281,18 @@ final class AgentViewModel {
 
     func closeScriptTab(id: UUID) {
         if let tab = scriptTabs.first(where: { $0.id == id }) {
+            // Cancel running script
             if tab.isRunning {
                 tab.isCancelled = true
                 tab.cancelHandler?()
                 tab.isRunning = false
+            }
+            // Cancel running LLM task
+            if tab.isLLMRunning {
+                tab.runningLLMTask?.cancel()
+                tab.runningLLMTask = nil
+                tab.isLLMRunning = false
+                tab.isLLMThinking = false
             }
         }
         if selectedTabId == id {
