@@ -108,10 +108,11 @@ enum AgentTools {
         Pass bundle_id + operations: get {key} | iterate {properties, limit} | index {index} | call {method, arg} | filter {predicate}
         Writes blocked by default; set allow_writes=true.
 
-        SDEF LOOKUP (51 app dictionaries as JSON):
-        Use lookup_sdef before writing osascript, NSAppleScript, apple_event_query, or ScriptingBridge code. \
-        Returns commands, classes, properties, elements, enums. bundle_id="list" shows all apps. \
-        class_name drills into a specific class. Read bridge Swift files via read_agent_script for Swift names.
+        SDEF LOOKUP (51 app dictionaries bundled as JSON):
+        ALWAYS use lookup_sdef to read SDEFs — never sdef or find for .sdef files. \
+        Use before writing osascript, NSAppleScript, apple_event_query, or ScriptingBridge code. \
+        bundle_id="list" shows all apps. class_name drills into a specific class. \
+        Read bridge Swift files via read_agent_script for Swift names.
 
         IMAGE PATHS: Print file paths — UI renders clickable links.
 
@@ -244,7 +245,7 @@ enum AgentTools {
         // --- Core Tools ---
         ToolDef(
             name: "apple_event_query",
-            description: "Query a scriptable Mac app via ObjC dynamic dispatch. No compilation. Priority 4 — prefer run_agent_script first. Use for simple property reads only.",
+            description: "Query a scriptable Mac app via ObjC dynamic dispatch. No compilation. Priority 4 — prefer run_agent_script first. Use lookup_sdef first to get valid keys. Simple property reads only.",
             properties: [
                 "bundle_id": ["type": "string", "description": "App bundle identifier (e.g. com.apple.Music)"],
                 "operations": [
@@ -271,7 +272,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: "execute_shell_command",
-            description: "Execute a shell command. TCC commands (osascript, screencapture) run in-process with full TCC in a tab. Non-TCC commands route through UserService LaunchAgent. Priority 3 for app automation — prefer run_agent_script first.",
+            description: "Execute a shell command. TCC commands (osascript, screencapture) run in-process with full TCC in a tab. Non-TCC routes through UserService LaunchAgent. Priority 3 for app automation — prefer run_agent_script. Use lookup_sdef first for osascript terminology.",
             properties: [
                 "command": ["type": "string", "description": "The bash command to execute in the Agent app process"],
             ],
@@ -457,7 +458,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: "run_agent_script",
-            description: "PRIORITY 1 for app automation. Compile and run a Swift dylib script with full TCC. Use existing scripts first (list_agent_scripts), create new ones for complex tasks. NSAppleScript fallback if ScriptingBridge has issues. Output streams live — do NOT repeat stdout.",
+            description: "PRIORITY 1 for app automation. Compile and run a Swift dylib with full TCC. Use existing scripts first (list_agent_scripts), create new ones for complex tasks. Use lookup_sdef to check app dictionaries. NSAppleScript fallback if ScriptingBridge has issues. Output streams live — do NOT repeat stdout.",
             properties: [
                 "name": ["type": "string", "description": "Script filename (without .swift)"],
                 "arguments": ["type": "string", "description": "Simple string passed via AGENT_SCRIPT_ARGS env var. For complex data, use JSON files instead."],
@@ -475,7 +476,7 @@ enum AgentTools {
         // --- SDEF Lookup ---
         ToolDef(
             name: "lookup_sdef",
-            description: "Look up an app's scripting dictionary. Returns commands, classes, properties, elements, and enums. Use before writing osascript, NSAppleScript, apple_event_query, or ScriptingBridge code to get correct terminology.",
+            description: "Read an app's SDEF scripting dictionary. ALWAYS use this to read SDEFs — never use shell commands to find .sdef files. Returns commands, classes, properties, elements, and enums. Use before writing osascript, NSAppleScript, apple_event_query, or ScriptingBridge code.",
             properties: [
                 "bundle_id": ["type": "string", "description": "App bundle identifier (e.g. com.apple.Music). Use 'list' to see all available SDEFs."],
                 "class_name": ["type": "string", "description": "Optional: get details for a specific class (e.g. 'track', 'application')"],
