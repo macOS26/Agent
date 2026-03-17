@@ -184,13 +184,14 @@ struct ActivityLogView: NSViewRepresentable {
         override func cellSize() -> NSSize { NSSize(width: 20, height: 16) }
 
         override func draw(withFrame cellFrame: NSRect, in controlView: NSView?) {
-            if let icon = NSImage(systemSymbolName: "doc.on.doc", accessibilityDescription: "Copy code") {
-                let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
-                guard let tinted = (icon.withSymbolConfiguration(config) ?? icon).copy() as? NSImage else { return }
-                tinted.isTemplate = true
-                NSColor.secondaryLabelColor.set()
-                tinted.draw(in: cellFrame)
-            }
+            let emoji = "📋" as NSString
+            let attrs: [NSAttributedString.Key: Any] = [
+                .font: NSFont.systemFont(ofSize: 12)
+            ]
+            let size = emoji.size(withAttributes: attrs)
+            let x = cellFrame.midX - size.width / 2
+            let y = cellFrame.midY - size.height / 2
+            emoji.draw(at: NSPoint(x: x, y: y), withAttributes: attrs)
         }
 
         override func wantsToTrackMouse(for theEvent: NSEvent, in cellFrame: NSRect,
@@ -368,16 +369,25 @@ struct ActivityLogView: NSViewRepresentable {
                 let path: String
                 let isHTML: Bool
             }
+            let fm = FileManager.default
             var allMatches: [FileMatch] = []
             for m in imageMatches {
                 let r = m.range(at: 1)
-                allMatches.append(FileMatch(range: r, path: nsText.substring(with: r), isHTML: false))
+                let p = nsText.substring(with: r)
+                if fm.fileExists(atPath: p) {
+                    allMatches.append(FileMatch(range: r, path: p, isHTML: false))
+                }
             }
             for m in htmlMatches {
                 let r = m.range(at: 1)
-                allMatches.append(FileMatch(range: r, path: nsText.substring(with: r), isHTML: true))
+                let p = nsText.substring(with: r)
+                if fm.fileExists(atPath: p) {
+                    allMatches.append(FileMatch(range: r, path: p, isHTML: true))
+                }
             }
             allMatches.sort { $0.range.location < $1.range.location }
+
+            guard !allMatches.isEmpty else { return renderMarkdown(text) }
 
             let baseAttrs: [NSAttributedString.Key: Any] = [
                 .font: font,
@@ -444,16 +454,25 @@ struct ActivityLogView: NSViewRepresentable {
                 let path: String
                 let isHTML: Bool
             }
+            let fm = FileManager.default
             var allMatches: [FileMatch] = []
             for m in imageMatches {
                 let r = m.range(at: 1)
-                allMatches.append(FileMatch(range: r, path: nsText.substring(with: r), isHTML: false))
+                let p = nsText.substring(with: r)
+                if fm.fileExists(atPath: p) {
+                    allMatches.append(FileMatch(range: r, path: p, isHTML: false))
+                }
             }
             for m in htmlMatches {
                 let r = m.range(at: 1)
-                allMatches.append(FileMatch(range: r, path: nsText.substring(with: r), isHTML: true))
+                let p = nsText.substring(with: r)
+                if fm.fileExists(atPath: p) {
+                    allMatches.append(FileMatch(range: r, path: p, isHTML: true))
+                }
             }
             allMatches.sort { $0.range.location < $1.range.location }
+
+            guard !allMatches.isEmpty else { return renderMarkdown(cleanText) }
 
             let result = NSMutableAttributedString()
             var lastEnd = 0
