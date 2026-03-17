@@ -21,11 +21,11 @@ enum AgentTools {
         Never use execute_user_command or execute_command for Automation/Accessibility — no TCC.
 
         APP AUTOMATION PRIORITY:
-        1. run_agent_script — ScriptingBridge Swift dylib, full TCC. NSAppleScript fallback if bridge has issues.
-        2. run_applescript — NSAppleScript in-process, full TCC. Quick AppleScript without compilation.
-        3. Accessibility tools (ax_*) — AXUIElement API for UI inspection/interaction.
-        4. execute_shell_command — osascript with TCC. Shell-based AppleScript.
-        5. apple_event_query — ObjC dispatch, no compile. Simple property reads.
+        1. apple_event_query — ObjC dispatch, no compile. Fast property reads. Use lookup_sdef first.
+        2. run_agent_script — ScriptingBridge Swift dylib, full TCC. NSAppleScript fallback if bridge has issues.
+        3. run_applescript — NSAppleScript in-process, full TCC. Quick AppleScript without compilation.
+        4. Accessibility tools (ax_*) — AXUIElement API for UI inspection/interaction.
+        5. execute_shell_command — osascript. Last resort for AppleScript.
         Shell commands fill gaps: execute_user_command (user) / execute_command (root) for CLI tools.
 
         FILE TOOLS: read_file, write_file, edit_file (read first), list_files, search_files
@@ -246,7 +246,7 @@ enum AgentTools {
         // --- Core Tools ---
         ToolDef(
             name: "apple_event_query",
-            description: "Query a scriptable Mac app via ObjC dynamic dispatch. No compilation. Priority 4 — prefer run_agent_script first. Use lookup_sdef first to get valid keys. Simple property reads only.",
+            description: "PRIORITY 1 for app automation. Query a scriptable Mac app via ObjC dynamic dispatch. No compilation, instant results. Use lookup_sdef first to get valid keys.",
             properties: [
                 "bundle_id": ["type": "string", "description": "App bundle identifier (e.g. com.apple.Music)"],
                 "operations": [
@@ -281,7 +281,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: "execute_shell_command",
-            description: "Execute a shell command. TCC commands (osascript, screencapture) run in-process with full TCC in a tab. Non-TCC routes through UserService LaunchAgent. Priority 3 for app automation — prefer run_agent_script. Use lookup_sdef first for osascript terminology.",
+            description: "Execute a shell command. TCC commands (osascript, screencapture) run in-process with full TCC in a tab. Non-TCC routes through UserService LaunchAgent. Priority 5 (last resort) for app automation — prefer run_agent_script or run_applescript.",
             properties: [
                 "command": ["type": "string", "description": "The bash command to execute in the Agent app process"],
             ],
