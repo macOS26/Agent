@@ -203,35 +203,30 @@ func capturePhoto() {
     }
     
     session.commitConfiguration()
-    
-    // Start session on background thread
+
     let captureSemaphore = DispatchSemaphore(value: 0)
     let photoCaptureDelegate = PhotoCaptureDelegate()
     let fileURL = URL(fileURLWithPath: finalPath)
     photoCaptureDelegate.outputURL = fileURL
-    
-    DispatchQueue.global(qos: .userInitiated).async {
+    photoCaptureDelegate.completionSemaphore = captureSemaphore
+
+    // Start session and trigger capture on background thread.
+    // Do NOT block inside this async block — doing so would cause a priority
+    // inversion: a userInitiated thread waiting on an AVFoundation callback
+    // delivered at base priority (the Xcode hang risk warning).
+    DispatchQueue.global(qos: .utility).async {
         session.startRunning()
-        
-        // Wait for session to be ready
         Thread.sleep(forTimeInterval: 0.5)
-        
         let settings = AVCapturePhotoSettings()
-        // Set continuous photo quality for external cameras
         if output.availablePhotoCodecTypes.contains(.jpeg) {
             settings.photoQualityPrioritization = .balanced
         }
-        
         output.capturePhoto(with: settings, delegate: photoCaptureDelegate)
-        
-        // Wait up to 5 seconds for capture
-        _ = captureSemaphore.wait(timeout: .now() + 5)
-        
-        session.stopRunning()
     }
-    
-    // Wait for completion
+
+    // Block only here (calling thread) — no userInitiated thread is waiting
     _ = captureSemaphore.wait(timeout: .now() + 6)
+    session.stopRunning()
     
     if photoCaptureDelegate.success {
         print("✅ Photo captured successfully")
