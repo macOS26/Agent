@@ -46,7 +46,7 @@ enum AgentTools {
         User scripts: ~/Documents/Agent/agents/. Tools: list/read/create/update/delete/run_agent_script.
         ALWAYS list first — update existing, don't duplicate.
         delete_agent_script blocklists so bundled scripts won't respawn. NEVER edit Package.swift manually.
-        Scripts can use any Swift 6 framework, NSAppleScript, Process(), AXUIElement.
+        Scripts are Swift — use the full Swift language, any Swift 6 framework, NSAppleScript, Process(), AXUIElement.
 
         SCRIPT FORMAT:
         import Foundation; import MailBridge
