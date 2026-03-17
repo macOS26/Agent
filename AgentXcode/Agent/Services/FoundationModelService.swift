@@ -96,12 +96,19 @@ final class FoundationModelService {
         for try await snapshot in s.streamResponse(to: prompt) {
             fullText = snapshot.content
         }
-        // Parse first. If it's a tool call, emit any text written before the JSON block.
-        // This preserves conversational text the model writes before acting.
+        // Parse first. If it's a tool call, emit any text written before it.
         let result = parseResponse(fullText, session: s)
         if result.stopReason == "tool_use" {
-            let pre = textBeforeFirstCodeBlock(fullText)
-            if !pre.isEmpty { onTextDelta(pre + "\n") }
+            let pre = textBeforeFirstToolCall(fullText)
+            if !pre.isEmpty {
+                onTextDelta(pre + "\n")
+            } else if let toolUse = result.content.first,
+                      toolUse["name"] as? String == "task_complete",
+                      let input = toolUse["input"] as? [String: Any],
+                      let summary = input["summary"] as? String, !summary.isEmpty {
+                // Model wrote no text — surface the summary so the user sees a response
+                onTextDelta(summary)
+            }
         } else {
             onTextDelta(fullText)
         }
@@ -133,10 +140,18 @@ final class FoundationModelService {
         return ""
     }
 
-    /// Returns any text appearing before the first ```-fenced code block.
-    private func textBeforeFirstCodeBlock(_ text: String) -> String {
-        guard let range = text.range(of: "```") else { return "" }
-        return String(text[..<range.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+    /// Returns any text appearing before the first tool call (code block or text-format).
+    private func textBeforeFirstToolCall(_ text: String) -> String {
+        var earliest: String.Index? = nil
+        // Check for code block marker
+        if let r = text.range(of: "```") { earliest = r.lowerBound }
+        // Check for text-format tool names (tool_name {)
+        for toolName in AgentTools.toolNames {
+            guard let r = text.range(of: toolName) else { continue }
+            if earliest == nil || r.lowerBound < earliest! { earliest = r.lowerBound }
+        }
+        guard let idx = earliest else { return "" }
+        return String(text[..<idx]).trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     /// Parse response from Foundation Models. Supports three output formats the model may use:
