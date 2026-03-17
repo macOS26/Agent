@@ -111,7 +111,11 @@ final class AppleEventService: @unchecked Sendable {
             return "Error: Could not connect to '\(appName)' (\(bundleID)). Make sure the app is running."
         }
 
+        // Pre-load SDEF so it's cached for hints during the query
+        _ = SDEFService.shared.loadByBundleID(bundleID)
+
         var cursor: Any = app
+        var cursorClass = "application"
         var output: [String] = []
 
         for (i, op) in operations.enumerated() {
@@ -127,11 +131,22 @@ final class AppleEventService: @unchecked Sendable {
                     return output.joined(separator: "\n")
                 }
                 guard let result = getValue(from: cursor, key: key) else {
-                    output.append("\(key) = nil")
+                    // Suggest valid keys from SDEF
+                    let keys = SDEFService.shared.aeKeys(for: bundleID, className: cursorClass)
+                    let allKeys = keys.properties + keys.elements
+                    let hint = allKeys.isEmpty ? "" : " Valid keys for '\(cursorClass)': \(allKeys.joined(separator: ", "))"
+                    output.append("\(key) = nil (key not found).\(hint)")
                     return output.joined(separator: "\n")
                 }
                 if isScalar(result) {
                     output.append("\(key) = \(formatValue(result))")
+                }
+                // Track cursor class for SDEF hints on subsequent steps
+                if result is SBElementArray {
+                    cursorClass = key
+                } else if let obj = result as? SBObject {
+                    cursorClass = key
+                    _ = obj // suppress unused warning
                 }
                 cursor = result
 
