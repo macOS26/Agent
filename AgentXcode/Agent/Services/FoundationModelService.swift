@@ -96,9 +96,13 @@ final class FoundationModelService {
         for try await snapshot in s.streamResponse(to: prompt) {
             fullText = snapshot.content
         }
-        // Parse first — only emit text to the log if it's not a tool call (avoids raw JSON in UI)
+        // Parse first. If it's a tool call, emit any text written before the JSON block.
+        // This preserves conversational text the model writes before acting.
         let result = parseResponse(fullText, session: s)
-        if result.stopReason != "tool_use" {
+        if result.stopReason == "tool_use" {
+            let pre = textBeforeFirstCodeBlock(fullText)
+            if !pre.isEmpty { onTextDelta(pre + "\n") }
+        } else {
             onTextDelta(fullText)
         }
         return result
@@ -127,6 +131,12 @@ final class FoundationModelService {
             }
         }
         return ""
+    }
+
+    /// Returns any text appearing before the first ```-fenced code block.
+    private func textBeforeFirstCodeBlock(_ text: String) -> String {
+        guard let range = text.range(of: "```") else { return "" }
+        return String(text[..<range.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     /// Parse response from Foundation Models.
