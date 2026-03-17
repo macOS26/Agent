@@ -238,6 +238,9 @@ extension AgentViewModel {
             let replaceAll = input["replace_all"] as? Bool ?? false
             tab.appendLog("📝 Edit: \(filePath)")
             let output = await Self.offMain { CodingService.editFile(path: filePath, oldString: oldString, newString: newString, replaceAll: replaceAll) }
+            let oldPreview = Self.preview(oldString, lines: 3)
+            let newPreview = Self.preview(newString, lines: 3)
+            tab.appendLog("```diff\n- \(oldPreview)\n+ \(newPreview)\n```")
             tab.appendLog(output)
             tab.flush()
             return TabToolResult(

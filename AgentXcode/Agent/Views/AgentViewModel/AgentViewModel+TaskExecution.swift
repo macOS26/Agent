@@ -348,7 +348,7 @@ extension AgentViewModel {
                         if name == "task_complete" {
                             let summary = input["summary"] as? String ?? "Done"
                             completionSummary = summary
-                            appendLog("Completed: \(summary)")
+                            appendLog("✅ Completed: \(summary)")
                             flushLog()
                             history.add(TaskRecord(prompt: prompt, summary: summary, commandsRun: commandsRun), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
                             // End the task in SwiftData chat history
@@ -373,12 +373,12 @@ extension AgentViewModel {
                             // Block disabled tools
                             guard !disabledSnapshot.contains(toolKey) else {
                                 let msg = "Tool '\(toolName)' is disabled"
-                                appendLog("MCP[\(serverName)]: \(msg)")
+                                appendLog("🖥️ MCP[\(serverName)]: \(msg)")
                                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": msg])
                                 continue
                             }
 
-                            appendLog("MCP[\(serverName)]: \(toolName)")
+                            appendLog("🖥️ MCP[\(serverName)]: \(toolName)")
                             flushLog()
 
                             var mcpOutput = ""
@@ -438,7 +438,7 @@ extension AgentViewModel {
                             let filePath = input["file_path"] as? String ?? ""
                             let offset = input["offset"] as? Int
                             let limit = input["limit"] as? Int
-                            appendLog("Read: \(filePath)")
+                            appendLog("📖 Read: \(filePath)")
                             let output = await Self.offMain { CodingService.readFile(path: filePath, offset: offset, limit: limit) }
                             let lang = Self.langFromPath(filePath)
                             appendLog(Self.codeFence(Self.preview(output, lines: readFilePreviewLines), language: lang))
@@ -448,7 +448,7 @@ extension AgentViewModel {
                         if name == "write_file" {
                             let filePath = input["file_path"] as? String ?? ""
                             let content = input["content"] as? String ?? ""
-                            appendLog("Write: \(filePath)")
+                            appendLog("📝 Write: \(filePath)")
                             let output = await Self.offMain { CodingService.writeFile(path: filePath, content: content) }
                             appendLog(output)
                             commandsRun.append("write_file: \(filePath)")
@@ -460,8 +460,12 @@ extension AgentViewModel {
                             let oldString = input["old_string"] as? String ?? ""
                             let newString = input["new_string"] as? String ?? ""
                             let replaceAll = input["replace_all"] as? Bool ?? false
-                            appendLog("Edit: \(filePath)")
+                            appendLog("📝 Edit: \(filePath)")
                             let output = await Self.offMain { CodingService.editFile(path: filePath, oldString: oldString, newString: newString, replaceAll: replaceAll) }
+                            // Show compact diff preview
+                            let oldPreview = Self.preview(oldString, lines: 3)
+                            let newPreview = Self.preview(newString, lines: 3)
+                            appendLog("```diff\n- \(oldPreview)\n+ \(newPreview)\n```")
                             appendLog(output)
                             commandsRun.append("edit_file: \(filePath)")
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
@@ -477,7 +481,7 @@ extension AgentViewModel {
                                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": pathErr])
                                 continue
                             }
-                            appendLog("$ find \(path ?? "~") -name '\(pattern)'")
+                            appendLog("🔍 $ find \(path ?? "~") -name '\(pattern)'")
                             flushLog()
                             let cmd = CodingService.buildListFilesCommand(pattern: pattern, path: path)
                             let result = await executeViaUserAgent(command: cmd)
@@ -496,7 +500,7 @@ extension AgentViewModel {
                                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": pathErr])
                                 continue
                             }
-                            appendLog("$ grep -rn '\(pattern)' \(path ?? "~")\(include.map { " --include=\($0)" } ?? "")")
+                            appendLog("🔍 $ grep -rn '\(pattern)' \(path ?? "~")\(include.map { " --include=\($0)" } ?? "")")
                             flushLog()
                             let cmd = CodingService.buildSearchFilesCommand(pattern: pattern, path: path, include: include)
                             let result = await executeViaUserAgent(command: cmd)
@@ -515,7 +519,7 @@ extension AgentViewModel {
                                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": pathErr])
                                 continue
                             }
-                            appendLog("$ git status\(path.map { " (\($0))" } ?? "")")
+                            appendLog("🔀 $ git status\(path.map { " (\($0))" } ?? "")")
                             flushLog()
                             let cmd = CodingService.buildGitStatusCommand(path: path)
                             let result = await executeViaUserAgent(command: cmd)
@@ -534,7 +538,7 @@ extension AgentViewModel {
                                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": pathErr])
                                 continue
                             }
-                            appendLog("$ git diff\(staged ? " --cached" : "")\(target.map { " \($0)" } ?? "")")
+                            appendLog("🔀 $ git diff\(staged ? " --cached" : "")\(target.map { " \($0)" } ?? "")")
                             flushLog()
                             let cmd = CodingService.buildGitDiffCommand(path: path, staged: staged, target: target)
                             let result = await executeViaUserAgent(command: cmd)
@@ -560,7 +564,7 @@ extension AgentViewModel {
                                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": pathErr])
                                 continue
                             }
-                            appendLog("$ git log\(path.map { " (\($0))" } ?? "")")
+                            appendLog("🔀 $ git log\(path.map { " (\($0))" } ?? "")")
                             flushLog()
                             let cmd = CodingService.buildGitLogCommand(path: path, count: count)
                             let result = await executeViaUserAgent(command: cmd)
@@ -585,7 +589,7 @@ extension AgentViewModel {
                                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": pathErr])
                                 continue
                             }
-                            appendLog("Git commit: \(message)")
+                            appendLog("🔀 Git commit: \(message)")
                             flushLog()
                             let cmd = CodingService.buildGitCommitCommand(path: path, message: message, files: files)
                             let result = await executeViaUserAgent(command: cmd)
@@ -655,7 +659,7 @@ extension AgentViewModel {
                             }
                             let isPrivileged = (name == "execute_command") && rootEnabled
                             commandsRun.append(command)
-                            appendLog("\(isPrivileged ? "#" : "$") \(Self.collapseHeredocs(command))")
+                            appendLog("\(isPrivileged ? "🔴 #" : "🔧 $") \(Self.collapseHeredocs(command))")
                             flushLog()
 
                             let result: (status: Int32, output: String)
@@ -723,14 +727,14 @@ extension AgentViewModel {
                             } else {
                                 output = scripts.map { "\($0.name) (\($0.size) bytes)" }.joined(separator: "\n")
                             }
-                            appendLog("Scripts: \(scripts.count) found")
+                            appendLog("🦾 Scripts: \(scripts.count) found")
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
                         if name == "read_agent_script" {
                             let scriptName = input["name"] as? String ?? ""
                             let output = scriptService.readScript(name: scriptName) ?? "Error: script '\(scriptName)' not found."
-                            appendLog("Read: \(scriptName)")
+                            appendLog("📖 Read: \(scriptName)")
                             appendLog(Self.codeFence(Self.preview(output, lines: readFilePreviewLines), language: "swift"))
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
@@ -776,7 +780,7 @@ extension AgentViewModel {
                             flushLog()
 
                             // Step 1: Compile the script dylib via UserService
-                            tab.appendLog("Compiling: \(scriptName)")
+                            tab.appendLog("🦾 Compiling: \(scriptName)")
                             tab.flush()
 
                             let compileResult = await executeViaUserAgent(command: compileCmd)
@@ -806,7 +810,7 @@ extension AgentViewModel {
                             }
 
                             // Step 2: Load and run dylib in Agent!'s process
-                            tab.appendLog("Running: \(scriptName) (in-process)")
+                            tab.appendLog("🦾 Running: \(scriptName) (in-process)")
                             tab.flush()
 
                             let cancelFlag = tab._cancelFlag
@@ -847,7 +851,7 @@ extension AgentViewModel {
                         }
 
                         // In-process shell with TCC (Automation, Accessibility, ScreenRecording)
-                        if name == "execute_app_command" {
+                        if name == "execute_shell_command" {
                             let command = input["command"] as? String ?? ""
 
                             // Label for tab
@@ -863,7 +867,7 @@ extension AgentViewModel {
                             appendLog("App command... (see tab)")
                             flushLog()
 
-                            tab.appendLog("$ \(AgentViewModel.collapseHeredocs(command))")
+                            tab.appendLog("🐣 $ \(AgentViewModel.collapseHeredocs(command))")
                             tab.flush()
 
                             let result = await executeLocalStreaming(command: command) { [weak tab] chunk in
@@ -889,7 +893,7 @@ extension AgentViewModel {
                             let truncated2 = toolOutput.count > 10000
                                 ? String(toolOutput.prefix(10000)) + "\n...(truncated)"
                                 : toolOutput
-                            commandsRun.append("execute_app_command: \(label)")
+                            commandsRun.append("execute_shell_command: \(label)")
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": truncated2])
                         }
 
@@ -898,7 +902,7 @@ extension AgentViewModel {
                             let bundleID = input["bundle_id"] as? String ?? ""
                             let operations = input["operations"] as? [[String: Any]] ?? []
                             let allowWrites = input["allow_writes"] as? Bool ?? false
-                            appendLog("AE query: \(bundleID) (\(operations.count) ops)")
+                            appendLog("🍎 AE query: \(bundleID) (\(operations.count) ops)")
                             flushLog()
                             let opsData = try? JSONSerialization.data(withJSONObject: operations)
                             let output = await Self.offMain {
@@ -925,7 +929,7 @@ extension AgentViewModel {
 
                         if name == "xcode_build" {
                             let projectPath = input["project_path"] as? String ?? ""
-                            appendLog("Building: \(projectPath)")
+                            appendLog("🔨 Building: \(projectPath)")
                             flushLog()
                             let output = await Self.offMain { XcodeService.shared.buildProject(projectPath: projectPath) }
                             appendLog(output)
@@ -935,7 +939,7 @@ extension AgentViewModel {
 
                         if name == "xcode_run" {
                             let projectPath = input["project_path"] as? String ?? ""
-                            appendLog("Running: \(projectPath)")
+                            appendLog("🔨 Running: \(projectPath)")
                             flushLog()
                             let output = await Self.offMain { XcodeService.shared.runProject(projectPath: projectPath) }
                             appendLog(output)
@@ -967,7 +971,7 @@ extension AgentViewModel {
                         }
 
                         if name == "ax_request_permission" {
-                            appendLog("Requesting Accessibility permission...")
+                            appendLog("♿️ Requesting Accessibility permission...")
                             let granted = AccessibilityService.requestAccessibilityPermission()
                             let output = granted ? "Accessibility permission granted!" : "Accessibility permission denied. Please enable it in System Settings > Privacy & Security > Accessibility."
                             appendLog(output)
@@ -992,7 +996,7 @@ extension AgentViewModel {
                             let x = CGFloat(xVal)
                             let y = CGFloat(yVal)
                             let depth = input["depth"] as? Int ?? 3
-                            appendLog("Inspecting element at (\(x), \(y))...")
+                            appendLog("♿️ Inspecting element at (\(x), \(y))...")
                             flushLog()
                             let output = await Self.offMain { AccessibilityService.shared.inspectElementAt(x: x, y: y, depth: depth) }
                             appendLog(Self.preview(output, lines: 30))
@@ -1062,7 +1066,7 @@ extension AgentViewModel {
                             let y = CGFloat(yVal)
                             let button = input["button"] as? String ?? "left"
                             let clicks = input["clicks"] as? Int ?? 1
-                            appendLog("Clicking at (\(x), \(y))...")
+                            appendLog("♿️ Clicking at (\(x), \(y))...")
                             flushLog()
                             let output = await Self.offMain {
                                 AccessibilityService.shared.clickAt(x: x, y: y, button: button, clicks: clicks)
@@ -1082,7 +1086,7 @@ extension AgentViewModel {
                             let y = CGFloat(yVal)
                             let deltaX = input["deltaX"] as? Int ?? 0
                             let deltaY = input["deltaY"] as? Int ?? 0
-                            appendLog("Scrolling at (\(x), \(y))...")
+                            appendLog("♿️ Scrolling at (\(x), \(y))...")
                             flushLog()
                             let output = await Self.offMain {
                                 AccessibilityService.shared.scrollAt(x: x, y: y, deltaX: deltaX, deltaY: deltaY)
@@ -1099,7 +1103,7 @@ extension AgentViewModel {
                             }
                             let keyCode = UInt16(keyCodeVal)
                             let modifiers = input["modifiers"] as? [String] ?? []
-                            appendLog("Pressing key code: \(keyCodeVal)...")
+                            appendLog("♿️ Pressing key code: \(keyCodeVal)...")
                             flushLog()
                             let output = await Self.offMain {
                                 AccessibilityService.shared.pressKey(virtualKey: keyCode, modifiers: modifiers)
@@ -1138,7 +1142,7 @@ extension AgentViewModel {
                             
                             // Check if output contains a path - if so, it's an image that can be displayed inline
                             if output.contains("\"path\"") {
-                                appendLog("Screenshot captured successfully")
+                                appendLog("♿️ Screenshot captured successfully")
                             } else {
                                 appendLog(output)
                             }
