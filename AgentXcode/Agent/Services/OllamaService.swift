@@ -31,7 +31,7 @@ final class OllamaService {
     var systemPrompt: String {
         var prompt = AgentTools.systemPrompt(userName: userName, userHome: userHome)
         if !projectFolder.isEmpty {
-            prompt = "CURRENT PROJECT FOLDER: \(projectFolder)\nUse this as the default working directory for all commands and file operations. You may go outside it when needed.\n\n" + prompt
+            prompt = "CURRENT PROJECT FOLDER: \(projectFolder)\nAlways cd to this directory before running any shell commands. Use it as the default for all file operations. You may go outside it when needed.\n\n" + prompt
         }
         if supportsVision {
             prompt += "\nYou have VISION. When images are attached, you can see and analyze them."
