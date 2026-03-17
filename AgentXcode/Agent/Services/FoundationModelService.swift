@@ -92,22 +92,16 @@ final class FoundationModelService {
         guard !prompt.isEmpty else {
             return ([["type": "text", "text": "(empty prompt)"]], "end_turn")
         }
-        var previousLength = 0
         var fullText = ""
-        // The session maintains transcript internally
-        // Stream response content and return text - tool calls are handled by native Tool protocol
         for try await snapshot in s.streamResponse(to: prompt) {
-            let accumulated = snapshot.content
-            let delta = String(accumulated.dropFirst(previousLength))
-            previousLength = accumulated.count
-            fullText = accumulated
-            if !delta.isEmpty {
-                onTextDelta(delta)
-            }
+            fullText = snapshot.content
         }
-        // For native Tool protocol, the framework handles tool calls internally
-        // We return the text response - tools are executed via NativeAgentTool.call()
-        return parseResponse(fullText, session: s)
+        // Parse first — only emit text to the log if it's not a tool call (avoids raw JSON in UI)
+        let result = parseResponse(fullText, session: s)
+        if result.stopReason != "tool_use" {
+            onTextDelta(fullText)
+        }
+        return result
     }
 
     // MARK: - Helpers
