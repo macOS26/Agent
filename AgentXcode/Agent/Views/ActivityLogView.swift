@@ -6,6 +6,7 @@ import AppKit
 /// Optimized for smooth streaming with incremental updates and debouncing.
 struct ActivityLogView: NSViewRepresentable {
     let text: String
+    var tabID: UUID?  // nil = main tab
     var searchText: String = ""
     var currentMatchIndex: Int = 0
     var onMatchCount: ((Int) -> Void)? = nil
@@ -71,19 +72,18 @@ struct ActivityLogView: NSViewRepresentable {
         let searchCleared = searchText.isEmpty && !coord.lastSearch.isEmpty
         coord.showingPlaceholder = false
 
-        if textChanged || searchCleared {
-            // Detect tab switch: if existing text prefix doesn't match, force full rebuild
-            let prefixMatches: Bool
-            if coord.lastLength > 0 && len >= coord.lastLength && !searchCleared {
-                let oldPrefix = (coord.lastRenderedText as NSString).substring(to: min(coord.lastLength, 200))
-                let newPrefix = (text as NSString).substring(to: min(coord.lastLength, 200))
-                prefixMatches = (oldPrefix == newPrefix)
-            } else {
-                prefixMatches = false
-            }
+        // Detect tab switch — reset and full rebuild
+        let tabSwitched = tabID != coord.lastTabID
+        if tabSwitched {
+            coord.lastTabID = tabID
+            coord.lastLength = 0
+            coord.lastRenderedText = ""
+            coord.clearCache()
+        }
 
-            // Use incremental update only when genuinely appending to same content
-            let isAppending = len > coord.lastLength && coord.lastLength > 0 && !searchCleared && prefixMatches
+        if textChanged || searchCleared || tabSwitched {
+            // Use incremental update only when genuinely appending to same tab
+            let isAppending = len > coord.lastLength && coord.lastLength > 0 && !searchCleared && !tabSwitched
 
             if isAppending {
                 // Incremental update: only render and append new text
@@ -237,6 +237,8 @@ struct ActivityLogView: NSViewRepresentable {
         var latestMatchCallback: ((Int) -> Void)?
         /// Track the last fully rendered text for incremental updates
         var lastRenderedText = ""
+        /// Track which tab we last rendered — forces full rebuild on tab switch
+        var lastTabID: UUID?
         /// Throttle scrollToEnd to avoid hyper-scrolling during fast streaming
         var lastScrollTime: CFAbsoluteTime = 0
         var pendingScrollWork: DispatchWorkItem?
