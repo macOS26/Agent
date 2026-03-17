@@ -116,6 +116,7 @@ final class AppleEventService: @unchecked Sendable {
 
         var cursor: Any = app
         var cursorClass = "application"
+        var cursorPath: [String] = []  // tracks path for NSAppleScript fallback
         var output: [String] = []
 
         for (i, op) in operations.enumerated() {
@@ -130,25 +131,31 @@ final class AppleEventService: @unchecked Sendable {
                     output.append("Error at step \(i): 'get' requires 'key'")
                     return output.joined(separator: "\n")
                 }
-                guard let result = getValue(from: cursor, key: key) else {
-                    // Suggest valid keys from SDEF
+                if let result = getValue(from: cursor, key: key) {
+                    if isScalar(result) {
+                        output.append("\(key) = \(formatValue(result))")
+                    }
+                    // Track cursor class for SDEF hints on subsequent steps
+                    if result is SBElementArray {
+                        cursorClass = key
+                    } else if result is SBObject {
+                        cursorClass = key
+                    }
+                    cursorPath.append(key)
+                    cursor = result
+                } else if let fallbackValue = appleScriptFallback(bundleID: bundleID, key: key, cursorPath: cursorPath) {
+                    // NSAppleScript fallback succeeded — return the value directly
+                    output.append("\(key) = \(fallbackValue)")
+                    // Can't continue chaining after fallback — AppleScript returns a string
+                    return output.joined(separator: "\n")
+                } else {
+                    // Both KVC and NSAppleScript failed — suggest valid keys
                     let keys = SDEFService.shared.aeKeys(for: bundleID, className: cursorClass)
                     let allKeys = keys.properties + keys.elements
                     let hint = allKeys.isEmpty ? "" : " Valid keys for '\(cursorClass)': \(allKeys.joined(separator: ", "))"
                     output.append("\(key) = nil (key not found).\(hint)")
                     return output.joined(separator: "\n")
                 }
-                if isScalar(result) {
-                    output.append("\(key) = \(formatValue(result))")
-                }
-                // Track cursor class for SDEF hints on subsequent steps
-                if result is SBElementArray {
-                    cursorClass = key
-                } else if let obj = result as? SBObject {
-                    cursorClass = key
-                    _ = obj // suppress unused warning
-                }
-                cursor = result
 
             case "iterate":
                 guard let properties = op["properties"] as? [String] else {
@@ -252,7 +259,47 @@ final class AppleEventService: @unchecked Sendable {
             return result
         }
         // KVC fallback — handles primitives and properties that need KVC path.
-        return safeValueForKey(nsObj, key: key)
+        if let result = safeValueForKey(nsObj, key: key) {
+            return result
+        }
+        return nil
+    }
+
+    /// NSAppleScript fallback for when KVC fails on object-type properties.
+    /// Converts camelCase key to AppleScript terminology and queries via NSAppleScript.
+    private func appleScriptFallback(bundleID: String, key: String, cursorPath: [String]) -> String? {
+        let appName = resolveAppName(bundleID)
+        guard !appName.isEmpty else { return nil }
+
+        // Convert camelCase to AppleScript space-separated: "currentTrack" → "current track"
+        let asKey = camelCaseToAppleScript(key)
+
+        // Build the property path for nested access
+        let source: String
+        if cursorPath.isEmpty {
+            source = "tell application \"\(appName)\" to get \(asKey)"
+        } else {
+            let path = cursorPath.map { camelCaseToAppleScript($0) }.joined(separator: " of ")
+            source = "tell application \"\(appName)\" to get \(asKey) of \(path)"
+        }
+
+        let result = NSAppleScriptService.shared.execute(source: source)
+        return result.success ? result.output : nil
+    }
+
+    /// Convert camelCase to AppleScript space-separated terminology.
+    /// "currentTrack" → "current track", "playerState" → "player state"
+    private func camelCaseToAppleScript(_ key: String) -> String {
+        var result = ""
+        for char in key {
+            if char.isUppercase && !result.isEmpty {
+                result += " "
+                result += String(char).lowercased()
+            } else {
+                result += String(char)
+            }
+        }
+        return result
     }
 
     /// Safely call value(forKey:) catching ObjC exceptions
