@@ -67,11 +67,9 @@ final class FoundationModelService {
     private func ensureSession() -> LanguageModelSession {
         if let s = session { return s }
     
-        // Use compact prompt for Apple Intelligence (limited context window)
-        var instructions = AgentTools.compactSystemPrompt(userName: userName, userHome: userHome)
-        if !projectFolder.isEmpty {
-            instructions = "CURRENT PROJECT FOLDER: \(projectFolder)\nAlways cd to this directory before running any shell commands. Use it as the default for all file operations. You may go outside it when needed.\n\n" + instructions
-        }
+        // Use compact prompt for Apple Intelligence (limited context window).
+        // Project folder is injected per-message in extractLastUserPrompt — don't duplicate here.
+        let instructions = AgentTools.compactSystemPrompt(userName: userName, userHome: userHome)
         // Skip history context for Apple Intelligence to save context window
         // Apple Intelligence has a smaller context window than Claude/Ollama
 
