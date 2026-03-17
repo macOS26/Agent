@@ -113,16 +113,28 @@ final class ChatHistoryStore {
         context?.insert(task)
         currentTask = task
         nextOrdinal = 0
-        try? context?.save()
+        safeSave()
         return task.id
     }
     
     /// End current task with optional summary
     func endCurrentTask(summary: String? = nil, cancelled: Bool = false) {
-        currentTask?.endTime = Date()
-        currentTask?.summary = summary
-        currentTask?.isCancelled = cancelled
-        try? context?.save()
+        guard let task = currentTask, let context else {
+            currentTask = nil
+            return
+        }
+        // Guard against faulted/deleted objects that cause Core Data crashes
+        if context.hasChanges {
+            task.endTime = Date()
+            task.summary = summary
+            task.isCancelled = cancelled
+        }
+        do {
+            try context.save()
+        } catch {
+            // Context in bad state — rollback to prevent cascading crashes
+            context.rollback()
+        }
         currentTask = nil
     }
     
@@ -149,7 +161,20 @@ final class ChatHistoryStore {
     
     /// Save pending changes
     func save() {
-        try? context?.save()
+        do {
+            try context?.save()
+        } catch {
+            context?.rollback()
+        }
+    }
+
+    /// Safe save that won't propagate exceptions
+    private func safeSave() {
+        do {
+            try context?.save()
+        } catch {
+            context?.rollback()
+        }
     }
     
     /// Fetch recent tasks with their messages
