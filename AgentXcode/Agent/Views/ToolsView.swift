@@ -27,15 +27,14 @@ struct ToolsView: View {
 
             Divider()
 
-            // Tool list
+            // Tag cloud
             ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(AgentTools.tools(for: selectedProvider), id: \.name) { tool in
-                        ToolRowView(tool: tool, provider: selectedProvider, prefs: prefs)
-                        Divider()
-                            .padding(.leading, 16)
-                    }
-                }
+                TagCloudView(
+                    tools: AgentTools.tools(for: selectedProvider),
+                    provider: selectedProvider,
+                    prefs: prefs
+                )
+                .padding()
             }
 
             Divider()
@@ -48,49 +47,111 @@ struct ToolsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
-                Button("Enable All") {
-                    prefs.enableAll(for: selectedProvider)
+                Button("Enable All") { prefs.enableAll(for: selectedProvider) }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                Button("Disable All") {
+                    for tool in AgentTools.tools(for: selectedProvider) {
+                        if prefs.isEnabled(selectedProvider, tool.name) {
+                            prefs.toggle(selectedProvider, tool.name)
+                        }
+                    }
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
             }
             .padding()
         }
-        .frame(width: 420, height: 520)
+        .frame(width: 460, height: 480)
     }
 }
 
-// MARK: - Tool Row
+// MARK: - Tag Cloud
 
-private struct ToolRowView: View {
-    let tool: AgentTools.ToolDef
+private struct TagCloudView: View {
+    let tools: [AgentTools.ToolDef]
     let provider: APIProvider
     let prefs: ToolPreferencesService
 
     var body: some View {
-        HStack(spacing: 12) {
-            Toggle("", isOn: Binding(
-                get: { prefs.isEnabled(provider, tool.name) },
-                set: { _ in prefs.toggle(provider, tool.name) }
-            ))
-            .toggleStyle(.switch)
-            .controlSize(.small)
-            .labelsHidden()
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(tool.name)
-                    .font(.system(.body, design: .monospaced))
-                    .fontWeight(.medium)
-                Text(tool.description.components(separatedBy: ". ").first ?? tool.description)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
+        FlowLayout(spacing: 8) {
+            ForEach(tools, id: \.name) { tool in
+                ToolTagView(tool: tool, provider: provider, prefs: prefs)
             }
-            Spacer()
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .contentShape(Rectangle())
-        .onTapGesture { prefs.toggle(provider, tool.name) }
+    }
+}
+
+// MARK: - Tool Tag
+
+private struct ToolTagView: View {
+    let tool: AgentTools.ToolDef
+    let provider: APIProvider
+    let prefs: ToolPreferencesService
+
+    private var isEnabled: Bool { prefs.isEnabled(provider, tool.name) }
+
+    var body: some View {
+        Text(tool.name)
+            .font(.system(.caption, design: .monospaced))
+            .fontWeight(isEnabled ? .semibold : .regular)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(isEnabled ? Color.accentColor.opacity(0.85) : Color.clear)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(isEnabled ? Color.clear : Color.secondary.opacity(0.4), lineWidth: 1)
+            )
+            .foregroundStyle(isEnabled ? .white : .secondary)
+            .help(tool.description.components(separatedBy: ". ").first ?? tool.description)
+            .onTapGesture { prefs.toggle(provider, tool.name) }
+            .animation(.easeInOut(duration: 0.15), value: isEnabled)
+    }
+}
+
+// MARK: - Flow Layout
+
+/// Wrapping horizontal layout — places items left-to-right, wrapping to the next line.
+private struct FlowLayout: Layout {
+    var spacing: CGFloat = 8
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? 400
+        var x: CGFloat = 0
+        var y: CGFloat = 0
+        var rowHeight: CGFloat = 0
+
+        for view in subviews {
+            let size = view.sizeThatFits(.unspecified)
+            if x + size.width > width, x > 0 {
+                y += rowHeight + spacing
+                x = 0
+                rowHeight = 0
+            }
+            x += size.width + spacing
+            rowHeight = max(rowHeight, size.height)
+        }
+        return CGSize(width: width, height: y + rowHeight)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var x = bounds.minX
+        var y = bounds.minY
+        var rowHeight: CGFloat = 0
+
+        for view in subviews {
+            let size = view.sizeThatFits(.unspecified)
+            if x + size.width > bounds.maxX, x > bounds.minX {
+                y += rowHeight + spacing
+                x = bounds.minX
+                rowHeight = 0
+            }
+            view.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
+            x += size.width + spacing
+            rowHeight = max(rowHeight, size.height)
+        }
     }
 }
