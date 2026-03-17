@@ -59,7 +59,8 @@ enum AgentTools {
         read_agent_script — read script source
         run_agent_script — compile and run script
         ALWAYS list first — update existing, don't duplicate.
-        To remove a script, use delete_agent_script — it deletes the file. \
+        To remove a script, use delete_agent_script — it deletes the file and blocklists it so \
+        bundled scripts won't respawn from the app bundle on next launch. create_agent_script unblocks. \
         NEVER manually edit Package.swift to remove scripts — a sync timer re-adds them from disk.
 
         SCRIPT CAPABILITIES:
