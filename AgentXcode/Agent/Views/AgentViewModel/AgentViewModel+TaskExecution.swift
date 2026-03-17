@@ -1252,7 +1252,11 @@ extension AgentViewModel {
                 }
 
                 // Add assistant response to conversation
-                messages.append(["role": "assistant", "content": response.content])
+                // Guard against empty content — Ollama rejects assistant messages with no content or tool_calls
+                let assistantContent: Any = response.content.isEmpty
+                    ? "I'll continue with the task." as Any
+                    : response.content as Any
+                messages.append(["role": "assistant", "content": assistantContent])
 
                 if hasToolUse && !toolResults.isEmpty {
                     messages.append(["role": "user", "content": toolResults])
