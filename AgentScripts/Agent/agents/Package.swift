@@ -44,6 +44,8 @@ let common: Target.Dependency = "ScriptingBridgeCommon"
 let bridgeNames = [
     "AdobeIllustratorBridge",
     "AgentAccessibility",
+    "AppleScriptUtilityBridge",
+    "AutomatorApplicationStubBridge",
     "AutomatorBridge",
     "BluetoothFileExchangeBridge",
     "CalendarBridge",
