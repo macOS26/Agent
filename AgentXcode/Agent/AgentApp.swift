@@ -1,14 +1,17 @@
 import SwiftUI
 import SwiftData
 
+extension Notification.Name {
+    static let appWillQuit = Notification.Name("appWillQuit")
+}
+
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        // Tell the view model to stop all running tasks, MCP servers, etc.
+        NotificationCenter.default.post(name: .appWillQuit, object: nil)
         // Drain the script compilation queue before exit to prevent a deadlock
         // where C++ static destructors (DoIOSInit) try to fflush(stdout) while
         // the compilation queue holds the flockfile(stdout) lock.
-        // NOTE: Must be synchronous — using terminateLater causes SwiftUI to
-        // attempt a layout pass on a partially torn-down view graph, crashing
-        // in getEnumTagSinglePayload during TintKey environment comparison.
         ScriptService.drainCompilationQueue()
         return .terminateNow
     }

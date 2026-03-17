@@ -109,6 +109,15 @@ final class MCPService: @unchecked Sendable {
         await refreshState()
     }
 
+    /// Disconnect all connected MCP servers (called on app quit)
+    func disconnectAll() async {
+        for serverId in connectedServerIds {
+            await client.removeServer(serverId)
+        }
+        connectedServerIds.removeAll()
+        connectionErrors.removeAll()
+    }
+
     /// Start all servers marked with autoStart
     func startAutoStartServers() async {
         let autoStartConfigs = MCPServerRegistry.shared.servers

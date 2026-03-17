@@ -465,6 +465,11 @@ struct ContentView: View {
         } message: {
             Text("Are you sure you want to close the window and quit?")
         }
+        .onReceive(NotificationCenter.default.publisher(for: .appWillQuit)) { _ in
+            viewModel.stopAll()
+            viewModel.stopMessagesMonitor()
+            Task { await MCPService.shared.disconnectAll() }
+        }
         .onAppear {
             Task {
                 await viewModel.fetchClaudeModels()
