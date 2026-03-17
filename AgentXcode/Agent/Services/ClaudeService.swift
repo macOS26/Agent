@@ -25,7 +25,7 @@ final class ClaudeService {
     var systemPrompt: String {
         var prompt = AgentTools.systemPrompt(userName: userName, userHome: userHome)
         if !projectFolder.isEmpty {
-            prompt += "\nPROJECT FOLDER: \(projectFolder) — use as the default working directory for commands and file operations. You may look outside this folder when needed to complete a task."
+            prompt = "CURRENT PROJECT FOLDER: \(projectFolder)\nUse this as the default working directory for all commands and file operations. You may go outside it when needed.\n\n" + prompt
         }
         if !historyContext.isEmpty {
             prompt += historyContext
