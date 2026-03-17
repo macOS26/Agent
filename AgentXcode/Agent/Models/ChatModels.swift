@@ -123,14 +123,19 @@ final class ChatHistoryStore {
             currentTask = nil
             return
         }
-        // ObjCTry catches CoreData ObjC exceptions that Swift do/catch cannot
-        let ok = ObjCTry {
-            task.endTime = Date()
-            task.summary = summary
-            task.isCancelled = cancelled
-            try? context.save()
+        // Validate the task is still live in this context before touching it.
+        // A destroyed store (clearAll) or deleted object causes _PF_FulfillDeferredFault
+        // inside performBlockAndWait — an ObjC exception no @catch can intercept.
+        guard task.modelContext != nil, !task.isDeleted else {
+            currentTask = nil
+            return
         }
-        if !ok {
+        task.endTime = Date()
+        task.summary = summary
+        task.isCancelled = cancelled
+        do {
+            try context.save()
+        } catch {
             context.rollback()
         }
         currentTask = nil
@@ -157,13 +162,14 @@ final class ChatHistoryStore {
         context?.insert(message)
     }
     
-    /// Save pending changes — catches both Swift errors and ObjC exceptions
+    /// Save pending changes
     func save() {
         guard let context else { return }
-        let ok = ObjCTry {
-            try? context.save()
+        do {
+            try context.save()
+        } catch {
+            context.rollback()
         }
-        if !ok { context.rollback() }
     }
 
     /// Alias for save()
