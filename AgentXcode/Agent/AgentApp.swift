@@ -6,13 +6,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Drain the script compilation queue before exit to prevent a deadlock
         // where C++ static destructors (DoIOSInit) try to fflush(stdout) while
         // the compilation queue holds the flockfile(stdout) lock.
-        DispatchQueue.global().async {
-            ScriptService.drainCompilationQueue()
-            DispatchQueue.main.async {
-                NSApp.reply(toApplicationShouldTerminate: true)
-            }
-        }
-        return .terminateLater
+        // NOTE: Must be synchronous — using terminateLater causes SwiftUI to
+        // attempt a layout pass on a partially torn-down view graph, crashing
+        // in getEnumTagSinglePayload during TintKey environment comparison.
+        ScriptService.drainCompilationQueue()
+        return .terminateNow
     }
 }
 
