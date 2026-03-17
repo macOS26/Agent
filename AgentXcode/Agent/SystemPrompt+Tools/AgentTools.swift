@@ -531,6 +531,39 @@ enum AgentTools {
         ),
     ]
 
+    // MARK: - Plain-Text Format (for Foundation Models / text-based providers)
+
+    /// All tool names derived from commonTools. Use instead of hardcoded lists.
+    nonisolated static var toolNames: [String] {
+        commonTools.map { $0.name }
+    }
+
+    /// Compact tool reference for inclusion in plain-text model prompts.
+    /// Format: toolName {"param": type, "optParam"?: type} — short description
+    nonisolated static var textFormat: String {
+        var lines: [String] = ["TOOLS — call as: toolName {\"param\": value, ...}"]
+        for tool in commonTools {
+            let reqParams = tool.required
+            let allKeys = tool.properties.keys.sorted { a, b in
+                let aReq = reqParams.contains(a)
+                let bReq = reqParams.contains(b)
+                if aReq != bReq { return aReq }
+                return a < b
+            }
+            var paramParts: [String] = []
+            for key in allKeys {
+                guard let schema = tool.properties[key] else { continue }
+                let typeStr = (schema["type"] as? String) ?? "any"
+                let opt = reqParams.contains(key) ? "" : "?"
+                paramParts.append("\"\(key)\"\(opt): \(typeStr)")
+            }
+            let params = paramParts.isEmpty ? "{}" : "{\(paramParts.joined(separator: ", "))}"
+            let shortDesc = tool.description.components(separatedBy: ". ").first ?? tool.description
+            lines.append("\(tool.name) \(params) — \(shortDesc)")
+        }
+        return lines.joined(separator: "\n")
+    }
+
     // MARK: - Claude (Anthropic) Format
 
     /// Convert a ToolDef to Anthropic's tool schema.

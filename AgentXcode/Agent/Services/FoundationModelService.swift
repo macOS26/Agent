@@ -63,8 +63,11 @@ final class FoundationModelService {
         }
         instructions += """
 
+
 TOOL USE FORMAT: When you need to call a tool, output the exact tool name followed immediately by a JSON object on the same line. One tool call per response. Do not wrap in markdown.
 Example: execute_user_command {"command": "ls -la /tmp"}
+
+\(AgentTools.textFormat)
 """
         let s = LanguageModelSession(model: .default, instructions: Instructions(instructions))
         session = s
@@ -135,16 +138,7 @@ Example: execute_user_command {"command": "ls -la /tmp"}
 
     /// Parse a tool call embedded in plain text. Mirrors OllamaService text-based parsing.
     private func parseResponse(_ text: String) -> (content: [[String: Any]], stopReason: String) {
-        let toolNames = [
-            "read_file", "write_file", "edit_file", "list_files", "search_files",
-            "git_status", "git_diff", "git_log", "git_commit", "git_diff_patch", "git_branch",
-            "apple_event_query", "lookup_sdef", "run_applescript",
-            "execute_user_command", "execute_command", "task_complete",
-            "list_agent_scripts", "read_agent_script", "create_agent_script",
-            "update_agent_script", "run_agent_script", "delete_agent_script",
-            "xcode_build", "xcode_run", "xcode_list_projects",
-            "xcode_select_project", "xcode_grant_permission"
-        ]
+        let toolNames = AgentTools.toolNames
 
         for toolName in toolNames {
             guard let nameRange = text.range(of: toolName) else { continue }
