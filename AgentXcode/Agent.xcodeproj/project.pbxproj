@@ -49,6 +49,7 @@
 		AA100000000000000000B1 /* SoundPlayerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000B0 /* SoundPlayerService.swift */; };
 		EA70000000000000000001 /* SDEFService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA70000000000000000002 /* SDEFService.swift */; };
 		EA80000000000000000001 /* NSAppleScriptService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA80000000000000000002 /* NSAppleScriptService.swift */; };
+		EAFA000000000000000001 /* FoundationModelService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAFA000000000000000002 /* FoundationModelService.swift */; };
 		AA100000000000000000B3 /* StartupTwentiethAnniversaryMac.wav in Resources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000B2 /* StartupTwentiethAnniversaryMac.wav */; };
 		BB10000000000000000030 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001A /* main.swift */; };
 		BB10000000000000000031 /* HelperProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001B /* HelperProtocol.swift */; };
@@ -221,6 +222,7 @@
 		EA60000000000000000002 /* SDEFs */ = {isa = PBXFileReference; lastKnownFileType = folder; path = SDEFs; sourceTree = "<group>"; };
 		EA70000000000000000002 /* SDEFService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDEFService.swift; sourceTree = "<group>"; };
 		EA80000000000000000002 /* NSAppleScriptService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NSAppleScriptService.swift; sourceTree = "<group>"; };
+		EAFA000000000000000002 /* FoundationModelService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoundationModelService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -384,6 +386,7 @@
 				AA10000000000000000075 /* AccessibilityService.swift */,
 				EA80000000000000000002 /* NSAppleScriptService.swift */,
 				EA70000000000000000002 /* SDEFService.swift */,
+				EAFA000000000000000002 /* FoundationModelService.swift */,
 				AA100000000000000000B0 /* SoundPlayerService.swift */,
 			);
 			path = Services;
@@ -636,6 +639,7 @@
 				AA10000000000000000076 /* AccessibilityService.swift in Sources */,
 				EA80000000000000000001 /* NSAppleScriptService.swift in Sources */,
 				EA70000000000000000001 /* SDEFService.swift in Sources */,
+				EAFA000000000000000001 /* FoundationModelService.swift in Sources */,
 				AA100000000000000000B1 /* SoundPlayerService.swift in Sources */,
 				AA1000000000000000007E /* AccessibilitySettingsView.swift in Sources */,
 				AA10000000000000000077 /* MessagesView.swift in Sources */,

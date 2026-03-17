@@ -6,12 +6,14 @@ enum APIProvider: String, CaseIterable {
     case claude = "claude"
     case ollama = "ollama"
     case localOllama = "localOllama"
+    case foundationModel = "foundationModel"
 
     var displayName: String {
         switch self {
         case .claude: "Claude"
         case .ollama: "Ollama"
         case .localOllama: "Local Ollama"
+        case .foundationModel: "Apple AI"
         }
     }
 }
@@ -51,6 +53,7 @@ final class AgentViewModel {
             if selectedProvider == .claude && availableClaudeModels.isEmpty {
                 Task { await fetchClaudeModels() }
             }
+            // .foundationModel needs no setup — uses SystemLanguageModel.default
         }
     }
 

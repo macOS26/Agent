@@ -91,6 +91,27 @@ struct SettingsView: View {
                         }
                     }
                 }
+            } else if viewModel.selectedProvider == .foundationModel {
+                // Apple Foundation Models (on-device)
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Apple Intelligence (On-Device)")
+                        .font(.headline)
+                    HStack(spacing: 6) {
+                        Image(systemName: FoundationModelService.isAvailable ? "checkmark.circle.fill" : "xmark.circle.fill")
+                            .foregroundStyle(FoundationModelService.isAvailable ? .green : .red)
+                        Text(FoundationModelService.isAvailable ? "Available" : "Not available")
+                            .font(.subheadline)
+                    }
+                    if !FoundationModelService.isAvailable {
+                        Text(FoundationModelService.unavailabilityReason)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("No configuration needed — runs entirely on-device.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
             } else {
                 // Local Ollama settings
                 VStack(alignment: .leading, spacing: 10) {

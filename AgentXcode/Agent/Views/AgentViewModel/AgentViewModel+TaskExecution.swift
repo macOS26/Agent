@@ -233,6 +233,9 @@ extension AgentViewModel {
         case .localOllama:
             modelName = localOllamaModel
             isVision = selectedLocalOllamaSupportsVision
+        case .foundationModel:
+            modelName = "Apple Intelligence"
+            isVision = false
         }
         appendLog("Model: \(provider.displayName) / \(modelName)\(isVision ? " (vision)" : "")")
         flushLog()
@@ -248,6 +251,8 @@ extension AgentViewModel {
         default:
             ollama = nil
         }
+        let foundationModel: FoundationModelService? = provider == .foundationModel
+            ? FoundationModelService(historyContext: historyContext, projectFolder: projectFolder) : nil
 
         // Prepend last task as conversation context so the LLM knows what just happened
         var messages: [[String: Any]] = history.lastTaskMessages()
@@ -300,6 +305,14 @@ extension AgentViewModel {
                     flushStreamBuffer()
                 } else if let ollama {
                     response = try await ollama.sendStreaming(messages: messages) { [weak self] delta in
+                        Task { @MainActor in
+                            self?.isThinking = false
+                            self?.appendStreamDelta(delta)
+                        }
+                    }
+                    textWasStreamed = true
+                } else if let foundationModel {
+                    response = try await foundationModel.sendStreaming(messages: messages) { [weak self] delta in
                         Task { @MainActor in
                             self?.isThinking = false
                             self?.appendStreamDelta(delta)

@@ -249,14 +249,14 @@ final class ScriptService {
 
     // MARK: - Package.swift
 
-    /// Copy Package.swift from bundle only if it doesn't exist (preserves user's scriptNames)
+    /// Always deploy Package.swift from bundle — syncBridgesWithPackageLocked and
+    /// syncScriptsWithPackageLocked re-add any user-created scripts/bridges afterward.
     private func copyPackageSwift() {
         let fm = FileManager.default
         guard let src = bundlePackage, fm.fileExists(atPath: src.path) else { return }
         let dst = Self.agentsDir.appendingPathComponent("Package.swift")
-        if !fm.fileExists(atPath: dst.path) {
-            try? fm.copyItem(at: src, to: dst)
-        }
+        try? fm.removeItem(at: dst)
+        try? fm.copyItem(at: src, to: dst)
     }
 
     // MARK: - Helpers
