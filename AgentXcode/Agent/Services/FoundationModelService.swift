@@ -16,6 +16,16 @@ final class FoundationModelService {
     /// Call to force a new session (e.g. after prompt changes).
     func resetSession() { session = nil }
 
+    // MARK: - Enabled Tools
+
+    /// Names of tools currently enabled for Apple Intelligence (shown in activity log).
+    var enabledToolNames: [String] {
+        let prefs = ToolPreferencesService.shared
+        return AgentTools.commonTools
+            .filter { prefs.isEnabled(.foundationModel, $0.name) }
+            .map { $0.name }
+    }
+
     // MARK: - Availability
 
     static var isAvailable: Bool {
