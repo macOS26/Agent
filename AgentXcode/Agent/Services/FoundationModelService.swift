@@ -139,21 +139,24 @@ final class FoundationModelService {
         return String(text[..<range.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    /// Parse response from Foundation Models.
-    /// Apple Intelligence outputs tool calls as JSON code blocks: ```json\n{"tool_name": {params}}\n```
-    /// We extract the first such call and return it as a tool_use block.
+    /// Parse response from Foundation Models. Supports three output formats the model may use:
+    /// 1. ```json\n{"tool_name": {params}}\n``` — JSON code block
+    /// 2. {"tool_name": {params}}              — bare JSON object
+    /// 3. tool_name {"param": value}           — plain text format
     private func parseResponse(_ text: String, session: LanguageModelSession) -> (content: [[String: Any]], stopReason: String) {
-        // Look for ```json ... ``` blocks containing {"tool_name": {params}}
+        // Format 1: ```json ... ``` code block
         let codeBlockPattern = "```(?:json)?\\s*\\n?([\\s\\S]*?)\\n?```"
         if let regex = try? NSRegularExpression(pattern: codeBlockPattern),
            let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
            let jsonRange = Range(match.range(at: 1), in: text) {
             let jsonStr = String(text[jsonRange]).trimmingCharacters(in: .whitespacesAndNewlines)
-            if let result = parseToolCallJSON(jsonStr) { return result }
+            if let result = parseWrappedJSON(jsonStr) { return result }
         }
-        // Also try parsing the entire text as bare JSON (no code block)
+        // Format 2: bare {"tool_name": {params}}
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.hasPrefix("{"), let result = parseToolCallJSON(trimmed) { return result }
+        if trimmed.hasPrefix("{"), let result = parseWrappedJSON(trimmed) { return result }
+        // Format 3: tool_name {"param": value}
+        if let result = parseTextFormat(text) { return result }
 
         if text.isEmpty {
             return ([["type": "text", "text": "I'll continue with the task."]], "end_turn")
@@ -161,17 +164,39 @@ final class FoundationModelService {
         return ([["type": "text", "text": text]], "end_turn")
     }
 
-    /// Parse {"tool_name": {params}} or {"tool_name": {"param": value}} JSON into a tool_use block.
-    private func parseToolCallJSON(_ json: String) -> (content: [[String: Any]], stopReason: String)? {
+    /// Parse {"tool_name": {params}} — the outer key is the tool name.
+    private func parseWrappedJSON(_ json: String) -> (content: [[String: Any]], stopReason: String)? {
         guard let data = json.data(using: .utf8),
               let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               obj.count == 1,
               let toolName = obj.keys.first,
               AgentTools.toolNames.contains(toolName) else { return nil }
         let input = (obj[toolName] as? [String: Any]) ?? [:]
-        return (
-            [["type": "tool_use", "id": UUID().uuidString, "name": toolName, "input": input]],
-            "tool_use"
-        )
+        return toolUseResult(name: toolName, input: input)
+    }
+
+    /// Parse plain text format: tool_name {"param": value, ...}
+    private func parseTextFormat(_ text: String) -> (content: [[String: Any]], stopReason: String)? {
+        for toolName in AgentTools.toolNames {
+            guard let nameRange = text.range(of: toolName) else { continue }
+            let afterName = text[nameRange.upperBound...].trimmingCharacters(in: .whitespaces)
+            guard afterName.hasPrefix("{") else { continue }
+            var depth = 0
+            var end = afterName.startIndex
+            for (i, ch) in afterName.enumerated() {
+                if ch == "{" { depth += 1 } else if ch == "}" { depth -= 1 }
+                if depth == 0 { end = afterName.index(afterName.startIndex, offsetBy: i); break }
+            }
+            let jsonStr = String(afterName[afterName.startIndex...end])
+            guard let data = jsonStr.data(using: .utf8),
+                  let input = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+            else { continue }
+            return toolUseResult(name: toolName, input: input)
+        }
+        return nil
+    }
+
+    private func toolUseResult(name: String, input: [String: Any]) -> (content: [[String: Any]], stopReason: String) {
+        ([["type": "tool_use", "id": UUID().uuidString, "name": name, "input": input]], "tool_use")
     }
 }
