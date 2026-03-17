@@ -37,6 +37,12 @@ final class ScriptTab: Identifiable {
     var runningLLMTask: Task<Void, Never>?
     var llmMessages: [[String: Any]] = []
 
+    // MARK: - Per-Tab Prompt History
+
+    var promptHistory: [String] = []
+    var historyIndex: Int = -1
+    var savedInput: String = ""
+
     // LLM streaming state
     var llmStreamBuffer: String = ""
     var llmStreamFlushTask: Task<Void, Never>?
@@ -130,5 +136,42 @@ final class ScriptTab: Identifiable {
     func resetLLMStreamCounters() {
         streamLineCount = 0
         streamTruncated = false
+    }
+
+    // MARK: - Prompt History Navigation
+
+    func addToHistory(_ prompt: String) {
+        promptHistory.append(prompt)
+        historyIndex = -1
+        savedInput = ""
+    }
+
+    func navigateHistory(direction: Int) {
+        guard !promptHistory.isEmpty else { return }
+
+        if historyIndex == -1 {
+            savedInput = taskInput
+            if direction == -1 {
+                historyIndex = promptHistory.count - 1
+            } else {
+                return
+            }
+        } else {
+            historyIndex += direction
+        }
+
+        if historyIndex < 0 {
+            historyIndex = -1
+            taskInput = savedInput
+            return
+        }
+
+        if historyIndex >= promptHistory.count {
+            historyIndex = -1
+            taskInput = savedInput
+            return
+        }
+
+        taskInput = promptHistory[historyIndex]
     }
 }

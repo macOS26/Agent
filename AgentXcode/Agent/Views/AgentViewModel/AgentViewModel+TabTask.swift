@@ -27,6 +27,7 @@ extension AgentViewModel {
             stopTabTask(tab: tab)
         }
 
+        tab.addToHistory(task)
         tab.taskInput = ""
 
         tab.runningLLMTask = Task {
@@ -55,11 +56,28 @@ extension AgentViewModel {
 
         // Build tab context from the existing log (cap at 8K characters)
         let tabContext = String(tab.activityLog.suffix(8000))
+        let tccNote: String
+        let lowerName = tab.scriptName.lowercased()
+        if lowerName == "osascript" {
+            tccNote = """
+            This is a TCC tab with full Automation, Accessibility, and Screen Recording permissions. \
+            Commands here run in the Agent app process. Use this tab for osascript, AppleScript, \
+            and any commands that need TCC grants. Use lookup_sdef to check an app's scripting dictionary \
+            before writing osascript commands.
+            """
+        } else if lowerName == "screencapture" {
+            tccNote = """
+            This is a TCC tab for screen capture. Commands run in the Agent app process with \
+            Screen Recording permission. Use screencapture or ax_screenshot here.
+            """
+        } else {
+            tccNote = "Help them debug, modify, re-run scripts, or perform any follow-up actions."
+        }
         let tabHistoryContext = """
 
-        \nYou are in a script tab for "\(tab.scriptName)". The user ran this script and can see its output.
-        Help them debug, modify, re-run scripts, or perform any follow-up actions.
-        The script's recent output is below for context:
+        \nYou are in a tab named "\(tab.scriptName)". The user can see the tab's output.
+        \(tccNote)
+        The tab's recent output is below for context:
 
         \(tabContext)
         """

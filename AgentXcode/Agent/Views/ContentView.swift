@@ -531,15 +531,16 @@ struct ContentView: View {
                     }
                 }
 
-                // Up/Down arrow for prompt history
-                if true {
-                    if event.keyCode == 126 { // Up arrow
-                        viewModel.navigatePromptHistory(direction: -1)
-                        return nil
-                    } else if event.keyCode == 125 { // Down arrow
-                        viewModel.navigatePromptHistory(direction: 1)
-                        return nil
+                // Up/Down arrow for prompt history (per-tab or main)
+                if event.keyCode == 126 || event.keyCode == 125 {
+                    let direction = event.keyCode == 126 ? -1 : 1
+                    if let tabId = viewModel.selectedTabId,
+                       let tab = viewModel.scriptTabs.first(where: { $0.id == tabId }) {
+                        tab.navigateHistory(direction: direction)
+                    } else {
+                        viewModel.navigatePromptHistory(direction: direction)
                     }
+                    return nil
                 }
 
                 return event
