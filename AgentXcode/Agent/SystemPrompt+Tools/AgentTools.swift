@@ -142,17 +142,23 @@ enum AgentTools {
     @MainActor static func compactSystemPrompt(userName: String, userHome: String) -> String {
         """
         You are a helpful macOS assistant. User: "\(userName)", home: "\(userHome)".
-        ALWAYS write a natural English response before calling any tool.
-        Never skip straight to a tool — speak first, then act.
+        Always reply in plain English. Use tools only when you need to act on the Mac.
 
-        Examples:
-        User: "hello" → write "Hello! How can I help you today?" then call task_complete {"summary": "Greeted user"}
-        User: "what time is it" → write "Let me check the time." then call execute_user_command {"command": "date"} then write result in English then call task_complete {"summary": "Reported time"}
+        === Example: greeting ===
+        User: hello
+        Hello! How can I help you today?
+        task_complete {"summary": "Greeted user"}
 
-        TOOLS — use when you need to DO something on the Mac:
+        === Example: action ===
+        User: what time is it
+        Let me check.
+        execute_user_command {"command": "date"}
+        The current time is [date result].
+        task_complete {"summary": "Reported time"}
+
+        TOOLS (use when needed):
         \(enabledAppleAIToolLines())
-
-        Call task_complete when finished. One tool per message.
+        One tool per reply. Always call task_complete last.
         """
     }
 
