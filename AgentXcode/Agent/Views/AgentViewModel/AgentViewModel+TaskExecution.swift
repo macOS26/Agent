@@ -230,13 +230,13 @@ extension AgentViewModel {
         flushLog()
 
         let claude: ClaudeService? = provider == .claude
-            ? ClaudeService(apiKey: apiKey, model: selectedModel, historyContext: historyContext) : nil
+            ? ClaudeService(apiKey: apiKey, model: selectedModel, historyContext: historyContext, projectFolder: projectFolder) : nil
         let ollama: OllamaService?
         switch provider {
         case .ollama:
-            ollama = OllamaService(apiKey: ollamaAPIKey, model: ollamaModel, endpoint: ollamaEndpoint, supportsVision: isVision, historyContext: historyContext)
+            ollama = OllamaService(apiKey: ollamaAPIKey, model: ollamaModel, endpoint: ollamaEndpoint, supportsVision: isVision, historyContext: historyContext, projectFolder: projectFolder)
         case .localOllama:
-            ollama = OllamaService(apiKey: "", model: localOllamaModel, endpoint: localOllamaEndpoint, supportsVision: isVision, historyContext: historyContext)
+            ollama = OllamaService(apiKey: "", model: localOllamaModel, endpoint: localOllamaEndpoint, supportsVision: isVision, historyContext: historyContext, projectFolder: projectFolder)
         default:
             ollama = nil
         }
@@ -244,13 +244,7 @@ extension AgentViewModel {
         // Prepend last task as conversation context so the LLM knows what just happened
         var messages: [[String: Any]] = history.lastTaskMessages()
 
-        // Prepend project folder context if set
-        let effectivePrompt: String
-        if !projectFolder.isEmpty {
-            effectivePrompt = "project folder: \(projectFolder)\n\n\(prompt)"
-        } else {
-            effectivePrompt = prompt
-        }
+        let effectivePrompt = prompt
 
         if !attachedImagesBase64.isEmpty {
             appendLog("(\(attachedImagesBase64.count) screenshot(s) attached)")

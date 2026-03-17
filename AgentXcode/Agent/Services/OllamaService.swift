@@ -12,8 +12,9 @@ final class OllamaService {
     let historyContext: String
     let userHome: String
     let userName: String
+    let projectFolder: String
 
-    init(apiKey: String, model: String, endpoint: String, supportsVision: Bool = false, historyContext: String = "") {
+    init(apiKey: String, model: String, endpoint: String, supportsVision: Bool = false, historyContext: String = "", projectFolder: String = "") {
         self.apiKey = apiKey
         self.model = model
         let effectiveEndpoint = endpoint.isEmpty ? "http://localhost:11434/api/chat" : endpoint
@@ -22,10 +23,14 @@ final class OllamaService {
         self.historyContext = historyContext
         self.userHome = FileManager.default.homeDirectoryForCurrentUser.path
         self.userName = NSUserName()
+        self.projectFolder = projectFolder
     }
 
     var systemPrompt: String {
         var prompt = AgentTools.systemPrompt(userName: userName, userHome: userHome)
+        if !projectFolder.isEmpty {
+            prompt += "\nPROJECT FOLDER: \(projectFolder) — use as the default working directory for commands and file operations. You may look outside this folder when needed to complete a task."
+        }
         if supportsVision {
             prompt += "\nYou have VISION. When images are attached, you can see and analyze them."
         }

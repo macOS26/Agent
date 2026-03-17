@@ -11,17 +11,22 @@ final class ClaudeService {
     let historyContext: String
     let userHome: String
     let userName: String
+    let projectFolder: String
 
-    init(apiKey: String, model: String, historyContext: String = "") {
+    init(apiKey: String, model: String, historyContext: String = "", projectFolder: String = "") {
         self.apiKey = apiKey
         self.model = model
         self.historyContext = historyContext
         self.userHome = FileManager.default.homeDirectoryForCurrentUser.path
         self.userName = NSUserName()
+        self.projectFolder = projectFolder
     }
 
     var systemPrompt: String {
         var prompt = AgentTools.systemPrompt(userName: userName, userHome: userHome)
+        if !projectFolder.isEmpty {
+            prompt += "\nPROJECT FOLDER: \(projectFolder) — use as the default working directory for commands and file operations. You may look outside this folder when needed to complete a task."
+        }
         if !historyContext.isEmpty {
             prompt += historyContext
         }
