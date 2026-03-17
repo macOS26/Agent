@@ -31,6 +31,9 @@ enum AgentTools {
         2. Accessibility tools (ax_*) — AXUIElement API for UI inspection/interaction.
         3. execute_shell_command — osascript with TCC. Quick one-off AppleScript commands.
         4. apple_event_query — Apple Events, ObjC dispatch, no compile. Simple property reads.
+        Shell commands (execute_user_command, execute_command) fill gaps — use CLI tools \
+        (find, grep, git, curl, brew, etc.) for anything the above can't handle. \
+        execute_user_command runs as user via LaunchAgent; execute_command runs as root via LaunchDaemon when needed.
 
         FILE TOOLS: read_file, write_file, edit_file (read first), list_files, search_files
         - write_file returns line count only. Call read_file after to verify content.
