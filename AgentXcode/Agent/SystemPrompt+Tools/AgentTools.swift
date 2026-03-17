@@ -27,11 +27,10 @@ enum AgentTools {
         - execute_user_command / execute_command: NO TCC. Never for AX/Automation.
 
         APP AUTOMATION PRIORITY (unless user directs otherwise):
-        1. apple_event_query — Apple Events, instant ObjC dispatch, no compile. FIRST for reads.
-        2. execute_shell_command — osascript with TCC. Quick one-off commands.
-        3. Accessibility tools (ax_*) — AXUIElement API for UI inspection/interaction.
-        4. run_agent_script — ScriptingBridge Swift dylib for complex/persistent work. Full TCC.
-        5. NSAppleScript inside run_agent_script — when bridge has issues.
+        1. run_agent_script — ScriptingBridge Swift dylib. Full TCC. NSAppleScript fallback if bridge has issues.
+        2. Accessibility tools (ax_*) — AXUIElement API for UI inspection/interaction.
+        3. execute_shell_command — osascript with TCC. Quick one-off AppleScript commands.
+        4. apple_event_query — Apple Events, ObjC dispatch, no compile. Simple property reads.
 
         FILE TOOLS: read_file, write_file, edit_file (read first), list_files, search_files
         - write_file returns line count only. Call read_file after to verify content.
