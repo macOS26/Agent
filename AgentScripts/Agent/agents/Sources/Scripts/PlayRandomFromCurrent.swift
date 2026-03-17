@@ -1,18 +1,76 @@
 import Foundation
 import MusicBridge
 
+// ============================================================================
+// PlayRandomFromCurrent - Play random track from current playlist
+//
+// INPUT OPTIONS:
+//   Option 1: AGENT_SCRIPT_ARGS environment variable
+//     Format: "json=true" or just run with no args
+//     Example: "json=true"
+//
+//   Option 2: JSON input file at ~/Documents/Agent/json/PlayRandomFromCurrent_input.json
+//     {
+//       "json": true
+//     }
+//
+// OUTPUT: ~/Documents/Agent/json/PlayRandomFromCurrent_output.json
+//   {
+//     "success": true,
+//     "playlist": "Playlist Name",
+//     "trackCount": 50,
+//     "randomIndex": 23,
+//     "track": { "name": "...", "artist": "...", "album": "..." }
+//   }
+// ============================================================================
+
 @_cdecl("script_main")
 public func scriptMain() -> Int32 {
+    playRandomFromCurrent()
+    return 0
+}
+
+func playRandomFromCurrent() {
+    let home = NSHomeDirectory()
+    let inputPath = "\(home)/Documents/Agent/json/PlayRandomFromCurrent_input.json"
+    let outputPath = "\(home)/Documents/Agent/json/PlayRandomFromCurrent_output.json"
+    
+    // Parse AGENT_SCRIPT_ARGS
+    let argsString = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""
+    var outputJSON = false
+    
+    if !argsString.isEmpty {
+        let pairs = argsString.components(separatedBy: ",")
+        for pair in pairs {
+            let parts = pair.components(separatedBy: "=")
+            if parts.count == 2 {
+                let key = parts[0].trimmingCharacters(in: .whitespaces)
+                let value = parts[1].trimmingCharacters(in: .whitespaces)
+                if key == "json" {
+                    outputJSON = value.lowercased() == "true"
+                }
+            }
+        }
+    }
+    
+    // Try JSON input file
+    if let data = FileManager.default.contents(atPath: inputPath),
+       let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+        if let j = json["json"] as? Bool { outputJSON = j }
+    }
+    
     guard let music: MusicApplication = SBApplication(bundleIdentifier: "com.apple.Music") else {
-        print("Could not connect to Music.app")
-        return 1
+        print("❌ Could not connect to Music.app")
+        writeOutput(outputPath, success: false, error: "Could not connect to Music.app", outputJSON: outputJSON)
+        return
     }
     
     // Get the current playlist (if any)
     guard let currentPlaylist = music.currentPlaylist else {
         print("❌ No playlist currently selected")
         print("ℹ️ Please select a playlist first")
-        return 1
+        writeOutput(outputPath, success: false, error: "No playlist currently selected", outputJSON: outputJSON)
+        return
     }
     
     let playlistName = currentPlaylist.name ?? "Unknown"
@@ -21,7 +79,8 @@ public func scriptMain() -> Int32 {
     // Get tracks in the playlist
     guard let tracks = currentPlaylist.tracks?() else {
         print("Could not get tracks from playlist")
-        return 1
+        writeOutput(outputPath, success: false, error: "Could not get tracks from playlist", outputJSON: outputJSON)
+        return
     }
     
     let trackCount = tracks.count
@@ -29,7 +88,8 @@ public func scriptMain() -> Int32 {
     
     if trackCount == 0 {
         print("❌ Playlist is empty!")
-        return 1
+        writeOutput(outputPath, success: false, error: "Playlist is empty", outputJSON: outputJSON)
+        return
     }
     
     // Pick a random track
@@ -38,7 +98,8 @@ public func scriptMain() -> Int32 {
     
     guard let randomTrack = tracks.object(at: randomIndex) as? MusicTrack else {
         print("Could not get random track")
-        return 1
+        writeOutput(outputPath, success: false, error: "Could not get random track", outputJSON: outputJSON)
+        return
     }
     
     let trackName = randomTrack.name ?? "Unknown"
@@ -57,11 +118,55 @@ public func scriptMain() -> Int32 {
     Thread.sleep(forTimeInterval: 1.0)
     
     // Confirm playback
+    var nowPlayingName = trackName
+    var nowPlayingArtist = artist
+    
     if let nowPlaying = music.currentTrack {
-        let npName = nowPlaying.name ?? "Unknown"
-        let npArtist = nowPlaying.artist ?? "Unknown"
-        print("\n✅ Now playing: \(npName) - \(npArtist)")
+        nowPlayingName = nowPlaying.name ?? "Unknown"
+        nowPlayingArtist = nowPlaying.artist ?? "Unknown"
+        print("\n✅ Now playing: \(nowPlayingName) - \(nowPlayingArtist)")
     }
     
-    return 0
+    // Write JSON output if requested
+    if outputJSON {
+        let trackInfo: [String: Any] = [
+            "name": nowPlayingName,
+            "artist": nowPlayingArtist,
+            "album": album
+        ]
+        
+        let result: [String: Any] = [
+            "success": true,
+            "timestamp": ISO8601DateFormatter().string(from: Date()),
+            "playlist": playlistName,
+            "trackCount": trackCount,
+            "randomIndex": randomIndex,
+            "track": trackInfo
+        ]
+        
+        try? FileManager.default.createDirectory(atPath: "\(home)/Documents/Agent/json", withIntermediateDirectories: true)
+        if let out = try? JSONSerialization.data(withJSONObject: result, options: .prettyPrinted) {
+            try? out.write(to: URL(fileURLWithPath: outputPath))
+            print("\n📄 JSON saved to: \(outputPath)")
+        }
+    }
+}
+
+func writeOutput(_ path: String, success: Bool, error: String?, outputJSON: Bool) {
+    guard outputJSON else { return }
+    
+    var result: [String: Any] = [
+        "success": success,
+        "timestamp": ISO8601DateFormatter().string(from: Date())
+    ]
+    
+    if let error = error {
+        result["error"] = error
+    }
+    
+    try? FileManager.default.createDirectory(atPath: (path as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
+    if let out = try? JSONSerialization.data(withJSONObject: result, options: .prettyPrinted) {
+        try? out.write(to: URL(fileURLWithPath: path))
+        print("\n📄 JSON saved to: \(path)")
+    }
 }

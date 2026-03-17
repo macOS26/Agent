@@ -2,6 +2,11 @@ import Foundation
 import AppKit
 import MusicBridge
 
+// ============================================================================
+// NowPlayingHTML - Generate HTML display for current track with album art
+// Fetches artwork from iTunes Search API when local artwork unavailable
+// ============================================================================
+
 @_cdecl("script_main")
 public func scriptMain() -> Int32 {
     generateNowPlayingHTML()
@@ -9,6 +14,12 @@ public func scriptMain() -> Int32 {
 }
 
 func generateNowPlayingHTML() {
+    let home = NSHomeDirectory()
+    let outputDir = "\(home)/Documents/Agent/html"
+    let artworkFilename = "album_art.jpg"
+    let htmlFilename = "now_playing.html"
+    let artPath = "\(outputDir)/\(artworkFilename)"
+    
     guard let music: MusicApplication = SBApplication(bundleIdentifier: "com.apple.Music") else {
         print("Could not connect to Music")
         return
@@ -35,31 +46,86 @@ func generateNowPlayingHTML() {
     print("Album: \(album)")
     print("Year: \(year)")
 
-    // Extract album artwork
+    // Ensure output directory exists
+    try? FileManager.default.createDirectory(atPath: outputDir, withIntermediateDirectories: true)
+
+    // Try to extract artwork from track
     var artworkSaved = false
+    var artworkSrc = ""
+    
+    // First try local artwork
     if let artworks = track.artworks?(), artworks.count > 0 {
-        guard let artworkObj = artworks.object(at: 0) as? SBObject else {
-            print("Could not get artwork object")
-            return
-        }
-
-        if let nsImage = artworkObj.value(forKey: "data") as? NSImage {
-            guard let tiffData = nsImage.tiffRepresentation,
-                  let bitmap = NSBitmapImageRep(data: tiffData),
-                  let jpegData = bitmap.representation(using: .jpeg, properties: [:]) else {
-                print("Could not convert artwork to JPEG")
-                return
+        if let artworkObj = artworks.object(at: 0) as? SBObject,
+           let nsImage = artworkObj.value(forKey: "data") as? NSImage,
+           let tiffData = nsImage.tiffRepresentation,
+           let bitmap = NSBitmapImageRep(data: tiffData),
+           let jpegData = bitmap.representation(using: .jpeg, properties: [.compressionFactor: 0.9]) {
+            
+            do {
+                try jpegData.write(to: URL(fileURLWithPath: artPath))
+                print("Artwork saved from Music: \(artPath) (\(jpegData.count) bytes)")
+                artworkSaved = true
+                artworkSrc = artworkFilename
+            } catch {
+                print("Error saving artwork: \(error)")
             }
-
-            let artPath = NSString("~/Music/album_art.jpg").expandingTildeInPath
-            try? jpegData.write(to: URL(fileURLWithPath: artPath))
-            print("Artwork saved: \(artPath) (\(jpegData.count) bytes)")
-            artworkSaved = true
+        }
+    }
+    
+    // If no local artwork, try iTunes Search API
+    if !artworkSaved {
+        print("No local artwork - searching iTunes API...")
+        let searchTerm = "\(artist) \(album)".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        let iTunesURL = "https://itunes.apple.com/search?term=\(searchTerm)&media=music&entity=album&limit=1"
+        
+        if let url = URL(string: iTunesURL),
+           let data = try? Data(contentsOf: url),
+           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let results = json["results"] as? [[String: Any]],
+           let firstResult = results.first,
+           let artworkURL100 = firstResult["artworkUrl100"] as? String {
+            
+            // Get high-res artwork (replace 100x100 with larger size)
+            let artworkURL = artworkURL100.replacingOccurrences(of: "100x100", with: "600x600")
+            
+            print("Found artwork URL: \(artworkURL)")
+            
+            if let artURL = URL(string: artworkURL),
+               let artData = try? Data(contentsOf: artURL),
+               let image = NSImage(data: artData),
+               let tiffData = image.tiffRepresentation,
+               let bitmap = NSBitmapImageRep(data: tiffData),
+               let jpegData = bitmap.representation(using: .jpeg, properties: [.compressionFactor: 0.9]) {
+                
+                do {
+                    try jpegData.write(to: URL(fileURLWithPath: artPath))
+                    print("Artwork saved from iTunes: \(artPath) (\(jpegData.count) bytes)")
+                    artworkSaved = true
+                    artworkSrc = artworkFilename
+                } catch {
+                    print("Error saving iTunes artwork: \(error)")
+                }
+            }
         }
     }
 
+    // If still no artwork, use placeholder
     if !artworkSaved {
-        print("No artwork available")
+        print("No artwork available - using placeholder")
+        let placeholderSVG = """
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 240'>
+  <defs>
+    <linearGradient id='bg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'>
+      <stop offset='0%25' style='stop-color:%232a2a3e'/>
+      <stop offset='100%25' style='stop-color:%231a1a2e'/>
+    </linearGradient>
+  </defs>
+  <rect width='240' height='240' fill='url(%23bg)' rx='12'/>
+  <text x='120' y='100' font-family='SF Pro Display, -apple-system, sans-serif' font-size='48' fill='%23e85d04' text-anchor='middle'>🎵</text>
+  <text x='120' y='150' font-family='SF Pro Display, -apple-system, sans-serif' font-size='14' fill='rgba(255,255,255,0.4)' text-anchor='middle'>No Artwork</text>
+</svg>
+"""
+        artworkSrc = "data:image/svg+xml,\(placeholderSVG.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? placeholderSVG)"
     }
 
     // Generate HTML
@@ -176,7 +242,7 @@ body {
 <body>
 <div class="card">
   <div class="artwork-container">
-    <img class="artwork" src="album_art.jpg">
+    <img class="artwork" src="\(artworkSrc)">
   </div>
   <h1 class="title">\(name)</h1>
   <p class="artist">\(artist)</p>
@@ -196,10 +262,16 @@ body {
 </html>
 """
 
-    let htmlPath = NSString("~/Music/now_playing.html").expandingTildeInPath
-    try? html.write(toFile: htmlPath, atomically: true, encoding: .utf8)
-    print("HTML saved: \(htmlPath)")
+    let htmlPath = "\(outputDir)/\(htmlFilename)"
+    do {
+        try html.write(toFile: htmlPath, atomically: true, encoding: .utf8)
+        print("HTML saved: \(htmlPath)")
+    } catch {
+        print("Error saving HTML: \(error)")
+        return
+    }
+    
     print("")
     print("Done! Open in Safari:")
-    print("   open -a Safari ~/Music/now_playing.html")
+    print("   open -a Safari \(htmlPath)")
 }

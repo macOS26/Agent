@@ -14,9 +14,9 @@ public func scriptMain() -> Int32 {
 
 func testEnvVars() {
     let home = NSHomeDirectory()
-    let agentDir = "\(home)/Documents/Agent"
-    let inputPath = "\(agentDir)/TestEnvVars_input.json"
-    let outputPath = "\(agentDir)/TestEnvVars_output.json"
+    let jsonDir = "\(home)/Documents/Agent/json"
+    let inputPath = "\(jsonDir)/TestEnvVars_input.json"
+    let outputPath = "\(jsonDir)/TestEnvVars_output.json"
     
     print("=== AGENT Script Environment Variables Test ===\n")
     
@@ -74,8 +74,8 @@ func testEnvVars() {
     print("TEST 4: JSON Output File")
     print("------------------------")
     
-    // Ensure Agent directory exists
-    try? FileManager.default.createDirectory(atPath: agentDir, withIntermediateDirectories: true)
+    // Ensure json directory exists
+    try? FileManager.default.createDirectory(atPath: jsonDir, withIntermediateDirectories: true)
     
     let results: [String: Any] = [
         "success": true,

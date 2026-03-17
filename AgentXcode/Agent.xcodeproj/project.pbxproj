@@ -807,11 +807,28 @@
 				DEVELOPMENT_TEAM = 469UCUB275;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = YES;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Agent!";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSAppleEventsUsageDescription = "Agent! needs to control other apps to run automation scripts on your behalf.";
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Agent! needs Bluetooth access for scripts that interact with Bluetooth devices.";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Agent! needs calendar access for scripts that read or create events.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Agent! needs camera access for scripts that capture photos.";
+				INFOPLIST_KEY_NSContactsUsageDescription = "Agent! needs contacts access for scripts that query your address book.";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Agent! needs biometric authentication for scripts that use Touch ID or Face ID.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Agent! needs local network access for scripts that discover devices on your network.";
+				INFOPLIST_KEY_NSLocationUsageDescription = "Agent! needs location access for scripts that use GPS data.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Agent! needs location access for scripts that use GPS data.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Agent! needs microphone access for scripts that record audio.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Agent! needs photo library access for scripts that read or save photos.";
+				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Agent! needs reminders access for scripts that manage reminders.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -820,6 +837,12 @@
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = YES;
+				RUNTIME_EXCEPTION_ALLOW_JIT = YES;
+				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = YES;
+				RUNTIME_EXCEPTION_DEBUGGING_TOOL = YES;
+				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = YES;
+				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "Agent/Agent-Bridging-Header.h";
 				SWIFT_VERSION = 6.0;
@@ -841,11 +864,28 @@
 				DEVELOPMENT_TEAM = 469UCUB275;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = YES;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Agent!";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSAppleEventsUsageDescription = "Agent! needs to control other apps to run automation scripts on your behalf.";
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Agent! needs Bluetooth access for scripts that interact with Bluetooth devices.";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Agent! needs calendar access for scripts that read or create events.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Agent! needs camera access for scripts that capture photos.";
+				INFOPLIST_KEY_NSContactsUsageDescription = "Agent! needs contacts access for scripts that query your address book.";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Agent! needs biometric authentication for scripts that use Touch ID or Face ID.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Agent! needs local network access for scripts that discover devices on your network.";
+				INFOPLIST_KEY_NSLocationUsageDescription = "Agent! needs location access for scripts that use GPS data.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Agent! needs location access for scripts that use GPS data.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Agent! needs microphone access for scripts that record audio.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Agent! needs photo library access for scripts that read or save photos.";
+				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Agent! needs reminders access for scripts that manage reminders.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -854,6 +894,12 @@
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = YES;
+				RUNTIME_EXCEPTION_ALLOW_JIT = YES;
+				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = YES;
+				RUNTIME_EXCEPTION_DEBUGGING_TOOL = YES;
+				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = YES;
+				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "Agent/Agent-Bridging-Header.h";
 				SWIFT_VERSION = 6.0;

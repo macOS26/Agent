@@ -548,7 +548,7 @@ extension AgentViewModel {
 
             tab.resetLLMStreamCounters()
             let cancelFlag = tab._cancelFlag
-            let runResult = await scriptService.loadAndRunScript(
+            let runResult = await scriptService.loadAndRunScriptViaProcess(
                 name: scriptName,
                 arguments: arguments,
                 captureStderr: scriptCaptureStderr,

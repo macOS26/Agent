@@ -8,9 +8,50 @@ public func scriptMain() -> Int32 {
 }
 
 func listNotes() {
+    // Parse arguments from AGENT_SCRIPT_ARGS or JSON input
+    let argsString = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""
+    let home = NSHomeDirectory()
+    let inputPath = "\(home)/Documents/Agent/json/ListNotes_input.json"
+    let outputPath = "\(home)/Documents/Agent/json/ListNotes_output.json"
+    
+    // Default options
+    var limit = 10
+    var showContent = false
+    var showModified = true
+    var outputJSON = false
+    
+    // Parse AGENT_SCRIPT_ARGS
+    if !argsString.isEmpty {
+        let pairs = argsString.components(separatedBy: ",")
+        for pair in pairs {
+            let parts = pair.components(separatedBy: "=")
+            if parts.count == 2 {
+                let key = parts[0].trimmingCharacters(in: .whitespaces)
+                let value = parts[1].trimmingCharacters(in: .whitespaces)
+                switch key {
+                case "limit": limit = Int(value) ?? 10
+                case "content": showContent = value.lowercased() == "true"
+                case "modified": showModified = value.lowercased() == "true"
+                case "json": outputJSON = value.lowercased() == "true"
+                default: break
+                }
+            }
+        }
+    }
+    
+    // Try JSON input file
+    if let data = FileManager.default.contents(atPath: inputPath),
+       let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+        if let l = json["limit"] as? Int { limit = l }
+        if let c = json["content"] as? Bool { showContent = c }
+        if let m = json["modified"] as? Bool { showModified = m }
+        if let j = json["json"] as? Bool { outputJSON = j }
+    }
+    
     // Connect to Notes app
     guard let app: NotesApplication = SBApplication(bundleIdentifier: "com.apple.Notes") else {
         print("Could not connect to Notes.app")
+        writeListNotesOutput(outputPath, success: false, error: "Could not connect to Notes.app", outputJSON: outputJSON)
         return
     }
 
@@ -26,6 +67,7 @@ func listNotes() {
 
     var totalNotes = 0
     var folderCount = 0
+    var allNotes: [[String: Any]] = []
 
     // Try to get notes from accounts first (more reliable)
     if let accounts = app.accounts?(), accounts.count > 0 {
@@ -46,16 +88,31 @@ func listNotes() {
 
                     print("\n[\(accountName)] \(folderName) (\(count) notes)")
 
-                    let limit = min(5, count)
-                    for k in 0..<limit {
+                    let displayLimit = min(limit, count)
+                    for k in 0..<displayLimit {
                         guard let note = notes.object(at: k) as? NotesNote,
                               let name = note.name else { continue }
 
-                        let modified = note.modificationDate.map { dateFormatter.string(from: $0) } ?? ""
-                        print("  - \(name)  [\(modified)]")
+                        let modified = showModified && note.modificationDate != nil 
+                            ? dateFormatter.string(from: note.modificationDate!) 
+                            : ""
+                        
+                        print("  - \(name)\(modified.isEmpty ? "" : "  [\(modified)]")")
+                        
+                        if showContent, let body = note.body {
+                            let preview = body.count > 100 ? String(body.prefix(100)) + "..." : body
+                            print("    \(preview.replacingOccurrences(of: "\n", with: " "))")
+                        }
+                        
+                        allNotes.append([
+                            "name": name,
+                            "folder": folderName,
+                            "account": accountName,
+                            "modified": note.modificationDate ?? Date()
+                        ] as [String : Any])
                     }
-                    if count > 5 {
-                        print("  ... and \(count - 5) more")
+                    if count > limit {
+                        print("  ... and \(count - limit) more")
                     }
                 }
             }
@@ -76,16 +133,24 @@ func listNotes() {
 
             print("\n\(folderName) (\(count) notes)")
 
-            let limit = min(5, count)
-            for j in 0..<limit {
+            let displayLimit = min(limit, count)
+            for j in 0..<displayLimit {
                 guard let note = notes.object(at: j) as? NotesNote,
                       let name = note.name else { continue }
 
-                let modified = note.modificationDate.map { dateFormatter.string(from: $0) } ?? ""
-                print("  - \(name)  [\(modified)]")
+                let modified = showModified && note.modificationDate != nil 
+                    ? dateFormatter.string(from: note.modificationDate!) 
+                    : ""
+                print("  - \(name)\(modified.isEmpty ? "" : "  [\(modified)]")")
+                
+                allNotes.append([
+                    "name": name,
+                    "folder": folderName,
+                    "modified": note.modificationDate ?? Date()
+                ] as [String : Any])
             }
-            if count > 5 {
-                print("  ... and \(count - 5) more")
+            if count > limit {
+                print("  ... and \(count - limit) more")
             }
         }
     }
@@ -95,16 +160,23 @@ func listNotes() {
         totalNotes = notes.count
         print("\nAll Notes (\(totalNotes) total)")
 
-        let limit = min(10, totalNotes)
-        for i in 0..<limit {
+        let displayLimit = min(limit, totalNotes)
+        for i in 0..<displayLimit {
             guard let note = notes.object(at: i) as? NotesNote,
                   let name = note.name else { continue }
 
-            let modified = note.modificationDate.map { dateFormatter.string(from: $0) } ?? ""
-            print("  - \(name)  [\(modified)]")
+            let modified = showModified && note.modificationDate != nil
+                ? dateFormatter.string(from: note.modificationDate!)
+                : ""
+            print("  - \(name)\(modified.isEmpty ? "" : "  [\(modified)]")")
+            
+            allNotes.append([
+                "name": name,
+                "modified": note.modificationDate ?? Date()
+            ] as [String : Any])
         }
-        if totalNotes > 10 {
-            print("  ... and \(totalNotes - 10) more")
+        if totalNotes > limit {
+            print("  ... and \(totalNotes - limit) more")
         }
     }
 
@@ -113,5 +185,34 @@ func listNotes() {
         print("Try: osascript -e 'tell application \"Notes\" to activate'")
     } else {
         print("\nTotal: \(totalNotes) notes in \(folderCount) folders")
+    }
+    
+    // Write JSON output if requested
+    if outputJSON {
+        writeListNotesOutput(outputPath, success: true, notes: allNotes, total: totalNotes, outputJSON: true)
+    }
+}
+
+func writeListNotesOutput(_ path: String, success: Bool, error: String? = nil, notes: [[String: Any]]? = nil, total: Int? = nil, outputJSON: Bool) {
+    guard outputJSON else { return }
+    
+    var result: [String: Any] = [
+        "success": success,
+        "timestamp": ISO8601DateFormatter().string(from: Date())
+    ]
+    
+    if !success, let error = error {
+        result["error"] = error
+    }
+    
+    if success {
+        if let notes = notes { result["notes"] = notes }
+        if let total = total { result["total"] = total }
+    }
+    
+    try? FileManager.default.createDirectory(atPath: (path as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
+    if let out = try? JSONSerialization.data(withJSONObject: result, options: .prettyPrinted) {
+        try? out.write(to: URL(fileURLWithPath: path))
+        print("\n📄 JSON saved to: \(path)")
     }
 }

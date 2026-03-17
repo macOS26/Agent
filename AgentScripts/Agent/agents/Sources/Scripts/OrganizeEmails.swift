@@ -1,6 +1,28 @@
 import Foundation
 import MailBridge
 
+// ============================================================================
+// OrganizeEmails - Organize inbox emails into folders by content
+//
+// INPUT OPTIONS:
+//   Option 1: AGENT_SCRIPT_ARGS environment variable
+//     Format: "dryRun=true,limit=50,json=true"
+//     Parameters:
+//       - dryRun=true (preview without moving, default: false)
+//       - limit=100 (max emails to process, default: all)
+//       - json=true (output to JSON file)
+//     Example: "dryRun=true,limit=50,json=true"
+//
+//   Option 2: JSON input file at ~/Documents/Agent/json/OrganizeEmails_input.json
+//     {
+//       "dryRun": true,
+//       "limit": 50,
+//       "json": true
+//     }
+//
+// OUTPUT: ~/Documents/Agent/json/OrganizeEmails_output.json
+// ============================================================================
+
 @_cdecl("script_main")
 public func scriptMain() -> Int32 {
     organizeEmails()
@@ -204,21 +226,61 @@ private func findBestFolder(subject: String, sender: String, availableFolders: [
 }
 
 func organizeEmails() {
-    print("📧 Dynamic Email Organizer - Intelligent Folder Matching")
-    print("=========================================================")
+    let home = NSHomeDirectory()
+    let inputPath = "\(home)/Documents/Agent/json/OrganizeEmails_input.json"
+    let outputPath = "\(home)/Documents/Agent/json/OrganizeEmails_output.json"
+    
+    // Parse AGENT_SCRIPT_ARGS
+    let argsString = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""
+    var dryRun = false
+    var limit: Int? = nil
+    var outputJSON = false
+    
+    if !argsString.isEmpty {
+        let pairs = argsString.components(separatedBy: ",")
+        for pair in pairs {
+            let parts = pair.components(separatedBy: "=")
+            if parts.count == 2 {
+                let key = parts[0].trimmingCharacters(in: .whitespaces)
+                let value = parts[1].trimmingCharacters(in: .whitespaces)
+                switch key {
+                case "dryRun", "dry": dryRun = value.lowercased() == "true"
+                case "limit": limit = Int(value)
+                case "json": outputJSON = value.lowercased() == "true"
+                default: break
+                }
+            }
+        }
+    }
+    
+    // Try JSON input file
+    if let data = FileManager.default.contents(atPath: inputPath),
+       let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+        if let d = json["dryRun"] as? Bool { dryRun = d }
+        if let l = json["limit"] as? Int { limit = l }
+        if let j = json["json"] as? Bool { outputJSON = j }
+    }
+    
+    print("📧 Dynamic Email Organizer")
+    print("═══════════════════════════════════════")
+    print("Dry run: \(dryRun ? "Yes" : "No")")
+    if let l = limit { print("Limit: \(l) emails") }
+    print("")
     
     guard let mail: MailApplication = SBApplication(bundleIdentifier: "com.apple.mail") else {
         print("❌ Could not connect to Mail.app")
+        writeOutput(outputPath, success: false, error: "Could not connect to Mail.app", outputJSON: outputJSON)
         return
     }
     
     // Discover email accounts
     guard let accounts = mail.accounts?() else {
         print("❌ Could not get accounts")
+        writeOutput(outputPath, success: false, error: "Could not get accounts", outputJSON: outputJSON)
         return
     }
     
-    print("\n📬 Discovering Email Accounts...")
+    print("📬 Discovering Email Accounts...")
     
     var discoveredAccounts: [(account: MailAccount, name: String, isEnabled: Bool)] = []
     
@@ -245,6 +307,7 @@ func organizeEmails() {
     
     guard !discoveredAccounts.isEmpty else {
         print("❌ No accounts found")
+        writeOutput(outputPath, success: false, error: "No accounts found", outputJSON: outputJSON)
         return
     }
     
@@ -319,86 +382,42 @@ func organizeEmails() {
         
         print("\n🎯 Organizing into \(targetFolders.count) folder(s)...")
         
-        // Process messages in batches
-        let batchSize = 100
-        var batchNumber = 0
-        var accountMoved = 0
+        // Process messages
+        let processCount = limit != nil ? min(limit!, totalMessages) : totalMessages
+        var movedThisAccount = 0
         
-        while true {
-            batchNumber += 1
+        for i in 0..<processCount {
+            guard let message = messages.object(at: i) as? MailMessage,
+                  let subject = message.subject,
+                  let sender = message.sender else { continue }
             
-            // Re-fetch messages each batch
-            guard let currentMessages = sourceMailbox.messages?() else {
-                print("❌ Could not re-access messages")
-                break
-            }
-            
-            let remainingCount = currentMessages.count
-            if remainingCount == 0 {
-                print("\n   🎉 All emails organized for this account!")
-                break
-            }
-            
-            print("\n   📦 Batch #\(batchNumber): \(remainingCount) remaining in Inbox")
-            
-            let processCount = min(batchSize, remainingCount)
-            var movedThisBatch = 0
-            var stayedThisBatch = 0
-            
-            for i in 0..<processCount {
-                guard let message = currentMessages.object(at: i) as? MailMessage,
-                      let subject = message.subject,
-                      let sender = message.sender else { continue }
-                
-                // Find best matching folder
-                if let targetFolder = findBestFolder(
-                    subject: subject,
-                    sender: sender,
-                    availableFolders: Array(targetFolders)
-                ) {
-                    if let targetMailbox = mailboxDict[targetFolder] {
-                        let shortSubject = subject.count > 40 ? String(subject.prefix(40)) + "..." : subject
+            // Find best matching folder
+            if let targetFolder = findBestFolder(
+                subject: subject,
+                sender: sender,
+                availableFolders: Array(targetFolders)
+            ) {
+                if let targetMailbox = mailboxDict[targetFolder] {
+                    let shortSubject = subject.count > 40 ? String(subject.prefix(40)) + "..." : subject
+                    
+                    if dryRun {
+                        print("   [DRY RUN] Would move to [\(targetFolder)]: \(shortSubject)")
+                    } else {
                         print("   ➡️ [\(targetFolder)] \(shortSubject)")
                         message.moveTo?(targetMailbox as? SBObject)
-                        movedThisBatch += 1
-                        folderStats[targetFolder, default: 0] += 1
                     }
-                } else {
-                    // No match found - show WHY and move to "Other" if available
-                    stayedThisBatch += 1
-                    
-                    // Debug: Show first few unmatched emails per batch
-                    if stayedThisBatch <= 3 {
-                        let shortSubject = subject.count > 50 ? String(subject.prefix(50)) + "..." : subject
-                        let shortSender = sender.count > 30 ? String(sender.prefix(30)) + "..." : sender
-                        print("   ❓ No match: \"\(shortSubject)\" from: \(shortSender)")
-                    }
-                    
-                    // Move to "Other" folder as fallback
-                    if targetFolders.contains(where: { $0.lowercased() == "other" }) {
-                        if let otherMailbox = mailboxDict.first(where: { $0.key.lowercased() == "other" })?.value {
-                            let shortSubject = subject.count > 40 ? String(subject.prefix(40)) + "..." : subject
-                            print("   ➡️ [Other] \(shortSubject) (fallback)")
-                            message.moveTo?(otherMailbox as? SBObject)
-                            movedThisBatch += 1
-                            folderStats["Other", default: 0] += 1
-                        }
-                    }
+                    movedThisAccount += 1
+                    folderStats[targetFolder, default: 0] += 1
                 }
-                
-                Thread.sleep(forTimeInterval: 0.02)
             }
             
-            accountMoved += movedThisBatch
-            totalProcessed += processCount
-            
-            print("   ✅ Batch #\(batchNumber): Moved \(movedThisBatch), Stayed: \(stayedThisBatch)")
-            
-            Thread.sleep(forTimeInterval: 0.3)
+            Thread.sleep(forTimeInterval: 0.02)
         }
         
-        totalMoved += accountMoved
-        print("\n   📊 Account Summary: \(accountMoved) emails moved")
+        totalMoved += movedThisAccount
+        totalProcessed += processCount
+        
+        print("\n   📊 Account Summary: \(movedThisAccount) emails \(dryRun ? "would be " : "")moved")
     }
     
     // Final summary
@@ -407,7 +426,7 @@ func organizeEmails() {
     print(String(repeating: "═", count: 60))
     print("   Accounts processed: \(discoveredAccounts.count)")
     print("   Total emails processed: \(totalProcessed)")
-    print("   Total emails moved: \(totalMoved)")
+    print("   Total emails \(dryRun ? "would be " : "")moved: \(totalMoved)")
     
     if !folderStats.isEmpty {
         print("\n📁 Emails per Folder:")
@@ -417,5 +436,51 @@ func organizeEmails() {
         }
     }
     
+    if dryRun {
+        print("\n⚠️ Dry run - no emails were actually moved")
+    }
+    
     print("\n✨ Done!")
+    
+    // Write JSON output if requested
+    if outputJSON {
+        writeFullOutput(outputPath, success: true, accountsProcessed: discoveredAccounts.count, totalProcessed: totalProcessed, totalMoved: totalMoved, folderStats: folderStats, dryRun: dryRun)
+    }
+}
+
+func writeOutput(_ path: String, success: Bool, error: String?, outputJSON: Bool) {
+    guard outputJSON else { return }
+    
+    var result: [String: Any] = [
+        "success": success,
+        "timestamp": ISO8601DateFormatter().string(from: Date())
+    ]
+    
+    if let error = error {
+        result["error"] = error
+    }
+    
+    try? FileManager.default.createDirectory(atPath: (path as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
+    if let out = try? JSONSerialization.data(withJSONObject: result, options: .prettyPrinted) {
+        try? out.write(to: URL(fileURLWithPath: path))
+        print("\n📄 JSON saved to: \(path)")
+    }
+}
+
+func writeFullOutput(_ path: String, success: Bool, accountsProcessed: Int, totalProcessed: Int, totalMoved: Int, folderStats: [String: Int], dryRun: Bool) {
+    var result: [String: Any] = [
+        "success": success,
+        "timestamp": ISO8601DateFormatter().string(from: Date()),
+        "dryRun": dryRun,
+        "accountsProcessed": accountsProcessed,
+        "totalProcessed": totalProcessed,
+        "totalMoved": totalMoved,
+        "folderStats": folderStats
+    ]
+    
+    try? FileManager.default.createDirectory(atPath: (path as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
+    if let out = try? JSONSerialization.data(withJSONObject: result, options: .prettyPrinted) {
+        try? out.write(to: URL(fileURLWithPath: path))
+        print("\n📄 JSON saved to: \(path)")
+    }
 }

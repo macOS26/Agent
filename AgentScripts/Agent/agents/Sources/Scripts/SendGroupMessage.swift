@@ -9,13 +9,13 @@ import MessagesBridge
 //     Format: "chatId|message" (pipe-separated)
 //     Example: "chat138755|Happy Birthday Max!"
 //
-//   Option 2: JSON input file at ~/Documents/Agent/SendGroupMessage_input.json
+//   Option 2: JSON input file at ~/Documents/Agent/json/SendGroupMessage_input.json
 //     {
 //       "chatId": "chat138755",
 //       "message": "Happy Birthday Max!"
 //     }
 //
-// OUTPUT: ~/Documents/Agent/SendGroupMessage_output.json
+// OUTPUT: ~/Documents/Agent/json/SendGroupMessage_output.json
 // ============================================================================
 
 @_cdecl("script_main")
@@ -26,12 +26,12 @@ public func scriptMain() -> Int32 {
 
 func sendGroupMessage() -> Int32 {
     let home = NSHomeDirectory()
-    let agentDir = "\(home)/Documents/Agent"
-    let inputPath = "\(agentDir)/SendGroupMessage_input.json"
-    let outputPath = "\(agentDir)/SendGroupMessage_output.json"
+    let jsonDir = "\(home)/Documents/Agent/json"
+    let inputPath = "\(jsonDir)/SendGroupMessage_input.json"
+    let outputPath = "\(jsonDir)/SendGroupMessage_output.json"
     
-    // Ensure Agent directory exists
-    try? FileManager.default.createDirectory(atPath: agentDir, withIntermediateDirectories: true)
+    // Ensure json directory exists
+    try? FileManager.default.createDirectory(atPath: jsonDir, withIntermediateDirectories: true)
     
     var chatId: String? = nil
     var message: String? = nil

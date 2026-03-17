@@ -8,8 +8,43 @@ public func scriptMain() -> Int32 {
 }
 
 func fetchEmailAccounts() {
+    // Parse arguments from AGENT_SCRIPT_ARGS or JSON input
+    let argsString = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""
+    let home = NSHomeDirectory()
+    let inputPath = "\(home)/Documents/Agent/json/EmailAccounts_input.json"
+    let outputPath = "\(home)/Documents/Agent/json/EmailAccounts_output.json"
+    
+    // Default options
+    var showDetails = true
+    var outputJSON = false
+    
+    // Parse AGENT_SCRIPT_ARGS
+    if !argsString.isEmpty {
+        let pairs = argsString.components(separatedBy: ",")
+        for pair in pairs {
+            let parts = pair.components(separatedBy: "=")
+            if parts.count == 2 {
+                let key = parts[0].trimmingCharacters(in: .whitespaces)
+                let value = parts[1].trimmingCharacters(in: .whitespaces)
+                switch key {
+                case "details": showDetails = value.lowercased() == "true"
+                case "json": outputJSON = value.lowercased() == "true"
+                default: break
+                }
+            }
+        }
+    }
+    
+    // Try JSON input file
+    if let data = FileManager.default.contents(atPath: inputPath),
+       let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+        if let details = json["details"] as? Bool { showDetails = details }
+        if let jsonOut = json["json"] as? Bool { outputJSON = jsonOut }
+    }
+    
     guard let mail: MailApplication = SBApplication(bundleIdentifier: "com.apple.mail") else {
         print("Could not connect to Mail.app")
+        writeEmailAccountsOutput(outputPath, success: false, error: "Could not connect to Mail.app", outputJSON: outputJSON)
         return
     }
 
@@ -18,6 +53,7 @@ func fetchEmailAccounts() {
 
     guard let accounts = mail.accounts?() else {
         print("No accounts found")
+        writeEmailAccountsOutput(outputPath, success: false, error: "No accounts found", outputJSON: outputJSON)
         return
     }
 
@@ -63,37 +99,57 @@ func fetchEmailAccounts() {
         accountList.append(accountInfo)
 
         // Print to console
-        print("📬 \(name)")
-        print("   Type: \(accountType)")
-        print("   Enabled: \(enabled ? "Yes" : "No")")
-        if !fullName.isEmpty {
-            print("   Full Name: \(fullName)")
+        if showDetails {
+            print("📬 \(name)")
+            print("   Type: \(accountType)")
+            print("   Enabled: \(enabled ? "Yes" : "No")")
+            if !fullName.isEmpty {
+                print("   Full Name: \(fullName)")
+            }
+            if !userName.isEmpty {
+                print("   Username: \(userName)")
+            }
+            if !serverName.isEmpty {
+                print("   Server: \(serverName)")
+            }
+            if !emailAddresses.isEmpty {
+                print("   Addresses: \(emailAddresses.joined(separator: ", "))")
+            }
+            print("")
+        } else {
+            print("📬 \(name) (\(accountType))")
         }
-        if !userName.isEmpty {
-            print("   Username: \(userName)")
-        }
-        if !serverName.isEmpty {
-            print("   Server: \(serverName)")
-        }
-        if !emailAddresses.isEmpty {
-            print("   Addresses: \(emailAddresses.joined(separator: ", "))")
-        }
-        print("")
     }
 
     print("-------------------")
     print("Total: \(accountList.count) account(s)")
+    
+    // Write JSON output if requested
+    if outputJSON {
+        writeEmailAccountsOutput(outputPath, success: true, accounts: accountList, count: accountList.count, outputJSON: true)
+    }
+}
 
-    // Write JSON output
-    let home = NSHomeDirectory()
-    let outputPath = "\(home)/Documents/Agent/email_accounts_output.json"
-    let output: [String: Any] = [
-        "accounts": accountList,
-        "count": accountList.count
+func writeEmailAccountsOutput(_ path: String, success: Bool, error: String? = nil, accounts: [[String: Any]]? = nil, count: Int? = nil, outputJSON: Bool) {
+    guard outputJSON else { return }
+    
+    var result: [String: Any] = [
+        "success": success,
+        "timestamp": ISO8601DateFormatter().string(from: Date())
     ]
-
-    if let jsonData = try? JSONSerialization.data(withJSONObject: output, options: .prettyPrinted) {
-        try? jsonData.write(to: URL(fileURLWithPath: outputPath))
-        print("\n📄 JSON saved to: \(outputPath)")
+    
+    if !success, let error = error {
+        result["error"] = error
+    }
+    
+    if success {
+        if let accounts = accounts { result["accounts"] = accounts }
+        if let count = count { result["count"] = count }
+    }
+    
+    try? FileManager.default.createDirectory(atPath: (path as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
+    if let out = try? JSONSerialization.data(withJSONObject: result, options: .prettyPrinted) {
+        try? out.write(to: URL(fileURLWithPath: path))
+        print("\n📄 JSON saved to: \(path)")
     }
 }

@@ -10,14 +10,14 @@ import AppKit
 //     Example: "excluded=Xcode,Agent,Terminal"
 //     Special: "excluded=essential" for default essential apps (Xcode,Agent,Terminal)
 //
-//   Option 2: JSON input file at ~/Documents/Agent/QuitApps_input.json
+//   Option 2: JSON input file at ~/Documents/Agent/json/QuitApps_input.json
 //     {
 //       "excluded": ["Xcode", "Agent", "Terminal"],
 //       "systemApps": false,
 //       "dryRun": false
 //     }
 //
-// OUTPUT: ~/Documents/Agent/QuitApps_output.json
+// OUTPUT: ~/Documents/Agent/json/QuitApps_output.json
 //   {
 //     "success": true,
 //     "quitApps": ["Safari", "Mail", ...],
@@ -34,8 +34,8 @@ public func scriptMain() -> Int32 {
 
 func quitApps() {
     let home = NSHomeDirectory()
-    let inputPath = "\(home)/Documents/Agent/QuitApps_input.json"
-    let outputPath = "\(home)/Documents/Agent/QuitApps_output.json"
+    let inputPath = "\(home)/Documents/Agent/json/QuitApps_input.json"
+    let outputPath = "\(home)/Documents/Agent/json/QuitApps_output.json"
     
     // Default essential apps
     let essentialApps = ["Xcode", "Agent", "Terminal"]
@@ -163,7 +163,7 @@ func quitApps() {
         "keptCount": keptApps.count
     ]
     
-    try? FileManager.default.createDirectory(atPath: "\(home)/Documents/Agent", withIntermediateDirectories: true)
+    try? FileManager.default.createDirectory(atPath: "\(home)/Documents/Agent/json", withIntermediateDirectories: true)
     if let out = try? JSONSerialization.data(withJSONObject: result, options: .prettyPrinted) {
         try? out.write(to: URL(fileURLWithPath: outputPath))
         print("\n📄 JSON saved to: \(outputPath)")

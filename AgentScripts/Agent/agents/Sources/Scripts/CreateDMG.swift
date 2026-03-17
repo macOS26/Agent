@@ -8,8 +8,8 @@ public func scriptMain() -> Int32 {
 
 func createDMG() {
     let home = NSHomeDirectory()
-    let inputPath = "\(home)/Documents/Agent/CreateDMG_input.json"
-    let outputPath = "\(home)/Documents/Agent/CreateDMG_output.json"
+    let inputPath = "\(home)/Documents/Agent/json/CreateDMG_input.json"
+    let outputPath = "\(home)/Documents/Agent/json/CreateDMG_output.json"
     
     // Default values
     var appName = "Agent!"

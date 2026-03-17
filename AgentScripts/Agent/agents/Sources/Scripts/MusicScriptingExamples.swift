@@ -1,6 +1,28 @@
 import Foundation
 import MusicBridge
 
+// ============================================================================
+// MusicScriptingExamples - Demonstrate Music.app scripting features
+//
+// INPUT OPTIONS:
+//   Option 1: AGENT_SCRIPT_ARGS environment variable
+//     Format: "section=playlists" or "limit=5,json=true"
+//     Parameters:
+//       - section=all|properties|track|playlists|search (default: all)
+//       - limit=10 (max items to show, default: 10)
+//       - json=true (output to JSON file)
+//     Example: "section=playlists,limit=5,json=true"
+//
+//   Option 2: JSON input file at ~/Documents/Agent/json/MusicScriptingExamples_input.json
+//     {
+//       "section": "playlists",
+//       "limit": 5,
+//       "json": true
+//     }
+//
+// OUTPUT: ~/Documents/Agent/json/MusicScriptingExamples_output.json
+// ============================================================================
+
 @_cdecl("script_main")
 public func scriptMain() -> Int32 {
     musicScriptingExamples()
@@ -8,123 +30,219 @@ public func scriptMain() -> Int32 {
 }
 
 func musicScriptingExamples() {
-    // Music Scripting Dictionary Examples
-    // This demonstrates key features from the Music app's AppleScript dictionary
-
+    let home = NSHomeDirectory()
+    let inputPath = "\(home)/Documents/Agent/json/MusicScriptingExamples_input.json"
+    let outputPath = "\(home)/Documents/Agent/json/MusicScriptingExamples_output.json"
+    
+    // Parse AGENT_SCRIPT_ARGS
+    let argsString = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""
+    var section = "all"
+    var limit = 10
+    var outputJSON = false
+    
+    if !argsString.isEmpty {
+        let pairs = argsString.components(separatedBy: ",")
+        for pair in pairs {
+            let parts = pair.components(separatedBy: "=")
+            if parts.count == 2 {
+                let key = parts[0].trimmingCharacters(in: .whitespaces)
+                let value = parts[1].trimmingCharacters(in: .whitespaces)
+                switch key {
+                case "section": section = value.lowercased()
+                case "limit": limit = Int(value) ?? 10
+                case "json": outputJSON = value.lowercased() == "true"
+                default: break
+                }
+            }
+        }
+    }
+    
+    // Try JSON input file
+    if let data = FileManager.default.contents(atPath: inputPath),
+       let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+        if let s = json["section"] as? String { section = s.lowercased() }
+        if let l = json["limit"] as? Int { limit = l }
+        if let j = json["json"] as? Bool { outputJSON = j }
+    }
+    
     guard let music: MusicApplication = SBApplication(bundleIdentifier: "com.apple.Music") else {
         print("Could not connect to Music")
+        writeOutput(outputPath, success: false, error: "Could not connect to Music", outputJSON: outputJSON)
         return
     }
 
-    // MARK: - Application Properties
-    print("=== Application Properties ===")
-    print("Current track: \(music.currentTrack?.name ?? "None")")
-    print("Player state: \(music.playerState ?? .stopped)")
-    print("Volume: \(music.soundVolume ?? 0)")
-    print("Shuffle: \(music.shuffleEnabled ?? false)")
-    print("Repeat: \(music.songRepeat ?? .off)")
-    print("")
+    var result: [String: Any] = [
+        "success": true,
+        "timestamp": ISO8601DateFormatter().string(from: Date())
+    ]
 
-    // MARK: - Playback Control
-    print("=== Playback Commands ===")
-    // music.play?()          // Start playback
-    // music.pause?()         // Pause playback
-    // music.playpause?()     // Toggle play/pause
-    // music.nextTrack?()     // Skip to next
-    // music.previousTrack?() // Go to previous
-    // music.stop?()          // Stop playback
+    // MARK: - Application Properties
+    if section == "all" || section == "properties" {
+        print("=== Application Properties ===")
+        let currentTrack = music.currentTrack?.name ?? "None"
+        let playerState: String
+        switch music.playerState ?? .stopped {
+        case .playing: playerState = "playing"
+        case .paused: playerState = "paused"
+        case .stopped: playerState = "stopped"
+        case .fastForwarding: playerState = "fastForwarding"
+        case .rewinding: playerState = "rewinding"
+        @unknown default: playerState = "unknown"
+        }
+        let volume = music.soundVolume ?? 0
+        let shuffle = music.shuffleEnabled ?? false
+        let repeatMode: String
+        switch music.songRepeat ?? .off {
+        case .off: repeatMode = "off"
+        case .one: repeatMode = "one"
+        case .all: repeatMode = "all"
+        @unknown default: repeatMode = "unknown"
+        }
+        
+        print("Current track: \(currentTrack)")
+        print("Player state: \(playerState)")
+        print("Volume: \(volume)")
+        print("Shuffle: \(shuffle)")
+        print("Repeat: \(repeatMode)")
+        print("")
+        
+        result["properties"] = [
+            "currentTrack": currentTrack,
+            "playerState": playerState,
+            "volume": volume,
+            "shuffle": shuffle,
+            "repeat": repeatMode
+        ]
+    }
 
     // MARK: - Current Track Info
-    if let track = music.currentTrack {
-        print("\n=== Current Track Details ===")
-        print("Name: \(track.name ?? "Unknown")")
-        print("Artist: \(track.artist ?? "Unknown")")
-        print("Album: \(track.album ?? "Unknown")")
-        print("Duration: \(track.time ?? "0:00")")
-        print("Rating: \(track.rating ?? 0)")
-        print("Play count: \(track.playedCount ?? 0)")
-        print("Genre: \(track.genre ?? "Unknown")")
-        print("Year: \(track.year ?? 0)")
+    if section == "all" || section == "track" {
+        if let track = music.currentTrack {
+            print("\n=== Current Track Details ===")
+            let trackInfo: [String: Any] = [
+                "name": track.name ?? "Unknown",
+                "artist": track.artist ?? "Unknown",
+                "album": track.album ?? "Unknown",
+                "duration": track.duration ?? 0,
+                "durationFormatted": track.time ?? "0:00",
+                "rating": track.rating ?? 0,
+                "playCount": track.playedCount ?? 0,
+                "genre": track.genre ?? "Unknown",
+                "year": track.year ?? 0
+            ]
+            
+            print("Name: \(trackInfo["name"] ?? "")")
+            print("Artist: \(trackInfo["artist"] ?? "")")
+            print("Album: \(trackInfo["album"] ?? "")")
+            print("Duration: \(trackInfo["durationFormatted"] ?? "")")
+            print("Rating: \(trackInfo["rating"] ?? 0)")
+            print("Play count: \(trackInfo["playCount"] ?? 0)")
+            print("Genre: \(trackInfo["genre"] ?? "")")
+            print("Year: \(trackInfo["year"] ?? 0)")
+            
+            result["track"] = trackInfo
+        }
     }
 
     // MARK: - Playlists
-    print("\n=== Playlists ===")
-    if let playlists = music.playlists?() {
-        for i in 0..<min(10, playlists.count) {
-            if let playlist = playlists.object(at: i) as? MusicPlaylist {
-                print("\(i+1). \(playlist.name ?? "Unnamed") - \(playlist.specialKind ?? .none)")
-
-                // Check playlist type
-                if let userPlaylist = playlist as? MusicUserPlaylist {
-                    print("   User playlist - Smart: \(userPlaylist.smart ?? false), Shared: \(userPlaylist.shared ?? false)")
-                } else if let _ = playlist as? MusicLibraryPlaylist {
-                    print("   Library playlist")
-                } else if let _ = playlist as? MusicSubscriptionPlaylist {
-                    print("   Apple Music subscription playlist")
-                }
-            }
-        }
-    }
-
-    // MARK: - Search Example
-    print("\n=== Search Example ===")
-    // Get the main library playlist
-    if let playlists = music.playlists?(),
-       playlists.count > 0,
-       let library = playlists.object(at: 0) as? MusicLibraryPlaylist {
-
-        // Search for tracks
-        if let results = library.searchFor?("Beatles", only: .all) {
-            print("Search results for 'Beatles':")
-
-            // The search returns an SBObject that acts as a track array
-            if let tracks = (results as? SBObject)?.value(forKey: "get") as? [SBObject] {
-                for (index, track) in tracks.prefix(5).enumerated() {
-                    if let t = track as? MusicTrack {
-                        print("\(index+1). \(t.name ?? "Unknown") by \(t.artist ?? "Unknown")")
+    if section == "all" || section == "playlists" {
+        print("\n=== Playlists ===")
+        var playlistsArray: [[String: Any]] = []
+        
+        if let playlists = music.playlists?() {
+            for i in 0..<min(limit, playlists.count) {
+                if let playlist = playlists.object(at: i) as? MusicPlaylist {
+                    let name = playlist.name ?? "Unnamed"
+                    let kind = specialKindName(playlist.specialKind ?? .none)
+                    print("\(i+1). \(name) - \(kind)")
+                    
+                    var playlistInfo: [String: Any] = [
+                        "name": name,
+                        "kind": kind
+                    ]
+                    
+                    if let userPlaylist = playlist as? MusicUserPlaylist {
+                        playlistInfo["smart"] = userPlaylist.smart ?? false
+                        playlistInfo["shared"] = userPlaylist.shared ?? false
+                        print("   User playlist - Smart: \(userPlaylist.smart ?? false), Shared: \(userPlaylist.shared ?? false)")
+                    } else if let _ = playlist as? MusicLibraryPlaylist {
+                        playlistInfo["type"] = "library"
+                        print("   Library playlist")
+                    } else if let _ = playlist as? MusicSubscriptionPlaylist {
+                        playlistInfo["type"] = "subscription"
+                        print("   Apple Music subscription playlist")
                     }
+                    
+                    playlistsArray.append(playlistInfo)
                 }
             }
         }
+        
+        result["playlists"] = playlistsArray
+        result["playlistCount"] = playlistsArray.count
     }
 
-    // MARK: - Creating a Playlist
-    print("\n=== Creating Playlist (example code) ===")
-    print("To create a new playlist:")
-    print("// if let newPlaylist = music.make?(with: nil, data: nil) {")
-    print("//     newPlaylist.setValue(\"My New Playlist\", forKey: \"name\")")
-    print("// }")
-
-    // MARK: - Track Properties
-    print("\n=== Track Property Categories ===")
-    print("Basic: name, artist, album, genre, year")
-    print("Playback: duration, playedCount, skippedCount, rating")
-    print("Technical: bitRate, sampleRate, size, kind")
-    print("Organization: grouping, albumArtist, composer, compilation")
-    print("Cloud: cloudStatus, downloaderAccount, purchaserAccount")
-    print("Media: mediaKind, episodeID, season, show")
-    print("Classical: work, movement, movementNumber, movementCount")
-
-    // MARK: - AirPlay Devices
-    print("\n=== AirPlay Devices ===")
-    if let devices = music.airPlayDevices?() {
-        for i in 0..<devices.count {
-            if let device = devices.object(at: i) as? MusicAirPlayDevice {
-                print("Device: \(device.name ?? "Unknown")")
-                print("  Kind: \(device.kind ?? .unknown)")
-                print("  Active: \(device.active ?? false)")
-                print("  Available: \(device.available ?? false)")
-            }
+    // MARK: - Track Property Categories
+    if section == "all" || section == "properties" {
+        print("\n=== Track Property Categories ===")
+        let categories: [String: [String]] = [
+            "Basic": ["name", "artist", "album", "genre", "year"],
+            "Playback": ["duration", "playedCount", "skippedCount", "rating"],
+            "Technical": ["bitRate", "sampleRate", "size", "kind"],
+            "Organization": ["grouping", "albumArtist", "composer", "compilation"],
+            "Cloud": ["cloudStatus", "downloaderAccount", "purchaserAccount"],
+            "Media": ["mediaKind", "episodeID", "season", "show"],
+            "Classical": ["work", "movement", "movementNumber", "movementCount"]
+        ]
+        
+        for (cat, props) in categories {
+            print("\(cat): \(props.joined(separator: ", "))")
         }
+        
+        result["propertyCategories"] = categories
     }
 
-    // MARK: - Sources
-    print("\n=== Sources ===")
-    if let sources = music.sources?() {
-        for i in 0..<sources.count {
-            if let source = sources.object(at: i) as? MusicSource {
-                print("Source: \(source.name ?? "Unknown") - Kind: \(source.kind ?? .unknown)")
-            }
-        }
+    // Write JSON output if requested
+    if outputJSON {
+        writeFullOutput(outputPath, result)
+    }
+}
+
+func specialKindName(_ kind: MusicESpK) -> String {
+    switch kind {
+    case .none: return "Standard Playlist"
+    case .folder: return "Folder"
+    case .genius: return "Genius"
+    case .library: return "Library"
+    case .music: return "Music"
+    case .purchasedMusic: return "Purchased Music"
+    @unknown default: return "Unknown (\(kind.rawValue))"
+    }
+}
+
+func writeOutput(_ path: String, success: Bool, error: String?, outputJSON: Bool) {
+    guard outputJSON else { return }
+    
+    var result: [String: Any] = [
+        "success": success,
+        "timestamp": ISO8601DateFormatter().string(from: Date())
+    ]
+    
+    if let error = error {
+        result["error"] = error
+    }
+    
+    try? FileManager.default.createDirectory(atPath: (path as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
+    if let out = try? JSONSerialization.data(withJSONObject: result, options: .prettyPrinted) {
+        try? out.write(to: URL(fileURLWithPath: path))
+        print("\n📄 JSON saved to: \(path)")
+    }
+}
+
+func writeFullOutput(_ path: String, _ result: [String: Any]) {
+    try? FileManager.default.createDirectory(atPath: (path as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
+    if let out = try? JSONSerialization.data(withJSONObject: result, options: .prettyPrinted) {
+        try? out.write(to: URL(fileURLWithPath: path))
+        print("\n📄 JSON saved to: \(path)")
     }
 }

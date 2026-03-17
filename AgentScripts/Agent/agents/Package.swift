@@ -5,15 +5,20 @@ import Foundation
 // Explicit script list — ScriptService adds/removes entries when scripts are created/deleted.
 // Scripts compile as dynamic libraries (.dylib) loaded into Agent! via dlopen.
 let scriptNames = [
+    "AXDemo",
+    "CapturePhoto",
     "CheckMail",
     "CreateDMG",
+    "CurrentPlaylist",
     "EmailAccounts",
+    "ExtractAlbumArt",
     "GenerateBridge",
     "Hello",
     "ListHomeContents",
     "ListNotes",
     "ListReminders",
     "MusicScriptingExamples",
+    "NowPlaying",
     "NowPlayingHTML",
     "OrganizeEmails",
     "OrganizeOtherSubcategories",
@@ -22,10 +27,12 @@ let scriptNames = [
     "QuitApps",
     "RunningApps",
     "SafariSearch",
-    "SaveImageFromChat",
+    "SaveImageFromClipboard",
     "SendGroupMessage",
     "SendMessage",
+    "TestCodingTools",
     "TestEnvVars",
+    "TestGenerateBridge",
     "TodayEvents",
     "WhatsPlaying",
 ]
@@ -36,6 +43,7 @@ let common: Target.Dependency = "ScriptingBridgeCommon"
 
 let bridgeNames = [
     "AdobeIllustratorBridge",
+    "AgentAccessibility",
     "AutomatorBridge",
     "BluetoothFileExchangeBridge",
     "CalendarBridge",
@@ -98,6 +106,8 @@ func parseDeps(for name: String) -> [Target.Dependency] {
                 deps.append(.init(stringLiteral: module))
             } else if module == "ScriptingBridgeCommon" {
                 deps.append(common)
+            } else if module == "AgentAccessibility" {
+                deps.append(.init(stringLiteral: "AgentAccessibility"))
             }
         }
         // Stop scanning after first non-import, non-comment, non-blank line
@@ -110,7 +120,7 @@ func parseDeps(for name: String) -> [Target.Dependency] {
 }
 
 // Compute exclude lists so SPM doesn't warn about unhandled files in shared directories
-let allBridgeFiles = ["ScriptingBridgeCommon.swift", "AgentScriptingBridge.swift"] + bridgeNames.map { "\($0).swift" }
+let allBridgeFiles = ["ScriptingBridgeCommon.swift", "AgentScriptingBridge.swift", "AgentAccessibility.swift"] + bridgeNames.map { "\($0).swift" }
 let allScriptFiles = scriptNames.map { "\($0).swift" }
 
 let scriptProducts: [Product] = scriptNames.map {
@@ -129,18 +139,19 @@ let scriptTargets: [Target] = scriptNames.map { name in
             sources: ["\(name).swift"])
 }
 
+let coreTargets: [Target] = [
+    .target(name: "ScriptingBridgeCommon", path: bridge,
+            exclude: bridgeNames.map { "\($0).swift" } + ["AgentScriptingBridge.swift", "AgentAccessibility.swift"],
+            sources: ["ScriptingBridgeCommon.swift"]),
+    .target(name: "AgentScriptingBridge", dependencies: [common], path: bridge,
+            exclude: allBridgeFiles.filter { $0 != "AgentScriptingBridge.swift" },
+            sources: ["AgentScriptingBridge.swift"]),
+    .testTarget(name: "AgentScriptsTests", dependencies: ["ScriptingBridgeCommon"]),
+]
+
 let package = Package(
     name: "AgentScripts",
     platforms: [.macOS(.v15)],
     products: [.library(name: "AgentScriptingBridge", targets: ["AgentScriptingBridge"])] + scriptProducts,
-    targets: [
-        .target(name: "ScriptingBridgeCommon", path: bridge,
-                exclude: bridgeNames.map { "\($0).swift" } + ["AgentScriptingBridge.swift"],
-                sources: ["ScriptingBridgeCommon.swift"]),
-        .target(name: "AgentScriptingBridge", dependencies: [common], path: bridge,
-                exclude: allBridgeFiles.filter { $0 != "AgentScriptingBridge.swift" },
-                sources: ["AgentScriptingBridge.swift"]),
-    ] + bridgeTargets + scriptTargets + [
-        .testTarget(name: "AgentScriptsTests", dependencies: ["ScriptingBridgeCommon"]),
-    ]
+    targets: coreTargets + bridgeTargets + scriptTargets
 )
