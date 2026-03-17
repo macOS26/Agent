@@ -241,7 +241,7 @@ final class SDEFService: @unchecked Sendable {
                     if let props = cls.properties {
                         for p in props {
                             let ro = p.readonly == true ? " (r)" : ""
-                            lines.append("    .\(p.name): \(p.type ?? "any")\(ro)")
+                            lines.append("    .\(Self.toCamelCase(p.name)): \(p.type ?? "any")\(ro)")
                         }
                     }
                     if let elems = cls.elements {
@@ -261,8 +261,17 @@ final class SDEFService: @unchecked Sendable {
         return lines.joined(separator: "\n")
     }
 
+    /// Convert SDEF space-separated name to camelCase for KVC / value(forKey:).
+    /// "current track" → "currentTrack", "AirPlay enabled" → "AirPlayEnabled"
+    static func toCamelCase(_ name: String) -> String {
+        let words = name.components(separatedBy: " ")
+        guard let first = words.first else { return name }
+        let rest = words.dropFirst().map { $0.prefix(1).uppercased() + $0.dropFirst() }
+        return first + rest.joined()
+    }
+
     /// Lookup valid property/element keys for apple_event_query.
-    /// Returns keys the AI can use with `get`, `iterate`, etc.
+    /// Returns camelCase keys the AI can use with `get`, `iterate`, etc.
     func aeKeys(for bundleID: String, className: String = "application") -> (properties: [String], elements: [String]) {
         let allClasses = classes(for: bundleID)
 
@@ -273,8 +282,8 @@ final class SDEFService: @unchecked Sendable {
 
         while let name = current {
             if let cls = allClasses.first(where: { $0.name == name }) {
-                propNames.append(contentsOf: cls.properties?.map { $0.name } ?? [])
-                elemNames.append(contentsOf: cls.elements ?? [])
+                propNames.append(contentsOf: cls.properties?.map { Self.toCamelCase($0.name) } ?? [])
+                elemNames.append(contentsOf: cls.elements?.map { Self.toCamelCase($0) } ?? [])
                 current = cls.inherits
             } else {
                 current = nil
