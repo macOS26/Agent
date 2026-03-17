@@ -15,13 +15,13 @@ enum AgentTools {
         NAMING: Call these scripts "AgentScripts" (not "scripts"). Reserve "AppleScript" for pure AppleScript.
 
         EXECUTION MODES:
-        - execute_shell_command: runs in Agent app process. Has ALL TCC (Automation, Accessibility, ScreenRecording). \
-        Use for osascript, AppleScript, Apple Events, Accessibility scripts, screen capture, or any TCC command. Streams in a tab.
+        - execute_shell_command: TCC commands (osascript, screencapture, etc.) run in Agent app process with ALL TCC, streaming in a tab. \
+        Non-TCC commands (ls, cat, find, etc.) route through the UserService LaunchAgent — same as execute_user_command.
         - execute_user_command: as \(userName), ~ = \(userHome). NO TCC. Default for git, builds, file ops.
         - execute_command: ROOT, ~ = /var/root, use "\(userHome)" for user files. NO TCC. Chown back after.
 
         TCC INHERITANCE:
-        - execute_shell_command: in Agent process → ALL TCC.
+        - execute_shell_command: TCC commands in Agent process → ALL TCC. Non-TCC → UserService XPC (LaunchAgent).
         - run_agent_script: dlopen in Agent process → ALL TCC. Use for compiled Swift automation.
         - apple_event_query: in-process ObjC dispatch → Automation TCC.
         - execute_user_command / execute_command: NO TCC. Never for AX/Automation.
@@ -295,7 +295,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: "execute_shell_command",
-            description: "Execute a shell command inside the Agent app process. Inherits ALL TCC permissions (Automation, Accessibility, ScreenRecording). Use for osascript, AppleScript, Apple Event scripts, Accessibility scripts, screen capture, or any command needing TCC. Output streams live in a tab.",
+            description: "Execute a shell command. TCC commands (osascript, screencapture, etc.) run in the Agent app process with full TCC permissions and stream in a tab. Non-TCC commands route through the UserService LaunchAgent (same as execute_user_command).",
             properties: [
                 "command": ["type": "string", "description": "The bash command to execute in the Agent app process"],
             ],

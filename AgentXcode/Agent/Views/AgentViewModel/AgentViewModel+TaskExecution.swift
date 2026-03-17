@@ -899,12 +899,13 @@ extension AgentViewModel {
                                 commandsRun.append("execute_shell_command: \(label)")
                                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": truncated2])
                             } else {
-                                // Simple command — run inline, output to activity log
+                                // Non-TCC command — route through XPC services
                                 let collapsed = Self.collapseHeredocs(command)
-                                appendLog("🐣 $ \(collapsed)")
+                                appendLog("🔧 $ \(collapsed)")
                                 flushLog()
 
-                                let result = await executeLocal(command: command)
+                                let result = await userService.execute(command: command)
+                                userWasActive = true
 
                                 guard !Task.isCancelled else { break }
 
