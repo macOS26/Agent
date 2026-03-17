@@ -58,6 +58,28 @@ extension AgentViewModel {
 
     /// Extract user-directory paths from a shell command for preflight validation.
     /// Catches typos like "/Users/foo/Documets/..." before running the command.
+    /// Resolve project folder to a directory (strip filename if path points to a file).
+    static func resolvedWorkingDirectory(_ path: String) -> String {
+        guard !path.isEmpty else { return "" }
+        var isDir: ObjCBool = false
+        if FileManager.default.fileExists(atPath: path, isDirectory: &isDir) {
+            return isDir.boolValue ? path : (path as NSString).deletingLastPathComponent
+        }
+        // Path doesn't exist yet — treat as directory
+        return path
+    }
+
+    /// Prepend `cd <dir> &&` to a shell command when a project folder is set.
+    /// Skips if the command already starts with `cd `.
+    static func prependWorkingDirectory(_ command: String, projectFolder: String) -> String {
+        guard !projectFolder.isEmpty else { return command }
+        let dir = resolvedWorkingDirectory(projectFolder)
+        guard !dir.isEmpty, dir != "/" else { return command }
+        if command.hasPrefix("cd ") { return command }
+        let escaped = dir.replacingOccurrences(of: "'", with: "'\\''")
+        return "cd '\(escaped)' && \(command)"
+    }
+
     static func preflightCommand(_ command: String) -> String? {
         // Match paths under /Users/ or ~/ — most common source of typos
         guard let regex = try? NSRegularExpression(
@@ -664,7 +686,8 @@ extension AgentViewModel {
                         // MARK: Shell execution tools
 
                         if name == "execute_command" || name == "execute_user_command" {
-                            let command = input["command"] as? String ?? ""
+                            let command = Self.prependWorkingDirectory(
+                                input["command"] as? String ?? "", projectFolder: projectFolder)
                             // Preflight: catch typos in /Users/ and ~/ paths before running
                             if let pathErr = Self.preflightCommand(command) {
                                 appendLog(pathErr)

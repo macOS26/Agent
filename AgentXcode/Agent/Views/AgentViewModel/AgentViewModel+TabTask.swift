@@ -428,7 +428,8 @@ extension AgentViewModel {
 
         // execute_user_command / execute_command
         if name == "execute_command" || name == "execute_user_command" {
-            let command = input["command"] as? String ?? ""
+            let command = Self.prependWorkingDirectory(
+                input["command"] as? String ?? "", projectFolder: projectFolder)
             if let pathErr = Self.preflightCommand(command) {
                 tab.appendLog(pathErr)
                 tab.flush()
