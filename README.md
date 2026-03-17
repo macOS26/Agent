@@ -443,22 +443,22 @@ Every shell command follows one of three execution paths based on privilege need
 ```mermaid
 flowchart TD
     A[Shell Command] --> B{Which tool?}
-    B --> C[execute_command\nroot]
+    B --> C[execute_command]
     B --> D[execute_user_command]
     B --> E[execute_shell_command]
 
     C --> F{Root enabled?}
-    F -- Yes --> G(HelperService XPC\nLaunchDaemon\nRuns as root)
+    F -- Yes --> G(LaunchDaemon\nRoot)
     F -- No --> H{osascript?}
 
     D --> H
 
-    H -- Yes --> I(In-Process\nInherits ALL TCC)
-    H -- No --> J(UserService XPC\nLaunchAgent\nRuns as user)
+    H -- Yes --> I(In-Process\nTCC)
+    H -- No --> J(LaunchAgent\nUser)
 
-    E --> K{Needs TCC?\nosascript / screencapture\napplescript / accessibility}
-    K -- Yes --> L(In-Process Streaming\nInherits ALL TCC\nOpens in tab)
-    K -- No --> M(UserService XPC\nLaunchAgent\nRuns as user)
+    E --> K{Needs TCC?}
+    K -- Yes --> L(In-Process\nTCC + Tab)
+    K -- No --> M(LaunchAgent\nUser)
 
     style G fill:#f96,stroke:#333,color:#000
     style I fill:#6b6,stroke:#333,color:#000
