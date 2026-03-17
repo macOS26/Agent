@@ -3,7 +3,7 @@ import SwiftUI
 struct ToolsView: View {
     let initialProvider: APIProvider
     @State private var selectedProvider: APIProvider
-    private let prefs = ToolPreferencesService.shared
+    @Bindable var prefs = ToolPreferencesService.shared
 
     init(initialProvider: APIProvider = .claude) {
         self.initialProvider = initialProvider
