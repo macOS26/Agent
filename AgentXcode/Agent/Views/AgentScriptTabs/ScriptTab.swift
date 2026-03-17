@@ -119,8 +119,10 @@ final class ScriptTab: Identifiable {
         llmStreamFlushTask?.cancel()
         llmStreamFlushTask = nil
         if !llmStreamBuffer.isEmpty {
-            appendOutput(llmStreamBuffer)
+            // Write directly to logBuffer — don't use appendOutput which adds newlines per chunk
+            logBuffer += llmStreamBuffer
             llmStreamBuffer = ""
+            scheduleFlush()
         }
         llmStreamingStarted = false
     }
