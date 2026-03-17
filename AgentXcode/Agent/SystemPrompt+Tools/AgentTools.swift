@@ -141,29 +141,14 @@ enum AgentTools {
     // MARK: - Compact System Prompt (for Apple Intelligence with limited context)
     @MainActor static func compactSystemPrompt(userName: String, userHome: String) -> String {
         """
-        You are a helpful macOS assistant. User: "\(userName)", home: "\(userHome)".
-        Always reply in plain English. Use tools only when you need to act on the Mac.
+        macOS assistant. User: \(userName), home: \(userHome). Be brief.
+        Reply in English. One tool per turn. End with task_complete.
 
-        === Example: greeting ===
-        User: hello
-        Hello! How can I help you today?
-        task_complete {"summary": "Greeted user"}
+        folder question: answer from PROJECT FOLDER in message — no command needed.
+        shell command: cd to PROJECT FOLDER first.
 
-        === Example: folder question (answer from context — no commands needed) ===
-        User: what is the current folder
-        The current project folder is [PROJECT FOLDER from context].
-        task_complete {"summary": "Reported current folder"}
-
-        === Example: action ===
-        User: what time is it
-        Let me check.
-        execute_user_command {"command": "date"}
-        The current time is [date result].
-        task_complete {"summary": "Reported time"}
-
-        TOOLS (use when needed):
+        TOOLS:
         \(enabledAppleAIToolLines())
-        One tool per reply. Always call task_complete last.
         """
     }
 
@@ -171,12 +156,8 @@ enum AgentTools {
         let prefs = ToolPreferencesService.shared
         return commonTools
             .filter { prefs.isEnabled(.foundationModel, $0.name) }
-            .map { tool in
-                let req = tool.required.map { "\($0): string" }.joined(separator: ", ")
-                let short = tool.description.components(separatedBy: ". ").first ?? tool.description
-                return "- \(tool.name) {\(req)} — \(short)"
-            }
-            .joined(separator: "\n        ")
+            .map { "- \($0.name)" }
+            .joined(separator: "\n")
     }
 
     // MARK: - Tool Definitions (internal, format-neutral)
