@@ -111,6 +111,17 @@ struct SettingsView: View {
                         Text("No configuration needed — runs entirely on-device.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                        HStack(alignment: .top, spacing: 6) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.orange)
+                                .font(.caption)
+                            Text("Limited tool use: the on-device model may skip tools or hallucinate results. It also has built-in safety filters that block system script execution. Best for simple conversational tasks.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(8)
+                        .background(.orange.opacity(0.08))
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
                     }
                 }
             } else {
