@@ -418,6 +418,7 @@ Agent.app (SwiftUI)
   |-- Messages Monitor       Polls chat.db for iMessage remote control
   |-- DependencyChecker      Xcode CLT detection + install trigger
   |
+  |-- [In-Process]           TCC commands run directly in the app (inherits ALL TCC grants)
   |-- UserService (XPC) --> Agent.app.toddbruss.user    (LaunchAgent, runs as user)
   |-- HelperService (XPC) --> Agent.app.toddbruss.helper (LaunchDaemon, runs as root)
 
@@ -427,6 +428,53 @@ Agent.app (SwiftUI)
   |-- Sources/Scripts/       One .swift file per executable script
   |-- Sources/XCFScriptingBridges/  One .swift file per app bridge + Common
 ```
+
+### Command Routing
+
+Every shell command follows one of three execution paths based on privilege needs and TCC requirements:
+
+```
+                        ┌─────────────────────┐
+                        │   Shell Command      │
+                        └──────────┬──────────┘
+                                   │
+                    ┌──────────────┼──────────────┐
+                    ▼              ▼              ▼
+            execute_command  execute_user   execute_shell
+            (root)           _command       _command
+                    │              │              │
+                    ▼              │         needsTCC?
+              rootEnabled?         │        ┌────┴────┐
+             ┌────┴────┐          │       Yes        No
+            Yes        No         │        │          │
+             │          │         │        ▼          ▼
+             ▼          │    osascript?  In-Process  UserService
+        HelperService   │   ┌────┴────┐ (streaming)    XPC
+        XPC (root)      │  Yes        No    TCC     (LaunchAgent)
+        LaunchDaemon    │   │          │
+                        │   ▼          ▼
+                     In-Process   UserService
+                     (TCC)         XPC
+                                 (LaunchAgent)
+```
+
+| Path | Service | Runs As | TCC | Used For |
+|------|---------|---------|-----|----------|
+| **In-Process** | Agent.app directly | User | ALL (Automation, Accessibility, Screen Recording) | osascript, screencapture, TCC-dependent commands |
+| **UserService XPC** | `Agent.app.toddbruss.user` (LaunchAgent) | User | None | git, find, grep, builds, file ops, homebrew |
+| **HelperService XPC** | `Agent.app.toddbruss.helper` (LaunchDaemon) | Root | None | System packages, /System, /Library, disk ops |
+
+### App Automation Priority
+
+The AI follows this priority order when automating Mac applications:
+
+| Priority | Tool | When to Use |
+|----------|------|-------------|
+| 1 | `apple_event_query` | First choice for reading app data — instant ObjC dispatch, zero compilation |
+| 2 | `execute_shell_command` | osascript with TCC — quick one-off AppleScript commands |
+| 3 | Accessibility tools (`ax_*`) | AXUIElement API for UI inspection and interaction |
+| 4 | `run_agent_script` | ScriptingBridge Swift dylib for complex/persistent automation (full TCC) |
+| 5 | NSAppleScript inside `run_agent_script` | Fallback when ScriptingBridge has issues with an app |
 
 ---
 
