@@ -1,6 +1,29 @@
 import Foundation
 import ScriptingBridge
 import AppKit
+import MusicBridge
+import MailBridge
+import FinderBridge
+import SafariBridge
+import NotesBridge
+import RemindersBridge
+import CalendarBridge
+import ContactsBridge
+import MessagesBridge
+import PhotosBridge
+import SystemEventsBridge
+import TerminalBridge
+import GoogleChromeBridge
+import FirefoxBridge
+import MicrosoftEdgeBridge
+import NumbersBridge
+import PagesBridge
+import KeynoteBridge
+import TextEditBridge
+import PreviewBridge
+import TVBridge
+import ShortcutsBridge
+import QuickTimePlayerBridge
 
 /// Executes dynamic Apple Event queries using ObjC runtime dispatch.
 /// No compilation needed — walks the object graph via value(forKey:) and NSInvocation.

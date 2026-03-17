@@ -156,6 +156,9 @@ let coreTargets: [Target] = [
 let package = Package(
     name: "AgentScripts",
     platforms: [.macOS(.v15)],
-    products: [.library(name: "AgentScriptingBridge", targets: ["AgentScriptingBridge"])] + scriptProducts,
+    products: [
+        .library(name: "AgentScriptingBridge", targets: ["AgentScriptingBridge"]),
+        .library(name: "AllBridges", targets: bridgeNames + ["ScriptingBridgeCommon", "AgentScriptingBridge"]),
+    ] + scriptProducts,
     targets: coreTargets + bridgeTargets + scriptTargets
 )

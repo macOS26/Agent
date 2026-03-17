@@ -62,6 +62,7 @@
 		DD10000000000000000031 /* ScriptingBridgesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000002 /* ScriptingBridgesTests.swift */; };
 		DD10000000000000000032 /* PackageGenerationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000003 /* PackageGenerationTests.swift */; };
 		EA37C5522F636B86009D0A23 /* AgentScriptingBridge in Frameworks */ = {isa = PBXBuildFile; productRef = EA37C5512F636B86009D0A23 /* AgentScriptingBridge */; };
+		EA90000000000000000001 /* AllBridges in Frameworks */ = {isa = PBXBuildFile; productRef = EA90000000000000000002 /* AllBridges */; };
 		EA37C5552F636B87009D0A23 /* Sources in Resources */ = {isa = PBXBuildFile; fileRef = EA37C5532F636B87009D0A23 /* Sources */; };
 		EA37C5562F636B87009D0A23 /* Package.swift in Resources */ = {isa = PBXBuildFile; fileRef = EA37C5542F636B87009D0A23 /* Package.swift */; };
 		EA50000000000000000001 /* send_message_input.json in Resources */ = {isa = PBXBuildFile; fileRef = EA50000000000000000005 /* send_message_input.json */; };
@@ -229,6 +230,7 @@
 			files = (
 				AA1000000000000000003E /* ScriptingBridge.framework in Frameworks */,
 				EA37C5522F636B86009D0A23 /* AgentScriptingBridge in Frameworks */,
+				EA90000000000000000001 /* AllBridges in Frameworks */,
 				EA50MCP0000000003 /* MCPClient in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -502,6 +504,7 @@
 			name = "Agent!";
 			packageProductDependencies = (
 				EA37C5512F636B86009D0A23 /* AgentScriptingBridge */,
+				EA90000000000000000002 /* AllBridges */,
 			);
 			productName = Agent;
 			productReference = AA10000000000000000024 /* Agent!.app */;
@@ -1115,6 +1118,10 @@
 		EA37C5512F636B86009D0A23 /* AgentScriptingBridge */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = AgentScriptingBridge;
+		};
+		EA90000000000000000002 /* AllBridges */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AllBridges;
 		};
 		EA50MCP0000000002 /* MCPClient */ = {
 			isa = XCSwiftPackageProductDependency;
