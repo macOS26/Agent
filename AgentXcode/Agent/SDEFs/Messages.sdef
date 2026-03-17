@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+<dictionary xmlns:xi="http://www.w3.org/2003/XInclude">
+	<xi:include href="file:///System/Library/ScriptingDefinitions/CocoaStandard.sdef" xpointer="xpointer(/dictionary/suite)"/>
+
+	<suite name="Messages Suite" code="icht" description="commands and classes for Messages scripting.">
+		<enumeration name="service type" code="styp">
+			<enumerator name="SMS" code="ssms"/>
+			<enumerator name="iMessage" code="sims"/>
+            <enumerator name="RCS" code="srcs"/>
+		</enumeration>
+		<enumeration name="direction" code="FTdr">
+			<enumerator name="incoming" code="FTic"/>
+			<enumerator name="outgoing" code="FTog"/>
+		</enumeration>
+		<enumeration name="transfer status" code="FTst">
+			<enumerator name="preparing" code="FTsp"/>
+			<enumerator name="waiting" code="FTsw"/>
+			<enumerator name="transferring" code="FTsg"/>
+			<enumerator name="finalizing" code="FTsz"/>
+			<enumerator name="finished" code="FTsf"/>
+			<enumerator name="failed" code="FTse"/>
+		</enumeration>
+        <enumeration name="connection status" code="ssta">
+            <enumerator name="disconnecting" code="dcng">
+                <cocoa name="Disconnecting"/>
+            </enumerator>
+            <enumerator name="connected" code="conn">
+                <cocoa name="Connected"/>
+            </enumerator>
+            <enumerator name="connecting" code="cong">
+                <cocoa name="Connecting"/>
+            </enumerator>
+            <enumerator name="disconnected" code="dcon">
+                <cocoa name="Disconnected"/>
+            </enumerator>
+        </enumeration>
+		<class-extension extends="application" description="Messages application.">
+			<cocoa class="SMSApplication"/>
+			<element type="participant" access="r">
+				<cocoa key="participants"/>
+			</element>
+			<element type="account" access="r">
+				<cocoa key="accounts"/>
+			</element>
+			<element type="file transfer" access="r">
+				<cocoa key="fileTransfers"/>
+			</element>
+			<element type="chat" access="r">
+				<cocoa key="chats"/>
+			</element>
+		</class-extension>
+        
+        <!--  Commands  -->
+        <command name="send" code="ichtsend" description="Sends a message to a participant or to a chat.">
+            <cocoa class="CKScriptCommand"/>
+            <direct-parameter>
+                <type type="file"/>
+                <type type="text"/>
+            </direct-parameter>
+            <parameter name="to" code="TO  ">
+                <cocoa key="to"/>
+                <type type="participant"/>
+                <type type="chat"/>
+            </parameter>
+        </command>
+        <command name="login" code="ichtlogi" description="Login to all accounts.">
+            <cocoa class="CKScriptCommand"/>
+        </command>
+        <command name="logout" code="ichtlogo" description="Logout of all accounts.">
+            <cocoa class="CKScriptCommand"/>
+        </command>
+        
+        <!--  Exposed Classes  -->
+		<class name="participant" code="pres" description="A participant for an account." plural="participants">
+            <synonym name="buddy"/>
+			<cocoa class="IMHandle"/>
+			<property name="id" code="ID  " description="The participant's unique identifier. For example: 01234567-89AB-CDEF-0123-456789ABCDEF:+11234567890" type="text" access="r">
+				<cocoa key="scriptUniqueId"/>
+			</property>
+			<property name="account" code="icsv" type="account" access="r" description="The account for this participant.">
+				<cocoa key="scriptAccount"/>
+			</property>
+			<property name="name" code="pnam" description="The participant's name as it appears in the participant list." type="text" access="r">
+				<cocoa key="scriptName"/>
+			</property>
+			<property name="handle" code="hndl" description="The participant's handle." type="text" access="r">
+				<cocoa key="scriptHandle"/>
+			</property>
+			<property name="first name" code="prfn" description="The first name from this participan's Contacts card, if available" type="text" access="r">
+				<cocoa key="scriptFirstName"/>
+			</property>
+			<property name="last name" code="prLn" description="The last name from this participant's Contacts card, if available" type="text" access="r">
+				<cocoa key="scriptLastName"/>
+			</property>
+			<property name="full name" code="prFn" description="The full name from this participant's Contacts card, if available" type="text" access="r">
+				<cocoa key="scriptFullName"/>
+			</property>
+		</class>
+		<class name="account" code="icsv" description="An account that can be logged in to from this system" plural="accounts">
+            <synonym name="service"/>
+			<cocoa class="IMAccount"/>
+			<property name="id" code="ID  " description="A unique identifier for this account." type="text" access="r">
+				<cocoa key="scriptUniqueId"/>
+			</property>
+			<property name="description" code="msdn" description="The name of this account as defined in Account preferences description field" access="r" type="text">
+				<cocoa key="scriptDescription"/>
+			</property>
+			<property name="enabled" code="enbl" description="Is the account enabled?" type="boolean">
+				<cocoa key="scriptEnabled"/>
+			</property>
+			<property name="connection status" code="ssta" type="connection status" access="r" description="The connection status for this account.">
+				<cocoa key="scriptConnectionStatus"/>
+			</property>
+			<property name="service type" code="styp" description="The type of service for this account" type="service type" access="r">
+				<cocoa key="scriptServiceType"/>
+			</property>
+			<element type="chat" access="r">
+				<cocoa key="scriptChats"/>
+			</element>
+            <element type="participant" access="r"/>
+		</class>
+        <class name="chat" code="imct" description="An SMS or iMessage chat.">
+			<cocoa class="IMChat"/>
+			<property name="id" code="ID  " type="text" access="r" description="A guid identifier for this chat.">
+				<cocoa key="scriptUniqueId"/>
+			</property>
+            <property name="name" code="pnam" description="The chat's name as it appears in the chat list." type="text" access="r">
+                <cocoa key="scriptName"/>
+            </property>
+			<property name="account" code="icsv" type="account" access="r" description="The account which is participating in this chat.">
+				<cocoa key="scriptAccount"/>
+			</property>
+            <element type="participant" access="r" description="Other participants of this chat. This property may be specified at time of creation.">
+                <cocoa key="scriptParticipants"/>
+            </element>
+        </class>
+        <class name="file transfer" code="tnfr" description="A file being sent or received" plural="file transfers" inherits="item">
+            <cocoa class="IMFileTransfer"/>
+            <property name="id" code="ID  " description="The guid for this file transfer" type="text" access="r">
+                <cocoa key="scriptUniqueId"/>
+            </property>
+            <property name="name" code="pnam" description="The name of this file" type="text" access="r">
+                <cocoa key="scriptFileName"/>
+            </property>
+			<property name="file path" code="ftpt" description="The local path to this file transfer" type="file" access="r">
+				<cocoa key="scriptFilePath"/>
+			</property>
+            <property name="direction" code="FTdr" description="The direction in which this file is being sent" type="direction" access="r">
+                <cocoa key="scriptDirection"/>
+            </property>
+            <property name="account" code="icsv" description="The account on which this file transfer is taking place" type="account" access="r">
+                <cocoa key="scriptAccount"/>
+            </property>
+            <property name="participant" code="pres" description="The other participatant in this file transfer" type="participant" access="r">
+                <cocoa key="scriptParticipant"/>
+            </property>
+            <property name="file size" code="ftpz" description="The total size in bytes of the completed file transfer" type="integer" access="r">
+                <cocoa key="scriptTransferSize"/>
+            </property>
+            <property name="file progress" code="ftpp" description="The number of bytes that have been transferred" type="integer" access="r">
+                <cocoa key="scriptTransferProgress"/>
+            </property>
+            <property name="transfer status" code="ftpf" description="The current status of this file transfer" type="transfer status" access="r">
+                <cocoa key="scriptTransferStatus"/>
+            </property>
+            <property name="started" code="mscc" description="The date that this file transfer started" type="date" access="r">
+                <cocoa key="scriptStarted"/>
+            </property>
+        </class>
+	</suite>
+</dictionary>

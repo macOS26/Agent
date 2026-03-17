@@ -90,6 +90,7 @@ let bridgeNames = [
     "TextEditBridge",
     "UTMBridge",
     "VoiceOverBridge",
+    "WishBridge",
 ]
 
 // Set of all known bridge target names for fast lookup

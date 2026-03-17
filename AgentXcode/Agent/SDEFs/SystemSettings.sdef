@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+<dictionary xmlns:xi="http://www.w3.org/2003/XInclude">
+    <suite name="Standard Suite" code="????">
+        <xi:include href="file://localhost/System/Library/ScriptingDefinitions/CocoaStandard.sdef" xpointer="xpointer(/dictionary/suite/node()[not(self::command and ((@name = 'delete') or (@name = 'duplicate') or (@name = 'move') or (@name = 'save')))])"/>
+    </suite>
+	<suite name="System Settings" code="xpsp" description="Classes and Commands specific to System Settings">
+		<class-extension extends="application" description="The System Settings top-level scripting object.">
+			<element type="pane" access="r">
+				<access-group identifier="preferencepane.reveal" access="r"/>
+				<access-group identifier="preferencepane.authorize" access="r"/>
+			</element>
+			
+			<property name="current pane" code="xpcp" type="pane" description="The currently selected pane.">
+				<access-group identifier="preferencepane.reveal" access="rw"/>
+				<access-group identifier="preferencepane.authorize" access="r"/>
+			</property>
+			
+			<property name="settings window" code="xppw" type="window" access="r" description="The main settings window.">
+				<synonym name="preferences window" hidden="yes"/>
+			</property>
+			
+			<property name="show all" code="xpsa" type="boolean" description="Is System Settings in show-all view? (Setting to false does nothing.) Deprecated: setting this property no longer does anything; it is always set to true.">
+				<access-group identifier="preferencepane.reveal" access="rw"/>
+			</property>
+		</class-extension>
+		
+		<class name="pane" code="xppb" description="A settings pane." inherits="item">
+			<cocoa class="System_Settings.SettingsBundle"/>
+			<access-group identifier="preferencepane.reveal" access="r"/>
+			
+			<element type="anchor" access="r"/>
+			
+			<property name="id" code="ID  " type="text" access="r" description="The id of the settings pane.">
+				<cocoa key="identifier"/>
+			</property>
+			
+			<property name="name" code="pnam" type="text" access="r" description="The name of the settings pane.">
+				<cocoa key="navigationTitle"/>
+				<synonym name="localized name" hidden="yes"/>
+				<synonym code="xpsn" hidden="yes"/>
+			</property>
+			
+			<responds-to command="reveal">
+				<cocoa method="reveal:"/>
+			</responds-to>
+			
+			<responds-to command="authorize">
+				<cocoa method="authorize:"/>
+			</responds-to>
+		</class>
+		
+		<class name="anchor" code="xppa" description="An anchor within a settings pane." inherits="item">
+			<cocoa class="System_Settings.PaneAnchor"/>
+			<access-group identifier="preferencepane.reveal" access="r"/>
+			
+			<property name="name" code="pnam" type="text" access="r" description="The name of the anchor."/>
+			
+			<responds-to command="reveal">
+				<cocoa method="reveal:"/>
+			</responds-to>
+		</class>
+		
+		<command name="reveal" code="miscmvis" description="Reveals a settings pane or an anchor within a pane.">
+			<cocoa class="System_Settings.ScriptCommand"/>
+			<access-group identifier="preferencepane.reveal"/>
+			<direct-parameter requires-access="r">
+				<type type="pane"/>
+				<type type="anchor"/>
+			</direct-parameter>
+			<result>
+				<type type="pane"/>
+				<type type="anchor"/>
+			</result>
+		</command>
+		
+		<command name="authorize" code="miscmaut" description="Prompt for authorization for a settings pane. Deprecated: no longer does anything.">
+			<cocoa class="System_Settings.ScriptCommand"/>
+			<access-group identifier="preferencepane.authorize"/>
+			<direct-parameter type="pane" requires-access="r"/>
+			<result>
+				<type type="pane"/>
+			</result>
+		</command>
+		
+		<command name="timedLoad" code="miscmtml" description="Times and loads given settings pane and returns load time. Deprecated: no longer does anything." hidden="yes">
+			<direct-parameter type="pane"/>
+			<result type="real"/>
+		</command>
+	</suite>
+</dictionary>

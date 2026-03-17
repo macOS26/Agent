@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+
+<dictionary title="Standard Terminology">
+
+	<suite name="Standard Suite" code="????" description="Common classes and commands for all applications.">
+		<!-- the standard suite is usable by any application, without an explicit entitlement. -->
+		<access-group identifier="*"/>
+		<command name="count" code="corecnte" description="Return the number of elements of a particular class within an object.">
+			<cocoa class="NSCountCommand"/>
+			<direct-parameter type="specifier" description="The objects to be counted."/>
+			<parameter name="each" code="kocl" type="type" optional="yes" description="The class of objects to be counted." hidden="yes">
+				<cocoa key="ObjectClass"/>
+			</parameter>
+			<result type="integer" description="The count."/>
+		</command>
+		
+		<command name="exists" code="coredoex" description="Verify that an object exists.">
+		    <cocoa class="NSExistsCommand"/>
+		    <direct-parameter type="any" description="The object(s) to check."/>
+		    <result type="boolean" description="Did the object(s) exist?"/>
+		</command>
+
+		<command name="open" code="aevtodoc" description="Open a photo library">
+			<direct-parameter description="The photo library to be opened.">
+				<type type="file"/>
+			</direct-parameter>
+		</command>
+
+		<command name="quit" code="aevtquit" description="Quit the application.">
+			<cocoa class="NSQuitCommand"/>
+		</command>
+
+		<class name="application" code="capp" description="The application's top-level scripting object.">
+			<cocoa class="NSApplication"/>
+			<property name="name" code="pnam" type="text" access="r" description="The name of the application."/>
+			<property name="frontmost" code="pisf" type="boolean" access="r" description="Is this the active application?">
+				<cocoa key="isActive"/>
+			</property>
+			<property name="version" code="vers" type="text" access="r" description="The version number of the application."/>
+			<responds-to command="open">
+				<cocoa method="handleOpenScriptCommand:"/>
+			</responds-to>
+			<responds-to command="quit">
+				<cocoa method="handleQuitScriptCommand:"/>
+			</responds-to>
+		</class>
+	</suite>
+    
+	<suite name="Photos Suite" code="IPXS" description="Classes and commands for Photos">
+		<!-- commands -->
+		<!-- import/export commands -->
+		<command name="import" code="IPXSimpo" description="Import files into the library">
+			<!-- access group for import -->
+			<access-group identifier="com.apple.Photos.import"/>
+			<cocoa class="IPXScriptingImport"/>
+			<direct-parameter description="The list of files to copy." >
+				<type type="file" list="yes" />
+			</direct-parameter>
+			<parameter name="into" code="toAl" type="album" description="The album to import into." optional="yes">
+				<cocoa key="ToAlbum"/>
+			</parameter>
+			<parameter name="skip check duplicates" code="skDU" type="boolean" description="Skip duplicate checking and import everything, defaults to false." optional="yes">
+				<cocoa key="SkipCheckDuplicates"/>
+			</parameter>
+			<result description="The imported media items in an array">
+				<type type="media item" list="yes" />
+			</result>
+		</command>
+		
+		<command name="export" code="IPXSexpo" description="Export media items to the specified location as files">
+			<!-- access group for export -->
+			<access-group identifier="com.apple.Photos.export"/>
+			<cocoa class="IPXScriptingExport"/>
+			<direct-parameter description="The list of media items to export." >
+				<type type="media item" list="yes" />
+			</direct-parameter>
+			<parameter name="to" code="insh" description="The destination of the export." type="file" >
+				<cocoa key="ToLocation"/>
+			</parameter>
+			<parameter name="using originals" code="usMA" type="boolean" description="Export the original files if true, otherwise export rendered jpgs. defaults to false." optional="yes">
+				<cocoa key="UsingMasters"/>
+			</parameter>
+		</command>
+		
+		
+		<!-- folder/album/mediaItem commands -->
+		<command name="duplicate" code="IPXSclon" description="Duplicate an object.  Only media items can be duplicated">
+			<!-- access group for library write -->
+			<access-group identifier="com.apple.Photos.library.read-write"/>
+
+			<cocoa class="NSScriptCommand"/>
+			<direct-parameter description="The media item to duplicate" >
+				<type type="media item" />
+			</direct-parameter>
+			<result type="media item" description="The duplicated media item"/>
+		</command>
+		
+		<command name="make" code="corecrel" description="Create a new object.  Only new albums and folders can be created.">
+			<!-- access group for library write -->
+			<access-group identifier="com.apple.Photos.library.read-write"/>
+			<cocoa class="IPXScriptingCreate"/>
+			<parameter name="new" code="kocl" type="type" description="The class of the new object, allowed values are album or folder">
+				<cocoa key="ObjectClass"/>
+			</parameter>
+			<parameter name="named" code="naME" type="text" optional="yes" description="The name of the new object.">
+				<cocoa key="NewName"/>
+			</parameter>
+			<parameter name="at" code="atFD" type="folder" optional="yes" description="The parent folder for the new object.">
+				<cocoa key="ParentFolder"/>
+			</parameter>
+			<result description="The new object." >
+				<type type="album" />
+				<type type="folder" />
+			</result>
+		</command>
+			
+		<command name="delete" code="coredelo" description="Delete an object.  Only albums and folders can be deleted.">
+			<cocoa class="IPXScriptingDelete"/>
+			<direct-parameter description="The album or folder to delete." >
+				<type type="album" />
+				<type type="folder" />
+			</direct-parameter>
+		</command>
+			
+		<command name="add" code="IPXSaddp" description="Add media items to an album.">
+			<!-- access group for library write -->
+			<access-group identifier="com.apple.Photos.library.read-write"/>
+			<cocoa class="IPXScriptingAdd"/>
+			<direct-parameter description="The list of media items to add." >
+				<type type="media item" list="yes" />
+			</direct-parameter>
+			<parameter name="to" code="toAl" type="album" description="The album to add to." >
+				<cocoa key="ToAlbum"/>
+			</parameter>
+		</command>
+		
+		<!-- slideshow commands -->
+		<command name="start slideshow" code="IPXSslid" description="Display an ad-hoc slide show from a list of media items, an album, or a folder.">
+			<!-- access group for slideshow -->
+			<access-group identifier="com.apple.Photos.slideshow"/>
+			<cocoa class="IPXScriptingStartSlideshow"/>
+			<parameter name="using" code="slUS" description="The media items to show." >
+				<cocoa key="SlideshowContent"/>
+				<type type="media item" list="yes" />
+			</parameter>
+		</command>
+
+		<command name="stop slideshow" code="IPXSinds" description="End the currently-playing slideshow." >
+			<!-- access group for slideshow -->
+			<access-group identifier="com.apple.Photos.slideshow"/>
+			<cocoa class="IPXScriptingEndSlideshow" />
+		</command>
+		<command name="next slide" code="IPXSslne" description="Skip to next slide in currently-playing slideshow." >
+			<!-- access group for slideshow -->
+			<access-group identifier="com.apple.Photos.slideshow"/>
+			<cocoa class="IPXScriptingNextSlide" />
+		</command>
+		<command name="previous slide" code="IPXSslpr" description="Skip to previous slide in currently-playing slideshow." >
+			<!-- access group for slideshow -->
+			<access-group identifier="com.apple.Photos.slideshow"/>
+			<cocoa class="IPXScriptingPreviousSlide" />
+		</command>
+		<command name="pause slideshow" code="IPXSslpa" description="Pause the currently-playing slideshow." >
+			<!-- access group for slideshow -->
+			<access-group identifier="com.apple.Photos.slideshow"/>
+			<cocoa class="IPXScriptingPauseSlideshow" />
+		</command>
+		<command name="resume slideshow" code="IPXSslre" description="Resume the currently-playing slideshow." >
+			<!-- access group for slideshow -->
+			<access-group identifier="com.apple.Photos.slideshow"/>
+			<cocoa class="IPXScriptingResumeSlideshow" />
+		</command>
+
+		<!-- Spotlight -->
+		<command name="spotlight" code="IPXSspot" description="Show the image at path in the application, used to show spotlight search results">
+			<!-- access group for spotlight -->
+			<access-group identifier="com.apple.Photos.spotlight"/>
+			<cocoa class="IPXScriptingSpotlight"/>
+			<direct-parameter description="The full path to the image" >
+				<type type="text" />
+				<type type="media item" />
+				<type type="container" />
+			</direct-parameter>
+		</command>
+
+		<!-- Search -->
+		<command name="search" code="IPXSsrch" description="search for items matching the search string. Identical to entering search text in the Search field in Photos">
+			<!-- access group for search -->
+			<access-group identifier="com.apple.Photos.search"/>
+			<cocoa class="IPXScriptingSearch"/>
+			<parameter name="for" code="pTrm" type="text" description="The text to search for" >
+				<cocoa key="SearchContent"/>
+			</parameter>
+			<result description="reference(s) to found media item(s)">
+				<type type="media item" list="yes" />
+			</result>
+		</command>
+		
+		<!-- classes -->
+		<class-extension extends="application" description="The top level scripting object for Photos.">
+		    
+			<!-- access group for library read -->
+			<access-group identifier="com.apple.Photos.library.read" access="r"/>
+			<access-group identifier="com.apple.Photos.library.read" access="rw"/>
+
+			<element type="container" access="r" description="Top level containers in the library, including user created albums and folders, as well as the favorites album"/>
+			<element type="album" access="r" description="All user created albums in the library, in no specific order">
+				<access-group identifier="com.apple.Photos.import" access="rw"/>
+			</element>
+			<element type="folder" access="r" description="All user created folders in the library, in no specific order"/>
+			<element type="media item" access="r" description="Media items in the library"/>
+			<element type="moment" access="r" description="Moments in the library" hidden="yes" />
+		    
+			<property name="selection" code="selc" access="r" description="The currently selected media items in the application" >
+				<type type="media item" list="yes" />
+			</property>
+			<property name="favorites album" code="fvAl" type="album" access="r" description="Favorited media items album." />
+			<property name="last import album" code="lstI" type="album" access="r" description="Last import album." hidden="yes" />
+			<property name="slideshow running" code="SSrn" type="boolean" access="r" description="Returns true if a slideshow is currently running." />
+			<property name="recently deleted album" code="trAl" type="album" access="r" description="The set of recently deleted media items" />
+		</class-extension>
+		
+		<class name="media item" code="IPmi" description="A media item, such as a photo or video." >
+			<!-- access group for library read/write-->
+			<access-group identifier="com.apple.Photos.library.read" access="r"/>
+			<access-group identifier="com.apple.Photos.library.read-write" access="rw"/>
+			<cocoa class="IPXScriptingMediaItem"/>
+		    
+			<!-- RW props -->
+			<property name="keywords" code="IPkw" description="A list of keywords to associate with a media item">
+				<type type="text" list="yes" />
+			</property>
+			<property name="name" code="pnam" type="text" description="The name (title) of the media item." />
+			<property name="description" code="IPde" type="text" description="A description of the media item." >
+				<cocoa key="iptcCaption" />
+			</property>
+			<property name="favorite" code="IPfv" type="boolean" description="Whether the media item has been favorited." />
+			<property name="date" code="idat" type="date" description="The date of the media item" />
+
+			<!-- RO props -->
+			<property name="id" code="ID  " type="text" access="r" description="The unique ID of the media item" >
+				<cocoa key="localIdentifier"/>
+			</property>
+			<property name="height" code="phit" type="integer" access="r" description="The height of the media item in pixels." />
+			<property name="width" code="pwid" type="integer" access="r" description="The width of the media item in pixels." />
+			<property name="filename" code="filn" type="text" access="r" description="The name of the file on disk." />
+			<property name="altitude" code="alti" type="real" access="r" description="The GPS altitude in meters." />
+			<property name="size" code="fsiz" type="integer" access="rw" description="The selected media item file size." />
+			<property name="location" code="IPlo" description="The GPS latitude and longitude, in an ordered list of 2 numbers or missing values.  Latitude in range -90.0 to 90.0, longitude in range -180.0 to 180.0." >
+				<type type="real" list="yes" />
+				<type type="missing value" list="yes" />
+			</property>
+			<responds-to command="duplicate">
+				<cocoa method="handleDuplicateScriptCommand:"/>
+			</responds-to>
+			<responds-to command="spotlight">
+				<cocoa method="handleSpotlightScriptCommand:"/>
+			</responds-to>
+		</class>
+		
+		<class name="container" code="IPct" description="Base class for collections that contains other items, such as albums and folders" >
+			<!-- access group for library read/write-->
+			<access-group identifier="com.apple.Photos.library.read" access="r"/>
+			<access-group identifier="com.apple.Photos.library.read-write" access="rw"/>
+			<cocoa class="IPXScriptingContainer"/>
+			<property name="id" code="ID  " type="text" access="r" description="The unique ID of this container." >
+				<cocoa key="localIdentifier"/>
+			</property>
+			<property name="name" code="pnam" type="text" description="The name of this container." />
+			<property name="parent" code="pare" type="folder" access="r" description="This container's parent folder, if any.">
+				<synonym code="fdPx"/>
+			</property>
+			<responds-to command="spotlight">
+				<cocoa method="handleSpotlightScriptCommand:"/>
+			</responds-to>
+		</class>
+
+		<class name="album" code="IPal" description="An album. A container that holds media items" inherits="container" >
+			<!-- access group for library read/write-->
+			<access-group identifier="com.apple.Photos.library.read" access="r"/>
+			<access-group identifier="com.apple.Photos.library.read-write" access="rw"/>
+			<cocoa class="IPXScriptingAlbum"/>
+			<element type="media item" access="r" description="The media items contained in this album" />
+		</class>
+
+		<class name="folder" code="IPfd" description="A folder. A container that holds albums and other folders, but not media items" inherits="container" >
+			<!-- access group for library read/write-->
+			<access-group identifier="com.apple.Photos.library.read" access="r"/>
+			<access-group identifier="com.apple.Photos.library.read-write" access="rw"/>
+			<cocoa class="IPXScriptingFolder"/>
+			<element type="container" access="r" description="The children containers contained in this folder" />
+			<element type="album" access="r" description="All albums contained in this folder"/>
+			<element type="folder" access="r" description="All folders contained in this folder"/>
+		</class>
+		
+		<!-- moments -->
+		<class name="moment" code="IPmm" description="A set of media items that represents a Moment." hidden="yes" >
+			<!-- access group for library read -->
+			<access-group identifier="com.apple.Photos.library.read" access="r"/>
+			<cocoa class="IPXScriptingMoment"/>
+			<element type="media item" access="r" description="The media items contained in this Moment" />
+			<property name="id" code="ID  " type="text" access="r" description="The unique ID of the Moment." >
+				<cocoa key="localIdentifier"/>
+			</property>
+			<property name="name" code="pnam" type="text" access="r" description="The name of the Moment." />
+		</class>
+	</suite>
+</dictionary>

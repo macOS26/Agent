@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+<dictionary>
+	<suite name="AppleScript Utility Suite" code="scut" description="Terms and Events for controlling the AppleScript Utility application">
+		<enumeration name="ApplicationScriptsPositions" code="ascp">
+			<enumerator name="top" code="top " description="top">
+				<cocoa name="Top" />
+			</enumerator>
+			<enumerator name="bottom" code="bttm" description="bottom">
+				<cocoa name="Bottom" />
+			</enumerator>
+		</enumeration>
+		<class name="application" plural="applications" code="capp" inherits="item" description="the AppleScript Utility application">
+			<cocoa class="NSApplication" />
+			<property type="file" name="default script editor" code="sced" description="the editor to be used to open scripts">
+				<cocoa key="defaultScriptEditor" />
+			</property>
+			<property type="boolean" name="GUI Scripting enabled" code="gsen" access="r" description="Are GUI Scripting events currently being processed?">
+				<cocoa key="guiScriptingEnabled" />
+			</property>
+			<property type="ApplicationScriptsPositions" name="application scripts position" code="ascp" description="the position in the Script menu at which the application scripts are displayed">
+				<cocoa key="applicationScriptsPosition" />
+			</property>
+			<property type="boolean" name="Script menu enabled" code="scmn" description="Is the Script menu installed in the menu bar?">
+				<cocoa key="scriptMenuEnabled" />
+			</property>
+			<property type="boolean" name="show Computer scripts" code="swlb" description="Are the Computer scripts shown in the Script menu?">
+				<cocoa key="showLibraryScripts" />
+			</property>
+			<property type="boolean" name="UI elements enabled" code="uien" access="r" description="Are UI element events currently being processed?" hidden="yes">
+				<cocoa key="uiElementsEnabled" />
+			</property>
+		</class>
+	</suite>
+</dictionary>

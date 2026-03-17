@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+
+<dictionary xmlns:xi="http://www.w3.org/2001/XInclude">
+
+	<xi:include href="file://localhost/System/Library/ScriptingDefinitions/CocoaStandard.sdef" xpointer="xpointer(/dictionary/suite)"/>
+	
+	<suite name="Notes Suite" code="note" description="Terms and Events for controlling the Notes application">
+		
+		<command name="open note location" code="noteopen" description="Open a note URL.">
+			<access-group identifier="com.apple.Notes.openlocation"/>
+			<direct-parameter description="The URL to be opened.">
+				<type type="text"/>
+			</direct-parameter>
+			<cocoa class="ICOpenNoteCommand"/>
+		</command>
+		
+		<command name="show" code="noteshow" description="Show an object in the UI">
+			<direct-parameter description="The object to be shown">
+				<type type="account"/>
+				<type type="folder"/>
+				<type type="note"/>
+				<type type="attachment"/>
+			</direct-parameter>
+			<parameter name="separately" code="sepa" type="boolean" optional="yes"/>
+			<result description="The object shown.">
+				<type type="account"/>
+				<type type="folder"/>
+				<type type="note"/>
+				<type type="attachment"/>
+			</result>
+		</command>
+		
+		<class-extension extends="application" description="the Notes application">
+			<cocoa class="NSApplication"/>
+			<property name="default account" code="dfac" type="account" description="the default account for creating notes">
+				<cocoa key="scriptingDefaultAccount"/>
+			</property>
+			<property name="selection" code="seln" description="the selected note(s)">
+				<type type="note" list="yes"/>
+				<cocoa key="scriptingSelection"/>
+			</property>
+			<element type="account">
+				<cocoa key="scriptingAccounts" insert-at-beginning="yes"/>
+			</element>
+			<element type="folder">
+				<cocoa key="scriptingFolders" insert-at-beginning="yes"/>
+			</element>
+			<element type="note">
+				<cocoa key="scriptingNotes" insert-at-beginning="yes"/>
+			</element>
+			<element type="attachment">
+				<cocoa key="scriptingAttachments" insert-at-beginning="yes"/>
+			</element>
+		</class-extension>
+		
+		<class name="account" code="acct" description="a Notes account">
+			<cocoa class="ICScriptingAccount"/>
+			<responds-to command="show">
+				<cocoa method="handleShowScriptCommand:"/>
+			</responds-to>
+			<property name="default folder" code="dfol" type="folder" description="the default folder for creating notes">
+				<cocoa key="scriptingDefaultFolder"/>
+			</property>
+			<element type="folder">
+				<cocoa key="scriptingFolders" insert-at-beginning="yes"/>
+			</element>
+			<element type="note">
+				<cocoa key="scriptingNotes" insert-at-beginning="yes"/>
+			</element>
+			<property name="name" code="pnam" type="text" description="the name of the account">
+				<cocoa key="accountDescription"/>
+			</property>
+			<property name="upgraded" code="upgr" type="boolean" access="r" description="Is the account upgraded?">
+				<cocoa key="isUpgraded"/>
+			</property>
+			<property name="id" code="ID  " type="text" access="r" description="the unique identifier of the account">
+				<cocoa key="scriptingID"/>
+			</property>
+		</class>
+		
+		<class name="folder" code="cfol" description="a folder containing notes">
+			<synonym code="asdr"/>
+			<cocoa class="ICScriptingFolder"/>
+			<responds-to command="show">
+				<cocoa method="handleShowScriptCommand:"/>
+			</responds-to>
+			<element type="folder">
+				<cocoa key="scriptingFolders" insert-at-beginning="yes"/>
+			</element>
+			<element type="note">
+				<cocoa key="scriptingNotes" insert-at-beginning="yes"/>
+			</element>
+			<property name="name" code="pnam" type="text" description="the name of the folder">
+				<cocoa key="scriptingName"/>
+            </property>
+			<property name="id" code="ID  " type="text" access="r" description="the unique identifier of the folder">
+				<cocoa key="scriptingID"/>
+			</property>
+			<property name="shared" code="shrd" type="boolean" access="r" description="Is the folder shared?">
+				<cocoa key="isShared"/>
+			</property>
+			<property name="container" code="cntr" access="r" description="the container of the folder">
+				<cocoa key="scriptingContainer"/>
+				<type type="account"/>
+				<type type="folder"/>
+			</property>
+		</class>
+		
+		<class name="note" code="note" description="a note in the Notes application">
+			<cocoa class="ICScriptingNote"/>
+			<responds-to command="show">
+				<cocoa method="handleShowScriptCommand:"/>
+			</responds-to>
+			<element type="attachment">
+				<cocoa key="scriptingAttachments" insert-at-beginning="yes"/>
+			</element>
+			<property name="name" code="pnam" type="text" description="the name of the note (normally the first line of the body)"/>
+			<property name="id" code="ID  " type="text" access="r" description="the unique identifier of the note">
+				<cocoa key="scriptingID"/>
+			</property>
+			<property name="container" code="cntr" type="folder" access="r" description="the folder of the note">
+				<cocoa key="folder"/>
+			</property>
+			<property name="body" code="body" type="text" description="the HTML content of the note">
+				<cocoa key="scriptingBody"/>
+			</property>
+			<property name="plaintext" code="text" type="text" access="r" description="the plaintext content of the note">
+				<cocoa key="scriptingPlainText"/>
+			</property>
+			<property name="creation date" code="ascd" type="date" access="r" description="the creation date of the note">
+				<cocoa key="creationDate"/>
+			</property>
+			<property name="modification date" code="asmo" type="date" access="r" description="the modification date of the note">
+				<cocoa key="modificationDate"/>
+			</property>
+			<property name="password protected" code="pwpr" type="boolean" access="r" description="Is the note password protected?">
+				<cocoa key="isPasswordProtected"/>
+			</property>
+			<property name="shared" code="shrd" type="boolean" access="r" description="Is the note shared?">
+				<cocoa key="isShared"/>
+			</property>
+		</class>
+		
+		<class name="attachment" code="atts" description="an attachment in a note">
+			<cocoa class="ICScriptingAttachment"/>
+			<responds-to command="show">
+				<cocoa method="handleShowScriptCommand:"/>
+			</responds-to>
+			<property name="name" code="pnam" type="text" access="r" description="the name of the attachment">
+				<cocoa key="filename"/>
+			</property>
+			<property name="id" code="ID  " type="text" access="r" description="the unique identifier of the attachment">
+				<cocoa key="scriptingID"/>
+			</property>
+			<property name="container" code="cntr" type="note" access="r" description="the note containing the attachment">
+				<cocoa key="note"/>
+			</property>
+			<property name="content identifier" code="cid " type="text" access="r" description="the content-id URL in the note's HTML">
+				<cocoa key="scriptingCID"/>
+			</property>
+			<property name="creation date" code="ascd" type="date" access="r" description="the creation date of the attachment">
+				<cocoa key="scriptingCreationDate"/>
+			</property>
+			<property name="modification date" code="asmo" type="date" access="r" description="the modification date of the attachment">
+				<cocoa key="scriptingModificationDate"/>
+			</property>
+			<property name="URL" code="URL " type="text" access="r" description="for URL attachments, the URL the attachment represents">
+				<cocoa key="scriptingURL"/>
+			</property>
+			<property name="shared" code="shrd" type="boolean" access="r" description="Is the attachment shared?">
+				<cocoa key="isShared"/>
+			</property>
+			<!--
+				It might seem a little weird to have a hidden contents property. We do this to facilitate creating
+				an attachment like this: "make new attachment with data myFile". Internally we copy the file to a
+				private location, and we don't want to expose that location in the scripting interface, hence we
+				hide the contents.
+			-->
+			<contents type="file" hidden="yes">
+				<cocoa key="scriptingContents"/>
+			</contents>
+			<responds-to command="save">
+				<cocoa method="handleSaveScriptCommand:"/>
+			</responds-to>
+		</class>
+		
+		<!--
+			This enumeration is used by the "save" command in the imported Cocoa Standard suite. We don't really
+			support saving items in different formats, but if we don't declare a "savable file format" type then
+			we get a runtime error.
+		-->
+		<enumeration name="saveable file format" code="savf">
+			<enumerator name="native format" code="item" description="Native format">
+				<cocoa string-value="public.item"/>
+			</enumerator>
+		</enumeration>
+		
+	</suite>
+	
+</dictionary>

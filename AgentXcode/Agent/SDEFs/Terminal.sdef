@@ -1,0 +1,576 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd"> 
+<dictionary title="Terminal Terminology">
+	<!--
+		STANDARD SUITE
+	-->
+	<suite name="Standard Suite" code="????" 
+			description="Common classes and commands for all applications."> 
+		<command name="open" code="aevtodoc" 
+				description="Open a document."> 
+			<direct-parameter description="The file(s) to be opened."> 
+				<type type="file" list="yes"/> 
+			</direct-parameter> 
+		</command> 
+		<enumeration name="save options" code="savo"> 
+			<enumerator name="yes" code="yes " description="Save the file."/> 
+			<enumerator name="no" code="no  " description="Do not save the file."/> 
+			<enumerator name="ask" code="ask " 
+				description="Ask the user whether or not to save the file."/> 
+		</enumeration> 
+		<command name="close" code="coreclos" description="Close a document."> 
+			<cocoa class="NSCloseCommand"/> 
+			<direct-parameter type="specifier" 
+				description="the document(s) or window(s) to close."/> 
+			<parameter name="saving" code="savo" type="save options" optional="yes" 
+				description="Whether or not changes should be saved before closing."> 
+				<cocoa key="SaveOptions"/> 
+			</parameter> 
+			<parameter name="saving in" code="kfil" type="file" optional="yes" 
+				description="The file in which to save the document."> 
+				<cocoa key="File"/> 
+			</parameter> 
+		</command> 
+		<command name="save" code="coresave" description="Save a document."> 
+			<direct-parameter type="specifier" 
+				description="The document(s) or window(s) to save."/> 
+			<parameter name="in" code="kfil" type="file" optional="yes" 
+				description="The file in which to save the document."> 
+				<cocoa key="File"/> 
+			</parameter> 
+			<!-- 
+			<parameter name="as" code="fltp" type="text" optional="yes"
+				description="The type of file to save."> 
+				<cocoa key="FileType"/> 
+			</parameter> 
+			--> 
+		</command> 
+		<enumeration name="printing error handling" code="enum"> 
+			<enumerator name="standard" code="lwst" 
+				description="Standard PostScript error handling"/> 
+			<enumerator name="detailed" code="lwdt" 
+				description="print a detailed report of PostScript errors"/> 
+		</enumeration> 
+		<record-type name="print settings" code="pset"> 
+			<property name="copies" code="lwcp" type="integer" 
+				description="the number of copies of a document to be printed"> 
+				<cocoa key="NSCopies"/> 
+			</property> 
+			<property name="collating" code="lwcl" type="boolean" 
+				description="Should printed copies be collated?"> 
+				<cocoa key="NSMustCollate"/> 
+			</property> 
+			<property name="starting page" code="lwfp" type="integer" 
+				description="the first page of the document to be printed"> 
+				<cocoa key="NSFirstPage"/> 
+			</property> 
+			<property name="ending page" code="lwlp" type="integer" 
+				description="the last page of the document to be printed"> 
+				<cocoa key="NSLastPage"/> 
+			</property> 
+			<property name="pages across" code="lwla" type="integer" 
+				description="number of logical pages laid across a physical page"> 
+				<cocoa key="NSPagesAcross"/> 
+			</property> 
+			<property name="pages down" code="lwld" type="integer" 
+				description="number of logical pages laid out down a physical page"> 
+				<cocoa key="NSPagesDown"/> 
+			</property> 
+			<property name="error handling" code="lweh" type="printing error handling" 
+				description="how errors are handled"> 
+				<cocoa key="NSDetailedErrorReporting"/> 
+			</property> 
+			<property name="fax number" code="faxn" type="text" 
+				description="for fax number"> 
+				<cocoa key="NSFaxNumber"/> 
+			</property> 
+			<property name="target printer" code="trpr" type="text" 
+				description="for target printer"> 
+				<cocoa key="NSPrinterName"/> 
+			</property> 
+		</record-type> 
+		<command name="print" code="aevtpdoc" 
+				description="Print a document."> 
+			<direct-parameter 
+				description="The file(s), document(s), or window(s) to be printed."> 
+				<type type="file" list="yes"/> 
+				<type type="specifier"/> 
+			</direct-parameter> 
+			<parameter name="with properties" code="prdt" type="print settings" optional="yes" 
+				description="The print settings to use."> 
+				<cocoa key="PrintSettings"/> 
+			</parameter> 
+			<parameter name="print dialog" code="pdlg" type="boolean" optional="yes" 
+				description="Should the application show the print dialog?"> 
+				<cocoa key="ShowPrintDialog"/> 
+			</parameter> 
+		</command> 
+		<command name="quit" code="aevtquit" description="Quit the application."> 
+			<cocoa class="NSQuitCommand"/> 
+			<parameter name="saving" code="savo" type="save options" optional="yes" 
+				description="Whether or not changed documents should be saved before closing."> 
+				<cocoa key="SaveOptions"/> 
+			</parameter> 
+		</command> 
+		<command name="count" code="corecnte" 
+				description="Return the number of elements of a particular class within an object."> 
+			<cocoa class="NSCountCommand"/> 
+			<direct-parameter type="specifier" 
+				description="the object whose elements are to be counted"/> 
+			<parameter name="each" code="kocl" type="type" optional="yes" 
+				description="The class of objects to be counted."> 
+				<cocoa key="ObjectClass"/> 
+			</parameter> 
+			<result type="integer" description="the number of elements"/> 
+		</command> 
+		<command name="delete" code="coredelo" description="Delete an object."> 
+			<cocoa class="NSDeleteCommand"/> 
+			<direct-parameter type="specifier" description="the object to delete"/> 
+		</command> 
+		<command name="duplicate" code="coreclon" 
+				description="Copy object(s) and put the copies at a new location."> 
+			<cocoa class="NSCloneCommand"/> 
+			<direct-parameter type="specifier" 
+				description="the object(s) to duplicate"/> 
+			<parameter name="to" code="insh" type="location specifier" 
+				description="The location for the new object(s)."> 
+				<cocoa key="ToLocation"/> 
+			</parameter> 
+			<parameter name="with properties" code="prdt" type="record" optional="yes"
+				description="Properties to be set in the new duplicated object(s)."> 
+				<cocoa key="WithProperties"/> 
+			</parameter> 
+		</command> 
+		<command name="exists" code="coredoex" description="Verify if an object exists."> 
+			<cocoa class="NSExistsCommand"/> 
+			<direct-parameter type="specifier" description="the object in question"/> 
+			<result type="boolean" description="true if it exists, false if not"/> 
+		</command> 
+		<command name="make" code="corecrel" description="Make a new object."> 
+			<cocoa class="NSCreateCommand"/> 
+			<parameter name="new" code="kocl" type="type" 
+				description="The class of the new object."> 
+				<cocoa key="ObjectClass"/> 
+			</parameter> 
+			<parameter name="at" code="insh" type="location specifier" optional="yes" 
+				description="The location at which to insert the object."> 
+				<cocoa key="Location"/> 
+			</parameter> 
+			<parameter name="with data" code="data" type="any" optional="yes" 
+				description="The initial contents of the object."> 
+				<cocoa key="ObjectData"/> 
+			</parameter> 
+			<parameter name="with properties" code="prdt" type="record" optional="yes" 
+				description="The initial values for properties of the object."> 
+				<cocoa key="KeyDictionary"/> 
+			</parameter> 
+			<result type="specifier" description="to the new object"/> 
+		</command> 
+		<command name="move" code="coremove" 
+				description="Move object(s) to a new location."> 
+			<cocoa class="NSMoveCommand"/> 
+			<direct-parameter type="specifier" description="the object(s) to move"/> 
+			<parameter name="to" code="insh" type="location specifier" 
+				description="The new location for the object(s)."> 
+				<cocoa key="ToLocation"/> 
+			</parameter> 
+		</command> 
+		<class name="application" code="capp" 
+				description="The application‘s top-level scripting object."> 
+			<cocoa class="TTApplication"/> 
+			<property name="name" code="pnam" type="text" access="r" 
+				description="The name of the application."/> 
+			<property name="frontmost" code="pisf" type="boolean" access="r" 
+				description="Is this the frontmost (active) application?"> 
+				<cocoa key="isActive"/> 
+			</property> 
+			<property name="version" code="vers" type="text" access="r" 
+				description="The version of the application."/> 
+			<element type="window" access="r"> 
+				<cocoa key="orderedWindows"/> 
+			</element> 
+			<responds-to command="open"> 
+				<cocoa method="handleOpenScriptCommand:"/> 
+			</responds-to> 
+			<responds-to command="print"> 
+				<cocoa method="handlePrintScriptCommand:"/> 
+			</responds-to> 
+			<responds-to command="quit"> 
+				<cocoa method="handleQuitScriptCommand:"/> 
+			</responds-to>
+			
+			<responds-to command="get URL">
+				<cocoa method="handleGetURLScriptCommand:" />
+			</responds-to>
+		</class> 
+		<class name="window" code="cwin" description="A window."> 
+			<cocoa class="TTWindow"/>
+			<property name="name" code="pnam" type="text" access="r"
+				description="The full title of the window."> 
+				<cocoa key="title"/> 
+			</property> 
+			<property name="id" code="ID  " type="integer" access="r" 
+				description="The unique identifier of the window."> 
+				<cocoa key="uniqueID"/> 
+			</property> 
+			<property name="index" code="pidx" type="integer" 
+				description="The index of the window, ordered front to back."> 
+				<cocoa key="orderedIndex"/> 
+			</property> 
+			<property name="bounds" code="pbnd" type="rectangle" 
+				description="The bounding rectangle of the window."> 
+				<cocoa key="boundsAsQDRect"/> 
+			</property> 
+			<property name="closeable" code="hclb" type="boolean" access="r" 
+				description="Whether the window has a close box."> 
+				<cocoa key="hasCloseBox"/> 
+			</property> 
+			<property name="miniaturizable" code="ismn" type="boolean" access="r" 
+				description="Whether the window can be minimized."> 
+				<cocoa key="isMiniaturizable"/> 
+			</property> 
+			<property name="miniaturized" code="pmnd" type="boolean" 
+				description="Whether the window is currently minimized."> 
+				<cocoa key="isMiniaturized"/> 
+			</property> 
+			<property name="resizable" code="prsz" type="boolean" access="r" 
+				description="Whether the window can be resized."> 
+				<cocoa key="isResizable"/> 
+			</property> 
+			<property name="visible" code="pvis" type="boolean" 
+				description="Whether the window is currently visible."> 
+				<cocoa key="isVisible"/> 
+			</property> 
+			<property name="zoomable" code="iszm" type="boolean" access="r" 
+				description="Whether the window can be zoomed."> 
+				<cocoa key="isZoomable"/> 
+			</property> 
+			<property name="zoomed" code="pzum" type="boolean" 
+				description="Whether the window is currently zoomed."> 
+				<cocoa key="isZoomed"/> 
+			</property>
+			<property name="frontmost" description="Whether the window is currently the frontmost Terminal window." code="pisf" type="boolean">
+				<cocoa key="scriptFrontmost"/>
+			</property>
+			<element type="tab" access="r">
+				<cocoa key="tabControllers" />
+			</element>
+			<contents name="selected tab" description="" type="tab" code="tcnt">
+				<cocoa key="selectedTabController" />
+			</contents>
+			<responds-to command="close"> 
+				<cocoa method="handleCloseScriptCommand:"/> 
+			</responds-to> 
+			<responds-to command="print"> 
+				<cocoa method="handlePrintScriptCommand:"/> 
+			</responds-to> 
+			<responds-to command="save"> 
+				<cocoa method="handleSaveScriptCommand:"/> 
+			</responds-to> 
+			
+			<!-- compatibility -->
+			<property name="position" description="The position of the window, relative to the upper left corner of the screen." code="ppos" type="point">
+				<cocoa key="scriptPosition" />
+				<documentation>
+					<html>
+						<![CDATA[
+						<i>Deprecated; use bounds instead.</i>
+						]]>
+					</html>
+				</documentation>
+			</property>
+			<property name="origin" description="The position of the window, relative to the lower left corner of the screen." code="pori" type="point">
+				<cocoa key="scriptOrigin" />
+				<documentation>
+					<html>
+						<![CDATA[
+						<i>Deprecated; use bounds instead.</i>
+						]]>
+					</html>
+				</documentation>
+			</property>
+			<property name="size" description="The width and height of the window" code="psiz" type="point">
+				<cocoa key="scriptSize" />
+				<documentation>
+					<html>
+						<![CDATA[
+						<i>Deprecated; use bounds instead.</i>
+						]]>
+					</html>
+				</documentation>
+			</property>
+			<property name="frame" description="The bounding rectangle, relative to the lower left corner of the screen." code="pfra" type="rectangle">
+				<cocoa key="scriptFrame" />
+				<documentation>
+					<html>
+						<![CDATA[
+						<i>Deprecated; use bounds instead.</i>
+						]]>
+					</html>
+				</documentation>
+			</property>
+		</class> 
+	</suite> 
+
+	<suite name="Terminal Suite" code="trmx" description="Terminal specific classes."> 
+		<value-type name="color" code="cRGB">
+			<cocoa class="NSColor"/>
+		</value-type>
+				
+		<command name="do script" code="coredosc" description="Runs a UNIX shell script or command."> 
+			<cocoa class="TTDoScriptCommand"/>
+			<direct-parameter type="text" description="The command to execute." optional="yes"/>
+			<parameter name="with command" description="Data to be passed to the Terminal application as the command line. Deprecated; use direct parameter instead." code="cmnd" optional="yes" hidden="yes">
+				<cocoa key="Command" />
+				<type type="text" />
+				<type type="any" /> <!-- support null case -->
+			</parameter>
+			<parameter name="in" description="The tab in which to execute the command" code="kfil" optional="yes">
+				<cocoa key="Target" />
+				<type type="tab" />
+				<type type="window" />
+				<type type="any" /> <!-- support null case -->
+			</parameter>
+			<result type="tab" description="The tab the command was executed in." />
+		</command>
+		
+		<command name="get URL" code="GURLGURL" description="Open a command an ssh, telnet, or x-man-page URL." hidden="yes">
+			<direct-parameter type="text" description="The URL to open." />
+		</command>
+		
+		<class-extension extends="application">
+			<element type="settings set" access="r">
+				<cocoa key="scriptSettings" />
+			</element>
+			<property name="default settings" description="The settings set used for new windows." code="tdpr" type="settings set">
+				<cocoa key="scriptDefaultSettings" />
+			</property>
+			<property name="startup settings" description="The settings set used for the window created on application startup." code="tspr" type="settings set">
+				<cocoa key="scriptStartupSettings" />
+			</property>
+		</class-extension>
+		
+		<class name="settings set" plural="settings sets" code="tprf" description="A set of settings.">
+			<cocoa class="TTProfile" />
+			<property name="id" code="ID  " type="integer" access="r" 
+				description="The unique identifier of the settings set."> 
+				<cocoa key="scriptUniqueID"/> 
+			</property> 
+			<property name="name" description="The name of the settings set." code="pnam" type="text">
+				<cocoa key="name" />
+			</property>
+			<property name="number of rows" description="The number of rows displayed in the tab." code="crow" type="integer">
+				<cocoa key="scriptNumberOfRows" />
+			</property>
+			<property name="number of columns" description="The number of columns displayed in the tab." code="ccol" type="integer">
+				<cocoa key="scriptNumberOfColumns" />
+			</property>
+			<property name="cursor color" description="The cursor color for the tab." code="pcuc" type="color">
+				<cocoa key="scriptCursorColor" />
+			</property>
+			<property name="background color" description="The background color for the tab." code="pbcl" type="color">
+				<cocoa key="scriptBackgroundColor" />
+			</property>
+			<property name="normal text color" description="The normal text color for the tab." code="ptxc" type="color">
+				<cocoa key="scriptNormalTextColor" />
+			</property>
+			<property name="bold text color" description="The bold text color for the tab." code="pbtc" type="color">
+				<cocoa key="scriptBoldTextColor" />
+			</property>
+			<property name="font name" description="The name of the font used to display the tab’s contents." code="font" type="text">
+				<cocoa key="scriptFontName" />
+			</property>
+			<property name="font size" description="The size of the font used to display the tab’s contents." code="ptsz" type="integer">
+				<cocoa key="scriptFontSize" />
+			</property>
+			<property name="font antialiasing" description="Whether the font used to display the tab’s contents is antialiased." code="panx" type="boolean">
+				<cocoa key="scriptFontAntialiasing" />
+			</property>
+			<property name="clean commands" description="The processes which will be ignored when checking whether a tab can be closed without showing a prompt." code="tcln">
+				<cocoa key="scriptCleanCommands" />
+				<type type="text" list="yes" />
+			</property>
+			<property name="title displays device name" description="Whether the title contains the device name." code="tddn" type="boolean">
+				<cocoa key="scriptTitleDisplaysDeviceName" />
+			</property>
+			<property name="title displays shell path" description="Whether the title contains the shell path." code="tdsp" type="boolean">
+				<cocoa key="scriptTitleDisplaysShellPath" />
+			</property>
+			<property name="title displays window size" description="Whether the title contains the tab’s size, in rows and columns." code="tdws" type="boolean">
+				<cocoa key="scriptTitleDisplaysWindowSize" />
+			</property>
+			<property name="title displays settings name" description="Whether the title contains the settings name." code="tdsn" type="boolean">
+				<cocoa key="scriptTitleDisplaysSettingsName" />
+			</property>
+			<property name="title displays custom title" description="Whether the title contains a custom title." code="tdct" type="boolean">
+				<cocoa key="scriptTitleDisplaysCustomTitle" />
+			</property>
+			<property name="custom title" description="The tab’s custom title." code="titl" type="text">
+				<cocoa key="scriptCustomTitle" />
+			</property>			
+		</class>
+		
+		<class name="tab" plural="tabs" code="ttab" description="A tab.">
+			<cocoa class="TTTabController" />
+			<property name="number of rows" description="The number of rows displayed in the tab." code="crow" type="integer">
+				<cocoa key="scriptNumberOfRows" />
+			</property>
+			<property name="number of columns" description="The number of columns displayed in the tab." code="ccol" type="integer">
+				<cocoa key="scriptNumberOfColumns" />
+			</property>
+			<property name="contents" description="The currently visible contents of the tab." code="pcnt" type="text" access="r">
+				<cocoa key="scriptContents" />
+			</property>
+			<property name="history" description="The contents of the entire scrolling buffer of the tab." code="hist" type="text" access="r">
+				<cocoa key="scriptHistory" />
+			</property>
+			<property name="busy" description="Whether the tab is busy running a process." code="busy" type="boolean" access="r">
+				<cocoa key="scriptBusy" />
+			</property>
+			<property name="processes" description="The processes currently running in the tab." code="prcs" access="r">
+				<cocoa key="scriptProcesses" />
+				<type type="text" list="yes" />
+			</property>
+			<property name="selected" description="Whether the tab is selected." code="tbsl" type="boolean">
+				<cocoa key="scriptSelected" />
+			</property>
+			<property name="title displays custom title" description="Whether the title contains a custom title." code="tdct" type="boolean">
+				<cocoa key="scriptTitleDisplaysCustomTitle" />
+			</property>
+			<property name="custom title" description="The tab’s custom title." code="titl" type="text">
+				<cocoa key="scriptCustomTitle" />
+			</property>			
+			
+			<property name="tty" description="The tab’s TTY device." code="ttty" type="text" access="r">
+				<cocoa key="scriptTTY" />
+			</property>
+			<property name="current settings" description="The set of settings which control the tab’s behavior and appearance." code="tcst" type="settings set">
+				<cocoa key="profile" />
+			</property>
+			<property name="cursor color" description="The cursor color for the tab." code="pcuc" type="color">
+				<cocoa key="scriptCursorColor" />
+				<documentation>
+					<html>
+						<![CDATA[
+						<i>Deprecated; use current settings instead.</i>
+						]]>
+					</html>
+				</documentation>
+			</property>
+			<property name="background color" description="The background color for the tab." code="pbcl" type="color">
+				<cocoa key="scriptBackgroundColor" />
+				<documentation>
+					<html>
+						<![CDATA[
+						<i>Deprecated; use current settings instead.</i>
+						]]>
+					</html>
+				</documentation>
+			</property>
+			<property name="normal text color" description="The normal text color for the tab." code="ptxc" type="color">
+				<cocoa key="scriptNormalTextColor" />
+				<documentation>
+					<html>
+						<![CDATA[
+						<i>Deprecated; use current settings instead.</i>
+						]]>
+					</html>
+				</documentation>
+			</property>
+			<property name="bold text color" description="The bold text color for the tab." code="pbtc" type="color">
+				<cocoa key="scriptBoldTextColor" />
+				<documentation>
+					<html>
+						<![CDATA[
+						<i>Deprecated; use current settings instead.</i>
+						]]>
+					</html>
+				</documentation>
+			</property>
+			<property name="clean commands" description="The processes which will be ignored when checking whether a tab can be closed without showing a prompt." code="tcln">
+				<cocoa key="scriptCleanCommands" />
+				<type type="text" list="yes" />
+				<documentation>
+					<html>
+						<![CDATA[
+						<i>Deprecated; use current settings instead.</i>
+						]]>
+					</html>
+				</documentation>
+			</property>
+			
+			<property name="title displays device name" description="Whether the title contains the device name." code="tddn" type="boolean">
+				<cocoa key="scriptTitleDisplaysDeviceName" />
+				<documentation>
+					<html>
+						<![CDATA[
+						<i>Deprecated; use current settings instead.</i>
+						]]>
+					</html>
+				</documentation>
+			</property>
+			<property name="title displays shell path" description="Whether the title contains the shell path." code="tdsp" type="boolean">
+				<cocoa key="scriptTitleDisplaysShellPath" />
+				<documentation>
+					<html>
+						<![CDATA[
+						<i>Deprecated; use current settings instead.</i>
+						]]>
+					</html>
+				</documentation>
+			</property>
+			<property name="title displays window size" description="Whether the title contains the tab’s size, in rows and columns." code="tdws" type="boolean">
+				<cocoa key="scriptTitleDisplaysWindowSize" />
+				<documentation>
+					<html>
+						<![CDATA[
+						<i>Deprecated; use current settings instead.</i>
+						]]>
+					</html>
+				</documentation>
+			</property>
+			<property name="title displays file name" description="Whether the title contains the file name." code="tdfn" type="boolean">
+				<cocoa key="scriptTitleDisplaysFileName" />
+				<documentation>
+					<html>
+						<![CDATA[
+						<i>Deprecated; use current settings instead.</i>
+						]]>
+					</html>
+				</documentation>
+			</property>
+			<property name="font name" description="The name of the font used to display the tab’s contents." code="font" type="text">
+				<cocoa key="scriptFontName" />
+				<documentation>
+					<html>
+						<![CDATA[
+						<i>Deprecated; use current settings instead.</i>
+						]]>
+					</html>
+				</documentation>
+			</property>
+			<property name="font size" description="The size of the font used to display the tab’s contents." code="ptsz" type="integer">
+				<cocoa key="scriptFontSize" />
+				<documentation>
+					<html>
+						<![CDATA[
+						<i>Deprecated; use current settings instead.</i>
+						]]>
+					</html>
+				</documentation>
+			</property>
+			<property name="font antialiasing" description="Whether the font used to display the tab’s contents is antialiased." code="panx" type="boolean">
+				<cocoa key="scriptFontAntialiasing" />
+				<documentation>
+					<html>
+						<![CDATA[
+						<i>Deprecated; use current settings instead.</i>
+						]]>
+					</html>
+				</documentation>
+			</property>
+
+		</class>
+
+	</suite> 
+</dictionary>

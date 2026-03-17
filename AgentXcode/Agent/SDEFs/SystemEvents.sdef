@@ -1,0 +1,2062 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+<dictionary xmlns:xi="http://www.w3.org/2003/XInclude">
+	<xi:include href="file:///System/Library/ScriptingDefinitions/CocoaStandard.sdef" xpointer="xpointer(/dictionary/suite)" />
+	<suite name="System Events Suite" code="sevs" description="Terms and Events for controlling the System Events application">
+		<command name="abort transaction" code="miscttrm" description="Discard the results of a bounded update session with one or more files." />
+		<command name="begin transaction" code="miscbegi" description="Begin a bounded update session with one or more files.">
+			<result type="integer" />
+		</command>
+		<command name="end transaction" code="miscendt" description="Apply the results of a bounded update session with one or more files." />
+		<class-extension extends="application" description="The System Events application">
+			<responds-to command="abort transaction">
+                <cocoa method="abortTransaction:" />
+            </responds-to>
+			<responds-to command="begin transaction">
+                <cocoa method="beginTransaction:" />
+            </responds-to>
+			<responds-to command="end transaction">
+                <cocoa method="endTransaction:" />
+            </responds-to>
+			<property name="quit delay" code="qdel" type="integer" description="the time in seconds the application will idle before quitting; if set to zero, idle time will not cause the application to quit" />
+			<property name="script menu enabled" code="scmn" type="boolean" access="r" description="Is the Script menu installed in the menu bar?" />
+		</class-extension>
+		<enumeration name="saveable file format" code="savf">
+			<enumerator name="text" code="ctxt" description="Text File Format">
+				<cocoa string-value="public.text"/>
+			</enumerator>
+		</enumeration>
+	</suite>
+	<suite name="Accounts Suite" code="acco" description="Terms and Events for controlling the users account settings">
+		<value-type name="file" code="file" description="a data container in the file system">
+			<cocoa class="NSString"/>
+		</value-type>
+		<class-extension extends="application" description="The System Events application">
+			<element type="user">
+				<cocoa key="localUsers" />
+			</element>
+			<property name="current user" code="curu" type="user" access="r" description="the currently logged in user" />
+		</class-extension>
+		<class name="user" code="uacc" description="user account" plural="users">
+			<cocoa class="ADMUser" />
+			<property name="full name" code="fnam" type="text" access="r" description="user&apos;s full name" />
+			<property name="home directory" code="home" access="r" description="path to user&apos;s home directory">
+				<type type="text" />
+				<type type="file" />
+			</property>
+			<property name="name" code="pnam" type="text" access="r" description="user&apos;s short name" />
+			<property name="picture path" code="picp" description="path to user&apos;s picture. Can be set for current user only!">
+				<type type="text" />
+				<type type="file" />
+			</property>
+		</class>
+	</suite>
+	<suite name="Appearance Suite" code="appz" description="Terms for controlling Appearance preferences">
+		<value-type name="color" code="colr" description="a list of three integers, each from 0 to 65535, representing red, green, and blue color components">
+			<cocoa class="NSColor"/>
+		</value-type>
+		<class-extension extends="application" description="The System Events application">
+			<property name="appearance preferences" code="aprp" type="appearance preferences object" description="a collection of appearance preferences">
+				<cocoa key="appearancePref" />
+			</property>
+		</class-extension>
+		<class name="appearance preferences object" code="apro" description="A collection of appearance preferences">
+			<cocoa class="AppearanceScripting" />
+			<property name="appearance" code="appe" type="Appearances" description="the overall look of buttons, menus and windows" />
+			<!--
+            <property name="double click minimizes" code="mndc" type="boolean" description="Does double clicking the title bar minimize a window?">
+                <cocoa key="minimizeOnDoubleClick" />
+            </property>
+            -->
+			<property name="font smoothing" code="ftts" type="boolean" description="Is font smoothing on?" />
+			<property name="font smoothing limit" code="ftsm" type="integer" description="the font size at or below which font smoothing is turned off" access="r" hidden="yes">
+				<cocoa key="fontSmoothingSize" />
+			</property>
+			<property name="font smoothing style" code="ftss" type="FontSmoothingStyles" description="the method used for smoothing fonts" />
+			<property name="highlight color" code="hico" description="color used for hightlighting selected text and lists">
+                <type type="HighlightColors" />
+                <type type="color" />
+            </property>
+			<property name="recent applications limit" code="rapl" type="integer" description="the number of recent applications to track">
+				<cocoa key="numberOfRecentApplications" />
+			</property>
+			<property name="recent documents limit" code="rdcl" type="integer" description="the number of recent documents to track">
+				<cocoa key="numberOfRecentDocuments" />
+			</property>
+			<property name="recent servers limit" code="rsvl" type="integer" description="the number of recent servers to track">
+				<cocoa key="numberOfRecentServers" />
+			</property>
+			<!--
+            <property name="scroll arrow placement" code="sclp" type="ScrollArrowPlacements" description="the placement of the scroll arrows" />
+            -->
+			<property name="scroll bar action" code="sclb" type="ScrollPageBehaviors" description="the action performed by clicking the scroll bar">
+				<cocoa key="scrollPageBehavior" />
+			</property>
+			<property name="smooth scrolling" code="scls" type="boolean" description="Is smooth scrolling used?" />
+			<property name="dark mode" code="thme" type="boolean" description="use dark menu bar and dock"/>
+		</class>
+        <!--
+        <enumeration name="ScrollArrowPlacements" code="sclp">
+            <enumerator name="together" code="tgth" description="together" />
+            <enumerator name="together at top and bottom" code="tgtb" description="together at top and bottom" />
+            <enumerator name="top and bottom" code="tpbt" description="top and bottom" />
+        </enumeration>
+        -->
+		<enumeration name="ScrollPageBehaviors" code="sclb">
+			<enumerator name="jump to here" code="tohr" description="jump to here" />
+			<enumerator name="jump to next page" code="nxpg" description="jump to next page" />
+		</enumeration>
+		<enumeration name="FontSmoothingStyles" code="ftss">
+			<enumerator name="automatic" code="autm" description="automatic" />
+			<enumerator name="light" code="lite" description="light" />
+			<enumerator name="medium" code="medi" description="medium" />
+			<enumerator name="standard" code="stnd" description="standard" />
+			<enumerator name="strong" code="strg" description="strong" />
+		</enumeration>
+		<enumeration name="Appearances" code="appe">
+			<enumerator name="blue" code="blue" description="blue" />
+			<enumerator name="graphite" code="grft" description="graphite" />
+		</enumeration>
+		<enumeration name="HighlightColors" code="hico">
+			<enumerator name="blue" code="blue" description="blue" />
+			<enumerator name="gold" code="gold" description="gold" />
+			<enumerator name="graphite" code="grft" description="graphite" />
+			<enumerator name="green" code="gren" description="green" />
+			<enumerator name="orange" code="orng" description="orange" />
+			<enumerator name="purple" code="prpl" description="purple" />
+			<enumerator name="red" code="red " description="red" />
+			<enumerator name="silver" code="slvr" description="silver" />
+		</enumeration>
+	</suite>
+	<suite name="CD and DVD Preferences Suite" code="dhas" description="Terms and Events for controlling the actions when inserting CDs and DVDs">
+		<class-extension extends="application" description="The System Events application">
+			<property name="CD and DVD preferences" code="dhas" type="CD and DVD preferences object" description="the preferences for the current user when a CD or DVD is inserted">
+				<cocoa key="digiHubPref" />
+			</property>
+		</class-extension>
+		<class name="CD and DVD preferences object" code="dhao" description="user&apos;s CD and DVD insertion preferences">
+			<cocoa class="DigiHubPref" />
+			<property name="blank CD" code="dhbc" type="insertion preference" access="r" description="the blank CD insertion preference">
+				<cocoa key="blankCD" />
+			</property>
+			<property name="blank DVD" code="dhbd" type="insertion preference" access="r" description="the blank DVD insertion preference">
+				<cocoa key="blankDVD" />
+			</property>
+			<property name="blank BD" code="dhbb" type="insertion preference" access="r" description="the blank BD insertion preference">
+				<cocoa key="blankBD" />
+			</property>
+			<property name="music CD" code="dhmc" type="insertion preference" access="r" description="the music CD insertion preference">
+				<cocoa key="musicCD" />
+			</property>
+			<property name="picture CD" code="dhpc" type="insertion preference" access="r" description="the picture CD insertion preference">
+				<cocoa key="pictureCD" />
+			</property>
+			<property name="video DVD" code="dhvd" type="insertion preference" access="r" description="the video DVD insertion preference">
+				<cocoa key="videoDVD" />
+			</property>
+			<property name="video BD" code="dhvb" type="insertion preference" access="r" description="the video BD insertion preference">
+				<cocoa key="videoBD" />
+			</property>
+		</class>
+		<class name="insertion preference" code="dhip" description="a specific insertion preference">
+			<cocoa class="InsertionPref" />
+			<property name="custom application" code="dhca" description="application to launch or activate on the insertion of media">
+				<cocoa key="customApp" />
+				<type type="text" />
+				<type type="missing value" />
+			</property>
+			<property name="custom script" code="dhcs" description="AppleScript to launch or activate on the insertion of media">
+				<type type="text" />
+				<type type="missing value" />
+			</property>
+			<property name="insertion action" code="dhat" type="dhac" description="action to perform on media insertion">
+				<cocoa key="insertaction" />
+			</property>
+		</class>
+		<enumeration name="dhac" code="dhac">
+			<enumerator name="ask what to do" code="dhas" description="ask what to do" />
+			<enumerator name="ignore" code="dhig" description="ignore" />
+			<enumerator name="open application" code="dhap" description="open application" />
+			<enumerator name="run a script" code="dhrs" description="run a script" />
+		</enumeration>
+	</suite>
+	<suite name="Desktop Suite" code="dskp" description="Terms and Events for controlling the desktop picture settings.">
+		<class-extension extends="application" description="The System Events application">
+			<element type="desktop" />
+			<property name="current desktop" code="curd" type="desktop" access="r" description="the primary desktop" />
+		</class-extension>
+		<class name="desktop" code="dskp" description="desktop picture settings" plural="desktops">
+			<cocoa class="DesktopScriptingWrapper" />
+			<property name="name" code="pnam" type="text" access="r" description="name of the desktop">
+				<cocoa key="displayName" />
+			</property>
+			<property name="id" code="ID  " type="integer" access="r" description="unique identifier of the desktop">
+				<cocoa key="displayID" />
+			</property>
+			<property name="change interval" code="cinT" type="real" description="number of seconds to wait between changing the desktop picture" />
+			<property name="display name" code="dnaM" type="text" access="r" description="name of display on which this desktop appears" />
+			<property name="picture" code="picP" description="path to file used as desktop picture">
+				<cocoa key="picturePath" />
+				<type type="text" />
+				<type type="file" />
+			</property>
+			<property name="picture rotation" code="chnG" type="integer" description="never, using interval, using login, after sleep">
+				<cocoa key="changeType" />
+			</property>
+			<property name="pictures folder" code="pdoc" description="path to folder containing pictures for changing desktop background">
+				<cocoa key="folderPath" />
+				<type type="text" />
+				<type type="file" />
+			</property>
+			<property name="random order" code="ranD" type="boolean" description="turn on for random ordering of changing desktop pictures">
+				<cocoa key="isRandom" />
+			</property>
+			<property name="translucent menu bar" code="mnTr" type="boolean" description="indicates whether the menu bar is translucent">
+				<cocoa key="isMenuBarTranslucent" />
+			</property>
+			<property name="dynamic style" code="dyst" type="dynamic style" description="desktop picture dynamic style">
+				<cocoa key="dynamicStyle" />
+			</property>
+		</class>
+		<enumeration name="dynamic style" code="dyst">
+			<enumerator name="auto" code="atmt" description="automatic (if supported, follows light/dark appearance)" />
+			<enumerator name="dynamic" code="dynm" description="dynamic (if supported, updates desktop picture based on time and/or location)" />
+			<enumerator name="light" code="lite" description="light" />
+			<enumerator name="dark" code="dark" description="dark" />
+			<enumerator name="unknown" code="unk?" description="unknown value" hidden="yes"/>
+		</enumeration>
+	</suite>
+	<suite name="Dock Preferences Suite" code="dpas" description="Terms and Events for controlling the dock preferences">
+		<class-extension extends="application" description="The System Events application">
+			<property name="dock preferences" code="dpas" type="dock preferences object" description="the preferences for the current user&apos;s dock">
+				<cocoa key="dockPref" />
+			</property>
+		</class-extension>
+		<class name="dock preferences object" code="dpao" description="user&apos;s dock preferences">
+			<cocoa class="DockPref" />
+			<property name="animate" code="dani" type="boolean" description="is the animation of opening applications on or off?" />
+			<property name="autohide" code="dahd" type="boolean" description="is autohiding the dock on or off?" />
+			<property name="dock size" code="dsze" type="real" description="size/height of the items (between 0.0 (minimum) and 1.0 (maximum))">
+				<cocoa key="docksize" />
+			</property>
+			<property name="autohide menu bar" code="dahm" type="boolean" description="is autohiding the menu bar on or off?">
+				<cocoa key="autohideMenuBar" />
+			</property>
+			<property name="double click behavior" code="dbeh" type="dpbh" description="behaviour when double clicking window a title bar">
+				<cocoa key="doubleClickBehavior" />
+			</property>
+			<property name="magnification" code="dmag" type="boolean" description="is magnification on or off?" />
+			<property name="magnification size" code="dmsz" type="real" description="maximum magnification size when magnification is on (between 0.0 (minimum) and 1.0 (maximum))">
+				<cocoa key="magsize" />
+			</property>
+			<property name="minimize effect" code="deff" type="dpef" description="minimization effect">
+				<cocoa key="effect" />
+			</property>
+			<property name="minimize into application" code="dmia" type="boolean" description="minimize window into its application?">
+				<cocoa key="minimizeIntoApp" />
+			</property>
+			<property name="screen edge" code="dpse" type="dpls" description="location on screen">
+				<cocoa key="edge" />
+			</property>
+			<property name="show indicators" code="dshi" type="boolean" description="show indicators for open applications?">
+				<cocoa key="showIndicators" />
+			</property>
+			<property name="show recents" code="dshr" type="boolean" description="show recent applications?">
+				<cocoa key="showRecents" />
+			</property>
+		</class>
+		<enumeration name="dpls" code="dpls">
+			<enumerator name="bottom" code="bott" description="bottom" />
+			<enumerator name="left" code="left" description="left" />
+			<enumerator name="right" code="righ" description="right" />
+		</enumeration>
+		<enumeration name="dpef" code="dpef">
+			<enumerator name="genie" code="geni" description="genie" />
+			<enumerator name="scale" code="scal" description="scale" />
+		</enumeration>
+		<enumeration name="dpbh" code="dpbh">
+			<enumerator name="minimize" code="ddmi" description="minimize" />
+			<enumerator name="off" code="ddof" description="off" />
+			<enumerator name="zoom" code="ddzo" description="zoom" />
+		</enumeration>
+	</suite>
+	<suite name="Login Items Suite" code="logi" description="Terms and Events for controlling the Login Items application">
+		<class-extension extends="application" description="The System Events application">
+			<element type="login item" />
+		</class-extension>
+		<class name="login item" code="logi" description="an item to be launched or opened at login" plural="login items">
+			<cocoa class="LoginItem" />
+			<property name="hidden" code="hidn" type="boolean" description="Is the Login Item hidden when launched?">
+				<cocoa key="AEHideOnLaunch" />
+			</property>
+			<property name="kind" code="kind" type="text" access="r" description="the file type of the Login Item">
+				<cocoa key="location" />
+			</property>
+			<property name="name" code="pnam" type="text" access="r" description="the name of the Login Item">
+				<cocoa key="itemName" />
+			</property>
+			<property name="path" code="ppth" type="text" access="r" description="the file system path to the Login Item">
+				<cocoa key="fullPath" />
+			</property>
+		</class>
+	</suite>
+	<suite name="Network Preferences Suite" code="netz" description="Terms and Commands for manipulating and viewing network settings">
+		<command name="connect" code="netzconn" description="connect a configuration or service">
+			<direct-parameter description="a configuration or service">
+                <type type="configuration" />
+                <type type="service" />
+            </direct-parameter>
+			<result type="configuration" />
+		</command>
+		<command name="disconnect" code="netzdcon" description="disconnect a configuration or service">
+			<direct-parameter description="a configuration or service">
+                <type type="configuration" />
+                <type type="service" />
+            </direct-parameter>
+			<result type="configuration" />
+		</command>
+		<class-extension extends="application" description="The System Events application">
+			<property name="network preferences" code="netp" type="network preferences object" description="the preferences for the current user&apos;s network">
+				<cocoa key="networkPref" />
+			</property>
+		</class-extension>
+		<class name="configuration" code="conF" description="A collection of settings for configuring a connection" plural="configurations">
+			<cocoa class="ANPConfiguration" />
+			<responds-to command="connect">
+                <cocoa method="connect:" />
+            </responds-to>
+			<responds-to command="disconnect">
+                <cocoa method="disconnect:" />
+            </responds-to>
+			<property name="account name" code="user" type="text" description="the name used to authenticate" />
+			<property name="connected" code="conn" type="boolean" access="r" description="Is the configuration connected?" />
+			<property name="id" code="ID  " type="text" access="r" description="the unique identifier for the configuration">
+				<cocoa key="configurationID" />
+			</property>
+			<property name="name" code="pnam" type="text" access="r" description="the name of the configuration" />
+		</class>
+		<class name="interface" code="intf" description="A collection of settings for a network interface" plural="interfaces">
+			<cocoa class="ANPInterface" />
+			<property name="automatic" code="auto" type="boolean" description="configure the interface speed, duplex, and mtu automatically?" />
+			<property name="duplex" code="dupl" type="text" description="the duplex setting  half | full | full with flow control">
+				<cocoa key="currentDuplex" />
+			</property>
+			<property name="id" code="ID  " type="text" access="r" description="the unique identifier for the interface">
+				<cocoa key="interfaceID" />
+			</property>
+			<property name="kind" code="kind" type="text" access="r" description="the type of interface">
+				<cocoa key="interfaceASType" />
+			</property>
+			<property name="MAC address" code="maca" type="text" access="r" description="the MAC address for the interface" />
+			<property name="mtu" code="mtu " type="integer" description="the packet size" />
+			<property name="name" code="pnam" type="text" access="r" description="the name of the interface" />
+			<property name="speed" code="sped" type="integer" description="ethernet speed 10 | 100 | 1000">
+				<cocoa key="speed" />
+			</property>
+		</class>
+		<class name="location" code="loca" description="A set of services" plural="locations">
+			<cocoa class="ANPLocation" />
+			<element type="service" />
+			<property name="id" code="ID  " type="text" access="r" description="the unique identifier for the location">
+				<cocoa key="locationID" />
+			</property>
+			<property name="name" code="pnam" type="text" description="the name of the location" />
+		</class>
+		<class name="network preferences object" code="neto" description="the preferences for the current user&apos;s network">
+			<cocoa class="ANPNetworkScripting" />
+			<element type="interface" />
+			<element type="location" />
+			<element type="service" />
+			<property name="current location" code="locc" type="location" description="the current location" />
+		</class>
+		<class name="service" code="svce" description="A collection of settings for a network service" plural="services">
+			<cocoa class="ANPService" />
+			<responds-to command="connect">
+                <cocoa method="connect:" />
+            </responds-to>
+			<responds-to command="disconnect">
+                <cocoa method="disconnect:" />
+            </responds-to>
+			<element type="configuration" />
+			<property name="active" code="acti" type="boolean" access="r" description="Is the service active?" />
+			<property name="current configuration" code="cnfg" type="configuration" description="the currently selected configuration" />
+			<property name="id" code="ID  " type="text" access="r" description="the unique identifier for the service">
+				<cocoa key="serviceID" />
+			</property>
+			<property name="interface" code="intf" type="interface" access="r" description="the interface the service is built on" />
+			<property name="kind" code="kind" type="integer" access="r" description="the type of service">
+				<cocoa key="serviceType" />
+			</property>
+			<property name="name" code="pnam" type="text" description="the name of the service" />
+		</class>
+	</suite>
+<!--	-->
+	<suite name="Screen Saver Suite" code="scsv" description="Terms and Events for controlling screen saver settings.">
+		<command name="start" code="scsvstrt" description="start the screen saver">
+			<direct-parameter description="the object for the command">
+                <type type="screen saver" />
+                <type type="screen saver preferences object" />
+            </direct-parameter>
+		</command>
+		<command name="stop" code="scsvstop" description="stop the screen saver">
+			<direct-parameter description="the object for the command">
+                <type type="screen saver" />
+                <type type="screen saver preferences object" />
+            </direct-parameter>
+		</command>
+		<class-extension extends="application" description="The System Events application">
+			<element type="screen saver" />
+			<property name="current screen saver" code="ssvc" type="screen saver" description="the currently selected screen saver" />
+			<property name="screen saver preferences" code="ssvp" type="screen saver preferences object" description="the preferences common to all screen savers" />
+		</class-extension>
+		<class name="screen saver" code="ssvr" description="an installed screen saver" plural="screen savers">
+			<cocoa class="ScreenSaver" />
+			<responds-to command="start">
+                <cocoa method="start:" />
+            </responds-to>
+			<responds-to command="stop">
+                <cocoa method="stop:" />
+            </responds-to>
+			<property name="displayed name" code="dnam" type="text" access="r" description="name of the screen saver module as displayed to the user" />
+			<property name="name" code="pnam" type="text" access="r" description="name of the screen saver module to be displayed" />
+			<property name="path" code="ppth" type="alias" access="r" description="path to the screen saver module" />
+			<property name="picture display style" code="psty" type="text" description="effect to use when displaying picture-based screen savers (slideshow, collage, or mosaic)" />
+		</class>
+		<class name="screen saver preferences object" code="ssvo" description="screen saver settings" plural="screen saver preferences objects">
+			<cocoa class="ScreenSaverPreferencesObject" />
+			<responds-to command="start">
+                <cocoa method="start:" />
+            </responds-to>
+			<responds-to command="stop">
+                <cocoa method="stop:" />
+            </responds-to>
+			<property name="delay interval" code="dlyi" type="integer" description="number of seconds of idle time before the screen saver starts; zero for never" />
+			<property name="main screen only" code="mscr" type="boolean" description="should the screen saver be shown only on the main screen?" />
+			<property name="running" code="runn" type="boolean" access="r" description="is the screen saver running?" />
+			<property name="show clock" code="shcl" type="boolean" description="should a clock appear over the screen saver?" />
+		</class>
+	</suite>
+<!--	-->
+	<suite name="Security Suite" code="secu" description="Terms for controlling Security preferences">
+		<class-extension extends="application" description="The System Events application">
+			<property name="security preferences" code="secp" type="security preferences object" description="a collection of security preferences">
+				<cocoa key="securityPref" />
+			</property>
+		</class-extension>
+		<class name="security preferences object" code="seco" description="a collection of security preferences">
+			<cocoa class="SecurityScripting" />
+			<property name="automatic login" code="aulg" type="boolean" description="Is automatic login allowed?">
+				<cocoa key="autoLogin" />
+			</property>
+			<property name="log out when inactive" code="aclk" type="boolean" description="Will the computer log out when inactive?">
+				<cocoa key="inactivityLogout" />
+			</property>
+			<property name="log out when inactive interval" code="acto" type="integer" description="The interval of inactivity after which the computer will log out">
+				<cocoa key="inactivityLogoutInterval" />
+			</property>
+			<property name="require password to unlock" code="pwul" type="boolean" description="Is a password required to unlock secure preferences?" />
+			<property name="require password to wake" code="pwwk" type="boolean" description="Is a password required to wake the computer from sleep or screen saver?" />
+			<property name="secure virtual memory" code="scvm" type="boolean" description="Is secure virtual memory being used?" />
+		</class>
+	</suite>
+	<suite name="Disk-Folder-File Suite" code="cdis" description="Terms and Events for controlling Disks, Folders, and Files">
+		<command name="delete" code="coredelo" description="Delete disk item(s).">
+			<cocoa class="NSDeleteCommand" />
+			<direct-parameter type="disk item" description="The disk item(s) to be deleted." />
+		</command>
+		<command name="move" code="coremove" description="Move disk item(s) to a new location.">
+			<cocoa class="MoveVerb" />
+			<access-group identifier="*"/>
+			<direct-parameter requires-access="r" description="The disk item(s) to be moved.">
+                <type type="disk item" />
+                <type type="disk item" list="yes" />
+                <type type="text" />
+                <type type="text" list="yes" />
+            </direct-parameter>
+			<parameter name="to" code="insh" description="The new location for the disk item(s).">
+				<cocoa key="ToLocation" />
+                <type type="location specifier" />
+                <type type="text" />
+			</parameter>
+			<result>
+                <type type="disk item" />
+                <type type="disk item" list="yes" />
+            </result>
+		</command>
+		<command name="open" code="aevtodoc" description="Open disk item(s) with the appropriate application.">
+			<cocoa class="OpenVerb" />
+			<direct-parameter description="The disk item(s) to be opened.">
+				<type type="file" />
+				<type type="text" />
+			</direct-parameter>
+			<result type="file" />
+		</command>
+		<class-extension extends="application" description="The Disk-Folder-File specific extensions to the application">
+			<responds-to command="delete">
+                <cocoa method="deleteVerb:" />
+            </responds-to>
+			<element type="alias" />
+			<element type="disk" />
+			<element type="disk item" />
+			<element type="domain" />
+			<element type="file" />
+			<element type="file package" />
+			<element type="folder" />
+			<element type="item" hidden="yes">
+				<cocoa key="oldItems" />
+			</element>
+			<property name="application support folder" code="asup" type="folder" access="r" description="The Application Support folder">
+				<cocoa key="folderApplicationSupport" />
+			</property>
+			<property name="applications folder" code="apps" type="folder" access="r" description="The user&apos;s Applications folder">
+				<cocoa key="folderApplications" />
+			</property>
+			<property name="Classic domain" code="fldc" type="Classic domain object" access="r" description="the collection of folders belonging to the Classic System">
+				<cocoa key="domainClassic" />
+			</property>
+			<property name="desktop folder" code="desk" type="folder" access="r" description="The user&apos;s Desktop folder">
+				<cocoa key="folderDesktop" />
+			</property>
+			<property name="desktop pictures folder" code="dtp$" type="folder" access="r" description="The Desktop Pictures folder">
+				<cocoa key="folderDesktopPictures" />
+				<synonym code="dtpQ" />
+			</property>
+			<property name="documents folder" code="docs" type="folder" access="r" description="The user&apos;s Documents folder">
+				<cocoa key="folderDocuments" />
+			</property>
+			<property name="downloads folder" code="down" type="folder" access="r" description="The user&apos;s Downloads folder">
+				<cocoa key="folderDownloads" />
+			</property>
+			<property name="favorites folder" code="favs" type="folder" access="r" description="The user&apos;s Favorites folder">
+				<cocoa key="folderFavorites" />
+			</property>
+			<property name="Folder Action scripts folder" code="fasf" type="folder" access="r" description="The user&apos;s Folder Action Scripts folder">
+				<cocoa key="folderFolderActionScripts" />
+				<synonym name="Folder Actions scripts folder" />
+			</property>
+			<property name="fonts folder" code="font" type="folder" access="r" description="The Fonts folder">
+				<cocoa key="folderFonts" />
+			</property>
+			<property name="home folder" code="cusr" type="folder" access="r" description="The Home folder of the currently logged in user">
+				<cocoa key="folderHome" />
+			</property>
+			<property name="library folder" code="dlib" type="folder" access="r" description="The Library folder">
+				<cocoa key="folderLibrary" />
+			</property>
+			<property name="local domain" code="fldl" type="local domain object" access="r" description="the collection of folders residing on the Local machine">
+				<cocoa key="domainLocal" />
+			</property>
+			<property name="movies folder" code="mdoc" type="folder" access="r" description="The user&apos;s Movies folder">
+				<cocoa key="folderMovies" />
+			</property>
+			<property name="music folder" code="%doc" type="folder" access="r" description="The user&apos;s Music folder">
+				<cocoa key="folderMusic" />
+				<synonym code="Jdoc" />
+			</property>
+			<property name="network domain" code="fldn" type="network domain object" access="r" description="the collection of folders residing on the Network">
+				<cocoa key="domainNetwork" />
+			</property>
+			<property name="pictures folder" code="pdoc" type="folder" access="r" description="The user&apos;s Pictures folder">
+				<cocoa key="folderPictures" />
+			</property>
+			<property name="preferences folder" code="pref" type="folder" access="r" description="The user&apos;s Preferences folder">
+				<cocoa key="folderPreferences" />
+			</property>
+			<property name="public folder" code="pubb" type="folder" access="r" description="The user&apos;s Public folder">
+				<cocoa key="folderPublic" />
+			</property>
+			<property name="scripting additions folder" code="$scr" type="folder" access="r" description="The Scripting Additions folder">
+				<cocoa key="folderScriptingAdditions" />
+				<synonym code="Qscr" />
+			</property>
+			<property name="scripts folder" code="scr$" type="folder" access="r" description="The user&apos;s Scripts folder">
+				<cocoa key="folderScripts" />
+				<synonym code="scrQ" />
+			</property>
+			<property name="shared documents folder" code="sdat" type="folder" access="r" description="The Shared Documents folder">
+				<cocoa key="folderSharedDocuments" />
+			</property>
+			<property name="sites folder" code="site" type="folder" access="r" description="The user&apos;s Sites folder">
+				<cocoa key="folderSites" />
+			</property>
+			<property name="speakable items folder" code="spki" type="folder" access="r" description="The Speakable Items folder">
+				<cocoa key="folderSpeakable" />
+			</property>
+			<property name="startup disk" code="sdsk" type="disk" access="r" description="the disk from which Mac OS X was loaded" />
+			<property name="system domain" code="flds" type="system domain object" access="r" description="the collection of folders belonging to the System">
+				<cocoa key="domainSystem" />
+			</property>
+			<property name="temporary items folder" code="temp" type="folder" access="r" description="The Temporary Items folder">
+				<cocoa key="folderTemporary" />
+			</property>
+			<property name="trash" code="trsh" type="folder" access="r" description="The user&apos;s Trash folder">
+				<cocoa key="folderTrash" />
+			</property>
+			<property name="user domain" code="fldu" type="user domain object" access="r" description="the collection of folders belonging to the User">
+				<cocoa key="domainUser" />
+			</property>
+			<property name="utilities folder" code="uti$" type="folder" access="r" description="The Utilities folder">
+				<cocoa key="folderUtilities" />
+				<synonym code="utiQ" />
+			</property>
+			<property name="workflows folder" code="flow" type="folder" access="r" description="The Automator Workflows folder">
+				<cocoa key="folderWorkflows" />
+			</property>
+		</class-extension>
+		<class name="alias" code="alis" description="An alias in the file system" inherits="disk item" plural="aliases">
+			<cocoa class="Alias" />
+			<responds-to command="delete">
+				<cocoa method="deleteVerb:" />
+			</responds-to>
+			<element type="alias" />
+			<element type="disk item" />
+			<element type="file" />
+			<element type="file package" />
+			<element type="folder" />
+			<element type="item" hidden="yes">
+				<cocoa key="oldItems" />
+			</element>
+			<property name="creator type" code="fcrt" description="the OSType identifying the application that created the alias">
+				<type type="text" />
+				<type type="any" />
+			</property>
+			<property name="default application" code="asda" description="the application that will launch if the alias is opened">
+				<type type="disk item" />
+				<type type="any" />
+			</property>
+			<property name="file type" code="asty" description="the OSType identifying the type of data contained in the alias">
+				<type type="text" />
+				<type type="any" />
+			</property>
+			<property name="kind" code="kind" type="text" access="r" description="The kind of alias, as shown in Finder" />
+			<property name="product version" code="ver2" type="text" access="r" description="the version of the product (visible at the top of the &quot;Get Info&quot; window)" />
+			<property name="short version" code="assv" type="text" access="r" description="the short version of the application bundle referenced by the alias" />
+			<property name="stationery" code="pspd" type="boolean" description="Is the alias a stationery pad?" />
+			<property name="type identifier" code="utid" type="text" access="r" description="The type identifier of the alias">
+				<cocoa key="uniformTypeID" />
+			</property>
+			<property name="version" code="vers" type="text" access="r" description="the version of the application bundle referenced by the alias (visible at the bottom of the &quot;Get Info&quot; window)" />
+		</class>
+		<class name="Classic domain object" code="domc" description="The Classic domain in the file system" inherits="domain" plural="Classic domain objects">
+			<cocoa class="ClassicDomain" />
+			<element type="folder" />
+			<property name="apple menu folder" code="amnu" type="folder" access="r" description="The Apple Menu Items folder">
+				<cocoa key="folderAppleMenu" />
+			</property>
+			<property name="control panels folder" code="ctrl" type="folder" access="r" description="The Control Panels folder">
+				<cocoa key="folderControlPanels" />
+			</property>
+			<property name="control strip modules folder" code="sdev" type="folder" access="r" description="The Control Strip Modules folder">
+				<cocoa key="folderControlStripModules" />
+			</property>
+			<property name="desktop folder" code="desk" type="folder" access="r" description="The Classic Desktop folder">
+				<cocoa key="folderDesktop" />
+			</property>
+			<property name="extensions folder" code="extz" type="folder" access="r" description="The Extensions folder">
+				<cocoa key="folderExtensions" />
+			</property>
+			<property name="fonts folder" code="font" type="folder" access="r" description="The Fonts folder">
+				<cocoa key="folderFonts" />
+			</property>
+			<property name="launcher items folder" code="laun" type="folder" access="r" description="The Launcher Items folder">
+				<cocoa key="folderLauncher" />
+			</property>
+			<property name="preferences folder" code="pref" type="folder" access="r" description="The Classic Preferences folder">
+				<cocoa key="folderPreferences" />
+			</property>
+			<property name="shutdown folder" code="shdf" type="folder" access="r" description="The Shutdown Items folder">
+				<cocoa key="folderShutdown" />
+			</property>
+			<property name="startup items folder" code="empz" type="folder" access="r" description="The StartupItems folder">
+				<cocoa key="folderStartup" />
+			</property>
+			<property name="system folder" code="macs" type="folder" access="r" description="The System folder">
+				<cocoa key="folderSystem" />
+			</property>
+		</class>
+		<class name="disk" code="cdis" description="A disk in the file system" inherits="disk item" plural="disks">
+			<cocoa class="Disk" />
+			<responds-to command="delete">
+				<cocoa method="deleteVerb:" />
+			</responds-to>
+			<element type="alias" />
+			<element type="disk item" />
+			<element type="file" />
+			<element type="file package" />
+			<element type="folder" />
+			<element type="item" hidden="yes">
+				<cocoa key="oldItems" />
+			</element>
+			<property name="capacity" code="capa" type="number" access="r" description="the total number of bytes (free or used) on the disk" />
+			<property name="ejectable" code="isej" type="boolean" access="r" description="Can the media be ejected (floppies, CD&apos;s, and so on)?" />
+			<property name="format" code="dfmt" type="edfm" access="r" description="the file system format of this disk" />
+			<property name="free space" code="frsp" type="number" access="r" description="the number of free bytes left on the disk" />
+			<property name="ignore privileges" code="igpr" type="boolean" description="Ignore permissions on this disk?" />
+			<property name="local volume" code="isrv" type="boolean" access="r" description="Is the media a local volume (as opposed to a file server)?" />
+			<property name="server" code="srvr" access="r" description="the server on which the disk resides, AFP volumes only">
+				<cocoa key="afpServer" />
+				<type type="text" />
+				<type type="any" />
+			</property>
+			<property name="startup" code="istd" type="boolean" access="r" description="Is this disk the boot disk?" />
+			<property name="zone" code="zone" access="r" description="the zone in which the disk&apos;s server resides, AFP volumes only">
+				<cocoa key="afpZone" />
+				<type type="text" />
+				<type type="any" />
+			</property>
+		</class>
+		<class name="disk item" code="ditm" description="An item stored in the file system" plural="disk items">
+			<cocoa class="DiskItem" />
+            <synonym name="item" code="cobj" />
+			<responds-to command="open">
+				<cocoa method="open:" />
+			</responds-to>
+			<responds-to command="move">
+				<cocoa method="move:" />
+			</responds-to>
+			<property name="busy status" code="busy" type="boolean" access="r" description="Is the disk item busy?" />
+			<property name="container" code="ctnr" type="disk item" access="r" description="the folder or disk which has this disk item as an element" />
+			<property name="creation date" code="ascd" type="date" access="r" description="the date on which the disk item was created" />
+			<property name="displayed name" code="dnam" type="text" access="r" description="the name of the disk item as displayed in the User Interface" />
+			<property name="id" code="ID  " type="text" access="r" description="the unique ID of the disk item">
+				<cocoa key="uniqueID" />
+			</property>
+			<property name="modification date" code="asmo" type="date" description="the date on which the disk item was last modified" />
+			<property name="name" code="pnam" type="text" description="the name of the disk item" />
+			<property name="name extension" code="extn" type="text" access="r" description="the extension portion of the name" />
+			<property name="package folder" code="pkgf" type="boolean" access="r" description="Is the disk item a package?" />
+			<property name="path" code="ppth" type="text" access="r" description="the file system path of the disk item">
+				<cocoa key="hfsPath" />
+			</property>
+			<property name="physical size" code="phys" type="integer" access="r" description="the actual space used by the disk item on disk" />
+			<property name="POSIX path" code="posx" type="text" access="r" description="the POSIX file system path of the disk item">
+				<cocoa key="posixPath" />
+			</property>
+			<property name="size" code="ptsz" type="integer" access="r" description="the logical size of the disk item">
+				<cocoa key="logicalSize" />
+			</property>
+			<property name="URL" code="url " type="text" access="r" description="the URL of the disk item">
+				<cocoa key="url" />
+			</property>
+			<property name="visible" code="pvis" type="boolean" description="Is the disk item visible?" />
+			<property name="volume" code="volu" type="text" access="r" description="the volume on which the disk item resides" />
+		</class>
+		<class name="domain" code="doma" description="A domain in the file system" plural="domains">
+			<cocoa class="Domain" />
+			<element type="folder" />
+			<property name="application support folder" code="asup" type="folder" access="r" description="The Application Support folder">
+				<cocoa key="folderApplicationSupport" />
+			</property>
+			<property name="applications folder" code="apps" type="folder" access="r" description="The Applications folder">
+				<cocoa key="folderApplications" />
+			</property>
+			<property name="desktop pictures folder" code="dtp$" type="folder" access="r" description="The Desktop Pictures folder">
+				<cocoa key="folderDesktopPictures" />
+				<synonym code="dtpQ" />
+			</property>
+			<property name="Folder Action scripts folder" code="fasf" type="folder" access="r" description="The Folder Action Scripts folder">
+				<cocoa key="folderFolderActionScripts" />
+			</property>
+			<property name="fonts folder" code="font" type="folder" access="r" description="The Fonts folder">
+				<cocoa key="folderFonts" />
+			</property>
+			<property name="id" code="ID  " type="text" access="r" description="the unique identifier of the domain">
+				<cocoa key="uniqueID" />
+			</property>
+			<property name="library folder" code="dlib" type="folder" access="r" description="The Library folder">
+				<cocoa key="folderLibrary" />
+			</property>
+			<property name="name" code="pnam" type="text" access="r" description="the name of the domain" />
+			<property name="preferences folder" code="pref" type="folder" access="r" description="The Preferences folder">
+				<cocoa key="folderPreferences" />
+			</property>
+			<property name="scripting additions folder" code="$scr" type="folder" access="r" description="The Scripting Additions folder">
+				<cocoa key="folderScriptingAdditions" />
+				<synonym code="Qscr" />
+			</property>
+			<property name="scripts folder" code="scr$" type="folder" access="r" description="The Scripts folder">
+				<cocoa key="folderScripts" />
+				<synonym code="scrQ" />
+			</property>
+			<property name="shared documents folder" code="sdat" type="folder" access="r" description="The Shared Documents folder">
+				<cocoa key="folderSharedDocuments" />
+			</property>
+			<property name="speakable items folder" code="spki" type="folder" access="r" description="The Speakable Items folder">
+				<cocoa key="folderSpeakable" />
+			</property>
+			<property name="utilities folder" code="uti$" type="folder" access="r" description="The Utilities folder">
+				<cocoa key="folderUtilities" />
+				<synonym code="utiQ" />
+			</property>
+			<property name="workflows folder" code="flow" type="folder" access="r" description="The Automator Workflows folder">
+				<cocoa key="folderWorkflows" />
+			</property>
+		</class>
+		<class name="file" code="file" description="A file in the file system" inherits="disk item" plural="files">
+			<cocoa class="File" />
+			<property name="creator type" code="fcrt" description="the OSType identifying the application that created the file">
+				<type type="text" />
+				<type type="any" />
+			</property>
+			<property name="default application" code="asda" description="the application that will launch if the file is opened">
+				<type type="disk item" />
+				<type type="any" />
+			</property>
+			<property name="file type" code="asty" description="the OSType identifying the type of data contained in the file">
+				<type type="text" />
+				<type type="any" />
+			</property>
+			<property name="kind" code="kind" type="text" access="r" description="The kind of file, as shown in Finder" />
+			<property name="product version" code="ver2" type="text" access="r" description="the version of the product (visible at the top of the &quot;Get Info&quot; window)" />
+			<property name="short version" code="assv" type="text" access="r" description="the short version of the file" />
+			<property name="stationery" code="pspd" type="boolean" description="Is the file a stationery pad?" />
+			<property name="type identifier" code="utid" type="text" access="r" description="The type identifier of the file">
+				<cocoa key="uniformTypeID" />
+			</property>
+			<property name="version" code="vers" type="text" access="r" description="the version of the file (visible at the bottom of the &quot;Get Info&quot; window)" />
+		</class>
+		<class name="file package" code="cpkg" description="A file package in the file system" inherits="file" plural="file packages">
+			<cocoa class="FilePackage" />
+			<responds-to command="delete">
+				<cocoa method="deleteVerb:" />
+			</responds-to>
+			<element type="alias" />
+			<element type="disk item" />
+			<element type="file" />
+			<element type="file package" />
+			<element type="folder" />
+			<element type="item" hidden="yes">
+				<cocoa key="oldItems" />
+			</element>
+		</class>
+		<class name="folder" code="cfol" description="A folder in the file system" inherits="disk item" plural="folders">
+			<cocoa class="Folder" />
+			<responds-to command="delete">
+				<cocoa method="deleteVerb:" />
+			</responds-to>
+			<element type="alias" />
+			<element type="disk item" />
+			<element type="file" />
+			<element type="file package" />
+			<element type="folder" />
+			<element type="item" hidden="yes">
+				<cocoa key="oldItems" />
+			</element>
+		</class>
+		<class name="local domain object" code="doml" description="The local domain in the file system" inherits="domain" plural="local domain objects">
+			<cocoa class="LocalDomain" />
+			<element type="folder" />
+		</class>
+		<class name="network domain object" code="domn" description="The network domain in the file system" inherits="domain" plural="network domain objects">
+			<cocoa class="NetworkDomain" />
+			<element type="folder" />
+		</class>
+		<class name="system domain object" code="doms" description="The system domain in the file system" inherits="domain" plural="system domain objects">
+			<cocoa class="SystemDomain" />
+			<element type="folder" />
+		</class>
+		<class name="user domain object" code="domu" description="The user domain in the file system" inherits="domain" plural="user domain objects">
+			<cocoa class="UserDomain" />
+			<element type="folder" />
+			<property name="desktop folder" code="desk" type="folder" access="r" description="The user&apos;s Desktop folder">
+				<cocoa key="folderDesktop" />
+			</property>
+			<property name="documents folder" code="docs" type="folder" access="r" description="The user&apos;s Documents folder">
+				<cocoa key="folderDocuments" />
+			</property>
+			<property name="downloads folder" code="down" type="folder" access="r" description="The user&apos;s Downloads folder">
+				<cocoa key="folderDownloads" />
+			</property>
+			<property name="favorites folder" code="favs" type="folder" access="r" description="The user&apos;s Favorites folder">
+				<cocoa key="folderFavorites" />
+			</property>
+			<property name="home folder" code="cusr" type="folder" access="r" description="The user&apos;s Home folder">
+				<cocoa key="folderHome" />
+			</property>
+			<property name="movies folder" code="mdoc" type="folder" access="r" description="The user&apos;s Movies folder">
+				<cocoa key="folderMovies" />
+			</property>
+			<property name="music folder" code="%doc" type="folder" access="r" description="The user&apos;s Music folder">
+				<cocoa key="folderMusic" />
+				<synonym code="Jdoc" />
+			</property>
+			<property name="pictures folder" code="pdoc" type="folder" access="r" description="The user&apos;s Pictures folder">
+				<cocoa key="folderPictures" />
+			</property>
+			<property name="public folder" code="pubb" type="folder" access="r" description="The user&apos;s Public folder">
+				<cocoa key="folderPublic" />
+			</property>
+			<property name="sites folder" code="site" type="folder" access="r" description="The user&apos;s Sites folder">
+				<cocoa key="folderSites" />
+			</property>
+			<property name="temporary items folder" code="temp" type="folder" access="r" description="The Temporary Items folder">
+				<cocoa key="folderTemporary" />
+			</property>
+		</class>
+		<enumeration name="edfm" code="edfm">
+			<enumerator name="Apple Photo format" code="dfph" description="Apple Photo format" />
+			<enumerator name="AppleShare format" code="dfas" description="AppleShare format" />
+			<enumerator name="audio format" code="dfau" description="audio format" />
+			<enumerator name="High Sierra format" code="dfhs" description="High Sierra format" />
+			<enumerator name="ISO 9660 format" code="df96" description="ISO 9660 format" />
+			<enumerator name="Mac OS Extended format" code="dfh+" description="Mac OS Extended format" />
+			<enumerator name="Mac OS format" code="dfhf" description="Mac OS format" />
+			<enumerator name="MSDOS format" code="dfms" description="MSDOS format" />
+			<enumerator name="NFS format" code="dfnf" description="NFS format" />
+			<enumerator name="ProDOS format" code="dfpr" description="ProDOS format" />
+			<enumerator name="QuickTake format" code="dfqt" description="QuickTake format" />
+			<enumerator name="UDF format" code="dfud" description="UDF format" />
+			<enumerator name="UFS format" code="dfuf" description="UFS format" />
+			<enumerator name="unknown format" code="df$$" description="unknown format" />
+			<enumerator name="WebDAV format" code="dfwd" description="WebDAV format" />
+		</enumeration>
+	</suite>
+<!--	-->
+
+    <xi:include href="file:///System/Library/PrivateFrameworks/FolderActionsKit.framework/Versions/A/Resources/FolderActions.sdef" xpointer="xpointer(/dictionary/suite)"/>
+
+	<suite name="Power Suite" code="powr" description="Terms and Events for controlling System power">
+		<command name="log out" code="fndrlogo" description="Log out the current user">
+			<cocoa class="LogoutVerb" />
+		</command>
+		<command name="restart" code="fndrrest" description="Restart the computer">
+			<cocoa class="RestartVerb" />
+			<parameter name="state saving preference" code="stsv" type="boolean" optional="yes" description="Is the user defined state saving preference followed?">
+				<cocoa key="stateSavingPreference" />
+			</parameter>
+            <documentation>
+                <html>
+                    If &quot;state saving preference&quot; is omitted or false, state is always saved.
+                </html>
+            </documentation>
+		</command>
+		<command name="shut down" code="fndrshut" description="Shut Down the computer">
+			<cocoa class="ShutDownVerb" />
+			<parameter name="state saving preference" code="stsv" type="boolean" optional="yes" description="Is the user defined state saving preference followed?">
+				<cocoa key="stateSavingPreference" />
+			</parameter>
+            <documentation>
+                <html>
+                    If &quot;state saving preference&quot; is omitted or false, state is always saved.
+                </html>
+            </documentation>
+		</command>
+		<command name="sleep" code="fndrslep" description="Put the computer to sleep">
+			<cocoa class="SleepVerb" />
+		</command>
+	</suite>
+	<suite name="Processes Suite" code="prcs" description="Terms and Events for controlling Processes">
+		<command name="click" code="prcsclic" description="cause the target process to behave as if the UI element were clicked">
+			<direct-parameter type="UI element" optional="yes" description="The UI element to be clicked." />
+			<parameter name="at" code="insh" optional="yes" description="when sent to a &quot;process&quot; object, the { x, y } location at which to click, in global coordinates">
+				<cocoa key="atPosition" />
+                <type type="number" list="yes" />
+			</parameter>
+			<result>
+                <type type="UI element" />
+                <type type="UI element" list="yes" />
+			</result>
+		</command>
+		<command name="key code" code="prcskcod" description="cause the target process to behave as if key codes were entered">
+			<cocoa class="KeyCodeVerb" />
+			<direct-parameter description="The key code(s) to be sent. May be a list.">
+				<type type="integer" />
+				<type type="integer" list="yes" />
+			</direct-parameter>
+			<parameter name="using" code="faal" optional="yes" description="modifiers with which the key codes are to be entered">
+				<cocoa key="using" />
+				<type type="eMds" />
+				<type type="eMds" list="yes" />
+			</parameter>
+		</command>
+		<command name="keystroke" code="prcskprs" description="cause the target process to behave as if keystrokes were entered">
+			<cocoa class="KeystrokeVerb" />
+			<direct-parameter type="text" description="The keystrokes to be sent." />
+			<parameter name="using" code="faal" optional="yes" description="modifiers with which the keystrokes are to be entered">
+				<cocoa key="using" />
+				<type type="eMds" />
+				<type type="eMds" list="yes" />
+			</parameter>
+		</command>
+		<command name="perform" code="prcsperf" description="cause the target process to behave as if the action were applied to its UI element">
+			<direct-parameter type="action" description="The action to be performed." />
+			<result type="action" />
+		</command>
+		<command name="select" code="miscslct" description="set the selected property of the UI element">
+			<direct-parameter type="UI element" description="The UI element to be selected." />
+			<result type="UI element" />
+		</command>
+		<class-extension extends="application" description="The System Events application">
+			<responds-to command="click">
+				<cocoa method="click:" />
+			</responds-to>
+			<element type="application process" />
+			<element type="desk accessory process" />
+			<element type="process" />
+			<element type="UI element">
+				<cocoa key="uiElements" />
+			</element>
+			<property name="UI elements enabled" code="uien" type="boolean" access="r" description="Are UI element events currently being processed?">
+				<cocoa key="uiElementsEnabled" />
+			</property>
+		</class-extension>
+		<class name="action" code="actT" description="An action that can be performed on the UI element" plural="actions">
+			<cocoa class="UIAction" />
+			<responds-to command="perform">
+				<cocoa method="perform:" />
+			</responds-to>
+			<property name="description" code="desc" type="text" access="r" description="what the action does">
+				<cocoa key="actionDescription" />
+			</property>
+			<property name="name" code="pnam" type="text" access="r" description="the name of the action" />
+		</class>
+		<class name="application process" code="pcap" description="A process launched from an application file" inherits="process" plural="application processes">
+			<cocoa class="ApplicationProcess" />
+			<property name="application file" code="appf" access="r" description="a reference to the application file from which this process was launched">
+                <type type="alias" />
+                <type type="file" />
+                <type type="any" hidden="yes" />
+            </property>
+		</class>
+		<class name="attribute" code="attr" description="An named data value associated with the UI element" plural="attributes">
+			<cocoa class="UIAttribute" />
+			<property name="name" code="pnam" type="text" access="r" description="the name of the attribute" />
+			<property name="settable" code="stbl" type="boolean" access="r" description="Can the attribute be set?" />
+			<property name="value" code="valL" description="the current value of the attribute">
+                <type type="specifier" />
+                <type type="number" />
+                <type type="text" />
+                <type type="list" />
+                <type type="record" />
+                <type type="any" hidden="yes" />
+                <type type="boolean" />
+            </property>
+		</class>
+		<class name="browser" code="broW" description="A browser belonging to a window" inherits="UI element" plural="browsers">
+			<cocoa class="UIBrowser" />
+		</class>
+		<class name="busy indicator" code="busi" description="A busy indicator belonging to a window" inherits="UI element" plural="busy indicators">
+			<cocoa class="UIBusyIndicator" />
+		</class>
+		<class name="button" code="butT" description="A button belonging to a window or scroll bar" inherits="UI element" plural="buttons">
+			<cocoa class="UIButton" />
+		</class>
+		<class name="checkbox" code="chbx" description="A checkbox belonging to a window" inherits="UI element" plural="checkboxes">
+			<cocoa class="UICheckbox" />
+		</class>
+		<class name="color well" code="colW" description="A color well belonging to a window" inherits="UI element" plural="color wells">
+			<cocoa class="UIColorWell" />
+		</class>
+		<class name="column" code="ccol" description="A column belonging to a table" inherits="UI element" plural="columns">
+			<cocoa class="UIColumn" />
+		</class>
+		<class name="combo box" code="comB" description="A combo box belonging to a window" inherits="UI element" plural="combo boxes">
+			<cocoa class="UIComboBox" />
+		</class>
+		<class name="desk accessory process" code="pcda" description="A process launched from an desk accessory file" inherits="process" plural="desk accessory processes">
+			<cocoa class="DeskAccessoryProcess" />
+			<property name="desk accessory file" code="dafi" type="alias" access="r" description="a reference to the desk accessory file from which this process was launched" />
+		</class>
+		<class name="drawer" code="draA" description="A drawer that may be extended from a window" inherits="UI element" plural="drawers">
+			<cocoa class="UIDrawer" />
+		</class>
+		<class name="group" code="sgrp" description="A group belonging to a window" inherits="UI element" plural="groups">
+			<cocoa class="UIGroup" />
+			<element type="checkbox">
+				<cocoa key="uiCheckBoxes" />
+			</element>
+			<element type="static text">
+				<cocoa key="uiStaticTexts" />
+			</element>
+		</class>
+		<class name="grow area" code="grow" description="A grow area belonging to a window" inherits="UI element" plural="grow areas">
+			<cocoa class="UIGrowArea" />
+		</class>
+		<class name="image" code="imaA" description="An image belonging to a static text field" inherits="UI element" plural="images">
+			<cocoa class="UIImage" />
+		</class>
+		<class name="incrementor" code="incr" description="A incrementor belonging to a window" inherits="UI element" plural="incrementors">
+			<cocoa class="UIIncrementor" />
+		</class>
+		<class name="list" code="list" description="A list belonging to a window" inherits="UI element" plural="lists">
+			<cocoa class="UIElement" />
+		</class>
+		<class name="menu" code="menE" description="A menu belonging to a menu bar item" inherits="UI element" plural="menus">
+			<cocoa class="UIMenu" />
+			<element type="menu item">
+				<cocoa key="uiMenuItems" />
+			</element>
+		</class>
+		<class name="menu bar" code="mbar" description="A menu bar belonging to a process" inherits="UI element" plural="menu bars">
+			<cocoa class="UIMenuBar" />
+			<element type="menu">
+				<cocoa key="uiMenus" />
+			</element>
+			<element type="menu bar item">
+				<cocoa key="uiMenuBarItems" />
+			</element>
+		</class>
+		<class name="menu bar item" code="mbri" description="A menu bar item belonging to a menu bar" inherits="UI element" plural="menu bar items">
+			<cocoa class="UIMenuBarItem" />
+			<element type="menu">
+				<cocoa key="uiMenus" />
+			</element>
+		</class>
+		<class name="menu button" code="menB" description="A menu button belonging to a window" inherits="UI element" plural="menu buttons">
+			<cocoa class="UIMenuButton" />
+		</class>
+		<class name="menu item" code="menI" description="A menu item belonging to a menu" inherits="UI element" plural="menu items">
+			<cocoa class="UIMenuItem" />
+			<element type="menu">
+				<cocoa key="uiMenus" />
+			</element>
+		</class>
+		<class name="outline" code="outl" description="A outline belonging to a window" inherits="UI element" plural="outlines">
+			<cocoa class="UIOutline" />
+		</class>
+		<class name="pop over" code="popv" description="A pop over belonging to a window" inherits="UI element" plural="pop overs">
+			<cocoa class="UIPopover" />
+		</class>
+		<class name="pop up button" code="popB" description="A pop up button belonging to a window" inherits="UI element" plural="pop up buttons">
+			<cocoa class="UIPopUpButton" />
+		</class>
+		<class name="process" code="prcs" description="A process running on this computer" inherits="UI element" plural="processes">
+			<cocoa class="Process" />
+			<responds-to command="click">
+				<cocoa method="click:" />
+			</responds-to>
+			<element type="menu bar">
+				<cocoa key="uiMenuBars" />
+			</element>
+			<element type="window">
+                <cocoa key="uiWindows" />
+                <access-group identifier="com.apple.systemevents.window.position" access="r" />
+			</element>
+			<property name="accepts high level events" code="isab" type="boolean" access="r" description="Is the process high-level event aware (accepts open application, open document, print document, and quit)?" />
+			<property name="accepts remote events" code="revt" type="boolean" access="r" description="Does the process accept remote events?" />
+			<property name="architecture" code="arch" type="text" access="r" description="the architecture in which the process is running" />
+			<property name="background only" code="bkgo" type="boolean" access="r" description="Does the process run exclusively in the background?" />
+			<property name="bundle identifier" code="bnid" type="text" access="r" description="the bundle identifier of the process&apos; application file" />
+			<property name="Classic" code="clsc" type="boolean" access="r" description="Is the process running in the Classic environment?">
+                <cocoa key="classic" />
+            </property>
+			<property name="creator type" code="fcrt" type="text" access="r" description="the OSType of the creator of the process (the signature)" />
+			<property name="displayed name" code="dnam" type="text" access="r" description="the name of the file from which the process was launched, as displayed in the User Interface" />
+			<property name="file" code="file" access="r" description="the file from which the process was launched">
+                <type type="alias" />
+                <type type="file" />
+                <type type="any" hidden="yes" />
+            </property>
+			<property name="file type" code="asty" type="text" access="r" description="the OSType of the file type of the process" />
+			<property name="frontmost" code="pisf" type="boolean" description="Is the process the frontmost process" />
+			<property name="has scripting terminology" code="hscr" type="boolean" access="r" description="Does the process have a scripting terminology, i.e., can it be scripted?" />
+			<property name="id" code="ID  " type="integer" access="r" description="The unique identifier of the process">
+				<cocoa key="uniqueID" />
+			</property>
+			<property name="name" code="pnam" type="text" access="r" description="the name of the process" />
+			<property name="partition space used" code="pusd" type="integer" access="r" description="the number of bytes currently used in the process&apos; partition" />
+			<property name="short name" code="cfbn" access="r" description="the short name of the file from which the process was launched">
+                <type type="text" />
+                <type type="missing value" />
+                <type type="any" hidden="yes" />
+            </property>
+			<property name="total partition size" code="appt" type="integer" access="r" description="the size of the partition with which the process was launched" />
+			<property name="unix id" code="idux" type="integer" access="r" description="The Unix process identifier of a process running in the native environment, or -1 for a process running in the Classic environment">
+                <cocoa key="unixID" />
+            </property>
+			<property name="visible" code="pvis" description="Is the process&apos; layer visible?">
+                <type type="boolean" />
+                <type type="number" hidden="yes" />
+            </property>
+		</class>
+		<class name="progress indicator" code="proI" description="A progress indicator belonging to a window" inherits="UI element" plural="progress indicators">
+			<cocoa class="UIProgressIndicator" />
+		</class>
+		<class name="radio button" code="radB" description="A radio button belonging to a window" inherits="UI element" plural="radio buttons">
+			<cocoa class="UIRadioButton" />
+		</class>
+		<class name="radio group" code="rgrp" description="A radio button group belonging to a window" inherits="UI element" plural="radio groups">
+			<cocoa class="UIRadioGroup" />
+			<element type="radio button">
+                <cocoa key="uiRadioButtons" />
+            </element>
+		</class>
+		<class name="relevance indicator" code="reli" description="A relevance indicator belonging to a window" inherits="UI element" plural="relevance indicators">
+			<cocoa class="UIRelevanceIndicator" />
+		</class>
+		<class name="row" code="crow" description="A row belonging to a table" inherits="UI element" plural="rows">
+			<cocoa class="UIRow" />
+		</class>
+		<class name="scroll area" code="scra" description="A scroll area belonging to a window" inherits="UI element" plural="scroll areas">
+			<cocoa class="UIScrollArea" />
+		</class>
+		<class name="scroll bar" code="scrb" description="A scroll bar belonging to a window" inherits="UI element" plural="scroll bars">
+			<cocoa class="UIScrollBar" />
+			<element type="button">
+                <cocoa key="uiButtons" />
+            </element>
+			<element type="value indicator">
+				<cocoa key="uiValueIndicators" />
+			</element>
+		</class>
+		<class name="sheet" code="sheE" description="A sheet displayed over a window" inherits="UI element" plural="sheets">
+			<cocoa class="UISheet" />
+		</class>
+		<class name="slider" code="sliI" description="A slider belonging to a window" inherits="UI element" plural="sliders">
+			<cocoa class="UISlider" />
+		</class>
+		<class name="splitter" code="splr" description="A splitter belonging to a window" inherits="UI element" plural="splitters">
+			<cocoa class="UISplitter" />
+		</class>
+		<class name="splitter group" code="splg" description="A splitter group belonging to a window" inherits="UI element" plural="splitter groups">
+			<cocoa class="UISplitterGroup" />
+		</class>
+		<class name="static text" code="sttx" description="A static text field belonging to a window" inherits="UI element" plural="static texts">
+			<cocoa class="UIStaticText" />
+			<element type="image">
+				<cocoa key="uiImages" />
+			</element>
+		</class>
+		<class name="tab group" code="tabg" description="A tab group belonging to a window" inherits="UI element" plural="tab groups">
+			<cocoa class="UITabGroup" />
+		</class>
+		<class name="table" code="tabB" description="A table belonging to a window" inherits="UI element" plural="tables">
+			<cocoa class="UITable" />
+		</class>
+		<class name="text area" code="txta" description="A text area belonging to a window" inherits="UI element" plural="text areas">
+			<cocoa class="UITextArea" />
+		</class>
+		<class name="text field" code="txtf" description="A text field belonging to a window" inherits="UI element" plural="text fields">
+			<cocoa class="UITextField" />
+		</class>
+		<class name="toolbar" code="tbar" description="A toolbar belonging to a window" inherits="UI element" plural="toolbars">
+			<cocoa class="UIToolBar" />
+			<synonym name="tool bar" />
+		</class>
+		<class name="UI element" code="uiel" description="A piece of the user interface of a process" plural="UI elements">
+			<cocoa class="UIElement" />
+			<responds-to command="click">
+				<cocoa method="click:" />
+			</responds-to>
+			<responds-to command="select">
+				<cocoa method="select:" />
+			</responds-to>
+			<responds-to command="increment">
+				<cocoa method="increment:" />
+			</responds-to>
+			<responds-to command="decrement">
+				<cocoa method="decrement:" />
+			</responds-to>
+			<responds-to command="confirm">
+				<cocoa method="confirm:" />
+			</responds-to>
+			<responds-to command="pick">
+				<cocoa method="pick:" />
+			</responds-to>
+			<responds-to command="cancel">
+				<cocoa method="cancel:" />
+			</responds-to>
+			<element type="action">
+				<cocoa key="uiActions" />
+			</element>
+			<element type="attribute">
+				<cocoa key="uiAttributes" />
+			</element>
+			<element type="browser">
+				<cocoa key="uiBrowsers" />
+			</element>
+			<element type="busy indicator">
+				<cocoa key="uiBusyIndicators" />
+			</element>
+			<element type="button">
+				<cocoa key="uiButtons" />
+			</element>
+			<element type="checkbox">
+				<cocoa key="uiCheckBoxes" />
+			</element>
+			<element type="color well">
+				<cocoa key="uiColorWells" />
+			</element>
+			<element type="column">
+				<cocoa key="uiColumns" />
+			</element>
+			<element type="combo box">
+				<cocoa key="uiComboBoxes" />
+			</element>
+			<element type="drawer">
+				<cocoa key="uiDrawers" />
+			</element>
+			<element type="group">
+				<cocoa key="uiGroups" />
+			</element>
+			<element type="grow area">
+				<cocoa key="uiGrowAreas" />
+			</element>
+			<element type="image">
+				<cocoa key="uiImages" />
+			</element>
+			<element type="incrementor">
+				<cocoa key="uiIncrementors" />
+			</element>
+			<element type="list">
+				<cocoa key="uiLists" />
+			</element>
+			<element type="menu">
+				<cocoa key="uiMenus" />
+			</element>
+			<element type="menu bar">
+				<cocoa key="uiMenuBars" />
+			</element>
+			<element type="menu bar item">
+				<cocoa key="uiMenuBarItems" />
+			</element>
+			<element type="menu button">
+				<cocoa key="uiMenuButtons" />
+			</element>
+			<element type="menu item">
+				<cocoa key="uiMenuItems" />
+			</element>
+			<element type="outline">
+				<cocoa key="uiOutlines" />
+			</element>
+			<element type="pop over">
+				<cocoa key="uiPopovers" />
+			</element>
+			<element type="pop up button">
+				<cocoa key="uiPopUpButtons" />
+			</element>
+			<element type="progress indicator">
+				<cocoa key="uiProgressIndicators" />
+			</element>
+			<element type="radio button">
+				<cocoa key="uiRadioButtons" />
+			</element>
+			<element type="radio group">
+				<cocoa key="uiRadioGroups" />
+			</element>
+			<element type="relevance indicator">
+				<cocoa key="uiRelevanceIndicators" />
+			</element>
+			<element type="row">
+				<cocoa key="uiRows" />
+			</element>
+			<element type="scroll area">
+				<cocoa key="uiScrollAreas" />
+			</element>
+			<element type="scroll bar">
+				<cocoa key="uiScrollBars" />
+			</element>
+			<element type="sheet">
+				<cocoa key="uiSheets" />
+			</element>
+			<element type="slider">
+				<cocoa key="uiSliders" />
+			</element>
+			<element type="splitter">
+				<cocoa key="uiSplitters" />
+			</element>
+			<element type="splitter group">
+				<cocoa key="uiSplitGroups" />
+			</element>
+			<element type="static text">
+				<cocoa key="uiStaticTexts" />
+			</element>
+			<element type="tab group">
+				<cocoa key="uiTabGroups" />
+			</element>
+			<element type="table">
+				<cocoa key="uiTables" />
+			</element>
+			<element type="text area">
+				<cocoa key="uiTextAreas" />
+			</element>
+			<element type="text field">
+				<cocoa key="uiTextFields" />
+			</element>
+			<element type="toolbar">
+				<cocoa key="uiToolbars" />
+			</element>
+			<element type="UI element">
+				<cocoa key="uiElements" />
+			</element>
+			<element type="value indicator">
+				<cocoa key="uiValueIndicators" />
+			</element>
+			<element type="window">
+                <cocoa key="uiWindows" />
+                <access-group identifier="com.apple.systemevents.window.position" access="r" />
+			</element>
+			<property name="accessibility description" code="axds" access="r" description="a more complete description of the UI element and its capabilities">
+                <cocoa key="axDescription" />
+                <type type="text" />
+                <type type="missing value" />
+                <type type="any" hidden="yes" />
+            </property>
+			<property name="class" code="pcls" type="type" access="r" description="the class of the UI Element, which identifies it function">
+                <cocoa key="classCode" />
+            </property>
+			<property name="description" code="desc" access="r" description="the accessibility description, if available; otherwise, the role description">
+                <cocoa key="scriptingDescription" />
+                <type type="text" />
+                <type type="missing value" />
+                <type type="any" hidden="yes" />
+            </property>
+			<property name="enabled" code="enaB" access="r" description="Is the UI element enabled? ( Does it accept clicks? )">
+                <type type="boolean" />
+                <type type="missing value" />
+                <type type="any" hidden="yes" />
+            </property>
+			<property name="entire contents" code="ects" access="r" description="a list of every UI element contained in this UI element and its child UI elements, to the limits of the tree">
+				<type type="specifier" list="yes" />
+			</property>
+			<property name="focused" code="focu" description="Is the focus on this UI element?">
+                <type type="boolean" />
+                <type type="missing value" />
+                <type type="any" hidden="yes" />
+            </property>
+			<property name="help" code="help" access="r" description="an elaborate description of the UI element and its capabilities">
+                <type type="text" />
+                <type type="missing value" />
+                <type type="any" hidden="yes" />
+            </property>
+			<property name="maximum value" code="maxV" access="r" description="the maximum value that the UI element can take on">
+                <type type="number" />
+                <type type="missing value" />
+                <type type="any" hidden="yes" />
+            </property>
+			<property name="minimum value" code="minW" access="r" description="the minimum value that the UI element can take on">
+                <type type="number" />
+                <type type="missing value" />
+                <type type="any" hidden="yes" />
+            </property>
+			<property name="name" code="pnam" type="text" access="r" description="the name of the UI Element, which identifies it within its container" />
+			<property name="orientation" code="orie" access="r" description="the orientation of the UI element">
+                <type type="text" />
+                <type type="missing value" />
+                <type type="any" hidden="yes" />
+            </property>
+			<property name="position" code="posn" description="the position of the UI element">
+				<type type="number" list="yes" />
+                <type type="missing value" />
+				<type type="any" hidden="yes" />
+			</property>
+			<property name="role" code="role" type="text" access="r" description="an encoded description of the UI element and its capabilities" />
+			<property name="role description" code="rold" type="text" access="r" description="a more complete description of the UI element&apos;s role" />
+			<property name="selected" code="selE" description="Is the UI element selected?">
+                <type type="boolean" />
+                <type type="missing value" />
+                <type type="any" hidden="yes" />
+            </property>
+			<property name="size" code="ptsz" description="the size of the UI element">
+				<type type="number" list="yes" />
+                <type type="missing value" />
+				<type type="any" hidden="yes" />
+			</property>
+			<property name="subrole" code="sbrl" access="r" description="an encoded description of the UI element and its capabilities">
+                <type type="text" />
+                <type type="missing value" />
+                <type type="any" hidden="yes" />
+            </property>
+			<property name="title" code="titl" type="text" access="r" description="the title of the UI element as it appears on the screen" />
+			<property name="value" code="valL" description="the current value of the UI element">
+                <type type="specifier" />
+                <type type="number" />
+                <type type="text" />
+                <type type="any" hidden="yes" />
+            </property>
+		</class>
+		<class name="value indicator" code="vali" description="A value indicator ( thumb or slider ) belonging to a scroll bar" inherits="UI element" plural="value indicators">
+			<cocoa class="UIValueIndicator" />
+		</class>
+		<class-extension extends="window" description="A window belonging to a process">
+			<responds-to command="click">
+			    <cocoa method="click:" />
+			</responds-to>
+			<responds-to command="select">
+			    <cocoa method="select:" />
+			</responds-to>
+			<responds-to command="increment">
+				<cocoa method="increment:" />
+			</responds-to>
+			<responds-to command="decrement">
+				<cocoa method="decrement:" />
+			</responds-to>
+            <responds-to command="confirm">
+                <cocoa method="confirm:" />
+            </responds-to>
+            <responds-to command="pick">
+                <cocoa method="pick:" />
+            </responds-to>
+            <responds-to command="cancel">
+                <cocoa method="cancel:" />
+            </responds-to>
+            <element type="action">
+                <cocoa key="uiActions" />
+            </element>
+            <element type="attribute">
+                <cocoa key="uiAttributes" />
+            </element>
+			<element type="browser">
+				<cocoa key="uiBrowsers" />
+			</element>
+			<element type="busy indicator">
+				<cocoa key="uiBusyIndicators" />
+			</element>
+			<element type="button">
+				<cocoa key="uiButtons" />
+			</element>
+			<element type="checkbox">
+				<cocoa key="uiCheckBoxes" />
+			</element>
+			<element type="color well">
+				<cocoa key="uiColorWells" />
+			</element>
+			<element type="combo box">
+				<cocoa key="uiComboBoxes" />
+			</element>
+			<element type="drawer">
+				<cocoa key="uiDrawers" />
+			</element>
+			<element type="group">
+				<cocoa key="uiGroups" />
+			</element>
+			<element type="grow area">
+				<cocoa key="uiGrowAreas" />
+			</element>
+			<element type="image">
+				<cocoa key="uiImages" />
+			</element>
+			<element type="incrementor">
+				<cocoa key="uiIncrementors" />
+			</element>
+			<element type="list">
+				<cocoa key="uiLists" />
+			</element>
+			<element type="menu button">
+				<cocoa key="uiMenuButtons" />
+			</element>
+			<element type="outline">
+				<cocoa key="uiOutlines" />
+			</element>
+			<element type="pop over">
+				<cocoa key="uiPopovers" />
+			</element>
+			<element type="pop up button">
+				<cocoa key="uiPopUpButtons" />
+			</element>
+			<element type="progress indicator">
+				<cocoa key="uiProgressIndicators" />
+			</element>
+			<element type="radio button">
+				<cocoa key="uiRadioButtons" />
+			</element>
+			<element type="radio group">
+				<cocoa key="uiRadioGroups" />
+			</element>
+			<element type="relevance indicator">
+				<cocoa key="uiRelevanceIndicators" />
+			</element>
+			<element type="scroll area">
+				<cocoa key="uiScrollAreas" />
+			</element>
+			<element type="scroll bar">
+				<cocoa key="uiScrollBars" />
+			</element>
+			<element type="sheet">
+				<cocoa key="uiSheets" />
+			</element>
+			<element type="slider">
+				<cocoa key="uiSliders" />
+			</element>
+			<element type="splitter">
+				<cocoa key="uiSplitters" />
+			</element>
+			<element type="splitter group">
+				<cocoa key="uiSplitGroups" />
+			</element>
+			<element type="static text">
+				<cocoa key="uiStaticTexts" />
+			</element>
+			<element type="tab group">
+				<cocoa key="uiTabGroups" />
+			</element>
+			<element type="table">
+				<cocoa key="uiTables" />
+			</element>
+			<element type="text area">
+				<cocoa key="uiTextAreas" />
+			</element>
+			<element type="text field">
+				<cocoa key="uiTextFields" />
+			</element>
+			<element type="toolbar">
+				<cocoa key="uiToolbars" />
+			</element>
+			<element type="UI element">
+				<cocoa key="uiElements" />
+			</element>
+			<property name="accessibility description" code="axds" access="r" description="a more complete description of the window and its capabilities">
+			    <cocoa key="axDescription" />
+			    <type type="text" />
+			    <type type="missing value" />
+			    <type type="any" hidden="yes" />
+			</property>
+			<property name="class" code="pcls" type="type" access="r" description="the class of the window, which identifies its function">
+			    <cocoa key="classCode" />
+			</property>
+			<property name="description" code="desc" access="r" description="the accessibility description, if available; otherwise, the role description">
+			    <cocoa key="scriptingDescription" />
+			    <type type="text" />
+			    <type type="missing value" />
+			    <type type="any" hidden="yes" />
+			</property>
+            <property name="enabled" code="enaB" access="r" description="Is the window enabled? ( Does it accept clicks? )">
+                <type type="boolean" />
+                <type type="missing value" />
+                <type type="any" hidden="yes" />
+            </property>
+            <property name="entire contents" code="ects" access="r" description="a list of every UI element contained in this window and its child UI elements, to the limits of the tree">
+                <type type="specifier" list="yes" />
+            </property>
+            <property name="focused" code="focu" description="Is the focus on this window?">
+                <type type="boolean" />
+                <type type="missing value" />
+                <type type="any" hidden="yes" />
+            </property>
+            <property name="help" code="help" access="r" description="an elaborate description of the window and its capabilities">
+                <type type="text" />
+                <type type="missing value" />
+                <type type="any" hidden="yes" />
+            </property>
+			<property name="maximum value" code="maxV" access="r" description="the maximum value that the UI element can take on">
+                <type type="number" />
+                <type type="missing value" />
+                <type type="any" hidden="yes" />
+            </property>
+			<property name="minimum value" code="minW" access="r" description="the minimum value that the UI element can take on">
+                <type type="number" />
+                <type type="missing value" />
+                <type type="any" hidden="yes" />
+            </property>
+            <property name="name" code="pnam" type="text" access="r" description="the name of the window, which identifies it within its container" />
+            <property name="orientation" code="orie" access="r" description="the orientation of the window">
+                <type type="text" />
+                <type type="missing value" />
+                <type type="any" hidden="yes" />
+            </property>
+			<property name="position" code="posn" description="the position of the window">
+                <access-group identifier="com.apple.systemevents.window.position" access="rw" />
+				<type type="number" list="yes" />
+                <type type="missing value" />
+				<type type="any" hidden="yes" />
+			</property>
+            <property name="role" code="role" type="text" access="r" description="an encoded description of the window and its capabilities" />
+            <property name="role description" code="rold" type="text" access="r" description="a more complete description of the window&apos;s role" />
+            <property name="selected" code="selE" description="Is the window selected?">
+                <type type="boolean" />
+                <type type="missing value" />
+                <type type="any" hidden="yes" />
+            </property>
+            <property name="size" code="ptsz" description="the size of the window">
+                <access-group identifier="com.apple.systemevents.window.position" access="rw" />
+                <type type="number" list="yes" />
+                <type type="missing value" />
+                <type type="any" hidden="yes" />
+            </property>
+            <property name="subrole" code="sbrl" access="r" description="an encoded description of the window and its capabilities">
+                <type type="text" />
+                <type type="missing value" />
+                <type type="any" hidden="yes" />
+            </property>
+            <property name="title" code="titl" type="text" access="r" description="the title of the window as it appears on the screen" />
+            <property name="value" code="valL" description="the current value of the window">
+                <type type="specifier" />
+                <type type="number" />
+                <type type="text" />
+                <type type="any" hidden="yes" />
+            </property>
+		</class-extension>
+		<enumeration name="eMds" code="eMds">
+			<enumerator name="command down" code="Kcmd" description="command down" />
+			<enumerator name="control down" code="Kctl" description="control down" />
+			<enumerator name="option down" code="Kopt" description="option down" />
+			<enumerator name="shift down" code="Ksft" description="shift down" />
+		</enumeration>
+		<enumeration name="eMky" code="eMky">
+			<enumerator name="command" code="eCmd" description="command" />
+			<enumerator name="control" code="eCnt" description="control" />
+			<enumerator name="option" code="eOpt" description="option" />
+			<enumerator name="shift" code="eSft" description="shift" />
+		</enumeration>
+	</suite>
+	<suite name="Property List Suite" code="pliz" description="Terms and Events for accessing the content of Property List files">
+		<class-extension extends="application" description="The System Events application">
+			<element type="property list file">
+				<cocoa key="plistFiles" />
+			</element>
+			<element type="property list item">
+				<cocoa key="plistItems" />
+			</element>
+		</class-extension>
+		<class name="property list file" code="plif" description="A file containing data in Property List format" inherits="file" plural="property list files">
+			<cocoa class="PropertyListFile" />
+			<contents type="property list item" description="the contents of the property list file; elements and properties of the property list item may be accessed as if they were elements and properties of the property list file" />
+		</class>
+        <!--    <rdar://problem/15764986>   <rdar://problem/15659926>   -->
+        <class name="data" code="rdat" description="A data blob" hidden="yes">
+			<cocoa class="NSData" />
+        </class>
+		<class name="property list item" code="plii" description="A unit of data in Property List format" plural="property list items">
+			<cocoa class="PropertyListItem" />
+            <type type="text" />
+            <type type="property list file" />
+			<element type="property list item">
+				<cocoa key="plistItems" />
+			</element>
+			<property name="kind" code="kind" type="type" access="r" description="the kind of data stored in the property list item: boolean/data/date/list/number/record/string" />
+			<property name="name" code="pnam" type="text" access="r" description="the name of the property list item ( if any )" />
+			<property name="text" code="ctxt" type="text" description="the text representation of the property list data" />
+			<property name="value" code="valL" description="the value of the property list item">
+                <type type="any" hidden="yes" />
+                <type type="number" />
+                <type type="boolean" />
+                <type type="date" />
+                <type type="list" />
+                <type type="record" />
+                <type type="text" />
+                <type type="data" />
+            </property>
+		</class>
+		<class-extension extends="property list item" hidden="yes">
+			<contents description="the contents of the property list item" access="r" hidden="yes" in-properties="no">
+                <type type="text" />
+                <type type="property list item" />
+                <type type="property list file" />
+                <type type="file" />
+            </contents>
+        </class-extension>
+	</suite>
+	<suite name="XML Suite" code="xmlz" description="Terms and Events for accessing the content of XML files">
+		<class-extension extends="application" description="The System Events application">
+			<element type="XML data">
+                <cocoa key="xmlDatas" />
+            </element>
+			<element type="XML file">
+                <cocoa key="xmlFiles" />
+            </element>
+		</class-extension>
+		<class name="XML attribute" code="xmla" description="A named value associated with a unit of data in XML format" plural="XML attributes">
+			<cocoa class="XMLAttribute" />
+			<property name="name" code="pnam" type="text" access="r" description="the name of the XML attribute" />
+			<property name="value" code="valL" description="the value of the XML attribute">
+                <type type="boolean" />
+                <type type="date" />
+                <type type="list" />
+                <type type="number" />
+                <type type="record" />
+                <type type="text" />
+                <type type="any" hidden="yes" />
+            </property>
+		</class>
+		<class name="XML data" code="xmld" description="Data in XML format">
+			<cocoa class="XMLData" />
+            <type type="text" />
+            <type type="XML file" />
+			<element type="XML element">
+                <cocoa key="xmlElements" />
+            </element>
+			<property name="id" code="ID  " type="text" access="r" description="the unique identifier of the XML data">
+				<cocoa key="uniqueID" />
+			</property>
+			<property name="name" code="pnam" type="text" description="the name of the XML data" />
+			<property name="text" code="ctxt" type="text" description="the text representation of the XML data">
+				<cocoa key="textStorage" />
+			</property>
+		</class>
+		<class name="XML element" code="xmle" description="A unit of data in XML format" plural="XML elements">
+			<cocoa class="XMLElement" />
+			<element type="XML attribute">
+                <cocoa key="xmlAttributes" />
+            </element>
+			<element type="XML element">
+                <cocoa key="xmlElements" />
+            </element>
+			<property name="id" code="ID  " type="text" access="r" description="the unique identifier of the XML element">
+				<cocoa key="uniqueID" />
+			</property>
+			<property name="name" code="pnam" type="text" access="r" description="the name of the XML element" />
+			<property name="value" code="valL" description="the value of the XML element">
+                <type type="boolean" />
+                <type type="date" />
+                <type type="list" />
+                <type type="number" />
+                <type type="record" />
+                <type type="text" />
+                <type type="any" hidden="yes" />
+            </property>
+		</class>
+		<class name="XML file" code="xmlf" description="A file containing data in XML format" inherits="file" plural="XML files">
+			<cocoa class="XMLFile" />
+			<contents type="XML data" description="the contents of the XML file; elements and properties of the XML data may be accessed as if they were elements and properties of the XML file" />
+		</class>
+	</suite>
+	<suite name="Type Definitions" code="tpdf" description="Records used in scripting System Events">
+		<class name="print settings" code="pset">
+			<cocoa class="NSObject" />
+			<property name="copies" code="lwcp" type="integer" description="the number of copies of a document to be printed" />
+			<property name="collating" code="lwcl" type="boolean" description="Should printed copies be collated?" />
+			<property name="starting page" code="lwfp" type="integer" description="the first page of the document to be printed" />
+			<property name="ending page" code="lwlp" type="integer" description="the last page of the document to be printed" />
+			<property name="pages across" code="lwla" type="integer" description="number of logical pages laid across a physical page" />
+			<property name="pages down" code="lwld" type="integer" description="number of logical pages laid out down a physical page" />
+			<property name="requested print time" code="lwqt" type="date" description="the time at which the desktop printer should print the document" />
+			<property name="error handling" code="lweh" type="enum" description="how errors are handled" />
+			<property name="fax number" code="faxn" type="text" description="for fax number" />
+			<property name="target printer" code="trpr" type="text" description="for target printer" />
+		</class>
+		<enumeration name="enum" code="enum">
+			<enumerator name="standard" code="lwst" description="Standard PostScript error handling" />
+			<enumerator name="detailed" code="lwdt" description="print a detailed report of PostScript errors" />
+		</enumeration>
+	</suite>
+<!--	-->
+	<suite name="Hidden Suite" code="tpnm" description="Hidden Terms and Events for controlling the System Events application" hidden="yes">
+		<class-extension extends="folder" description="The Folder Actions specific extensions to the folder class" hidden="yes">
+			<responds-to command="attach action to">
+                <cocoa method="attachActionVerb:" />
+            </responds-to>
+			<responds-to command="attached scripts">
+                <cocoa method="attachedScriptsVerb:" />
+            </responds-to>
+            <responds-to command="edit action of">
+                <cocoa method="editActionVerb:" />
+            </responds-to>
+            <responds-to command="remove action from">
+                <cocoa method="removeActionVerb:" />
+            </responds-to>
+        </class-extension>
+		<command name="attach action to" code="facoatfa" description="Attach an action to a folder" hidden="yes">
+            <cocoa class="AttachActionVerb" />
+			<direct-parameter type="specifier" description="the object for the command" />
+			<parameter name="using" code="faal" type="text" description="a file containing the script to attach">
+				<cocoa key="using" />
+			</parameter>
+			<result type="folder action" />
+		</command>
+		<command name="attached scripts" code="facolact" description="List the actions attached to a folder" hidden="yes">
+            <cocoa class="AttachedScriptsVerb" />
+			<direct-parameter type="specifier" description="the object for the command" />
+			<result>
+                <type type="any" list="yes" />
+            </result>
+		</command>
+		<command name="cancel" code="prcscncl" description="cause the target process to behave as if the UI element were cancelled" hidden="yes">
+			<direct-parameter type="specifier" description="the object for the command" />
+			<result type="UI element" />
+		</command>
+		<command name="confirm" code="prcscnfm" description="cause the target process to behave as if the UI element were confirmed" hidden="yes">
+			<direct-parameter type="specifier" description="the object for the command" />
+			<result type="UI element" />
+		</command>
+		<command name="decrement" code="prcsdecr" description="cause the target process to behave as if the UI element were decremented" hidden="yes">
+			<direct-parameter type="specifier" description="the object for the command" />
+			<result type="UI element" />
+		</command>
+		<command name="do folder action" code="facofola" description="Send a folder action code to a folder action script" hidden="yes">
+			<direct-parameter type="specifier" description="the object for the command" />
+			<parameter name="folder action code" code="actn" type="actn" description="the folder action message to process">
+				<cocoa key="code" />
+			</parameter>
+			<parameter name="with item list" code="flst" type="any" optional="yes" description="a list of items for the folder action message to process">
+				<cocoa key="itemList" />
+			</parameter>
+			<parameter name="with window size" code="fnsz" type="rectangle" optional="yes" description="the new window size for the folder action message to process">
+				<cocoa key="windowSize" />
+			</parameter>
+		</command>
+		<command name="edit action of" code="facoedfa" description="Edit an action of a folder" hidden="yes">
+            <cocoa class="EditActionVerb" />
+			<direct-parameter type="specifier" description="the object for the command" />
+			<parameter name="using action name" code="snam" type="text" optional="yes" description="...or the name of the action to edit">
+				<cocoa key="usingName" />
+			</parameter>
+			<parameter name="using action number" code="indx" type="integer" optional="yes" description="the index number of the action to edit...">
+				<cocoa key="usingNumber" />
+			</parameter>
+			<result type="file" />
+		</command>
+		<command name="increment" code="prcsincE" description="cause the target process to behave as if the UI element were incremented" hidden="yes">
+			<direct-parameter type="specifier" description="the object for the command" />
+			<result type="UI element" />
+		</command>
+		<command name="key down" code="prcskeyF" description="cause the target process to behave as if keys were held down" hidden="yes">
+            <cocoa class="KeyDownVerb" />
+			<direct-parameter description="a keystroke, key code, or (list of) modifier key names.">
+				<type type="text" />
+				<type type="integer" />
+				<type type="eMky" />
+				<type type="eMky" list="yes" />
+			</direct-parameter>
+		</command>
+		<command name="key up" code="prcskeyU" description="cause the target process to behave as if keys were released" hidden="yes">
+            <cocoa class="KeyUpVerb" />
+			<direct-parameter description="a keystroke, key code, or (list of) modifier key names.">
+				<type type="text" />
+				<type type="integer" />
+				<type type="eMky" />
+				<type type="eMky" list="yes" />
+			</direct-parameter>
+		</command>
+		<command name="pick" code="prcspick" description="cause the target process to behave as if the UI element were picked" hidden="yes">
+			<direct-parameter type="specifier" description="the object for the command" />
+			<result type="UI element" />
+		</command>
+		<command name="remove action from" code="facormfa" description="Remove a folder action from a folder" hidden="yes">
+            <cocoa class="RemoveActionVerb" />
+			<direct-parameter type="specifier" description="the object for the command" />
+			<parameter name="using action name" code="snam" type="text" optional="yes" description="...or the name of the action to remove">
+				<cocoa key="usingName" />
+			</parameter>
+			<parameter name="using action number" code="indx" type="integer" optional="yes" description="the index number of the action to remove...">
+				<cocoa key="usingNumber" />
+			</parameter>
+			<result type="folder action" />
+		</command>
+		<enumeration name="actn" code="actn" hidden="yes">
+			<enumerator name="items added" code="fget" description="items added" />
+			<enumerator name="items removed" code="flos" description="items removed" />
+			<enumerator name="window closed" code="fclo" description="window closed" />
+			<enumerator name="window moved" code="fsiz" description="window moved" />
+			<enumerator name="window opened" code="fopn" description="window opened" />
+		</enumeration>
+	</suite>
+	<suite name="Scripting Definition Suite" code="sdef" description=" Terms and Events for examining the System Events scripting definition">
+		<class-extension extends="application" description="The System Events application">
+			<property name="scripting definition" code="sdef" type="scripting definition object" access="r" description="The scripting definition of the System Events application" />
+		</class-extension>
+        <!--
+		<class-extension extends="application process" description="An application process known to the System Events application">
+			<property name="scripting definition" code="sdef" type="scripting definition object" access="r" description="The scripting definition of the application process" />
+		</class-extension>
+        -->
+		<class name="scripting class" code="sdcl" description="A class within a suite within a scripting definition" plural="scripting classes">
+            <cocoa class="ScriptingClass" />
+			<element type="scripting element">
+                <cocoa key="scriptingElements" />
+            </element>
+			<element type="scripting property">
+                <cocoa key="scriptingPropertyArray" />
+            </element>
+			<property name="name" code="pnam" type="text" access="r" description="The name of the class" />
+			<property name="id" code="ID  " type="text" access="r" description="The unique identifier of the class">
+                <cocoa key="uniqueID" />
+            </property>
+			<property name="description" code="desc" type="text" access="r" description="The description of the class">
+                <cocoa key="scriptingDescription" />
+            </property>
+			<property name="hidden" code="hidn" type="boolean" access="r" description="Is the class hidden?" />
+			<property name="plural name" code="plnm" type="text" access="r" description="The plural name of the class" />
+			<property name="suite name" code="stnm" type="text" access="r" description="The name of the suite to which this class belongs" />
+			<property name="superclass" code="supe" type="scripting class" access="r" description="The class from which this class inherits" />
+		</class>
+		<class name="scripting command" code="sdcm" description="A command within a suite within a scripting definition" plural="scripting commands">
+            <cocoa class="ScriptingCommand" />
+			<element type="scripting parameter" />
+			<property name="name" code="pnam" type="text" access="r" description="The name of the command" />
+			<property name="id" code="ID  " type="text" access="r" description="The unique identifier of the command">
+                <cocoa key="uniqueID" />
+            </property>
+			<property name="description" code="desc" type="text" access="r" description="The description of the command">
+                <cocoa key="scriptingDescription" />
+            </property>
+			<property name="direct parameter" code="sddp" type="scripting parameter" access="r" description="The direct parameter of the command" />
+			<property name="hidden" code="hidn" type="boolean" access="r" description="Is the command hidden?" />
+			<property name="scripting result" code="sdrs" type="scripting result object" access="r" description="The object or data returned by this command" />
+			<property name="suite name" code="stnm" type="text" access="r" description="The name of the suite to which this command belongs" />
+		</class>
+		<class name="scripting definition object" code="sdeo" description="The scripting definition of the System Events applicaation">
+            <cocoa class="ScriptingDefinition" />
+			<element type="scripting suite" />
+		</class>
+		<class name="scripting element" code="sdel" description="An element within a class within a suite within a scripting definition" inherits="scripting class" plural="scripting elements">
+            <cocoa class="ScriptingElement" />
+		</class>
+		<class name="scripting enumeration" code="sden" description="An enumeration within a suite within a scripting definition" plural="scripting enumerations">
+            <cocoa class="ScriptingEnumeration" />
+			<element type="scripting enumerator" />
+			<property name="name" code="pnam" type="text" access="r" description="The name of the enumeration" />
+			<property name="id" code="ID  " type="text" access="r" description="The unique identifier of the enumeration">
+                <cocoa key="uniqueID" />
+            </property>
+			<property name="hidden" code="hidn" type="boolean" access="r" description="Is the enumeration hidden?" />
+		</class>
+		<class name="scripting enumerator" code="sder" description="An enumerator within an enumeration within a suite within a scripting definition" plural="scripting enumerators">
+            <cocoa class="ScriptingEnumerator" />
+			<property name="name" code="pnam" type="text" access="r" description="The name of the enumerator" />
+			<property name="id" code="ID  " type="text" access="r" description="The unique identifier of the enumerator">
+                <cocoa key="uniqueID" />
+            </property>
+			<property name="description" code="desc" type="text" access="r" description="The description of the enumerator">
+                <cocoa key="scriptingDescription" />
+            </property>
+			<property name="hidden" code="hidn" type="boolean" access="r" description="Is the enumerator hidden?" />
+		</class>
+		<class name="scripting parameter" code="sdpa" description="A parameter within a command within a suite within a scripting definition" plural="scripting parameters">
+            <cocoa class="ScriptingParameter" />
+			<property name="name" code="pnam" type="text" access="r" description="The name of the parameter" />
+			<property name="id" code="ID  " type="text" access="r" description="The unique identifier of the parameter">
+                <cocoa key="uniqueID" />
+            </property>
+			<property name="description" code="desc" type="text" access="r" description="The description of the parameter">
+                <cocoa key="scriptingDescription" />
+            </property>
+			<property name="hidden" code="hidn" type="boolean" access="r" description="Is the parameter hidden?" />
+			<property name="kind" code="kind" type="text" access="r" description="The kind of object or data specified by this parameter" />
+			<property name="optional" code="optl" type="boolean" access="r" description="Is the parameter optional?" />
+		</class>
+		<class name="scripting property" code="sdpr" description="A property within a class within a suite within a scripting definition" plural="scripting properties">
+            <cocoa class="ScriptingProperty" />
+			<property name="name" code="pnam" type="text" access="r" description="The name of the property" />
+			<property name="id" code="ID  " type="text" access="r" description="The unique identifier of the property">
+                <cocoa key="uniqueID" />
+            </property>
+			<property name="access" code="accs" type="accs" access="r" description="The type of access to this property" />
+			<property name="description" code="desc" type="text" access="r" description="The description of the property">
+                <cocoa key="scriptingDescription" />
+            </property>
+			<property name="enumerated" code="enmd" type="boolean" access="r" description="Is the property's value an enumerator?" />
+			<property name="hidden" code="hidn" type="boolean" access="r" description="Is the property hidden?" />
+			<property name="kind" code="kind" type="text" access="r" description="The kind of object or data returned by this property" />
+			<property name="listed" code="lstd" type="boolean" access="r" description="Is the property's value a list?" />
+		</class>
+		<class name="scripting result object" code="sdro" description="The result of a command within a suite within a scripting definition" plural="scripting result objects">
+            <cocoa class="ScriptingResult" />
+			<property name="description" code="desc" type="text" access="r" description="The description of the property">
+                <cocoa key="scriptingDescription" />
+            </property>
+			<property name="enumerated" code="enmd" type="boolean" access="r" description="Is the scripting result's value an enumerator?" />
+			<property name="kind" code="kind" type="text" access="r" description="The kind of object or data returned by this property" />
+			<property name="listed" code="lstd" type="boolean" access="r" description="Is the scripting result's value a list?" />
+		</class>
+		<class name="scripting suite" code="sdst" description="A suite within a scripting definition" plural="scripting suites">
+            <cocoa class="ScriptingSuite" />
+			<element type="scripting command" />
+			<element type="scripting class" />
+			<element type="scripting enumeration" />
+			<property name="name" code="pnam" type="text" access="r" description="The name of the suite" />
+			<property name="id" code="ID  " type="text" access="r" description="The unique identifier of the suite">
+                <cocoa key="uniqueID" />
+            </property>
+			<property name="description" code="desc" type="text" access="r" description="The description of the suite">
+                <cocoa key="scriptingDescription" />
+            </property>
+			<property name="hidden" code="hidn" type="boolean" access="r" description="Is the suite hidden?" />
+		</class>
+		<enumeration name="accs" code="accs">
+			<enumerator name="none" code="none" description="none" />
+			<enumerator name="read only" code="read" description="read only" />
+			<enumerator name="read write" code="rdwr" description="read write" />
+			<enumerator name="write only" code="writ" description="write only" />
+		</enumeration>
+	</suite>
+</dictionary>

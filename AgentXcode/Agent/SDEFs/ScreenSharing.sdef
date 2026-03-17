@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+
+<dictionary title="Screen Sharing">
+	<suite name="Screen Sharing Suite" code="LAzn" description="Terms and Events for controlling the Screen Sharing application.">
+	
+		<command name="GetURL" code="GURLGURL" description="Open a vnc URL">
+			<cocoa class="SSURLHandler"/>
+			<direct-parameter type="text" description="the vnc URL"/>
+		</command>
+		
+	</suite>
+</dictionary>

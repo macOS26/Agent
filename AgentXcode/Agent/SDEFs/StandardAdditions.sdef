@@ -1,0 +1,739 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+<dictionary>
+	<suite name="User Interaction" code="syso" description="Basic commands for interacting with the user">
+		<command name="beep" code="sysobeep" description="Beep 1 or more times">
+			<direct-parameter type="integer" optional="yes" description="number of times to beep"/>
+		</command>
+		<command name="choose application" code="sysoppcb" description="Choose an application on this machine or the network">
+			<parameter name="with title" code="appr" type="text" optional="yes" description="the dialog window title"/>
+			<parameter name="with prompt" code="prmp" type="text" optional="yes" description="the prompt to be displayed in the dialog box"/>
+			<parameter name="multiple selections allowed" code="mlsl" type="boolean" optional="yes" description="Allow multiple items to be selected? (default is false)"/>
+			<parameter name="as" code="rtyp" type="type class" optional="yes" description="the desired type of result.  May be application (the default) or alias."/>
+			<result type="application" description="the chosen application"/>
+                        <xref target="choose remote application"/>
+		</command>
+		<command name="choose color" code="sysochcl" description="Choose a color">
+			<parameter name="default color" code="dcol" type="RGB color" optional="yes" description="the default color"/>
+			<result type="RGB color" description="the chosen color"/>
+		</command>
+		<command name="choose file" code="sysostdf" description="Choose a file on a disk or server">
+			<parameter name="with prompt" code="prmp" type="text" optional="yes" description="the prompt to be displayed in the dialog box"/>
+			<parameter name="of type" code="ftyp" optional="yes" description="a list of file types or type identifiers. Only files of the specified types will be selectable.">
+				<type type="text" list="yes"/>
+			</parameter>
+			<parameter name="default location" code="dflc" type="alias" optional="yes" description="the default file location"/>
+			<parameter name="invisibles" code="lfiv" type="boolean" optional="yes" description="Show invisible files and folders? (default is false)"/>
+			<parameter name="multiple selections allowed" code="mlsl" type="boolean" optional="yes" description="Allow multiple items to be selected? (default is false)"/>
+			<parameter name="showing package contents" code="shpc" type="boolean" optional="yes" description="Show the contents of packages? (Packages will be treated as folders. Default is false.)"/>
+			<result type="alias" description="the chosen file"/>
+                        <xref target="choose file name"/>
+                        <xref target="choose folder"/>
+		</command>
+		<command name="choose file name" code="sysonwfl" description="Get a new file reference from the user, without creating the file">
+			<parameter name="with prompt" code="prmt" type="text" optional="yes" description="the prompt to be displayed in the dialog box"/>
+			<parameter name="default name" code="dfnm" type="text" optional="yes" description="the default name for the new file"/>
+			<parameter name="default location" code="dflc" type="alias" optional="yes" description="the default file location"/>
+			<result type="file" description="the file the user specified"/>
+                        <xref target="choose file"/>
+                        <xref target="choose folder"/>
+		</command>
+		<command name="choose folder" code="sysostfl" description="Choose a folder on a disk or server">
+			<parameter name="with prompt" code="prmp" type="text" optional="yes" description="the prompt to be displayed in the dialog box"/>
+			<parameter name="default location" code="dflc" type="alias" optional="yes" description="the default folder location"/>
+			<parameter name="invisibles" code="lfiv" type="boolean" optional="yes" description="Show invisible files and folders? (default is false)"/>
+			<parameter name="multiple selections allowed" code="mlsl" type="boolean" optional="yes" description="Allow multiple items to be selected? (default is false)"/>
+			<parameter name="showing package contents" code="shpc" type="boolean" optional="yes" description="Show the contents of packages? (Packages will be treated as folders. Default is false.)"/>
+			<result type="alias" description="the chosen folder"/>
+                        <xref target="choose file"/>
+                        <xref target="choose file name"/>
+		</command>
+		<command name="choose from list" code="gtqpchlt" description="Choose one or more items from a list">
+			<direct-parameter description="a list of items to display">
+				<type list="yes">
+					<type type="text"/>
+					<type type="number"/>
+				</type>
+			</direct-parameter>
+			<parameter name="with title" code="appr" type="text" optional="yes" description="the dialog window title"/>
+			<parameter name="with prompt" code="prmp" type="text" optional="yes" description="the prompt to be displayed in the dialog box"/>
+			<parameter name="default items" code="inSL" optional="yes" description="a list of items to initially select (an empty list if no selection)">
+				<type list="yes">
+					<type type="text"/>
+					<type type="number"/>
+				</type>
+			</parameter>
+			<parameter name="OK button name" code="okbt" type="text" optional="yes" description="the name of the OK button"/>
+			<parameter name="cancel button name" code="cnbt" type="text" optional="yes" description="the name of the Cancel button"/>
+			<parameter name="multiple selections allowed" code="mlsl" type="boolean" optional="yes" description="Allow multiple items to be selected?"/>
+			<parameter name="empty selection allowed" code="empL" type="boolean" optional="yes" description="Can the user make no selection and then choose OK?"/>
+			<result description="the list of selected items">
+				<type list="yes">
+					<type type="number"/>
+					<type type="text"/>
+				</type>
+			</result>
+		</command>
+		<command name="choose remote application" code="sysochra" description="Choose a running application on a remote machine or on this machine">
+			<parameter name="with title" code="appr" type="text" optional="yes" description="the dialog window title"/>
+			<parameter name="with prompt" code="prmp" type="text" optional="yes" description="the prompt to be displayed above the list of applications"/>
+			<result type="application" description="the chosen application"/>
+                        <xref target="choose application"/>
+		</command>
+		<command name="choose URL" code="sysochur" description="Choose a service on the Internet">
+			<parameter name="showing" code="cusv" optional="yes" description="which network services to show">
+				<type type="essv" list="yes"/>
+			</parameter>
+			<parameter name="editable URL" code="pedu" type="boolean" optional="yes" description="Allow user to type in a URL?"/>
+			<result type="URL" description="the chosen URL"/>
+		</command>
+		<command name="delay" code="sysodela" description="Pause for a fixed amount of time">
+			<direct-parameter type="number" optional="yes" description="the number of seconds to delay (default is 0)"/>
+			<documentation>
+				<html>
+					<![CDATA[
+						<p><em>NOTE: This is a built-in command, not a scripting addition, and is documented here for reference.</em></p>
+					]]>
+				</html>
+			</documentation>
+		</command>
+		<command name="display alert" code="sysodisA" description="Display an alert">
+			<direct-parameter type="text" description="the alert text (will be displayed in emphasized system font)"/>
+			<parameter name="message" code="mesS" type="text" optional="yes" description="the explanatory message (will be displayed in small system font)"/>
+			<parameter name="as" code="as A" type="EAlT" optional="yes" description="the type of alert (default is informational)"/>
+			<parameter name="buttons" code="btns" optional="yes" description="a list of up to three button names">
+				<type type="text" list="yes"/>
+			</parameter>
+			<parameter name="default button" code="dflt" optional="yes" description="the name or number of the default button">
+				<type type="text"/>
+				<type type="integer"/>
+			</parameter>
+			<parameter name="cancel button" code="cbtn" optional="yes" description="the name or number of the cancel button">
+				<type type="text"/>
+				<type type="integer"/>
+			</parameter>
+			<parameter name="giving up after" code="givu" type="integer" optional="yes" description="number of seconds to wait before automatically dismissing the alert"/>
+			<result type="alert reply" description="a record containing the button clicked"/>
+                        <xref target="display dialog"/>
+		</command>
+		<record-type name="alert reply" code="aleR" description="Reply record for the ‘display alert’ command">
+			<property name="button returned" code="bhit" type="text" access="r" description="name of button chosen (empty if ‘giving up after’ was supplied and alert timed out)"/>
+			<property name="gave up" code="gavu" type="boolean" access="r" description="Did the alert time out? (present only if ‘giving up after’ was supplied)"/>
+		</record-type>
+		<command name="display dialog" code="sysodlog" description="Display a dialog box, optionally requesting user input">
+			<direct-parameter type="text" description="the text to display in the dialog box"/>
+			<parameter name="default answer" code="dtxt" type="text" optional="yes" description="the default editable text"/>
+			<parameter name="hidden answer" code="htxt" type="boolean" optional="yes" description="Should editable text be displayed as bullets? (default is false)"/>
+			<parameter name="buttons" code="btns" optional="yes" description="a list of up to three button names">
+				<type type="text" list="yes"/>
+			</parameter>
+			<parameter name="default button" code="dflt" optional="yes" description="the name or number of the default button">
+				<type type="text"/>
+				<type type="integer"/>
+			</parameter>
+			<parameter name="cancel button" code="cbtn" optional="yes" description="the name or number of the cancel button">
+				<type type="text"/>
+				<type type="integer"/>
+			</parameter>
+			<parameter name="with title" code="appr" type="text" optional="yes" description="the dialog window title"/>
+			<parameter name="with icon" code="disp" optional="yes" description="the resource name or ID of the icon to display…">
+				<type type="text"/>
+				<type type="integer"/>
+			</parameter>
+			<parameter name="with icon" code="disp" type="stic" optional="yes" description="…or one of these system icons…"/>
+			<parameter name="with icon" code="disp" type="file" optional="yes" description="…or an alias or file reference to a ‘.icns’ file"/>
+			<parameter name="giving up after" code="givu" type="integer" optional="yes" description="number of seconds to wait before automatically dismissing the dialog"/>
+			<result type="dialog reply" description="a record containing the button clicked and text entered (if any)"/>
+                        <xref target="display alert"/>
+		</command>
+		<record-type name="dialog reply" code="askr" description="Reply record for the ‘display dialog’ command">
+			<property name="button returned" code="bhit" type="text" access="r" description="name of button chosen (empty if ‘giving up after’ was supplied and dialog timed out)"/>
+			<property name="text returned" code="ttxt" type="text" access="r" description="text entered (present only if ‘default answer’ was supplied)"/>
+			<property name="gave up" code="gavu" type="boolean" access="r" description="Did the dialog time out? (present only if ‘giving up after’ was supplied)"/>
+		</record-type>
+		<command name="display notification" code="sysonotf" description="Display a notification.  At least one of the body text and the title must be specified.">
+			<direct-parameter type="text" optional="yes" description="the body text of the notification"/>
+			<parameter name="with title" code="appr" type="text" optional="yes" description="the title of the notification (default is the name of the calling application)."/>
+			<parameter name="subtitle" code="subt" type="text" optional="yes" description="the subtitle of the notification"/>
+			<parameter name="sound name" code="nsou" type="text" optional="yes" description="the name of the sound to play"/>
+		</command>
+		<command name="say" code="sysottos" description="Speak the given text">
+			<direct-parameter type="text" description="the text to speak, which can include intonation characters"/>
+			<parameter name="displaying" code="DISP" type="text" optional="yes" description="the text to display in the feedback window (if different). Ignored unless Speech Recognition is on."/>
+			<parameter name="using" code="VOIC" type="text" optional="yes" description="the voice to speak with. (Default is the system voice.)"/>
+			<parameter name="speaking rate" code="RATE" type="number" optional="yes" description="the rate of speech in words per minute. Average human speech occurs at a rate of 180 to 220 words per minute. (Default depends on the voice used. If “using” is not given, the system speaking rate is the default.)"/>
+			<parameter name="pitch" code="PTCH" type="number" optional="yes" description="the base pitch frequency, a real number from 0 to 127. Values correspond to MIDI note values, where 60 is equal to middle C. Typical pitches range from around 30 to 40 for a low-pitched male voice to perhaps 55 to 65 for a high-pitched child’s voice."/>
+			<parameter name="modulation" code="PMOD" type="number" optional="yes" description="the pitch modulation, a real number from 0 to 127. A value of 0 corresponds to a monotone in which all speech is at the base speech pitch. Given a pitch value of 46, a modulation of 2 means the widest range of pitches would be 44 to 48."/>
+			<parameter name="volume" code="VOLU" type="number" optional="yes" description="the volume, a real number from 0 to 1 (default is the system volume)."/>
+			<parameter name="stopping current speech" code="STOP" type="boolean" optional="yes" description="stop any current speech before starting (default is false). When false, “say” waits for previous speech commands to complete before beginning to speak."/>
+			<parameter name="waiting until completion" code="wfsp" type="boolean" optional="yes" description="wait for speech to complete before returning (default is true)."/>
+			<parameter name="saving to" code="stof" type="any" optional="yes" description="the alias, file reference or path string of an AIFF file (existing or not) to contain the sound output."/>
+			<documentation>
+				<html>
+				<![CDATA[
+					<p>When “saving to” or voice-modifying parameters other than “using” are
+					given, text is not displayed in the Speech Recognition feedback window,
+					as it is not used to produce the speech in that case.</p>
+				]]>
+				</html>
+			</documentation>			
+		</command>
+		<enumeration name="stic" code="stic">
+			<enumerator name="stop" code="0x00000000" description="The Stop alert icon"/>
+			<enumerator name="note" code="0x00000001" description="The Note alert icon"/>
+			<enumerator name="caution" code="0x00000002" description="The Caution alert icon"/>
+		</enumeration>
+		<enumeration name="etpt" code="etpt">
+			<enumerator name="IP" code="eipt" description="via Internet Protocol"/>
+			<enumerator name="AppleTalk" code="eatt" description="via AppleTalk"/>
+		</enumeration>
+		<enumeration name="essv" code="essv">
+			<enumerator name="Web servers" code="esvw"/>
+			<enumerator name="FTP Servers" code="esvf"/>
+			<enumerator name="Telnet hosts" code="esvt"/>
+			<enumerator name="File servers" code="esva"/>
+			<enumerator name="News servers" code="esvn"/>
+			<enumerator name="Directory services" code="esvd"/>
+			<enumerator name="Media servers" code="esvm"/>
+			<enumerator name="Remote applications" code="esve"/>
+		</enumeration>
+		<enumeration name="EAlT" code="EAlT">
+			<enumerator name="critical" code="criT"/>
+			<enumerator name="informational" code="infA"/>
+			<enumerator name="warning" code="warN"/>
+		</enumeration>
+	</suite>
+	<suite name="File Commands" code="syso" description="Commands to work with files without using the Finder">
+		<command name="info for" code="sysonfo4" description="Return information for a file or folder">
+			<direct-parameter type="file" description="an alias or file reference to the file or folder"/>
+			<parameter name="size" code="ptsz" type="boolean" optional="yes" description="Return the size of the file or folder? (default is true)"/>
+			<result type="file information" description="a record containing the information for the specified file or folder"/>
+			<documentation>
+				<html>
+                           <![CDATA[
+ 					This command is deprecated; use &lsquo;tell application "System Events" to get the properties of …&rsquo;.
+                           ]]>
+                           	</html>
+			</documentation>			
+		</command>
+		<record-type name="file information" code="asfe" description="Reply record for the ‘info for’ command">
+			<property name="name" code="pnam" type="text" access="r" description="the name of the item"/>
+			<property name="displayed name" code="dnam" type="text" access="r" description="the user-visible name of the item"/>
+			<property name="short name" code="cfbn" type="text" access="r" description="the short name (CFBundleName) of the item (if the item is an application)"/>
+			<property name="name extension" code="nmxt" type="text" access="r" description="the name extension of the item (such as “txt”)"/>
+			<property name="bundle identifier" code="bnid" type="text" access="r" description="the item’s bundle identifier (if the item is a package)"/>
+			<property name="type identifier" code="utid" type="text" access="r" description="the item’s type identifier"/>
+			<property name="kind" code="kind" type="text" access="r" description="the kind of the item"/>
+			<property name="default application" code="asda" type="alias" access="r" description="the application that normally opens this kind of item"/>
+			<property name="creation date" code="ascd" type="date" access="r" description="the date the item was created"/>
+			<property name="modification date" code="asmo" type="date" access="r" description="the date the item was last modified"/>
+			<property name="file type" code="asty" type="text" access="r" description="the file type of the item"/>
+			<property name="file creator" code="asct" type="text" access="r" description="the creator type of the item"/>
+			<property name="short version" code="assv" type="text" access="r" description="the item’s short version string (from the Finder’s ‘Get Info’ box)"/>
+			<property name="long version" code="aslv" type="text" access="r" description="the item’s long version string (from the Finder’s ‘Get Info’ box)"/>
+			<property name="size" code="ptsz" type="integer" access="r" description="the size of the item in bytes"/>
+			<property name="alias" code="alis" type="boolean" access="r" description="Is the item an alias file?"/>
+			<property name="folder" code="asdr" type="boolean" access="r" description="Is the item a folder?"/>
+			<property name="package folder" code="ispk" type="boolean" access="r" description="Is the item a package (a folder treated as a file?)"/>
+			<property name="extension hidden" code="hidx" type="boolean" access="r" description="Is the item’s name extension hidden from the user?"/>
+			<property name="visible" code="pvis" type="boolean" access="r" description="Is the item visible?"/>
+			<property name="locked" code="aslk" type="boolean" access="r" description="Is the item locked?"/>
+			<property name="busy status" code="bzst" type="boolean" access="r" description="Is the item currently in use?"/>
+			<property name="folder window" code="asfw" type="bounding rectangle" access="r" description="the coordinates of the folder’s window (if the item is a folder)"/>
+		</record-type>
+		<command name="list disks" code="earslvol" description="Return a list of the currently mounted volumes">
+			<result description="a list of the currently mounted volumes.">
+				<type type="text" list="yes"/>
+			</result>
+			<documentation>
+				<html>
+                           <![CDATA[
+ 					This command is deprecated; use &lsquo;tell application "System Events" to get the name of every disk&rsquo;.
+                           ]]>
+                           	</html>
+			</documentation>			
+		</command>
+		<command name="list folder" code="earslfdr" description="Return the contents of a specified folder">
+			<direct-parameter type="file" description="an alias or file reference to the folder"/>
+			<parameter name="invisibles" code="lfiv" type="boolean" optional="yes" description="List invisible files? (default is true)"/>
+			<result description="a list of the items in the specified folder">
+				<type type="text" list="yes"/>
+			</result>
+			<documentation>
+				<html>
+                           <![CDATA[
+ 					This command is deprecated; use &lsquo;tell application "System Events" to get the name of every item of folder …&rsquo;.
+                           ]]>
+                           	</html>
+			</documentation>			
+		</command>
+		<command name="mount volume" code="aevtmvol" description="Mount the specified server volume">
+			<direct-parameter type="text" description="the name or URL path (e.g. ‘afp://server/volume/’) of the volume to mount"/>
+			<parameter name="on server" code="SRVR" type="text" description="the server on which the volume resides; omit if URL path provided"/>
+			<parameter name="in AppleTalk zone" code="ZONE" type="text" optional="yes" description="the AppleTalk zone in which the server resides; omit if URL path provided"/>
+			<parameter name="as user name" code="USER" type="text" optional="yes" description="the user name with which to log in to the server; omit for guest access"/>
+			<parameter name="with password" code="PASS" type="text" optional="yes" description="the password for the user name; omit for guest access"/>
+			<result type="file" description="a specifier for the mounted volume"/>
+		</command>
+		<command name="path to" code="earsffdr" description="Return the full path to the specified application or script">
+			<direct-parameter description="the item path to return; e.g., current application, frontmost application, application “AppName”, me, it">
+				<type type="application"/>
+				<type type="appf"/>
+				<type type="script"/>
+			</direct-parameter>
+			<parameter name="as" code="rtyp" type="type class" optional="yes" description="the type to return: alias or string (default is alias)"/>
+			<result description="the path to the specified item">
+				<type type="text"/>
+				<type type="alias"/>
+			</result>
+		</command>
+		<command name="path to" code="earsffdr" description="Return the full path to the specified folder">
+			<direct-parameter type="afdr" description="the folder to return"/>
+			<parameter name="from" code="from" type="fldm" optional="yes" description="where to look for the indicated folder"/>
+			<parameter name="as" code="rtyp" type="type class" optional="yes" description="the type to return: alias or string (default is alias)"/>
+			<parameter name="folder creation" code="crfl" type="boolean" optional="yes" description="Create the folder if it doesn’t exist? (default is true)"/>
+			<result type="alias" description="the path to the specified folder"/>
+		</command>
+		<command name="path to resource" code="sysorpth" description="Return the full path to the specified resource">
+			<direct-parameter type="text" description="the name of the requested resource"/>
+			<parameter name="in bundle" code="in B" type="file" optional="yes" description="an alias or file reference to the bundle containing the resource (default is the target application or current script bundle)"/>
+			<parameter name="in directory" code="in D" type="text" optional="yes" description="the name of a subdirectory in the bundle’s “Resources” directory"/>
+			<result type="alias" description="the path to the resource"/>
+		</command>
+		<enumeration name="appf" code="appf">
+			<enumerator name="frontmost application" code="egfp"/>
+		</enumeration>
+		<enumeration name="afdr" code="afdr">
+			<enumerator name="application support" code="asup" description="The Application Support folder"/>
+			<enumerator name="applications folder" code="apps" description="The user's Applications folder"/>
+			<enumerator name="desktop" code="desk" description="The user's Desktop folder"/>
+			<enumerator name="desktop pictures folder" code="dtpƒ" description="The Desktop Pictures folder"/>
+			<enumerator name="documents folder" code="docs" description="The user's Documents folder"/>
+			<enumerator name="downloads folder" code="down" description="The user's Downloads folder"/>
+			<enumerator name="favorites folder" code="favs" description="The user's Favorites folder"/>
+			<enumerator name="Folder Action scripts" code="fasf" description="The user's Folder Action Scripts folder"/>
+			<enumerator name="fonts" code="font" description="The Fonts folder"/>
+			<enumerator name="help" code="ƒhlp" description="The Help folder"/>
+			<enumerator name="home folder" code="cusr" description="The user's home folder"/>
+			<enumerator name="internet plugins" code="ƒnet" description="The Internet Plug-Ins folder"/>
+			<enumerator name="keychain folder" code="kchn" description="The user's Keychains folder"/>
+			<enumerator name="library folder" code="dlib" description="The Library folder"/>
+			<enumerator name="modem scripts" code="ƒmod" description="The Modem Scripts folder"/>
+			<enumerator name="movies folder" code="mdoc" description="The user's Movies folder"/>
+			<enumerator name="music folder" code="µdoc" description="The user's Music folder"/>
+			<enumerator name="pictures folder" code="pdoc" description="The user's Pictures folder"/>
+			<enumerator name="preferences" code="pref" description="The user's Preferences folder"/>
+			<enumerator name="printer descriptions" code="ppdf" description="The Printer Descriptions folder"/>
+			<enumerator name="public folder" code="pubb" description="The user's Public folder"/>
+			<enumerator name="scripting additions folder" code="ƒscr" description="The Scripting Additions folder"/>
+			<enumerator name="scripts folder" code="scrƒ" description="The user's Scripts folder"/>
+			<enumerator name="services folder" code="svcs" description="The Services folder"/>
+			<enumerator name="shared documents" code="sdat" description="The shared Documents folder"/>
+			<enumerator name="shared libraries" code="ƒlib" description="The CFMSupport folder"/>
+			<enumerator name="sites folder" code="site" description="The user's Sites folder"/>
+			<enumerator name="startup disk" code="boot" description="The startup disk"/>
+			<enumerator name="startup items" code="empz" description="The StartupItems folder"/>
+			<enumerator name="system folder" code="macs" description="The System folder"/>
+			<enumerator name="system preferences" code="sprf" description="The PreferencePanes folder"/>
+			<enumerator name="temporary items" code="temp" description="The Temporary Items folder"/>
+			<enumerator name="trash" code="trsh" description="The user's Trash folder"/>
+			<enumerator name="users folder" code="usrs" description="The Users folder"/>
+			<enumerator name="utilities folder" code="utiƒ" description="The Utilities folder"/>
+			<enumerator name="workflows folder" code="flow" description="The Workflows folder"/>
+			<enumerator name="voices" code="fvoc" description="The Voices folder"/>
+			<enumerator name="apple menu" code="amnu" description="The Apple Menu Items folder"/>
+			<enumerator name="control panels" code="ctrl" description="The Control Panels folder"/>
+			<enumerator name="control strip modules" code="sdev" description="The Control Strip Modules folder"/>
+			<enumerator name="extensions" code="extn" description="The Extensions folder"/>
+			<enumerator name="launcher items folder" code="laun" description="The Launcher Items folder"/>
+			<enumerator name="printer drivers" code="ƒprd" description="The Printer Drivers folder"/>
+			<enumerator name="printmonitor" code="prnt" description="The PrintMonitor Documents folder"/>
+			<enumerator name="shutdown folder" code="shdf" description="The Shutdown Items folder"/>
+			<enumerator name="speakable items" code="spki" description="The Speakable Items folder"/>
+			<enumerator name="stationery" code="odst" description="The Stationery folder"/>
+		</enumeration>
+		<enumeration name="afdm" code="afdm">
+			<enumerator name="application support folder" code="asup" description="The Application Support folder"/>
+			<enumerator name="current user folder" code="cusr" description="The user's home folder"/>
+			<enumerator name="desktop folder" code="desk" description="The user's Desktop folder"/>
+			<enumerator name="Folder Action scripts folder" code="fasf" description="The user's Folder Action Scripts folder"/>
+			<enumerator name="fonts folder" code="font" description="The Fonts folder"/>
+			<enumerator name="frontmost application" code="egfp" description="The frontmost application"/>
+			<enumerator name="help folder" code="ƒhlp" description="The Help folder"/>
+			<enumerator name="plugins" code="ƒnet" description="The Internet Plug-Ins folder"/>
+			<enumerator name="internet plugins folder" code="ƒnet" description="The Internet Plug-Ins folder"/>
+			<enumerator name="modem scripts folder" code="ƒmod" description="The Modem Scripts folder"/>
+			<enumerator name="preferences folder" code="pref" description="The user's Preferences folder"/>
+			<enumerator name="printer descriptions folder" code="ppdf" description="The Printer Descriptions folder"/>
+			<enumerator name="shared documents folder" code="sdat" description="The shared Documents folder"/>
+			<enumerator name="shared libraries folder" code="ƒlib" description="The Shared Libraries folder"/>
+			<enumerator name="startup" code="empz" description="The StartupItems folder"/>
+			<enumerator name="startup items folder" code="empz" description="The StartupItems folder"/>
+			<enumerator name="temporary items folder" code="temp" description="The Temporary Items folder"/>
+			<enumerator name="trash folder" code="trsh" description="The Trash folder"/>
+			<enumerator name="voices folder" code="fvoc" description="The Speech Voices folder"/>
+			<enumerator name="apple menu items" code="amnu" description="The Apple Menu Items folder"/>
+			<enumerator name="apple menu items folder" code="amnu" description="The Apple Menu Items folder"/>
+			<enumerator name="control panels folder" code="ctrl" description="The Control Panels folder"/>
+			<enumerator name="control strip modules folder" code="sdev" description="The Control Strip Modules folder"/>
+			<enumerator name="extensions folder" code="extn" description="The Extensions folder"/>
+			<enumerator name="printer drivers folder" code="ƒprd" description="The Printer Drivers folder"/>
+			<enumerator name="printmonitor folder" code="prnt" description="The PrintMonitor Documents folder"/>
+			<enumerator name="shutdown items" code="shdf" description="The Shutdown Items folder"/>
+			<enumerator name="shutdown items folder" code="shdf" description="The Shutdown Items folder"/>
+			<enumerator name="stationery folder" code="odst" description="The Stationery folder"/>
+			<enumerator name="At Ease applications" code="apps" description="The At Ease Applications folder"/>
+			<enumerator name="At Ease applications folder" code="apps" description="The At Ease Applications folder"/>
+			<enumerator name="At Ease documents" code="docs" description="The At Ease Documents folder"/>
+			<enumerator name="At Ease documents folder" code="docs" description="The At Ease Documents folder"/>
+			<enumerator name="editors" code="oded" description="The OpenDoc Editors folder"/>
+			<enumerator name="editors folder" code="oded" description="The OpenDoc Editors folder"/>
+		</enumeration>
+		<enumeration name="fldm" code="fldm">
+			<enumerator name="system domain" code="flds"/>
+			<enumerator name="local domain" code="fldl"/>
+			<enumerator name="network domain" code="fldn"/>
+			<enumerator name="user domain" code="fldu"/>
+			<enumerator name="Classic domain" code="fldc"/>
+		</enumeration>
+	</suite>
+	<suite name="String Commands" code="syso" description="Useful commands for working with text">
+		<command name="ASCII character" code="sysontoc" description="Convert a number to a character">
+			<direct-parameter type="integer" description="the code point of the specified character"/>
+			<result type="text" description="the character"/>
+                        <xref target="ASCII number"/>
+			<documentation>
+				<html>
+                           <![CDATA[
+ 					This command is deprecated; use &lsquo;character id …&rsquo;.
+                           ]]>
+                           	</html>
+			</documentation>			
+		</command>
+		<command name="ASCII number" code="sysocton" description="Convert a character to a number">
+			<direct-parameter type="text" description="the character"/>
+			<result type="integer" description="the code point of the specified character"/>
+                        <xref target="ASCII character"/>
+			<documentation>
+				<html>
+                           <![CDATA[
+ 					This command is deprecated; use &lsquo;id …&rsquo;.
+                           ]]>
+                           	</html>
+			</documentation>			
+		</command>
+		<command name="localized string" code="sysolocS" description="Return the localized string for the specified key">
+			<direct-parameter type="text" description="the key"/>
+			<parameter name="from table" code="froT" type="text" optional="yes" description="the name of the strings file excluding the “.strings” suffix (default is “Localizable”)"/>
+			<parameter name="in bundle" code="in B" type="file" optional="yes" description="an alias or file reference to the bundle containing the strings file (default is the current application/script bundle)"/>
+			<result type="text" description="the localized string"/>
+		</command>
+		<command name="offset" code="sysooffs" description="Find one piece of text inside another">
+			<parameter name="of" code="psof" type="text" description="the source text to find the position of"/>
+			<parameter name="in" code="psin" type="text" description="the target text to search in"/>
+			<result type="integer" description="the position of the source text in the target, or 0 if not found"/>
+		</command>
+		<command name="summarize" code="fbcssumm" description="Summarize the specified text or text file">
+			<direct-parameter description="the text (or an alias to a text file) to summarize">
+				<type type="text"/>
+				<type type="alias"/>
+			</direct-parameter>
+			<parameter name="in" code="in  " type="integer" optional="yes" description="the number of sentences desired in the summary"/>
+			<result type="text" description="a summarized version of the text or file"/>
+		</command>
+	</suite>
+	<suite name="Clipboard Commands" code="syso" description="Access to the Clipboard in applications">
+		<command name="set the clipboard to" code="JonspClp" description="Place data on an application’s clipboard. Use inside a ‘tell’ block and activate the application first">
+			<direct-parameter type="any" description="the data to place on the clipboard"/>
+		</command>
+		<command name="the clipboard" code="JonsgClp" description="Return the contents of an application’s clipboard.  Use in a ‘tell’ block after activating the application">
+			<parameter name="as" code="rtyp" type="type class" optional="yes" description="the type of data desired"/>
+			<result type="any" description="the data"/>
+		</command>
+		<command name="clipboard info" code="JonsiClp" description="Return information about the clipboard">
+			<parameter name="for" code="for " type="type class" optional="yes" description="restricts to information about only this data type"/>
+			<result description="a list of {data type, size} for each type of data on the clipboard">
+				<type type="list" list="yes"/>
+			</result>
+		</command>
+	</suite>
+	<suite name="File Read/Write" code="syso" description="Commands for reading and writing information in a file">
+		<command name="open for access" code="rdwropen" description="Open a disk file for the read and write commands">
+			<direct-parameter type="file" description="the file or alias to open for access.  If the file does not exist, a new file is created."/>
+			<parameter name="write permission" code="perm" type="boolean" optional="yes" description="whether to allow writing to the file."/>
+			<result type="integer" description="a file reference number; use for ‘read’, ‘write’, and ‘close access’"/>
+                        <xref target="close access"/>
+                        <xref target="read"/>
+                        <xref target="write"/>
+		</command>
+		<command name="close access" code="rdwrclos" description="Close a file that was opened for access">
+			<direct-parameter type="any" description="the file reference number, alias, or file reference of the file to close"/>
+                        <xref target="open for access"/>
+                        <xref target="read"/>
+                        <xref target="write"/>
+		</command>
+		<command name="read" code="rdwrread" description="Read data from a file that has been opened for access">
+			<direct-parameter type="any" description="the file reference number, alias, or file reference of the file to read"/>
+			<parameter name="from" code="rdfm" type="integer" optional="yes" description="starting from this position; if omitted, start at last position read from"/>
+			<parameter name="for" code="rdfr" type="integer" optional="yes" description="the number of bytes to read from current position; if omitted, read until the end of the file…"/>
+			<parameter name="to" code="rdto" type="integer" optional="yes" description="…or stop at this position…"/>
+			<parameter name="before" code="rbfr" type="text" optional="yes" description="…or read up to but not including this character…"/>
+			<parameter name="until" code="rdut" type="text" optional="yes" description="…or read up to and including this character"/>
+			<parameter name="using delimiter" code="deli" type="text" optional="yes" description="the value that separates items to read…"/>
+			<parameter name="using delimiters" code="deli" optional="yes" description="…or a list of values that separate items to read">
+				<type type="text" list="yes"/>
+			</parameter>
+			<parameter name="as" code="as  " type="type class" optional="yes" description="the form in which to read and return data"/>
+			<result type="any" description="the data read from the file"/>
+                        <xref target="open for access"/>
+                        <xref target="close access"/>
+                        <xref target="write"/>
+		</command>
+		<command name="write" code="rdwrwrit" description="Write data to a file that was opened for access with write permission">
+			<direct-parameter type="any" description="the data to write to the file"/>
+			<parameter name="to" code="refn" type="any" description="the file reference number, alias, or file reference of the file to write to"/>
+			<parameter name="starting at" code="wrat" type="integer" optional="yes" description="start writing at this position in the file"/>
+			<parameter name="for" code="nmwr" type="integer" optional="yes" description="the number of bytes to write; if not specified, write all the data provided"/>
+			<parameter name="as" code="as  " type="type class" optional="yes" description="how to write the data: as text, data, list, etc."/>
+                        <xref target="open for access"/>
+                        <xref target="close access"/>
+                        <xref target="read"/>
+		</command>
+		<command name="get eof" code="rdwrgeof" description="Return the length, in bytes, of a file">
+			<direct-parameter type="any" description="a file reference number, alias, or file reference of a file"/>
+			<result type="integer" description="the total number of bytes in the file"/>
+                        <xref target="set eof"/>
+		</command>
+		<command name="set eof" code="rdwrseof" description="Set the length, in bytes, of a file">
+			<direct-parameter type="any" description="a file reference number, alias, or file reference of a file"/>
+			<parameter name="to" code="set2" type="integer" description="the new length of the file, in bytes.  Any data beyond this position is lost."/>
+                        <xref target="get eof"/>
+		</command>
+		<enumeration name="rdwr" code="rdwr">
+			<enumerator name="short" code="shor" description="short integers"/>
+			<enumerator name="eof" code="eof " description="end of file"/>
+		</enumeration>
+	</suite>
+	<suite name="Scripting Commands" code="syso" description="Commands to work with scripts">
+		<command name="load script" code="sysoload" description="Return a script object loaded from a specified file">
+			<direct-parameter type="file" description="an alias or file reference to the file containing the script object"/>
+			<result type="script" description="the script object.  You can get this object’s properties or call its handlers as if it were a local script object."/>
+                        <xref target="store script"/>
+		</command>
+		<command name="store script" code="sysostor" description="Store a script object into a file">
+			<direct-parameter type="script" optional="yes" description="the script object to store"/>
+			<parameter name="in" code="fpth" type="file" optional="yes" description="an alias or file reference to the file to store the script object in"/>
+			<parameter name="replacing" code="savo" type="savo" optional="yes" description="control display of the Save As dialog"/>
+                        <xref target="load script"/>
+		</command>
+		<command name="run script" code="sysodsct" description="Run a specified script or script file">
+			<direct-parameter type="script" description="the script text (or an alias or file reference to a script file) to run"/>
+			<parameter name="with parameters" code="plst" optional="yes" description="a list of parameters">
+				<type type="any" list="yes"/>
+			</parameter>
+			<parameter name="in" code="scsy" type="text" optional="yes" description="the scripting component to use; default is the current scripting component"/>
+			<result type="any" description="the result of running the script"/>
+		</command>
+		<command name="scripting components" code="sysocpls" description="Return a list of all scripting components (e.g. AppleScript)">
+			<result description="a list of installed scripting components">
+				<type type="text" list="yes"/>
+			</result>
+		</command>
+		<enumeration name="savo" code="savo">
+			<enumerator name="ask" code="ask " description="display save as dialog"/>
+			<enumerator name="yes" code="yes " description="overwrite existing file"/>
+			<enumerator name="no" code="no  " description="don't overwrite existing file"/>
+		</enumeration>
+	</suite>
+	<suite name="Miscellaneous Commands" code="syso" description="Other useful commands">
+		<command name="current date" code="misccurd" description="Return the current date and time">
+			<result type="date" description="the current date and time. Use ‘month of (current date)’, etc. to get individual parts."/>
+		</command>
+		<command name="do shell script" code="sysoexec" description="Execute a shell script using the ‘sh’ shell">
+			<direct-parameter type="text" description="the shell script to execute."/>
+			<parameter name="as" code="rtyp" type="type class" optional="yes" description="the desired type of result; default is text (UTF-8)"/>
+			<parameter name="administrator privileges" code="badm" type="boolean" optional="yes" description="execute the command as the administrator"/>
+			<parameter name="user name" code="RAun" type="text" optional="yes" description="use this administrator account to avoid a password dialog (If this parameter is specified, the “password” parameter must also be specified.)"/>
+			<parameter name="password" code="RApw" type="text" optional="yes" description="use this administrator password to avoid a password dialog"/>
+			<parameter name="with prompt" code="prmp" type="text" optional="yes" description="the prompt to be displayed in the password dialog when the name and password are not specified or are incorrect"/>
+			<parameter name="altering line endings" code="alen" type="boolean" optional="yes" description="change all line endings to Mac-style and trim a trailing one (default true)"/>
+			<result type="text" description="the command output"/>
+			<documentation>
+				<html>
+					For answers to commonly asked questions about &lt;i&gt;do shell script&lt;/i&gt;, see
+					<![CDATA[
+						<a href="http://developer.apple.com/technotes/tn2002/tn2065.html">Technical Note TN2065</a>.
+					]]>
+				</html>
+			</documentation>			
+		</command>
+		<command name="get volume settings" code="sysogtvl" description="Get the sound output and input volume settings">
+			<result type="volume settings" description="a record containing the sound output and input volume settings"/>
+                        <xref target="set volume"/>
+		</command>
+		<record-type name="volume settings" code="vlst" description="Reply record for the ‘get volume settings’ command">
+			<property name="output volume" code="ouvl" type="integer" access="r" description="the sound output volume"/>
+			<property name="input volume" code="invl" type="integer" access="r" description="the sound input volume"/>
+			<property name="alert volume" code="alvl" type="integer" access="r" description="the alert volume (as a percentage of the output volume)"/>
+			<property name="output muted" code="mute" type="boolean" access="r" description="Is the sound output muted?"/>
+		</record-type>
+		<command name="random number" code="sysorand" description="Generate a random number">
+			<direct-parameter type="number" optional="yes" description="the upper limit (Default is 1.0. If this parameter is specified, the “from” and “to” parameters will be ignored.)"/>
+			<parameter name="from" code="from" type="number" optional="yes" description="the lowest number to return (default is 0.0)"/>
+			<parameter name="to" code="to  " type="number" optional="yes" description="the highest number to return (default is 1.0)"/>
+			<parameter name="with seed" code="seed" type="integer" optional="yes" description="a starting point for a repeatable sequence of random numbers. A value of 0 will use a random seed."/>
+			<result type="number" description="a number between the “from” and “to” limits, including limit values. If all specified limits are integers, the result is an integer. Otherwise, the result is a real."/>
+		</command>
+		<command name="round" code="sysorond" description="Round number to integer">
+			<direct-parameter type="real" description="the number to round"/>
+			<parameter name="rounding" code="dire" type="olie" optional="yes" description="the rounding direction; if omitted, rounds to nearest.  “to nearest” rounds .5 cases to the nearest even integer in order to decrease cumulative errors.  To always round .5 away from zero, use “as taught in school.”"/>
+			<result type="integer" description="the rounded value"/>
+		</command>
+		<command name="set volume" code="aevtstvl" description="Set the sound output and/or input volume">
+			<direct-parameter type="number" optional="yes" description="the sound output volume, a real number from 0 to 7 (This parameter is deprecated; if specified, all other parameters will be ignored.)"/>
+			<parameter name="output volume" code="ouvl" type="integer" optional="yes" description="the sound output volume, an integer from 0 to 100"/>
+			<parameter name="input volume" code="invl" type="integer" optional="yes" description="the sound input volume, an integer from 0 to 100"/>
+			<parameter name="alert volume" code="alvl" type="integer" optional="yes" description="the alert volume, an integer from 0 to 100"/>
+			<parameter name="output muted" code="mute" type="boolean" optional="yes" description="Should the sound output be muted?"/>
+                        <xref target="get volume settings"/>
+		</command>
+		<command name="system attribute" code="fndrgstl" description="Test attributes of this computer">
+			<direct-parameter type="any" optional="yes" description="the attribute to test (either a “Gestalt” value or a shell environment variable)."/>
+			<parameter name="has" code="has " type="integer" optional="yes" description="test specific bits of response (ignored for environment variables)"/>
+			<result type="any" description="the result of the query (or a list of all environment variables, if no attribute is provided)"/>
+		</command>
+		<command name="system info" code="sysosigt" description="Get information about the system">
+			<result type="system information" description="a record containing the system information"/>
+		</command>
+		<record-type name="system information" code="sirr" description="Reply record for the ‘system info’ command">
+			<property name="AppleScript version" code="siav" type="text" access="r" description="the AppleScript version"/>
+			<property name="AppleScript Studio version" code="sikv" type="text" access="r" description="the AppleScript Studio version"/>
+			<property name="system version" code="sisv" type="text" access="r" description="the system version"/>
+			<property name="short user name" code="sisn" type="text" access="r" description="the current user’s short name"/>
+			<property name="long user name" code="siln" type="text" access="r" description="the current user’s long name"/>
+			<property name="user ID" code="siid" type="integer" access="r" description="the current user’s ID"/>
+			<property name="user locale" code="siul" type="text" access="r" description="the current user’s locale"/>
+			<property name="home directory" code="home" type="alias" access="r" description="the current user’s home directory"/>
+			<property name="boot volume" code="sibv" type="text" access="r" description="the boot volume"/>
+			<property name="computer name" code="sicn" type="text" access="r" description="the computer name"/>
+			<property name="host name" code="ldsa" type="text" access="r" description="the host name"/>
+			<property name="IPv4 address" code="siip" type="text" access="r" description="the IPv4 address"/>
+			<property name="primary Ethernet address" code="siea" type="text" access="r" description="the primary Ethernet address"/>
+			<property name="CPU type" code="sict" type="text" access="r" description="the CPU type"/>
+			<property name="CPU speed" code="sics" type="integer" access="r" description="the clock speed of the CPU in MHz"/>
+			<property name="physical memory" code="sipm" type="integer" access="r" description="the amount of physical RAM in MB"/>
+		</record-type>
+		<command name="time to GMT" code="sysoGMT " description="Return the difference between local time and GMT (Universal Time)">
+			<result type="integer" description="the difference between current time zone and Universal Time, in seconds"/>
+		</command>
+		<class name="POSIX file" code="psxf" description="A file object specified with a POSIX (slash)-style pathname.">
+			<property name="POSIX path" code="psxp" type="text" access="r" description="the POSIX (slash)-style path of a file or alias object"/>
+		</class>
+		<enumeration name="olie" code="olie">
+			<enumerator name="up" code="rndU" description="round up"/>
+			<enumerator name="down" code="rndD" description="round down"/>
+			<enumerator name="toward zero" code="rndZ" description="round toward zero"/>
+			<enumerator name="to nearest" code="rndN" description="round to nearest"/>
+			<enumerator name="as taught in school" code="rndS" description="round to nearest with .5 always rounding away from zero"/>
+		</enumeration>
+	</suite>
+	<suite name="Folder Actions" code="ssrv" description="Terms for Folder Actions handlers.  These commands are sent to your folder action scripts.">
+		<command name="opening folder" code="facofopn" description="Called after a folder has been opened into a window">
+			<direct-parameter type="alias" description="the folder that was opened"/>
+		</command>
+		<command name="closing folder window for" code="facofclo" description="Called after a folder window has been closed">
+			<direct-parameter type="alias" description="the folder that was closed"/>
+		</command>
+		<command name="moving folder window for" code="facofsiz" description="Called after a folder window has been moved or resized">
+			<direct-parameter type="alias" description="the folder whose window was moved or resized"/>
+			<parameter name="from" code="fnsz" type="bounding rectangle" description="the previous coordinates of folder window (you can get the new coordinates from the Finder)"/>
+		</command>
+		<command name="adding folder items to" code="facofget" description="Called after new items have been added to a folder">
+			<direct-parameter type="alias" description="Folder receiving the new items"/>
+			<parameter name="after receiving" code="flst" description="a list of the items the folder received">
+				<type type="alias" list="yes"/>
+			</parameter>
+		</command>
+		<command name="removing folder items from" code="facoflos" description="Called after items have been removed from a folder">
+			<direct-parameter type="alias" description="the folder losing the items"/>
+			<parameter name="after losing" code="flst" description="a list of the items the folder lost.  For permanently deleted items, only the names (in strings) are provided.">
+				<type type="alias" list="yes"/>
+			</parameter>
+		</command>
+	</suite>
+	<suite name="Internet Suite" code="gurl" description="Standard terms for Internet scripting">
+		<command name="open location" code="GURLGURL" description="Opens a URL with the appropriate program">
+			<direct-parameter type="text" optional="yes" description="the URL to open"/>
+			<parameter name="error reporting" code="errr" type="boolean" optional="yes" description="Should error conditions be reported in a dialog?"/>
+		</command>
+		<command name="handle CGI request" code="WWWΩsdoc" description="Sent to a script to process a Common Gateway Interface request">
+			<direct-parameter type="text" description="the path of the URL"/>
+			<parameter name="searching for" code="kfor" type="text" optional="yes" description="the data for the GET method or data after the ‘?’ in a POST method"/>
+			<parameter name="with posted data" code="post" type="text" optional="yes" description="the POST arguments"/>
+			<parameter name="of content type" code="ctyp" type="text" optional="yes" description="the MIME content type of POST arguments"/>
+			<parameter name="using access method" code="meth" type="text" optional="yes" description="either ‘GET’ or ‘POST’"/>
+			<parameter name="from address" code="addr" type="text" optional="yes" description="the IP address of the entity making the request"/>
+			<parameter name="from user" code="user" type="text" optional="yes" description="the user name associated with the request"/>
+			<parameter name="using password" code="pass" type="text" optional="yes" description="the password sent with the request"/>
+			<parameter name="with user info" code="frmu" type="text" optional="yes" description="additional information about the user, usually the email address"/>
+			<parameter name="from server" code="svnm" type="text" optional="yes" description="the name of the server application sending this request"/>
+			<parameter name="via port" code="svpt" type="text" optional="yes" description="the IP port number of the server"/>
+			<parameter name="executing by" code="scnm" type="text" optional="yes" description="the path to the script executing this CGI, in URL form"/>
+			<parameter name="referred by" code="refr" type="text" optional="yes" description="the URL of the page the client used to link to the CGI"/>
+			<parameter name="from browser" code="Agnt" type="text" optional="yes" description="the name of the client software"/>
+			<parameter name="using action" code="Kapt" type="text" optional="yes" description="the path to the file or CGI"/>
+			<parameter name="of action type" code="Kact" type="text" optional="yes" description="either PREPROCESSOR, POSTPROCESSOR, CGI, or ACGI"/>
+			<parameter name="from client IP address" code="Kcip" type="text" optional="yes" description="the Internet address of the client"/>
+			<parameter name="with full request" code="Kfrq" type="text" optional="yes" description="the full request as sent to the server"/>
+			<parameter name="with connection ID" code="Kcid" type="integer" optional="yes" description="the ID of the connection from the server to the client"/>
+			<parameter name="from virtual host" code="DIRE" type="text" optional="yes" description="the URL of the root folder of the virtual host"/>
+			<result type="web page" description="An HTML page resulting from the CGI execution"/>
+		</command>
+		<class name="URL" code="url " description="A Uniform Resource Locator or Uniform Resource ID (URI)">
+			<property name="properties" code="pALL" type="record" description="property that allows getting and setting of multiple properties"/>
+			<property name="name" code="pnam" type="text" access="r" description="a name given to this URL, usually the name of the page it refers to"/>
+			<property name="scheme" code="pusc" type="esch" access="r" description="the access scheme"/>
+			<property name="host" code="HOST" type="Internet address" access="r" description="the host specified by this URL"/>
+			<property name="path" code="FTPc" type="text" access="r" description="the location of the target on the host"/>
+			<property name="user name" code="RAun" type="text" access="r" description="the user name by which to access this URL"/>
+			<property name="password" code="RApw" type="text" access="r" description="the password by which to access this URL"/>
+		</class>
+		<class name="Internet address" code="IPAD" description="An Internet or Intranet address for the TCP/IP protocol" plural="Internet addresses">
+			<property name="properties" code="pALL" type="record" description="property that allows getting and setting of multiple properties"/>
+			<property name="DNS form" code="pDNS" type="text" description="the Domain Name System form of the address (e.g. apple.com)"/>
+			<property name="dotted decimal form" code="pipd" type="text" description="the dotted-decimal form of the address (e.g. 17.255.1.1)"/>
+			<property name="port" code="ppor" type="integer" description="the port number of the requested TCP/IP service"/>
+		</class>
+		<class name="web page" code="html" description="A web page in HyperText Markup Language form" plural="web pages">
+			<property name="properties" code="pALL" type="record" description="property that allows getting and setting of multiple properties"/>
+			<property name="name" code="pnam" type="text" access="r" description="the name of the web page"/>
+			<property name="URL" code="pURL" type="URL" access="r" description="the universal resource locator for this page"/>
+			<property name="text encoding" code="ptxe" type="text" access="r" description="the text encoding method used for this page"/>
+		</class>
+		<enumeration name="esch" code="esch">
+			<enumerator name="http URL" code="http"/>
+			<enumerator name="secure http URL" code="htps"/>
+			<enumerator name="ftp URL" code="ftp "/>
+			<enumerator name="mail URL" code="mail"/>
+			<enumerator name="file URL (obsolete)" code="file"/>
+			<enumerator name="gopher URL" code="gphr"/>
+			<enumerator name="telnet URL" code="tlnt"/>
+			<enumerator name="news URL" code="news"/>
+			<enumerator name="secure news URL" code="snws"/>
+			<enumerator name="nntp URL" code="nntp"/>
+			<enumerator name="message URL" code="mess"/>
+			<enumerator name="mailbox URL" code="mbox"/>
+			<enumerator name="multi URL" code="mult"/>
+			<enumerator name="launch URL" code="laun"/>
+			<enumerator name="afp URL" code="afp "/>
+			<enumerator name="AppleTalk URL" code="at  "/>
+			<enumerator name="remote application URL" code="eppc"/>
+			<enumerator name="streaming multimedia URL" code="rtsp"/>
+			<enumerator name="network file system URL" code="unfs"/>
+			<enumerator name="mailbox access URL" code="imap"/>
+			<enumerator name="mail server URL" code="upop"/>
+			<enumerator name="directory server URL" code="uldp"/>
+			<enumerator name="unknown URL" code="url?" description="????"/>
+		</enumeration>
+	</suite>
+</dictionary>

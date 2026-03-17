@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+<dictionary title="VoiceOver Terminology">
+    
+    <suite name="VoiceOver Suite" code="VOAS" description="VOASeOver AppleScripting facilities">
+        <class name="application" code="capp" description="VoiceOver">     
+            <cocoa class="SCRWorkspace"/>
+
+            <property name="vo cursor" code="vocu" access="r" type="vo cursor object" description="The VoiceOver cursor">
+                <cocoa key="voCursor"/>
+            </property>
+
+            <property name="commander" access="r" code="cmmd" type="commander object" description="The VoiceOver commander">
+                <cocoa key="commander"/>
+            </property>
+
+            <property name="mouse cursor" code="mocu" access="r" type="mouse cursor object" description="The mouse cursor">
+                <cocoa key="mouseCursor"/>
+            </property>
+
+            <property name="keyboard cursor" code="kbcu" access="r" type="keyboard cursor object" description="The keyboard cursor">
+                <cocoa key="keyboardCursor"/>
+            </property>
+            
+            <property name="caption window" code="capa" access="r" type="caption window object" description="The VoiceOver caption window">
+                <cocoa key="captionWindow"/>
+            </property>
+            
+            <property name="braille window" code="brpa" access="r" type="braille window object" description="The VoiceOver Braille window">
+                <cocoa key="brailleWindow"/>
+            </property>
+            
+            <property name="last phrase" code="lapr" access="r" type="last phrase object" description="The last phrase VoiceOver output">
+                <cocoa key="lastPhrase"/>
+            </property>
+            
+            <responds-to command="output">
+                <cocoa method="appleScriptHandleOutput:"/>
+            </responds-to>
+            <responds-to command="open">
+                <cocoa method="appleScriptHandleOpen:"/>
+            </responds-to>
+            <responds-to command="close menu">
+                <cocoa method="appleScriptHandleCloseMenu:"/>
+            </responds-to>
+            <responds-to command="quit">
+                <cocoa method="appleScriptHandleQuit:"/>
+            </responds-to>
+        </class>
+        
+        <class name="vo cursor object" plural="vo cursor object" code="vocO" description="The VoiceOver cursor">
+            <cocoa class="SCRAppleScriptVOCursor"/> 
+            
+            <property name="bounds" code="pbnd" type="rectangle" description="The bounds of the VoiceOver cursor" access="r">
+                <cocoa key="bounds"/>
+            </property>
+            <property name="text under cursor" code="votx" type="text" access="r" description="The text of the item in the VoiceOver cursor">
+                <cocoa key="textUnderCursor"/>
+            </property>
+            <property name="magnification" code="vMag" type="real" access="rw" description="The magnification factor of the VoiceOver cursor">
+                <cocoa key="magnification"/>
+            </property>
+                        
+            <responds-to command="grab screenshot">
+                <cocoa method="appleScriptHandleGrabScreenshot:"/>
+            </responds-to>
+            <responds-to command="move">
+                <cocoa method="appleScriptHandleMove:"/>
+            </responds-to>
+            <responds-to command="perform action">
+                <cocoa method="appleScriptHandlePerformAction:"/>
+            </responds-to>
+            <responds-to command="select">
+                <cocoa method="appleScriptHandleSelect:"/>
+            </responds-to>
+        </class>
+
+        <class name="commander object" code="cmmO" description="The VoiceOver commander.">
+            <cocoa class="SCRAppleScriptCommander"/>
+            <responds-to command="perform command">
+                <cocoa method="appleScriptHandlePerformCommand:"/>
+            </responds-to>
+        </class>
+        
+        <class name="caption window object" code="capO" description="The caption window">
+            <cocoa class="SCRAppleScriptCaptionWindow"/>
+            <property name="enabled" code="cwon" access="rw" type="boolean" description="The visibility of the caption window">
+                <cocoa key="enabled"/>
+            </property>
+        </class>
+
+        <class name="braille window object" code="brpO" description="The Braille window">
+            <cocoa class="SCRAppleScriptBrailleWindow"/>
+            <property name="enabled" code="pvis" access="rw" type="boolean" description="The visibility of the Braille window">
+                <cocoa key="enabled"/>
+            </property>
+        </class>
+
+        <class name="mouse cursor object" code="mocO" description="The mouse cursor">
+            <cocoa class="SCRAppleScriptMouseCursor"/>            
+            <responds-to command="click">
+                <cocoa method="appleScriptHandleClick:"/>  
+            </responds-to>
+            <responds-to command="press">
+                <cocoa method="appleScriptHandlePress:"/>  
+            </responds-to>
+            <responds-to command="release">
+                <cocoa method="appleScriptHandleRelease:"/>  
+            </responds-to>
+
+            <property name="position" code="posi" type="point" description="Position of the mouse">
+                <cocoa key="position"/>
+            </property> 
+        </class>
+
+        <class name="last phrase object" code="lapO" description="The last phrase outputted">
+            <cocoa class="SCRAppleScriptLastPhrase"/>            
+            <responds-to command="save">
+                <cocoa method="appleScriptHandleSave:"/>  
+            </responds-to>
+            <responds-to command="copy to pasteboard">
+                <cocoa method="appleScriptHandleCopy:"/>  
+            </responds-to>
+            <responds-to command="output">
+                <cocoa method="appleScriptHandleOutput:"/>  
+            </responds-to>
+
+            <property name="content" code="lptx" type="text" access="r" description="The text of the last phrase">
+                <cocoa key="content"/>
+            </property>
+
+        </class>
+
+        <class name="keyboard cursor object" code="kbcO" description="The keyboard cursor">
+            <cocoa class="SCRAppleScriptKeyboardCursor"/>            
+            
+            <property name="bounds" code="pbnd" type="rectangle" description="The bounds of the keyboard cursor" access="r">
+                <cocoa key="bounds"/>
+            </property>
+            <property name="text under cursor" code="votx" type="text" access="r" description="The text of the item in the keyboard cursor">
+                <cocoa key="textUnderCursor"/>
+            </property>
+        </class>
+
+        <command name="perform command" code="VOASperC">
+            <cocoa class="SCRAppleScriptPerformCommand"/>
+            <direct-parameter type="text" description="The English name of the VoiceOver command to perform" optional="no"/>
+        </command>
+
+        <command name="grab screenshot" code="VOASshot" description="Takes a screenshot of the VO cursor and returns the path to the file">
+            <direct-parameter type="vo cursor object" hidden="yes" optional="no" description="the vo cursor object to grab"/>
+            <result type="text" description="the path to the screenshot"/>   
+        </command>
+        
+        <command name="click" code="VOASclik">
+            <cocoa class="SCRAppleScriptClickMouseCommand"/>
+            <direct-parameter optional="yes" description="Number of times to click">
+                <type type="click count"/>
+            </direct-parameter>
+            
+            <parameter name="with" type="click button" code="with" description="Mouse button to click" optional="yes">
+                <cocoa key="with"/>
+            </parameter>
+        </command>
+        
+        <command name="quit" code="aevtquit"/>
+        
+        <command name="press" code="VOASpres">
+            <direct-parameter type="mouse cursor object" hidden="yes" optional="no" description="The mouse cursor object"/>
+        </command>  
+
+        <command name="release" code="VOASrele">
+            <direct-parameter type="mouse cursor object" hidden="yes" optional="no" description="The mouse cursor object"/>
+        </command>  
+        
+        <command name="perform action" code="VOASpera">
+            <direct-parameter type="vo cursor object" hidden="yes" optional="no" description="The vo cursor object"/>
+        </command>  
+
+        <command name="select" code="VOASsele">
+            <direct-parameter type="vo cursor object" hidden="yes" optional="no" description="The vo cursor object"/>
+        </command>  
+
+        <command name="move" code="coremove" description="Move the vo cursor to a new location.">
+            <cocoa class="SCRAppleScriptMoveCommand"/>
+            <direct-parameter description="The direction to move in." optional="yes">
+                <type type="direction"/>
+                <type type="containment"/>
+            </direct-parameter>
+            <parameter name="to" code="to  " description="The place to move to" optional="yes">
+                <type type="place"/>
+                <cocoa key="to"/>
+            </parameter> 
+        </command>
+
+        <command name="output" code="VOASoutp" description="Output">
+            <direct-parameter description="item to be outputted" optional="yes">
+                <type type="text"/>
+                <type type="outputables"/>
+            </direct-parameter>
+            <parameter name="with" type="spelling type" code="with" description="Type of reading" optional="yes">
+                <cocoa key="with"/>
+            </parameter>
+        </command>
+        
+        <command name="open" code="VOASopen">
+            <direct-parameter description="the item to open">
+                <type type="menu"/>
+                <type type="resource"/>
+            </direct-parameter>
+        </command>
+
+        <command name="close menu" code="VOASclos" description="Closes open menus"/>
+        
+        <command name="save" code="VOASsave" description="Save last phrase">
+            <direct-parameter type="last phrase object" hidden="yes" optional="no" description="The last phrase object"/>
+        </command>  
+
+        <command name="copy to pasteboard" code="VOAScopy" description="Copy last phrase to pasteboard">
+            <direct-parameter type="last phrase object" hidden="yes" optional="no" description="The last phrase object"/>
+        </command>  
+        
+        <enumeration name="click count" code="clCt">
+            <enumerator name="once" code="once" description="One mouse click"/>
+            <enumerator name="twice" code="twic" description="Double mouse click"/>
+            <enumerator name="thrice" code="thri" description="Triple mouse click"/>
+        </enumeration>
+        
+        <enumeration name="click button" code="clBt">
+            <enumerator name="left button" code="left" description="Left mouse button"/>
+            <enumerator name="right button" code="righ" description="Right mouse button"/>
+        </enumeration>
+
+        <enumeration name="place" code="plCO">
+            <enumerator name="dock" code="docV" description="The dock"/>
+            <enumerator name="desktop" code="desV" description="The desktop"/>
+            <enumerator name="menubar" code="menV" description="The menubar"/>
+            <enumerator name="status menu" code="meeV" description="Status menu"/>
+            <enumerator name="spotlight" code="spoV" description="Spotlight"/>
+            <enumerator name="linked item" code="linV" description="Linked item"/>
+            <enumerator name="first item" code="FirV" description="First item"/>
+            <enumerator name="last item" code="LasV" description="Last item"/>
+        </enumeration>
+        
+        <enumeration name="direction" code="dire">
+            <enumerator name="up" code="up V" description="Up"/>
+            <enumerator name="down" code="dowV" description="Down"/>
+            <enumerator name="left" code="lefV" description="Left"/>
+            <enumerator name="right" code="rigV" description="Right"/>
+        </enumeration>
+
+        <enumeration name="containment" code="conT">
+            <enumerator name="into item" code="in V" description="Interact in"/>
+            <enumerator name="out of item" code="outV" description="Interact out"/>
+        </enumeration>
+
+        <enumeration name="menu" code="menU">
+            <enumerator name="help menu" code="help" description="Help menu"/>            
+            <enumerator name="applications menu" code="apps" description="Applications menu"/>            
+            <enumerator name="windows menu" code="wind" description="Windows menu"/>            
+            <enumerator name="commands menu" code="cmds" description="Commands menu"/>            
+            <enumerator name="item chooser" code="item" description="Item chooser"/>            
+            <enumerator name="web menu" code="webm" description="Web menu"/>            
+            <enumerator name="contextual menu" code="ctxm" description="Contextual menu"/>    
+        </enumeration>
+
+        <enumeration name="resource" code="resc">
+            <enumerator name="utility" code="util" description="VoiceOver Utility"/>            
+            <enumerator name="quickstart" code="quik" description="Quickstart"/>    
+            <enumerator name="VoiceOver help" code="vhel" description="Quickstart"/>    
+        </enumeration>
+
+        <enumeration name="outputables" code="spea">       
+            <enumerator name="mouse summary" code="mosU" description="Summary of the item under the mouse"/>    
+            <enumerator name="workspace overview" code="worS" description="The overview of the working environment"/>    
+            <enumerator name="window overview" code="winO" description="The overview of the current window"/>    
+            <enumerator name="web overview" code="webO" description="The overview of the web page"/>    
+            <enumerator name="announcement history" code="annH" description="Causes the display to show recent announcement"/>
+        </enumeration>
+
+        <enumeration name="spelling type" code="spel">
+            <enumerator name="alphabetic spelling" code="alpS" description="Alphabetic spelling"/>            
+            <enumerator name="phonetic spelling" code="phoS" description="Phoenetic spelling"/>            
+        </enumeration>
+
+    </suite>
+    
+</dictionary>

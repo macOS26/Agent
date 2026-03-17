@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+<dictionary title="Dictionary" xmlns:xi="http://www.w3.org/2003/XInclude">
+	<xi:include href="file:///System/Library/ScriptingDefinitions/CocoaStandard.sdef" xpointer="xpointer(/dictionary/suite)"/>
+	<suite name="Shortcuts Suite" code="srct" description="Classes and Commands for working with Shortcuts">
+		<value-type hidden="yes" name="RGB color" code="cRGB">
+			<cocoa class="WFColor"/>
+		</value-type>
+		<value-type hidden="yes" name="TIFF image" code="TIFF">
+			<cocoa class="NSImage"/>
+		</value-type>
+		<class-extension extends="application">
+			<element type="shortcut">
+				<access-group identifier="com.apple.shortcuts.run" access="r"/>
+				<access-group identifier="com.apple.shortcuts.organize" access="rw"/>
+				<cocoa key="scriptingShortcuts"/>
+				<accessor style="name"/>
+				<accessor style="id"/>
+			</element>
+			<element type="folder">
+				<access-group identifier="com.apple.shortcuts.run" access="r"/>
+				<access-group identifier="com.apple.shortcuts.organize" access="rw"/>
+				<cocoa key="scriptingFolders"/>
+				<accessor style="id"/>
+			</element>
+		</class-extension>
+		<class name="shortcut" code="srct" description="a shortcut in the Shortcuts application" plural="shortcuts">
+			<access-group identifier="com.apple.shortcuts.run" access="r"/>
+			<access-group identifier="com.apple.shortcuts.organize" access="rw"/>
+			<cocoa class="WFWorkflowReference"/>
+			<property name="name" code="pnam" description="the name of the shortcut" type="text" access="r">
+				<cocoa key="scriptingName"/>
+			</property>
+			<property name="subtitle" code="subt" description="the shortcut&apos;s subtitle" type="text" access="r">
+				<cocoa key="scriptingSubtitle"/>
+			</property>
+			<property name="id" code="ID  " description="the unique identifier of the shortcut" type="text" access="r">
+				<cocoa key="scriptingID"/>
+			</property>
+			<property name="folder" code="fldr" description="the folder containing this shortcut" type="folder" access="rw">
+				<cocoa key="scriptingFolder"/>
+			</property>
+			<property name="color" code="colr" description="the shortcut&apos;s color" type="RGB color" access="r">
+				<cocoa key="scriptingColor"/>
+			</property>
+            <property name="icon" code="sico" description="the shortcut&apos;s icon" type="TIFF image" access="r">
+                <cocoa key="scriptingIcon"/>
+            </property>
+            <property name="accepts input" code="anpt" description="indicates whether or not the shortcut accepts input data" type="boolean" access="r">
+                <cocoa key="scriptingAcceptsInput"/>
+            </property>
+			<property name="action count" code="acnt" description="the number of actions in the shortcut" type="integer" access="r">
+				<cocoa key="scriptingActionCount"/>
+			</property>
+			<responds-to command="run">
+				<cocoa method="scriptingRun:"/>
+			</responds-to>
+		</class>
+        <class name="folder" code="fldr" description="a folder containing shortcuts" plural="folders">
+			<access-group identifier="com.apple.shortcuts.run" access="r"/>
+			<access-group identifier="com.apple.shortcuts.organize" access="rw"/>
+            <cocoa class="WFWorkflowCollection"/>
+			<element type="shortcut">
+            <cocoa key="scriptingShortcuts"/>
+			</element>
+			<property name="name" code="pnam" description="the name of the folder" type="text" access="rw">
+				<cocoa key="scriptingName"/>
+			</property>
+			<property name="id" code="ID  " description="the unique identifier of the folder" type="text" access="r">
+				<cocoa key="scriptingID"/>
+			</property>
+		</class>
+		<command name="run" code="srctrun " description="Run a shortcut. To run a shortcut in the background, without opening the Shortcuts app, tell &apos;Shortcuts Events&apos; instead of &apos;Shortcuts&apos;.">
+			<access-group identifier="com.apple.shortcuts.run"/>
+			<cocoa class="RunShortcutScriptCommand"/>
+			<direct-parameter description="the shortcut to run" type="shortcut" requires-access="r"/>
+			<parameter name="with input" code="inpt" description="the input to provide to the shortcut" type="any" optional="yes"/>
+			<result description="the result of the shortcut" type="any"/>
+		</command>
+	</suite>
+</dictionary>

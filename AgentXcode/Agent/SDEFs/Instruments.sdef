@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+
+<dictionary xmlns:xi="http://www.w3.org/2003/XInclude">
+    
+    <xi:include href="file:///System/Library/ScriptingDefinitions/CocoaStandard.sdef" xpointer="xpointer(/dictionary/suite)"/>
+    
+    <suite name="Instruments Data" code="istd" description="Access to Instrument's internal data storage">
+        
+        <class name="document" code="docu" description="A Trace Document.">
+            <cocoa class="PFTTraceDocument"/>
+            <property name="name" code="pnam" type="text" access="r" description="Its name.">
+				<cocoa key="displayName"/>
+			</property>
+            
+            <property name="modified" code="imod" type="boolean" access="r" description="Has it been modified since the last save?">
+				<cocoa key="isDocumentEdited"/>
+			</property>
+            
+			<property name="file" code="file" type="file" access="r" description="Its location on disk, if it has one.">
+				<cocoa key="fileURL"/>
+			</property>
+
+        </class>
+        
+    </suite>
+
+</dictionary>

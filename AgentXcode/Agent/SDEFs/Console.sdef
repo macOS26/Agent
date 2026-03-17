@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+
+<dictionary title="Console">
+
+    <suite name="Console Suite" code="csls" description="Console commands.">
+
+        <command name="selectDevice" code="cslselde" description="Select a device.">
+            <cocoa class="Console.DeviceSelectionCommand"/>
+            <direct-parameter type="text" description="The Device UDID to select."/>
+        </command>
+
+    </suite>
+
+</dictionary>

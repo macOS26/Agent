@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+
+<dictionary xmlns:xi="http://www.w3.org/2003/XInclude">
+    <xi:include href="file:///System/Library/ScriptingDefinitions/CocoaStandard.sdef" xpointer="xpointer(/dictionary/suite)"/>
+
+    <suite name="Safari suite" code="sfri" description="Safari specific classes">
+
+        <class-extension extends="window" description="A Safari window.">
+            <cocoa class="BrowserWindow"/>
+            <property type="tab" name="current tab" code="cTab" description="The current tab.">
+                <cocoa key="currentTabViewItem"/>
+            </property>
+            <element type="tab">
+                <cocoa key="orderedTabViewItems"/>
+            </element>
+        </class-extension>
+
+        <class-extension extends="document" description="A Safari document representing the active tab in a window.">
+            <cocoa class="BrowserDocument"/>
+            <property type="text" name="source" code="conT" access="r" description="The HTML source of the web page currently loaded in the document.">
+                <cocoa key="source"/>
+            </property>
+            <property type="text" name="URL" code="pURL" description="The current URL of the document.">
+                <cocoa key="URLString"/>
+            </property>
+            <property type="text" name="text" code="ctxt" access="r" description="The text of the web page currently loaded in the document. Modifications to text aren't reflected on the web page.">
+                <cocoa key="text"/>
+            </property>
+            <responds-to command="do JavaScript">
+                <cocoa method="handleDoJavaScriptCommand:"/>
+            </responds-to>
+            <responds-to command="email contents">
+                <cocoa method="handleEmailContentsCommand:"/>
+            </responds-to>
+            <responds-to command="search the web">
+                <cocoa method="handleSearchTheWebCommand:"/>
+            </responds-to>
+        </class-extension>
+
+        <class name="tab" plural="tabs" code="bTab" description="A Safari window tab.">
+            <cocoa class="BrowserTabViewItem"/>
+            <property type="text" name="source" code="conT" access="r" description="The HTML source of the web page currently loaded in the tab.">
+                <cocoa key="source"/>
+            </property>
+            <property type="text" name="URL" code="pURL" description="The current URL of the tab.">
+                <cocoa key="URLString"/>
+            </property>
+            <property type="number" name="index" code="pidx" access="r" description="The index of the tab, ordered left to right.">
+                <cocoa key="orderedIndex"/>
+            </property>
+            <property type="text" name="text" code="ctxt" access="r" description="The text of the web page currently loaded in the tab. Modifications to text aren't reflected on the web page.">
+                <cocoa key="text"/>
+            </property>
+            <property type="boolean" name="visible" code="pvis" access="r" description="Whether the tab is currently visible.">
+                <cocoa key="isVisible"/>
+            </property>
+            <property type="text" name="name" code="pnam" access="r" description="The name of the tab.">
+                <cocoa key="title"/>
+            </property>
+            <responds-to command="do JavaScript">
+                <cocoa method="handleDoJavaScriptCommand:"/>
+            </responds-to>
+            <responds-to command="email contents">
+                <cocoa method="handleEmailContentsCommand:"/>
+            </responds-to>
+            <responds-to command="close">
+                <cocoa method="handleCloseScriptCommand:"/>
+            </responds-to>
+            <responds-to command="search the web">
+                <cocoa method="handleSearchTheWebCommand:"/>
+            </responds-to>
+            <property type="number" name="pid" code="wpid" access="r" description="The pid of the WebContent process backing the tab, if it exists." hidden="yes">
+                <cocoa key="webProcessIdentifier"/>
+            </property>
+        </class>
+
+        <class code="srcP" name="sourceProvider" hidden="yes">
+            <cocoa class="ScriptPageSourceProvider"/>
+            <responds-to command="get">
+                <cocoa method="handleGetScriptCommand:"/>
+            </responds-to>
+        </class>
+
+        <class code="txtP" name="contentsProvider" hidden="yes">
+            <cocoa class="ScriptPageContentsProvider"/>
+            <responds-to command="get">
+                <cocoa method="handleGetScriptCommand:"/>
+            </responds-to>
+        </class>
+
+        <command name="add reading list item" code="sfriarli" description="Add a new Reading List item with the given URL. Allows a custom title and preview text to be specified.">
+            <cocoa class="AddReadingListItemCommand"/>
+            <direct-parameter type="text" description="URL of the Reading List item"/>
+            <parameter type="text" name="and preview text" code="rlip" optional="yes" description="Preview text for the Reading List item, usually the first few sentences of the article">
+                <cocoa key="PreviewText"/>
+            </parameter>
+            <parameter type="text" name="with title" code="rlit" optional="yes" description="Title of the Reading List item">
+                <cocoa key="Title"/>
+            </parameter>
+        </command>
+
+        <command name="do JavaScript" code="sfridojs" description="Applies a string of JavaScript code to a document.">
+            <cocoa class="DoJavaScriptCommand"/>
+            <direct-parameter type="text" description="The JavaScript code to evaluate."/>
+            <parameter name="in" code="dcnm" optional="yes" description="The tab that the JavaScript should be evaluated in.">
+                <cocoa key="Target"/>
+                <type type="document"/>
+                <type type="tab"/>
+            </parameter>
+            <result type="any"/>
+        </command>
+
+        <command name="email contents" code="sfrimlct" description="Emails the contents of a tab.">
+            <cocoa class="EmailContents"/>
+            <parameter name="of" code="dcnm" optional="yes" description="The tab to send.">
+                <cocoa key="Target"/>
+                <type type="tab"/>
+                <type type="document"/>
+            </parameter>
+        </command>
+
+        <command name="search the web" code="sfrisrch" description="Searches the web using Safari's current search provider.">
+            <cocoa class="SearchTheWeb"/>
+            <parameter name="in" code="dcnm" optional="yes" description="The tab that the search results should shown in.">
+                <cocoa key="Target"/>
+                <type type="document"/>
+                <type type="tab"/>
+            </parameter>
+            <parameter type="text" name="for" code="qury" description="The query to search for.">
+                <cocoa key="Query"/>
+            </parameter>
+        </command>
+
+        <command name="show bookmarks" code="sfriopbk" description="Shows Safari's bookmarks.">
+            <cocoa class="ShowBookmarks"/>
+        </command>
+
+        <command name="show extensions preferences" code="sfrissep" hidden="yes" description="Show Safari Extensions preferences.">
+            <cocoa class="ShowExtensionsPreferences"/>
+            <access-group identifier="com.apple.Safari.show-extensions-preferences"/>
+            <direct-parameter type="text" description="The identifier of the extension to select."/>
+        </command>
+
+        <command name="dispatch message to extension" code="sfridste" hidden="yes" description="Dispatch a message to a Safari Extension.">
+            <cocoa class="DispatchMessageToExtension"/>
+            <access-group identifier="com.apple.Safari.dispatch-message-to-extension"/>
+            <direct-parameter type="any" description="A dictionary describing the message"/>
+        </command>
+
+        <command name="sync all plist to disk" code="sfriplst" hidden="yes" description="Make sure that all in-memory structures are in-sync with their on-disk counterparts.">
+            <access-group identifier="com.apple.private.Safari.sync-plist"/>
+        </command>
+
+        <command name="show privacy report" code="sfripvrp" hidden="yes" description="Show Safari's Privacy Report">
+            <cocoa class="ShowPrivacyReport"/>
+        </command>
+
+        <command name="show credit card settings" code="sfrisccs" hidden="yes" description="Show Safari Credit Card Settings.">
+            <cocoa class="ShowCreditCardSettings"/>
+        </command>
+
+    </suite>
+</dictionary>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+<dictionary>
+    <suite name="Hidden Suite" code="faco" description="Hidden Terms and Events for controlling the Folder Actions Dispatcher application" hidden="yes">
+        
+        <command name="do folder action" code="facofola" description="Send a folder action code to a folder action script" hidden="yes">
+            <cocoa class="DoActionVerb" />
+            <direct-parameter type="file" description="the path to the folder" />
+            <parameter name="folder action code" code="actn" type="actn" description="the folder action message to process">
+                <cocoa key="code" />
+            </parameter>
+            <parameter name="with item list" code="flst" optional="yes" description="a list of items for the folder action message to process">
+                <cocoa key="itemList" />
+                <type type="text" list="yes" />
+            </parameter>
+            <parameter name="with window size" code="fnsz" type="rectangle" optional="yes" description="the new window size for the folder action message to process">
+                <cocoa key="windowSize" />
+            </parameter>
+        </command>
+
+        <enumeration name="actn" code="actn" hidden="yes">
+            <enumerator name="items added" code="fget" description="items added" />
+            <enumerator name="items removed" code="flos" description="items removed" />
+            <enumerator name="window closed" code="fclo" description="window closed" />
+            <enumerator name="window moved" code="fsiz" description="window moved" />
+            <enumerator name="window opened" code="fopn" description="window opened" />
+        </enumeration>
+        
+    </suite>
+</dictionary>

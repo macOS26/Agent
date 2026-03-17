@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+<dictionary title="Dictionary">
+	<suite name="Bluetooth File Exchange Suite" code="btfe" description="The suite of commands for Bluetooth File Exchange">
+		<command name="browse" code="aevtoFTP" description="Browse a device.">
+			<parameter name="device" code="bdAd" optional="yes" type="text" description="The device to browse.">
+			</parameter>
+		</command>
+		<command name="send" code="aevtoOPP" description="Send a file to a bluetooth device.">
+			<parameter name="file" code="btFs" type="file" optional="yes" list="yes" description="The file to send.">
+			</parameter>
+			<parameter name="to device" code="bdAd" optional="yes" type="text" description="The device to send the file to.">
+			</parameter>
+		</command>
+	</suite>
+</dictionary>

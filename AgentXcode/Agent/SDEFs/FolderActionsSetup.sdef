@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+<dictionary xmlns:xi="http://www.w3.org/2001/XInclude">
+    
+    <xi:include href="file:///System/Library/ScriptingDefinitions/CocoaStandard.sdef" xpointer="xpointer(/dictionary/suite)"/>
+
+    <xi:include href="file:///System/Library/PrivateFrameworks/FolderActionsKit.framework/Versions/A/Resources/FolderActions.sdef" xpointer="xpointer(/dictionary/suite)"/>
+
+    <suite name="Folder Actions Setup Suite" code="faco" description="Terms and Events for controlling the Folder Actions Setup application">
+        <command name="open" code="aevtodoc" description="Open a folder action associated with a folder, for the purpose of attaching a script.">
+            <cocoa class="OpenCommand" />
+            <direct-parameter description="The associated folder.">
+<!--                <type type="alias" />-->
+<!--                <type type="folder" />-->
+                <type type="text" />
+                <type type="any" hidden="yes" />
+            </direct-parameter>
+            <result description="The resultant folder action.">
+                <type type="folder action"/>
+            </result>
+        </command>
+        <enumeration name="saveable file format" code="savf">
+            <enumerator name="text" code="ctxt" description="Text File Format">
+                <cocoa string-value="public.text"/>
+            </enumerator>
+        </enumeration>
+    </suite>
+</dictionary>
