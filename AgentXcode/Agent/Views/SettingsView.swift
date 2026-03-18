@@ -16,8 +16,6 @@ struct SettingsView: View {
                     }
                 }
                 .labelsHidden()
-                .pickerStyle(.segmented)
-                .frame(maxWidth: .infinity)
             }
 
             if viewModel.selectedProvider == .claude {
