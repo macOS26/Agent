@@ -30,6 +30,7 @@ let scriptNames = [
     "SaveImageFromClipboard",
     "SendGroupMessage",
     "SendMessage",
+    "SystemInfo",
     "TestCodingTools",
     "TestEnvVars",
     "TestGenerateBridge",

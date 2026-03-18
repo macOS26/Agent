@@ -416,6 +416,7 @@ HTTP-based demonstration server with utility functions:
   "name": "HelloWorld",
   "command": "/usr/local/bin/node",
   "arguments": ["/path/to/mcp-server-hello/dist/index.js"],
+  "environment": {},
   "enabled": true,
   "autoStart": true
 }
@@ -427,6 +428,21 @@ HTTP-based demonstration server with utility functions:
   "name": "xcf",
   "command": "/usr/local/bin/node",
   "arguments": ["/path/to/xcf-server/dist/index.js"],
+  "environment": {},
+  "enabled": true,
+  "autoStart": true
+}
+```
+
+#### DemoHttp MCP Server
+```json
+{
+  "name": "DemoHttp",
+  "command": "/usr/local/bin/node",
+  "arguments": ["/path/to/demo-http-mcp-server/dist/index.js"],
+  "environment": {
+    "PORT": "3000"
+  },
   "enabled": true,
   "autoStart": true
 }
@@ -652,10 +668,10 @@ Agent! also supports MCP (Model Context Protocol) servers for extended functiona
 - `mcp_xcf_show_current_project` / `mcp_xcf_list_projects` / `mcp_xcf_select_project` — Project management
 - `mcp_xcf_show_env` / `mcp_xcf_show_folder` — Environment info
 
-**DemoHttp MCP** — HTTP demo server (3 tools)
+**DemoHttp MCP** — HTTP-based demonstration server with utility functions:
 - `mcp_DemoHttp_get_time` — Get current date and time
-- `mcp_DemoHttp_calculate` — Evaluate math expressions
-- `mcp_DemoHttp_reverse_string` — Reverse a string
+- `mcp_DemoHttp_calculate` — Evaluate math expressions (add, subtract, multiply, divide)
+- `mcp_DemoHttp_reverse_string` — Reverse a text string
 
 ---
 
