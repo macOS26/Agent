@@ -148,10 +148,7 @@ enum AgentTools {
     @MainActor static func compactSystemPrompt(userName: String, userHome: String) -> String {
         """
         macOS assistant. User: \(userName), home: \(userHome). Be brief.
-        When asked to DO something, call a tool immediately. Do not explain — just act.
-        One tool per reply. Always end with task_complete {"summary": "..."}.
-        Tool call format — always JSON after the tool name:
-        \(enabledAppleAIToolLines())
+        Use tools when asked to act. Reply in plain English when done.
         """
     }
 

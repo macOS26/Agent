@@ -66,18 +66,13 @@ final class FoundationModelService {
 
     private func ensureSession() -> LanguageModelSession {
         if let s = session { return s }
-    
-        // Use compact prompt for Apple Intelligence (limited context window).
-        // Project folder is injected per-message in extractLastUserPrompt — don't duplicate here.
+
         let instructions = AgentTools.compactSystemPrompt(userName: userName, userHome: userHome)
-        // Skip history context for Apple Intelligence to save context window
-        // Apple Intelligence has a smaller context window than Claude/Ollama
         print("=== Apple AI System Prompt ===\n\(instructions)\n=== End (\(instructions.count) chars) ===")
-        
-        
-        // No tools for Apple Intelligence — all 40+ tool schemas exceed the context window.
-        // Apple Intelligence responds with plain text only.
-        let s = LanguageModelSession(model: .default, instructions: Instructions(instructions))
+
+        // Load one native tool — Foundation Models injects its schema automatically (no TOOLS: in prompt needed).
+        let shellTool = NativeShellTool(projectFolder: projectFolder)
+        let s = LanguageModelSession(model: .default, tools: [shellTool], instructions: Instructions(instructions))
         session = s
         return s
     }
@@ -274,5 +269,46 @@ final class FoundationModelService {
 
     private func toolUseResult(name: String, input: [String: Any]) -> (content: [[String: Any]], stopReason: String) {
         ([["type": "tool_use", "id": UUID().uuidString, "name": name, "input": input]], "tool_use")
+    }
+}
+
+// MARK: - Native Shell Tool
+
+/// Arguments the model generates when calling execute_user_command.
+@Generable
+private struct ShellCommandArgs {
+    @Guide(description: "The bash shell command to run as the current user")
+    var command: String
+}
+
+/// Native Foundation Models tool: runs a shell command in-process.
+/// Foundation Models injects its schema into the session automatically — no TOOLS: list needed in the prompt.
+private struct NativeShellTool: Tool {
+    typealias Arguments = ShellCommandArgs
+    typealias Output = AgentToolOutput
+
+    let name = "execute_user_command"
+    let description = "Execute a bash shell command as the current user. Use for ls, pwd, git, file operations, etc."
+    let projectFolder: String
+
+    func call(arguments: ShellCommandArgs) async throws -> AgentToolOutput {
+        var cmd = arguments.command
+        if !projectFolder.isEmpty && !cmd.hasPrefix("cd ") {
+            let escaped = projectFolder.replacingOccurrences(of: "'", with: "'\\''")
+            cmd = "cd '\(escaped)' && \(cmd)"
+        }
+        let process = Process()
+        let pipe = Pipe()
+        process.executableURL = URL(fileURLWithPath: "/bin/bash")
+        process.arguments = ["-c", cmd]
+        process.standardOutput = pipe
+        process.standardError = pipe
+        try? process.run()
+        process.waitUntilExit()
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let result = output.isEmpty ? "(no output, exit \(process.terminationStatus))" : output
+        print("🔧 [Apple AI] $ \(arguments.command)\n\(result)")
+        return AgentToolOutput(result: result)
     }
 }
