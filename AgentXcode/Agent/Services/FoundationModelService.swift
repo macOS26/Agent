@@ -65,8 +65,8 @@ final class FoundationModelService {
     // MARK: - Session
 
     private func ensureSession() -> LanguageModelSession {
-        if let s = session { return s }
-
+        // Always create a fresh session — the on-device model's small context
+        // gets polluted by prior turns, causing it to skip tools.
         NativeToolContext.projectFolder = projectFolder
         let instructions = SystemPromptService.shared.prompt(for: .foundationModel, userName: userName, userHome: userHome)
         print("=== Apple AI System Prompt ===\n\(instructions)\n=== End (\(instructions.count) chars) ===")
