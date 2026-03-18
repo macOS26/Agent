@@ -23,7 +23,10 @@ public actor MCPClient {
         public let autoStart: Bool
 
         /// True if this server uses HTTP/HTTPS transport
-        public var isHTTP: Bool { url != nil && !(url!.isEmpty) }
+        public var isHTTP: Bool {
+            guard let url = url, !url.isEmpty else { return false }
+            return true
+        }
 
         /// Stdio transport initializer
         public init(

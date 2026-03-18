@@ -52,13 +52,15 @@ func getLocalIP() -> String {
             defer { ptr = ptr?.pointee.ifa_next }
 
             let interface = ptr?.pointee
-            let addrFamily = interface?.ifa_addr.pointee.sa_family
+            guard let ifa_name = interface?.ifa_name,
+                  let ifa_addr = interface?.ifa_addr else { continue }
+            let addrFamily = ifa_addr.pointee.sa_family
             if addrFamily == UInt8(AF_INET) || addrFamily == UInt8(AF_INET6) {
-
-                let name: String = String(cString: (interface?.ifa_name)!)
+                let name = String(cString: ifa_name)
                 if name == "en0" || name == "en1" {
                     var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-                    getnameinfo(interface?.ifa_addr, socklen_t((interface?.ifa_addr.pointee.sa_len)!), &hostname, socklen_t(hostname.count), nil, socklen_t(0), NI_NUMERICHOST)
+                    let saLen = ifa_addr.pointee.sa_len
+                    getnameinfo(ifa_addr, socklen_t(saLen), &hostname, socklen_t(hostname.count), nil, socklen_t(0), NI_NUMERICHOST)
                     address = String(cString: hostname)
                 }
             }

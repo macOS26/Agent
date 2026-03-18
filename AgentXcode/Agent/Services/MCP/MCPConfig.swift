@@ -18,7 +18,10 @@ struct MCPServerConfig: Codable, Identifiable, Hashable {
     var autoStart: Bool
 
     /// True if this server uses HTTP/HTTPS transport
-    var isHTTP: Bool { url != nil && !(url!.isEmpty) }
+    var isHTTP: Bool {
+        guard let url = url, !url.isEmpty else { return false }
+        return true
+    }
 
     /// Display string for the server's connection target
     var displayAddress: String { isHTTP ? (url ?? "") : command }
