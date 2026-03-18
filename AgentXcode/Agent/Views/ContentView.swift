@@ -425,8 +425,8 @@ struct ContentView: View {
                     .buttonStyle(.bordered)
                     .controlSize(.regular)
                     .help("Cancel running task")
-                    .opacity(viewModel.isRunning ? 1 : 0)
-                    .disabled(!viewModel.isRunning)
+                    .opacity(viewModel.isRunning || viewModel.isThinking ? 1 : 0)
+                    .disabled(!viewModel.isRunning && !viewModel.isThinking)
 
                     Button { viewModel.captureScreenshot() } label: {
                         Image(systemName: "camera")
