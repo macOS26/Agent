@@ -156,23 +156,29 @@ enum AgentTools {
         """
     }
 
+    /// Concrete examples for each tool shown in the Apple AI compact prompt.
+    private static let toolExamples: [String: String] = [
+        "execute_user_command": #"execute_user_command {"command": "ls -la"}"#,
+        "execute_command":      #"execute_command {"command": "whoami"}"#,
+        "run_applescript":      #"run_applescript {"source": "tell application \"Finder\" to get name of home"}"#,
+        "run_osascript":        #"run_osascript {"script": "display dialog \"Hello\""}"#,
+        "read_file":            #"read_file {"file_path": "/Users/toddbruss/Documents/example.txt"}"#,
+        "write_file":           #"write_file {"file_path": "/Users/toddbruss/Documents/out.txt", "content": "hello"}"#,
+        "edit_file":            #"edit_file {"file_path": "/path/file.txt", "old_string": "old", "new_string": "new"}"#,
+        "list_files":           #"list_files {"pattern": "*.swift", "path": "/Users/toddbruss/Documents"}"#,
+        "search_files":         #"search_files {"pattern": "TODO", "path": "/Users/toddbruss/Documents"}"#,
+        "task_complete":        #"task_complete {"summary": "Done"}"#,
+        "git_status":           #"git_status {"path": "/Users/toddbruss/Documents/GitHub/MyRepo"}"#,
+        "git_commit":           #"git_commit {"path": "/Users/toddbruss/Documents/GitHub/MyRepo", "message": "fix: update"}"#,
+        "apple_event_query":    #"apple_event_query {"bundle_id": "com.apple.Music", "operations": [{"action": "get", "key": "currentTrack"}]}"#,
+        "run_agent_script":     #"run_agent_script {"name": "MyScript"}"#,
+    ]
+
     @MainActor private static func enabledAppleAIToolLines() -> String {
         let prefs = ToolPreferencesService.shared
         return commonTools
             .filter { prefs.isEnabled(.foundationModel, $0.name) }
-            .map { tool in
-                let params = tool.required.map { key -> String in
-                    let type_ = (tool.properties[key]?["type"] as? String) ?? "string"
-                    let placeholder: String
-                    switch type_ {
-                    case "integer": placeholder = "0"
-                    case "boolean": placeholder = "true"
-                    default: placeholder = "..."
-                    }
-                    return "\"\(key)\": \"\(placeholder)\""
-                }.joined(separator: ", ")
-                return "\(tool.name) {\(params)}"
-            }
+            .map { tool in toolExamples[tool.name] ?? "\(tool.name) {}" }
             .joined(separator: "\n")
     }
 
