@@ -878,14 +878,26 @@ struct NativeAgentTool: Tool {
     }
 
     func call(arguments: GeneratedContent) async throws -> AgentToolOutput {
-        // This is called by Foundation Models when the tool is invoked.
-        // The actual tool execution happens in TaskExecution.swift, which handles
-        // the tool_use blocks from the parsed response.
-        // We return a placeholder here - the real execution flow is:
-        // 1. Model generates tool calls in transcript
-        // 2. FoundationModelService.parseResponse extracts tool_calls from transcript
-        // 3. TaskExecution.swift processes the tool_use blocks
-        // This design allows us to reuse the existing tool execution infrastructure.
-        return AgentToolOutput(result: "Tool \(name) queued for execution")
+        // Extract arguments via Mirror reflection
+        var input: [String: Any] = [:]
+        let mirror = Mirror(reflecting: arguments)
+        for child in mirror.children {
+            guard let label = child.label else { continue }
+            // Unwrap optionals
+            let childMirror = Mirror(reflecting: child.value)
+            if childMirror.displayStyle == .optional {
+                if let first = childMirror.children.first {
+                    input[label] = first.value
+                }
+            } else {
+                input[label] = child.value
+            }
+        }
+        // Route to handler for real execution
+        if let handler = NativeToolContext.toolHandler {
+            let result = await handler(name, input)
+            return AgentToolOutput(result: result)
+        }
+        return AgentToolOutput(result: "Error: no tool handler configured")
     }
 }

@@ -80,23 +80,9 @@ final class FoundationModelService {
     @MainActor
     private func makeEnabledNativeTools() -> [any Tool] {
         let prefs = ToolPreferencesService.shared
-        func on(_ n: String) -> Bool { prefs.isEnabled(.foundationModel, n) }
-        var t: [any Tool] = []
-        if on("execute_user_command") { t.append(NativeShellTool()) }
-        if on("run_applescript")      { t.append(NativeAppleScriptTool()) }
-        if on("run_osascript")        { t.append(NativeOsaScriptTool()) }
-        if on("read_file")            { t.append(NativeReadFileTool()) }
-        if on("write_file")           { t.append(NativeWriteFileTool()) }
-        if on("edit_file")            { t.append(NativeEditFileTool()) }
-        if on("list_files")           { t.append(NativeListFilesTool()) }
-        if on("search_files")         { t.append(NativeSearchFilesTool()) }
-        if on("task_complete")        { t.append(NativeTaskCompleteTool()) }
-        if on("git_status")           { t.append(NativeGitStatusTool()) }
-        if on("git_commit")           { t.append(NativeGitCommitTool()) }
-        if on("git_log")              { t.append(NativeGitLogTool()) }
-        if on("git_diff")             { t.append(NativeGitDiffTool()) }
-        if on("list_native_tools")    { t.append(NativeListNativeToolsTool()) }
-        if on("list_mcp_tools")       { t.append(NativeListMCPToolsTool()) }
+        let t: [any Tool] = AgentTools.tools(for: .foundationModel)
+            .filter { prefs.isEnabled(.foundationModel, $0.name) }
+            .map { NativeAgentTool(toolDef: $0) }
         print("🔧 [Apple AI] Loaded \(t.count) native tools: \(t.map { $0.name }.joined(separator: ", "))")
         return t
     }
@@ -298,9 +284,11 @@ final class FoundationModelService {
 
 // MARK: - Shared State for Native Tools
 
-/// Shared project folder so individual tool structs don't each need a copy.
+/// Shared state for native Foundation Models tools.
 enum NativeToolContext {
     @MainActor static var projectFolder: String = ""
+    /// Handler that routes tool calls to real execution (set by ViewModel before task starts).
+    nonisolated(unsafe) static var toolHandler: (@Sendable (String, sending [String: Any]) async -> String)?
 }
 
 // MARK: - Native Shell Tool

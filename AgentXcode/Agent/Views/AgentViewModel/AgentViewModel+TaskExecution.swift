@@ -142,6 +142,148 @@ extension AgentViewModel {
         return nil
     }
 
+    // MARK: - Native Tool Handler (Apple AI)
+
+    /// Executes a tool call from Apple AI's Foundation Models native tool system.
+    /// Routes to the same execution logic as TaskExecution tool handlers.
+    func executeNativeTool(_ name: String, input: sending [String: Any]) async -> String {
+        let pf = projectFolder
+
+        // Shell commands
+        if name == "execute_user_command" || name == "execute_command" {
+            let cmd = input["command"] as? String ?? ""
+            let result = await executeViaUserAgent(command:
+                Self.prependWorkingDirectory(cmd, projectFolder: pf))
+            return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
+        }
+
+        // AppleScript
+        if name == "run_applescript" {
+            let source = (input["source"] as? String ?? "")
+            let result = await MainActor.run { () -> String in
+                var err: NSDictionary?
+                guard let script = NSAppleScript(source: source) else { return "Error" }
+                let out = script.executeAndReturnError(&err)
+                if let e = err { return "AppleScript error: \(e)" }
+                return out.stringValue ?? "(no output)"
+            }
+            return result
+        }
+
+        // Script management
+        if name == "list_agent_scripts" {
+            let scripts = scriptService.listScripts()
+            return scripts.isEmpty ? "No scripts found" : scripts.map { "\($0.name) (\($0.size) bytes)" }.joined(separator: "\n")
+        }
+        if name == "run_agent_script" {
+            let scriptName = input["name"] as? String ?? ""
+            guard let cmd = scriptService.compileCommand(name: scriptName) else {
+                return "Error: script '\(scriptName)' not found"
+            }
+            var fullCmd = cmd
+            if let args = input["arguments"] as? String {
+                fullCmd = "AGENT_SCRIPT_ARGS='\(args)' \(cmd)"
+            }
+            let result = await executeViaUserAgent(command: fullCmd)
+            return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
+        }
+        if name == "read_agent_script" {
+            return scriptService.readScript(name: input["name"] as? String ?? "") ?? "Not found"
+        }
+        if name == "create_agent_script" || name == "update_agent_script" {
+            return scriptService.createScript(name: input["name"] as? String ?? "", content: input["content"] as? String ?? "")
+        }
+        if name == "delete_agent_script" {
+            return scriptService.deleteScript(name: input["name"] as? String ?? "")
+        }
+
+        // File operations
+        if name == "read_file" {
+            let path = input["file_path"] as? String ?? ""
+            guard let data = FileManager.default.contents(atPath: path),
+                  let content = String(data: data, encoding: .utf8) else { return "Error: cannot read \(path)" }
+            return content
+        }
+        if name == "write_file" {
+            let path = input["file_path"] as? String ?? ""
+            let content = input["content"] as? String ?? ""
+            let url = URL(fileURLWithPath: path)
+            try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+            do { try content.write(to: url, atomically: true, encoding: .utf8); return "Wrote \(path)" }
+            catch { return "Error: \(error.localizedDescription)" }
+        }
+        if name == "edit_file" {
+            let path = input["file_path"] as? String ?? ""
+            let old = input["old_string"] as? String ?? ""
+            let new = input["new_string"] as? String ?? ""
+            guard let data = FileManager.default.contents(atPath: path),
+                  let content = String(data: data, encoding: .utf8) else { return "Error: cannot read \(path)" }
+            guard let range = content.range(of: old) else { return "Error: old_string not found" }
+            let updated = content.replacingCharacters(in: range, with: new)
+            do { try updated.write(to: URL(fileURLWithPath: path), atomically: true, encoding: .utf8); return "Edit applied" }
+            catch { return "Error: \(error.localizedDescription)" }
+        }
+
+        // Git (via shell)
+        if name.hasPrefix("git_") {
+            let dir = (input["path"] as? String ?? pf).isEmpty ? pf : (input["path"] as? String ?? pf)
+            let esc = dir.isEmpty ? "." : "'\(dir)'"
+            var cmd = "cd \(esc) && "
+            switch name {
+            case "git_status": cmd += "git status"
+            case "git_log": cmd += "git log --oneline -\(input["count"] as? Int ?? 20)"
+            case "git_diff":
+                cmd += "git diff"
+                if input["staged"] as? Bool == true { cmd += " --staged" }
+                if let target = input["target"] as? String { cmd += " \(target)" }
+            case "git_commit": cmd += "git add -A && git commit -m '\(input["message"] as? String ?? "update")'"
+            case "git_branch": cmd += "git branch -a"
+            case "git_diff_patch": cmd += "git diff"
+            default: cmd += "git \(name.replacingOccurrences(of: "git_", with: ""))"
+            }
+            let result = await executeViaUserAgent(command: cmd)
+            return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
+        }
+
+        // List/search files (via shell)
+        if name == "list_files" {
+            let pat = input["pattern"] as? String ?? "*"
+            let dir = input["path"] as? String ?? pf
+            let result = await executeViaUserAgent(command: "find '\(dir)' -name '\(pat)' ! -path '*/.build/*' ! -path '*/.git/*' 2>/dev/null | sort | head -100")
+            return result.output.isEmpty ? "No files found" : result.output
+        }
+        if name == "search_files" {
+            let pat = input["pattern"] as? String ?? ""
+            let dir = input["path"] as? String ?? pf
+            let result = await executeViaUserAgent(command: "grep -rn '\(pat)' '\(dir)' 2>/dev/null | head -50")
+            return result.output.isEmpty ? "No matches" : result.output
+        }
+
+        // Tool discovery
+        if name == "list_native_tools" {
+            let prefs = ToolPreferencesService.shared
+            return AgentTools.tools(for: selectedProvider)
+                .filter { prefs.isEnabled(selectedProvider, $0.name) }
+                .sorted { $0.name < $1.name }
+                .map { $0.name }
+                .joined(separator: "\n")
+        }
+        if name == "list_mcp_tools" {
+            let mcp = MCPService.shared
+            let enabled = mcp.discoveredTools.filter { mcp.isToolEnabled(serverName: $0.serverName, toolName: $0.name) }
+            return enabled.isEmpty ? "No MCP tools enabled" : enabled.map { "mcp_\($0.serverName)_\($0.name)" }.joined(separator: "\n")
+        }
+
+        // Task complete
+        if name == "task_complete" {
+            return "Task complete: \(input["summary"] as? String ?? "")"
+        }
+
+        // Fallback: try as shell command
+        let result = await executeViaUserAgent(command: "echo 'Tool \(name) not implemented for Apple AI'")
+        return result.output
+    }
+
     /// Execute a command via UserService XPC with streaming output.
     private func executeViaUserAgent(command: String) async -> (status: Int32, output: String) {
         resetStreamCounters()
@@ -313,6 +455,11 @@ extension AgentViewModel {
         }
         let foundationModel: FoundationModelService? = provider == .foundationModel
             ? FoundationModelService(historyContext: historyContext, projectFolder: projectFolder) : nil
+        if foundationModel != nil {
+            NativeToolContext.toolHandler = { [weak self] toolName, input in
+                await self?.executeNativeTool(toolName, input: input) ?? "Error: agent unavailable"
+            }
+        }
         // Prepend last task as conversation context so the LLM knows what just happened
         var messages: [[String: Any]] = history.lastTaskMessages()
 
