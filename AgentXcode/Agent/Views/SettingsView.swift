@@ -113,7 +113,7 @@ struct SettingsView: View {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .foregroundStyle(.orange)
                                 .font(.caption)
-                            Text("For AppleScript, type the exact syntax (e.g. display dialog \"hello\"). Best for very specific tasks. Does not use MCP tools.")
+                            Text("For AppleScript, type the exact syntax (e.g. display dialog \"hello\"). Best for very specific tasks. Due to its small context, does not use MCP.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
