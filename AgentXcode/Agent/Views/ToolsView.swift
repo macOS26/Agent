@@ -10,33 +10,6 @@ struct ToolsView: View {
         _selectedProvider = State(initialValue: initialProvider)
     }
 
-    /// Unified item representing either a native tool or an MCP tool.
-    private struct ToolItem: Identifiable {
-        let id: String  // unique key for display
-        let displayName: String
-        let helpText: String
-        let isMCP: Bool
-        let serverName: String?  // non-nil for MCP tools
-    }
-
-    /// All tools (native + MCP) sorted alphabetically.
-    private var allTools: [ToolItem] {
-        let nativeTools = AgentTools.tools(for: selectedProvider)
-        let mcpTools = MCPService.shared.discoveredTools
-        var items: [ToolItem] = nativeTools.map { tool in
-            ToolItem(id: tool.name, displayName: tool.name,
-                     helpText: tool.description.components(separatedBy: ". ").first ?? tool.description,
-                     isMCP: false, serverName: nil)
-        }
-        for mcp in mcpTools {
-            let key = "mcp_\(mcp.serverName)_\(mcp.name)"
-            items.append(ToolItem(id: key, displayName: mcp.name,
-                                  helpText: "\(mcp.description) (server: \(mcp.serverName))",
-                                  isMCP: true, serverName: mcp.serverName))
-        }
-        return items.sorted { $0.id.localizedCaseInsensitiveCompare($1.id) == .orderedAscending }
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
@@ -54,37 +27,25 @@ struct ToolsView: View {
 
             Divider()
 
-            // Tag cloud
+            // Tag cloud — native tools only, sorted alphabetically
             ScrollView {
                 FlowLayout(spacing: 4) {
-                    ForEach(allTools) { item in
-                        let enabled = item.isMCP
-                            ? MCPService.shared.isToolEnabled(serverName: item.serverName ?? "", toolName: item.displayName)
-                            : prefs.isEnabled(selectedProvider, item.id)
+                    ForEach(AgentTools.tools(for: selectedProvider).sorted(by: { $0.name < $1.name }), id: \.name) { tool in
+                        let enabled = prefs.isEnabled(selectedProvider, tool.name)
                         Button {
-                            if item.isMCP, let server = item.serverName {
-                                MCPService.shared.toggleTool(serverName: server, toolName: item.displayName)
-                            } else {
-                                prefs.toggle(selectedProvider, item.id)
-                            }
+                            prefs.toggle(selectedProvider, tool.name)
                         } label: {
-                            HStack(spacing: 2) {
-                                if item.isMCP {
-                                    Image(systemName: "server.rack")
-                                        .font(.system(size: 7))
-                                }
-                                Text(item.isMCP ? item.id : item.displayName)
-                            }
-                            .font(.caption2)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(enabled ? Color.accentColor.opacity(0.2) : Color.secondary.opacity(0.1))
-                            .foregroundStyle(enabled ? .primary : .tertiary)
-                            .clipShape(Capsule())
-                            .overlay(Capsule().stroke(enabled ? Color.accentColor.opacity(0.5) : Color.clear, lineWidth: 0.5))
+                            Text(tool.name)
+                                .font(.caption2)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(enabled ? Color.accentColor.opacity(0.2) : Color.secondary.opacity(0.1))
+                                .foregroundStyle(enabled ? .primary : .tertiary)
+                                .clipShape(Capsule())
+                                .overlay(Capsule().stroke(enabled ? Color.accentColor.opacity(0.5) : Color.clear, lineWidth: 0.5))
                         }
                         .buttonStyle(.plain)
-                        .help(item.helpText)
+                        .help(tool.description.components(separatedBy: ". ").first ?? tool.description)
                     }
                 }
                 .padding()
@@ -94,36 +55,19 @@ struct ToolsView: View {
 
             // Footer
             HStack {
-                let items = allTools
-                let nativeItems = items.filter { !$0.isMCP }
-                let mcpItems = items.filter { $0.isMCP }
-                let nativeEnabled = nativeItems.filter { prefs.isEnabled(selectedProvider, $0.id) }.count
-                let mcpEnabled = mcpItems.filter { MCPService.shared.isToolEnabled(serverName: $0.serverName ?? "", toolName: $0.displayName) }.count
-                Text("\(nativeEnabled + mcpEnabled) of \(items.count) enabled")
+                let all = AgentTools.tools(for: selectedProvider)
+                let enabledCount = all.filter { prefs.isEnabled(selectedProvider, $0.name) }.count
+                Text("\(enabledCount) of \(all.count) enabled")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
-                Button("Enable All") {
-                    prefs.enableAll(for: selectedProvider)
-                    for item in mcpItems {
-                        if let server = item.serverName,
-                           !MCPService.shared.isToolEnabled(serverName: server, toolName: item.displayName) {
-                            MCPService.shared.toggleTool(serverName: server, toolName: item.displayName)
-                        }
-                    }
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
+                Button("Enable All") { prefs.enableAll(for: selectedProvider) }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
                 Button("Disable All") {
-                    for item in nativeItems {
-                        if prefs.isEnabled(selectedProvider, item.id) {
-                            prefs.toggle(selectedProvider, item.id)
-                        }
-                    }
-                    for item in mcpItems {
-                        if let server = item.serverName,
-                           MCPService.shared.isToolEnabled(serverName: server, toolName: item.displayName) {
-                            MCPService.shared.toggleTool(serverName: server, toolName: item.displayName)
+                    for tool in all {
+                        if prefs.isEnabled(selectedProvider, tool.name) {
+                            prefs.toggle(selectedProvider, tool.name)
                         }
                     }
                 }
