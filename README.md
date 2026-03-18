@@ -1,3 +1,5 @@
+<img width="128" alt="Agent! icon" src="https://github.com/user-attachments/assets/5645d8b8-8ce7-4d56-9ede-5eb58f31f227" />
+
 # Agent!
 
 [![Swift 6.0](https://img.shields.io/badge/Swift-6.0-orange.svg)](https://swift.org)
@@ -6,15 +8,20 @@
 [![GitHub downloads](https://img.shields.io/github/downloads/macOS26/Agent/total.svg?v=3)](https://github.com/macOS26/Agent/releases)
 [![GitHub stars](https://img.shields.io/github/stars/macOS26/Agent.svg?style=social)](https://github.com/macOS26/Agent/stargazers)
 
-Agent! — AI for your  Mac Desktop
+## Dream It, Do It
+### Agentic AI for your entire  Mac Desktop 🤯
+Ollama Pro $20 subscription is preferred.
+Apple Intelligence is experimental.
 
-<img width="340" height="339" alt="Agent! icon" src="https://github.com/user-attachments/assets/5645d8b8-8ce7-4d56-9ede-5eb58f31f227" />
+<img width="1056" height="597" alt="IMG_5716" src="https://github.com/user-attachments/assets/117cbeb8-46e4-4f92-8494-f6058a92059e" />
+
 
 A native macOS autonomous AI agent built entirely in Swift.
 
 Agent uses SwiftUI, XPC, SMAppService, Apple Events, ScriptingBridge, Accessibility APIs, and MCP to give an AI agent native access to your Mac. It's an `.app` that speaks macOS natively. Xcode command line tools are required which is Agent!'s only dependency.
 
-<img width="562" height="734" alt="Agent! screenshot" src="https://github.com/user-attachments/assets/f33f2d6c-8b91-44eb-989c-00b249cd9a7e" />
+<img width="1535" height="1008" alt="IMG_4776" src="https://github.com/user-attachments/assets/56549e6b-06ff-449c-b1b7-fd77b90ad9f6" />
+
 
 ---
 
