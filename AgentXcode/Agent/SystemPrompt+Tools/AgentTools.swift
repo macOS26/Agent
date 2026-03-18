@@ -145,9 +145,10 @@ enum AgentTools {
     //task_complete {"summary": "Done"}
     
     // MARK: - Compact System Prompt (for Apple Intelligence with limited context)
-    @MainActor static func compactSystemPrompt(userName: String, userHome: String) -> String {
-        """
-        You are a macOS automation assistant. User: \(userName), home: \(userHome).
+    @MainActor static func compactSystemPrompt(userName: String, userHome: String, projectFolder: String = "") -> String {
+        let folderLine = projectFolder.isEmpty ? "" : "\nProject folder: \(projectFolder) — cd here before shell commands."
+        return """
+        You are a macOS automation assistant. User: \(userName), home: \(userHome).\(folderLine)
         Always use tools to act — never just describe what you would do.
         For AppleScript: use plain straight quotes " not escaped \\". Example: display dialog "Hello"
         When finished, always call task_complete with a short summary of what was done.

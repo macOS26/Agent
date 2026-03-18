@@ -67,7 +67,8 @@ final class FoundationModelService {
     private func ensureSession() -> LanguageModelSession {
         if let s = session { return s }
 
-        let instructions = AgentTools.compactSystemPrompt(userName: userName, userHome: userHome)
+        NativeToolContext.projectFolder = projectFolder
+        let instructions = AgentTools.compactSystemPrompt(userName: userName, userHome: userHome, projectFolder: projectFolder)
         print("=== Apple AI System Prompt ===\n\(instructions)\n=== End (\(instructions.count) chars) ===")
 
         let tools = makeEnabledNativeTools()
@@ -80,21 +81,20 @@ final class FoundationModelService {
     private func makeEnabledNativeTools() -> [any Tool] {
         let prefs = ToolPreferencesService.shared
         func on(_ n: String) -> Bool { prefs.isEnabled(.foundationModel, n) }
-        let pf = projectFolder
         var t: [any Tool] = []
-        if on("execute_user_command") { t.append(NativeShellTool(projectFolder: pf)) }
+        if on("execute_user_command") { t.append(NativeShellTool()) }
         if on("run_applescript")      { t.append(NativeAppleScriptTool()) }
         if on("run_osascript")        { t.append(NativeOsaScriptTool()) }
         if on("read_file")            { t.append(NativeReadFileTool()) }
         if on("write_file")           { t.append(NativeWriteFileTool()) }
         if on("edit_file")            { t.append(NativeEditFileTool()) }
-        if on("list_files")           { t.append(NativeListFilesTool(projectFolder: pf)) }
-        if on("search_files")         { t.append(NativeSearchFilesTool(projectFolder: pf)) }
+        if on("list_files")           { t.append(NativeListFilesTool()) }
+        if on("search_files")         { t.append(NativeSearchFilesTool()) }
         if on("task_complete")        { t.append(NativeTaskCompleteTool()) }
-        if on("git_status")           { t.append(NativeGitStatusTool(projectFolder: pf)) }
-        if on("git_commit")           { t.append(NativeGitCommitTool(projectFolder: pf)) }
-        if on("git_log")              { t.append(NativeGitLogTool(projectFolder: pf)) }
-        if on("git_diff")             { t.append(NativeGitDiffTool(projectFolder: pf)) }
+        if on("git_status")           { t.append(NativeGitStatusTool()) }
+        if on("git_commit")           { t.append(NativeGitCommitTool()) }
+        if on("git_log")              { t.append(NativeGitLogTool()) }
+        if on("git_diff")             { t.append(NativeGitDiffTool()) }
         if on("list_native_tools")    { t.append(NativeListNativeToolsTool()) }
         if on("list_mcp_tools")       { t.append(NativeListMCPToolsTool()) }
         print("🔧 [Apple AI] Loaded \(t.count) native tools: \(t.map { $0.name }.joined(separator: ", "))")
@@ -296,12 +296,19 @@ final class FoundationModelService {
     }
 }
 
+// MARK: - Shared State for Native Tools
+
+/// Shared project folder so individual tool structs don't each need a copy.
+enum NativeToolContext {
+    @MainActor static var projectFolder: String = ""
+}
+
 // MARK: - Native Shell Tool
 
 /// Arguments the model generates when calling execute_user_command.
 @Generable
 private struct ShellCommandArgs {
-    @Guide(description: "The bash shell command to run as the current user")
+    @Guide(description: "Shell command")
     var command: String
 }
 
@@ -312,13 +319,13 @@ private struct NativeShellTool: Tool {
     typealias Output = AgentToolOutput
 
     let name = "execute_user_command"
-    let description = "Execute a bash shell command as the current user. Use for ls, pwd, git, file operations, etc."
-    let projectFolder: String
+    let description = "Run a shell command"
 
     func call(arguments: ShellCommandArgs) async throws -> AgentToolOutput {
         var cmd = arguments.command.asciiQuotes
-        if !projectFolder.isEmpty && !cmd.hasPrefix("cd ") {
-            let escaped = projectFolder.replacingOccurrences(of: "'", with: "'\\''")
+        let pf = await NativeToolContext.projectFolder
+        if !pf.isEmpty && !cmd.hasPrefix("cd ") {
+            let escaped = pf.replacingOccurrences(of: "'", with: "'\\''")
             cmd = "export PWD='\(escaped)'; \(cmd)"
         }
         let result = nativeShellRun(cmd)
@@ -331,99 +338,99 @@ private struct NativeShellTool: Tool {
 
 @Generable
 private struct AppleScriptArgs {
-    @Guide(description: "AppleScript source code to execute")
+    @Guide(description: "AppleScript code")
     var source: String
 }
 
 @Generable
 private struct OsaScriptArgs {
-    @Guide(description: "AppleScript source code to execute via osascript")
+    @Guide(description: "AppleScript code")
     var script: String
 }
 
 @Generable
 private struct ReadFileArgs {
-    @Guide(description: "Absolute path to the file to read")
+    @Guide(description: "File path")
     var file_path: String
-    @Guide(description: "1-based line number to start reading from (optional)")
+    @Guide(description: "Start line")
     var offset: Int?
-    @Guide(description: "Maximum lines to return (optional, default 2000)")
+    @Guide(description: "Max lines")
     var limit: Int?
 }
 
 @Generable
 private struct WriteFileArgs {
-    @Guide(description: "Absolute path to the file to write")
+    @Guide(description: "File path")
     var file_path: String
-    @Guide(description: "Full file content to write")
+    @Guide(description: "File content")
     var content: String
 }
 
 @Generable
 private struct EditFileArgs {
-    @Guide(description: "Absolute path to the file to edit")
+    @Guide(description: "File path")
     var file_path: String
-    @Guide(description: "Exact text to find and replace (must be unique in the file)")
+    @Guide(description: "Text to find")
     var old_string: String
-    @Guide(description: "Replacement text")
+    @Guide(description: "Replacement")
     var new_string: String
-    @Guide(description: "Replace all occurrences (optional, default false)")
+    @Guide(description: "Replace all")
     var replace_all: Bool?
 }
 
 @Generable
 private struct GlobArgs {
-    @Guide(description: "Glob pattern, e.g. '*.swift' or '**/*.txt'")
+    @Guide(description: "Glob pattern")
     var pattern: String
-    @Guide(description: "Directory to search in (optional, defaults to project folder)")
+    @Guide(description: "Directory")
     var path: String?
 }
 
 @Generable
 private struct SearchArgs {
-    @Guide(description: "Regex pattern to search for in file contents")
+    @Guide(description: "Regex pattern")
     var pattern: String
-    @Guide(description: "Directory to search in (optional, defaults to project folder)")
+    @Guide(description: "Directory")
     var path: String?
-    @Guide(description: "File glob filter, e.g. '*.swift' (optional)")
+    @Guide(description: "File filter")
     var include: String?
 }
 
 @Generable
 private struct TaskCompleteArgs {
-    @Guide(description: "Brief summary of what was accomplished")
+    @Guide(description: "Summary")
     var summary: String
 }
 
 @Generable
 private struct GitRepoArgs {
-    @Guide(description: "Repository directory path (optional, defaults to project folder)")
+    @Guide(description: "Repo path")
     var path: String?
 }
 
 @Generable
 private struct GitCommitArgs {
-    @Guide(description: "Repository directory path (optional, defaults to project folder)")
+    @Guide(description: "Repo path")
     var path: String?
-    @Guide(description: "Commit message")
+    @Guide(description: "Message")
     var message: String
 }
 
 @Generable
 private struct GitLogArgs {
-    @Guide(description: "Repository directory path (optional, defaults to project folder)")
+    @Guide(description: "Repo path")
     var path: String?
-    @Guide(description: "Number of commits to show (optional, default 20)")
+    @Guide(description: "Count")
     var count: Int?
 }
 
 @Generable
 private struct GitDiffArgs {
-    @Guide(description: "Repository directory path (optional, defaults to project folder)")
+    @Guide(description: "Repo path")
     var path: String?
-    @Guide(description: "Show staged changes only (optional, default false)")
+    @Guide(description: "Staged only")
     var staged: Bool?
-    @Guide(description: "Branch or commit to diff against (optional)")
+    @Guide(description: "Target branch")
     var target: String?
 }
 
@@ -434,7 +441,7 @@ private struct NativeAppleScriptTool: Tool {
     typealias Output = AgentToolOutput
 
     let name = "run_applescript"
-    let description = "Execute AppleScript code in-process via NSAppleScript with full TCC permissions."
+    let description = "Run AppleScript code"
 
     func call(arguments: AppleScriptArgs) async throws -> AgentToolOutput {
         let source = arguments.source.appleScriptSanitized
@@ -457,7 +464,7 @@ private struct NativeOsaScriptTool: Tool {
     typealias Output = AgentToolOutput
 
     let name = "run_osascript"
-    let description = "Run AppleScript source code via osascript with full TCC permissions."
+    let description = "Run AppleScript via osascript"
 
     func call(arguments: OsaScriptArgs) async throws -> AgentToolOutput {
         let result = nativeShellRun("/usr/bin/osascript", args: ["-e", arguments.script.appleScriptSanitized])
@@ -471,7 +478,7 @@ private struct NativeReadFileTool: Tool {
     typealias Output = AgentToolOutput
 
     let name = "read_file"
-    let description = "Read file contents with line numbers."
+    let description = "Read a file"
 
     func call(arguments: ReadFileArgs) async throws -> AgentToolOutput {
         guard let data = FileManager.default.contents(atPath: arguments.file_path),
@@ -492,7 +499,7 @@ private struct NativeWriteFileTool: Tool {
     typealias Output = AgentToolOutput
 
     let name = "write_file"
-    let description = "Create or overwrite a file with the given content."
+    let description = "Write a file"
 
     func call(arguments: WriteFileArgs) async throws -> AgentToolOutput {
         let url = URL(fileURLWithPath: arguments.file_path)
@@ -512,7 +519,7 @@ private struct NativeEditFileTool: Tool {
     typealias Output = AgentToolOutput
 
     let name = "edit_file"
-    let description = "Replace exact text in a file. Read the file first. old_string must be unique unless replace_all is true."
+    let description = "Edit a file"
 
     func call(arguments: EditFileArgs) async throws -> AgentToolOutput {
         guard let data = FileManager.default.contents(atPath: arguments.file_path),
@@ -542,11 +549,11 @@ private struct NativeListFilesTool: Tool {
     typealias Output = AgentToolOutput
 
     let name = "list_files"
-    let description = "Find files matching a glob pattern. Returns file paths."
-    let projectFolder: String
+    let description = "Find files by pattern"
 
     func call(arguments: GlobArgs) async throws -> AgentToolOutput {
-        let base = arguments.path ?? projectFolder
+        let pf = await NativeToolContext.projectFolder
+        let base = arguments.path ?? pf
         let dir = base.isEmpty ? FileManager.default.homeDirectoryForCurrentUser.path : base
         let esc = dir.shellEscaped
         let pat = arguments.pattern.shellEscaped
@@ -560,11 +567,11 @@ private struct NativeSearchFilesTool: Tool {
     typealias Output = AgentToolOutput
 
     let name = "search_files"
-    let description = "Search file contents by regex pattern. Returns matching lines with file paths and line numbers."
-    let projectFolder: String
+    let description = "Search file contents"
 
     func call(arguments: SearchArgs) async throws -> AgentToolOutput {
-        let base = arguments.path ?? projectFolder
+        let pf = await NativeToolContext.projectFolder
+        let base = arguments.path ?? pf
         let dir = base.isEmpty ? FileManager.default.homeDirectoryForCurrentUser.path : base
         let esc = dir.shellEscaped
         let pat = arguments.pattern.shellEscaped
@@ -580,7 +587,7 @@ private struct NativeTaskCompleteTool: Tool {
     typealias Output = AgentToolOutput
 
     let name = "task_complete"
-    let description = "Signal that the task is complete. Always call this when done."
+    let description = "Mark task done"
 
     func call(arguments: TaskCompleteArgs) async throws -> AgentToolOutput {
         return AgentToolOutput(result: "Task complete: \(arguments.summary)")
@@ -592,11 +599,11 @@ private struct NativeGitStatusTool: Tool {
     typealias Output = AgentToolOutput
 
     let name = "git_status"
-    let description = "Show current git branch, staged/unstaged changes, and untracked files."
-    let projectFolder: String
+    let description = "Git status"
 
     func call(arguments: GitRepoArgs) async throws -> AgentToolOutput {
-        let dir = (arguments.path ?? projectFolder).orProjectFolder(projectFolder)
+        let pf = await NativeToolContext.projectFolder
+        let dir = (arguments.path ?? pf).orProjectFolder(pf)
         return AgentToolOutput(result: nativeShellRun("cd \(dir.shellEscaped) && git status"))
     }
 }
@@ -606,11 +613,11 @@ private struct NativeGitCommitTool: Tool {
     typealias Output = AgentToolOutput
 
     let name = "git_commit"
-    let description = "Stage all changes and create a git commit."
-    let projectFolder: String
+    let description = "Git commit"
 
     func call(arguments: GitCommitArgs) async throws -> AgentToolOutput {
-        let dir = (arguments.path ?? projectFolder).orProjectFolder(projectFolder)
+        let pf = await NativeToolContext.projectFolder
+        let dir = (arguments.path ?? pf).orProjectFolder(pf)
         let msg = arguments.message.shellEscaped
         return AgentToolOutput(result: nativeShellRun("cd \(dir.shellEscaped) && git add -A && git commit -m \(msg)"))
     }
@@ -621,11 +628,11 @@ private struct NativeGitLogTool: Tool {
     typealias Output = AgentToolOutput
 
     let name = "git_log"
-    let description = "Show recent commit history."
-    let projectFolder: String
+    let description = "Git log"
 
     func call(arguments: GitLogArgs) async throws -> AgentToolOutput {
-        let dir = (arguments.path ?? projectFolder).orProjectFolder(projectFolder)
+        let pf = await NativeToolContext.projectFolder
+        let dir = (arguments.path ?? pf).orProjectFolder(pf)
         let n = arguments.count ?? 20
         return AgentToolOutput(result: nativeShellRun("cd \(dir.shellEscaped) && git log --oneline -\(n)"))
     }
@@ -636,11 +643,11 @@ private struct NativeGitDiffTool: Tool {
     typealias Output = AgentToolOutput
 
     let name = "git_diff"
-    let description = "Show file changes as a unified diff."
-    let projectFolder: String
+    let description = "Git diff"
 
     func call(arguments: GitDiffArgs) async throws -> AgentToolOutput {
-        let dir = (arguments.path ?? projectFolder).orProjectFolder(projectFolder)
+        let pf = await NativeToolContext.projectFolder
+        let dir = (arguments.path ?? pf).orProjectFolder(pf)
         var cmd = "cd \(dir.shellEscaped) && git diff"
         if arguments.staged == true { cmd += " --staged" }
         if let target = arguments.target { cmd += " \(target)" }
