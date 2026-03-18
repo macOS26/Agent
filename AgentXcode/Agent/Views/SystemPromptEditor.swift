@@ -215,10 +215,10 @@ struct SystemPromptsView: View {
     private let service = SystemPromptService.shared
 
     private let providerLabels: [(APIProvider, String, Color, NSColor)] = [
-        (.claude,          "Claude",   Color(red: 0.75, green: 0.48, blue: 0.2),  NSColor(red: 0.75, green: 0.48, blue: 0.2,  alpha: 1.0)),
-        (.ollama,          "Ollama",   Color(red: 0.3,  green: 0.58, blue: 0.7),  NSColor(red: 0.3,  green: 0.58, blue: 0.7,  alpha: 1.0)),
-        (.localOllama,     "Local",    Color(red: 0.55, green: 0.38, blue: 0.7),  NSColor(red: 0.55, green: 0.38, blue: 0.7,  alpha: 1.0)),
-        (.foundationModel, "Apple AI", Color(red: 0.25, green: 0.62, blue: 0.3),  NSColor(red: 0.25, green: 0.62, blue: 0.3,  alpha: 1.0)),
+        (.claude,          "Claude",   Color(red: 0.67, green: 0.52, blue: 0.3),  NSColor(red: 0.67, green: 0.52, blue: 0.3,  alpha: 1.0)),
+        (.ollama,          "Ollama",   Color(red: 0.3,  green: 0.6,  blue: 0.55), NSColor(red: 0.3,  green: 0.6,  blue: 0.55, alpha: 1.0)),
+        (.localOllama,     "Local",    Color(red: 0.45, green: 0.55, blue: 0.65), NSColor(red: 0.45, green: 0.55, blue: 0.65, alpha: 1.0)),
+        (.foundationModel, "Apple AI", Color(red: 0.3,  green: 0.65, blue: 0.35), NSColor(red: 0.3,  green: 0.65, blue: 0.35, alpha: 1.0)),
     ]
 
     private func tabColor(for provider: APIProvider) -> Color {
@@ -226,7 +226,7 @@ struct SystemPromptsView: View {
     }
 
     private func nsColor(for provider: APIProvider) -> NSColor {
-        providerLabels.first { $0.0 == provider }?.3 ?? NSColor(red: 0.25, green: 0.62, blue: 0.3, alpha: 1.0)
+        providerLabels.first { $0.0 == provider }?.3 ?? NSColor(red: 0.3, green: 0.65, blue: 0.35, alpha: 1.0)
     }
 
     var body: some View {
