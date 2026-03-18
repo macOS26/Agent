@@ -128,25 +128,11 @@ enum AgentTools {
 
     // MARK: - Tool List per Provider (for ToolsView)
 
-    /// Tool names suitable for Apple AI's small context — only the essentials.
-    private static let appleAIToolNames: Set<String> = [
-        "execute_user_command",
-        "read_file",
-        "write_file",
-        "edit_file",
-        "list_files",
-        "search_files",
-        "run_applescript",
-        "task_complete",
-    ]
-
     /// Returns the tools available for a given provider.
     static func tools(for provider: APIProvider) -> [ToolDef] {
         switch provider {
         case .ollama, .localOllama:
             return commonTools + ollamaOnlyTools
-        case .foundationModel:
-            return commonTools.filter { appleAIToolNames.contains($0.name) }
         default:
             return commonTools
         }
