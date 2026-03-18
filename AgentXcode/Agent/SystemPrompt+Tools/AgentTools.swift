@@ -190,6 +190,8 @@ enum AgentTools {
         "ax_press_key":         #"ax_press_key {"keyCode": 36}"#,
         "ax_screenshot":        "ax_screenshot",
         "ax_get_audit_log":     "ax_get_audit_log",
+        "list_native_tools":    "list_native_tools",
+        "list_mcp_tools":       "list_mcp_tools",
     ]
 
     @MainActor private static func enabledAppleAIToolLines() -> String {
@@ -600,6 +602,19 @@ enum AgentTools {
         ToolDef(
             name: "xcode_grant_permission",
             description: "Grant macOS Automation permission so the agent can control Xcode via ScriptingBridge. Run this once before using xcode_build or xcode_run.",
+            properties: [:],
+            required: []
+        ),
+        // --- Tool Discovery ---
+        ToolDef(
+            name: "list_native_tools",
+            description: "List all native tools and their enabled/disabled status.",
+            properties: [:],
+            required: []
+        ),
+        ToolDef(
+            name: "list_mcp_tools",
+            description: "List all MCP (Model Context Protocol) tools and their enabled/disabled status.",
             properties: [:],
             required: []
         ),
