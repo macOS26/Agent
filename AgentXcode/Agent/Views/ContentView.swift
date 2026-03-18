@@ -120,7 +120,7 @@ struct ContentView: View {
                 }
 
                 Button { showSettings.toggle() } label: {
-                    Image(systemName: "gear")
+                    Image(systemName: "cpu")
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
