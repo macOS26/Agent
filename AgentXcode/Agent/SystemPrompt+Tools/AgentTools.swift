@@ -153,9 +153,9 @@ enum AgentTools {
 
         RULES:
         1. For greetings or questions: reply with text, then call task_complete.
-        2. For actions (run command, open app, etc.): call ONE tool, then task_complete.
-        3. NEVER call a tool more than once. If it fails, call task_complete with the error.
-        4. ALWAYS end by calling task_complete.
+        2. For actions: first call the right tool to do the work, then call task_complete.
+        3. If a tool fails, call task_complete with the error. Do not retry.
+        4. ALWAYS finish by calling task_complete.
 
         TOOLS:
         \(toolGuide)
