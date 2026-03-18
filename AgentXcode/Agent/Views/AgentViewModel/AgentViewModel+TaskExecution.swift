@@ -80,6 +80,44 @@ extension AgentViewModel {
         return "cd '\(escaped)' && \(command)"
     }
 
+    /// Extract the target directory from a command starting with `cd `.
+    /// Resolves relative paths against the current project folder.
+    static func extractCdTarget(_ command: String, relativeTo base: String) -> String? {
+        guard command.hasPrefix("cd ") else { return nil }
+        let afterCd = String(command.dropFirst(3)).trimmingCharacters(in: .whitespaces)
+        guard !afterCd.isEmpty else { return nil }
+        // Extract path before any && or ;
+        let path: String
+        if let r = afterCd.range(of: "&&") {
+            path = String(afterCd[..<r.lowerBound]).trimmingCharacters(in: .whitespaces)
+        } else if let r = afterCd.range(of: ";") {
+            path = String(afterCd[..<r.lowerBound]).trimmingCharacters(in: .whitespaces)
+        } else {
+            path = afterCd
+        }
+        // Strip surrounding quotes
+        var cleaned = path
+        if (cleaned.hasPrefix("'") && cleaned.hasSuffix("'")) ||
+           (cleaned.hasPrefix("\"") && cleaned.hasSuffix("\"")) {
+            cleaned = String(cleaned.dropFirst().dropLast())
+        }
+        guard !cleaned.isEmpty else { return nil }
+        // Expand ~
+        if cleaned.hasPrefix("~/") || cleaned == "~" {
+            cleaned = (cleaned as NSString).expandingTildeInPath
+        }
+        // Resolve relative paths against current project folder
+        if !cleaned.hasPrefix("/") {
+            let baseDir = resolvedWorkingDirectory(base)
+            if !baseDir.isEmpty {
+                cleaned = (baseDir as NSString).appendingPathComponent(cleaned)
+            }
+        }
+        // Standardize (resolve .., .)
+        cleaned = (cleaned as NSString).standardizingPath
+        return cleaned
+    }
+
     static func preflightCommand(_ command: String) -> String? {
         // Match paths under /Users/ or ~/ — most common source of typos
         guard let regex = try? NSRegularExpression(
@@ -686,8 +724,9 @@ extension AgentViewModel {
                         // MARK: Shell execution tools
 
                         if name == "execute_command" || name == "execute_user_command" {
+                            let rawCommand = input["command"] as? String ?? ""
                             let command = Self.prependWorkingDirectory(
-                                input["command"] as? String ?? "", projectFolder: projectFolder)
+                                rawCommand, projectFolder: projectFolder)
                             // Preflight: catch typos in /Users/ and ~/ paths before running
                             if let pathErr = Self.preflightCommand(command) {
                                 appendLog(pathErr)
@@ -727,6 +766,17 @@ extension AgentViewModel {
 
                             if result.status != 0 {
                                 appendLog("exit code: \(result.status)")
+                            }
+
+                            // Update project folder if `cd` succeeded
+                            if result.status == 0,
+                               let cdTarget = Self.extractCdTarget(rawCommand, relativeTo: projectFolder) {
+                                var isDir: ObjCBool = false
+                                if FileManager.default.fileExists(atPath: cdTarget, isDirectory: &isDir),
+                                   isDir.boolValue {
+                                    projectFolder = cdTarget
+                                    appendLog("📂 Project folder → \(cdTarget)")
+                                }
                             }
 
                             let toolOutput: String
