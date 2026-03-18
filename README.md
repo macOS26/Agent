@@ -417,6 +417,7 @@ HTTP-based demonstration server with utility functions:
   "command": "/usr/local/bin/node",
   "arguments": ["/path/to/mcp-server-hello/dist/index.js"],
   "environment": {},
+  "transport": "stdio",
   "enabled": true,
   "autoStart": true
 }
@@ -425,24 +426,38 @@ HTTP-based demonstration server with utility functions:
 #### XCF (Xcode Features) Server
 ```json
 {
-  "name": "xcf",
-  "command": "/usr/local/bin/node",
-  "arguments": ["/path/to/xcf-server/dist/index.js"],
-  "environment": {},
-  "enabled": true,
-  "autoStart": true
+  "xcf": {
+    "transport": "stdio",
+    "command": "/Applications/xcf.app/Contents/MacOS/xcf",
+    "env": {},
+    "args": [
+      "server"
+    ]
+  }
 }
 ```
 
-#### DemoHttp MCP Server
+#### DemoHttp MCP Server (HTTP Transport)
 ```json
 {
-  "name": "DemoHttp",
+  "DemoHttp": {
+    "transport": "http",
+    "url": "http://localhost:8085/mcp"
+  }
+}
+```
+
+#### DemoHttp MCP Server (SSE Transport)
+```json
+{
+  "name": "DemoHttpSSE",
   "command": "/usr/local/bin/node",
   "arguments": ["/path/to/demo-http-mcp-server/dist/index.js"],
   "environment": {
-    "PORT": "3000"
+    "PORT": "3001",
+    "USE_SSE": "true"
   },
+  "transport": "sse",
   "enabled": true,
   "autoStart": true
 }
