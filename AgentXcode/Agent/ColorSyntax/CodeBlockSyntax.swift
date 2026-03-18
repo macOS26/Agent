@@ -604,13 +604,15 @@ private struct LangDef {
     private static let actSectionRx: NSRegularExpression? = try? NSRegularExpression(
         pattern: #"---\s+.+?\s+---"#)
     private static let actLabelRx: NSRegularExpression? = try? NSRegularExpression(
-        pattern: #"\b(?:Task|Model|Status|Error|Warning|Result|Info):"#)
+        pattern: #"\b(?:Task|Model|Status|Error|Warning|Result|Info|Read|exit code):"#)
     private static let actShellRx: NSRegularExpression? = try? NSRegularExpression(
         pattern: #"\$\s+\S+"#)
+    private static let actPipeCmdRx: NSRegularExpression? = try? NSRegularExpression(
+        pattern: #"(?:&&|\|)\s+(\w+)"#)
     private static let actGrepFileRx: NSRegularExpression? = try? NSRegularExpression(
-        pattern: #"^(\.?/[^\s:]+):(\d+):"#, options: .anchorsMatchLines)
+        pattern: #"^([^\s:]+):(\d+):"#, options: .anchorsMatchLines)
     private static let actAbsPathRx: NSRegularExpression? = try? NSRegularExpression(
-        pattern: #"(?:^|\s)(\.?(?:/[\w.@+\-]+)+/?)"#, options: .anchorsMatchLines)
+        pattern: #"(?:^|\s)(\.?/?(?:[\w.@+\-]+/)+[\w.@+\-]+/?)"#, options: .anchorsMatchLines)
     private static let actFlagRx: NSRegularExpression? = try? NSRegularExpression(
         pattern: #"(?<=\s)-{1,2}[\w][\w\-]*"#)
     private static let actQuoteRx: NSRegularExpression? = try? NSRegularExpression(
@@ -620,7 +622,7 @@ private struct LangDef {
     static func looksLikeActivityLogLine(_ line: String) -> Bool {
         let t = line.trimmingCharacters(in: .whitespaces)
         if t.range(of: #"^\[\d{2}:\d{2}:\d{2}\]"#, options: .regularExpression) != nil { return true }
-        if t.range(of: #"^\.?/\S+:\d+:"#, options: .regularExpression) != nil { return true }
+        if t.range(of: #"^\S+\.\w+:\d+:"#, options: .regularExpression) != nil { return true }
         return false
     }
 
@@ -654,6 +656,12 @@ private struct LangDef {
         let cCmd = termExec
         actShellRx?.enumerateMatches(in: line, range: r) { m, _, _ in
             guard let mr = m?.range else { return }
+            result.addAttribute(.foregroundColor, value: cCmd, range: mr)
+        }
+
+        // Pipe/chain commands (| grep, && grep) → green
+        actPipeCmdRx?.enumerateMatches(in: line, range: r) { m, _, _ in
+            guard let mr = m?.range(at: 1) else { return }
             result.addAttribute(.foregroundColor, value: cCmd, range: mr)
         }
 
