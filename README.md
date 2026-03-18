@@ -6,7 +6,10 @@
 [![GitHub downloads](https://img.shields.io/github/downloads/macOS26/Agent/total.svg?v=3)](https://github.com/macOS26/Agent/releases)
 [![GitHub stars](https://img.shields.io/github/stars/macOS26/Agent.svg?style=social)](https://github.com/macOS26/Agent/stargazers)
 
-Agent! — AI for your  Mac Desktop
+## Dream It, Do It
+### Agentic AI for your entire  Mac Desktop 🤯
+Ollama Pro $20 subscription is preferred
+Apple Intelligence is experimental
 
 <img width="340" height="339" alt="Agent! icon" src="https://github.com/user-attachments/assets/5645d8b8-8ce7-4d56-9ede-5eb58f31f227" />
 
