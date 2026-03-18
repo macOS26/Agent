@@ -342,6 +342,10 @@ extension AgentViewModel {
             streamingTextStarted = false
         }
         if !logBuffer.isEmpty {
+            // Ensure timestamps always start on a new line
+            if !activityLog.isEmpty && !activityLog.hasSuffix("\n") {
+                activityLog += "\n"
+            }
             ChatHistoryStore.shared.save()
             activityLog += logBuffer
             logBuffer = ""
