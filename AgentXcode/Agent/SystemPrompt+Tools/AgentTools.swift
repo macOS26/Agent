@@ -162,34 +162,15 @@ enum AgentTools {
         """
     }
 
-    /// Brief descriptions of each enabled Apple AI tool.
+    /// Brief descriptions + examples of each enabled Apple AI tool.
     @MainActor private static func enabledAppleAIToolDescriptions() -> String {
         let prefs = ToolPreferencesService.shared
-        let descs: [String: String] = [
-            "execute_user_command": "Run a shell command",
-            "execute_command": "Run a shell command as root",
-            "run_applescript": "Run AppleScript code",
-            "run_osascript": "Run osascript",
-            "apple_event_query": "Query an app via Apple Events",
-            "list_agent_scripts": "List available automation scripts",
-            "run_agent_script": "Run a named script (list first!)",
-            "read_agent_script": "Read a script's source code",
-            "create_agent_script": "Create a new script",
-            "update_agent_script": "Update an existing script",
-            "delete_agent_script": "Delete a script",
-            "read_file": "Read a file",
-            "write_file": "Write a file",
-            "edit_file": "Edit part of a file",
-            "list_files": "Find files by pattern",
-            "search_files": "Search file contents",
-            "task_complete": "Call when done with a summary",
-            "list_native_tools": "List your available tools",
-            "list_mcp_tools": "List MCP tools",
-            "lookup_sdef": "Look up app scripting dictionary",
-        ]
         return commonTools
             .filter { prefs.isEnabled(.foundationModel, $0.name) }
-            .map { tool in "\(tool.name) — \(descs[tool.name] ?? tool.description)" }
+            .compactMap { tool -> String? in
+                guard let example = toolExamples[tool.name] else { return nil }
+                return example
+            }
             .joined(separator: "\n")
     }
 
