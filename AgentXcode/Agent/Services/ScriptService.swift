@@ -170,15 +170,15 @@ final class ScriptService {
         let agentsPath = Self.agentsDir.path
 
         if !fm.fileExists(atPath: agentsPath) {
-            // Fresh install — copy entire package from bundle
+            // Fresh install — copy sources from bundle and generate Package.swift
             copyEntirePackage()
+            generatePackageSwift()
         } else {
             // Existing install — update bridges, add new scripts only
             updateBridges()
             installNewScripts()
         }
         copyBundledJSONFiles()
-        generatePackageSwift()
     }
 
 
