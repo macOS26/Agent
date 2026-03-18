@@ -464,15 +464,50 @@ struct MCPServerEditView: View {
     }
 
     /// Parse edited JSON back into the form fields.
+    /// Accepts standard MCP format: {"mcpServers":{"name":{...}}} or {"name":{...}} or bare {command, args, ...}
     private func applyJSON(_ json: String) {
         guard let data = json.data(using: .utf8),
-              let config = try? JSONDecoder().decode(MCPServerConfig.self, from: data) else {
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             jsonError = "Invalid JSON"
             return
         }
+
+        // Unwrap standard MCP format to find the server name and inner dict
+        var serverName: String?
+        var innerDict: [String: Any]?
+
+        if let mcpServers = obj["mcpServers"] as? [String: Any],
+           let firstName = mcpServers.keys.first,
+           let firstVal = mcpServers[firstName] as? [String: Any] {
+            // { "mcpServers": { "name": { ... } } }
+            serverName = firstName
+            innerDict = firstVal
+        } else if obj["command"] != nil || obj["url"] != nil || obj["transport"] != nil {
+            // Bare config: { "command": "...", "args": [...] }
+            innerDict = obj
+        } else if let firstName = obj.keys.first,
+                  let firstVal = obj[firstName] as? [String: Any] {
+            // { "name": { "command": "...", ... } }
+            serverName = firstName
+            innerDict = firstVal
+        }
+
+        guard let dict = innerDict,
+              let dictData = try? JSONSerialization.data(withJSONObject: dict),
+              var config = try? JSONDecoder().decode(MCPServerConfig.self, from: dictData) else {
+            jsonError = "Invalid MCP server config"
+            return
+        }
+
+        if let sn = serverName {
+            config.name = sn
+        }
+
         jsonError = nil
         updatingFromJSON = true
-        name = config.name
+        if !config.name.isEmpty {
+            name = config.name
+        }
         if config.isHTTP {
             useHTTP = true
             urlText = config.url ?? ""
