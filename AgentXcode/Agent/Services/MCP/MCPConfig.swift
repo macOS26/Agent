@@ -205,12 +205,26 @@ final class MCPServerRegistry {
         }
     }
 
-    /// Validate that a command path exists and is a file (not a directory)
+    /// Validate that a command exists — supports both absolute paths and bare names resolved via PATH
     private static func validateCommandPath(_ command: String) -> Bool {
         let fm = FileManager.default
-        var isDir: ObjCBool = false
-        guard fm.fileExists(atPath: command, isDirectory: &isDir) else { return false }
-        return !isDir.boolValue
+        // Absolute or relative path — check directly
+        if command.contains("/") {
+            var isDir: ObjCBool = false
+            guard fm.fileExists(atPath: command, isDirectory: &isDir) else { return false }
+            return !isDir.boolValue
+        }
+        // Bare command name — resolve via PATH
+        let pathDirs = (ProcessInfo.processInfo.environment["PATH"] ?? "/usr/bin:/usr/local/bin")
+            .split(separator: ":")
+        for dir in pathDirs {
+            let full = "\(dir)/\(command)"
+            var isDir: ObjCBool = false
+            if fm.fileExists(atPath: full, isDirectory: &isDir), !isDir.boolValue {
+                return true
+            }
+        }
+        return false
     }
 
     func remove(at id: UUID) {
