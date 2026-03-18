@@ -220,10 +220,10 @@ struct SystemPromptsView: View {
                                        NSColor(hue: 0.0/360,   saturation: 0.5, brightness: 0.85, alpha: 1.0)),
         (.ollama,          "Ollama",   Color(hue: 130.0/360, saturation: 0.6, brightness: 0.65),   // green 130°
                                        NSColor(hue: 130.0/360, saturation: 0.6, brightness: 0.65, alpha: 1.0)),
-        (.localOllama,     "Local",    Color(hue: 220.0/360, saturation: 0.6, brightness: 0.65),   // blue 220°
-                                       NSColor(hue: 220.0/360, saturation: 0.6, brightness: 0.65, alpha: 1.0)),
-        (.foundationModel, "Apple AI", Color(hue: 270.0/360, saturation: 0.5, brightness: 0.85),   // violet 270°
-                                       NSColor(hue: 270.0/360, saturation: 0.5, brightness: 0.85, alpha: 1.0)),
+        (.localOllama,     "Local",    Color(hue: 220.0/360, saturation: 0.6, brightness: 0.80),   // blue 220°
+                                       NSColor(hue: 220.0/360, saturation: 0.6, brightness: 0.80, alpha: 1.0)),
+        (.foundationModel, "Apple AI", Color(hue: 270.0/360, saturation: 0.5, brightness: 0.65),   // violet 270°
+                                       NSColor(hue: 270.0/360, saturation: 0.5, brightness: 0.65, alpha: 1.0)),
     ]
 
     private func tabColor(for provider: APIProvider) -> Color {
@@ -231,7 +231,7 @@ struct SystemPromptsView: View {
     }
 
     private func nsColor(for provider: APIProvider) -> NSColor {
-        providerLabels.first { $0.0 == provider }?.3 ?? NSColor(hue: 270.0/360, saturation: 0.5, brightness: 0.85, alpha: 1.0)
+        providerLabels.first { $0.0 == provider }?.3 ?? NSColor(hue: 270.0/360, saturation: 0.5, brightness: 0.65, alpha: 1.0)
     }
 
     var body: some View {
