@@ -445,7 +445,7 @@ extension AgentViewModel {
             let result: (status: Int32, output: String)
             if isPrivileged {
                 result = await helperService.execute(command: command)
-            } else if Self.isOsascriptCommand(command) {
+            } else if Self.needsTCCTab(command) {
                 result = await executeLocal(command: command)
             } else {
                 result = await executeForTab(command: command)

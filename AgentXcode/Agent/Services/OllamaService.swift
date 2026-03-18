@@ -312,25 +312,7 @@ final class OllamaService {
 
         if let text = message["content"] as? String, !text.isEmpty {
             // Check if model wrote a tool call as plain text (common with Ollama models)
-            let toolNames = ["read_file", "write_file", "edit_file", "list_files", "search_files",
-                              "git_status", "git_diff", "git_log", "git_commit", "git_diff_patch", "git_branch",
-                              "apple_event_query",
-                              "execute_user_command", "execute_command", "task_complete",
-                              "list_agent_scripts", "read_agent_script", "create_agent_script",
-                              "update_agent_script", "run_agent_script", "delete_agent_script",
-                              "xcode_build", "xcode_run", "xcode_list_projects",
-                              "xcode_select_project", "xcode_grant_permission"]
-            var extractedTool = false
-
-            for toolName in toolNames {
-                guard let nameRange = text.range(of: toolName) else { continue }
-                // Look for JSON after the tool name
-                let afterName = String(text[nameRange.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
-                guard afterName.hasPrefix("{"),
-                      let jsonData = afterName.data(using: .utf8),
-                      let parsed = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else { continue }
-
-                // Extract text before the tool call
+            if let (toolName, nameRange, parsed) = Self.extractFirstToolCall(from: text) {
                 let beforeText = String(text[..<nameRange.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
                 if !beforeText.isEmpty {
                     contentBlocks.append(["type": "text", "text": beforeText])
@@ -342,12 +324,8 @@ final class OllamaService {
                     "name": toolName,
                     "input": parsed
                 ])
-                extractedTool = true
                 parsedToolFromText = true
-                break
-            }
-
-            if !extractedTool {
+            } else {
                 contentBlocks.append(["type": "text", "text": text])
             }
         }
@@ -464,19 +442,7 @@ final class OllamaService {
 
         // Check if full text contains a tool call (same pattern as non-streaming)
         var parsedToolFromText = false
-        let toolNames = ["apple_event_query",
-                         "execute_user_command", "execute_command", "task_complete",
-                         "list_agent_scripts", "read_agent_script", "create_agent_script",
-                         "update_agent_script", "run_agent_script", "delete_agent_script",
-                         "xcode_build", "xcode_run", "xcode_grant_permission"]
-
-        for toolName in toolNames {
-            guard let nameRange = fullText.range(of: toolName) else { continue }
-            let afterName = String(fullText[nameRange.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
-            guard afterName.hasPrefix("{"),
-                  let jsonData = afterName.data(using: .utf8),
-                  let parsed = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else { continue }
-
+        if let (toolName, nameRange, parsed) = Self.extractFirstToolCall(from: fullText) {
             let beforeText = String(fullText[..<nameRange.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
             if !beforeText.isEmpty {
                 contentBlocks.append(["type": "text", "text": beforeText])
@@ -489,7 +455,6 @@ final class OllamaService {
                 "input": parsed
             ])
             parsedToolFromText = true
-            break
         }
 
         // If no tool calls found, return text
@@ -498,5 +463,66 @@ final class OllamaService {
         }
 
         return (contentBlocks, stopReason)
+    }
+
+    /// Find the earliest tool call by position in the text, parse its JSON args.
+    /// Returns (toolName, rangeOfName, parsedArgs) or nil.
+    nonisolated private static func extractFirstToolCall(from text: String) -> (String, Range<String.Index>, [String: Any])? {
+        let toolNames = [
+            "read_file", "write_file", "edit_file", "list_files", "search_files",
+            "git_status", "git_diff", "git_log", "git_commit", "git_diff_patch", "git_branch",
+            "apple_event_query",
+            "execute_user_command", "execute_command", "task_complete",
+            "list_agent_scripts", "read_agent_script", "create_agent_script",
+            "update_agent_script", "run_agent_script", "delete_agent_script",
+            "xcode_build", "xcode_run", "xcode_list_projects",
+            "xcode_select_project", "xcode_grant_permission"
+        ]
+
+        var earliest: (String, Range<String.Index>, [String: Any])? = nil
+
+        for toolName in toolNames {
+            guard let nameRange = text.range(of: toolName) else { continue }
+            // Only consider if this is earlier than what we found so far
+            if let existing = earliest, nameRange.lowerBound >= existing.1.lowerBound { continue }
+            // Skip garbage between tool name and '{' (LLMs sometimes emit junk)
+            let remainder = text[nameRange.upperBound...]
+            guard let braceIdx = remainder.firstIndex(of: "{") else { continue }
+            // Only allow up to 20 garbage chars between name and '{'
+            guard text.distance(from: nameRange.upperBound, to: braceIdx) <= 20 else { continue }
+            let afterName = String(remainder[braceIdx...])
+            // Extract just the first balanced JSON object to avoid garbage trailing braces
+            guard let json = Self.extractFirstJSON(from: afterName) else { continue }
+            earliest = (toolName, nameRange, json)
+        }
+
+        return earliest
+    }
+
+    /// Extract the first balanced JSON object from a string, ignoring trailing garbage.
+    nonisolated private static func extractFirstJSON(from text: String) -> [String: Any]? {
+        var depth = 0
+        var inString = false
+        var escape = false
+        var endIndex: String.Index?
+
+        for i in text.indices {
+            let c = text[i]
+            if escape { escape = false; continue }
+            if c == "\\" && inString { escape = true; continue }
+            if c == "\"" { inString.toggle(); continue }
+            if inString { continue }
+            if c == "{" { depth += 1 }
+            else if c == "}" {
+                depth -= 1
+                if depth == 0 { endIndex = text.index(after: i); break }
+            }
+        }
+
+        guard let end = endIndex else { return nil }
+        let jsonString = String(text[text.startIndex..<end])
+        guard let data = jsonString.data(using: .utf8),
+              let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        return parsed
     }
 }

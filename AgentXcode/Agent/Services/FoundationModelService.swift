@@ -317,7 +317,7 @@ private struct NativeShellTool: Tool {
         var cmd = arguments.command.asciiQuotes
         if !projectFolder.isEmpty && !cmd.hasPrefix("cd ") {
             let escaped = projectFolder.replacingOccurrences(of: "'", with: "'\\''")
-            cmd = "cd '\(escaped)' && \(cmd)"
+            cmd = "export PWD='\(escaped)'; \(cmd)"
         }
         let result = nativeShellRun(cmd)
         print("🔧 [Apple AI] $ \(arguments.command)\n\(result)")

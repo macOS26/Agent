@@ -69,7 +69,7 @@ extension AgentViewModel {
         return path
     }
 
-    /// Prepend `cd <dir> &&` to a shell command when a project folder is set.
+    /// Set `PWD` for a shell command when a project folder is set.
     /// Skips if the command already starts with `cd `.
     static func prependWorkingDirectory(_ command: String, projectFolder: String) -> String {
         guard !projectFolder.isEmpty else { return command }
@@ -77,7 +77,7 @@ extension AgentViewModel {
         guard !dir.isEmpty, dir != "/" else { return command }
         if command.hasPrefix("cd ") { return command }
         let escaped = dir.replacingOccurrences(of: "'", with: "'\\''")
-        return "cd '\(escaped)' && \(command)"
+        return "export PWD='\(escaped)'; \(command)"
     }
 
     /// Extract the target directory from a command starting with `cd `.
@@ -749,9 +749,9 @@ extension AgentViewModel {
                                 result = await helperService.execute(command: command)
                                 helperService.onOutput = nil
                                 rootServiceActive = false
-                            } else if Self.isOsascriptCommand(command) {
-                                // Run osascript directly in the Agent app process
-                                // so it inherits the app's Automation permissions
+                            } else if Self.needsTCCTab(command) {
+                                // Run TCC commands directly in the Agent app process
+                                // so they inherit the app's Automation permissions
                                 userServiceActive = true
                                 userWasActive = true
                                 result = await executeLocal(command: command)
