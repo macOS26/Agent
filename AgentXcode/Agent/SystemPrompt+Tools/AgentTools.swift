@@ -158,15 +158,22 @@ enum AgentTools {
 
     @MainActor private static func enabledAppleAIToolLines() -> String {
         let prefs = ToolPreferencesService.shared
-        let x = commonTools
+        return commonTools
             .filter { prefs.isEnabled(.foundationModel, $0.name) }
             .map { tool in
-                let short = tool.description.components(separatedBy: ". ").first ?? tool.description
-                return "- \(tool.name): \(short)"
+                let params = tool.required.map { key -> String in
+                    let type_ = (tool.properties[key]?["type"] as? String) ?? "string"
+                    let placeholder: String
+                    switch type_ {
+                    case "integer": placeholder = "0"
+                    case "boolean": placeholder = "true"
+                    default: placeholder = "..."
+                    }
+                    return "\"\(key)\": \"\(placeholder)\""
+                }.joined(separator: ", ")
+                return "\(tool.name) {\(params)}"
             }
             .joined(separator: "\n")
-        print(x)
-        return(x)
     }
 
     // MARK: - Tool Definitions (internal, format-neutral)
