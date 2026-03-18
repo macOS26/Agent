@@ -168,13 +168,45 @@ private class PromptLineNumberRuler: NSRulerView {
     }
 }
 
+// MARK: - System Prompt Window (standalone popup)
+
+@MainActor
+final class SystemPromptWindow {
+    static let shared = SystemPromptWindow()
+    private var window: NSWindow?
+
+    func show() {
+        if let w = window, w.isVisible {
+            w.makeKeyAndOrderFront(nil)
+            return
+        }
+
+        let view = SystemPromptsView()
+        let hostingView = NSHostingView(rootView: view)
+        hostingView.frame = NSRect(x: 0, y: 0, width: 700, height: 500)
+
+        let w = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 700, height: 500),
+            styleMask: [.titled, .closable, .resizable, .miniaturizable],
+            backing: .buffered,
+            defer: false
+        )
+        w.title = "System Prompts"
+        w.contentView = hostingView
+        w.minSize = NSSize(width: 500, height: 350)
+        w.center()
+        w.isReleasedWhenClosed = false
+        w.makeKeyAndOrderFront(nil)
+        window = w
+    }
+}
+
 // MARK: - System Prompts View (tabbed editor for all 4 providers)
 
 struct SystemPromptsView: View {
     @State private var selectedProvider: APIProvider = .claude
     @State private var texts: [APIProvider: String] = [:]
     @State private var isDirty: [APIProvider: Bool] = [:]
-    @Environment(\.dismiss) private var dismiss
 
     private let service = SystemPromptService.shared
 
@@ -245,24 +277,12 @@ struct SystemPromptsView: View {
                 }
                 .controlSize(.small)
                 .keyboardShortcut("s", modifiers: .command)
-
-                Button("Done") {
-                    // Auto-save on close
-                    for (provider, content) in texts {
-                        if isDirty[provider] == true {
-                            service.saveTemplate(content, for: provider)
-                        }
-                    }
-                    dismiss()
-                }
-                .controlSize(.small)
-                .keyboardShortcut(.escape, modifiers: [])
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 6)
             .background(Color(nsColor: .controlBackgroundColor).opacity(0.8))
         }
-        .frame(width: 700, height: 500)
+        .frame(minWidth: 500, minHeight: 350)
         .onAppear {
             service.ensureDefaults()
             for (provider, _) in SystemPromptService.fileNames {
