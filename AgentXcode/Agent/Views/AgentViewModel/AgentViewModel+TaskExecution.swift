@@ -7,6 +7,35 @@ extension AgentViewModel {
 
     // MARK: - Helpers
 
+    /// Convert Any to JSONValue, handling arrays and nested objects recursively.
+    static func toJSONValue(_ value: Any) -> JSONValue {
+        if let s = value as? String { return .string(s) }
+        if let i = value as? Int { return .int(i) }
+        if let d = value as? Double { return .double(d) }
+        if let b = value as? Bool { return .bool(b) }
+        if let arr = value as? [Any] { return .array(arr.map { toJSONValue($0) }) }
+        if let dict = value as? [String: Any] { return .object(dict.mapValues { toJSONValue($0) }) }
+        return .string(String(describing: value))
+    }
+
+    /// Generate a short name for auto-saving an AppleScript from its source.
+    /// Uses the first meaningful words from the script, capped at 40 chars.
+    static func autoScriptName(from source: String) -> String {
+        let clean = source
+            .replacingOccurrences(of: "tell application", with: "")
+            .replacingOccurrences(of: "display dialog", with: "dialog")
+            .replacingOccurrences(of: "\"", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let words = clean.components(separatedBy: .whitespacesAndNewlines)
+            .filter { !$0.isEmpty }
+            .prefix(4)
+            .joined(separator: "_")
+        let name = words.prefix(40)
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: ".", with: "_")
+        return name.isEmpty ? "untitled_\(Int(Date().timeIntervalSince1970))" : String(name)
+    }
+
     /// Show first N lines of output, then "..." if there's more.
     static func preview(_ text: String, lines count: Int) -> String {
         let lines = text.split(separator: "\n", omittingEmptySubsequences: false)
@@ -169,14 +198,17 @@ extension AgentViewModel {
         // AppleScript (NSAppleScript in-process with TCC)
         if name == "run_applescript" {
             let source = (input["source"] as? String ?? "")
-            let result = await MainActor.run { () -> String in
+            let result = await MainActor.run { () -> (String, Bool) in
                 var err: NSDictionary?
-                guard let script = NSAppleScript(source: source) else { return "Error" }
+                guard let script = NSAppleScript(source: source) else { return ("Error", false) }
                 let out = script.executeAndReturnError(&err)
-                if let e = err { return "AppleScript error: \(e)" }
-                return out.stringValue ?? "(no output)"
+                if let e = err { return ("AppleScript error: \(e)", false) }
+                return (out.stringValue ?? "(no output)", true)
             }
-            return result
+            if result.1 {
+                let _ = scriptService.saveAppleScript(name: Self.autoScriptName(from: source), source: source)
+            }
+            return result.0
         }
 
         // osascript (runs osascript CLI in-process with TCC)
@@ -185,6 +217,21 @@ extension AgentViewModel {
             let escaped = script.replacingOccurrences(of: "'", with: "'\\''")
             let command = "osascript -e '\(escaped)'"
             let result = await executeLocalStreaming(command: command) { _ in }
+            if result.status == 0 {
+                let _ = scriptService.saveAppleScript(name: Self.autoScriptName(from: script), source: script)
+            }
+            return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
+        }
+
+        // JavaScript for Automation (JXA via osascript -l JavaScript)
+        if name == "execute_javascript" {
+            let script = input["source"] as? String ?? input["script"] as? String ?? ""
+            let escaped = script.replacingOccurrences(of: "'", with: "'\\''")
+            let command = "osascript -l JavaScript -e '\(escaped)'"
+            let result = await executeLocalStreaming(command: command) { _ in }
+            if result.status == 0 {
+                let _ = scriptService.saveJavaScript(name: Self.autoScriptName(from: script), source: script)
+            }
             return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
         }
 
@@ -239,6 +286,27 @@ extension AgentViewModel {
                 return out.stringValue ?? "(no output)"
             }
             return result
+        }
+
+        // Saved JavaScript/JXA
+        if name == "list_javascript" {
+            let scripts = scriptService.listJavaScripts()
+            return scripts.isEmpty ? "No saved JXA scripts" : scripts.map { "\($0.name) (\($0.size) bytes)" }.joined(separator: "\n")
+        }
+        if name == "save_javascript" {
+            return scriptService.saveJavaScript(name: input["name"] as? String ?? "", source: input["source"] as? String ?? "")
+        }
+        if name == "delete_javascript" {
+            return scriptService.deleteJavaScript(name: input["name"] as? String ?? "")
+        }
+        if name == "run_javascript" {
+            let scriptName = input["name"] as? String ?? ""
+            guard let source = scriptService.readJavaScript(name: scriptName) else {
+                return "Error: JXA script '\(scriptName)' not found. Use list_javascript first."
+            }
+            let escaped = source.replacingOccurrences(of: "'", with: "'\\''")
+            let result = await executeLocalStreaming(command: "osascript -l JavaScript -e '\(escaped)'") { _ in }
+            return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
         }
 
         // File operations
@@ -695,11 +763,7 @@ extension AgentViewModel {
                             }) {
                                 do {
                                     let args = input.mapValues { value -> JSONValue in
-                                        if let s = value as? String { return .string(s) }
-                                        if let i = value as? Int { return .int(i) }
-                                        if let d = value as? Double { return .double(d) }
-                                        if let b = value as? Bool { return .bool(b) }
-                                        return .string(String(describing: value))
+                                        Self.toJSONValue(value)
                                     }
                                     let result = try await MCPService.shared.callTool(
                                         serverId: mcpTool.serverId,
@@ -1228,6 +1292,12 @@ extension AgentViewModel {
                             appendLog("osascript \(statusNote)")
                             flushLog()
 
+                            // Auto-save successful scripts for reuse
+                            if result.status == 0 {
+                                let autoName = Self.autoScriptName(from: script)
+                                let _ = scriptService.saveAppleScript(name: autoName, source: script)
+                            }
+
                             let toolOutput = result.output.isEmpty
                                 ? "(no output, exit code: \(result.status))"
                                 : result.output
@@ -1235,6 +1305,55 @@ extension AgentViewModel {
                                 ? String(toolOutput.prefix(10000)) + "\n...(truncated)"
                                 : toolOutput
                             commandsRun.append("run_osascript")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": truncated2])
+                        }
+
+                        // JavaScript for Automation (JXA via osascript -l JavaScript)
+                        if name == "execute_javascript" {
+                            let script = input["source"] as? String ?? input["script"] as? String ?? ""
+                            let escaped = script.replacingOccurrences(of: "'", with: "'\\''")
+                            let command = "osascript -l JavaScript -e '\(escaped)'"
+
+                            let tab: ScriptTab
+                            if let existing = scriptTabs.first(where: { $0.scriptName == "javascript" }) {
+                                tab = existing
+                                selectedTabId = tab.id
+                                tab.isRunning = true
+                            } else {
+                                tab = openScriptTab(scriptName: "javascript")
+                            }
+                            appendLog("🟨 JXA (see tab)")
+                            flushLog()
+                            tab.appendLog("🟨 \(script.prefix(80))...")
+                            tab.flush()
+
+                            let result = await executeLocalStreaming(command: command) { [weak tab] chunk in
+                                Task { @MainActor in tab?.appendOutput(chunk) }
+                            }
+
+                            tab.isRunning = false
+                            tab.exitCode = result.status
+                            tab.flush()
+                            persistScriptTabs()
+
+                            guard !Task.isCancelled else { break }
+
+                            let statusNote = result.status == 0 ? "completed" : "exit code: \(result.status)"
+                            appendLog("JXA \(statusNote)")
+                            flushLog()
+
+                            // Auto-save successful JXA scripts
+                            if result.status == 0 {
+                                let _ = scriptService.saveJavaScript(name: Self.autoScriptName(from: script), source: script)
+                            }
+
+                            let toolOutput = result.output.isEmpty
+                                ? "(no output, exit code: \(result.status))"
+                                : result.output
+                            let truncated2 = toolOutput.count > 10000
+                                ? String(toolOutput.prefix(10000)) + "\n...(truncated)"
+                                : toolOutput
+                            commandsRun.append("execute_javascript")
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": truncated2])
                         }
 
@@ -1296,6 +1415,13 @@ extension AgentViewModel {
                             let statusNote = result.success ? "completed" : "error"
                             appendLog("AppleScript \(statusNote)")
                             flushLog()
+
+                            // Auto-save successful scripts for reuse
+                            if result.success {
+                                let autoName = Self.autoScriptName(from: source)
+                                let _ = scriptService.saveAppleScript(name: autoName, source: source)
+                            }
+
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": result.output])
                         }
 
@@ -1358,6 +1484,67 @@ extension AgentViewModel {
                             appendLog("\(scriptName) \(statusNote)")
                             flushLog()
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": result.output])
+                        }
+
+                        // Saved JavaScript/JXA tools
+                        if name == "list_javascript" {
+                            let scripts = scriptService.listJavaScripts()
+                            let output = scripts.isEmpty
+                                ? "No saved JXA scripts in ~/Documents/AgentScript/javascript/"
+                                : scripts.map { "\($0.name) (\($0.size) bytes)" }.joined(separator: "\n")
+                            appendLog("🟨 Saved JXA: \(scripts.count) found")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+                        if name == "save_javascript" {
+                            let scriptName = input["name"] as? String ?? ""
+                            let source = input["source"] as? String ?? ""
+                            let output = scriptService.saveJavaScript(name: scriptName, source: source)
+                            appendLog("🟨 \(output)")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+                        if name == "delete_javascript" {
+                            let scriptName = input["name"] as? String ?? ""
+                            let output = scriptService.deleteJavaScript(name: scriptName)
+                            appendLog("🟨 \(output)")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+                        if name == "run_javascript" {
+                            let scriptName = input["name"] as? String ?? ""
+                            guard let source = scriptService.readJavaScript(name: scriptName) else {
+                                let err = "Error: JXA script '\(scriptName)' not found. Use list_javascript first."
+                                appendLog("🟨 \(err)")
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
+                                continue
+                            }
+                            let escaped = source.replacingOccurrences(of: "'", with: "'\\''")
+                            let command = "osascript -l JavaScript -e '\(escaped)'"
+
+                            let tab: ScriptTab
+                            if let existing = scriptTabs.first(where: { $0.scriptName == "javascript" }) {
+                                tab = existing
+                                selectedTabId = tab.id
+                                tab.isRunning = true
+                            } else {
+                                tab = openScriptTab(scriptName: "javascript")
+                            }
+                            appendLog("🟨 Running saved: \(scriptName) (see tab)")
+                            flushLog()
+                            tab.appendLog("🟨 \(scriptName)")
+                            tab.flush()
+
+                            let result = await executeLocalStreaming(command: command) { [weak tab] chunk in
+                                Task { @MainActor in tab?.appendOutput(chunk) }
+                            }
+
+                            tab.isRunning = false
+                            tab.exitCode = result.status
+                            tab.flush()
+                            persistScriptTabs()
+
+                            let statusNote = result.status == 0 ? "completed" : "exit code: \(result.status)"
+                            appendLog("\(scriptName) \(statusNote)")
+                            flushLog()
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": result.output.isEmpty ? "(no output)" : result.output])
                         }
 
                         // Dynamic Apple Event query tool

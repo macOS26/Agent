@@ -24,9 +24,17 @@ enum AgentTools {
         1. apple_event_query — ObjC dispatch, no compile. Fast property reads. Use lookup_sdef first.
         2. run_agent_script — ScriptingBridge Swift dylib, full TCC. NSAppleScript fallback if bridge has issues.
         3. run_applescript — NSAppleScript in-process, full TCC. Quick AppleScript without compilation.
-        4. Accessibility tools (ax_*) — AXUIElement API for UI inspection/interaction.
-        5. run_osascript — osascript. Last resort for AppleScript.
+        4. execute_javascript — JXA (JavaScript for Automation) via osascript -l JavaScript. Full TCC.
+        5. Accessibility tools (ax_*) — AXUIElement API for UI inspection/interaction.
+        6. run_osascript — osascript. Last resort for AppleScript.
         Shell commands fill gaps: execute_user_command (user) / execute_command (root) for CLI tools.
+
+        JAVASCRIPT FOR AUTOMATION (JXA):
+        Use execute_javascript for JXA code: var app = Application('Finder'); app.selection()
+        OR run JXA inside run_applescript via: run script jsCode in "JavaScript"
+        Example AppleScript wrapping JXA:
+          set jsCode to "function run() { var app = Application.currentApplication(); app.includeStandardAdditions = true; return app.displayDialog('Hello').buttonReturned; }"
+          run script jsCode in "JavaScript"
 
         FILE TOOLS: read_file, write_file, edit_file (read first), list_files, search_files
         write_file returns line count only — call read_file after to verify.
@@ -180,6 +188,7 @@ enum AgentTools {
         "execute_command":      #"execute_command {"command": "whoami"}"#,
         "run_applescript":      #"run_applescript {"source": "tell application \"Finder\" to get name of home"}"#,
         "run_osascript":        #"run_osascript {"script": "display dialog \"Hello\""}"#,
+        "execute_javascript":   #"execute_javascript {"source": "var app = Application.currentApplication(); app.includeStandardAdditions = true; app.displayDialog('Hello')"}"#,
         "read_file":            #"read_file {"file_path": "/Users/toddbruss/Documents/example.txt"}"#,
         "write_file":           #"write_file {"file_path": "/Users/toddbruss/Documents/out.txt", "content": "hello"}"#,
         "edit_file":            #"edit_file {"file_path": "/path/file.txt", "old_string": "old", "new_string": "new"}"#,
@@ -214,6 +223,10 @@ enum AgentTools {
         "run_apple_script":     #"run_apple_script {"name": "Greeting"}"#,
         "save_apple_script":    #"save_apple_script {"name": "Greeting", "source": "display dialog \"Hello!\""}"#,
         "delete_apple_script":  #"delete_apple_script {"name": "Greeting"}"#,
+        "list_javascript":      "list_javascript",
+        "run_javascript":       #"run_javascript {"name": "HelloJXA"}"#,
+        "save_javascript":      #"save_javascript {"name": "HelloJXA", "source": "var app = Application.currentApplication(); app.includeStandardAdditions = true; app.displayDialog('Hello')"}"#,
+        "delete_javascript":    #"delete_javascript {"name": "HelloJXA"}"#,
         "list_native_tools":    "list_native_tools",
         "list_mcp_tools":       "list_mcp_tools",
     ]
@@ -386,6 +399,14 @@ enum AgentTools {
                 "script": ["type": "string", "description": "AppleScript source code to execute"],
             ],
             required: ["script"]
+        ),
+        ToolDef(
+            name: "execute_javascript",
+            description: "Run JavaScript for Automation (JXA) code via osascript. Use for app automation with JavaScript syntax. Example: var app = Application('Finder'); app.selection()",
+            properties: [
+                "source": ["type": "string", "description": "JXA source code to execute"],
+            ],
+            required: ["source"]
         ),
         ToolDef(
             name: "execute_user_command",
@@ -658,6 +679,38 @@ enum AgentTools {
             description: "Delete a saved AppleScript file.",
             properties: [
                 "name": ["type": "string", "description": "Name of the saved AppleScript to delete"],
+            ],
+            required: ["name"]
+        ),
+        // --- Saved JavaScript/JXA ---
+        ToolDef(
+            name: "list_javascript",
+            description: "List all saved JavaScript (JXA) files in ~/Documents/AgentScript/javascript/.",
+            properties: [:],
+            required: []
+        ),
+        ToolDef(
+            name: "run_javascript",
+            description: "Run a saved JavaScript (JXA) script by name. List first with list_javascript.",
+            properties: [
+                "name": ["type": "string", "description": "Name of the saved script (without .js extension)"],
+            ],
+            required: ["name"]
+        ),
+        ToolDef(
+            name: "save_javascript",
+            description: "Save a JXA script to ~/Documents/AgentScript/javascript/ for reuse.",
+            properties: [
+                "name": ["type": "string", "description": "Name for the script (without .js extension)"],
+                "source": ["type": "string", "description": "JavaScript for Automation source code"],
+            ],
+            required: ["name", "source"]
+        ),
+        ToolDef(
+            name: "delete_javascript",
+            description: "Delete a saved JavaScript (JXA) file.",
+            properties: [
+                "name": ["type": "string", "description": "Name of the saved script to delete"],
             ],
             required: ["name"]
         ),

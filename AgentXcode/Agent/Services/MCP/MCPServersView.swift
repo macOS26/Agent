@@ -273,6 +273,15 @@ struct MCPServerEditView: View {
     @State private var jsonText: String
     @State private var jsonError: String?
     @State private var updatingFromJSON = false
+    @State private var updatingFromFields = false
+
+    private func syncFieldsToJSON() {
+        guard !updatingFromJSON else { return }
+        updatingFromFields = true
+        jsonText = previewJSON
+        // Keep flag alive across the SwiftUI update cycle
+        DispatchQueue.main.async { updatingFromFields = false }
+    }
 
     @Environment(\.dismiss) private var dismiss
 
@@ -349,12 +358,10 @@ struct MCPServerEditView: View {
                     }
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Headers (Name: Value, one per line)").font(.caption).foregroundStyle(.secondary)
-                        TextEditor(text: $headersText)
+                        TextField("Authorization: Bearer ...", text: $headersText, axis: .vertical)
                             .font(.system(.caption, design: .monospaced))
-                            .frame(height: 60)
-                            .scrollContentBackground(.hidden)
-                            .background(.secondary.opacity(0.1))
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                            .textFieldStyle(.roundedBorder)
+                            .lineLimit(3...6)
                     }
                 } else {
                     // Stdio fields
@@ -364,21 +371,18 @@ struct MCPServerEditView: View {
                     }
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Arguments (one per line)").font(.caption).foregroundStyle(.secondary)
-                        TextEditor(text: $argumentsText)
+                        TextField("arg1", text: $argumentsText, axis: .vertical)
                             .font(.system(.caption, design: .monospaced))
-                            .frame(height: 60)
-                            .scrollContentBackground(.hidden)
-                            .background(.secondary.opacity(0.1))
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                            .textFieldStyle(.roundedBorder)
+                            .lineLimit(3...6)
                     }
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Environment Variables (KEY=value, one per line)").font(.caption).foregroundStyle(.secondary)
-                        TextEditor(text: $environmentText)
+                        TextField("API_KEY=abc123", text: $environmentText, axis: .vertical)
                             .font(.system(.caption, design: .monospaced))
-                            .frame(height: 60)
-                            .scrollContentBackground(.hidden)
-                            .background(.secondary.opacity(0.1))
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                            .textFieldStyle(.roundedBorder)
+                            .lineLimit(3...6)
+                            .disableAutocorrection(true)
                     }
                 }
 
@@ -386,15 +390,15 @@ struct MCPServerEditView: View {
                     Toggle("Enabled", isOn: $enabled).toggleStyle(.switch).controlSize(.mini)
                     Toggle("Auto-start", isOn: $autoStart).toggleStyle(.switch).controlSize(.mini)
                 }
-                .onChange(of: name) { if !updatingFromJSON { jsonText = previewJSON } }
-                .onChange(of: useHTTP) { if !updatingFromJSON { jsonText = previewJSON } }
-                .onChange(of: command) { if !updatingFromJSON { jsonText = previewJSON } }
-                .onChange(of: argumentsText) { if !updatingFromJSON { jsonText = previewJSON } }
-                .onChange(of: environmentText) { if !updatingFromJSON { jsonText = previewJSON } }
-                .onChange(of: urlText) { if !updatingFromJSON { jsonText = previewJSON } }
-                .onChange(of: headersText) { if !updatingFromJSON { jsonText = previewJSON } }
-                .onChange(of: enabled) { if !updatingFromJSON { jsonText = previewJSON } }
-                .onChange(of: autoStart) { if !updatingFromJSON { jsonText = previewJSON } }
+                .onChange(of: name) { syncFieldsToJSON() }
+                .onChange(of: useHTTP) { syncFieldsToJSON() }
+                .onChange(of: command) { syncFieldsToJSON() }
+                .onChange(of: argumentsText) { syncFieldsToJSON() }
+                .onChange(of: environmentText) { syncFieldsToJSON() }
+                .onChange(of: urlText) { syncFieldsToJSON() }
+                .onChange(of: headersText) { syncFieldsToJSON() }
+                .onChange(of: enabled) { syncFieldsToJSON() }
+                .onChange(of: autoStart) { syncFieldsToJSON() }
             }
 
             Divider()
@@ -405,7 +409,7 @@ struct MCPServerEditView: View {
                     .frame(height: 120)
                     .clipShape(RoundedRectangle(cornerRadius: 6))
                     .onChange(of: jsonText) {
-                        applyJSON(jsonText)
+                        if !updatingFromFields { applyJSON(jsonText) }
                     }
                 if let jsonError {
                     Text(jsonError)

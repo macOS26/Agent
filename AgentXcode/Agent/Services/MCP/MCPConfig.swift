@@ -205,7 +205,8 @@ final class MCPServerRegistry {
         }
     }
 
-    /// Validate that a command exists — supports both absolute paths and bare names resolved via PATH
+    /// Validate that a command exists — supports both absolute paths and bare names resolved via PATH.
+    /// macOS apps don't inherit the user's shell PATH, so we check common tool directories.
     private static func validateCommandPath(_ command: String) -> Bool {
         let fm = FileManager.default
         // Absolute or relative path — check directly
@@ -214,15 +215,27 @@ final class MCPServerRegistry {
             guard fm.fileExists(atPath: command, isDirectory: &isDir) else { return false }
             return !isDir.boolValue
         }
-        // Bare command name — resolve via PATH
-        let pathDirs = (ProcessInfo.processInfo.environment["PATH"] ?? "/usr/bin:/usr/local/bin")
+        // Bare command name — check common dirs + PATH
+        let home = fm.homeDirectoryForCurrentUser.path
+        let searchDirs = [
+            "\(home)/.local/bin",
+            "/opt/homebrew/bin",
+            "/usr/local/bin",
+            "\(home)/.cargo/bin",
+            "\(home)/.nvm/current/bin",
+            "/usr/bin",
+            "/bin",
+        ]
+        for dir in searchDirs {
+            let full = "\(dir)/\(command)"
+            if fm.fileExists(atPath: full) { return true }
+        }
+        // Also check process PATH as fallback
+        let pathDirs = (ProcessInfo.processInfo.environment["PATH"] ?? "")
             .split(separator: ":")
         for dir in pathDirs {
             let full = "\(dir)/\(command)"
-            var isDir: ObjCBool = false
-            if fm.fileExists(atPath: full, isDirectory: &isDir), !isDir.boolValue {
-                return true
-            }
+            if fm.fileExists(atPath: full) { return true }
         }
         return false
     }

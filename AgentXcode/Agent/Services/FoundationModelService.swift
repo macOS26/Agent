@@ -84,6 +84,7 @@ final class FoundationModelService {
             NativeShellTool(),
             NativeAppleScriptTool(),
             NativeOsaScriptTool(),
+            NativeJXATool(),
             NativeReadFileTool(),
             NativeWriteFileTool(),
             NativeEditFileTool(),
@@ -519,6 +520,26 @@ private struct NativeOsaScriptTool: Tool {
     func call(arguments: OsaScriptArgs) async throws -> AgentToolOutput {
         let result = nativeShellRun("/usr/bin/osascript", args: ["-e", arguments.script.appleScriptSanitized])
         print("🔧 [Apple AI] run_osascript\n\(result)")
+        return AgentToolOutput(result: result)
+    }
+}
+
+@Generable
+private struct JXAArgs {
+    @Guide(description: "JavaScript for Automation source code")
+    var source: String
+}
+
+private struct NativeJXATool: Tool {
+    typealias Arguments = JXAArgs
+    typealias Output = AgentToolOutput
+
+    let name = "execute_javascript"
+    let description = "Run JavaScript for Automation (JXA). Example: var app = Application('Finder'); app.selection()"
+
+    func call(arguments: JXAArgs) async throws -> AgentToolOutput {
+        let result = nativeShellRun("/usr/bin/osascript", args: ["-l", "JavaScript", "-e", arguments.source])
+        print("🔧 [Apple AI] execute_javascript\n\(result)")
         return AgentToolOutput(result: result)
     }
 }

@@ -733,13 +733,11 @@ struct ActivityLogView: NSViewRepresentable {
             style.textBlocks = [block]
             style.alignment = align
 
-            return NSAttributedString(
-                string: text + "\n",
-                attributes: [
-                    .paragraphStyle: style,
-                    .font: cellFont,
-                    .foregroundColor: NSColor.labelColor
-                ])
+            let rendered = renderInlineElements(text, baseFont: cellFont)
+            let cell = NSMutableAttributedString(attributedString: rendered)
+            cell.append(NSAttributedString(string: "\n"))
+            cell.addAttribute(.paragraphStyle, value: style, range: NSRange(location: 0, length: cell.length))
+            return cell
         }
 
         /// Renders a single line, detecting block-level elements first, then inline.
@@ -861,9 +859,48 @@ struct ActivityLogView: NSViewRepresentable {
                     }
                 }
 
+                // Manual fallback: apply **bold** and *italic* that Apple's parser missed
+                applyManualBoldItalic(nsAttr, baseFont: baseFont)
                 return nsAttr
             } catch {
-                return NSAttributedString(string: text, attributes: plainAttrs)
+                // Parser failed entirely — do manual bold/italic on plain text
+                let nsAttr = NSMutableAttributedString(string: text, attributes: plainAttrs)
+                applyManualBoldItalic(nsAttr, baseFont: baseFont)
+                return nsAttr
+            }
+        }
+
+        /// Manually apply **bold** and *italic* markers that Apple's markdown parser missed.
+        private func applyManualBoldItalic(_ attrStr: NSMutableAttributedString, baseFont: NSFont) {
+            let text = attrStr.string
+            // Bold: **text**
+            if let regex = try? NSRegularExpression(pattern: #"\*\*(.+?)\*\*"#) {
+                let matches = regex.matches(in: text, range: NSRange(text.startIndex..., in: text))
+                let boldFont = NSFontManager.shared.convert(baseFont, toHaveTrait: .boldFontMask)
+                for match in matches.reversed() {
+                    let contentRange = match.range(at: 1)
+                    let content = (text as NSString).substring(with: contentRange)
+                    let styled = NSAttributedString(string: content, attributes: [
+                        .font: boldFont,
+                        .foregroundColor: NSColor.labelColor
+                    ])
+                    attrStr.replaceCharacters(in: match.range, with: styled)
+                }
+            }
+            // Italic: *text* (but not inside **)
+            let updatedText = attrStr.string
+            if let regex = try? NSRegularExpression(pattern: #"(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)"#) {
+                let matches = regex.matches(in: updatedText, range: NSRange(updatedText.startIndex..., in: updatedText))
+                let italicFont = NSFontManager.shared.convert(baseFont, toHaveTrait: .italicFontMask)
+                for match in matches.reversed() {
+                    let contentRange = match.range(at: 1)
+                    let content = (updatedText as NSString).substring(with: contentRange)
+                    let styled = NSAttributedString(string: content, attributes: [
+                        .font: italicFont,
+                        .foregroundColor: NSColor.labelColor
+                    ])
+                    attrStr.replaceCharacters(in: match.range, with: styled)
+                }
             }
         }
 

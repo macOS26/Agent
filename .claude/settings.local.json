@@ -192,7 +192,12 @@
       "Bash(swift:*)",
       "Bash(xargs -I{} basename {} Bridge.swift)",
       "WebFetch(domain:dev.to)",
-      "WebFetch(domain:azamsharp.com)"
+      "WebFetch(domain:azamsharp.com)",
+      "mcp__xcf-server__xcf_help",
+      "mcp__xcf-server__help",
+      "mcp__xcf-server__show_folder",
+      "mcp__xcf-server__cd_dir",
+      "WebFetch(domain:gist.github.com)"
     ]
   }
 }
