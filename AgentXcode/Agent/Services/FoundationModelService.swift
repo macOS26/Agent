@@ -243,10 +243,23 @@ final class FoundationModelService {
         return toolUseResult(name: toolName, input: input)
     }
 
+    /// Common aliases the model hallucinates — mapped to real tool names.
+    private static let toolAliases: [String: String] = [
+        "execute_applescript": "run_applescript",
+        "run_applescript_command": "run_applescript",
+        "execute_osascript": "run_osascript",
+        "run_shell_command": "execute_user_command",
+        "shell_command": "execute_user_command",
+        "complete_task": "task_complete",
+    ]
+
     /// Parse plain text format: tool_name {"param": value, ...} or bare tool_name / tool_name.
     private func parseTextFormat(_ text: String) -> (content: [[String: Any]], stopReason: String)? {
-        for toolName in AgentTools.toolNames {
-            guard let nameRange = text.range(of: toolName) else { continue }
+        // Build search list: real tool names + aliases
+        let allNames = AgentTools.toolNames + Array(Self.toolAliases.keys)
+        for rawName in allNames {
+            let toolName = Self.toolAliases[rawName] ?? rawName
+            guard let nameRange = text.range(of: rawName) else { continue }
             let afterName = text[nameRange.upperBound...].trimmingCharacters(in: .whitespaces)
             if afterName.hasPrefix("{") {
                 // Has JSON args — extract matching braces
