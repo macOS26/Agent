@@ -148,6 +148,8 @@ extension AgentViewModel {
     /// Routes to the same execution logic as TaskExecution tool handlers.
     func executeNativeTool(_ name: String, input: sending [String: Any]) async -> String {
         let pf = projectFolder
+        appendLog("🍎 \(name)")
+        flushLog()
 
         // Shell commands
         if name == "execute_user_command" || name == "execute_command" {

@@ -128,11 +128,25 @@ enum AgentTools {
 
     // MARK: - Tool List per Provider (for ToolsView)
 
+    /// Tool names suitable for Apple AI's small context — only the essentials.
+    private static let appleAIToolNames: Set<String> = [
+        "execute_user_command",
+        "read_file",
+        "write_file",
+        "edit_file",
+        "list_files",
+        "search_files",
+        "run_applescript",
+        "task_complete",
+    ]
+
     /// Returns the tools available for a given provider.
     static func tools(for provider: APIProvider) -> [ToolDef] {
         switch provider {
         case .ollama, .localOllama:
             return commonTools + ollamaOnlyTools
+        case .foundationModel:
+            return commonTools.filter { appleAIToolNames.contains($0.name) }
         default:
             return commonTools
         }
@@ -149,9 +163,8 @@ enum AgentTools {
         let folderLine = projectFolder.isEmpty ? "" : "\nProject folder: \(projectFolder) — cd here before shell commands."
         return """
         You are a macOS automation assistant. User: \(userName), home: \(userHome).\(folderLine)
-        Always use tools to act — never just describe what you would do.
-        For AppleScript: use plain straight quotes " not escaped \\". Example: display dialog "Hello"
-        When finished, always call task_complete with a short summary of what was done.
+        You MUST call tools to complete tasks. Never just describe what you would do.
+        ALWAYS call task_complete when done.
         """
     }
 
