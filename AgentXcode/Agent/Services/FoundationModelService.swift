@@ -77,14 +77,38 @@ final class FoundationModelService {
         return s
     }
 
+    /// All properly-typed native tools keyed by name.
+    /// Uses @Generable argument structs so the on-device model understands the schemas.
+    private static let allNativeTools: [String: any Tool] = {
+        let tools: [any Tool] = [
+            NativeShellTool(),
+            NativeAppleScriptTool(),
+            NativeOsaScriptTool(),
+            NativeReadFileTool(),
+            NativeWriteFileTool(),
+            NativeEditFileTool(),
+            NativeListFilesTool(),
+            NativeSearchFilesTool(),
+            NativeTaskCompleteTool(),
+            NativeGitStatusTool(),
+            NativeGitCommitTool(),
+            NativeGitLogTool(),
+            NativeGitDiffTool(),
+            NativeListNativeToolsTool(),
+            NativeListMCPToolsTool(),
+        ]
+        return Dictionary(uniqueKeysWithValues: tools.map { ($0.name, $0) })
+    }()
+
     @MainActor
     private func makeEnabledNativeTools() -> [any Tool] {
         let prefs = ToolPreferencesService.shared
-        let t: [any Tool] = AgentTools.tools(for: .foundationModel)
+        let enabledNames = Set(AgentTools.tools(for: .foundationModel)
             .filter { prefs.isEnabled(.foundationModel, $0.name) }
-            .map { NativeAgentTool(toolDef: $0) }
-        print("🔧 [Apple AI] Loaded \(t.count) native tools: \(t.map { $0.name }.joined(separator: ", "))")
-        return t
+            .map { $0.name })
+        let t = Self.allNativeTools.values.filter { enabledNames.contains($0.name) }
+        print("🔧 [Apple AI] Loaded \(t.count) native tools: \(t.map { $0.name }.sorted().joined(separator: ", "))")
+        return Array(t)
     }
 
     // MARK: - Send (non-streaming)
@@ -604,6 +628,7 @@ private struct NativeTaskCompleteTool: Tool {
     let description = "Mark task done"
 
     func call(arguments: TaskCompleteArgs) async throws -> AgentToolOutput {
+        await MainActor.run { NativeToolContext.taskCompleteSummary = arguments.summary }
         return AgentToolOutput(result: "Task complete: \(arguments.summary)")
     }
 }
