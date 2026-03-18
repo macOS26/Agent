@@ -959,9 +959,9 @@ extension AgentViewModel {
                             } else {
                                 tab = openScriptTab(scriptName: "osascript")
                             }
-                            appendLog("🍎 osascript (see tab)")
+                            appendLog("🍏 osascript (see tab)")
                             flushLog()
-                            tab.appendLog("🍎 \(script)")
+                            tab.appendLog("🍏 \(script)")
                             tab.flush()
 
                             let result = await executeLocalStreaming(command: command) { [weak tab] chunk in
