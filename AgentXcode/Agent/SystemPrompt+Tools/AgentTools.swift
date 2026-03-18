@@ -137,7 +137,12 @@ enum AgentTools {
             return commonTools
         }
     }
-    
+//TOOLS:
+//\(enabledAppleAIToolLines())
+    //execute_user_command {"command": "ls -la"}
+    //run_applescript {"source": "tell app \\"Finder\\" to get name of home"}
+    //run_osascript {"script": "display dialog \\"Hello\\""}
+    //task_complete {"summary": "Done"}
     
     // MARK: - Compact System Prompt (for Apple Intelligence with limited context)
     @MainActor static func compactSystemPrompt(userName: String, userHome: String) -> String {
@@ -146,12 +151,6 @@ enum AgentTools {
         When asked to DO something, call a tool immediately. Do not explain — just act.
         One tool per reply. Always end with task_complete {"summary": "..."}.
         Tool call format — always JSON after the tool name:
-        execute_user_command {"command": "ls -la"}
-        run_applescript {"source": "tell app \\"Finder\\" to get name of home"}
-        run_osascript {"script": "display dialog \\"Hello\\""}
-        task_complete {"summary": "Done"}
-
-        TOOLS:
         \(enabledAppleAIToolLines())
         """
     }
@@ -172,6 +171,15 @@ enum AgentTools {
         "git_commit":           #"git_commit {"path": "/Users/toddbruss/Documents/GitHub/MyRepo", "message": "fix: update"}"#,
         "apple_event_query":    #"apple_event_query {"bundle_id": "com.apple.Music", "operations": [{"action": "get", "key": "currentTrack"}]}"#,
         "run_agent_script":     #"run_agent_script {"name": "MyScript"}"#,
+        "list_agent_scripts":   #"list_agent_scripts  — lists all scripts in ~/Documents/Agent/agents/"#,
+        "read_agent_script":    #"read_agent_script {"name": "MyScript"}"#,
+        "create_agent_script":  #"create_agent_script {"name": "MyScript", "content": "import Foundation\n@_cdecl(\"script_main\") public func scriptMain() -> Int32 { print(\"hello\"); return 0 }"}"#,
+        "delete_agent_script":  #"delete_agent_script {"name": "MyScript"}"#,
+        "lookup_sdef":          #"lookup_sdef {"bundle_id": "com.apple.Music"}"#,
+        "xcode_build":          #"xcode_build {"project_path": "/Users/toddbruss/Documents/GitHub/MyApp/MyApp.xcodeproj"}"#,
+        "xcode_list_projects":  #"xcode_list_projects  — lists all open Xcode projects"#,
+        "ax_list_windows":      #"ax_list_windows  — lists all visible windows"#,
+        "ax_check_permission":  #"ax_check_permission  — checks Accessibility permission"#,
     ]
 
     @MainActor private static func enabledAppleAIToolLines() -> String {
