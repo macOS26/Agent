@@ -335,6 +335,12 @@ extension AgentViewModel {
             activityLog += streamBuffer
             streamBuffer = ""
         }
+        // Ensure streamed text ends with a newline before timestamped entries
+        if streamingTextStarted {
+            ChatHistoryStore.shared.appendStreamingContent("\n")
+            activityLog += "\n"
+            streamingTextStarted = false
+        }
         if !logBuffer.isEmpty {
             ChatHistoryStore.shared.save()
             activityLog += logBuffer
