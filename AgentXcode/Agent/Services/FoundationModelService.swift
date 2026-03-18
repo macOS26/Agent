@@ -103,12 +103,20 @@ final class FoundationModelService {
     @MainActor
     private func makeEnabledNativeTools() -> [any Tool] {
         let prefs = ToolPreferencesService.shared
-        let enabledNames = Set(AgentTools.tools(for: .foundationModel)
+        let enabledDefs = AgentTools.tools(for: .foundationModel)
             .filter { prefs.isEnabled(.foundationModel, $0.name) }
-            .map { $0.name })
-        let t = Self.allNativeTools.values.filter { enabledNames.contains($0.name) }
-        print("🔧 [Apple AI] Loaded \(t.count) native tools: \(t.map { $0.name }.sorted().joined(separator: ", "))")
-        return Array(t)
+        var tools: [any Tool] = []
+        for def in enabledDefs {
+            if let native = Self.allNativeTools[def.name] {
+                // Prefer properly-typed @Generable tool
+                tools.append(native)
+            } else {
+                // Fall back to dynamic wrapper for tools without native impl
+                tools.append(NativeAgentTool(toolDef: def))
+            }
+        }
+        print("🔧 [Apple AI] Loaded \(tools.count) native tools: \(tools.map { $0.name }.sorted().joined(separator: ", "))")
+        return tools
     }
 
     // MARK: - Send (non-streaming)
