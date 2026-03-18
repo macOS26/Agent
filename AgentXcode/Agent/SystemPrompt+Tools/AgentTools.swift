@@ -148,7 +148,7 @@ enum AgentTools {
     @MainActor static func compactSystemPrompt(userName: String, userHome: String) -> String {
         """
         macOS assistant. User: \(userName), home: \(userHome). Be brief.
-        Use tools when asked to act. Reply in plain English when done.
+        Use tools when asked to act. When the task is complete, call task_complete with a short summary.
         """
     }
 
