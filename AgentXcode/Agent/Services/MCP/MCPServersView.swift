@@ -9,6 +9,7 @@ struct MCPServersView: View {
     @State private var importText = ""
     @State private var connectingIds: Set<UUID> = []
     @State private var renderKey = false
+    @State private var addError: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -17,6 +18,15 @@ struct MCPServersView: View {
                 Text("MCP Servers")
                     .font(.headline)
                 Spacer()
+                Button {
+                    Task { await mcpService.refreshState() }
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .help("Refresh server status")
+
                 Button {
                     showingImport = true
                 } label: {
@@ -80,10 +90,23 @@ struct MCPServersView: View {
         .sheet(isPresented: $showingAddServer) {
             MCPServerEditView(server: nil) { newServer in
                 if let err = registry.add(newServer) {
-                    print("[MCP] Add failed: \(err)")
+                    addError = err
+                } else {
+                    showingAddServer = false
+                    // Auto-connect the new server
+                    let config = newServer
+                    Task {
+                        connectingIds.insert(config.id)
+                        try? await mcpService.connect(to: config)
+                        connectingIds.remove(config.id)
+                    }
                 }
-                showingAddServer = false
             }
+        }
+        .alert("Add Failed", isPresented: Binding(get: { addError != nil }, set: { if !$0 { addError = nil } })) {
+            Button("OK") { addError = nil }
+        } message: {
+            Text(addError ?? "")
         }
         .sheet(item: $editingServer) { server in
             MCPServerEditView(server: server) { updatedServer in

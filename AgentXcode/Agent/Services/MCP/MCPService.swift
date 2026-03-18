@@ -157,7 +157,7 @@ final class MCPService: @unchecked Sendable {
     }
 
     /// Refresh local state from client
-    private func refreshState() async {
+    func refreshState() async {
         let state = await client.getConnectionState()
 
         discoveredTools = state.discoveredTools.map { tool in
