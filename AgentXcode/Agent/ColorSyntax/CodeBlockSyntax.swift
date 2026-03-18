@@ -597,6 +597,110 @@ private struct LangDef {
     private static let termErrorRx: NSRegularExpression? = try? NSRegularExpression(pattern: #"\b(?:error|Error|ERROR|fatal|FATAL|failed|FAILED|No such file|Permission denied|not found|cannot)\b"#)
     private static let termSizeRx: NSRegularExpression? = try? NSRegularExpression(pattern: #"(?<=\s)\d{1,12}(?=\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))"#)
 
+    // MARK: - Activity Log Line Highlighting
+
+    private static let actTimestampRx: NSRegularExpression? = try? NSRegularExpression(
+        pattern: #"\[\d{2}:\d{2}:\d{2}\]"#)
+    private static let actSectionRx: NSRegularExpression? = try? NSRegularExpression(
+        pattern: #"---\s+.+?\s+---"#)
+    private static let actLabelRx: NSRegularExpression? = try? NSRegularExpression(
+        pattern: #"\b(?:Task|Model|Status|Error|Warning|Result|Info):"#)
+    private static let actShellRx: NSRegularExpression? = try? NSRegularExpression(
+        pattern: #"\$\s+\S+"#)
+    private static let actGrepFileRx: NSRegularExpression? = try? NSRegularExpression(
+        pattern: #"^(/[^\s:]+):(\d+):"#, options: .anchorsMatchLines)
+    private static let actAbsPathRx: NSRegularExpression? = try? NSRegularExpression(
+        pattern: #"(?:^|\s)((?:/[\w.@+\-]+)+/?)"#, options: .anchorsMatchLines)
+    private static let actFlagRx: NSRegularExpression? = try? NSRegularExpression(
+        pattern: #"(?<=\s)-{1,2}[\w][\w\-]*"#)
+    private static let actQuoteRx: NSRegularExpression? = try? NSRegularExpression(
+        pattern: ##"'[^'\n]*'|"[^"\n]*""##)
+
+    /// Check if a line is activity log output (timestamps or grep results)
+    static func looksLikeActivityLogLine(_ line: String) -> Bool {
+        let t = line.trimmingCharacters(in: .whitespaces)
+        if t.range(of: #"^\[\d{2}:\d{2}:\d{2}\]"#, options: .regularExpression) != nil { return true }
+        if t.range(of: #"^/\S+:\d+:"#, options: .regularExpression) != nil { return true }
+        return false
+    }
+
+    /// Highlight a single activity log line. Returns nil if the line is not activity-log output.
+    static func highlightActivityLogLine(line: String, font: NSFont) -> NSAttributedString? {
+        guard looksLikeActivityLogLine(line) else { return nil }
+
+        let result = NSMutableAttributedString(string: line, attributes: [
+            .font: font, .foregroundColor: NSColor.labelColor
+        ])
+        let ns = line as NSString
+        let r = NSRange(location: 0, length: ns.length)
+        let bold = NSFont.monospacedSystemFont(ofSize: font.pointSize, weight: .bold)
+
+        // Paths → cyan
+        let cPath = termPath
+        actAbsPathRx?.enumerateMatches(in: line, range: r) { m, _, _ in
+            guard let mr = m?.range(at: 1) else { return }
+            result.addAttribute(.foregroundColor, value: cPath, range: mr)
+        }
+
+        // Grep file:line: → cyan path, yellow line number
+        let cNum = termSize
+        actGrepFileRx?.enumerateMatches(in: line, range: r) { m, _, _ in
+            guard let m else { return }
+            result.addAttribute(.foregroundColor, value: cPath, range: m.range(at: 1))
+            result.addAttribute(.foregroundColor, value: cNum, range: m.range(at: 2))
+        }
+
+        // Shell $ command → green
+        let cCmd = termExec
+        actShellRx?.enumerateMatches(in: line, range: r) { m, _, _ in
+            guard let mr = m?.range else { return }
+            result.addAttribute(.foregroundColor, value: cCmd, range: mr)
+        }
+
+        // Flags --option → orange
+        let cFlag = CodeBlockTheme.preproc
+        actFlagRx?.enumerateMatches(in: line, range: r) { m, _, _ in
+            guard let mr = m?.range else { return }
+            result.addAttribute(.foregroundColor, value: cFlag, range: mr)
+        }
+
+        // Quoted strings → string color
+        let cStr = CodeBlockTheme.string
+        actQuoteRx?.enumerateMatches(in: line, range: r) { m, _, _ in
+            guard let mr = m?.range else { return }
+            result.addAttribute(.foregroundColor, value: cStr, range: mr)
+        }
+
+        // Timestamps [HH:MM:SS] → dim
+        let cTime = termDate
+        actTimestampRx?.enumerateMatches(in: line, range: r) { m, _, _ in
+            guard let mr = m?.range else { return }
+            result.addAttribute(.foregroundColor, value: cTime, range: mr)
+        }
+
+        // Section headers --- text --- → bold keyword
+        let cKw = CodeBlockTheme.keyword
+        actSectionRx?.enumerateMatches(in: line, range: r) { m, _, _ in
+            guard let mr = m?.range else { return }
+            result.addAttributes([.foregroundColor: cKw, .font: bold], range: mr)
+        }
+
+        // Labels Task:, Model: → bold keyword
+        actLabelRx?.enumerateMatches(in: line, range: r) { m, _, _ in
+            guard let mr = m?.range else { return }
+            result.addAttributes([.foregroundColor: cKw, .font: bold], range: mr)
+        }
+
+        // Error keywords → red (last, overrides other colors)
+        let cErr = termError
+        termErrorRx?.enumerateMatches(in: line, range: r) { m, _, _ in
+            guard let mr = m?.range else { return }
+            result.addAttribute(.foregroundColor, value: cErr, range: mr)
+        }
+
+        return result
+    }
+
     private static func highlightTerminalOutput(code: String, font: NSFont) -> NSAttributedString {
         let text = CodeBlockTheme.text
         let result = NSMutableAttributedString(string: code, attributes: [

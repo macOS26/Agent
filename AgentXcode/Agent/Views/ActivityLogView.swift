@@ -798,6 +798,11 @@ struct ActivityLogView: NSViewRepresentable {
                 return result
             }
 
+            // Activity log output (timestamps, grep results) — bypass markdown parser
+            if let highlighted = CodeBlockHighlighter.highlightActivityLogLine(line: line, font: font) {
+                return highlighted
+            }
+
             // Regular line — inline elements only
             return renderInlineElements(line, baseFont: font)
         }
