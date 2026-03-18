@@ -21,7 +21,7 @@ struct ToolsView: View {
                         Text(p.displayName).tag(p)
                     }
                 }
-                .pickerStyle(.segmented)
+                .pickerStyle(.menu)
             }
             .padding()
 
