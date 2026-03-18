@@ -433,6 +433,7 @@ final class AgentViewModel {
     init() {
         // Restore ~/Documents/AgentScript/ folder and bundled resources if missing
         scriptService.ensurePackage()
+        SystemPromptService.shared.ensureDefaults()
 
         // Cancel any orphaned processes from a previous app session
         let defaults = UserDefaults.standard

@@ -68,7 +68,7 @@ final class FoundationModelService {
         if let s = session { return s }
 
         NativeToolContext.projectFolder = projectFolder
-        let instructions = AgentTools.compactSystemPrompt(userName: userName, userHome: userHome, projectFolder: projectFolder)
+        let instructions = SystemPromptService.shared.prompt(for: .foundationModel, userName: userName, userHome: userHome)
         print("=== Apple AI System Prompt ===\n\(instructions)\n=== End (\(instructions.count) chars) ===")
 
         let tools = makeEnabledNativeTools()

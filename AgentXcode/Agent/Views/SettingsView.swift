@@ -2,7 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @Bindable var viewModel: AgentViewModel
-
+    @State private var showPromptEditor = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -191,6 +191,13 @@ struct SettingsView: View {
                 }
             }
 
+            // System Prompts Editor
+            Button("Edit System Prompts...") {
+                showPromptEditor = true
+            }
+            .sheet(isPresented: $showPromptEditor) {
+                SystemPromptsView()
+            }
         }
         .padding(20)
         .frame(width: 360)

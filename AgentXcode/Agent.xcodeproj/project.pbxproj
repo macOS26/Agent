@@ -75,6 +75,8 @@
 		EA90000000000000000001 /* AllBridges in Frameworks */ = {isa = PBXBuildFile; productRef = EA90000000000000000002 /* AllBridges */; };
 		EAF3666F2F623D6A004B7E38 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = EAF3666E2F623D6A004B7E38 /* AppIcon.icon */; };
 		EAFA000000000000000001 /* FoundationModelService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAFA000000000000000002 /* FoundationModelService.swift */; };
+		EASP000000000000000001 /* SystemPromptService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EASP000000000000000002 /* SystemPromptService.swift */; };
+		EASP000000000000000003 /* SystemPromptEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = EASP000000000000000004 /* SystemPromptEditor.swift */; };
 		EE10000000000000000004 /* ObjCTry.m in Sources */ = {isa = PBXBuildFile; fileRef = EE10000000000000000002 /* ObjCTry.m */; };
 		FF10000000000000000002 /* PackageAutoDiscoveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000001 /* PackageAutoDiscoveryTests.swift */; };
 		FF10000000000000000004 /* CodingServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000003 /* CodingServiceTests.swift */; };
@@ -222,6 +224,8 @@
 		EA80000000000000000002 /* NSAppleScriptService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NSAppleScriptService.swift; sourceTree = "<group>"; };
 		EAF3666E2F623D6A004B7E38 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		EAFA000000000000000002 /* FoundationModelService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoundationModelService.swift; sourceTree = "<group>"; };
+		EASP000000000000000002 /* SystemPromptService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemPromptService.swift; sourceTree = "<group>"; };
+		EASP000000000000000004 /* SystemPromptEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemPromptEditor.swift; sourceTree = "<group>"; };
 		EE10000000000000000001 /* ObjCTry.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ObjCTry.h; sourceTree = "<group>"; };
 		EE10000000000000000002 /* ObjCTry.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ObjCTry.m; sourceTree = "<group>"; };
 		EE10000000000000000003 /* Agent-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Agent-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -393,6 +397,7 @@
 				EA80000000000000000002 /* NSAppleScriptService.swift */,
 				EA70000000000000000002 /* SDEFService.swift */,
 				EAFA000000000000000002 /* FoundationModelService.swift */,
+				EASP000000000000000002 /* SystemPromptService.swift */,
 				AA100000000000000000B0 /* SoundPlayerService.swift */,
 				AA100000000000000000B4 /* ToolPreferencesService.swift */,
 			);
@@ -415,6 +420,7 @@
 				AA10000000000000000068 /* StatusDotView.swift */,
 				AA100000000000000000B6 /* ToolsView.swift */,
 				AA100000000000000000B9 /* AgentOptionsView.swift */,
+				EASP000000000000000004 /* SystemPromptEditor.swift */,
 				EADF39D02F69018800CD01E5 /* AgentScriptTabs */,
 			);
 			path = Views;
@@ -649,6 +655,8 @@
 				EA80000000000000000001 /* NSAppleScriptService.swift in Sources */,
 				EA70000000000000000001 /* SDEFService.swift in Sources */,
 				EAFA000000000000000001 /* FoundationModelService.swift in Sources */,
+				EASP000000000000000001 /* SystemPromptService.swift in Sources */,
+				EASP000000000000000003 /* SystemPromptEditor.swift in Sources */,
 				AA100000000000000000B1 /* SoundPlayerService.swift in Sources */,
 				AA100000000000000000B5 /* ToolPreferencesService.swift in Sources */,
 				AA100000000000000000B7 /* ToolsView.swift in Sources */,
