@@ -148,8 +148,15 @@ extension AgentViewModel {
     /// Routes to the same execution logic as TaskExecution tool handlers.
     func executeNativeTool(_ name: String, input: sending [String: Any]) async -> String {
         let pf = projectFolder
+        NativeToolContext.toolCallCount += 1
         appendLog("🔧 \(name)")
         flushLog()
+
+        // Prevent infinite tool call loops — force completion after max calls
+        if name != "task_complete" && NativeToolContext.toolCallCount > NativeToolContext.maxToolCalls {
+            NativeToolContext.taskCompleteSummary = "Stopped: too many tool calls"
+            return "Error: too many tool calls. Call task_complete now."
+        }
 
         // Shell commands
         if name == "execute_user_command" || name == "execute_command" {
@@ -484,6 +491,7 @@ extension AgentViewModel {
             ? FoundationModelService(historyContext: historyContext, projectFolder: projectFolder) : nil
         if foundationModel != nil {
             NativeToolContext.taskCompleteSummary = nil
+            NativeToolContext.toolCallCount = 0
             NativeToolContext.toolHandler = { [weak self] toolName, input in
                 await self?.executeNativeTool(toolName, input: input) ?? "Error: agent unavailable"
             }

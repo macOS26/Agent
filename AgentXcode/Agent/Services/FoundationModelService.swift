@@ -289,6 +289,10 @@ enum NativeToolContext {
     @MainActor static var projectFolder: String = ""
     /// Set when task_complete is called via native tool — the task loop checks this after each iteration.
     @MainActor static var taskCompleteSummary: String?
+    /// Counts tool calls per session turn to prevent infinite loops.
+    @MainActor static var toolCallCount = 0
+    /// Max tool calls before forcing task_complete.
+    static let maxToolCalls = 5
     /// Handler that routes tool calls to real execution (set by ViewModel before task starts).
     nonisolated(unsafe) static var toolHandler: (@Sendable (String, sending [String: Any]) async -> String)?
 }
