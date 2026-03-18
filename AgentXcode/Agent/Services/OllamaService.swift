@@ -422,7 +422,7 @@ final class OllamaService {
                 for toolCall in toolCalls {
                     if let function = toolCall["function"] as? [String: Any],
                        let name = function["name"] as? String {
-                        let id = toolCall["id"] as? String ?? UUID().uuidString
+                        let id = toolCall["id"] as? String ?? "call_\(UUID().uuidString.prefix(8).lowercased())"
                         let input = function["arguments"] as? [String: Any] ?? [:]
                         contentBlocks.append([
                             "type": "tool_use",
@@ -440,9 +440,9 @@ final class OllamaService {
             }
         }
 
-        // Check if full text contains a tool call (same pattern as non-streaming)
+        // Only parse tool calls from text if no native tool_calls were found
         var parsedToolFromText = false
-        if let (toolName, nameRange, parsed) = Self.extractFirstToolCall(from: fullText) {
+        if contentBlocks.isEmpty, let (toolName, nameRange, parsed) = Self.extractFirstToolCall(from: fullText) {
             let beforeText = String(fullText[..<nameRange.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
             if !beforeText.isEmpty {
                 contentBlocks.append(["type": "text", "text": beforeText])
