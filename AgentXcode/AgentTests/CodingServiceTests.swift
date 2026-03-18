@@ -391,27 +391,27 @@ struct CodingServiceTests {
 
     // MARK: - Preview helper
 
-    @Test("preview returns full text when under limit")
+    @MainActor @Test("preview returns full text when under limit")
     func previewShort() {
         let text = "line1\nline2"
         let result = AgentViewModel.preview(text, lines: 3)
         #expect(result == "line1\nline2")
     }
 
-    @Test("preview truncates with ... when over limit")
+    @MainActor @Test("preview truncates with ... when over limit")
     func previewLong() {
         let text = "line1\nline2\nline3\nline4\nline5"
         let result = AgentViewModel.preview(text, lines: 3)
         #expect(result == "line1\nline2\nline3\n...")
     }
 
-    @Test("preview handles single line")
+    @MainActor @Test("preview handles single line")
     func previewSingle() {
         let result = AgentViewModel.preview("hello", lines: 3)
         #expect(result == "hello")
     }
 
-    @Test("preview handles empty string")
+    @MainActor @Test("preview handles empty string")
     func previewEmpty() {
         let result = AgentViewModel.preview("", lines: 3)
         #expect(result == "")
