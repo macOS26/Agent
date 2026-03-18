@@ -44,7 +44,7 @@ enum AgentTools {
 
         AGENTSCRIPTS:
         Core scripts: pre-compiled dylibs in Agent.app/Contents/Resources/. Run via run_agent_script.
-        User scripts: ~/Documents/Agent/agents/. Tools: list/read/create/update/delete/run_agent_script.
+        User scripts: ~/Documents/AgentScript/agents/. Tools: list/read/create/update/delete/run_agent_script.
         ALWAYS list first — update existing, don't duplicate.
         delete_agent_script blocklists so bundled scripts won't respawn. NEVER edit Package.swift manually.
         AgentScripts are Swift — use the full Swift language, any Swift 6 framework, ScriptingBridge, NSAppleScript, Process(), AXUIElement.
@@ -57,9 +57,9 @@ enum AgentTools {
 
         DATA PASSING (scripts are dlopen'd):
         - Simple: env AGENT_SCRIPT_ARGS
-        - Structured: ~/Documents/Agent/json/{Name}_input.json / _output.json
+        - Structured: ~/Documents/AgentScript/json/{Name}_input.json / _output.json
 
-        OUTPUT FOLDERS (~/Documents/Agent/):
+        OUTPUT FOLDERS (~/Documents/AgentScript/):
         json/ photos/ images/ screenshots/ html/
 
         SCRIPTING BRIDGE:
@@ -121,7 +121,7 @@ enum AgentTools {
 
         NEVER DO:
         - xcodebuild or swift build via shell → use xcode_build / run_agent_script
-        - xcode_build on ~/Documents/Agent/agents/ → use run_agent_script
+        - xcode_build on ~/Documents/AgentScript/agents/ → use run_agent_script
         - execute_user_command for AX/Automation → use run_agent_script
         """
     }
@@ -512,7 +512,7 @@ enum AgentTools {
         // --- Script Management ---
         ToolDef(
             name: "list_agent_scripts",
-            description: "List all Swift automation scripts in ~/Documents/Agent/agents/",
+            description: "List all Swift automation scripts in ~/Documents/AgentScript/agents/",
             properties: [:],
             required: []
         ),
@@ -526,7 +526,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: "create_agent_script",
-            description: "Create a new Swift automation script in ~/Documents/Agent/agents/",
+            description: "Create a new Swift automation script in ~/Documents/AgentScript/agents/",
             properties: [
                 "name": ["type": "string", "description": "Script filename (with or without .swift)"],
                 "content": ["type": "string", "description": "Swift source code"],

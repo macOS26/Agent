@@ -543,10 +543,10 @@ final class AccessibilityService: @unchecked Sendable {
         
         let home = FileManager.default.homeDirectoryForCurrentUser
         let fileName = "screenshot_\(UUID().uuidString).png"
-        let outputPath = home.appendingPathComponent("Documents/Agent/screenshots/\(fileName)").path
+        let outputPath = home.appendingPathComponent("Documents/AgentScript/screenshots/\(fileName)").path
 
         // Ensure output directory exists
-        try? FileManager.default.createDirectory(atPath: home.appendingPathComponent("Documents/Agent/screenshots").path, withIntermediateDirectories: true)
+        try? FileManager.default.createDirectory(atPath: home.appendingPathComponent("Documents/AgentScript/screenshots").path, withIntermediateDirectories: true)
         
         // Build screencapture command
         var args = ["-x", "-t", "png"]  // -x: no sound, -t png: format
@@ -601,9 +601,9 @@ final class AccessibilityService: @unchecked Sendable {
         
         let home = FileManager.default.homeDirectoryForCurrentUser
         let fileName = "screenshot_\(UUID().uuidString).png"
-        let outputPath = home.appendingPathComponent("Documents/Agent/\(fileName)").path
+        let outputPath = home.appendingPathComponent("Documents/AgentScript/\(fileName)").path
         
-        try? FileManager.default.createDirectory(atPath: home.appendingPathComponent("Documents/Agent").path, withIntermediateDirectories: true)
+        try? FileManager.default.createDirectory(atPath: home.appendingPathComponent("Documents/AgentScript").path, withIntermediateDirectories: true)
         
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
@@ -639,7 +639,7 @@ final class AccessibilityService: @unchecked Sendable {
     private static nonisolated(unsafe) var auditLog: [String] = []
     private static let auditLogLock = NSLock()
     private static let auditLogFile = FileManager.default.homeDirectoryForCurrentUser
-        .appendingPathComponent("Documents/Agent/accessibility_audit.log")
+        .appendingPathComponent("Documents/AgentScript/accessibility_audit.log")
     
     private static func logAudit(_ message: String) {
         let timestamp = ISO8601DateFormatter().string(from: Date())

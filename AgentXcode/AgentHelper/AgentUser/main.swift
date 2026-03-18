@@ -133,7 +133,7 @@ func syncArray(named marker: String, with diskNames: Set<String>, in content: St
 func syncPackage() {
     let fm = FileManager.default
     let home = fm.homeDirectoryForCurrentUser
-    let agentsDir = home.appendingPathComponent("Documents/Agent/agents")
+    let agentsDir = home.appendingPathComponent("Documents/AgentScript/agents")
     let scriptsDir = agentsDir.appendingPathComponent("Sources/Scripts")
     let bridgesDir = agentsDir.appendingPathComponent("Sources/XCFScriptingBridges")
     let packageURL = agentsDir.appendingPathComponent("Package.swift")

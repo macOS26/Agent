@@ -5,7 +5,7 @@ import Darwin
 final class ScriptService {
     static let agentsDir: URL = {
         let home = FileManager.default.homeDirectoryForCurrentUser
-        return home.appendingPathComponent("Documents/Agent/agents")
+        return home.appendingPathComponent("Documents/AgentScript/agents")
     }()
 
     private var sourcesDir: URL { Self.agentsDir.appendingPathComponent("Sources") }
@@ -161,7 +161,7 @@ final class ScriptService {
 
     // MARK: - Ensure package
 
-    /// Ensure ~/Documents/Agent/agents/ exists with bridges, scripts, and Package.swift
+    /// Ensure ~/Documents/AgentScript/agents/ exists with bridges, scripts, and Package.swift
     func ensurePackage() {
         packageLock.lock()
         defer { packageLock.unlock() }
@@ -184,13 +184,13 @@ final class ScriptService {
 
     // MARK: - JSON files
 
-    /// The parent directory ~/Documents/Agent/ where JSON input/output files live
+    /// The parent directory ~/Documents/AgentScript/ where JSON input/output files live
     static let agentDir: URL = {
         let home = FileManager.default.homeDirectoryForCurrentUser
-        return home.appendingPathComponent("Documents/Agent")
+        return home.appendingPathComponent("Documents/AgentScript")
     }()
 
-    /// Copy any bundled .json files to ~/Documents/Agent/json/ if they don't already exist
+    /// Copy any bundled .json files to ~/Documents/AgentScript/json/ if they don't already exist
     private func copyBundledJSONFiles() {
         let fm = FileManager.default
         guard let bundleURL = Bundle.main.resourceURL else { return }
@@ -215,7 +215,7 @@ final class ScriptService {
 
     // MARK: - Fresh install
 
-    /// Copy entire bundled package to ~/Documents/Agent/agents/
+    /// Copy entire bundled package to ~/Documents/AgentScript/agents/
     private func copyEntirePackage() {
         let fm = FileManager.default
         let dest = Self.agentsDir

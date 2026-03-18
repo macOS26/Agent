@@ -1014,7 +1014,7 @@ extension AgentViewModel {
                             let scripts = scriptService.listScripts()
                             let output: String
                             if scripts.isEmpty {
-                                output = "No scripts found in ~/Documents/Agent/agents/"
+                                output = "No scripts found in ~/Documents/AgentScript/agents/"
                             } else {
                                 output = scripts.map { "\($0.name) (\($0.size) bytes)" }.joined(separator: "\n")
                             }

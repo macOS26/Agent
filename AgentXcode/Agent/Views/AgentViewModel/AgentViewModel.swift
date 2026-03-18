@@ -431,7 +431,7 @@ final class AgentViewModel {
     // MARK: - Init
 
     init() {
-        // Restore ~/Documents/Agent/ folder and bundled resources if missing
+        // Restore ~/Documents/AgentScript/ folder and bundled resources if missing
         scriptService.ensurePackage()
 
         // Cancel any orphaned processes from a previous app session

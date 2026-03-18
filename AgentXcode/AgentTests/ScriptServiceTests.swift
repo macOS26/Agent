@@ -268,8 +268,8 @@ struct ScriptServiceTests {
 
         func processJSON() {
             let home = NSHomeDirectory()
-            let inputPath = "\\(home)/Documents/Agent/test_json_io_input.json"
-            let outputPath = "\\(home)/Documents/Agent/test_json_io_output.json"
+            let inputPath = "\\(home)/Documents/AgentScript/test_json_io_input.json"
+            let outputPath = "\\(home)/Documents/AgentScript/test_json_io_output.json"
 
             guard let data = FileManager.default.contents(atPath: inputPath),
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
@@ -340,7 +340,7 @@ struct ScriptServiceTests {
 
         func checkInput() -> Int32 {
             let home = NSHomeDirectory()
-            let inputPath = "\\(home)/Documents/Agent/test_missing_json_input.json"
+            let inputPath = "\\(home)/Documents/AgentScript/test_missing_json_input.json"
 
             guard let _ = FileManager.default.contents(atPath: inputPath) else {
                 print("ERROR:input_not_found")
