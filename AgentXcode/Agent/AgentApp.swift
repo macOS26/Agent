@@ -39,5 +39,13 @@ struct AgentApp: App {
                 }
         }
         .windowResizability(.contentMinSize)
+        .commands {
+            CommandGroup(after: .windowArrangement) {
+                Button("System Prompts") {
+                    SystemPromptWindow.shared.show()
+                }
+                .keyboardShortcut("p", modifiers: [.command, .shift])
+            }
+        }
     }
 }
