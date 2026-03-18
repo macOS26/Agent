@@ -159,9 +159,9 @@ extension AgentViewModel {
             return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
         }
 
-        // AppleScript
-        if name == "run_applescript" || name == "run_osascript" {
-            let source = (input["source"] as? String ?? input["script"] as? String ?? "")
+        // AppleScript (NSAppleScript in-process with TCC)
+        if name == "run_applescript" {
+            let source = (input["source"] as? String ?? "")
             let result = await MainActor.run { () -> String in
                 var err: NSDictionary?
                 guard let script = NSAppleScript(source: source) else { return "Error" }
@@ -170,6 +170,15 @@ extension AgentViewModel {
                 return out.stringValue ?? "(no output)"
             }
             return result
+        }
+
+        // osascript (runs osascript CLI in-process with TCC)
+        if name == "run_osascript" {
+            let script = input["script"] as? String ?? input["command"] as? String ?? ""
+            let escaped = script.replacingOccurrences(of: "'", with: "'\\''")
+            let command = "osascript -e '\(escaped)'"
+            let result = await executeLocalStreaming(command: command) { _ in }
+            return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
         }
 
         // Script management
