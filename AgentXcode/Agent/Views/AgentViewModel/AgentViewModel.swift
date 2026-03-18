@@ -360,11 +360,8 @@ final class AgentViewModel {
             scriptTabs.append(tab)
         }
 
-        if let selStr = UserDefaults.standard.string(forKey: "agentSelectedTabId"),
-           let selId = UUID(uuidString: selStr),
-           scriptTabs.contains(where: { $0.id == selId }) {
-            selectedTabId = selId
-        }
+        // Always start on Main tab
+        selectedTabId = nil
     }
 
     // MARK: - Logging State
