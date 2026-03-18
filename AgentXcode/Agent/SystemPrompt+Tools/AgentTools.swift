@@ -142,10 +142,13 @@ enum AgentTools {
     @MainActor static func compactSystemPrompt(userName: String, userHome: String) -> String {
         """
         macOS assistant. User: \(userName), home: \(userHome). Be brief.
-        Reply in English. One tool per turn. End with task_complete.
+        When asked to DO something, call a tool immediately. Do not explain — just act.
+        One tool per reply. Always end with task_complete {"summary": "..."}.
 
-        folder question: answer from PROJECT FOLDER in message — no command needed.
-        shell command: cd to PROJECT FOLDER first.
+        Tool call format — always JSON after the tool name:
+        execute_user_command {"command": "ls -la"}
+        run_osascript {"command": "osascript -e 'display dialog \\"Hello\\"'"}
+        task_complete {"summary": "Done"}
 
         TOOLS:
         \(enabledAppleAIToolLines())
