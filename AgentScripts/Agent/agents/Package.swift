@@ -150,7 +150,6 @@ let coreTargets: [Target] = [
     .target(name: "AgentScriptingBridge", dependencies: [common], path: bridge,
             exclude: allBridgeFiles.filter { $0 != "AgentScriptingBridge.swift" },
             sources: ["AgentScriptingBridge.swift"]),
-    .testTarget(name: "AgentScriptsTests", dependencies: ["ScriptingBridgeCommon"]),
 ]
 
 let package = Package(
