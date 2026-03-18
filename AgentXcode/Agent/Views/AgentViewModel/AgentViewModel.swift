@@ -13,7 +13,7 @@ enum APIProvider: String, CaseIterable {
         case .claude: "Claude"
         case .ollama: "Ollama"
         case .localOllama: "Local Ollama"
-        case .foundationModel: "Apple AI"
+        case .foundationModel: "Apple Intelligence (Experimental)"
         }
     }
 }
