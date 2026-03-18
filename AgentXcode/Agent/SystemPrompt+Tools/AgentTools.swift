@@ -146,12 +146,47 @@ enum AgentTools {
     
     // MARK: - Compact System Prompt (for Apple Intelligence with limited context)
     @MainActor static func compactSystemPrompt(userName: String, userHome: String, projectFolder: String = "") -> String {
-        let folderLine = projectFolder.isEmpty ? "" : "\nProject folder: \(projectFolder) — cd here before shell commands."
+        let folderLine = projectFolder.isEmpty ? "" : "\nProject: \(projectFolder)"
+        let toolGuide = enabledAppleAIToolDescriptions()
         return """
-        You are a macOS automation assistant. User: \(userName), home: \(userHome).\(folderLine)
-        You MUST call tools to complete tasks. Never just describe what you would do.
-        ALWAYS call task_complete when done.
+        macOS assistant. User: \(userName), home: \(userHome).\(folderLine)
+        Call tools to act. For simple questions, just answer in text then call task_complete.
+        ALWAYS call task_complete with a summary when finished.
+
+        YOUR TOOLS:
+        \(toolGuide)
         """
+    }
+
+    /// Brief descriptions of each enabled Apple AI tool.
+    @MainActor private static func enabledAppleAIToolDescriptions() -> String {
+        let prefs = ToolPreferencesService.shared
+        let descs: [String: String] = [
+            "execute_user_command": "Run a shell command",
+            "execute_command": "Run a shell command as root",
+            "run_applescript": "Run AppleScript code",
+            "run_osascript": "Run osascript",
+            "apple_event_query": "Query an app via Apple Events",
+            "list_agent_scripts": "List available automation scripts",
+            "run_agent_script": "Run a named script (list first!)",
+            "read_agent_script": "Read a script's source code",
+            "create_agent_script": "Create a new script",
+            "update_agent_script": "Update an existing script",
+            "delete_agent_script": "Delete a script",
+            "read_file": "Read a file",
+            "write_file": "Write a file",
+            "edit_file": "Edit part of a file",
+            "list_files": "Find files by pattern",
+            "search_files": "Search file contents",
+            "task_complete": "Call when done with a summary",
+            "list_native_tools": "List your available tools",
+            "list_mcp_tools": "List MCP tools",
+            "lookup_sdef": "Look up app scripting dictionary",
+        ]
+        return commonTools
+            .filter { prefs.isEnabled(.foundationModel, $0.name) }
+            .map { tool in "\(tool.name) — \(descs[tool.name] ?? tool.description)" }
+            .joined(separator: "\n")
     }
 
     /// Concrete examples for each tool shown in the Apple AI compact prompt.
