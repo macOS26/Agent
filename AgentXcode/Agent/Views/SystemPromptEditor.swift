@@ -218,8 +218,8 @@ struct SystemPromptsView: View {
     private let providerLabels: [(APIProvider, String, Color, NSColor)] = [
         (.claude,          "Claude",   Color(hue: 0.0/360,   saturation: 0.5, brightness: 0.85),   // red 0°
                                        NSColor(hue: 0.0/360,   saturation: 0.5, brightness: 0.85, alpha: 1.0)),
-        (.ollama,          "Ollama",   Color(hue: 90.0/360,  saturation: 0.5, brightness: 0.85),   // chartreuse 90°
-                                       NSColor(hue: 90.0/360,  saturation: 0.5, brightness: 0.85, alpha: 1.0)),
+        (.ollama,          "Ollama",   Color(hue: 130.0/360, saturation: 0.6, brightness: 0.65),   // green 130°
+                                       NSColor(hue: 130.0/360, saturation: 0.6, brightness: 0.65, alpha: 1.0)),
         (.localOllama,     "Local",    Color(hue: 180.0/360, saturation: 0.5, brightness: 0.85),   // cyan 180°
                                        NSColor(hue: 180.0/360, saturation: 0.5, brightness: 0.85, alpha: 1.0)),
         (.foundationModel, "Apple AI", Color(hue: 270.0/360, saturation: 0.5, brightness: 0.85),   // violet 270°
