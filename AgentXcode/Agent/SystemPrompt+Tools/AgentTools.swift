@@ -156,7 +156,10 @@ enum AgentTools {
         let prefs = ToolPreferencesService.shared
         return commonTools
             .filter { prefs.isEnabled(.foundationModel, $0.name) }
-            .map { "- \($0.name)" }
+            .map { tool in
+                let short = tool.description.components(separatedBy: ". ").first ?? tool.description
+                return "- \(tool.name): \(short)"
+            }
             .joined(separator: "\n")
     }
 
