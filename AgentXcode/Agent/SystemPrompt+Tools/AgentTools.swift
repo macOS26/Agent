@@ -210,6 +210,10 @@ enum AgentTools {
         "ax_press_key":         #"ax_press_key {"keyCode": 36}"#,
         "ax_screenshot":        "ax_screenshot",
         "ax_get_audit_log":     "ax_get_audit_log",
+        "list_apple_scripts":   "list_apple_scripts",
+        "run_apple_script":     #"run_apple_script {"name": "Greeting"}"#,
+        "save_apple_script":    #"save_apple_script {"name": "Greeting", "source": "display dialog \"Hello!\""}"#,
+        "delete_apple_script":  #"delete_apple_script {"name": "Greeting"}"#,
         "list_native_tools":    "list_native_tools",
         "list_mcp_tools":       "list_mcp_tools",
     ]
@@ -624,6 +628,38 @@ enum AgentTools {
             description: "Grant macOS Automation permission so the agent can control Xcode via ScriptingBridge. Run this once before using xcode_build or xcode_run.",
             properties: [:],
             required: []
+        ),
+        // --- Saved AppleScripts ---
+        ToolDef(
+            name: "list_apple_scripts",
+            description: "List all saved AppleScript files in ~/Documents/AgentScript/applescript/.",
+            properties: [:],
+            required: []
+        ),
+        ToolDef(
+            name: "run_apple_script",
+            description: "Run a saved AppleScript by name. List first with list_apple_scripts.",
+            properties: [
+                "name": ["type": "string", "description": "Name of the saved AppleScript (without .applescript extension)"],
+            ],
+            required: ["name"]
+        ),
+        ToolDef(
+            name: "save_apple_script",
+            description: "Save an AppleScript to ~/Documents/AgentScript/applescript/ for reuse.",
+            properties: [
+                "name": ["type": "string", "description": "Name for the script (without .applescript extension)"],
+                "source": ["type": "string", "description": "AppleScript source code"],
+            ],
+            required: ["name", "source"]
+        ),
+        ToolDef(
+            name: "delete_apple_script",
+            description: "Delete a saved AppleScript file.",
+            properties: [
+                "name": ["type": "string", "description": "Name of the saved AppleScript to delete"],
+            ],
+            required: ["name"]
         ),
         // --- Tool Discovery ---
         ToolDef(

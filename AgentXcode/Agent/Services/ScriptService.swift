@@ -12,6 +12,12 @@ final class ScriptService {
     private var bridgesDir: URL { sourcesDir.appendingPathComponent("XCFScriptingBridges") }
     private var scriptsDir: URL { sourcesDir.appendingPathComponent("Scripts") }
 
+    /// Directory for saved AppleScript files
+    static let applescriptDir: URL = {
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        return home.appendingPathComponent("Documents/AgentScript/applescript")
+    }()
+
     struct ScriptInfo {
         let name: String
         let path: String
@@ -198,7 +204,7 @@ final class ScriptService {
         try? fm.createDirectory(at: Self.agentDir, withIntermediateDirectories: true)
 
         // Create organized output subfolders
-        for sub in ["json", "photos", "images", "screenshots", "html"] {
+        for sub in ["json", "photos", "images", "screenshots", "html", "applescript"] {
             try? fm.createDirectory(at: Self.agentDir.appendingPathComponent(sub), withIntermediateDirectories: true)
         }
 
@@ -742,6 +748,66 @@ final class ScriptService {
                 let status = process.terminationStatus
                 continuation.resume(returning: (collected.output, status))
             }
+        }
+    }
+
+    // MARK: - Saved AppleScripts (~/Documents/AgentScript/applescript/)
+
+    /// List all saved .applescript files
+    func listAppleScripts() -> [ScriptInfo] {
+        let fm = FileManager.default
+        let dir = Self.applescriptDir
+        try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        guard let files = try? fm.contentsOfDirectory(atPath: dir.path) else { return [] }
+
+        return files.filter { $0.hasSuffix(".applescript") }.sorted().compactMap { file in
+            let path = dir.appendingPathComponent(file).path
+            guard let attrs = try? fm.attributesOfItem(atPath: path) else { return nil }
+            let name = file.replacingOccurrences(of: ".applescript", with: "")
+            return ScriptInfo(
+                name: name,
+                path: path,
+                modifiedDate: attrs[.modificationDate] as? Date ?? Date(),
+                size: attrs[.size] as? Int ?? 0
+            )
+        }
+    }
+
+    /// Read a saved AppleScript's source
+    func readAppleScript(name: String) -> String? {
+        let scriptName = name.replacingOccurrences(of: ".applescript", with: "")
+        let file = Self.applescriptDir.appendingPathComponent("\(scriptName).applescript")
+        return try? String(contentsOf: file, encoding: .utf8)
+    }
+
+    /// Save an AppleScript to disk (create or overwrite)
+    func saveAppleScript(name: String, source: String) -> String {
+        let fm = FileManager.default
+        let dir = Self.applescriptDir
+        try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
+
+        let scriptName = name.replacingOccurrences(of: ".applescript", with: "")
+        let file = dir.appendingPathComponent("\(scriptName).applescript")
+        do {
+            try source.write(to: file, atomically: true, encoding: .utf8)
+            return "Saved \(scriptName).applescript (\(source.count) bytes)"
+        } catch {
+            return "Error saving: \(error.localizedDescription)"
+        }
+    }
+
+    /// Delete a saved AppleScript
+    func deleteAppleScript(name: String) -> String {
+        let scriptName = name.replacingOccurrences(of: ".applescript", with: "")
+        let file = Self.applescriptDir.appendingPathComponent("\(scriptName).applescript")
+        guard FileManager.default.fileExists(atPath: file.path) else {
+            return "Error: '\(scriptName)' not found"
+        }
+        do {
+            try FileManager.default.removeItem(at: file)
+            return "Deleted \(scriptName).applescript"
+        } catch {
+            return "Error: \(error.localizedDescription)"
         }
     }
 }

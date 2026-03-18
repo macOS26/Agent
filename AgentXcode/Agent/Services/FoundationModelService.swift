@@ -96,6 +96,10 @@ final class FoundationModelService {
             NativeGitDiffTool(),
             NativeListNativeToolsTool(),
             NativeListMCPToolsTool(),
+            NativeListAppleScriptsTool(),
+            NativeRunAppleScriptTool(),
+            NativeSaveAppleScriptTool(),
+            NativeDeleteAppleScriptTool(),
         ]
         return Dictionary(uniqueKeysWithValues: tools.map { ($0.name, $0) })
     }()
@@ -741,6 +745,90 @@ private struct NativeListMCPToolsTool: Tool {
                 return "No MCP tools enabled."
             }
             return enabled.map { "mcp_\($0.serverName)_\($0.name)" }.joined(separator: "\n")
+        }
+        return AgentToolOutput(result: result)
+    }
+}
+
+// MARK: - Saved AppleScript Tools
+
+@Generable
+private struct AppleScriptNameArgs {
+    @Guide(description: "Script name")
+    var name: String
+}
+
+@Generable
+private struct SaveAppleScriptArgs {
+    @Guide(description: "Script name")
+    var name: String
+    @Guide(description: "AppleScript source")
+    var source: String
+}
+
+private struct NativeListAppleScriptsTool: Tool {
+    typealias Arguments = NoArgs
+    typealias Output = AgentToolOutput
+
+    let name = "list_apple_scripts"
+    let description = "List saved AppleScripts"
+
+    func call(arguments: NoArgs) async throws -> AgentToolOutput {
+        let result: String = await MainActor.run {
+            let scripts = ScriptService().listAppleScripts()
+            return scripts.isEmpty ? "No saved AppleScripts" : scripts.map { "\($0.name) (\($0.size) bytes)" }.joined(separator: "\n")
+        }
+        return AgentToolOutput(result: result)
+    }
+}
+
+private struct NativeRunAppleScriptTool: Tool {
+    typealias Arguments = AppleScriptNameArgs
+    typealias Output = AgentToolOutput
+
+    let name = "run_apple_script"
+    let description = "Run a saved AppleScript by name"
+
+    func call(arguments: AppleScriptNameArgs) async throws -> AgentToolOutput {
+        let result: String = await MainActor.run {
+            guard let source = ScriptService().readAppleScript(name: arguments.name) else {
+                return "Error: '\(arguments.name)' not found. Use list_apple_scripts first."
+            }
+            var err: NSDictionary?
+            guard let script = NSAppleScript(source: source) else { return "Error creating script" }
+            let out = script.executeAndReturnError(&err)
+            if let e = err { return "AppleScript error: \(e)" }
+            return out.stringValue ?? "(no output)"
+        }
+        return AgentToolOutput(result: result)
+    }
+}
+
+private struct NativeSaveAppleScriptTool: Tool {
+    typealias Arguments = SaveAppleScriptArgs
+    typealias Output = AgentToolOutput
+
+    let name = "save_apple_script"
+    let description = "Save an AppleScript for reuse"
+
+    func call(arguments: SaveAppleScriptArgs) async throws -> AgentToolOutput {
+        let result: String = await MainActor.run {
+            ScriptService().saveAppleScript(name: arguments.name, source: arguments.source)
+        }
+        return AgentToolOutput(result: result)
+    }
+}
+
+private struct NativeDeleteAppleScriptTool: Tool {
+    typealias Arguments = AppleScriptNameArgs
+    typealias Output = AgentToolOutput
+
+    let name = "delete_apple_script"
+    let description = "Delete a saved AppleScript"
+
+    func call(arguments: AppleScriptNameArgs) async throws -> AgentToolOutput {
+        let result: String = await MainActor.run {
+            ScriptService().deleteAppleScript(name: arguments.name)
         }
         return AgentToolOutput(result: result)
     }

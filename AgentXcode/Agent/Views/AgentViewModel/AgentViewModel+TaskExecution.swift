@@ -215,6 +215,32 @@ extension AgentViewModel {
             return scriptService.deleteScript(name: input["name"] as? String ?? "")
         }
 
+        // Saved AppleScripts
+        if name == "list_apple_scripts" {
+            let scripts = scriptService.listAppleScripts()
+            return scripts.isEmpty ? "No saved AppleScripts" : scripts.map { "\($0.name) (\($0.size) bytes)" }.joined(separator: "\n")
+        }
+        if name == "save_apple_script" {
+            return scriptService.saveAppleScript(name: input["name"] as? String ?? "", source: input["source"] as? String ?? "")
+        }
+        if name == "delete_apple_script" {
+            return scriptService.deleteAppleScript(name: input["name"] as? String ?? "")
+        }
+        if name == "run_apple_script" {
+            let scriptName = input["name"] as? String ?? ""
+            guard let source = scriptService.readAppleScript(name: scriptName) else {
+                return "Error: AppleScript '\(scriptName)' not found. Use list_apple_scripts first."
+            }
+            let result = await MainActor.run { () -> String in
+                var err: NSDictionary?
+                guard let script = NSAppleScript(source: source) else { return "Error creating script" }
+                let out = script.executeAndReturnError(&err)
+                if let e = err { return "AppleScript error: \(e)" }
+                return out.stringValue ?? "(no output)"
+            }
+            return result
+        }
+
         // File operations
         if name == "read_file" {
             let path = input["file_path"] as? String ?? ""
@@ -1238,20 +1264,99 @@ extension AgentViewModel {
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
-                        // NSAppleScript execution (in-process, full TCC)
+                        // NSAppleScript execution (in-process, full TCC, runs in tab)
                         if name == "run_applescript" {
                             let source = input["source"] as? String ?? ""
+                            let tab: ScriptTab
+                            if let existing = scriptTabs.first(where: { $0.scriptName == "applescript" }) {
+                                tab = existing
+                                selectedTabId = tab.id
+                                tab.isRunning = true
+                            } else {
+                                tab = openScriptTab(scriptName: "applescript")
+                            }
                             let preview = source.prefix(80).replacingOccurrences(of: "\n", with: " ")
-                            appendLog("🍎 AppleScript: \(preview)...")
+                            appendLog("🍎 AppleScript (see tab)")
                             flushLog()
+                            tab.appendLog("🍎 \(preview)...")
+                            tab.flush()
+
                             let result = await Self.offMain {
                                 NSAppleScriptService.shared.execute(source: source)
                             }
-                            if !result.success {
-                                appendLog(result.output)
-                            } else {
-                                appendLog(Self.preview(result.output, lines: 10))
+
+                            tab.isRunning = false
+                            tab.exitCode = result.success ? 0 : 1
+                            if !result.output.isEmpty {
+                                tab.appendOutput(result.output)
                             }
+                            tab.flush()
+                            persistScriptTabs()
+
+                            let statusNote = result.success ? "completed" : "error"
+                            appendLog("AppleScript \(statusNote)")
+                            flushLog()
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": result.output])
+                        }
+
+                        // Saved AppleScript tools
+                        if name == "list_apple_scripts" {
+                            let scripts = scriptService.listAppleScripts()
+                            let output = scripts.isEmpty
+                                ? "No saved AppleScripts in ~/Documents/AgentScript/applescript/"
+                                : scripts.map { "\($0.name) (\($0.size) bytes)" }.joined(separator: "\n")
+                            appendLog("🍎 Saved AppleScripts: \(scripts.count) found")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+                        if name == "save_apple_script" {
+                            let scriptName = input["name"] as? String ?? ""
+                            let source = input["source"] as? String ?? ""
+                            let output = scriptService.saveAppleScript(name: scriptName, source: source)
+                            appendLog("🍎 \(output)")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+                        if name == "delete_apple_script" {
+                            let scriptName = input["name"] as? String ?? ""
+                            let output = scriptService.deleteAppleScript(name: scriptName)
+                            appendLog("🍎 \(output)")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+                        if name == "run_apple_script" {
+                            let scriptName = input["name"] as? String ?? ""
+                            guard let source = scriptService.readAppleScript(name: scriptName) else {
+                                let err = "Error: AppleScript '\(scriptName)' not found. Use list_apple_scripts first."
+                                appendLog("🍎 \(err)")
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
+                                continue
+                            }
+                            let tab: ScriptTab
+                            if let existing = scriptTabs.first(where: { $0.scriptName == "applescript" }) {
+                                tab = existing
+                                selectedTabId = tab.id
+                                tab.isRunning = true
+                            } else {
+                                tab = openScriptTab(scriptName: "applescript")
+                            }
+                            appendLog("🍎 Running saved: \(scriptName) (see tab)")
+                            flushLog()
+                            tab.appendLog("🍎 \(scriptName)")
+                            tab.flush()
+
+                            let result = await Self.offMain {
+                                NSAppleScriptService.shared.execute(source: source)
+                            }
+
+                            tab.isRunning = false
+                            tab.exitCode = result.success ? 0 : 1
+                            if !result.output.isEmpty {
+                                tab.appendOutput(result.output)
+                            }
+                            tab.flush()
+                            persistScriptTabs()
+
+                            let statusNote = result.success ? "completed" : "error"
+                            appendLog("\(scriptName) \(statusNote)")
+                            flushLog()
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": result.output])
                         }
 
