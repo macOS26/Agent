@@ -79,7 +79,9 @@ struct MCPServersView: View {
         .frame(maxHeight: 500)
         .sheet(isPresented: $showingAddServer) {
             MCPServerEditView(server: nil) { newServer in
-                registry.add(newServer)
+                if let err = registry.add(newServer) {
+                    print("[MCP] Add failed: \(err)")
+                }
                 showingAddServer = false
             }
         }
@@ -89,19 +91,8 @@ struct MCPServersView: View {
                 editingServer = nil
             }
         }
-        .alert("Import Configuration", isPresented: $showingImport) {
-            TextField("Paste JSON configuration", text: $importText, axis: .vertical)
-                .font(.system(.caption, design: .monospaced))
-            Button("Cancel", role: .cancel) {
-                importText = ""
-            }
-            Button("Import") {
-                if registry.importFrom(importText) {
-                    importText = ""
-                }
-            }
-        } message: {
-            Text("Paste MCP server JSON configuration")
+        .sheet(isPresented: $showingImport) {
+            MCPImportView(registry: registry, isPresented: $showingImport)
         }
         .onAppear {
             // Force toggles to re-render with correct thumb after popover appears
@@ -586,6 +577,56 @@ private struct PlainTextEditor: NSViewRepresentable {
             guard let tv = notification.object as? NSTextView else { return }
             text.wrappedValue = tv.string
         }
+    }
+}
+
+// MARK: - Import View (proper sheet with text editor)
+
+struct MCPImportView: View {
+    let registry: MCPServerRegistry
+    @Binding var isPresented: Bool
+    @State private var jsonText = ""
+    @State private var errorText: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Import MCP Server")
+                .font(.headline)
+            Text("Paste standard MCP JSON configuration:")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            PlainTextEditor(text: $jsonText)
+                .frame(height: 200)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+
+            if let errorText {
+                Text(errorText)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+
+            HStack {
+                Button("Cancel") {
+                    isPresented = false
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                Spacer()
+                Button("Import") {
+                    if registry.importFrom(jsonText) {
+                        isPresented = false
+                    } else {
+                        errorText = "Invalid JSON. Expected format: {\"mcpServers\": {\"name\": {\"command\": \"...\", \"args\": [...]}}}"
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+                .disabled(jsonText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+        }
+        .padding(16)
+        .frame(width: 450)
     }
 }
 

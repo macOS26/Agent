@@ -169,21 +169,21 @@ final class MCPServerRegistry {
 
     // MARK: - CRUD Operations
 
-    func add(_ config: MCPServerConfig) {
+    @discardableResult
+    func add(_ config: MCPServerConfig) -> String? {
         if config.isHTTP {
             guard let url = URL(string: config.url ?? ""), url.scheme != nil, url.host != nil else {
-                print("[MCPConfig] Refusing to add server: invalid URL \(config.url ?? "")")
-                return
+                return "Invalid URL: \(config.url ?? "")"
             }
         } else {
             guard Self.validateCommandPath(config.command) else {
-                print("[MCPConfig] Refusing to add server: command not found at \(config.command)")
-                return
+                return "Command not found: \(config.command)"
             }
         }
         config.savePrefs()
         servers.append(config)
         save()
+        return nil
     }
 
     func update(_ config: MCPServerConfig) {
