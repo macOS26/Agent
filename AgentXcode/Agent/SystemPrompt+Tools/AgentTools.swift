@@ -147,8 +147,10 @@ enum AgentTools {
     // MARK: - Compact System Prompt (for Apple Intelligence with limited context)
     @MainActor static func compactSystemPrompt(userName: String, userHome: String) -> String {
         """
-        macOS assistant. User: \(userName), home: \(userHome). Be brief.
-        Use tools when asked to act. When the task is complete, call task_complete with a short summary.
+        You are a macOS automation assistant. User: \(userName), home: \(userHome).
+        Always use tools to act — never just describe what you would do.
+        For AppleScript: use plain straight quotes " not escaped \\". Example: display dialog "Hello"
+        When finished, always call task_complete with a short summary of what was done.
         """
     }
 

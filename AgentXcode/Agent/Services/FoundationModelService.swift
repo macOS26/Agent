@@ -314,7 +314,7 @@ private struct NativeShellTool: Tool {
     let projectFolder: String
 
     func call(arguments: ShellCommandArgs) async throws -> AgentToolOutput {
-        var cmd = arguments.command
+        var cmd = arguments.command.asciiQuotes
         if !projectFolder.isEmpty && !cmd.hasPrefix("cd ") {
             let escaped = projectFolder.replacingOccurrences(of: "'", with: "'\\''")
             cmd = "cd '\(escaped)' && \(cmd)"
@@ -435,7 +435,7 @@ private struct NativeAppleScriptTool: Tool {
     let description = "Execute AppleScript code in-process via NSAppleScript with full TCC permissions."
 
     func call(arguments: AppleScriptArgs) async throws -> AgentToolOutput {
-        let source = arguments.source
+        let source = arguments.source.appleScriptSanitized
         let result = await MainActor.run { () -> String in
             var errorDict: NSDictionary?
             guard let script = NSAppleScript(source: source) else {
@@ -458,7 +458,7 @@ private struct NativeOsaScriptTool: Tool {
     let description = "Run AppleScript source code via osascript with full TCC permissions."
 
     func call(arguments: OsaScriptArgs) async throws -> AgentToolOutput {
-        let result = nativeShellRun("/usr/bin/osascript", args: ["-e", arguments.script])
+        let result = nativeShellRun("/usr/bin/osascript", args: ["-e", arguments.script.appleScriptSanitized])
         print("🔧 [Apple AI] run_osascript\n\(result)")
         return AgentToolOutput(result: result)
     }
@@ -684,4 +684,24 @@ private extension String {
 
     /// Returns self if non-empty, otherwise returns the given fallback.
     func orProjectFolder(_ fallback: String) -> String { isEmpty ? fallback : self }
+
+    /// Replace Unicode smart/curly quotes and apostrophes with plain ASCII equivalents.
+    /// Apple Intelligence often generates these in code strings, which break NSAppleScript / osascript / bash.
+    var asciiQuotes: String {
+        self
+            .replacingOccurrences(of: "\u{201C}", with: "\"")  // " LEFT DOUBLE QUOTATION MARK
+            .replacingOccurrences(of: "\u{201D}", with: "\"")  // " RIGHT DOUBLE QUOTATION MARK
+            .replacingOccurrences(of: "\u{2018}", with: "'")   // ' LEFT SINGLE QUOTATION MARK
+            .replacingOccurrences(of: "\u{2019}", with: "'")   // ' RIGHT SINGLE QUOTATION MARK
+            .replacingOccurrences(of: "\u{2032}", with: "'")   // ′ PRIME (sometimes used as apostrophe)
+    }
+
+    /// Sanitize a string for use as AppleScript source.
+    /// Fixes smart quotes AND removes backslash-escaping that the model adds (\" → ").
+    /// AppleScript uses raw unquoted " for string literals — backslash escapes are invalid syntax.
+    var appleScriptSanitized: String {
+        asciiQuotes
+            .replacingOccurrences(of: "\\\"", with: "\"")  // \" → "  (model over-escapes quotes)
+            .replacingOccurrences(of: "\\'", with: "'")     // \' → '
+    }
 }
