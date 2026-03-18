@@ -608,9 +608,9 @@ private struct LangDef {
     private static let actShellRx: NSRegularExpression? = try? NSRegularExpression(
         pattern: #"\$\s+\S+"#)
     private static let actGrepFileRx: NSRegularExpression? = try? NSRegularExpression(
-        pattern: #"^(/[^\s:]+):(\d+):"#, options: .anchorsMatchLines)
+        pattern: #"^(\.?/[^\s:]+):(\d+):"#, options: .anchorsMatchLines)
     private static let actAbsPathRx: NSRegularExpression? = try? NSRegularExpression(
-        pattern: #"(?:^|\s)((?:/[\w.@+\-]+)+/?)"#, options: .anchorsMatchLines)
+        pattern: #"(?:^|\s)(\.?(?:/[\w.@+\-]+)+/?)"#, options: .anchorsMatchLines)
     private static let actFlagRx: NSRegularExpression? = try? NSRegularExpression(
         pattern: #"(?<=\s)-{1,2}[\w][\w\-]*"#)
     private static let actQuoteRx: NSRegularExpression? = try? NSRegularExpression(
@@ -620,7 +620,7 @@ private struct LangDef {
     static func looksLikeActivityLogLine(_ line: String) -> Bool {
         let t = line.trimmingCharacters(in: .whitespaces)
         if t.range(of: #"^\[\d{2}:\d{2}:\d{2}\]"#, options: .regularExpression) != nil { return true }
-        if t.range(of: #"^/\S+:\d+:"#, options: .regularExpression) != nil { return true }
+        if t.range(of: #"^\.?/\S+:\d+:"#, options: .regularExpression) != nil { return true }
         return false
     }
 
