@@ -99,6 +99,7 @@ Agent uses SwiftUI, XPC, SMAppService, Apple Events, ScriptingBridge, Accessibil
   - **Claude** (Anthropic API key)
   - **Ollama Pro Cloud** (Ollama API key)
   - **Local Ollama** (no API key required, but requires significant RAM)
+  - **Apple Intelligence** (no API key required — experimental alpha, runs on-device)
 
 ### 2. Build and Run
 
@@ -765,6 +766,9 @@ Attach screenshots or paste images directly into Agent. Images are encoded as ba
 | **Claude** | Yes (Anthropic) | ✓ | Sonnet 4, Opus 4, Haiku 3.5 |
 | **Ollama Cloud** | Yes (Ollama Pro) | Auto-detected | Cloud-hosted Ollama |
 | **Local Ollama** | No | Auto-detected | Requires 32-128GB RAM |
+| **Apple Intelligence** | No | No | Experimental (alpha) — on-device, no API key needed |
+
+> **Apple Intelligence (Experimental):** Runs entirely on-device using Apple's Foundation Models framework. No configuration needed. Due to its small context window, best for very specific tasks — type exact AppleScript syntax for best results (e.g. `display dialog "hello"`). Does not use MCP. User-selectable tool subset via the Tools picker.
 
 ### Task Memory
 
