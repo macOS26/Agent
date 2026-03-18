@@ -27,8 +27,9 @@ struct PromptEditor: NSViewRepresentable {
         textView.isAutomaticLinkDetectionEnabled = false
         textView.isAutomaticDataDetectionEnabled = false
         textView.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
-        textView.textColor = .textColor
-        textView.backgroundColor = .textBackgroundColor
+        textView.textColor = NSColor(red: 0.2, green: 0.9, blue: 0.3, alpha: 1.0)
+        textView.insertionPointColor = NSColor(red: 0.2, green: 0.9, blue: 0.3, alpha: 1.0)
+        textView.backgroundColor = NSColor(red: 0.05, green: 0.05, blue: 0.05, alpha: 1.0)
         textView.isEditable = true
         textView.isSelectable = true
         textView.allowsUndo = true
