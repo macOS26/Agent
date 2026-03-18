@@ -160,8 +160,8 @@ extension AgentViewModel {
         }
 
         // AppleScript
-        if name == "run_applescript" {
-            let source = (input["source"] as? String ?? "")
+        if name == "run_applescript" || name == "run_osascript" {
+            let source = (input["source"] as? String ?? input["script"] as? String ?? "")
             let result = await MainActor.run { () -> String in
                 var err: NSDictionary?
                 guard let script = NSAppleScript(source: source) else { return "Error" }
