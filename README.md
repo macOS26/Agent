@@ -1,3 +1,5 @@
+<img width="128" alt="Agent! icon" src="https://github.com/user-attachments/assets/5645d8b8-8ce7-4d56-9ede-5eb58f31f227" />
+
 # Agent!
 
 [![Swift 6.0](https://img.shields.io/badge/Swift-6.0-orange.svg)](https://swift.org)
@@ -11,7 +13,6 @@
 Ollama Pro $20 subscription is preferred.
 Apple Intelligence is experimental.
 
-<img width="256" alt="Agent! icon" src="https://github.com/user-attachments/assets/5645d8b8-8ce7-4d56-9ede-5eb58f31f227" />
 
 A native macOS autonomous AI agent built entirely in Swift.
 
