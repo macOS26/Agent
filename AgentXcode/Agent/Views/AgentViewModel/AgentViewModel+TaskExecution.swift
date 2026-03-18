@@ -289,9 +289,11 @@ extension AgentViewModel {
             }
         }
 
-        // Task complete
+        // Task complete — signal via NativeToolContext so the task loop can detect it
         if name == "task_complete" {
-            return "Task complete: \(input["summary"] as? String ?? "")"
+            let summary = input["summary"] as? String ?? "Done"
+            NativeToolContext.taskCompleteSummary = summary
+            return "Task complete: \(summary)"
         }
 
         // Fallback
@@ -470,6 +472,7 @@ extension AgentViewModel {
         let foundationModel: FoundationModelService? = provider == .foundationModel
             ? FoundationModelService(historyContext: historyContext, projectFolder: projectFolder) : nil
         if foundationModel != nil {
+            NativeToolContext.taskCompleteSummary = nil
             NativeToolContext.toolHandler = { [weak self] toolName, input in
                 await self?.executeNativeTool(toolName, input: input) ?? "Error: agent unavailable"
             }
@@ -522,7 +525,6 @@ extension AgentViewModel {
                         }
                     }
                     textWasStreamed = true
-                    flushStreamBuffer()
                 } else if let ollama {
                     response = try await ollama.sendStreaming(messages: messages) { [weak self] delta in
                         Task { @MainActor in
@@ -542,8 +544,22 @@ extension AgentViewModel {
                 } else {
                     throw AgentError.noAPIKey
                 }
+                flushStreamBuffer()
                 isThinking = false
                 guard !Task.isCancelled else { break }
+
+                // Check if Apple AI called task_complete via native tool system
+                if let summary = NativeToolContext.taskCompleteSummary {
+                    NativeToolContext.taskCompleteSummary = nil
+                    completionSummary = summary
+                    appendLog("✅ Completed: \(summary)")
+                    flushLog()
+                    history.add(TaskRecord(prompt: prompt, summary: summary, commandsRun: commandsRun), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
+                    ChatHistoryStore.shared.endCurrentTask(summary: summary)
+                    sendAgentReply(summary)
+                    isRunning = false
+                    return
+                }
 
                 var toolResults: [[String: Any]] = []
                 var hasToolUse = false

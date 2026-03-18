@@ -287,6 +287,8 @@ final class FoundationModelService {
 /// Shared state for native Foundation Models tools.
 enum NativeToolContext {
     @MainActor static var projectFolder: String = ""
+    /// Set when task_complete is called via native tool — the task loop checks this after each iteration.
+    @MainActor static var taskCompleteSummary: String?
     /// Handler that routes tool calls to real execution (set by ViewModel before task starts).
     nonisolated(unsafe) static var toolHandler: (@Sendable (String, sending [String: Any]) async -> String)?
 }
