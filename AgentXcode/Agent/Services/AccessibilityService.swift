@@ -39,7 +39,8 @@ final class AccessibilityService: @unchecked Sendable {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        
+        Self.logAudit("listWindows(limit: \(limit))")
+
         let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
         
         var results: [[String: Any]] = []
@@ -81,7 +82,8 @@ final class AccessibilityService: @unchecked Sendable {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        
+        Self.logAudit("inspectElementAt(x: \(x), y: \(y), depth: \(depth))")
+
         let point = CGPoint(x: x, y: y)
         let systemWide = AXUIElementCreateSystemWide()
         var element: AXUIElement?
@@ -163,7 +165,8 @@ final class AccessibilityService: @unchecked Sendable {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        
+        Self.logAudit("getElementProperties(role: \(role ?? "nil"), title: \(title ?? "nil"), app: \(appBundleId ?? "nil"))")
+
         if let x = x, let y = y {
             return inspectElementAt(x: x, y: y, depth: 2)
         }
@@ -276,7 +279,8 @@ final class AccessibilityService: @unchecked Sendable {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        
+        Self.logAudit("performAction(\(action)) role: \(role ?? "nil"), title: \(title ?? "nil"), app: \(appBundleId ?? "nil"), allowWrites: \(allowWrites)")
+
         if !allowWrites && Self.isRestricted(action) {
             return errorJSON("Action '\(action)' restricted. Enable in Accessibility Access or set allowWrites=true.")
         }
@@ -318,7 +322,8 @@ final class AccessibilityService: @unchecked Sendable {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        
+        Self.logAudit("typeText(\(text.count) chars) at x: \(x.map(String.init) ?? "nil"), y: \(y.map(String.init) ?? "nil")")
+
         // If coordinates provided, click first to focus
         if let x = x, let y = y {
             let clickResult = clickAt(x: x, y: y, button: "left", clicks: 1)
@@ -377,9 +382,10 @@ final class AccessibilityService: @unchecked Sendable {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        
+        Self.logAudit("clickAt(x: \(x), y: \(y), button: \(button), clicks: \(clicks))")
+
         let source = CGEventSource(stateID: .combinedSessionState)
-        
+
         // Map button name to CGMouseButton
         let cgButton: CGMouseButton
         switch button.lowercased() {
@@ -466,9 +472,10 @@ final class AccessibilityService: @unchecked Sendable {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        
+        Self.logAudit("scrollAt(x: \(x), y: \(y), deltaX: \(deltaX), deltaY: \(deltaY))")
+
         let source = CGEventSource(stateID: .combinedSessionState)
-        
+
         // Move to position first
         let moveEvent = CGEvent(source: source)
         moveEvent?.type = .mouseMoved
@@ -494,9 +501,10 @@ final class AccessibilityService: @unchecked Sendable {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        
+        Self.logAudit("pressKey(\(virtualKey), modifiers: \(modifiers))")
+
         let source = CGEventSource(stateID: .combinedSessionState)
-        
+
         // Map modifier names to flags
         var flags: CGEventFlags = []
         for mod in modifiers {
@@ -540,7 +548,8 @@ final class AccessibilityService: @unchecked Sendable {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility/Screen Recording permission required.")
         }
-        
+        Self.logAudit("captureScreenshot(x: \(x.map(String.init) ?? "nil"), y: \(y.map(String.init) ?? "nil"), w: \(width.map(String.init) ?? "nil"), h: \(height.map(String.init) ?? "nil"), windowID: \(windowID.map(String.init) ?? "nil"))")
+
         let home = FileManager.default.homeDirectoryForCurrentUser
         let fileName = "screenshot_\(UUID().uuidString).png"
         let outputPath = home.appendingPathComponent("Documents/AgentScript/screenshots/\(fileName)").path
@@ -598,7 +607,8 @@ final class AccessibilityService: @unchecked Sendable {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility/Screen Recording permission required.")
         }
-        
+        Self.logAudit("captureAllWindows()")
+
         let home = FileManager.default.homeDirectoryForCurrentUser
         let fileName = "screenshot_\(UUID().uuidString).png"
         let outputPath = home.appendingPathComponent("Documents/AgentScript/\(fileName)").path
@@ -659,7 +669,18 @@ final class AccessibilityService: @unchecked Sendable {
         let fileURL = auditLogFile
         DispatchQueue.global().async {
             if let data = (entry + "\n").data(using: .utf8) {
-                try? data.write(to: fileURL, options: .atomic)
+                if FileManager.default.fileExists(atPath: fileURL.path) {
+                    if let handle = try? FileHandle(forWritingTo: fileURL) {
+                        handle.seekToEndOfFile()
+                        handle.write(data)
+                        handle.closeFile()
+                    }
+                } else {
+                    try? FileManager.default.createDirectory(
+                        at: fileURL.deletingLastPathComponent(),
+                        withIntermediateDirectories: true)
+                    try? data.write(to: fileURL, options: .atomic)
+                }
             }
         }
     }
