@@ -274,14 +274,28 @@ extension AgentViewModel {
             return enabled.isEmpty ? "No MCP tools enabled" : enabled.map { "mcp_\($0.serverName)_\($0.name)" }.joined(separator: "\n")
         }
 
+        // Apple Event query
+        if name == "apple_event_query" {
+            let bundleID = input["bundle_id"] as? String ?? ""
+            let operations = input["operations"] as? [[String: Any]] ?? []
+            let allowWrites = input["allow_writes"] as? Bool ?? false
+            let opsData = try? JSONSerialization.data(withJSONObject: operations)
+            return await Self.offMain {
+                guard let data = opsData,
+                      let ops = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+                    return "Error: failed to process operations"
+                }
+                return AppleEventService.shared.execute(bundleID: bundleID, operations: ops, allowWrites: allowWrites)
+            }
+        }
+
         // Task complete
         if name == "task_complete" {
             return "Task complete: \(input["summary"] as? String ?? "")"
         }
 
-        // Fallback: try as shell command
-        let result = await executeViaUserAgent(command: "echo 'Tool \(name) not implemented for Apple AI'")
-        return result.output
+        // Fallback
+        return "Tool \(name) not implemented for Apple AI"
     }
 
     /// Execute a command via UserService XPC with streaming output.
