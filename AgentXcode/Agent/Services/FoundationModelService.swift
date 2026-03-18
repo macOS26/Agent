@@ -266,8 +266,28 @@ final class FoundationModelService {
                    let input = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
                     return toolUseResult(name: toolName, input: input)
                 }
+            } else if afterName.hasPrefix("(") {
+                // Python-style kwargs: task_complete(summary="Done")
+                if let closeIdx = afterName.firstIndex(of: ")") {
+                    let inner = afterName[afterName.index(after: afterName.startIndex)..<closeIdx]
+                    var input: [String: Any] = [:]
+                    for part in inner.split(separator: ",") {
+                        let kv = part.split(separator: "=", maxSplits: 1)
+                        if kv.count == 2 {
+                            let key = kv[0].trimmingCharacters(in: .whitespaces)
+                            var val = kv[1].trimmingCharacters(in: .whitespaces)
+                            // Strip quotes
+                            if (val.hasPrefix("\"") && val.hasSuffix("\"")) ||
+                               (val.hasPrefix("'") && val.hasSuffix("'")) {
+                                val = String(val.dropFirst().dropLast())
+                            }
+                            input[key] = val
+                        }
+                    }
+                    return toolUseResult(name: toolName, input: input)
+                }
             } else {
-                // No JSON args (e.g. "task_complete." or "task_complete") — call with empty input
+                // No args (e.g. "task_complete." or "task_complete") — call with empty input
                 let nextChar = afterName.first
                 if nextChar == nil || nextChar == "." || nextChar == "\n" || nextChar == " " {
                     return toolUseResult(name: toolName, input: [:])
