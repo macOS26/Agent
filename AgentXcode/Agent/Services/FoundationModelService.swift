@@ -441,7 +441,7 @@ private struct NativeAppleScriptTool: Tool {
     typealias Output = AgentToolOutput
 
     let name = "run_applescript"
-    let description = "Run AppleScript code"
+    let description = "Run AppleScript. Example: display dialog \"Hello\""
 
     func call(arguments: AppleScriptArgs) async throws -> AgentToolOutput {
         let source = arguments.source.appleScriptSanitized
@@ -464,7 +464,7 @@ private struct NativeOsaScriptTool: Tool {
     typealias Output = AgentToolOutput
 
     let name = "run_osascript"
-    let description = "Run AppleScript via osascript"
+    let description = "Run osascript. Example: say \"hello\""
 
     func call(arguments: OsaScriptArgs) async throws -> AgentToolOutput {
         let result = nativeShellRun("/usr/bin/osascript", args: ["-e", arguments.script.appleScriptSanitized])

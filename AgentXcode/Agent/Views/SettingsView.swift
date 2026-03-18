@@ -113,7 +113,7 @@ struct SettingsView: View {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .foregroundStyle(.orange)
                                 .font(.caption)
-                            Text("Limited tool use: the on-device model may skip tools or hallucinate results. It also has built-in safety filters that block system script execution. For AppleScript, type the exact syntax (e.g. display dialog \"hello\"). Best for simple conversational tasks.")
+                            Text("For AppleScript, type the exact syntax (e.g. display dialog \"hello\"). Best for simple conversational tasks.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
