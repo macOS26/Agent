@@ -807,31 +807,27 @@ extension AgentViewModel {
 
                         // Tool discovery
                         if name == "list_native_tools" {
-                            let allTools = AgentTools.tools(for: selectedProvider)
                             let prefs = ToolPreferencesService.shared
-                            let lines = allTools.sorted(by: { $0.name < $1.name }).map { tool in
-                                let status = prefs.isEnabled(selectedProvider, tool.name) ? "enabled" : "disabled"
-                                return "\(tool.name): \(status)"
-                            }
-                            let output = lines.joined(separator: "\n")
-                            appendLog("🔧 Native tools: \(allTools.count)")
+                            let enabled = AgentTools.tools(for: selectedProvider)
+                                .filter { prefs.isEnabled(selectedProvider, $0.name) }
+                                .sorted(by: { $0.name < $1.name })
+                            let output = enabled.map { $0.name }.joined(separator: "\n")
+                            appendLog("🔧 Native tools: \(enabled.count) enabled")
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
                         if name == "list_mcp_tools" {
                             let mcpService = MCPService.shared
-                            let mcpTools = mcpService.discoveredTools
-                            if mcpTools.isEmpty {
-                                let output = "No MCP tools discovered. No MCP servers are connected."
+                            let enabled = mcpService.discoveredTools
+                                .filter { mcpService.isToolEnabled(serverName: $0.serverName, toolName: $0.name) }
+                                .sorted(by: { $0.name < $1.name })
+                            if enabled.isEmpty {
+                                let output = "No MCP tools enabled."
                                 appendLog("🔧 MCP tools: 0")
                                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                             } else {
-                                let lines = mcpTools.sorted(by: { $0.name < $1.name }).map { tool in
-                                    let status = mcpService.isToolEnabled(serverName: tool.serverName, toolName: tool.name) ? "enabled" : "disabled"
-                                    return "mcp_\(tool.serverName)_\(tool.name): \(status) (server: \(tool.serverName))"
-                                }
-                                let output = lines.joined(separator: "\n")
-                                appendLog("🔧 MCP tools: \(mcpTools.count)")
+                                let output = enabled.map { "mcp_\($0.serverName)_\($0.name)" }.joined(separator: "\n")
+                                appendLog("🔧 MCP tools: \(enabled.count) enabled")
                                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                             }
                         }

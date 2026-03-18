@@ -608,13 +608,13 @@ enum AgentTools {
         // --- Tool Discovery ---
         ToolDef(
             name: "list_native_tools",
-            description: "List all native tools and their enabled/disabled status.",
+            description: "List all enabled native tools.",
             properties: [:],
             required: []
         ),
         ToolDef(
             name: "list_mcp_tools",
-            description: "List all MCP (Model Context Protocol) tools and their enabled/disabled status.",
+            description: "List all enabled MCP (Model Context Protocol) tools.",
             properties: [:],
             required: []
         ),

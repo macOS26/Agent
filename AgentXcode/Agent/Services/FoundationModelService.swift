@@ -95,6 +95,8 @@ final class FoundationModelService {
         if on("git_commit")           { t.append(NativeGitCommitTool(projectFolder: pf)) }
         if on("git_log")              { t.append(NativeGitLogTool(projectFolder: pf)) }
         if on("git_diff")             { t.append(NativeGitDiffTool(projectFolder: pf)) }
+        if on("list_native_tools")    { t.append(NativeListNativeToolsTool()) }
+        if on("list_mcp_tools")       { t.append(NativeListMCPToolsTool()) }
         print("🔧 [Apple AI] Loaded \(t.count) native tools: \(t.map { $0.name }.joined(separator: ", "))")
         return t
     }
@@ -643,6 +645,50 @@ private struct NativeGitDiffTool: Tool {
         if arguments.staged == true { cmd += " --staged" }
         if let target = arguments.target { cmd += " \(target)" }
         return AgentToolOutput(result: nativeShellRun(cmd))
+    }
+}
+
+@Generable
+private struct NoArgs {}
+
+private struct NativeListNativeToolsTool: Tool {
+    typealias Arguments = NoArgs
+    typealias Output = AgentToolOutput
+
+    let name = "list_native_tools"
+    let description = "List all enabled native tools."
+
+    func call(arguments: NoArgs) async throws -> AgentToolOutput {
+        let lines: [String] = await MainActor.run {
+            let prefs = ToolPreferencesService.shared
+            return AgentTools.tools(for: .foundationModel)
+                .filter { prefs.isEnabled(.foundationModel, $0.name) }
+                .sorted(by: { $0.name < $1.name })
+                .map { $0.name }
+        }
+        return AgentToolOutput(result: lines.joined(separator: "\n"))
+    }
+}
+
+private struct NativeListMCPToolsTool: Tool {
+    typealias Arguments = NoArgs
+    typealias Output = AgentToolOutput
+
+    let name = "list_mcp_tools"
+    let description = "List all enabled MCP tools."
+
+    func call(arguments: NoArgs) async throws -> AgentToolOutput {
+        let result: String = await MainActor.run {
+            let mcpService = MCPService.shared
+            let enabled = mcpService.discoveredTools
+                .filter { mcpService.isToolEnabled(serverName: $0.serverName, toolName: $0.name) }
+                .sorted(by: { $0.name < $1.name })
+            if enabled.isEmpty {
+                return "No MCP tools enabled."
+            }
+            return enabled.map { "mcp_\($0.serverName)_\($0.name)" }.joined(separator: "\n")
+        }
+        return AgentToolOutput(result: result)
     }
 }
 
