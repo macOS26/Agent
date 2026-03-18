@@ -81,12 +81,22 @@ final class MCPService: @unchecked Sendable {
                 autoStart: config.autoStart
             )
         } else {
+            // Resolve bare command names (e.g. "uvx") to full paths since
+            // macOS apps don't inherit the user's shell PATH
+            let resolvedCommand = Self.resolveCommand(config.command)
+
+            // Merge user's PATH into the server environment so child processes can find tools
+            var env = config.environment
+            if env["PATH"] == nil {
+                env["PATH"] = Self.userShellPATH()
+            }
+
             serverConfig = MCPClient.ServerConfig(
                 id: config.id,
                 name: config.name,
-                command: config.command,
+                command: resolvedCommand,
                 arguments: config.arguments,
-                env: config.environment,
+                env: env,
                 enabled: config.enabled,
                 autoStart: config.autoStart
             )
@@ -190,5 +200,49 @@ final class MCPService: @unchecked Sendable {
 
         await disconnect(serverId: serverId)
         try await connect(to: config)
+    }
+
+    // MARK: - PATH Resolution
+
+    /// Resolve a bare command name to its full path via common directories.
+    /// macOS apps don't inherit the user's shell PATH, so "uvx" won't be found.
+    private static func resolveCommand(_ command: String) -> String {
+        guard !command.contains("/") else { return command }
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        let searchDirs = [
+            "\(home)/.local/bin",
+            "/usr/local/bin",
+            "/opt/homebrew/bin",
+            "\(home)/.cargo/bin",
+            "\(home)/.nvm/current/bin",
+            "/usr/bin",
+            "/bin",
+        ]
+        let fm = FileManager.default
+        for dir in searchDirs {
+            let full = "\(dir)/\(command)"
+            if fm.fileExists(atPath: full) { return full }
+        }
+        // Also check PATH env
+        let pathDirs = (ProcessInfo.processInfo.environment["PATH"] ?? "")
+            .split(separator: ":")
+        for dir in pathDirs {
+            let full = "\(dir)/\(command)"
+            if fm.fileExists(atPath: full) { return full }
+        }
+        return command // Return as-is if not found
+    }
+
+    /// Get a reasonable PATH string including common user tool directories.
+    private static func userShellPATH() -> String {
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        let extra = [
+            "\(home)/.local/bin",
+            "/opt/homebrew/bin",
+            "/usr/local/bin",
+            "\(home)/.cargo/bin",
+        ]
+        let existing = ProcessInfo.processInfo.environment["PATH"] ?? "/usr/bin:/bin"
+        return (extra + [existing]).joined(separator: ":")
     }
 }
