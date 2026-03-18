@@ -72,7 +72,9 @@ final class FoundationModelService {
         let instructions = AgentTools.compactSystemPrompt(userName: userName, userHome: userHome)
         // Skip history context for Apple Intelligence to save context window
         // Apple Intelligence has a smaller context window than Claude/Ollama
-
+        print("=== Apple AI System Prompt ===\n\(instructions)\n=== End (\(instructions.count) chars) ===")
+        
+        
         // No tools for Apple Intelligence — all 40+ tool schemas exceed the context window.
         // Apple Intelligence responds with plain text only.
         let s = LanguageModelSession(model: .default, instructions: Instructions(instructions))

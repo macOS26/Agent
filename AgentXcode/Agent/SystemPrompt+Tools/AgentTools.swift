@@ -137,14 +137,14 @@ enum AgentTools {
             return commonTools
         }
     }
-
+    
+    
     // MARK: - Compact System Prompt (for Apple Intelligence with limited context)
     @MainActor static func compactSystemPrompt(userName: String, userHome: String) -> String {
         """
         macOS assistant. User: \(userName), home: \(userHome). Be brief.
         When asked to DO something, call a tool immediately. Do not explain — just act.
         One tool per reply. Always end with task_complete {"summary": "..."}.
-
         Tool call format — always JSON after the tool name:
         execute_user_command {"command": "ls -la"}
         run_applescript {"source": "tell app \\"Finder\\" to get name of home"}
@@ -158,13 +158,15 @@ enum AgentTools {
 
     @MainActor private static func enabledAppleAIToolLines() -> String {
         let prefs = ToolPreferencesService.shared
-        return commonTools
+        let x = commonTools
             .filter { prefs.isEnabled(.foundationModel, $0.name) }
             .map { tool in
                 let short = tool.description.components(separatedBy: ". ").first ?? tool.description
                 return "- \(tool.name): \(short)"
             }
             .joined(separator: "\n")
+        print(x)
+        return(x)
     }
 
     // MARK: - Tool Definitions (internal, format-neutral)
