@@ -13,6 +13,7 @@ private class PromptTextView: NSTextView {
 /// NSViewRepresentable wrapping NSTextView for plain-text editing with line numbers.
 struct PromptEditor: NSViewRepresentable {
     @Binding var text: String
+    var textColor: NSColor = NSColor(red: 0.2, green: 0.9, blue: 0.3, alpha: 1.0)
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
@@ -27,8 +28,8 @@ struct PromptEditor: NSViewRepresentable {
         textView.isAutomaticLinkDetectionEnabled = false
         textView.isAutomaticDataDetectionEnabled = false
         textView.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
-        textView.textColor = NSColor(red: 0.2, green: 0.9, blue: 0.3, alpha: 1.0)
-        textView.insertionPointColor = NSColor(red: 0.2, green: 0.9, blue: 0.3, alpha: 1.0)
+        textView.textColor = textColor
+        textView.insertionPointColor = textColor
         textView.backgroundColor = NSColor(red: 0.05, green: 0.05, blue: 0.05, alpha: 1.0)
         textView.isEditable = true
         textView.isSelectable = true
@@ -59,6 +60,8 @@ struct PromptEditor: NSViewRepresentable {
 
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
         guard let textView = scrollView.documentView as? NSTextView else { return }
+        textView.textColor = textColor
+        textView.insertionPointColor = textColor
         if textView.string != text {
             let sel = textView.selectedRange()
             textView.string = text
@@ -211,12 +214,20 @@ struct SystemPromptsView: View {
 
     private let service = SystemPromptService.shared
 
-    private let providerLabels: [(APIProvider, String)] = [
-        (.claude, "Claude"),
-        (.ollama, "Ollama"),
-        (.localOllama, "Local"),
-        (.foundationModel, "Apple AI"),
+    private let providerLabels: [(APIProvider, String, Color, NSColor)] = [
+        (.claude,          "Claude",   Color.orange, NSColor(red: 1.0,  green: 0.6,  blue: 0.2, alpha: 1.0)),
+        (.ollama,          "Ollama",   Color.cyan,   NSColor(red: 0.3,  green: 0.85, blue: 1.0, alpha: 1.0)),
+        (.localOllama,     "Local",    Color.purple, NSColor(red: 0.75, green: 0.45, blue: 1.0, alpha: 1.0)),
+        (.foundationModel, "Apple AI", Color.green,  NSColor(red: 0.2,  green: 0.9,  blue: 0.3, alpha: 1.0)),
     ]
+
+    private func tabColor(for provider: APIProvider) -> Color {
+        providerLabels.first { $0.0 == provider }?.2 ?? .green
+    }
+
+    private func nsColor(for provider: APIProvider) -> NSColor {
+        providerLabels.first { $0.0 == provider }?.3 ?? NSColor(red: 0.2, green: 0.9, blue: 0.3, alpha: 1.0)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -226,6 +237,7 @@ struct SystemPromptsView: View {
                 ForEach(providerLabels, id: \.0) { pair in
                     let provider = pair.0
                     let label = pair.1
+                    let color = pair.2
                     Button(action: { selectedProvider = provider }) {
                         Text(label)
                             .font(.system(.caption, design: .monospaced))
@@ -236,8 +248,8 @@ struct SystemPromptsView: View {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .background(selectedProvider == provider ? Color.blue.opacity(0.3) : Color.clear)
-                    .foregroundColor(selectedProvider == provider ? .primary : .secondary)
+                    .background(selectedProvider == provider ? color.opacity(0.3) : Color.clear)
+                    .foregroundColor(selectedProvider == provider ? color : .secondary)
                     .cornerRadius(6)
                 }
                 Spacer(minLength: 0)
@@ -248,7 +260,7 @@ struct SystemPromptsView: View {
             Divider()
 
             // Editor
-            PromptEditor(text: binding(for: selectedProvider))
+            PromptEditor(text: binding(for: selectedProvider), textColor: nsColor(for: selectedProvider))
                 .id(selectedProvider)
 
             Divider()
