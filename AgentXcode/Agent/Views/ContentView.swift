@@ -110,15 +110,6 @@ struct ContentView: View {
                     ToolsView(initialProvider: viewModel.selectedProvider)
                 }
 
-                Button { showOptions.toggle() } label: {
-                    Image(systemName: "slider.horizontal.3")
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                .popover(isPresented: $showOptions) {
-                    AgentOptionsView(viewModel: viewModel)
-                }
-
                 Button { showSettings.toggle() } label: {
                     Image(systemName: "cpu")
                 }
@@ -126,6 +117,15 @@ struct ContentView: View {
                 .controlSize(.small)
                 .popover(isPresented: $showSettings) {
                     SettingsView(viewModel: viewModel)
+                }
+
+                Button { showOptions.toggle() } label: {
+                    Image(systemName: "slider.horizontal.3")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .popover(isPresented: $showOptions) {
+                    AgentOptionsView(viewModel: viewModel)
                 }
 
                 Button { showHistory.toggle() } label: {
