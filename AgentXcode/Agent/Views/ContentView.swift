@@ -14,6 +14,7 @@ struct ContentView: View {
     @State private var totalMatches = 0
     @State private var showMCPServers = false
     @State private var showTools = false
+    @State private var showOptions = false
     @State private var showMessages = false
     @State private var showAccessibility = false
     @State private var showQuitConfirm = false
@@ -107,6 +108,15 @@ struct ContentView: View {
                 .controlSize(.small)
                 .popover(isPresented: $showTools) {
                     ToolsView(initialProvider: viewModel.selectedProvider)
+                }
+
+                Button { showOptions.toggle() } label: {
+                    Image(systemName: "slider.horizontal.3")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .popover(isPresented: $showOptions) {
+                    AgentOptionsView(viewModel: viewModel)
                 }
 
                 Button { showSettings.toggle() } label: {

@@ -147,6 +147,7 @@ enum AgentTools {
 
         Tool call format — always JSON after the tool name:
         execute_user_command {"command": "ls -la"}
+        run_applescript {"source": "tell app \\"Finder\\" to get name of home"}
         run_osascript {"script": "display dialog \\"Hello\\""}
         task_complete {"summary": "Done"}
 
