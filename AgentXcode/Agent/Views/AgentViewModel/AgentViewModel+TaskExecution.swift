@@ -896,91 +896,47 @@ extension AgentViewModel {
 
                         // In-process shell with TCC (Automation, Accessibility, ScreenRecording)
                         if name == "run_osascript" {
-                            let command = input["command"] as? String ?? ""
+                            let script = input["script"] as? String ?? input["command"] as? String ?? ""
+                            let escaped = script.replacingOccurrences(of: "'", with: "'\\''")
+                            let command = "osascript -e '\(escaped)'"
 
-                            if Self.needsTCCTab(command) {
-                                // TCC command — reuse existing tab per type, or create one
-                                let label: String
-                                if command.contains("osascript") {
-                                    label = "osascript"
-                                } else if command.contains("screencapture") {
-                                    label = "screencapture"
-                                } else {
-                                    let words = command.prefix(30).components(separatedBy: " ")
-                                    label = words.first ?? "app_cmd"
-                                }
-
-                                // Reuse existing tab for this label, or create a new one
-                                let tab: ScriptTab
-                                if let existing = scriptTabs.first(where: { $0.scriptName == label }) {
-                                    tab = existing
-                                    selectedTabId = tab.id
-                                    tab.isRunning = true
-                                } else {
-                                    tab = openScriptTab(scriptName: label)
-                                }
-                                appendLog("App command... (see tab)")
-                                flushLog()
-
-                                tab.appendLog("🐣 $ \(AgentViewModel.collapseHeredocs(command))")
-                                tab.flush()
-
-                                let result = await executeLocalStreaming(command: command) { [weak tab] chunk in
-                                    Task { @MainActor in
-                                        tab?.appendOutput(chunk)
-                                    }
-                                }
-
-                                tab.isRunning = false
-                                tab.exitCode = result.status
-                                tab.flush()
-                                persistScriptTabs()
-
-                                guard !Task.isCancelled else { break }
-
-                                let statusNote = result.status == 0 ? "completed" : "exit code: \(result.status)"
-                                appendLog("\(label) \(statusNote)")
-                                flushLog()
-
-                                let toolOutput = result.output.isEmpty
-                                    ? "(no output, exit code: \(result.status))"
-                                    : result.output
-                                let truncated2 = toolOutput.count > 10000
-                                    ? String(toolOutput.prefix(10000)) + "\n...(truncated)"
-                                    : toolOutput
-                                commandsRun.append("run_osascript: \(label)")
-                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": truncated2])
+                            // Always run via TCC tab — osascript needs in-process TCC
+                            let tab: ScriptTab
+                            if let existing = scriptTabs.first(where: { $0.scriptName == "osascript" }) {
+                                tab = existing
+                                selectedTabId = tab.id
+                                tab.isRunning = true
                             } else {
-                                // Non-TCC command — route through XPC services
-                                let collapsed = Self.collapseHeredocs(command)
-                                appendLog("🔧 $ \(collapsed)")
-                                flushLog()
-
-                                let result = await userService.execute(command: command)
-                                userWasActive = true
-
-                                guard !Task.isCancelled else { break }
-
-                                if result.status != 0 {
-                                    appendLog("exit code: \(result.status)")
-                                }
-
-                                let toolOutput = result.output.isEmpty
-                                    ? "(no output, exit code: \(result.status))"
-                                    : result.output
-                                let truncated2 = toolOutput.count > 10000
-                                    ? String(toolOutput.prefix(10000)) + "\n...(truncated)"
-                                    : toolOutput
-
-                                let preview = Self.preview(result.output, lines: 10)
-                                if !preview.isEmpty { appendLog(preview) }
-                                flushLog()
-
-                                let words = command.prefix(30).components(separatedBy: " ")
-                                let label = words.first ?? "app_cmd"
-                                commandsRun.append("run_osascript: \(label)")
-                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": truncated2])
+                                tab = openScriptTab(scriptName: "osascript")
                             }
+                            appendLog("🍎 osascript (see tab)")
+                            flushLog()
+                            tab.appendLog("🍎 \(script)")
+                            tab.flush()
+
+                            let result = await executeLocalStreaming(command: command) { [weak tab] chunk in
+                                Task { @MainActor in tab?.appendOutput(chunk) }
+                            }
+
+                            tab.isRunning = false
+                            tab.exitCode = result.status
+                            tab.flush()
+                            persistScriptTabs()
+
+                            guard !Task.isCancelled else { break }
+
+                            let statusNote = result.status == 0 ? "completed" : "exit code: \(result.status)"
+                            appendLog("osascript \(statusNote)")
+                            flushLog()
+
+                            let toolOutput = result.output.isEmpty
+                                ? "(no output, exit code: \(result.status))"
+                                : result.output
+                            let truncated2 = toolOutput.count > 10000
+                                ? String(toolOutput.prefix(10000)) + "\n...(truncated)"
+                                : toolOutput
+                            commandsRun.append("run_osascript")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": truncated2])
                         }
 
                         // SDEF lookup tool

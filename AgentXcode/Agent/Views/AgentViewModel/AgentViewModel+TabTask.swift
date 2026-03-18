@@ -394,16 +394,16 @@ extension AgentViewModel {
             )
         }
 
-        // run_osascript — in-process shell with ALL TCC
+        // run_osascript — AppleScript via osascript in-process with full TCC
         if name == "run_osascript" {
-            let command = input["command"] as? String ?? ""
-            tab.appendLog("🐣 \(Self.collapseHeredocs(command))")
+            let script = input["script"] as? String ?? input["command"] as? String ?? ""
+            let escaped = script.replacingOccurrences(of: "'", with: "'\\''")
+            let command = "osascript -e '\(escaped)'"
+            tab.appendLog("🍎 \(script)")
             tab.flush()
 
             let result = await executeLocalStreaming(command: command) { [weak tab] chunk in
-                Task { @MainActor in
-                    tab?.appendOutput(chunk)
-                }
+                Task { @MainActor in tab?.appendOutput(chunk) }
             }
 
             guard !Task.isCancelled else { return TabToolResult(toolResult: nil, isComplete: false) }

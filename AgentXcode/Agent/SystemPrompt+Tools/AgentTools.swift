@@ -147,7 +147,7 @@ enum AgentTools {
 
         Tool call format — always JSON after the tool name:
         execute_user_command {"command": "ls -la"}
-        run_osascript {"command": "osascript -e 'display dialog \\"Hello\\"'"}
+        run_osascript {"script": "display dialog \\"Hello\\""}
         task_complete {"summary": "Done"}
 
         TOOLS:
@@ -321,11 +321,11 @@ enum AgentTools {
         ),
         ToolDef(
             name: "run_osascript",
-            description: "Execute a shell command. TCC commands (osascript, screencapture) run in-process with full TCC in a tab. Non-TCC routes through UserService LaunchAgent. Priority 5 (last resort) for app automation — prefer run_agent_script or run_applescript.",
+            description: "Run AppleScript source code via osascript in-process with full TCC. Use for app automation via AppleScript. Prefer run_applescript or run_agent_script when available.",
             properties: [
-                "command": ["type": "string", "description": "The bash command to execute in the Agent app process"],
+                "script": ["type": "string", "description": "AppleScript source code to execute"],
             ],
-            required: ["command"]
+            required: ["script"]
         ),
         ToolDef(
             name: "execute_user_command",
