@@ -12,13 +12,13 @@ final class ToolPreferencesService {
     }
 
     private static let udKey = "agent.disabledTools"
-    private static let appleAISeededKey = "agent.appleAISeeded"
+    private static let appleAISeededKey = "agent.appleAISeeded.v2"
 
     /// Tools enabled by default for Apple Intelligence (small context window).
     static let appleAIDefaults: Set<String> = [
-        "execute_user_command", "execute_command",
-        "read_file", "write_file", "edit_file", "list_files",
-        "task_complete"
+        "task_complete", "list_agent_scripts", "run_agent_script",
+        "list_native_tools", "list_mcp_tools", "apple_event_query",
+        "run_applescript", "run_osascript"
     ]
 
     private init() {
