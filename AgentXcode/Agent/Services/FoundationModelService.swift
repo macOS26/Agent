@@ -88,8 +88,18 @@ final class FoundationModelService {
         guard !prompt.isEmpty else {
             return ([["type": "text", "text": "(empty prompt)"]], "end_turn")
         }
-        let response = try await s.respond(to: prompt)
-        return parseResponse(response.content, session: s)
+        do {
+            let response = try await s.respond(to: prompt)
+            return parseResponse(response.content, session: s)
+        } catch {
+            self.session = nil
+            let msg = error.localizedDescription.lowercased()
+            if msg.contains("unsafe") || msg.contains("guardrail") || msg.contains("policy") || msg.contains("safety") {
+                let notice = "Apple Intelligence blocked this request due to its built-in safety filters. Try using Claude or Ollama for script execution tasks."
+                return ([["type": "text", "text": notice]], "end_turn")
+            }
+            throw error
+        }
     }
 
     // MARK: - Streaming
@@ -109,9 +119,14 @@ final class FoundationModelService {
                 fullText = snapshot.content
             }
         } catch {
-            // Foundation Models may throw a locale/language error mid-session.
-            // Reset the session so the next task starts clean.
             self.session = nil
+            // Check for safety/guardrail violation — surface a friendly message instead of an error
+            let msg = error.localizedDescription.lowercased()
+            if msg.contains("unsafe") || msg.contains("guardrail") || msg.contains("policy") || msg.contains("safety") {
+                let notice = "Apple Intelligence blocked this request due to its built-in safety filters. Try using Claude or Ollama for script execution tasks."
+                onTextDelta(notice)
+                return ([["type": "text", "text": notice]], "end_turn")
+            }
             throw error
         }
         // Parse first. If it's a tool call, emit any text written before it.
