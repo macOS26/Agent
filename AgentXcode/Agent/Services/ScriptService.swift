@@ -38,8 +38,125 @@ final class ScriptService {
     private var bundleScripts: URL? {
         bundleSources?.appendingPathComponent("Scripts")
     }
-    private var bundlePackage: URL? {
-        Bundle.main.resourceURL?.appendingPathComponent("Package.swift")
+    // MARK: - Package.swift generation
+
+    /// Generate a clean Package.swift from the actual files on disk.
+    /// No bundled file needed — always reflects current state.
+    private func generatePackageSwift() {
+        let fm = FileManager.default
+
+        // Discover bridges on disk (exclude core files managed separately)
+        let coreFiles: Set<String> = ["ScriptingBridgeCommon", "AgentScriptingBridge", "AgentAccessibility"]
+        let bridgeFiles = (try? fm.contentsOfDirectory(atPath: bridgesDir.path)) ?? []
+        let bridgeNames = bridgeFiles
+            .filter { $0.hasSuffix(".swift") }
+            .map { $0.replacingOccurrences(of: ".swift", with: "") }
+            .filter { !coreFiles.contains($0) }
+            .sorted()
+
+        // Discover scripts on disk
+        let scriptFiles = (try? fm.contentsOfDirectory(atPath: scriptsDir.path)) ?? []
+        let scriptNames = scriptFiles
+            .filter { $0.hasSuffix(".swift") }
+            .map { $0.replacingOccurrences(of: ".swift", with: "") }
+            .sorted()
+
+        let bridgeList = bridgeNames.map { "    \"\($0)\"," }.joined(separator: "\n")
+        let scriptList = scriptNames.map { "    \"\($0)\"," }.joined(separator: "\n")
+
+        let content = """
+        // swift-tools-version: 6.0
+        import PackageDescription
+        import Foundation
+
+        let scriptNames = [
+        \(scriptList)
+        ]
+
+        let bridge = "Sources/XCFScriptingBridges"
+        let scripts = "Sources/Scripts"
+        let common: Target.Dependency = "ScriptingBridgeCommon"
+
+        let bridgeNames = [
+        \(bridgeList)
+        ]
+
+        let bridgeNameSet = Set(bridgeNames)
+
+        func parseDeps(for name: String) -> [Target.Dependency] {
+            let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+                .appendingPathComponent(scripts).appendingPathComponent("\\(name).swift")
+            guard let contents = try? String(contentsOf: url, encoding: .utf8) else { return [] }
+            var deps: [Target.Dependency] = []
+            for line in contents.components(separatedBy: .newlines) {
+                let trimmed = line.trimmingCharacters(in: .whitespaces)
+                if trimmed.hasPrefix("import ") {
+                    let module = String(trimmed.dropFirst(7)).trimmingCharacters(in: .whitespaces)
+                    if bridgeNameSet.contains(module) {
+                        deps.append(.init(stringLiteral: module))
+                    } else if module == "ScriptingBridgeCommon" {
+                        deps.append(common)
+                    } else if module == "AgentAccessibility" {
+                        deps.append(.init(stringLiteral: "AgentAccessibility"))
+                    }
+                }
+                if !trimmed.isEmpty && !trimmed.hasPrefix("import ") &&
+                   !trimmed.hasPrefix("//") && !trimmed.hasPrefix("@") {
+                    break
+                }
+            }
+            return deps
+        }
+
+        let allBridgeFiles = ["ScriptingBridgeCommon.swift", "AgentScriptingBridge.swift", "AgentAccessibility.swift"] + bridgeNames.map { "\\($0).swift" }
+        let allScriptFiles = scriptNames.map { "\\($0).swift" }
+
+        let scriptProducts: [Product] = scriptNames.map {
+            .library(name: $0, type: .dynamic, targets: [$0])
+        }
+
+        let bridgeTargets: [Target] = bridgeNames.map { name in
+            .target(name: name, dependencies: [common], path: bridge,
+                    exclude: allBridgeFiles.filter { $0 != "\\(name).swift" },
+                    sources: ["\\(name).swift"])
+        }
+
+        let scriptTargets: [Target] = scriptNames.map { name in
+            .target(name: name, dependencies: parseDeps(for: name), path: scripts,
+                    exclude: allScriptFiles.filter { $0 != "\\(name).swift" },
+                    sources: ["\\(name).swift"])
+        }
+
+        let coreTargets: [Target] = [
+            .target(name: "ScriptingBridgeCommon", path: bridge,
+                    exclude: bridgeNames.map { "\\($0).swift" } + ["AgentScriptingBridge.swift", "AgentAccessibility.swift"],
+                    sources: ["ScriptingBridgeCommon.swift"]),
+            .target(name: "AgentScriptingBridge", dependencies: [common], path: bridge,
+                    exclude: allBridgeFiles.filter { $0 != "AgentScriptingBridge.swift" },
+                    sources: ["AgentScriptingBridge.swift"]),
+        ]
+
+        let package = Package(
+            name: "AgentScripts",
+            platforms: [.macOS(.v15)],
+            products: [
+                .library(name: "AgentScriptingBridge", targets: ["AgentScriptingBridge"]),
+                .library(name: "AllBridges", targets: bridgeNames + ["ScriptingBridgeCommon", "AgentScriptingBridge"]),
+            ] + scriptProducts,
+            targets: coreTargets + bridgeTargets + scriptTargets
+        )
+        """
+
+        // Remove leading whitespace from each line (heredoc indentation)
+        let trimmed = content.components(separatedBy: "\n")
+            .map { line in
+                var s = line
+                while s.hasPrefix("        ") { s = String(s.dropFirst(8)) }
+                return s
+            }
+            .joined(separator: "\n")
+
+        try? trimmed.write(to: packageSwiftURL, atomically: true, encoding: .utf8)
     }
 
     // MARK: - Ensure package
@@ -48,7 +165,7 @@ final class ScriptService {
     func ensurePackage() {
         packageLock.lock()
         defer { packageLock.unlock() }
-        
+
         let fm = FileManager.default
         let agentsPath = Self.agentsDir.path
 
@@ -59,66 +176,11 @@ final class ScriptService {
             // Existing install — update bridges, add new scripts only
             updateBridges()
             installNewScripts()
-            copyPackageSwift()
         }
         copyBundledJSONFiles()
-        syncBridgesWithPackageLocked()
-        syncScriptsWithPackageLocked()
+        generatePackageSwift()
     }
 
-    /// Sync scriptNames in Package.swift with actual .swift files on disk.
-    /// Adds unregistered scripts and removes entries for deleted files.
-    /// MUST be called with packageLock held.
-    private func syncScriptsWithPackageLocked() {
-        let fm = FileManager.default
-        guard fm.fileExists(atPath: scriptsDir.path),
-              fm.fileExists(atPath: packageSwiftURL.path) else { return }
-
-        guard let files = try? fm.contentsOfDirectory(atPath: scriptsDir.path) else { return }
-        let diskScripts = Set(files.filter { $0.hasSuffix(".swift") }
-            .map { $0.replacingOccurrences(of: ".swift", with: "") })
-
-        guard var content = try? String(contentsOf: packageSwiftURL, encoding: .utf8) else { return }
-        content = syncArray(named: "let scriptNames = [", with: diskScripts, in: content)
-        try? content.write(to: packageSwiftURL, atomically: true, encoding: .utf8)
-    }
-
-    /// Sync bridgeNames in Package.swift with actual .swift files on disk.
-    /// Excludes ScriptingBridgeCommon.swift and AgentScriptingBridge.swift (managed separately).
-    /// MUST be called with packageLock held.
-    private func syncBridgesWithPackageLocked() {
-        let fm = FileManager.default
-        guard fm.fileExists(atPath: bridgesDir.path),
-              fm.fileExists(atPath: packageSwiftURL.path) else { return }
-
-        guard let files = try? fm.contentsOfDirectory(atPath: bridgesDir.path) else { return }
-        let excluded: Set<String> = ["ScriptingBridgeCommon", "AgentScriptingBridge"]
-        let diskBridges = Set(files.filter { $0.hasSuffix(".swift") }
-            .map { $0.replacingOccurrences(of: ".swift", with: "") })
-            .subtracting(excluded)
-
-        guard var content = try? String(contentsOf: packageSwiftURL, encoding: .utf8) else { return }
-        content = syncArray(named: "let bridgeNames = [", with: diskBridges, in: content)
-        try? content.write(to: packageSwiftURL, atomically: true, encoding: .utf8)
-    }
-
-    /// Replace the contents of a named array in Package.swift with the given set of names.
-    /// Returns the updated content, or the original if unchanged.
-    private func syncArray(named marker: String, with diskNames: Set<String>, in content: String) -> String {
-        guard let arrayStart = content.range(of: marker) else { return content }
-        guard let arrayEnd = content[arrayStart.upperBound...].range(of: "]") else { return content }
-
-        let arrayContent = content[arrayStart.upperBound..<arrayEnd.lowerBound]
-        let registered = Set(arrayContent.components(separatedBy: "\n")
-            .map { $0.trimmingCharacters(in: .whitespaces).trimmingCharacters(in: CharacterSet(charactersIn: "\",")) }
-            .filter { !$0.isEmpty })
-
-        guard diskNames != registered else { return content }
-
-        let sorted = diskNames.sorted()
-        let newArray = sorted.map { "    \"\($0)\"," }.joined(separator: "\n")
-        return String(content[..<arrayStart.upperBound]) + "\n" + newArray + "\n" + String(content[arrayEnd.lowerBound...])
-    }
 
     // MARK: - JSON files
 
@@ -160,15 +222,12 @@ final class ScriptService {
 
         try? fm.createDirectory(at: dest, withIntermediateDirectories: true)
 
-        // Copy Package.swift
-        if let src = bundlePackage {
-            try? fm.copyItem(at: src, to: dest.appendingPathComponent("Package.swift"))
-        }
-
         // Copy Sources/
         if let src = bundleSources {
             try? fm.copyItem(at: src, to: dest.appendingPathComponent("Sources"))
         }
+
+        // Package.swift is generated from disk contents by generatePackageSwift()
     }
 
     // MARK: - Update bridges
@@ -247,17 +306,6 @@ final class ScriptService {
         }
     }
 
-    // MARK: - Package.swift
-
-    /// Always deploy Package.swift from bundle — syncBridgesWithPackageLocked and
-    /// syncScriptsWithPackageLocked re-add any user-created scripts/bridges afterward.
-    private func copyPackageSwift() {
-        let fm = FileManager.default
-        guard let src = bundlePackage, fm.fileExists(atPath: src.path) else { return }
-        let dst = Self.agentsDir.appendingPathComponent("Package.swift")
-        try? fm.removeItem(at: dst)
-        try? fm.copyItem(at: src, to: dst)
-    }
 
     // MARK: - Helpers
 
@@ -329,10 +377,10 @@ final class ScriptService {
             try final.write(to: scriptFile, atomically: true, encoding: .utf8)
             unmarkScriptDeleted(scriptName)
 
-            // Hold lock while modifying Package.swift
+            // Regenerate Package.swift to include the new script
             packageLock.lock()
             defer { packageLock.unlock() }
-            addScriptToPackageLocked(scriptName)
+            generatePackageSwift()
             return "Created \(scriptName) (\(final.count) bytes). Registered in Package.swift."
         } catch {
             return "Error creating script: \(error.localizedDescription)"
@@ -372,58 +420,20 @@ final class ScriptService {
             try fm.removeItem(at: scriptFile)
             markScriptDeleted(scriptName)
 
-            // Hold lock while modifying Package.swift
+            // Regenerate Package.swift without the deleted script
             packageLock.lock()
             defer { packageLock.unlock() }
-            removeScriptFromPackageLocked(scriptName)
+            generatePackageSwift()
             return "Deleted \(scriptName). Removed from Package.swift."
         } catch {
             return "Error deleting script: \(error.localizedDescription)"
         }
     }
 
-    // MARK: - Package.swift script registration
+    // MARK: - Package.swift path
 
     private var packageSwiftURL: URL {
         Self.agentsDir.appendingPathComponent("Package.swift")
-    }
-
-    /// Add a script name to the scriptNames array in Package.swift
-    /// MUST be called with packageLock held or from ensurePackage (which holds it).
-    private func addScriptToPackageLocked(_ name: String) {
-        guard let content = try? String(contentsOf: packageSwiftURL, encoding: .utf8) else { return }
-
-        // Find the scriptNames array and insert the new name in sorted order
-        guard let range = content.range(of: "let scriptNames = [") else { return }
-        guard let closingBracket = content[range.upperBound...].range(of: "]") else { return }
-
-        let arrayContent = content[range.upperBound..<closingBracket.lowerBound]
-        var names = arrayContent.components(separatedBy: "\n")
-            .map { $0.trimmingCharacters(in: .whitespaces).trimmingCharacters(in: CharacterSet(charactersIn: "\",")) }
-            .filter { !$0.isEmpty }
-
-        guard !names.contains(name) else { return }
-        names.append(name)
-        names.sort()
-
-        let newArray = names.map { "    \"\($0)\"," }.joined(separator: "\n")
-        let newContent = content[..<range.upperBound] + "\n" + newArray + "\n" + content[closingBracket.lowerBound...]
-
-        try? String(newContent).write(to: packageSwiftURL, atomically: true, encoding: .utf8)
-    }
-
-    /// Remove a script name from the scriptNames array in Package.swift
-    /// MUST be called with packageLock held or from ensurePackage (which holds it).
-    private func removeScriptFromPackageLocked(_ name: String) {
-        guard let content = try? String(contentsOf: packageSwiftURL, encoding: .utf8) else { return }
-
-        // Find and remove the line containing this script name
-        let lines = content.components(separatedBy: "\n")
-        let pattern = "    \"\(name)\","
-        let filtered = lines.filter { $0 != pattern }
-
-        guard filtered.count < lines.count else { return }
-        try? filtered.joined(separator: "\n").write(to: packageSwiftURL, atomically: true, encoding: .utf8)
     }
 
     /// Return the swift build command to compile a script as a dynamic library
