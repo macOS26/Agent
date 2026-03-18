@@ -16,6 +16,9 @@ struct SettingsView: View {
                     }
                 }
                 .labelsHidden()
+                Text("Ollama Pro is preferred")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             if viewModel.selectedProvider == .claude {
