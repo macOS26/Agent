@@ -79,9 +79,24 @@ final class FoundationModelService {
     @MainActor
     private func makeEnabledNativeTools() -> [any Tool] {
         let prefs = ToolPreferencesService.shared
-        let t: [any Tool] = AgentTools.tools(for: .foundationModel)
-            .filter { prefs.isEnabled(.foundationModel, $0.name) }
-            .map { NativeAgentTool(toolDef: $0) }
+        func on(_ n: String) -> Bool { prefs.isEnabled(.foundationModel, n) }
+        let pf = projectFolder
+        var t: [any Tool] = []
+        if on("execute_user_command") { t.append(NativeShellTool(projectFolder: pf)) }
+        if on("run_applescript")      { t.append(NativeAppleScriptTool()) }
+        if on("run_osascript")        { t.append(NativeOsaScriptTool()) }
+        if on("read_file")            { t.append(NativeReadFileTool()) }
+        if on("write_file")           { t.append(NativeWriteFileTool()) }
+        if on("edit_file")            { t.append(NativeEditFileTool()) }
+        if on("list_files")           { t.append(NativeListFilesTool(projectFolder: pf)) }
+        if on("search_files")         { t.append(NativeSearchFilesTool(projectFolder: pf)) }
+        if on("task_complete")        { t.append(NativeTaskCompleteTool()) }
+        if on("git_status")           { t.append(NativeGitStatusTool(projectFolder: pf)) }
+        if on("git_commit")           { t.append(NativeGitCommitTool(projectFolder: pf)) }
+        if on("git_log")              { t.append(NativeGitLogTool(projectFolder: pf)) }
+        if on("git_diff")             { t.append(NativeGitDiffTool(projectFolder: pf)) }
+        if on("list_native_tools")    { t.append(NativeListNativeToolsTool()) }
+        if on("list_mcp_tools")       { t.append(NativeListMCPToolsTool()) }
         print("🔧 [Apple AI] Loaded \(t.count) native tools: \(t.map { $0.name }.joined(separator: ", "))")
         return t
     }
