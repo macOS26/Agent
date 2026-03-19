@@ -201,7 +201,10 @@
       "WebFetch(domain:spec.modelcontextprotocol.io)",
       "WebFetch(domain:blog.christianposta.com)",
       "Bash(python3 -c \"import json,sys; [print\\(f[''''name'''']\\) for f in json.load\\(sys.stdin\\)]\")",
-      "Bash(gh api:*)"
+      "Bash(gh api:*)",
+      "WebFetch(domain:platform.openai.com)",
+      "WebFetch(domain:openai.com)",
+      "WebFetch(domain:help.openai.com)"
     ]
   }
 }
