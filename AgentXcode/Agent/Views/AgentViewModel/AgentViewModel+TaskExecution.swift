@@ -2274,16 +2274,30 @@ extension AgentViewModel {
                     messages.append(["role": "user", "content": "Continue with the task. Call task_complete when finished."])
                 } else if !hasToolUse {
                     consecutiveNoTool += 1
-                    // Apple Intelligence: text-only = final answer, stop immediately
+                    // Apple Intelligence: text-only = final answer, auto-complete
                     if provider == .foundationModel {
-                        break
+                        // Grab the text response as the completion summary
+                        let textResponse = response.content.compactMap { block -> String? in
+                            guard block["type"] as? String == "text" else { return nil }
+                            return block["text"] as? String
+                        }.joined(separator: "\n")
+                        let summary = NativeToolContext.lastToolOutput.isEmpty
+                            ? (textResponse.isEmpty ? "Done" : String(textResponse.prefix(500)))
+                            : NativeToolContext.lastToolOutput
+                        NativeToolContext.lastToolOutput = ""
+                        completionSummary = summary
+                        history.add(TaskRecord(prompt: prompt, summary: summary, commandsRun: commandsRun), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
+                        ChatHistoryStore.shared.endCurrentTask(summary: summary)
+                        sendAgentReply(summary)
+                        isRunning = false
+                        return
                     }
                     // Give other models up to 3 nudges to use tools before giving up
                     if consecutiveNoTool >= 3 {
                         appendLog("(model not using tools — stopping)")
                         break
                     }
-                    messages.append(["role": "user", "content": "Continue. You must use execute_user_command or execute_command tools to perform actions. Call task_complete when finished."])
+                    messages.append(["role": "user", "content": "Continue. You must use execute_agent_command or execute_daemon_command tools to perform actions. Call task_complete when finished."])
                 }
 
             } catch {
