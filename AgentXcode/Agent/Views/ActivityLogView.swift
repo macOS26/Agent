@@ -33,6 +33,7 @@ struct ActivityLogView: NSViewRepresentable {
         textView.isAutomaticLinkDetectionEnabled = true
         textView.delegate = context.coordinator
         textView.checkTextInDocument(nil)
+        context.coordinator.startObservingScroll(scrollView)
         return scrollView
     }
 
@@ -245,6 +246,36 @@ struct ActivityLogView: NSViewRepresentable {
         /// Minimum time between full renders during streaming (ms)
         private static let minRenderInterval: CFAbsoluteTime = 50
 
+        /// Tracks whether user is at/near bottom — updated continuously via scroll notifications
+        var userIsAtBottom = true
+        /// Suppresses scroll tracking during programmatic scrolls
+        var isProgrammaticScroll = false
+        /// Observation token for scroll notifications
+        nonisolated(unsafe) var scrollObserver: NSObjectProtocol?
+
+        /// Start observing scroll position changes on the clip view
+        func startObservingScroll(_ scrollView: NSScrollView) {
+            scrollView.contentView.postsBoundsChangedNotifications = true
+            scrollObserver = NotificationCenter.default.addObserver(
+                forName: NSView.boundsDidChangeNotification,
+                object: scrollView.contentView,
+                queue: .main
+            ) { [weak self, weak scrollView] _ in
+                MainActor.assumeIsolated {
+                    guard let self, let scrollView else { return }
+                    guard !self.isProgrammaticScroll else { return }
+                    guard let textView = scrollView.documentView as? NSTextView else { return }
+                    self.userIsAtBottom = self.isNearBottom(textView)
+                }
+            }
+        }
+
+        deinit {
+            if let observer = scrollObserver {
+                NotificationCenter.default.removeObserver(observer)
+            }
+        }
+
         /// Check if scroll view is near the bottom
         func isNearBottom(_ textView: NSTextView) -> Bool {
             guard let scrollView = textView.enclosingScrollView else { return true }
@@ -255,19 +286,23 @@ struct ActivityLogView: NSViewRepresentable {
 
         /// Throttled scroll — at most once per 0.15s, skipped if user scrolled away from bottom
         func throttledScrollToEnd(_ textView: NSTextView) {
-            guard isNearBottom(textView) else { return }
+            guard userIsAtBottom else { return }
             let now = CFAbsoluteTimeGetCurrent()
             let interval: CFAbsoluteTime = 0.15
             pendingScrollWork?.cancel()
             if now - lastScrollTime >= interval {
                 lastScrollTime = now
+                isProgrammaticScroll = true
                 textView.scrollToEndOfDocument(nil)
+                isProgrammaticScroll = false
             } else {
                 let work = DispatchWorkItem { [weak self, weak textView] in
                     guard let self, let textView else { return }
-                    guard self.isNearBottom(textView) else { return }
+                    guard self.userIsAtBottom else { return }
                     self.lastScrollTime = CFAbsoluteTimeGetCurrent()
+                    self.isProgrammaticScroll = true
                     textView.scrollToEndOfDocument(nil)
+                    self.isProgrammaticScroll = false
                 }
                 pendingScrollWork = work
                 DispatchQueue.main.asyncAfter(deadline: .now() + interval, execute: work)
