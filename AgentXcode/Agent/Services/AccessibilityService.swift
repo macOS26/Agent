@@ -695,9 +695,9 @@ final class AccessibilityService: @unchecked Sendable {
 
         let home = FileManager.default.homeDirectoryForCurrentUser
         let fileName = "screenshot_\(UUID().uuidString).png"
-        let outputPath = home.appendingPathComponent("Documents/AgentScript/\(fileName)").path
-        
-        try? FileManager.default.createDirectory(atPath: home.appendingPathComponent("Documents/AgentScript").path, withIntermediateDirectories: true)
+        let outputPath = home.appendingPathComponent("Documents/AgentScript/screenshots/\(fileName)").path
+
+        try? FileManager.default.createDirectory(atPath: home.appendingPathComponent("Documents/AgentScript/screenshots").path, withIntermediateDirectories: true)
         
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
