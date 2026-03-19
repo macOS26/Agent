@@ -10,7 +10,7 @@
 
 ## Dream It, Do It
 ### Agentic AI for your entire  Mac Desktop 🤯
-Agent is designed for Ollama Pro (Cloud) $20/mo https://ollama.com/pricing
+Agent is designed for Ollama Pro or Max $20, $100/mo https://ollama.com/pricing
 Claude API and Local Ollama LLMs are fully supported. Recommend 32GB - 128GB for local LLMs on Apple Silcon. Apple Intelligence is extremely experimental.
 
 <img width="1056" height="597" alt="IMG_5716" src="https://github.com/user-attachments/assets/117cbeb8-46e4-4f92-8494-f6058a92059e" />
