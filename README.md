@@ -9,7 +9,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/macOS26/Agent.svg?style=social)](https://github.com/macOS26/Agent/stargazers)
 
 ### Dream Big with true Agentic AI for your entire  Mac Desktop 🤯
-Agent! is designed for Ollama Cloud API with Pro or Max see https://ollama.com/pricing. laude API and Local Ollama LLMs are fully supported. Recommend 32GB - 128GB for local LLMs on Apple Silcon. Apple Intelligence is extremely experimental. If you know how to train LoRA Local LLMs, we would love to colaborate.
+Agent! is designed for Ollama Cloud API with Pro or Max see https://ollama.com/pricing. laude API and Local Ollama LLMs are fully supported. Recommend 32GB - 128GB for local LLMs on Apple Silcon. Apple Intelligence is extremely experimental. If you know how to train LLMs using LoRA, I would love to colaborate.
 
 <img width="1056" height="597" alt="IMG_5716" src="https://github.com/user-attachments/assets/117cbeb8-46e4-4f92-8494-f6058a92059e" />
 
