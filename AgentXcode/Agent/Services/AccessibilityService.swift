@@ -1,6 +1,6 @@
 import Foundation
 import AppKit
-import ApplicationServices
+@preconcurrency import ApplicationServices
 
 /// Accessibility automation service for interacting with UI elements via the Accessibility API.
 /// Provides tools for window listing, element inspection, and UI interaction.
@@ -46,7 +46,12 @@ final class AccessibilityService: @unchecked Sendable {
     }
     
     /// Check whether an ID is restricted. Reads UserDefaults directly (thread-safe).
+    /// Only IDs in the known restriction list can be restricted. Unknown IDs are allowed.
     private static func isRestricted(_ id: String) -> Bool {
+        // IDs not in the known restriction list are always allowed
+        guard AccessibilityRestrictionIDs.allIds.contains(id) else {
+            return false
+        }
         guard let enabled = UserDefaults.standard.stringArray(forKey: "ax.enabledRestrictions") else {
             // First launch — all enabled (not restricted)
             return false
@@ -100,6 +105,9 @@ final class AccessibilityService: @unchecked Sendable {
     
     // MARK: - Element Inspection
     
+    /// Timeout for AXUIElementCopyElementAtPosition to prevent hangs on complex text views
+    private static let elementAtPositionTimeout: TimeInterval = 2.0
+    
     func inspectElementAt(x: CGFloat, y: CGFloat, depth: Int = 3) -> String {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
@@ -110,7 +118,16 @@ final class AccessibilityService: @unchecked Sendable {
         let systemWide = AXUIElementCreateSystemWide()
         var element: AXUIElement?
         
-        if AXUIElementCopyElementAtPosition(systemWide, Float(x), Float(y), &element) == .success, let el = element {
+        // Run AXUIElementCopyElementAtPosition with timeout to prevent hangs on text views
+        // This can hang when computing accessibility bounds for complex text layouts
+        let copyResult = copyWithTimeout(systemWide: systemWide, x: x, y: y, timeout: Self.elementAtPositionTimeout)
+        element = copyResult.element
+        
+        if copyResult.timedOut {
+            return errorJSON("Accessibility inspection timed out at (\(x), \(y)) - text view may be complex")
+        }
+        
+        if copyResult.error == .success, let el = element {
             return inspectElement(el, depth: depth)
         }
         
@@ -129,6 +146,32 @@ final class AccessibilityService: @unchecked Sendable {
         }
         
         return errorJSON("No element found at (\(x), \(y))")
+    }
+    
+    /// Timeout wrapper for AXUIElementCopyElementAtPosition
+    /// Returns element if found, whether it timed out, and the AXError code
+    private nonisolated func copyWithTimeout(systemWide: AXUIElement, x: CGFloat, y: CGFloat, timeout: TimeInterval) -> (element: AXUIElement?, timedOut: Bool, error: AXError) {
+        // Use a thread-safe box for results
+        final class Box: @unchecked Sendable {
+            var result: AXError = .failure
+            var element: AXUIElement?
+        }
+        let box = Box()
+        let completed = DispatchSemaphore(value: 0)
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+            // Copy systemWide in the calling context, pass primitives to closure
+            var el: AXUIElement?
+            box.result = AXUIElementCopyElementAtPosition(systemWide, Float(x), Float(y), &el)
+            box.element = el
+            completed.signal()
+        }
+        
+        let waitResult = completed.wait(timeout: .now() + timeout)
+        if waitResult == .timedOut {
+            return (element: nil, timedOut: true, error: .failure)
+        }
+        return (element: box.element, timedOut: false, error: box.result)
     }
     
     private func inspectElement(_ element: AXUIElement, depth: Int, indent: Int = 0) -> String {
@@ -317,7 +360,12 @@ final class AccessibilityService: @unchecked Sendable {
         
         if let x = x, let y = y {
             let systemWide = AXUIElementCreateSystemWide()
-            _ = AXUIElementCopyElementAtPosition(systemWide, Float(x), Float(y), &element)
+            // Use timeout wrapper to prevent hangs on complex text views
+            let copyResult = copyWithTimeout(systemWide: systemWide, x: x, y: y, timeout: Self.elementAtPositionTimeout)
+            if copyResult.timedOut {
+                return errorJSON("Element lookup timed out at (\(x), \(y)) - text view may be complex")
+            }
+            element = copyResult.element
         } else if let bundleId = appBundleId {
             let apps = NSWorkspace.shared.runningApplications
             if let app = apps.first(where: { $0.bundleIdentifier == bundleId }),

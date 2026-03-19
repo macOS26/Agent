@@ -1,24 +1,63 @@
 import SwiftUI
 
-/// Manages which accessibility / Apple Event safety restrictions are active.
-/// All restrictions default to ENABLED (enforced). User can disable per-item.
-@MainActor @Observable
-final class AccessibilityRestrictions {
-    static let shared = AccessibilityRestrictions()
+// MARK: - Known Restriction IDs (nonisolated for thread-safe access)
 
-    // MARK: - Discoverable Restrictions
-
-    static let axActions: [(id: String, label: String)] = [
+/// All known restriction IDs - computed from static lists at compile time
+/// This is nonisolated so it can be accessed from any thread without MainActor
+enum AccessibilityRestrictionIDs {
+    /// Core UI actions - buttons, menus, controls
+    static let axCoreActions: [(id: String, label: String)] = [
         ("AXPress", "AXPress"),
         ("AXConfirm", "AXConfirm"),
-        ("AXShowMenu", "AXShowMenu"),
-        ("AXIncrement", "AXIncrement"),
-        ("AXDecrement", "AXDecrement"),
         ("AXActivate", "AXActivate"),
         ("AXCancel", "AXCancel"),
+        ("AXShowMenu", "AXShowMenu"),
+        ("AXDismiss", "AXDismiss"),
+    ]
+
+    /// Value adjustment - sliders, steppers, progress
+    static let axValueActions: [(id: String, label: String)] = [
+        ("AXIncrement", "AXIncrement"),
+        ("AXDecrement", "AXDecrement"),
+    ]
+
+    /// Disclosure - expandable content, outlines
+    static let axDisclosureActions: [(id: String, label: String)] = [
         ("AXExpand", "AXExpand"),
         ("AXCollapse", "AXCollapse"),
+        ("AXOpen", "AXOpen"),
     ]
+
+    /// Window management
+    static let axWindowActions: [(id: String, label: String)] = [
+        ("AXRaise", "AXRaise"),
+        ("AXZoom", "AXZoom"),
+        ("AXMinimize", "AXMinimize"),
+    ]
+
+    /// Text/clipboard operations
+    static let axTextActions: [(id: String, label: String)] = [
+        ("AXCopy", "AXCopy"),
+        ("AXCut", "AXCut"),
+        ("AXPaste", "AXPaste"),
+        ("AXSelect", "AXSelect"),
+        ("AXSelectAll", "AXSelectAll"),
+    ]
+
+    /// Scroll operations
+    static let axScrollActions: [(id: String, label: String)] = [
+        ("AXScrollToVisible", "AXScrollToVisible"),
+    ]
+
+    /// Focus operation
+    static let axFocusActions: [(id: String, label: String)] = [
+        ("AXFocus", "AXFocus"),
+    ]
+
+    /// All AX actions combined (for backward compatibility)
+    static var axActions: [(id: String, label: String)] {
+        axCoreActions + axValueActions + axDisclosureActions + axWindowActions + axTextActions + axScrollActions + axFocusActions
+    }
 
     static let axRoles: [(id: String, label: String)] = [
         ("AXSecureTextField", "AXSecureTextField"),
@@ -39,10 +78,23 @@ final class AccessibilityRestrictions {
         ("sendMessage", "sendMessage"),
     ]
 
-    /// All known restriction IDs
+    /// All known restriction IDs - thread-safe static constant
     static let allIds: Set<String> = {
         Set(axActions.map(\.id) + axRoles.map(\.id) + aeWriteSelectors.map(\.id))
     }()
+}
+
+/// Manages which accessibility / Apple Event safety restrictions are active.
+/// All restrictions default to ENABLED (enforced). User can disable per-item.
+@MainActor @Observable
+final class AccessibilityRestrictions {
+    static let shared = AccessibilityRestrictions()
+
+    // Expose the static lists for UI binding
+    static var axActions: [(id: String, label: String)] { AccessibilityRestrictionIDs.axActions }
+    static var axRoles: [(id: String, label: String)] { AccessibilityRestrictionIDs.axRoles }
+    static var aeWriteSelectors: [(id: String, label: String)] { AccessibilityRestrictionIDs.aeWriteSelectors }
+    static var allIds: Set<String> { AccessibilityRestrictionIDs.allIds }
 
     // MARK: - State
 
@@ -89,28 +141,37 @@ struct AccessibilitySettingsView: View {
     @Bindable var restrictions = AccessibilityRestrictions.shared
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Accessibility Access")
-                .font(.headline)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Accessibility Access")
+                    .font(.headline)
 
-            Text("Enabled calls are allowed. Click to disable.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                Text("Enabled calls are allowed. Click to disable.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
 
-            Divider()
+                Divider()
 
-            section(title: "AX Actions", items: AccessibilityRestrictions.axActions)
+                section(title: "AX Core Actions", items: AccessibilityRestrictionIDs.axCoreActions)
+                section(title: "AX Value Actions", items: AccessibilityRestrictionIDs.axValueActions)
+                section(title: "AX Disclosure Actions", items: AccessibilityRestrictionIDs.axDisclosureActions)
+                section(title: "AX Window Actions", items: AccessibilityRestrictionIDs.axWindowActions)
+                section(title: "AX Text Actions", items: AccessibilityRestrictionIDs.axTextActions)
+                section(title: "AX Scroll Actions", items: AccessibilityRestrictionIDs.axScrollActions)
+                section(title: "AX Focus Actions", items: AccessibilityRestrictionIDs.axFocusActions)
 
-            Divider()
+                Divider()
 
-            section(title: "AX Enabled Roles", items: AccessibilityRestrictions.axRoles)
+                section(title: "AX Protected Roles", items: AccessibilityRestrictions.axRoles)
 
-            Divider()
+                Divider()
 
-            section(title: "Apple Event Write Selectors", items: AccessibilityRestrictions.aeWriteSelectors)
+                section(title: "Apple Event Write Selectors", items: AccessibilityRestrictions.aeWriteSelectors)
+            }
+            .padding(16)
         }
-        .padding(16)
-        .frame(width: 360)
+        .frame(width: 400)
+        .frame(maxHeight: 500)
     }
 
     @ViewBuilder

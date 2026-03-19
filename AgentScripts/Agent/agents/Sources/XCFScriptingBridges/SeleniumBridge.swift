@@ -152,6 +152,25 @@ public class SeleniumClient {
         return session
     }
     
+    /// Reconnect to an existing session by session ID
+    public func reconnect(sessionId: String) async throws {
+        // Verify the session is valid by getting the title (or any simple command)
+        let response = try await sendRequest("GET", "/session/\(sessionId)/title")
+        // If we get a valid response, the session exists
+        session = WebDriverSession(sessionId: sessionId, capabilities: nil)
+    }
+    
+    /// Set session directly (for reconnection from saved state)
+    public func setSession(_ newSession: WebDriverSession) {
+        session = newSession
+    }
+    
+    /// Get server status
+    public func getStatus() async throws -> [String: Any] {
+        let response = try await sendRequest("GET", "/status")
+        return response["value"] as? [String: Any] ?? [:]
+    }
+    
     // MARK: - Navigation
     
     public func navigate(to url: String) async throws {
