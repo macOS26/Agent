@@ -6,6 +6,12 @@ extension Notification.Name {
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        // Initialize accessibility enabled defaults on startup
+        // This ensures the UserDefaults keys exist before any isRestricted() checks
+        _ = AccessibilityEnabled.shared
+    }
+    
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         // Tell the view model to stop all running tasks, MCP servers, etc.
         NotificationCenter.default.post(name: .appWillQuit, object: nil)

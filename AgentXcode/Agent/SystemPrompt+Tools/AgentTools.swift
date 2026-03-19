@@ -45,9 +45,10 @@ enum AgentTools {
         NEVER xcodebuild or swift build via shell. Workflow: read → edit → xcode_build → fix → commit.
 
         ACCESSIBILITY (require TCC):
-        Read: ax_list_windows, ax_inspect_element, ax_get_properties, ax_check_permission, ax_request_permission
-        Input: ax_type_text, ax_click, ax_scroll, ax_press_key
-        Action: ax_perform_action (allowWrites=true required). Password fields always blocked.
+        Read: ax_list_windows, ax_inspect_element, ax_get_properties, ax_get_children, ax_get_focused_element, ax_check_permission, ax_request_permission
+        Input: ax_type_text, ax_click, ax_scroll, ax_press_key, ax_drag
+        Action: ax_perform_action, ax_show_menu (allowWrites=true required). Password fields always blocked.
+        Set: ax_set_properties (sets text, values, positions). Find: ax_find_element, ax_wait_for_element.
         Other: ax_screenshot, ax_get_audit_log
 
         AGENTSCRIPTS:
@@ -233,6 +234,13 @@ enum AgentTools {
         "ax_press_key":         #"ax_press_key {"keyCode": 36}"#,
         "ax_screenshot":        "ax_screenshot",
         "ax_get_audit_log":     "ax_get_audit_log",
+        "ax_set_properties":    #"ax_set_properties {"properties": {"AXValue": "hello"}}"#,
+        "ax_find_element":      #"ax_find_element {"role": "AXButton", "title": "Submit"}"#,
+        "ax_get_focused_element": "ax_get_focused_element",
+        "ax_get_children":      #"ax_get_children {"role": "AXWindow"}"#,
+        "ax_drag":              #"ax_drag {"fromX": 100, "fromY": 100, "toX": 200, "toY": 200}"#,
+        "ax_wait_for_element":  #"ax_wait_for_element {"role": "AXButton", "timeout": 5}"#,
+        "ax_show_menu":         #"ax_show_menu {"x": 100, "y": 200}"#,
         "list_apple_scripts":   "list_apple_scripts",
         "run_apple_script":     #"run_apple_script {"name": "Greeting"}"#,
         "save_apple_script":    #"save_apple_script {"name": "Greeting", "source": "display dialog \"Hello!\""}"#,
@@ -564,6 +572,96 @@ enum AgentTools {
             description: "Get recent accessibility audit log entries. Shows recent accessibility operations performed by the agent.",
             properties: [
                 "limit": ["type": "integer", "description": "Maximum number of entries to return (default 50)"],
+            ],
+            required: []
+        ),
+        // --- Accessibility Set Properties (Phase 6) ---
+        ToolDef(
+            name: "ax_set_properties",
+            description: "Set accessibility property values on an element. CRITICAL for setting text fields, selections, slider values, etc. Can find element by role/title, by position, or within a specific app.",
+            properties: [
+                "role": ["type": "string", "description": "Accessibility role to find (e.g., 'AXTextField', 'AXSlider')"],
+                "title": ["type": "string", "description": "Title or name to match (partial match)"],
+                "appBundleId": ["type": "string", "description": "Optional bundle ID to search within a specific app"],
+                "x": ["type": "number", "description": "Screen X coordinate for position-based lookup"],
+                "y": ["type": "number", "description": "Screen Y coordinate for position-based lookup"],
+                "properties": ["type": "object", "description": "Properties to set as key-value pairs. Common: 'AXValue' for text, 'AXSelected' for selection, 'AXValue' (with position dict) for sliders"],
+            ],
+            required: ["properties"]
+        ),
+        // --- Accessibility Find Element (Phase 6) ---
+        ToolDef(
+            name: "ax_find_element",
+            description: "Find an accessibility element by role, title, or value with optional timeout. Returns element properties when found. Useful for waiting for UI elements to appear.",
+            properties: [
+                "role": ["type": "string", "description": "Accessibility role to find (e.g., 'AXButton', 'AXTextField')"],
+                "title": ["type": "string", "description": "Title or name to match (partial match)"],
+                "value": ["type": "string", "description": "Value to match (partial match in element's AXValue)"],
+                "appBundleId": ["type": "string", "description": "Optional bundle ID to search within a specific app"],
+                "timeout": ["type": "number", "description": "Maximum seconds to wait for element (default 5.0)"],
+            ],
+            required: []
+        ),
+        // --- Accessibility Get Focused Element (Phase 6) ---
+        ToolDef(
+            name: "ax_get_focused_element",
+            description: "Get the currently focused accessibility element. Can optionally filter by app. Returns element properties.",
+            properties: [
+                "appBundleId": ["type": "string", "description": "Optional bundle ID to get focused element within a specific app"],
+            ],
+            required: []
+        ),
+        // --- Accessibility Get Children (Phase 6) ---
+        ToolDef(
+            name: "ax_get_children",
+            description: "Get all children of an accessibility element. Useful for exploring UI hierarchy.",
+            properties: [
+                "role": ["type": "string", "description": "Accessibility role to find parent element"],
+                "title": ["type": "string", "description": "Title to match for parent element"],
+                "appBundleId": ["type": "string", "description": "Optional bundle ID to search within a specific app"],
+                "x": ["type": "number", "description": "Screen X coordinate for position-based parent lookup"],
+                "y": ["type": "number", "description": "Screen Y coordinate for position-based parent lookup"],
+                "depth": ["type": "integer", "description": "How deep to traverse children (default 3)"],
+            ],
+            required: []
+        ),
+        // --- Accessibility Drag (Phase 6) ---
+        ToolDef(
+            name: "ax_drag",
+            description: "Perform a drag operation from one point to another. Simulates mouse down, drag, and mouse up.",
+            properties: [
+                "fromX": ["type": "number", "description": "Starting X coordinate"],
+                "fromY": ["type": "number", "description": "Starting Y coordinate"],
+                "toX": ["type": "number", "description": "Ending X coordinate"],
+                "toY": ["type": "number", "description": "Ending Y coordinate"],
+                "button": ["type": "string", "description": "Mouse button: 'left' (default), 'right', or 'middle'"],
+            ],
+            required: ["fromX", "fromY", "toX", "toY"]
+        ),
+        // --- Accessibility Wait For Element (Phase 6) ---
+        ToolDef(
+            name: "ax_wait_for_element",
+            description: "Wait for an accessibility element to appear, polling periodically until found or timeout. Returns element properties when found.",
+            properties: [
+                "role": ["type": "string", "description": "Accessibility role to find"],
+                "title": ["type": "string", "description": "Title or name to match (partial match)"],
+                "value": ["type": "string", "description": "Value to match"],
+                "appBundleId": ["type": "string", "description": "Optional bundle ID to search within a specific app"],
+                "timeout": ["type": "number", "description": "Maximum seconds to wait (default 10.0)"],
+                "pollInterval": ["type": "number", "description": "Seconds between polls (default 0.5)"],
+            ],
+            required: []
+        ),
+        // --- Accessibility Show Menu (Phase 6) ---
+        ToolDef(
+            name: "ax_show_menu",
+            description: "Show context menu for an element. Uses AXShowMenu action if available, otherwise simulates right-click at element center.",
+            properties: [
+                "role": ["type": "string", "description": "Accessibility role to find element"],
+                "title": ["type": "string", "description": "Title to match for element"],
+                "appBundleId": ["type": "string", "description": "Optional bundle ID to search within a specific app"],
+                "x": ["type": "number", "description": "Screen X coordinate for position-based lookup"],
+                "y": ["type": "number", "description": "Screen Y coordinate for position-based lookup"],
             ],
             required: []
         ),

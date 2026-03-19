@@ -1699,7 +1699,8 @@ extension AgentViewModel {
                             appendLog("Typing: \(text.count) characters...")
                             flushLog()
                             let output = await Self.offMain {
-                                AccessibilityService.shared.typeText(text, at: x, y: y)
+                                // Ensure text is non-nil and handle empty string gracefully
+                                AccessibilityService.shared.typeText(text ?? "", at: x, y: y)
                             }
                             appendLog(output)
                             commandsRun.append("ax_type_text")
@@ -1809,6 +1810,151 @@ extension AgentViewModel {
                                 AccessibilityService.shared.getAuditLog(limit: limit)
                             }
                             appendLog(Self.preview(output, lines: 30))
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        // Accessibility set properties (Phase 6)
+                        if name == "ax_set_properties" {
+                            guard let propertiesInput = input["properties"] as? [String: Any], !propertiesInput.isEmpty else {
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Error: properties dictionary is required"])
+                                continue
+                            }
+                            let role = input["role"] as? String
+                            let title = input["title"] as? String
+                            let appBundleId = input["appBundleId"] as? String
+                            let x = (input["x"] as? Double).map { CGFloat($0) }
+                            let y = (input["y"] as? Double).map { CGFloat($0) }
+                            appendLog("Setting element properties...")
+                            flushLog()
+                            // Serialize and deserialize to avoid Sendable issues
+                            let propertiesData = try? JSONSerialization.data(withJSONObject: propertiesInput)
+                            let output = await Self.offMain {
+                                guard let data = propertiesData,
+                                      let properties = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                                    return "{\"success\": false, \"error\": \"Failed to serialize properties\"}"
+                                }
+                                return AccessibilityService.shared.setProperties(
+                                    role: role, title: title, appBundleId: appBundleId, x: x, y: y,
+                                    properties: properties
+                                )
+                            }
+                            appendLog(output)
+                            commandsRun.append("ax_set_properties")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        // Accessibility find element (Phase 6)
+                        if name == "ax_find_element" {
+                            let role = input["role"] as? String
+                            let title = input["title"] as? String
+                            let value = input["value"] as? String
+                            let appBundleId = input["appBundleId"] as? String
+                            let timeout = input["timeout"] as? Double ?? 5.0
+                            appendLog("Finding element...")
+                            flushLog()
+                            let output = await Self.offMain {
+                                AccessibilityService.shared.findElement(
+                                    role: role, title: title, value: value, appBundleId: appBundleId, timeout: timeout
+                                )
+                            }
+                            appendLog(Self.preview(output, lines: 30))
+                            commandsRun.append("ax_find_element")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        // Accessibility get focused element (Phase 6)
+                        if name == "ax_get_focused_element" {
+                            let appBundleId = input["appBundleId"] as? String
+                            appendLog("Getting focused element...")
+                            flushLog()
+                            let output = await Self.offMain {
+                                AccessibilityService.shared.getFocusedElement(appBundleId: appBundleId)
+                            }
+                            appendLog(Self.preview(output, lines: 30))
+                            commandsRun.append("ax_get_focused_element")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        // Accessibility get children (Phase 6)
+                        if name == "ax_get_children" {
+                            let role = input["role"] as? String
+                            let title = input["title"] as? String
+                            let appBundleId = input["appBundleId"] as? String
+                            let x = (input["x"] as? Double).map { CGFloat($0) }
+                            let y = (input["y"] as? Double).map { CGFloat($0) }
+                            let depth = input["depth"] as? Int ?? 3
+                            appendLog("Getting element children...")
+                            flushLog()
+                            let output = await Self.offMain {
+                                AccessibilityService.shared.getChildren(
+                                    role: role, title: title, appBundleId: appBundleId, x: x, y: y, depth: depth
+                                )
+                            }
+                            appendLog(Self.preview(output, lines: 30))
+                            commandsRun.append("ax_get_children")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        // Accessibility drag (Phase 6)
+                        if name == "ax_drag" {
+                            guard let fromXVal = input["fromX"] as? Double,
+                                  let fromYVal = input["fromY"] as? Double,
+                                  let toXVal = input["toX"] as? Double,
+                                  let toYVal = input["toY"] as? Double else {
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Error: fromX, fromY, toX, toY coordinates are required"])
+                                continue
+                            }
+                            let fromX = CGFloat(fromXVal)
+                            let fromY = CGFloat(fromYVal)
+                            let toX = CGFloat(toXVal)
+                            let toY = CGFloat(toYVal)
+                            let button = input["button"] as? String ?? "left"
+                            appendLog("Dragging from (\(fromX), \(fromY)) to (\(toX), \(toY))...")
+                            flushLog()
+                            let output = await Self.offMain {
+                                AccessibilityService.shared.drag(fromX: fromX, fromY: fromY, toX: toX, toY: toY, button: button)
+                            }
+                            appendLog(output)
+                            commandsRun.append("ax_drag")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        // Accessibility wait for element (Phase 6)
+                        if name == "ax_wait_for_element" {
+                            let role = input["role"] as? String
+                            let title = input["title"] as? String
+                            let value = input["value"] as? String
+                            let appBundleId = input["appBundleId"] as? String
+                            let timeout = input["timeout"] as? Double ?? 10.0
+                            let pollInterval = input["pollInterval"] as? Double ?? 0.5
+                            appendLog("Waiting for element (timeout: \(timeout)s)...")
+                            flushLog()
+                            let output = await Self.offMain {
+                                AccessibilityService.shared.waitForElement(
+                                    role: role, title: title, value: value, appBundleId: appBundleId, timeout: timeout, pollInterval: pollInterval
+                                )
+                            }
+                            appendLog(Self.preview(output, lines: 30))
+                            commandsRun.append("ax_wait_for_element")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        // Accessibility show menu (Phase 6)
+                        if name == "ax_show_menu" {
+                            let role = input["role"] as? String
+                            let title = input["title"] as? String
+                            let appBundleId = input["appBundleId"] as? String
+                            let x = (input["x"] as? Double).map { CGFloat($0) }
+                            let y = (input["y"] as? Double).map { CGFloat($0) }
+                            appendLog("Showing context menu...")
+                            flushLog()
+                            let output = await Self.offMain {
+                                AccessibilityService.shared.showMenu(
+                                    role: role, title: title, appBundleId: appBundleId, x: x, y: y
+                                )
+                            }
+                            appendLog(output)
+                            commandsRun.append("ax_show_menu")
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 

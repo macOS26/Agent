@@ -58,17 +58,12 @@ final class AppleEventService: @unchecked Sendable {
     private static let maxOutputLines = 500
     private static let defaultLimit = 50
 
-    /// Known write selectors that can be restricted via Accessibility Settings.
-    private static let writeSelectors: Set<String> = [
-        "delete", "close", "remove", "quit", "move", "moveTo",
-        "duplicate", "save", "set", "sendMessage"
-    ]
-
     /// Check whether a write selector is restricted. Only applies to known write selectors.
     /// Non-write methods (e.g. "playlists", "searchFor") always pass through.
     private static func isSelectorRestricted(_ selector: String) -> Bool {
-        guard writeSelectors.contains(selector) else { return false }
-        guard let enabled = UserDefaults.standard.stringArray(forKey: "ax.enabledRestrictions") else {
+        guard AppleEventsEnabledIDs.allAeIds.contains(selector) else { return false }
+        // Use the shared enabled key constant for consistency
+        guard let enabled = UserDefaults.standard.stringArray(forKey: aeEnabledKey) else {
             return false // First launch — all enabled
         }
         return !enabled.contains(selector)

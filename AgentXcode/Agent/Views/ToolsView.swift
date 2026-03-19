@@ -30,22 +30,53 @@ struct ToolsView: View {
             // Tag cloud — native tools only, sorted alphabetically
             ScrollView {
                 FlowLayout(spacing: 4) {
-                    ForEach(AgentTools.tools(for: selectedProvider).sorted(by: { $0.name < $1.name }), id: \.name) { tool in
-                        let enabled = prefs.isEnabled(selectedProvider, tool.name)
-                        Button {
-                            prefs.toggle(selectedProvider, tool.name)
-                        } label: {
-                            Text(tool.name)
-                                .font(.caption2)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(enabled ? Color.accentColor.opacity(0.2) : Color.secondary.opacity(0.1))
-                                .foregroundStyle(enabled ? .primary : .tertiary)
-                                .clipShape(Capsule())
-                                .overlay(Capsule().stroke(enabled ? Color.accentColor.opacity(0.5) : Color.clear, lineWidth: 0.5))
+                    // Group tools by category
+                    let tools = AgentTools.tools(for: selectedProvider)
+                    let categories: [String: [AgentTools.ToolDef]] = [
+                        "Coding": tools.filter { $0.name.hasPrefix("read_") || $0.name.hasPrefix("write_") || $0.name.hasPrefix("edit_") || $0.name.hasPrefix("list_") || $0.name.hasPrefix("search_") },
+                        "Git": tools.filter { $0.name.hasPrefix("git_") },
+                        "Automation": tools.filter { $0.name.hasPrefix("apple_event_") || $0.name.hasPrefix("run_") || $0.name == "execute_javascript" },
+                        "Shell": tools.filter { $0.name.hasPrefix("execute_") && !$0.name.hasPrefix("execute_javascript") },
+                        "Accessibility": tools.filter { $0.name.hasPrefix("ax_") },
+                        "Scripts": tools.filter { $0.name.hasPrefix("list_agent_") || $0.name.hasPrefix("read_agent_") || $0.name.hasPrefix("create_agent_") || $0.name.hasPrefix("update_agent_") || $0.name.hasPrefix("run_agent_") || $0.name.hasPrefix("delete_agent_") },
+                        "SDEF": tools.filter { $0.name == "lookup_sdef" },
+                        "Xcode": tools.filter { $0.name.hasPrefix("xcode_") },
+                        "AppleScript": tools.filter { $0.name.hasPrefix("list_apple_") || $0.name.hasPrefix("run_apple_") || $0.name.hasPrefix("save_apple_") || $0.name.hasPrefix("delete_apple_") },
+                        "JavaScript": tools.filter { $0.name.hasPrefix("list_javascript") || $0.name.hasPrefix("run_javascript") || $0.name.hasPrefix("save_javascript") || $0.name.hasPrefix("delete_javascript") },
+                        "Discovery": tools.filter { $0.name == "list_native_tools" || $0.name == "list_mcp_tools" },
+                        "Core": tools.filter { $0.name == "task_complete" }
+                    ]
+                    
+                    ForEach(Array(categories.keys).sorted(), id: \.self) { category in
+                        if let categoryTools = categories[category], !categoryTools.isEmpty {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(category)
+                                    .font(.caption).bold()
+                                    .foregroundStyle(.secondary)
+                                    .padding(.leading, 4)
+                                    .padding(.top, 8)
+                                
+                                FlowLayout(spacing: 4) {
+                                    ForEach(categoryTools.sorted(by: { $0.name < $1.name }), id: \.name) { tool in
+                                        let enabled = prefs.isEnabled(selectedProvider, tool.name)
+                                        Button {
+                                            prefs.toggle(selectedProvider, tool.name)
+                                        } label: {
+                                            Text(tool.name)
+                                                .font(.caption2)
+                                                .padding(.horizontal, 6)
+                                                .padding(.vertical, 2)
+                                                .background(enabled ? Color.accentColor.opacity(0.2) : Color.secondary.opacity(0.1))
+                                                .foregroundStyle(enabled ? .primary : .tertiary)
+                                                .clipShape(Capsule())
+                                                .overlay(Capsule().stroke(enabled ? Color.accentColor.opacity(0.5) : Color.clear, lineWidth: 0.5))
+                                        }
+                                        .buttonStyle(.plain)
+                                        .help(tool.description.components(separatedBy: ". ").first ?? tool.description)
+                                    }
+                                }
+                            }
                         }
-                        .buttonStyle(.plain)
-                        .help(tool.description.components(separatedBy: ". ").first ?? tool.description)
                     }
                 }
                 .padding()

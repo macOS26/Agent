@@ -939,6 +939,176 @@ extension AgentViewModel {
             )
         }
 
+        // ax_set_properties
+        if name == "ax_set_properties" {
+            guard let propertiesInput = input["properties"] as? [String: Any], !propertiesInput.isEmpty else {
+                return TabToolResult(
+                    toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": "Error: properties dictionary is required"],
+                    isComplete: false
+                )
+            }
+            let role = input["role"] as? String
+            let title = input["title"] as? String
+            let appBundleId = input["appBundleId"] as? String
+            let x = (input["x"] as? Double).map { CGFloat($0) }
+            let y = (input["y"] as? Double).map { CGFloat($0) }
+            tab.appendLog("Setting element properties...")
+            tab.flush()
+            // Serialize and deserialize to avoid Sendable issues
+            let propertiesData = try? JSONSerialization.data(withJSONObject: propertiesInput)
+            let output = await Self.offMain {
+                guard let data = propertiesData,
+                      let properties = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                    return "{\"success\": false, \"error\": \"Failed to serialize properties\"}"
+                }
+                return AccessibilityService.shared.setProperties(
+                    role: role, title: title, appBundleId: appBundleId, x: x, y: y,
+                    properties: properties
+                )
+            }
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+        }
+
+        // ax_find_element
+        if name == "ax_find_element" {
+            let role = input["role"] as? String
+            let title = input["title"] as? String
+            let value = input["value"] as? String
+            let appBundleId = input["appBundleId"] as? String
+            let timeout = input["timeout"] as? Double ?? 5.0
+            tab.appendLog("Finding element...")
+            tab.flush()
+            let output = await Self.offMain {
+                AccessibilityService.shared.findElement(
+                    role: role, title: title, value: value, appBundleId: appBundleId, timeout: timeout
+                )
+            }
+            tab.appendLog(Self.preview(output, lines: 30))
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+        }
+
+        // ax_get_focused_element
+        if name == "ax_get_focused_element" {
+            let appBundleId = input["appBundleId"] as? String
+            tab.appendLog("Getting focused element...")
+            tab.flush()
+            let output = await Self.offMain {
+                AccessibilityService.shared.getFocusedElement(appBundleId: appBundleId)
+            }
+            tab.appendLog(Self.preview(output, lines: 30))
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+        }
+
+        // ax_get_children
+        if name == "ax_get_children" {
+            let role = input["role"] as? String
+            let title = input["title"] as? String
+            let appBundleId = input["appBundleId"] as? String
+            let x = (input["x"] as? Double).map { CGFloat($0) }
+            let y = (input["y"] as? Double).map { CGFloat($0) }
+            let depth = input["depth"] as? Int ?? 3
+            tab.appendLog("Getting element children...")
+            tab.flush()
+            let output = await Self.offMain {
+                AccessibilityService.shared.getChildren(
+                    role: role, title: title, appBundleId: appBundleId, x: x, y: y, depth: depth
+                )
+            }
+            tab.appendLog(Self.preview(output, lines: 30))
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+        }
+
+        // ax_drag
+        if name == "ax_drag" {
+            guard let fromXVal = input["fromX"] as? Double,
+                  let fromYVal = input["fromY"] as? Double,
+                  let toXVal = input["toX"] as? Double,
+                  let toYVal = input["toY"] as? Double else {
+                return TabToolResult(
+                    toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": "Error: fromX, fromY, toX, toY coordinates are required"],
+                    isComplete: false
+                )
+            }
+            let fromX = CGFloat(fromXVal)
+            let fromY = CGFloat(fromYVal)
+            let toX = CGFloat(toXVal)
+            let toY = CGFloat(toYVal)
+            let button = input["button"] as? String ?? "left"
+            tab.appendLog("Dragging from (\(fromX), \(fromY)) to (\(toX), \(toY))...")
+            tab.flush()
+            let output = await Self.offMain {
+                AccessibilityService.shared.drag(fromX: fromX, fromY: fromY, toX: toX, toY: toY, button: button)
+            }
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+        }
+
+        // ax_wait_for_element
+        if name == "ax_wait_for_element" {
+            let role = input["role"] as? String
+            let title = input["title"] as? String
+            let value = input["value"] as? String
+            let appBundleId = input["appBundleId"] as? String
+            let timeout = input["timeout"] as? Double ?? 10.0
+            let pollInterval = input["pollInterval"] as? Double ?? 0.5
+            tab.appendLog("Waiting for element (timeout: \(timeout)s)...")
+            tab.flush()
+            let output = await Self.offMain {
+                AccessibilityService.shared.waitForElement(
+                    role: role, title: title, value: value, appBundleId: appBundleId, timeout: timeout, pollInterval: pollInterval
+                )
+            }
+            tab.appendLog(Self.preview(output, lines: 30))
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+        }
+
+        // ax_show_menu
+        if name == "ax_show_menu" {
+            let role = input["role"] as? String
+            let title = input["title"] as? String
+            let appBundleId = input["appBundleId"] as? String
+            let x = (input["x"] as? Double).map { CGFloat($0) }
+            let y = (input["y"] as? Double).map { CGFloat($0) }
+            tab.appendLog("Showing context menu...")
+            tab.flush()
+            let output = await Self.offMain {
+                AccessibilityService.shared.showMenu(
+                    role: role, title: title, appBundleId: appBundleId, x: x, y: y
+                )
+            }
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+        }
+
         // MCP tools
         if name.hasPrefix("mcp_") {
             let parts = name.dropFirst(4).split(separator: "_", maxSplits: 1)
