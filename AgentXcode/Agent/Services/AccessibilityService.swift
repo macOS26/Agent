@@ -229,7 +229,7 @@ final class AccessibilityService: @unchecked Sendable {
     
     /// Max recursion depth for AX hierarchy traversal — prevents stack overflow
     /// from deeply nested or circular element trees (browsers, Finder, etc.)
-    private static let maxHierarchyDepth = 50
+    private static let maxHierarchyDepth = 100
 
     private func findElementInHierarchy(_ parent: AXUIElement, role: String?, title: String?, depth: Int = 0) -> AXUIElement? {
         guard depth < Self.maxHierarchyDepth else { return nil }
