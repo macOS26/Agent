@@ -87,12 +87,12 @@ final class FoundationModelService {
 
     /// All properly-typed native tools keyed by name.
     /// Uses @Generable argument structs so the on-device model understands the schemas.
+    /// Core tools only — Apple AI's tiny context can't handle many tools.
+    /// Keep this list small for reliable tool calling.
     private static let allNativeTools: [String: any Tool] = {
         let tools: [any Tool] = [
             NativeShellTool(),
             NativeAppleScriptTool(),
-            NativeOsaScriptTool(),
-            NativeJXATool(),
             NativeReadFileTool(),
             NativeWriteFileTool(),
             NativeEditFileTool(),
@@ -103,12 +103,6 @@ final class FoundationModelService {
             NativeGitCommitTool(),
             NativeGitLogTool(),
             NativeGitDiffTool(),
-            NativeListNativeToolsTool(),
-            NativeListMCPToolsTool(),
-            NativeListAppleScriptsTool(),
-            NativeRunAppleScriptTool(),
-            NativeSaveAppleScriptTool(),
-            NativeDeleteAppleScriptTool(),
         ]
         return Dictionary(uniqueKeysWithValues: tools.map { ($0.name, $0) })
     }()
@@ -354,6 +348,8 @@ enum NativeToolContext {
     @MainActor static var projectFolder: String = ""
     /// Set when task_complete is called via native tool — the task loop checks this after each iteration.
     @MainActor static var taskCompleteSummary: String?
+    /// Last tool output — so task_complete can include it if the model just says "Done".
+    @MainActor static var lastToolOutput: String = ""
     /// Counts tool calls per session turn to prevent infinite loops.
     @MainActor static var toolCallCount = 0
     /// Max tool calls before forcing task_complete.
@@ -385,10 +381,11 @@ private struct NativeShellTool: Tool {
         let pf = await NativeToolContext.projectFolder
         if !pf.isEmpty && !cmd.hasPrefix("cd ") {
             let escaped = pf.replacingOccurrences(of: "'", with: "'\\''")
-            cmd = "export PWD='\(escaped)'; \(cmd)"
+            cmd = "cd '\(escaped)' && \(cmd)"
         }
         let result = nativeShellRun(cmd)
         print("🔧 [Apple AI] $ \(arguments.command)\n\(result)")
+        await MainActor.run { NativeToolContext.lastToolOutput = "$ \(arguments.command)\n\(result)" }
         return AgentToolOutput(result: result)
     }
 }
@@ -669,7 +666,16 @@ private struct NativeTaskCompleteTool: Tool {
     let description = "Mark task done"
 
     func call(arguments: TaskCompleteArgs) async throws -> AgentToolOutput {
-        await MainActor.run { NativeToolContext.taskCompleteSummary = arguments.summary }
+        await MainActor.run {
+            let lastOutput = NativeToolContext.lastToolOutput
+            if !lastOutput.isEmpty && (arguments.summary == "Done" || arguments.summary.count < 10) {
+                // Model gave a lazy summary — include the actual tool output
+                NativeToolContext.taskCompleteSummary = lastOutput
+            } else {
+                NativeToolContext.taskCompleteSummary = arguments.summary
+            }
+            NativeToolContext.lastToolOutput = ""
+        }
         return AgentToolOutput(result: "Task complete: \(arguments.summary)")
     }
 }

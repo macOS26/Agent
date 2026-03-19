@@ -800,6 +800,7 @@ extension AgentViewModel {
             ? FoundationModelService(historyContext: historyContext, projectFolder: projectFolder) : nil
         if foundationModel != nil {
             NativeToolContext.taskCompleteSummary = nil
+            NativeToolContext.lastToolOutput = ""
             NativeToolContext.toolCallCount = 0
             NativeToolContext.toolHandler = { [weak self] toolName, input in
                 await self?.executeNativeTool(toolName, input: input) ?? "Error: agent unavailable"
@@ -1923,7 +1924,7 @@ extension AgentViewModel {
                             flushLog()
                             let output = await Self.offMain {
                                 // Ensure text is non-nil and handle empty string gracefully
-                                AccessibilityService.shared.typeText(text ?? "", at: x, y: y)
+                                AccessibilityService.shared.typeText(text, at: x, y: y)
                             }
                             appendLog(output)
                             commandsRun.append("ax_type_text")

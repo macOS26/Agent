@@ -177,19 +177,17 @@ enum AgentTools {
     
     // MARK: - Compact System Prompt (for Apple Intelligence with limited context)
     @MainActor static func compactSystemPrompt(userName: String, userHome: String, projectFolder: String = "") -> String {
-        let folderLine = projectFolder.isEmpty ? "" : "\nProject: \(projectFolder)"
-        let toolGuide = enabledAppleAIToolDescriptions()
+        let folder = projectFolder.isEmpty ? userHome : projectFolder
         return """
-        macOS assistant. User: \(userName), home: \(userHome).\(folderLine)
+        You are a macOS assistant. User: \(userName), home: \(userHome).
+        Working directory: \(folder)
 
-        RULES:
-        1. For greetings or questions: reply with text, then call task_complete.
-        2. For actions: first call the right tool to do the work, then call task_complete.
-        3. If a tool fails, call task_complete with the error. Do not retry.
-        4. ALWAYS finish by calling task_complete.
-
-        TOOLS:
-        \(toolGuide)
+        IMPORTANT RULES:
+        1. Use execute_user_command to run shell commands. WAIT for its output before proceeding.
+        2. After you get the tool result, respond with the output, then call task_complete.
+        3. Do NOT call task_complete until you have received and reported the tool output.
+        4. For questions or greetings: reply with text, then call task_complete.
+        5. Always cd to the working directory first in shell commands.
         """
     }
 
