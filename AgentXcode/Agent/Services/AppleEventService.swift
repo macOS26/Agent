@@ -58,21 +58,11 @@ final class AppleEventService: @unchecked Sendable {
     private static let maxOutputLines = 500
     private static let defaultLimit = 50
 
-    /// Check whether a write selector is restricted. Only applies to known write selectors.
-    /// Non-write methods (e.g. "playlists", "searchFor") always pass through.
-    private static func isSelectorRestricted(_ selector: String) -> Bool {
-        guard AppleEventsEnabledIDs.allAeIds.contains(selector) else { return false }
-        // Use the shared enabled key constant for consistency
-        guard let enabled = UserDefaults.standard.stringArray(forKey: aeEnabledKey) else {
-            return false // First launch — all enabled
-        }
-        return !enabled.contains(selector)
-    }
 
     /// Execute a query against a scriptable application.
     /// Runs osascript first to trigger the Automation permission dialog if needed,
     /// then runs the ScriptingBridge query.
-    nonisolated func execute(bundleID: String, operations: [[String: Any]], allowWrites: Bool = true) -> String {
+    nonisolated func execute(bundleID: String, operations: [[String: Any]]) -> String {
         // SECURITY: Validate bundle ID to prevent injection attacks
         let sanitizedBundleID = sanitizeBundleID(bundleID)
         guard !sanitizedBundleID.isEmpty else {
@@ -83,7 +73,7 @@ final class AppleEventService: @unchecked Sendable {
         // Run a trivial osascript to trigger the macOS Automation permission dialog.
         // This is what actually makes the "Agent wants to control X" prompt appear.
         grantPermissionViaOsascript(appName: appName, bundleID: sanitizedBundleID)
-        return run(bundleID: sanitizedBundleID, operations: operations, allowWrites: allowWrites)
+        return run(bundleID: sanitizedBundleID, operations: operations)
     }
 
     /// Validate and sanitize a bundle identifier.
@@ -142,7 +132,7 @@ final class AppleEventService: @unchecked Sendable {
         return ""
     }
 
-    private func run(bundleID: String, operations: [[String: Any]], allowWrites: Bool) -> String {
+    private func run(bundleID: String, operations: [[String: Any]]) -> String {
         guard !bundleID.isEmpty else { return "Error: bundle_id is required" }
         guard !operations.isEmpty else { return "Error: operations array is empty" }
 
@@ -250,10 +240,6 @@ final class AppleEventService: @unchecked Sendable {
             case "call":
                 guard let method = op["method"] as? String else {
                     output.append("Error at step \(i): 'call' requires 'method'")
-                    return output.joined(separator: "\n")
-                }
-                if !allowWrites && Self.isSelectorRestricted(method) {
-                    output.append("Error at step \(i): '\(method)' is restricted. Set allow_writes=true or disable in Accessibility Settings.")
                     return output.joined(separator: "\n")
                 }
                 let result = callMethod(on: cursor, method: method, arg: op["arg"] as? String)

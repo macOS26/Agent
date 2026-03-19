@@ -47,8 +47,9 @@ enum AgentTools {
         ACCESSIBILITY (require TCC):
         Read: ax_list_windows, ax_inspect_element, ax_get_properties, ax_get_children, ax_get_focused_element, ax_check_permission, ax_request_permission
         Input: ax_type_text, ax_click, ax_scroll, ax_press_key, ax_drag
-        Action: ax_perform_action (defaults to allowWrites=true). Protected roles/actions can be disabled in Accessibility Settings.
+        Action: ax_perform_action. Protected roles/actions can be disabled in Accessibility Settings.
         Set: ax_set_properties (sets text, values, positions). Find: ax_find_element, ax_wait_for_element.
+        Smart: ax_click_element (click by role/title), ax_wait_adaptive (exponential backoff), ax_type_into_element (verified typing).
         Other: ax_screenshot, ax_get_audit_log
 
         AGENTSCRIPTS:
@@ -128,9 +129,16 @@ enum AgentTools {
           4. run_agent_script Selenium with {"action":"screenshot","filename":"result.png"}
           5. run_agent_script Selenium with {"action":"stop"}
 
+        WEB AUTOMATION (Phase 2):
+        Unified API that auto-selects best strategy: Accessibility → JavaScript → Selenium.
+        Tools: web_open, web_find, web_click, web_type, web_execute_js, web_get_url, web_get_title.
+        Strategies: 'auto' (default), 'accessibility', 'javascript', 'selenium'.
+        Selectors: CSS (#id, .class), XPath (//div), accessibility (AXButton, [title='Submit']).
+        For advanced control, use selenium_* tools directly for WebDriver operations.
+
         APPLE EVENT QUERY:
         Pass bundle_id + operations: get {key} | iterate {properties, limit} | index {index} | call {method, arg} | filter {predicate}
-        Writes blocked by default; set allow_writes=true.
+        Restricted operations can be disabled in Settings.
 
         SDEF LOOKUP (51 app dictionaries bundled as JSON):
         ALWAYS use lookup_sdef to read SDEFs — never sdef or find for .sdef files. \
@@ -240,6 +248,9 @@ enum AgentTools {
         "ax_get_children":      #"ax_get_children {"role": "AXWindow"}"#,
         "ax_drag":              #"ax_drag {"fromX": 100, "fromY": 100, "toX": 200, "toY": 200}"#,
         "ax_wait_for_element":  #"ax_wait_for_element {"role": "AXButton", "timeout": 5}"#,
+        "ax_click_element":     #"ax_click_element {"role": "AXButton", "title": "Submit"}"#,
+        "ax_wait_adaptive":     #"ax_wait_adaptive {"role": "AXTextField", "timeout": 10}"#,
+        "ax_type_into_element": #"ax_type_into_element {"role": "AXTextField", "text": "hello@example.com"}"#,
         "ax_show_menu":         #"ax_show_menu {"x": 100, "y": 200}"#,
         "list_apple_scripts":   "list_apple_scripts",
         "run_apple_script":     #"run_apple_script {"name": "Greeting"}"#,
@@ -402,7 +413,6 @@ enum AgentTools {
                         "required": ["action"],
                     ] as [String: Any],
                 ] as [String: Any],
-                "allow_writes": ["type": "boolean", "description": "Allow destructive operations (delete, close, move, etc.). Default true."],
             ],
             required: ["bundle_id", "operations"]
         ),
@@ -488,7 +498,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: "ax_perform_action",
-            description: "Perform an accessibility action on an element. SECURITY: Interaction actions (AXPress, AXConfirm, etc.) default to enabled. Protected roles (AXSecureTextField, AXPasswordField) can be disabled in Accessibility Settings — if disabled, they're blocked regardless of allowWrites. CRITICAL: If you just used ax_wait_for_element or ax_find_element, pass the SAME role/title/value parameters to this function - the element locator must match exactly.",
+            description: "Perform an accessibility action on an element. SECURITY: Protected roles (AXSecureTextField, AXPasswordField) can be disabled in Accessibility Settings. CRITICAL: If you just used ax_wait_for_element or ax_find_element, pass the SAME role/title/value parameters to this function - the element locator must match exactly.",
             properties: [
                 "role": ["type": "string", "description": "Accessibility role to find (e.g., 'AXButton', 'AXTextField')"],
                 "title": ["type": "string", "description": "Title to match (partial match)"],
@@ -497,7 +507,6 @@ enum AgentTools {
                 "x": ["type": "number", "description": "Screen X coordinate for position-based lookup"],
                 "y": ["type": "number", "description": "Screen Y coordinate for position-based lookup"],
                 "action": ["type": "string", "description": "Accessibility action to perform (e.g., 'AXPress', 'AXConfirm')"],
-                "allowWrites": ["type": "boolean", "description": "Allow interaction actions (default true)"],
             ],
             required: ["action"]
         ),
@@ -669,6 +678,48 @@ enum AgentTools {
                 "y": ["type": "number", "description": "Screen Y coordinate for position-based lookup"],
             ],
             required: []
+        ),
+        // --- Smart Element Click (Phase 1 Improvement) ---
+        ToolDef(
+            name: "ax_click_element",
+            description: "Click an element by finding it semantically (role/title) and clicking its center. More reliable than coordinate-based clicking for web automation. Finds element, gets its position/size, calculates center, and clicks.",
+            properties: [
+                "role": ["type": "string", "description": "Accessibility role to find (e.g., 'AXButton', 'AXTextField')"],
+                "title": ["type": "string", "description": "Title or name to match (partial match)"],
+                "value": ["type": "string", "description": "Value to match (partial match)"],
+                "appBundleId": ["type": "string", "description": "Optional bundle ID to search within a specific app"],
+                "timeout": ["type": "number", "description": "Maximum seconds to wait for element (default 5.0)"],
+                "verify": ["type": "boolean", "description": "Whether to capture screenshot for verification (default false)"],
+            ],
+            required: []
+        ),
+        // --- Adaptive Wait (Phase 1 Improvement) ---
+        ToolDef(
+            name: "ax_wait_adaptive",
+            description: "Wait for an element with exponential backoff polling. More efficient than fixed-interval polling for slow-loading content. Starts with short interval and increases up to max.",
+            properties: [
+                "role": ["type": "string", "description": "Accessibility role to find (e.g., 'AXButton', 'AXTextField')"],
+                "title": ["type": "string", "description": "Title or name to match (partial match)"],
+                "value": ["type": "string", "description": "Value to match (partial match)"],
+                "appBundleId": ["type": "string", "description": "Optional bundle ID to search within a specific app"],
+                "timeout": ["type": "number", "description": "Maximum seconds to wait (default 10.0)"],
+                "initialDelay": ["type": "number", "description": "Initial polling delay in seconds (default 0.1)"],
+                "maxDelay": ["type": "number", "description": "Maximum polling delay in seconds (default 1.0)"],
+            ],
+            required: []
+        ),
+        // --- Type into Element (Phase 1 Improvement) ---
+        ToolDef(
+            name: "ax_type_into_element",
+            description: "Type text into an element found by role/title. First tries AXValue set (fastest), falls back to CGEvent typing. Can verify the text was entered. Best for web form filling.",
+            properties: [
+                "role": ["type": "string", "description": "Accessibility role of target element (e.g., 'AXTextField', 'AXTextArea')"],
+                "title": ["type": "string", "description": "Title to match (partial match)"],
+                "text": ["type": "string", "description": "Text to type into the element"],
+                "appBundleId": ["type": "string", "description": "Optional bundle ID to search within a specific app"],
+                "verify": ["type": "boolean", "description": "Whether to verify the text was entered (default true)"],
+            ],
+            required: ["text"]
         ),
         // --- Script Management ---
         ToolDef(
@@ -843,6 +894,164 @@ enum AgentTools {
             description: "List all enabled MCP (Model Context Protocol) tools.",
             properties: [:],
             required: []
+        ),
+        // MARK: - Web Automation (Phase 2)
+        ToolDef(
+            name: "web_open",
+            description: "Open a URL in the specified browser. Uses AppleScript for Safari/Firefox, falls back to NSWorkspace for others. Fastest way to open URLs in web automation.",
+            properties: [
+                "url": ["type": "string", "description": "URL to open"],
+                "browser": ["type": "string", "description": "Browser type: 'safari' (default), 'chrome', 'firefox', 'edge'"],
+            ],
+            required: ["url"]
+        ),
+        ToolDef(
+            name: "web_find",
+            description: "Find an element on a web page using the best available strategy. Auto-selects: Accessibility (Safari AX) → JavaScript (Safari/Firefox) → Selenium. Supports CSS selectors, XPath, and accessibility attributes. Returns element properties with source strategy.",
+            properties: [
+                "selector": ["type": "string", "description": "Element selector: CSS (#id, .class), XPath (//div), or accessibility (AXButton, [title='Submit'])"],
+                "strategy": ["type": "string", "description": "Strategy: 'auto' (default), 'accessibility', 'javascript', 'selenium'"],
+                "timeout": ["type": "number", "description": "Maximum wait time in seconds (default 10.0)"],
+                "fuzzyThreshold": ["type": "number", "description": "Minimum match score 0-1 for fuzzy matching (default 0.6)"],
+                "appBundleId": ["type": "string", "description": "Optional browser bundle ID (auto-detected if not specified)"],
+            ],
+            required: ["selector"]
+        ),
+        ToolDef(
+            name: "web_click",
+            description: "Click a web element by selector. Auto-selects best strategy: AX click, JavaScript click, or Selenium click. Use after web_find to verify element exists.",
+            properties: [
+                "selector": ["type": "string", "description": "Element selector to click"],
+                "strategy": ["type": "string", "description": "Strategy: 'auto' (default), 'accessibility', 'javascript', 'selenium'"],
+                "appBundleId": ["type": "string", "description": "Optional browser bundle ID"],
+            ],
+            required: ["selector"]
+        ),
+        ToolDef(
+            name: "web_type",
+            description: "Type text into a web element by selector. Auto-selects best strategy: AXValue set (fastest), JavaScript value set, or Selenium sendKeys. Verifies text was entered.",
+            properties: [
+                "selector": ["type": "string", "description": "Element selector for input field"],
+                "text": ["type": "string", "description": "Text to type"],
+                "strategy": ["type": "string", "description": "Strategy: 'auto' (default), 'accessibility', 'javascript', 'selenium'"],
+                "verify": ["type": "boolean", "description": "Verify text was entered (default true)"],
+                "appBundleId": ["type": "string", "description": "Optional browser bundle ID"],
+            ],
+            required: ["selector", "text"]
+        ),
+        ToolDef(
+            name: "web_execute_js",
+            description: "Execute JavaScript in the active browser. Works in Safari and Firefox via AppleScript, Chrome via Selenium. Returns the result of the script execution.",
+            properties: [
+                "script": ["type": "string", "description": "JavaScript code to execute"],
+                "browser": ["type": "string", "description": "Browser bundle ID (auto-detected if not specified)"],
+            ],
+            required: ["script"]
+        ),
+        ToolDef(
+            name: "web_get_url",
+            description: "Get the current URL from the active browser. Works via AppleScript for Safari/Firefox/Chrome or via Selenium session.",
+            properties: [
+                "browser": ["type": "string", "description": "Optional browser bundle ID"],
+            ],
+            required: []
+        ),
+        ToolDef(
+            name: "web_get_title",
+            description: "Get the page title from the active browser.",
+            properties: [
+                "browser": ["type": "string", "description": "Optional browser bundle ID"],
+            ],
+            required: []
+        ),
+        // MARK: - Selenium WebDriver Tools
+        ToolDef(
+            name: "selenium_start",
+            description: "Start a Selenium WebDriver session. SafariDriver is built into macOS. For Chrome/Firefox, install chromedriver/geckodriver. Returns session ID for subsequent calls.",
+            properties: [
+                "browser": ["type": "string", "description": "Browser: 'safari' (default), 'chrome', 'firefox'"],
+                "port": ["type": "integer", "description": "WebDriver port (default 7055)"],
+                "capabilities": ["type": "object", "description": "Optional WebDriver capabilities"],
+            ],
+            required: []
+        ),
+        ToolDef(
+            name: "selenium_stop",
+            description: "End the Selenium WebDriver session.",
+            properties: [
+                "port": ["type": "integer", "description": "WebDriver port (default 7055)"],
+            ],
+            required: []
+        ),
+        ToolDef(
+            name: "selenium_navigate",
+            description: "Navigate to a URL via Selenium WebDriver. More reliable than AppleScript for complex pages.",
+            properties: [
+                "url": ["type": "string", "description": "URL to navigate to"],
+                "port": ["type": "integer", "description": "WebDriver port (default 7055)"],
+            ],
+            required: ["url"]
+        ),
+        ToolDef(
+            name: "selenium_find",
+            description: "Find element via Selenium WebDriver with CSS or XPath selector. Returns element ID for subsequent operations.",
+            properties: [
+                "strategy": ["type": "string", "description": "Locator strategy: 'css', 'xpath', 'id', 'name', 'linktext', 'tagname', 'classname'"],
+                "value": ["type": "string", "description": "Selector value"],
+                "port": ["type": "integer", "description": "WebDriver port (default 7055)"],
+            ],
+            required: ["strategy", "value"]
+        ),
+        ToolDef(
+            name: "selenium_click",
+            description: "Click an element via Selenium WebDriver. More reliable for dynamically loaded content.",
+            properties: [
+                "strategy": ["type": "string", "description": "Locator strategy: 'css', 'xpath', 'id', 'name'"],
+                "value": ["type": "string", "description": "Selector value"],
+                "port": ["type": "integer", "description": "WebDriver port (default 7055)"],
+            ],
+            required: ["strategy", "value"]
+        ),
+        ToolDef(
+            name: "selenium_type",
+            description: "Type text into an element via Selenium WebDriver. Simulates actual keyboard input.",
+            properties: [
+                "strategy": ["type": "string", "description": "Locator strategy: 'css', 'xpath', 'id', 'name'"],
+                "value": ["type": "string", "description": "Selector value"],
+                "text": ["type": "string", "description": "Text to type"],
+                "port": ["type": "integer", "description": "WebDriver port (default 7055)"],
+            ],
+            required: ["strategy", "value", "text"]
+        ),
+        ToolDef(
+            name: "selenium_execute",
+            description: "Execute JavaScript in the Selenium session. Useful for scrolling, DOM manipulation, or extracting data.",
+            properties: [
+                "script": ["type": "string", "description": "JavaScript code to execute"],
+                "args": ["type": "array", "description": "Optional arguments for the script"],
+                "port": ["type": "integer", "description": "WebDriver port (default 7055)"],
+            ],
+            required: ["script"]
+        ),
+        ToolDef(
+            name: "selenium_screenshot",
+            description: "Take a screenshot via Selenium WebDriver. Saves to ~/Documents/Agent/screenshots/.",
+            properties: [
+                "filename": ["type": "string", "description": "Screenshot filename (default: auto-generated)"],
+                "port": ["type": "integer", "description": "WebDriver port (default 7055)"],
+            ],
+            required: []
+        ),
+        ToolDef(
+            name: "selenium_wait",
+            description: "Wait for an element to appear via Selenium WebDriver. Uses explicit wait with timeout.",
+            properties: [
+                "strategy": ["type": "string", "description": "Locator strategy: 'css', 'xpath', 'id', 'name'"],
+                "value": ["type": "string", "description": "Selector value"],
+                "timeout": ["type": "number", "description": "Maximum wait time in seconds (default 10.0)"],
+                "port": ["type": "integer", "description": "WebDriver port (default 7055)"],
+            ],
+            required: ["strategy", "value"]
         ),
     ]
 

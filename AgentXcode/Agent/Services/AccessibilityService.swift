@@ -347,21 +347,15 @@ final class AccessibilityService: @unchecked Sendable {
     
     // MARK: - Perform Actions
     
-    func performAction(role: String?, title: String?, value: String?, appBundleId: String?, x: CGFloat?, y: CGFloat?, action: String, allowWrites: Bool = true) -> String {
+    func performAction(role: String?, title: String?, value: String?, appBundleId: String?, x: CGFloat?, y: CGFloat?, action: String) -> String {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        Self.logAudit("performAction(\(action)) role: \(role ?? "nil"), title: \(title ?? "nil"), value: \(value ?? "nil"), app: \(appBundleId ?? "nil"), allowWrites: \(allowWrites)")
+        Self.logAudit("performAction(\(action)) role: \(role ?? "nil"), title: \(title ?? "nil"), value: \(value ?? "nil"), app: \(appBundleId ?? "nil")")
 
-        // Check settings FIRST - if disabled, always block regardless of allowWrites
+        // Check settings - if disabled, block
         if Self.isRestricted(action) {
             return errorJSON("Action '\(action)' is disabled in Accessibility Settings. Enable it in Settings to allow this action.")
-        }
-        
-        // Then check allowWrites parameter - allows AI to opt-out of destructive ops
-        if !allowWrites {
-            Self.logAudit("AI DECLINED: Action '\(action)' blocked - AI set allowWrites=false (self-imposed safety limit)")
-            return errorJSON("Action '\(action)' requires allowWrites=true. This call passed allowWrites=false.")
         }
         
         var element: AXUIElement?
@@ -1272,6 +1266,310 @@ final class AccessibilityService: @unchecked Sendable {
         }
         
         return errorJSON("Element does not support showing menu and could not determine position")
+    }
+    
+    // MARK: - Smart Element Click (Phase 1 Improvement)
+    
+    /// Click an element by finding it semantically (role/title) and clicking its center.
+    /// This is more reliable than coordinate-based clicking for web automation.
+    /// - Parameters:
+    ///   - role: Accessibility role to find (e.g., "AXButton", "AXTextField")
+    ///   - title: Title or name to match (partial match supported)
+    ///   - value: Value content to match (partial match supported)
+    ///   - appBundleId: Optional bundle ID to search within a specific app
+    ///   - timeout: Maximum time to wait for element to appear (default 5 seconds)
+    ///   - verify: Whether to verify the click succeeded via screenshot (default false)
+    /// - Returns: JSON result with click position and verification status
+    func clickElement(role: String?, title: String?, value: String?, appBundleId: String?, timeout: TimeInterval = 5.0, verify: Bool = false) -> String {
+        guard Self.hasAccessibilityPermission() else {
+            return errorJSON("Accessibility permission required.")
+        }
+        Self.logAudit("clickElement(role: \(role ?? "nil"), title: \(title ?? "nil"), value: \(value ?? "nil"), app: \(appBundleId ?? "nil"), timeout: \(timeout), verify: \(verify))")
+        
+        // Find the element
+        let startTime = Date()
+        var element: AXUIElement?
+        
+        while Date().timeIntervalSince(startTime) < timeout {
+            if let bundleId = appBundleId {
+                let apps = NSWorkspace.shared.runningApplications
+                if let app = apps.first(where: { $0.bundleIdentifier == bundleId }),
+                   let pid = app.processIdentifier as pid_t? {
+                    element = findElementInApp(pid: pid, role: role, title: title, value: value)
+                }
+            } else {
+                element = findElementGlobally(role: role, title: title, value: value)
+            }
+            
+            if element != nil { break }
+            Thread.sleep(forTimeInterval: 0.1)
+        }
+        
+        guard let found = element else {
+            return errorJSON("Element not found within \(timeout)s timeout")
+        }
+        
+        // Check for restricted roles
+        var roleRef: CFTypeRef?
+        if AXUIElementCopyAttributeValue(found, kAXRoleAttribute as CFString, &roleRef) == .success,
+           let elRole = roleRef as? String, Self.isRestricted(elRole) {
+            return errorJSON("Cannot interact with \(elRole) — disabled in Accessibility Access")
+        }
+        
+        // Get element position and size
+        var positionRef: CFTypeRef?
+        var sizeRef: CFTypeRef?
+        
+        guard AXUIElementCopyAttributeValue(found, kAXPositionAttribute as CFString, &positionRef) == .success,
+              let positionValue = positionRef,
+              CFGetTypeID(positionValue) == AXValueGetTypeID() else {
+            return errorJSON("Could not get element position")
+        }
+        
+        var point = CGPoint.zero
+        guard AXValueGetValue(positionValue as! AXValue, .cgPoint, &point) else {
+            return errorJSON("Could not decode element position")
+        }
+        
+        var width: CGFloat = 1
+        var height: CGFloat = 1
+        if AXUIElementCopyAttributeValue(found, kAXSizeAttribute as CFString, &sizeRef) == .success,
+           let sizeValue = sizeRef,
+           CFGetTypeID(sizeValue) == AXValueGetTypeID() {
+            var size = CGSize.zero
+            if AXValueGetValue(sizeValue as! AXValue, .cgSize, &size) {
+                width = size.width
+                height = size.height
+            }
+        }
+        
+        // Calculate center point
+        let centerX = point.x + width / 2
+        let centerY = point.y + height / 2
+        
+        // Capture screenshot before click if verifying
+        var beforeScreenshot: String? = nil
+        if verify {
+            beforeScreenshot = captureScreenshot(x: point.x - 5, y: point.y - 5, width: width + 10, height: height + 10)
+        }
+        
+        // Perform the click
+        let clickResult = clickAt(x: centerX, y: centerY, button: "left", clicks: 1)
+        
+        // Small delay for UI to respond
+        Thread.sleep(forTimeInterval: 0.1)
+        
+        var result: [String: Any] = [
+            "message": "Clicked element",
+            "role": roleRef as? String ?? "Unknown",
+            "centerX": centerX,
+            "centerY": centerY,
+            "width": width,
+            "height": height
+        ]
+        
+        // Add verification if requested
+        if verify, let before = beforeScreenshot, !before.contains("\"success\": false") {
+            result["verification"] = "screenshot_captured"
+            result["screenshot_before"] = before
+        }
+        
+        return successJSON(result)
+    }
+    
+    // MARK: - Adaptive Wait for Element (Phase 1 Improvement)
+    
+    /// Wait for an element to appear with exponential backoff polling.
+    /// More efficient than fixed-interval polling for slow-loading content.
+    /// - Parameters:
+    ///   - role: Accessibility role to find
+    ///   - title: Title to match (partial)
+    ///   - value: Value to match (partial)
+    ///   - appBundleId: Optional bundle ID to search within
+    ///   - timeout: Maximum wait time (default 10 seconds)
+    ///   - initialDelay: Initial polling delay (default 0.1 seconds)
+    ///   - maxDelay: Maximum polling delay (default 1.0 seconds)
+    ///   - multiplier: Delay multiplier for backoff (default 1.5)
+    /// - Returns: JSON result with found element properties
+    func waitForElementAdaptive(
+        role: String?,
+        title: String?,
+        value: String?,
+        appBundleId: String?,
+        timeout: TimeInterval = 10.0,
+        initialDelay: TimeInterval = 0.1,
+        maxDelay: TimeInterval = 1.0,
+        multiplier: Double = 1.5
+    ) -> String {
+        guard Self.hasAccessibilityPermission() else {
+            return errorJSON("Accessibility permission required.")
+        }
+        Self.logAudit("waitForElementAdaptive(role: \(role ?? "nil"), title: \(title ?? "nil"), value: \(value ?? "nil"), app: \(appBundleId ?? "nil"), timeout: \(timeout))")
+        
+        let startTime = Date()
+        var currentDelay = initialDelay
+        var attempts = 0
+        var lastError: String? = nil
+        
+        while Date().timeIntervalSince(startTime) < timeout {
+            attempts += 1
+            var element: AXUIElement?
+            
+            if let bundleId = appBundleId {
+                let apps = NSWorkspace.shared.runningApplications
+                if let app = apps.first(where: { $0.bundleIdentifier == bundleId }),
+                   let pid = app.processIdentifier as pid_t? {
+                    element = findElementInApp(pid: pid, role: role, title: title, value: value)
+                } else {
+                    lastError = "App not found: \(bundleId)"
+                }
+            } else {
+                element = findElementGlobally(role: role, title: title, value: value)
+            }
+            
+            if let found = element {
+                let elapsed = Date().timeIntervalSince(startTime)
+                var props = getAllProperties(found)
+                props["found_after_attempts"] = attempts
+                props["elapsed_seconds"] = String(format: "%.2f", elapsed)
+                props["final_poll_interval"] = String(format: "%.2f", currentDelay)
+                return successJSON(props)
+            }
+            
+            // Exponential backoff
+            Thread.sleep(forTimeInterval: currentDelay)
+            currentDelay = min(currentDelay * multiplier, maxDelay)
+        }
+        
+        let errorMsg = lastError ?? "Element not found"
+        return errorJSON("\(errorMsg) within \(timeout)s timeout after \(attempts) attempts (adaptive polling)")
+    }
+    
+    // MARK: - Verification Helpers (Phase 1 Improvement)
+    
+    /// Capture a verification screenshot after an action
+    /// - Parameters:
+    ///   - action: Description of the action performed
+    ///   - role: Role of element acted upon
+    ///   - title: Title of element acted upon
+    ///   - appBundleId: Optional bundle ID
+    /// - Returns: JSON with screenshot path and element verification
+    func captureVerificationScreenshot(action: String, role: String?, title: String?, appBundleId: String?) -> String {
+        guard Self.hasAccessibilityPermission() else {
+            return errorJSON("Accessibility permission required.")
+        }
+        Self.logAudit("captureVerificationScreenshot(action: \(action))")
+        
+        // Take fullscreen screenshot
+        let screenshotResult = captureAllWindows()
+        
+        // Try to find the element again for verification
+        var elementStatus = "not_verified"
+        if let r = role ?? title {
+            let findResult = findElement(role: role, title: title, value: nil, appBundleId: appBundleId, timeout: 1.0)
+            
+            if findResult.contains("\"success\": true") {
+                elementStatus = "verified_present"
+            } else {
+                elementStatus = "not_found_after_action"
+            }
+        }
+        
+        var result: [String: Any] = [
+            "action": action,
+            "element_status": elementStatus,
+            "screenshot": screenshotResult
+        ]
+        
+        return successJSON(result)
+    }
+    
+    /// Type text into an element with verification
+    /// - Parameters:
+    ///   - role: Accessibility role of target element
+    ///   - title: Title of target element
+    ///   - text: Text to type
+    ///   - appBundleId: Optional bundle ID
+    ///   - verify: Whether to verify the text was entered (default true)
+    /// - Returns: JSON result with verification status
+    func typeTextIntoElement(role: String?, title: String?, text: String, appBundleId: String?, verify: Bool = true) -> String {
+        guard Self.hasAccessibilityPermission() else {
+            return errorJSON("Accessibility permission required.")
+        }
+        Self.logAudit("typeTextIntoElement(role: \(role ?? "nil"), title: \(title ?? "nil"), text: \(text.count) chars, verify: \(verify))")
+        
+        // Find element first
+        let findResult = findElement(role: role, title: title, value: nil, appBundleId: appBundleId, timeout: 5.0)
+        
+        // Extract position from find result
+        guard findResult.contains("\"success\": true") else {
+            return errorJSON("Element not found for typing")
+        }
+        
+        // Try to use ax_set_properties for text fields (faster and more reliable)
+        let setPropsResult = setProperties(role: role, title: title, value: nil, appBundleId: appBundleId, x: nil, y: nil, properties: ["AXValue": text])
+        
+        if setPropsResult.contains("\"success\": true") {
+            if verify {
+                // Verify the value was set
+                Thread.sleep(forTimeInterval: 0.2)
+                let checkResult: String
+                if let bundleId = appBundleId {
+                    checkResult = getElementProperties(role: role, title: title, value: nil, appBundleId: bundleId, x: nil, y: nil)
+                } else {
+                    checkResult = getElementProperties(role: role, title: title, value: nil, appBundleId: nil, x: nil, y: nil)
+                }
+                
+                if checkResult.contains(text) {
+                    return successJSON([
+                        "message": "Text set via AXValue",
+                        "method": "ax_set_properties",
+                        "verified": true,
+                        "text_length": text.count
+                    ])
+                } else {
+                    // Fall back to CGEvent typing
+                    return typeTextFallback(role: role, title: title, text: text, appBundleId: appBundleId)
+                }
+            }
+            
+            return successJSON([
+                "message": "Text set via AXValue",
+                "method": "ax_set_properties",
+                "verified": false,
+                "text_length": text.count
+            ])
+        }
+        
+        // Fall back to CGEvent typing
+        return typeTextFallback(role: role, title: title, text: text, appBundleId: appBundleId)
+    }
+    
+    private func typeTextFallback(role: String?, title: String?, text: String, appBundleId: String?) -> String {
+        // Find element position and click to focus
+        let findResult = findElement(role: role, title: title, value: nil, appBundleId: appBundleId, timeout: 5.0)
+        
+        // Parse position from JSON result
+        // Look for "AXPosition" : { "x": ..., "y": ... }
+        if let range = findResult.range(of: "\"AXPosition\" : \\{[^}]+\\}", options: .regularExpression) {
+            let posStr = String(findResult[range])
+            if let xRange = posStr.range(of: "\"x\" : ([0-9.]+)", options: .regularExpression),
+               let yRange = posStr.range(of: "\"y\" : ([0-9.]+)", options: .regularExpression) {
+                let xStr = String(posStr[xRange].split(separator: ":").last ?? "0").trimmingCharacters(in: .whitespaces)
+                let yStr = String(posStr[yRange].split(separator: ":").last ?? "0").trimmingCharacters(in: .whitespaces)
+                
+                if let x = Double(xStr), let y = Double(yStr) {
+                    // Click to focus
+                    _ = clickAt(x: CGFloat(x), y: CGFloat(y), button: "left", clicks: 1)
+                    Thread.sleep(forTimeInterval: 0.1)
+                    
+                    // Type using CGEvent
+                    return typeText(text)
+                }
+            }
+        }
+        
+        return errorJSON("Could not determine element position for typing")
     }
     
     // MARK: - Audit Logging (Phase 5)

@@ -391,14 +391,13 @@ extension AgentViewModel {
         if name == "apple_event_query" {
             let bundleID = input["bundle_id"] as? String ?? ""
             let operations = input["operations"] as? [[String: Any]] ?? []
-            let allowWrites = input["allow_writes"] as? Bool ?? true
             let opsData = try? JSONSerialization.data(withJSONObject: operations)
             return await Self.offMain {
                 guard let data = opsData,
                       let ops = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
                     return "Error: failed to process operations"
                 }
-                return AppleEventService.shared.execute(bundleID: bundleID, operations: ops, allowWrites: allowWrites)
+                return AppleEventService.shared.execute(bundleID: bundleID, operations: ops)
             }
         }
 
@@ -1770,7 +1769,6 @@ extension AgentViewModel {
                         if name == "apple_event_query" {
                             let bundleID = input["bundle_id"] as? String ?? ""
                             let operations = input["operations"] as? [[String: Any]] ?? []
-                            let allowWrites = input["allow_writes"] as? Bool ?? true
                             appendLog("🍎 AE query: \(bundleID) (\(operations.count) ops)")
                             flushLog()
                             let opsData = try? JSONSerialization.data(withJSONObject: operations)
@@ -1780,7 +1778,7 @@ extension AgentViewModel {
                                     return "Error: failed to process operations"
                                 }
                                 return AppleEventService.shared.execute(
-                                    bundleID: bundleID, operations: ops, allowWrites: allowWrites
+                                    bundleID: bundleID, operations: ops
                                 )
                             }
                             appendLog(output)
@@ -1898,13 +1896,12 @@ extension AgentViewModel {
                             let appBundleId = input["appBundleId"] as? String
                             let x = (input["x"] as? Double).map { CGFloat($0) }
                             let y = (input["y"] as? Double).map { CGFloat($0) }
-                            let allowWrites = input["allowWrites"] as? Bool ?? false
                             appendLog("Performing action: \(action)...")
                             flushLog()
                             let output = await Self.offMain {
                                 AccessibilityService.shared.performAction(
                                     role: role, title: title, value: value, appBundleId: appBundleId, x: x, y: y,
-                                    action: action, allowWrites: allowWrites
+                                    action: action
                                 )
                             }
                             appendLog(output)

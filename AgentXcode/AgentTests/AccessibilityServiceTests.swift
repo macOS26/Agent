@@ -104,7 +104,7 @@ struct AccessibilityServiceTests {
     
     // MARK: - Action Tests
     
-    @Test("performAction allows enabled actions without allowWrites")
+    @Test("performAction allows enabled actions")
     func performActionAllowsEnabledActions() {
         // AXPress is enabled by default — should not be blocked by restrictions
         // (may still fail due to "element not found" which is fine)
@@ -114,8 +114,7 @@ struct AccessibilityServiceTests {
             appBundleId: nil,
             x: nil,
             y: nil,
-            action: "AXPress",
-            allowWrites: false
+            action: "AXPress"
         )
         // Should NOT be restricted — may fail for "not found" reasons instead
         #expect(!result.contains("restricted"))
@@ -129,8 +128,7 @@ struct AccessibilityServiceTests {
             appBundleId: nil,
             x: nil,
             y: nil,
-            action: "AXPress",
-            allowWrites: true
+            action: "AXPress"
         )
         // Should fail because no target specified
         #expect(result.contains("\"success\": false") || result.contains("not found"))
@@ -272,15 +270,14 @@ struct AccessibilityServiceTests {
             appBundleId: nil,
             x: nil,
             y: nil,
-            action: "AXPress",
-            allowWrites: true
+            action: "AXPress"
         )
         // Should fail because element not found, not because of role restriction
         #expect(result.contains("not found") || result.contains("error"))
         #expect(!result.contains("restricted"))
     }
 
-    @Test("Enabled actions are allowed without allowWrites")
+    @Test("Enabled actions are allowed")
     func enabledActionsAllowed() {
         // All actions enabled by default — should not be restricted
         let actions = ["AXPress", "AXConfirm", "AXShowMenu"]
@@ -291,8 +288,7 @@ struct AccessibilityServiceTests {
                 appBundleId: nil,
                 x: nil,
                 y: nil,
-                action: action,
-                allowWrites: false
+                action: action
             )
             #expect(!result.contains("restricted"), "Expected \(action) to not be restricted")
         }
