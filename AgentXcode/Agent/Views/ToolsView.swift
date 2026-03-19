@@ -1,14 +1,8 @@
 import SwiftUI
 
 struct ToolsView: View {
-    let initialProvider: APIProvider
-    @State private var selectedProvider: APIProvider
+    @Binding var selectedProvider: APIProvider
     @Bindable var prefs = ToolPreferencesService.shared
-
-    init(initialProvider: APIProvider = .claude) {
-        self.initialProvider = initialProvider
-        _selectedProvider = State(initialValue: initialProvider)
-    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
