@@ -17,7 +17,7 @@ Agent! is designed for Ollama Cloud API with Pro or Max see https://ollama.com/p
 ### What about OpenClaw
 Personally, I never tried OC and I do not plan to. I write native Mac apps in my spare time. I don't need to deal with how insecure Node.js, NPM, and rogue NPM plugins can be, draining your bank account, buying a $3,000 domain on your behalf. That's not saying Agent! can't do that; it could if someone had access to your computer. So make sure you keep your password safe, and soon Agent! will support Passkeys and communicate with a WebAuthn server locally, where only your biometric can unlock Agent!
 
-### Virtual Buddy
+### Virtual Buddy, UTM and Apple VMs
 Agent! fully supports Virtual Buddy and Apple VMs. Apple even has source code you can download to fire up your own VM. Sandboxing Agent! is a great way to see what it can do without affecting your main desktop. Once you trust what it can do, you can take its AgentScripts, AppleScripts, and JXA JavaScript and reuse or repurpose Agent! on your full desktop. While Agent! is still young, I have huge plans to expand its plugin dylib architecture and also expand on AX Accessibility, Automator, AppleScript apps, you name it. We plan to use every automation tool and turn it into one very slick, neat app!
 
 <img width="1056" height="597" alt="IMG_5716" src="https://github.com/user-attachments/assets/117cbeb8-46e4-4f92-8494-f6058a92059e" />
