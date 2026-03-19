@@ -693,15 +693,22 @@ final class AccessibilityService: @unchecked Sendable {
         }
         Self.logAudit("captureAllWindows()")
 
+        // Try to capture just the frontmost window instead of the entire screen
+        let frontWindowID = Self.frontmostWindowID()
+
         let home = FileManager.default.homeDirectoryForCurrentUser
         let fileName = "screenshot_\(UUID().uuidString).png"
         let outputPath = home.appendingPathComponent("Documents/AgentScript/screenshots/\(fileName)").path
 
         try? FileManager.default.createDirectory(atPath: home.appendingPathComponent("Documents/AgentScript/screenshots").path, withIntermediateDirectories: true)
-        
+
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-        process.arguments = ["-x", "-t", "png", outputPath]
+        if let wid = frontWindowID {
+            process.arguments = ["-x", "-t", "png", "-l", "\(wid)", outputPath]
+        } else {
+            process.arguments = ["-x", "-t", "png", outputPath]
+        }
         
         do {
             try process.run()
@@ -1572,6 +1579,24 @@ final class AccessibilityService: @unchecked Sendable {
         return errorJSON("Could not determine element position for typing")
     }
     
+    // MARK: - Frontmost Window
+
+    /// Get the CGWindowID of the frontmost window for targeted screenshots.
+    private static func frontmostWindowID() -> UInt32? {
+        guard let app = NSWorkspace.shared.frontmostApplication else { return nil }
+        let pid = app.processIdentifier
+        guard let windowList = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else { return nil }
+        for window in windowList {
+            guard let ownerPID = window[kCGWindowOwnerPID as String] as? Int32,
+                  ownerPID == pid,
+                  let windowID = window[kCGWindowNumber as String] as? UInt32,
+                  let layer = window[kCGWindowLayer as String] as? Int,
+                  layer == 0 else { continue }
+            return windowID
+        }
+        return nil
+    }
+
     // MARK: - Audit Logging (Phase 5)
     
     private static nonisolated(unsafe) var auditLog: [String] = []
