@@ -11,6 +11,15 @@
 ### Dream Big with true Agentic AI for your entire  Mac Desktop 🤯
 Agent! is designed for Ollama Cloud API with Pro or Max see https://ollama.com/pricing. laude API and Local Ollama LLMs are fully supported. Recommend 32GB - 128GB for local LLMs on Apple Silcon. Apple Intelligence is extremely experimental. If you know how to train LLMs using LoRA, I would love to colaborate.
 
+### How does it have all this tech?
+27 years ago, I started using FaceSpan and AppleScript to automate apps and tasks on macOS 9. Later I graduated to AppleScript Studio and AppleScript-ObjC. When Swift came out, I decided: no more Objective-C, starting with Swift 1. After OpenClaws made headlines, I thought to myself: what if we connected AppleScript to an LLM? What if we expanded that to work with ScriptingBridge for native Swift + AppleScript automation? What if we added raw AppleEvents, osascript, AX Accessibility, Launch Agent for user-space shell commands, and a privileged helper to automatically escalate to root, but only when absolutely necessary? What if I took 27 years of Mac desktop automation experience and created my own agentic AI for the entire Mac desktop?! This is the result, and you will be amazed that Agent! is only a week old, a weekend experiment that has legs.
+
+### What about OpenClaws
+Personally, I never tried OC and I do not plan to. I write native Mac apps in my spare time. I don't need to deal with how insecure Node.js, NPM, and rogue NPM plugins can be, draining your bank account, buying a $3,000 domain on your behalf. That's not saying Agent! can't do that; it could if someone had access to your computer. So make sure you keep your password safe, and soon Agent! will support Passkeys and communicate with a WebAuthn server locally, where only your biometric can unlock Agent!
+
+### Virtual Buddy
+Agent! fully supports Virtual Buddy and Apple VMs. Apple even has source code you can download to fire up your own VM. Sandboxing Agent! is a great way to see what it can do without affecting your main desktop. Once you trust what it can do, you can take its AgentScripts, AppleScripts, and JXA JavaScript and reuse or repurpose Agent! on your full desktop. While Agent! is still young, I have huge plans to expand its plugin dylib architecture and also expand on AX Accessibility, Automator, AppleScript apps, you name it. We plan to use every automation tool and turn it into one very slick, neat app!
+
 <img width="1056" height="597" alt="IMG_5716" src="https://github.com/user-attachments/assets/117cbeb8-46e4-4f92-8494-f6058a92059e" />
 
 
