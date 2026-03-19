@@ -196,13 +196,17 @@ final class FoundationModelService {
 
     // MARK: - Helpers
 
-    /// Collapse two or more consecutive newlines into one to avoid double-spaced output.
+    /// Fix newlines: convert literal \n to real newlines, then collapse 2+ into one.
     private func normalizeNewlines(_ text: String) -> String {
-        // Replace 2+ newlines with a single newline
+        // Apple AI often writes literal \n instead of actual newlines
+        var fixed = text.replacingOccurrences(of: "\\n", with: "\n")
+        // Also fix literal \t
+        fixed = fixed.replacingOccurrences(of: "\\t", with: "\t")
+        // Collapse 2+ newlines into one
         let pattern = try? NSRegularExpression(pattern: "\\n{2,}")
         return pattern?.stringByReplacingMatches(
-            in: text, range: NSRange(text.startIndex..., in: text), withTemplate: "\n"
-        ) ?? text
+            in: fixed, range: NSRange(fixed.startIndex..., in: fixed), withTemplate: "\n"
+        ) ?? fixed
     }
 
     /// Prefix injected into every user message so Apple Intelligence sees the project folder
