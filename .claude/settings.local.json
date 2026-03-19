@@ -197,7 +197,11 @@
       "mcp__xcf-server__help",
       "mcp__xcf-server__show_folder",
       "mcp__xcf-server__cd_dir",
-      "WebFetch(domain:gist.github.com)"
+      "WebFetch(domain:gist.github.com)",
+      "WebFetch(domain:spec.modelcontextprotocol.io)",
+      "WebFetch(domain:blog.christianposta.com)",
+      "Bash(python3 -c \"import json,sys; [print\\(f[''''name'''']\\) for f in json.load\\(sys.stdin\\)]\")",
+      "Bash(gh api:*)"
     ]
   }
 }
