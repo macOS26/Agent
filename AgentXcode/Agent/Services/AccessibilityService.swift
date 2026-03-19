@@ -8,19 +8,41 @@ final class AccessibilityService: @unchecked Sendable {
     static let shared = AccessibilityService()
     
     // MARK: - Security
-    
-    /// Check if the app has Accessibility permissions
+
+    /// Cached permission — once granted, skip repeated AXIsProcessTrusted() calls.
+    /// Rebuilds in Xcode change the binary signature, causing macOS TCC to revoke trust.
+    /// Caching prevents the LLM from re-triggering the dialog on every tool call within a session.
+    private nonisolated(unsafe) static var _permissionGranted = false
+
+    /// Check if the app has Accessibility permissions (cached once granted)
     static func hasAccessibilityPermission() -> Bool {
-        return AXIsProcessTrusted()
+        if _permissionGranted { return true }
+        let granted = AXIsProcessTrusted()
+        if granted { _permissionGranted = true }
+        return granted
     }
-    
-    /// Request Accessibility permissions (shows system prompt)
+
+    /// Request Accessibility permissions — opens System Settings directly.
+    /// Only shows the system dialog once per session to avoid repeated prompts.
+    private nonisolated(unsafe) static var _promptShown = false
     static func requestAccessibilityPermission() -> Bool {
-        // kAXTrustedCheckOptionPrompt is a CFString constant - use the raw string value
-        // The constant is defined in AXAttributeConstants.h as "AXTrustedCheckOptionPrompt"
-        let promptKey = "AXTrustedCheckOptionPrompt" as CFString
-        let options: [CFString: Bool] = [promptKey: true]
-        return AXIsProcessTrustedWithOptions(options as CFDictionary)
+        if AXIsProcessTrusted() {
+            _permissionGranted = true
+            return true
+        }
+        if !_promptShown {
+            _promptShown = true
+            let promptKey = "AXTrustedCheckOptionPrompt" as CFString
+            let options: [CFString: Bool] = [promptKey: true]
+            let result = AXIsProcessTrustedWithOptions(options as CFDictionary)
+            if result { _permissionGranted = true }
+            return result
+        }
+        // Already showed dialog this session — just open System Settings
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+            NSWorkspace.shared.open(url)
+        }
+        return false
     }
     
     /// Check whether an ID is restricted. Reads UserDefaults directly (thread-safe).
@@ -205,7 +227,13 @@ final class AccessibilityService: @unchecked Sendable {
         return nil
     }
     
-    private func findElementInHierarchy(_ parent: AXUIElement, role: String?, title: String?) -> AXUIElement? {
+    /// Max recursion depth for AX hierarchy traversal — prevents stack overflow
+    /// from deeply nested or circular element trees (browsers, Finder, etc.)
+    private static let maxHierarchyDepth = 50
+
+    private func findElementInHierarchy(_ parent: AXUIElement, role: String?, title: String?, depth: Int = 0) -> AXUIElement? {
+        guard depth < Self.maxHierarchyDepth else { return nil }
+
         if let role = role {
             var roleRef: CFTypeRef?
             if AXUIElementCopyAttributeValue(parent, kAXRoleAttribute as CFString, &roleRef) == .success,
@@ -221,12 +249,12 @@ final class AccessibilityService: @unchecked Sendable {
                 }
             }
         }
-        
+
         var childrenRef: CFTypeRef?
         if AXUIElementCopyAttributeValue(parent, kAXChildrenAttribute as CFString, &childrenRef) == .success,
            let children = childrenRef as? [AXUIElement] {
             for child in children {
-                if let found = findElementInHierarchy(child, role: role, title: title) {
+                if let found = findElementInHierarchy(child, role: role, title: title, depth: depth + 1) {
                     return found
                 }
             }
