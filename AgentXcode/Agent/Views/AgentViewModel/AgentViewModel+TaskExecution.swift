@@ -189,7 +189,7 @@ extension AgentViewModel {
         }
 
         // Shell commands
-        if name == "execute_user_command" || name == "execute_command" {
+        if name == "execute_agent_command" || name == "execute_daemon_command" {
             let cmd = input["command"] as? String ?? ""
             let result = await executeViaUserAgent(command:
                 Self.prependWorkingDirectory(cmd, projectFolder: pf))
@@ -1233,7 +1233,7 @@ extension AgentViewModel {
 
                         // MARK: Shell execution tools
 
-                        if name == "execute_command" || name == "execute_user_command" {
+                        if name == "execute_daemon_command" || name == "execute_agent_command" {
                             let rawCommand = input["command"] as? String ?? ""
                             let command = Self.prependWorkingDirectory(
                                 rawCommand, projectFolder: projectFolder)
@@ -1243,7 +1243,7 @@ extension AgentViewModel {
                                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": pathErr])
                                 continue
                             }
-                            let isPrivileged = (name == "execute_command") && rootEnabled
+                            let isPrivileged = (name == "execute_daemon_command") && rootEnabled
                             commandsRun.append(command)
                             appendLog("\(isPrivileged ? "🔴 #" : "🔧 $") \(Self.collapseHeredocs(command))")
                             flushLog()

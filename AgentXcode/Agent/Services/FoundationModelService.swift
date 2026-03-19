@@ -373,7 +373,7 @@ private struct NativeShellTool: Tool {
     typealias Arguments = ShellCommandArgs
     typealias Output = AgentToolOutput
 
-    let name = "execute_user_command"
+    let name = "execute_agent_command"
     let description = "Run a shell command"
 
     func call(arguments: ShellCommandArgs) async throws -> AgentToolOutput {

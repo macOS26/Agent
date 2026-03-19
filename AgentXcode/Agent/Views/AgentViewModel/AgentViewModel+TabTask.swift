@@ -448,7 +448,7 @@ extension AgentViewModel {
         }
 
         // execute_user_command / execute_command
-        if name == "execute_command" || name == "execute_user_command" {
+        if name == "execute_daemon_command" || name == "execute_agent_command" {
             let command = Self.prependWorkingDirectory(
                 input["command"] as? String ?? "", projectFolder: projectFolder)
             if let pathErr = Self.preflightCommand(command) {
@@ -459,7 +459,7 @@ extension AgentViewModel {
                     isComplete: false
                 )
             }
-            let isPrivileged = (name == "execute_command") && rootEnabled
+            let isPrivileged = (name == "execute_daemon_command") && rootEnabled
             tab.appendLog("\(isPrivileged ? "🔴 #" : "🔧 $") \(Self.collapseHeredocs(command))")
             tab.flush()
 

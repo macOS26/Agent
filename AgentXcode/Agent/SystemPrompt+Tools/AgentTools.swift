@@ -205,8 +205,8 @@ enum AgentTools {
 
     /// Concrete examples for each tool shown in the Apple AI compact prompt.
     private static let toolExamples: [String: String] = [
-        "execute_user_command": #"execute_user_command {"command": "ls -la"}"#,
-        "execute_command":      #"execute_command {"command": "whoami"}"#,
+        "execute_agent_command": #"execute_user_command {"command": "ls -la"}"#,
+        "execute_daemon_command":      #"execute_command {"command": "whoami"}"#,
         "run_applescript":      #"run_applescript {"source": "tell application \"Finder\" to get name of home"}"#,
         "run_osascript":        #"run_osascript {"script": "display dialog \"Hello\""}"#,
         "execute_javascript":   #"execute_javascript {"source": "var app = Application.currentApplication(); app.includeStandardAdditions = true; app.displayDialog('Hello')"}"#,
@@ -439,7 +439,7 @@ enum AgentTools {
             required: ["source"]
         ),
         ToolDef(
-            name: "execute_user_command",
+            name: "execute_agent_command",
             description: "Execute a shell command as the current user (no root). NO TCC permissions. Use for git, builds, file ops, homebrew, etc.",
             properties: [
                 "command": ["type": "string", "description": "The bash command to execute as the current user"],
@@ -447,7 +447,7 @@ enum AgentTools {
             required: ["command"]
         ),
         ToolDef(
-            name: "execute_command",
+            name: "execute_daemon_command",
             description: "Execute a shell command with ROOT privileges via the privileged daemon. NO TCC. Only use when root is required: system packages, /System or /Library modifications, disk operations.",
             properties: [
                 "command": ["type": "string", "description": "The bash command to execute as root"],
