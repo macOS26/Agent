@@ -3,7 +3,7 @@
 # Agent!
 
 [![Swift 6.0](https://img.shields.io/badge/Swift-6.0-orange.svg)](https://swift.org)
-[![Website](https://img.shields.io/badge/website-agent.macos26.app-blue.svg)](https://agent.macos26.app)
+[![Website](https://img.shields.io/badge/website-macos26.app-blue.svg)](https://macos26.app)
 [![Version](https://img.shields.io/badge/version-1.0.11-red.svg)](https://github.com/macOS26/Agent)
 [![GitHub downloads](https://img.shields.io/github/downloads/macOS26/Agent/total.svg?v=3)](https://github.com/macOS26/Agent/releases)
 [![GitHub stars](https://img.shields.io/github/stars/macOS26/Agent.svg?style=social)](https://github.com/macOS26/Agent/stargazers)
