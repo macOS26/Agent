@@ -8,8 +8,7 @@
 [![GitHub downloads](https://img.shields.io/github/downloads/macOS26/Agent/total.svg?v=4)](https://github.com/macOS26/Agent/releases)
 [![GitHub stars](https://img.shields.io/github/stars/macOS26/Agent.svg?style=social)](https://github.com/macOS26/Agent/stargazers)
 
-## Dream It, Do It
-### Agentic AI for your entire  Mac Desktop 🤯
+### Dream Big with true Agentic AI for your entire  Mac Desktop 🤯
 Agent! is designed for Ollama Pro API or Max $20, $100/mo https://ollama.com/pricing
 Claude API and Local Ollama LLMs are fully supported. Recommend 32GB - 128GB for local LLMs on Apple Silcon. Apple Intelligence is extremely experimental.
 
