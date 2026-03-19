@@ -26,8 +26,6 @@ struct LoRASettingsView: View {
             // Python Environment Section
             pythonSection
         }
-        .padding(20)
-        .frame(width: 360)
         .alert("LoRA", isPresented: $showAlert) {
             Button("OK") {}
         } message: {
