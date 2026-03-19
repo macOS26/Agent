@@ -113,6 +113,20 @@ enum AgentTools {
         WishBridge→WishApplication→com.tcltk.wish
         UTMBridge→UTMApplication→com.utmapp.UTM
 
+        SELENIUM WEBDRIVER AUTOMATION:
+        SeleniumBridge provides WebDriver-style browser automation via HTTP API (W3C WebDriver spec).
+        SafariDriver is built into macOS at /usr/bin/safaridriver — no download needed.
+        For Chrome/Firefox: install chromedriver/geckodriver and run on default ports.
+        Use run_agent_script Selenium with JSON args: {"action":"start","browser":"safari"}
+        Actions: start, stop, navigate, find, click, type, getText, execute, screenshot, waitFor
+        Locator strategies: css, xpath, id, name, linktext, partiallinktext, tagname, classname
+        Example workflow:
+          1. run_agent_script Selenium with {"action":"start","browser":"safari"}
+          2. run_agent_script Selenium with {"action":"navigate","url":"https://example.com"}
+          3. run_agent_script Selenium with {"action":"click","strategy":"css","value":"#submit"}
+          4. run_agent_script Selenium with {"action":"screenshot","filename":"result.png"}
+          5. run_agent_script Selenium with {"action":"stop"}
+
         APPLE EVENT QUERY:
         Pass bundle_id + operations: get {key} | iterate {properties, limit} | index {index} | call {method, arg} | filter {predicate}
         Writes blocked by default; set allow_writes=true.

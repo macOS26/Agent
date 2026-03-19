@@ -30,6 +30,7 @@ let scriptNames = [
     "SaveImageFromClipboard",
     "SendGroupMessage",
     "SendMessage",
+    "Selenium",
     "SystemInfo",
     "TestCodingTools",
     "TestEnvVars",
@@ -113,6 +114,8 @@ func parseDeps(for name: String) -> [Target.Dependency] {
                 deps.append(common)
             } else if module == "AgentAccessibility" {
                 deps.append(.init(stringLiteral: "AgentAccessibility"))
+            } else if module == "SeleniumBridge" {
+                deps.append(.init(stringLiteral: "SeleniumBridge"))
             }
         }
         // Stop scanning after first non-import, non-comment, non-blank line
@@ -125,7 +128,7 @@ func parseDeps(for name: String) -> [Target.Dependency] {
 }
 
 // Compute exclude lists so SPM doesn't warn about unhandled files in shared directories
-let allBridgeFiles = ["ScriptingBridgeCommon.swift", "AgentScriptingBridge.swift", "AgentAccessibility.swift"] + bridgeNames.map { "\($0).swift" }
+let allBridgeFiles = ["ScriptingBridgeCommon.swift", "AgentScriptingBridge.swift"] + bridgeNames.map { "\($0).swift" }
 let allScriptFiles = scriptNames.map { "\($0).swift" }
 
 let scriptProducts: [Product] = scriptNames.map {
@@ -146,11 +149,14 @@ let scriptTargets: [Target] = scriptNames.map { name in
 
 let coreTargets: [Target] = [
     .target(name: "ScriptingBridgeCommon", path: bridge,
-            exclude: bridgeNames.map { "\($0).swift" } + ["AgentScriptingBridge.swift", "AgentAccessibility.swift"],
+            exclude: bridgeNames.map { "\($0).swift" } + ["AgentScriptingBridge.swift", "SeleniumBridge.swift"],
             sources: ["ScriptingBridgeCommon.swift"]),
     .target(name: "AgentScriptingBridge", dependencies: [common], path: bridge,
             exclude: allBridgeFiles.filter { $0 != "AgentScriptingBridge.swift" },
             sources: ["AgentScriptingBridge.swift"]),
+    .target(name: "SeleniumBridge", dependencies: [common], path: bridge,
+            exclude: allBridgeFiles.filter { $0 != "SeleniumBridge.swift" },
+            sources: ["SeleniumBridge.swift"]),
 ]
 
 let package = Package(
@@ -158,7 +164,8 @@ let package = Package(
     platforms: [.macOS(.v15)],
     products: [
         .library(name: "AgentScriptingBridge", targets: ["AgentScriptingBridge"]),
-        .library(name: "AllBridges", targets: bridgeNames + ["ScriptingBridgeCommon", "AgentScriptingBridge"]),
+        .library(name: "SeleniumBridge", targets: ["SeleniumBridge"]),
+        .library(name: "AllBridges", targets: bridgeNames + ["ScriptingBridgeCommon", "AgentScriptingBridge", "SeleniumBridge"]),
     ] + scriptProducts,
     targets: coreTargets + bridgeTargets + scriptTargets
 )
