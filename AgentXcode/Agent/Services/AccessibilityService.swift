@@ -147,7 +147,7 @@ final class AccessibilityService: @unchecked Sendable {
         var valueRef: CFTypeRef?
         AXUIElementCopyAttributeValue(element, kAXValueAttribute as CFString, &valueRef)
         if let value = valueRef as? String, !value.isEmpty {
-            let truncated = String(value.prefix(100))
+            let truncated = String(value.prefix(1500))
             result += " [\(truncated)\(truncated.count < value.count ? "..." : "")]"
         }
         
