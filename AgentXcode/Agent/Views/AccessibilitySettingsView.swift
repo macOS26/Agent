@@ -223,9 +223,14 @@ final class AccessibilityEnabled {
 struct AccessibilitySettingsView: View {
     @Bindable var settings = AccessibilityEnabled.shared
 
+    private let columns = [
+        GridItem(.flexible(), spacing: 16),
+        GridItem(.flexible(), spacing: 16)
+    ]
+
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 12) {
                 Text("Accessibility Actions")
                     .font(.headline)
 
@@ -235,17 +240,16 @@ struct AccessibilitySettingsView: View {
 
                 Divider()
 
-                axSection(title: "AX Core Actions", items: AccessibilityEnabledIDs.axCoreActions)
-                axSection(title: "AX Value Actions", items: AccessibilityEnabledIDs.axValueActions)
-                axSection(title: "AX Disclosure Actions", items: AccessibilityEnabledIDs.axDisclosureActions)
-                axSection(title: "AX Window Actions", items: AccessibilityEnabledIDs.axWindowActions)
-                axSection(title: "AX Text Actions", items: AccessibilityEnabledIDs.axTextActions)
-                axSection(title: "AX Scroll Actions", items: AccessibilityEnabledIDs.axScrollActions)
-                axSection(title: "AX Focus Actions", items: AccessibilityEnabledIDs.axFocusActions)
-
-                Divider()
-
-                axSection(title: "AX Protected Roles", items: AccessibilityEnabledIDs.axRoles)
+                LazyVGrid(columns: columns, alignment: .leading, spacing: 12) {
+                    axSection(title: "AX Core Actions", items: AccessibilityEnabledIDs.axCoreActions)
+                    axSection(title: "AX Value Actions", items: AccessibilityEnabledIDs.axValueActions)
+                    axSection(title: "AX Disclosure Actions", items: AccessibilityEnabledIDs.axDisclosureActions)
+                    axSection(title: "AX Window Actions", items: AccessibilityEnabledIDs.axWindowActions)
+                    axSection(title: "AX Text Actions", items: AccessibilityEnabledIDs.axTextActions)
+                    axSection(title: "AX Scroll Actions", items: AccessibilityEnabledIDs.axScrollActions)
+                    axSection(title: "AX Focus Actions", items: AccessibilityEnabledIDs.axFocusActions)
+                    axSection(title: "AX Protected Roles", items: AccessibilityEnabledIDs.axRoles)
+                }
 
                 Divider()
 
@@ -260,7 +264,7 @@ struct AccessibilitySettingsView: View {
             }
             .padding(16)
         }
-        .frame(width: 400)
+        .frame(width: 500)
         .frame(maxHeight: 500)
     }
 
