@@ -475,10 +475,11 @@ enum AgentTools {
         ),
         ToolDef(
             name: "ax_get_properties",
-            description: "Get all properties of an accessibility element. Can find by role/title or by screen position.",
+            description: "Get all properties of an accessibility element. Can find by role/title/value or by screen position. CRITICAL: If you just used ax_wait_for_element or ax_find_element, pass the SAME role/title/value parameters to this function.",
             properties: [
                 "role": ["type": "string", "description": "Accessibility role to find (e.g., 'AXButton', 'AXTextField')"],
                 "title": ["type": "string", "description": "Title or name to match (partial match)"],
+                "value": ["type": "string", "description": "Value to match (partial match) - useful for text fields with specific content"],
                 "appBundleId": ["type": "string", "description": "Optional bundle ID to search within a specific app"],
                 "x": ["type": "number", "description": "Screen X coordinate for position-based lookup"],
                 "y": ["type": "number", "description": "Screen Y coordinate for position-based lookup"],
@@ -487,10 +488,11 @@ enum AgentTools {
         ),
         ToolDef(
             name: "ax_perform_action",
-            description: "Perform an accessibility action on an element. SECURITY: Interaction actions (click, press) require allowWrites=true. Password fields are always blocked.",
+            description: "Perform an accessibility action on an element. SECURITY: Interaction actions (click, press) require allowWrites=true. Password fields are always blocked. CRITICAL: If you just used ax_wait_for_element or ax_find_element, pass the SAME role/title/value parameters to this function - the element locator must match exactly.",
             properties: [
-                "role": ["type": "string", "description": "Accessibility role to find"],
-                "title": ["type": "string", "description": "Title to match"],
+                "role": ["type": "string", "description": "Accessibility role to find (e.g., 'AXButton', 'AXTextField')"],
+                "title": ["type": "string", "description": "Title to match (partial match)"],
+                "value": ["type": "string", "description": "Value to match (partial match) - useful for text fields with specific content"],
                 "appBundleId": ["type": "string", "description": "Bundle ID of the target app"],
                 "x": ["type": "number", "description": "Screen X coordinate for position-based lookup"],
                 "y": ["type": "number", "description": "Screen Y coordinate for position-based lookup"],
@@ -578,10 +580,11 @@ enum AgentTools {
         // --- Accessibility Set Properties (Phase 6) ---
         ToolDef(
             name: "ax_set_properties",
-            description: "Set accessibility property values on an element. CRITICAL for setting text fields, selections, slider values, etc. Can find element by role/title, by position, or within a specific app.",
+            description: "Set accessibility property values on an element. CRITICAL for setting text fields, selections, slider values, etc. Can find element by role/title/value, by position, or within a specific app. CRITICAL: If you just used ax_wait_for_element or ax_find_element, pass the SAME role/title/value parameters to this function.",
             properties: [
                 "role": ["type": "string", "description": "Accessibility role to find (e.g., 'AXTextField', 'AXSlider')"],
                 "title": ["type": "string", "description": "Title or name to match (partial match)"],
+                "value": ["type": "string", "description": "Value to match (partial match) - useful for text fields with specific content"],
                 "appBundleId": ["type": "string", "description": "Optional bundle ID to search within a specific app"],
                 "x": ["type": "number", "description": "Screen X coordinate for position-based lookup"],
                 "y": ["type": "number", "description": "Screen Y coordinate for position-based lookup"],
@@ -614,10 +617,11 @@ enum AgentTools {
         // --- Accessibility Get Children (Phase 6) ---
         ToolDef(
             name: "ax_get_children",
-            description: "Get all children of an accessibility element. Useful for exploring UI hierarchy.",
+            description: "Get all children of an accessibility element. Useful for exploring UI hierarchy. CRITICAL: If you just used ax_wait_for_element or ax_find_element, pass the SAME role/title/value parameters to this function.",
             properties: [
                 "role": ["type": "string", "description": "Accessibility role to find parent element"],
-                "title": ["type": "string", "description": "Title to match for parent element"],
+                "title": ["type": "string", "description": "Title to match for parent element (partial match)"],
+                "value": ["type": "string", "description": "Value to match (partial match) - useful for text fields with specific content"],
                 "appBundleId": ["type": "string", "description": "Optional bundle ID to search within a specific app"],
                 "x": ["type": "number", "description": "Screen X coordinate for position-based parent lookup"],
                 "y": ["type": "number", "description": "Screen Y coordinate for position-based parent lookup"],
@@ -641,11 +645,11 @@ enum AgentTools {
         // --- Accessibility Wait For Element (Phase 6) ---
         ToolDef(
             name: "ax_wait_for_element",
-            description: "Wait for an accessibility element to appear, polling periodically until found or timeout. Returns element properties when found.",
+            description: "Wait for an accessibility element to appear, polling periodically until found or timeout. Returns element properties when found. CRITICAL: When calling ax_perform_action or ax_set_properties after this, use the SAME role/title/value parameters to locate the element.",
             properties: [
-                "role": ["type": "string", "description": "Accessibility role to find"],
+                "role": ["type": "string", "description": "Accessibility role to find (e.g., 'AXButton', 'AXTextField')"],
                 "title": ["type": "string", "description": "Title or name to match (partial match)"],
-                "value": ["type": "string", "description": "Value to match"],
+                "value": ["type": "string", "description": "Value to match (partial match) - useful for text fields"],
                 "appBundleId": ["type": "string", "description": "Optional bundle ID to search within a specific app"],
                 "timeout": ["type": "number", "description": "Maximum seconds to wait (default 10.0)"],
                 "pollInterval": ["type": "number", "description": "Seconds between polls (default 0.5)"],
@@ -655,10 +659,11 @@ enum AgentTools {
         // --- Accessibility Show Menu (Phase 6) ---
         ToolDef(
             name: "ax_show_menu",
-            description: "Show context menu for an element. Uses AXShowMenu action if available, otherwise simulates right-click at element center.",
+            description: "Show context menu for an element. Uses AXShowMenu action if available, otherwise simulates right-click at element center. CRITICAL: If you just used ax_wait_for_element or ax_find_element, pass the SAME role/title/value parameters to this function.",
             properties: [
                 "role": ["type": "string", "description": "Accessibility role to find element"],
-                "title": ["type": "string", "description": "Title to match for element"],
+                "title": ["type": "string", "description": "Title to match for element (partial match)"],
+                "value": ["type": "string", "description": "Value to match (partial match) - useful for text fields with specific content"],
                 "appBundleId": ["type": "string", "description": "Optional bundle ID to search within a specific app"],
                 "x": ["type": "number", "description": "Screen X coordinate for position-based lookup"],
                 "y": ["type": "number", "description": "Screen Y coordinate for position-based lookup"],

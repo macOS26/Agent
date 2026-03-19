@@ -344,7 +344,7 @@ Accessibility requires explicit user approval in **System Settings > Privacy & S
 |------|-------------|
 | `ax_list_windows` | List all visible windows with positions, sizes, and owner apps |
 | `ax_inspect_element` | Inspect the accessibility element at a screen coordinate (role, title, value, children) |
-| `ax_get_properties` | Get all properties of an element found by role, title, app bundle ID, or position |
+| `ax_get_properties` | Get all properties of an element found by role, title, value, app bundle ID, or position. Use SAME role/title/value from ax_wait_for_element to locate. |
 | `ax_screenshot` | Capture a screenshot of a region or specific window |
 | `ax_get_audit_log` | View recent accessibility operations (all actions are audit-logged) |
 
@@ -361,7 +361,7 @@ Accessibility requires explicit user approval in **System Settings > Privacy & S
 
 | Tool | Description |
 |------|-------------|
-| `ax_perform_action` | Perform an accessibility action (AXPress, AXConfirm, etc.) on a UI element |
+| `ax_perform_action` | Perform an accessibility action (AXPress, AXConfirm, etc.) on a UI element. Use SAME role/title/value from ax_wait_for_element or ax_find_element to locate the element. |
 
 ### Security Safeguards
 
@@ -639,7 +639,7 @@ Agent! provides **60+ tools** across multiple categories for autonomous task exe
 |------|-------------|
 | `ax_list_windows` | List all visible windows with positions and sizes |
 | `ax_inspect_element` | Inspect accessibility element at screen coordinates |
-| `ax_get_properties` | Get all properties of an accessibility element |
+| `ax_get_properties` | Get all properties of an accessibility element. Use SAME role/title/value from ax_wait_for_element to locate. |
 | `ax_type_text` | Simulate typing text at cursor or coordinates |
 | `ax_click` | Simulate mouse click at screen coordinates |
 | `ax_scroll` | Simulate scroll wheel at coordinates |

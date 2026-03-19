@@ -227,11 +227,11 @@ final class AccessibilityService: @unchecked Sendable {
     
     // MARK: - Get Element Properties
     
-    func getElementProperties(role: String?, title: String?, appBundleId: String?, x: CGFloat?, y: CGFloat?) -> String {
+    func getElementProperties(role: String?, title: String?, value: String?, appBundleId: String?, x: CGFloat?, y: CGFloat?) -> String {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        Self.logAudit("getElementProperties(role: \(role ?? "nil"), title: \(title ?? "nil"), app: \(appBundleId ?? "nil"))")
+        Self.logAudit("getElementProperties(role: \(role ?? "nil"), title: \(title ?? "nil"), value: \(value ?? "nil"), app: \(appBundleId ?? "nil"))")
 
         if let x = x, let y = y {
             return inspectElementAt(x: x, y: y, depth: 2)
@@ -243,10 +243,10 @@ final class AccessibilityService: @unchecked Sendable {
             let apps = NSWorkspace.shared.runningApplications
             if let app = apps.first(where: { $0.bundleIdentifier == bundleId }),
                let pid = app.processIdentifier as pid_t? {
-                element = findElementInApp(pid: pid, role: role, title: title)
+                element = findElementInApp(pid: pid, role: role, title: title, value: value)
             }
         } else {
-            element = findElementGlobally(role: role, title: title)
+            element = findElementGlobally(role: role, title: title, value: value)
         }
         
         guard let found = element else {
@@ -347,11 +347,11 @@ final class AccessibilityService: @unchecked Sendable {
     
     // MARK: - Perform Actions
     
-    func performAction(role: String?, title: String?, appBundleId: String?, x: CGFloat?, y: CGFloat?, action: String, allowWrites: Bool = false) -> String {
+    func performAction(role: String?, title: String?, value: String?, appBundleId: String?, x: CGFloat?, y: CGFloat?, action: String, allowWrites: Bool = false) -> String {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        Self.logAudit("performAction(\(action)) role: \(role ?? "nil"), title: \(title ?? "nil"), app: \(appBundleId ?? "nil"), allowWrites: \(allowWrites)")
+        Self.logAudit("performAction(\(action)) role: \(role ?? "nil"), title: \(title ?? "nil"), value: \(value ?? "nil"), app: \(appBundleId ?? "nil"), allowWrites: \(allowWrites)")
 
         if !allowWrites && Self.isRestricted(action) {
             return errorJSON("Action '\(action)' restricted. Enable in Accessibility Access or set allowWrites=true.")
@@ -371,10 +371,10 @@ final class AccessibilityService: @unchecked Sendable {
             let apps = NSWorkspace.shared.runningApplications
             if let app = apps.first(where: { $0.bundleIdentifier == bundleId }),
                let pid = app.processIdentifier as pid_t? {
-                element = findElementInApp(pid: pid, role: role, title: title)
+                element = findElementInApp(pid: pid, role: role, title: title, value: value)
             }
         } else {
-            element = findElementGlobally(role: role, title: title)
+            element = findElementGlobally(role: role, title: title, value: value)
         }
         
         guard let found = element else {
@@ -730,11 +730,11 @@ final class AccessibilityService: @unchecked Sendable {
     // MARK: - Set Properties (Phase 6)
     
     /// Set accessibility property values on an element. CRITICAL for setting text fields, selections, etc.
-    func setProperties(role: String?, title: String?, appBundleId: String?, x: CGFloat?, y: CGFloat?, properties: [String: Any]) -> String {
+    func setProperties(role: String?, title: String?, value: String?, appBundleId: String?, x: CGFloat?, y: CGFloat?, properties: [String: Any]) -> String {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        Self.logAudit("setProperties(role: \(role ?? "nil"), title: \(title ?? "nil"), properties: \(properties.keys)")
+        Self.logAudit("setProperties(role: \(role ?? "nil"), title: \(title ?? "nil"), value: \(value ?? "nil"), properties: \(properties.keys)")
         
         var element: AXUIElement?
         
@@ -749,10 +749,10 @@ final class AccessibilityService: @unchecked Sendable {
             let apps = NSWorkspace.shared.runningApplications
             if let app = apps.first(where: { $0.bundleIdentifier == bundleId }),
                let pid = app.processIdentifier as pid_t? {
-                element = findElementInApp(pid: pid, role: role, title: title)
+                element = findElementInApp(pid: pid, role: role, title: title, value: value)
             }
         } else {
-            element = findElementGlobally(role: role, title: title)
+            element = findElementGlobally(role: role, title: title, value: value)
         }
         
         guard let found = element else {
@@ -992,11 +992,11 @@ final class AccessibilityService: @unchecked Sendable {
     // MARK: - Get Children (Phase 6)
     
     /// Get all children of an element
-    func getChildren(role: String?, title: String?, appBundleId: String?, x: CGFloat?, y: CGFloat?, depth: Int = 3) -> String {
+    func getChildren(role: String?, title: String?, value: String?, appBundleId: String?, x: CGFloat?, y: CGFloat?, depth: Int = 3) -> String {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        Self.logAudit("getChildren(role: \(role ?? "nil"), title: \(title ?? "nil"), app: \(appBundleId ?? "nil"), depth: \(depth))")
+        Self.logAudit("getChildren(role: \(role ?? "nil"), title: \(title ?? "nil"), value: \(value ?? "nil"), app: \(appBundleId ?? "nil"), depth: \(depth))")
         
         var element: AXUIElement?
         
@@ -1011,10 +1011,10 @@ final class AccessibilityService: @unchecked Sendable {
             let apps = NSWorkspace.shared.runningApplications
             if let app = apps.first(where: { $0.bundleIdentifier == bundleId }),
                let pid = app.processIdentifier as pid_t? {
-                element = findElementInApp(pid: pid, role: role, title: title)
+                element = findElementInApp(pid: pid, role: role, title: title, value: value)
             }
         } else {
-            element = findElementGlobally(role: role, title: title)
+            element = findElementGlobally(role: role, title: title, value: value)
         }
         
         guard let found = element else {
@@ -1187,11 +1187,11 @@ final class AccessibilityService: @unchecked Sendable {
     // MARK: - Show Menu (Phase 6)
     
     /// Show context menu for an element
-    func showMenu(role: String?, title: String?, appBundleId: String?, x: CGFloat?, y: CGFloat?) -> String {
+    func showMenu(role: String?, title: String?, value: String?, appBundleId: String?, x: CGFloat?, y: CGFloat?) -> String {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        Self.logAudit("showMenu(role: \(role ?? "nil"), title: \(title ?? "nil"), app: \(appBundleId ?? "nil"))")
+        Self.logAudit("showMenu(role: \(role ?? "nil"), title: \(title ?? "nil"), value: \(value ?? "nil"), app: \(appBundleId ?? "nil"))")
         
         var element: AXUIElement?
         
@@ -1206,10 +1206,10 @@ final class AccessibilityService: @unchecked Sendable {
             let apps = NSWorkspace.shared.runningApplications
             if let app = apps.first(where: { $0.bundleIdentifier == bundleId }),
                let pid = app.processIdentifier as pid_t? {
-                element = findElementInApp(pid: pid, role: role, title: title)
+                element = findElementInApp(pid: pid, role: role, title: title, value: value)
             }
         } else {
-            element = findElementGlobally(role: role, title: title)
+            element = findElementGlobally(role: role, title: title, value: value)
         }
         
         guard let found = element else {

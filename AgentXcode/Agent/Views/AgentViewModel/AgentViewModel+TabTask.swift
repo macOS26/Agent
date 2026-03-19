@@ -749,6 +749,7 @@ extension AgentViewModel {
         if name == "ax_get_properties" {
             let role = input["role"] as? String
             let title = input["title"] as? String
+            let value = input["value"] as? String
             let appBundleId = input["appBundleId"] as? String
             let x = (input["x"] as? Double).map { CGFloat($0) }
             let y = (input["y"] as? Double).map { CGFloat($0) }
@@ -756,7 +757,7 @@ extension AgentViewModel {
             tab.flush()
             let output = await Self.offMain {
                 AccessibilityService.shared.getElementProperties(
-                    role: role, title: title, appBundleId: appBundleId, x: x, y: y
+                    role: role, title: title, value: value, appBundleId: appBundleId, x: x, y: y
                 )
             }
             tab.appendLog(Self.preview(output, lines: 30))
@@ -772,6 +773,7 @@ extension AgentViewModel {
             let action = input["action"] as? String ?? ""
             let role = input["role"] as? String
             let title = input["title"] as? String
+            let value = input["value"] as? String
             let appBundleId = input["appBundleId"] as? String
             let x = (input["x"] as? Double).map { CGFloat($0) }
             let y = (input["y"] as? Double).map { CGFloat($0) }
@@ -780,7 +782,7 @@ extension AgentViewModel {
             tab.flush()
             let output = await Self.offMain {
                 AccessibilityService.shared.performAction(
-                    role: role, title: title, appBundleId: appBundleId, x: x, y: y,
+                    role: role, title: title, value: value, appBundleId: appBundleId, x: x, y: y,
                     action: action, allowWrites: allowWrites
                 )
             }
@@ -949,6 +951,7 @@ extension AgentViewModel {
             }
             let role = input["role"] as? String
             let title = input["title"] as? String
+            let value = input["value"] as? String
             let appBundleId = input["appBundleId"] as? String
             let x = (input["x"] as? Double).map { CGFloat($0) }
             let y = (input["y"] as? Double).map { CGFloat($0) }
@@ -962,7 +965,7 @@ extension AgentViewModel {
                     return "{\"success\": false, \"error\": \"Failed to serialize properties\"}"
                 }
                 return AccessibilityService.shared.setProperties(
-                    role: role, title: title, appBundleId: appBundleId, x: x, y: y,
+                    role: role, title: title, value: value, appBundleId: appBundleId, x: x, y: y,
                     properties: properties
                 )
             }
@@ -1016,6 +1019,7 @@ extension AgentViewModel {
         if name == "ax_get_children" {
             let role = input["role"] as? String
             let title = input["title"] as? String
+            let value = input["value"] as? String
             let appBundleId = input["appBundleId"] as? String
             let x = (input["x"] as? Double).map { CGFloat($0) }
             let y = (input["y"] as? Double).map { CGFloat($0) }
@@ -1024,7 +1028,7 @@ extension AgentViewModel {
             tab.flush()
             let output = await Self.offMain {
                 AccessibilityService.shared.getChildren(
-                    role: role, title: title, appBundleId: appBundleId, x: x, y: y, depth: depth
+                    role: role, title: title, value: value, appBundleId: appBundleId, x: x, y: y, depth: depth
                 )
             }
             tab.appendLog(Self.preview(output, lines: 30))
@@ -1091,6 +1095,7 @@ extension AgentViewModel {
         if name == "ax_show_menu" {
             let role = input["role"] as? String
             let title = input["title"] as? String
+            let value = input["value"] as? String
             let appBundleId = input["appBundleId"] as? String
             let x = (input["x"] as? Double).map { CGFloat($0) }
             let y = (input["y"] as? Double).map { CGFloat($0) }
@@ -1098,7 +1103,7 @@ extension AgentViewModel {
             tab.flush()
             let output = await Self.offMain {
                 AccessibilityService.shared.showMenu(
-                    role: role, title: title, appBundleId: appBundleId, x: x, y: y
+                    role: role, title: title, value: value, appBundleId: appBundleId, x: x, y: y
                 )
             }
             tab.appendLog(output)
