@@ -1354,7 +1354,7 @@ final class AccessibilityService: @unchecked Sendable {
         }
         
         // Perform the click
-        let clickResult = clickAt(x: centerX, y: centerY, button: "left", clicks: 1)
+        _ = clickAt(x: centerX, y: centerY, button: "left", clicks: 1)
         
         // Small delay for UI to respond
         Thread.sleep(forTimeInterval: 0.1)
@@ -1465,7 +1465,7 @@ final class AccessibilityService: @unchecked Sendable {
         
         // Try to find the element again for verification
         var elementStatus = "not_verified"
-        if let r = role ?? title {
+        if (role ?? title) != nil {
             let findResult = findElement(role: role, title: title, value: nil, appBundleId: appBundleId, timeout: 1.0)
             
             if findResult.contains("\"success\": true") {
@@ -1475,7 +1475,7 @@ final class AccessibilityService: @unchecked Sendable {
             }
         }
         
-        var result: [String: Any] = [
+        let result: [String: Any] = [
             "action": action,
             "element_status": elementStatus,
             "screenshot": screenshotResult
