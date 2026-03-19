@@ -1576,8 +1576,12 @@ final class AccessibilityService: @unchecked Sendable {
     
     private static nonisolated(unsafe) var auditLog: [String] = []
     private static let auditLogLock = NSLock()
-    private static let auditLogFile = FileManager.default.homeDirectoryForCurrentUser
-        .appendingPathComponent("Documents/AgentScript/accessibility_audit.log")
+    private static let auditLogFile: URL = {
+        let dir = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Documents/AgentScript/logs")
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir.appendingPathComponent("accessibility_audit.log")
+    }()
     
     private static func logAudit(_ message: String) {
         let timestamp = ISO8601DateFormatter().string(from: Date())
