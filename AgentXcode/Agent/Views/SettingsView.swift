@@ -279,8 +279,8 @@ struct SettingsView: View {
                 }
             }
 
-            // Web Search (Tavily) — for Ollama and Apple AI providers
-            if viewModel.selectedProvider == .ollama || viewModel.selectedProvider == .localOllama || viewModel.selectedProvider == .foundationModel {
+            // Web Search (Tavily) — for Ollama providers only
+            if viewModel.selectedProvider == .ollama || viewModel.selectedProvider == .localOllama {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Web Search")
                         .font(.headline)
