@@ -45,7 +45,6 @@ let common: Target.Dependency = "ScriptingBridgeCommon"
 
 let bridgeNames = [
     "AdobeIllustratorBridge",
-    "AgentAccessibility",
     "AppleScriptUtilityBridge",
     "AutomatorApplicationStubBridge",
     "AutomatorBridge",
@@ -128,7 +127,7 @@ func parseDeps(for name: String) -> [Target.Dependency] {
 }
 
 // Compute exclude lists so SPM doesn't warn about unhandled files in shared directories
-let allBridgeFiles = ["ScriptingBridgeCommon.swift", "AgentScriptingBridge.swift"] + bridgeNames.map { "\($0).swift" }
+let allBridgeFiles = ["ScriptingBridgeCommon.swift", "AgentScriptingBridge.swift", "AgentAccessibility.swift"] + bridgeNames.map { "\($0).swift" }
 let allScriptFiles = scriptNames.map { "\($0).swift" }
 
 let scriptProducts: [Product] = scriptNames.map {
@@ -149,11 +148,14 @@ let scriptTargets: [Target] = scriptNames.map { name in
 
 let coreTargets: [Target] = [
     .target(name: "ScriptingBridgeCommon", path: bridge,
-            exclude: bridgeNames.map { "\($0).swift" } + ["AgentScriptingBridge.swift", "SeleniumBridge.swift"],
+            exclude: bridgeNames.map { "\($0).swift" } + ["AgentScriptingBridge.swift", "AgentAccessibility.swift", "SeleniumBridge.swift"],
             sources: ["ScriptingBridgeCommon.swift"]),
     .target(name: "AgentScriptingBridge", dependencies: [common], path: bridge,
             exclude: allBridgeFiles.filter { $0 != "AgentScriptingBridge.swift" },
             sources: ["AgentScriptingBridge.swift"]),
+    .target(name: "AgentAccessibility", path: bridge,
+            exclude: allBridgeFiles.filter { $0 != "AgentAccessibility.swift" },
+            sources: ["AgentAccessibility.swift"]),
     .target(name: "SeleniumBridge", dependencies: [common], path: bridge,
             exclude: allBridgeFiles.filter { $0 != "SeleniumBridge.swift" },
             sources: ["SeleniumBridge.swift"]),
@@ -164,8 +166,9 @@ let package = Package(
     platforms: [.macOS(.v15)],
     products: [
         .library(name: "AgentScriptingBridge", targets: ["AgentScriptingBridge"]),
+        .library(name: "AgentAccessibility", targets: ["AgentAccessibility"]),
         .library(name: "SeleniumBridge", targets: ["SeleniumBridge"]),
-        .library(name: "AllBridges", targets: bridgeNames + ["ScriptingBridgeCommon", "AgentScriptingBridge", "SeleniumBridge"]),
+        .library(name: "AllBridges", targets: bridgeNames + ["ScriptingBridgeCommon", "AgentScriptingBridge", "AgentAccessibility", "SeleniumBridge"]),
     ] + scriptProducts,
     targets: coreTargets + bridgeTargets + scriptTargets
 )
