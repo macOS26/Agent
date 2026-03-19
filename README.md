@@ -1,4 +1,4 @@
-<img width="128" alt="Agent! icon" src="https://github.com/user-attachments/assets/5645d8b8-8ce7-4d56-9ede-5eb58f31f227" />
+<img width="107" height="107" alt="Agent! Agentic AI for the rest of us only on  macOS Desktop" src="https://github.com/user-attachments/assets/245b3612-c354-4177-a500-3ee4f22a5111" />
 
 # Agent!
 
