@@ -10,8 +10,8 @@
 
 ## Dream It, Do It
 ### Agentic AI for your entire  Mac Desktop 🤯
-Ollama Pro $20 subscription is preferred.
-Apple Intelligence is experimental.
+Agent is design for Ollama Pro $20/mo https://ollama.com/pricing
+Claude API is fully supported. Local Ollama LLMs are also fully supported. Apple Intelligence is extremely experimental.
 
 <img width="1056" height="597" alt="IMG_5716" src="https://github.com/user-attachments/assets/117cbeb8-46e4-4f92-8494-f6058a92059e" />
 
