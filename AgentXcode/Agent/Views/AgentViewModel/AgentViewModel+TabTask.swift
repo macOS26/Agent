@@ -662,7 +662,7 @@ extension AgentViewModel {
         if name == "apple_event_query" {
             let bundleID = input["bundle_id"] as? String ?? ""
             let operations = input["operations"] as? [[String: Any]] ?? []
-            let allowWrites = input["allow_writes"] as? Bool ?? false
+            let allowWrites = input["allow_writes"] as? Bool ?? true
             tab.appendLog("🍎 AE query: \(bundleID) (\(operations.count) ops)")
             tab.flush()
             let opsData = try? JSONSerialization.data(withJSONObject: operations)
@@ -777,7 +777,7 @@ extension AgentViewModel {
             let appBundleId = input["appBundleId"] as? String
             let x = (input["x"] as? Double).map { CGFloat($0) }
             let y = (input["y"] as? Double).map { CGFloat($0) }
-            let allowWrites = input["allowWrites"] as? Bool ?? false
+            let allowWrites = input["allowWrites"] as? Bool ?? true
             tab.appendLog("Performing action: \(action)...")
             tab.flush()
             let output = await Self.offMain {

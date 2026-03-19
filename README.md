@@ -365,8 +365,8 @@ Accessibility requires explicit user approval in **System Settings > Privacy & S
 
 ### Security Safeguards
 
-- **Password fields are always blocked** — the AI cannot read or interact with `AXSecureTextField` or `AXPasswordField` elements
-- **Destructive actions require `allowWrites: true`** — AXPress, AXConfirm, AXActivate and other interaction actions are blocked by default
+- **Protected roles/actions can be disabled by user** — Password fields (`AXSecureTextField`, `AXPasswordField`) and interactive actions (`AXPress`, `AXConfirm`, etc.) are in a protected list. All default to ENABLED. User can disable per-item in Accessibility Settings. When disabled, password fields are always blocked; actions are blocked entirely.
+- **Interactive actions default to enabled** — `ax_perform_action` defaults to `allowWrites=true`. Set `allowWrites=false` only when you need to disable actions that are enabled in Accessibility Settings.
 - **Audit logging** — Every accessibility operation is logged with timestamps to `~/Documents/Agent/accessibility_audit.log`
 - **TCC boundary** — Accessibility tools only work when run in the Agent app process (via `run_agent_script` or directly). Shell commands via `execute_user_command` do NOT inherit Accessibility permissions.
 

@@ -47,7 +47,7 @@ enum AgentTools {
         ACCESSIBILITY (require TCC):
         Read: ax_list_windows, ax_inspect_element, ax_get_properties, ax_get_children, ax_get_focused_element, ax_check_permission, ax_request_permission
         Input: ax_type_text, ax_click, ax_scroll, ax_press_key, ax_drag
-        Action: ax_perform_action, ax_show_menu (allowWrites=true required). Password fields always blocked.
+        Action: ax_perform_action (defaults to allowWrites=true). Protected roles/actions can be disabled in Accessibility Settings.
         Set: ax_set_properties (sets text, values, positions). Find: ax_find_element, ax_wait_for_element.
         Other: ax_screenshot, ax_get_audit_log
 
@@ -402,7 +402,7 @@ enum AgentTools {
                         "required": ["action"],
                     ] as [String: Any],
                 ] as [String: Any],
-                "allow_writes": ["type": "boolean", "description": "Allow destructive operations (delete, close, move, etc.). Default false."],
+                "allow_writes": ["type": "boolean", "description": "Allow destructive operations (delete, close, move, etc.). Default true."],
             ],
             required: ["bundle_id", "operations"]
         ),
@@ -488,7 +488,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: "ax_perform_action",
-            description: "Perform an accessibility action on an element. SECURITY: Interaction actions (click, press) require allowWrites=true. Password fields are always blocked. CRITICAL: If you just used ax_wait_for_element or ax_find_element, pass the SAME role/title/value parameters to this function - the element locator must match exactly.",
+            description: "Perform an accessibility action on an element. SECURITY: Interaction actions (AXPress, AXConfirm, etc.) default to enabled. Protected roles (AXSecureTextField, AXPasswordField) can be disabled in Accessibility Settings — if disabled, they're blocked regardless of allowWrites. CRITICAL: If you just used ax_wait_for_element or ax_find_element, pass the SAME role/title/value parameters to this function - the element locator must match exactly.",
             properties: [
                 "role": ["type": "string", "description": "Accessibility role to find (e.g., 'AXButton', 'AXTextField')"],
                 "title": ["type": "string", "description": "Title to match (partial match)"],
@@ -497,7 +497,7 @@ enum AgentTools {
                 "x": ["type": "number", "description": "Screen X coordinate for position-based lookup"],
                 "y": ["type": "number", "description": "Screen Y coordinate for position-based lookup"],
                 "action": ["type": "string", "description": "Accessibility action to perform (e.g., 'AXPress', 'AXConfirm')"],
-                "allowWrites": ["type": "boolean", "description": "Allow interaction actions (default false)"],
+                "allowWrites": ["type": "boolean", "description": "Allow interaction actions (default true)"],
             ],
             required: ["action"]
         ),
@@ -659,7 +659,7 @@ enum AgentTools {
         // --- Accessibility Show Menu (Phase 6) ---
         ToolDef(
             name: "ax_show_menu",
-            description: "Show context menu for an element. Uses AXShowMenu action if available, otherwise simulates right-click at element center. CRITICAL: If you just used ax_wait_for_element or ax_find_element, pass the SAME role/title/value parameters to this function.",
+            description: "Show context menu for an element. Uses AXShowMenu action if available, otherwise simulates right-click at element center. Protected roles can be disabled in Accessibility Settings. CRITICAL: If you just used ax_wait_for_element or ax_find_element, pass the SAME role/title/value parameters to this function.",
             properties: [
                 "role": ["type": "string", "description": "Accessibility role to find element"],
                 "title": ["type": "string", "description": "Title to match for element (partial match)"],

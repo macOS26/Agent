@@ -72,7 +72,7 @@ final class AppleEventService: @unchecked Sendable {
     /// Execute a query against a scriptable application.
     /// Runs osascript first to trigger the Automation permission dialog if needed,
     /// then runs the ScriptingBridge query.
-    nonisolated func execute(bundleID: String, operations: [[String: Any]], allowWrites: Bool = false) -> String {
+    nonisolated func execute(bundleID: String, operations: [[String: Any]], allowWrites: Bool = true) -> String {
         // SECURITY: Validate bundle ID to prevent injection attacks
         let sanitizedBundleID = sanitizeBundleID(bundleID)
         guard !sanitizedBundleID.isEmpty else {

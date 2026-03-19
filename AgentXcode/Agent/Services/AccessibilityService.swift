@@ -347,14 +347,21 @@ final class AccessibilityService: @unchecked Sendable {
     
     // MARK: - Perform Actions
     
-    func performAction(role: String?, title: String?, value: String?, appBundleId: String?, x: CGFloat?, y: CGFloat?, action: String, allowWrites: Bool = false) -> String {
+    func performAction(role: String?, title: String?, value: String?, appBundleId: String?, x: CGFloat?, y: CGFloat?, action: String, allowWrites: Bool = true) -> String {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
         Self.logAudit("performAction(\(action)) role: \(role ?? "nil"), title: \(title ?? "nil"), value: \(value ?? "nil"), app: \(appBundleId ?? "nil"), allowWrites: \(allowWrites)")
 
-        if !allowWrites && Self.isRestricted(action) {
-            return errorJSON("Action '\(action)' restricted. Enable in Accessibility Access or set allowWrites=true.")
+        // Check settings FIRST - if disabled, always block regardless of allowWrites
+        if Self.isRestricted(action) {
+            return errorJSON("Action '\(action)' is disabled in Accessibility Settings. Enable it in Settings to allow this action.")
+        }
+        
+        // Then check allowWrites parameter - allows AI to opt-out of destructive ops
+        if !allowWrites {
+            Self.logAudit("AI DECLINED: Action '\(action)' blocked - AI set allowWrites=false (self-imposed safety limit)")
+            return errorJSON("Action '\(action)' requires allowWrites=true. This call passed allowWrites=false.")
         }
         
         var element: AXUIElement?
