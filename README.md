@@ -14,7 +14,7 @@ Agent! is designed for Ollama Cloud API with Pro or Max see https://ollama.com/p
 ### How does it have all this tech?
 27 years ago, I started using FaceSpan and AppleScript to automate apps and tasks on macOS 9. Later I graduated to AppleScript Studio and AppleScript-ObjC. When Swift came out, I decided: no more Objective-C, starting with Swift 1. After OpenClaws made headlines, I thought to myself: what if we connected AppleScript to an LLM? What if we expanded that to work with ScriptingBridge for native Swift + AppleScript automation? What if we added raw AppleEvents, osascript, AX Accessibility, Launch Agent for user-space shell commands, and a privileged helper to automatically escalate to root, but only when absolutely necessary? What if I took 27 years of Mac desktop automation experience and created my own agentic AI for the entire Mac desktop?! This is the result, and you will be amazed that Agent! is only a week old, a weekend experiment that has legs.
 
-### What about OpenClaws
+### What about OpenClaw
 Personally, I never tried OC and I do not plan to. I write native Mac apps in my spare time. I don't need to deal with how insecure Node.js, NPM, and rogue NPM plugins can be, draining your bank account, buying a $3,000 domain on your behalf. That's not saying Agent! can't do that; it could if someone had access to your computer. So make sure you keep your password safe, and soon Agent! will support Passkeys and communicate with a WebAuthn server locally, where only your biometric can unlock Agent!
 
 ### Virtual Buddy
