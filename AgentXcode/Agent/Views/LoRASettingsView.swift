@@ -4,6 +4,7 @@ import UniformTypeIdentifiers
 struct LoRASettingsView: View {
     @State private var adapterManager = LoRAAdapterManager.shared
     @State private var showAdapterPicker = false
+    @State private var showImportJSONLPicker = false
     @State private var showAlert = false
     @State private var alertMessage = ""
     @State private var pythonAvailable = false
@@ -45,6 +46,17 @@ struct LoRASettingsView: View {
         ) { result in
             if case .success(let urls) = result, let url = urls.first {
                 let _ = adapterManager.installAdapter(from: url)
+            }
+        }
+        .fileImporter(
+            isPresented: $showImportJSONLPicker,
+            allowedContentTypes: [UTType(filenameExtension: "jsonl") ?? .json, .json],
+            allowsMultipleSelection: false
+        ) { result in
+            if case .success(let urls) = result, let url = urls.first {
+                let count = adapterManager.importJSONL(from: url)
+                alertMessage = count > 0 ? "Imported \(count) training samples from \(url.lastPathComponent)" : "No valid samples found in file."
+                showAlert = true
             }
         }
     }
@@ -123,9 +135,34 @@ struct LoRASettingsView: View {
                 .font(.headline)
 
             let files = adapterManager.savedFiles()
-            Text("\(files.count) JSONL file(s) saved")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+
+            if !files.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Saved JSONL files:").font(.caption2).foregroundStyle(.secondary)
+                    ForEach(files, id: \.absoluteString) { url in
+                        HStack(spacing: 6) {
+                            Image(systemName: "doc.text")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                            Text(url.lastPathComponent)
+                                .font(.caption)
+                                .lineLimit(1)
+                            Spacer()
+                            Button("Delete") { adapterManager.deleteJSONLFile(at: url) }
+                                .font(.caption2)
+                                .buttonStyle(.borderless)
+                                .foregroundStyle(.red)
+                        }
+                    }
+                }
+                .padding(6)
+                .background(.quaternary.opacity(0.3))
+                .clipShape(RoundedRectangle(cornerRadius: 4))
+            } else {
+                Text("No JSONL files saved yet.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
 
             HStack(spacing: 8) {
                 Button("Export Task History") {
@@ -140,6 +177,12 @@ struct LoRASettingsView: View {
                 .buttonStyle(.bordered)
                 .controlSize(.small)
 
+                Button("Import JSONL") {
+                    showImportJSONLPicker = true
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+
                 Button("Open Folder") {
                     LoRAAdapterManager.revealInFinder()
                 }
@@ -147,7 +190,7 @@ struct LoRASettingsView: View {
                 .controlSize(.small)
             }
 
-            Text("Exports prompt/response pairs from task history as JSONL for LoRA training.")
+            Text("Export task history or import existing JSONL for LoRA training.")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }

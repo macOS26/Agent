@@ -164,6 +164,42 @@ final class LoRAAdapterManager {
         }
     }
 
+    /// Import a JSONL file into the training data directory. Returns sample count.
+    func importJSONL(from sourceURL: URL) -> Int {
+        guard let content = try? String(contentsOf: sourceURL, encoding: .utf8) else { return 0 }
+
+        // Validate and count entries
+        let decoder = JSONDecoder()
+        var validCount = 0
+        for line in content.components(separatedBy: "\n") where !line.isEmpty {
+            guard let data = line.data(using: .utf8),
+                  let entry = try? decoder.decode(JSONLEntry.self, from: data),
+                  entry.messages.count >= 2 else { continue }
+            validCount += 1
+        }
+
+        guard validCount > 0 else { return 0 }
+
+        // Copy to our JSONL directory
+        let destName = sourceURL.lastPathComponent
+        let destURL = Self.jsonlDir.appendingPathComponent(destName)
+        do {
+            if FileManager.default.fileExists(atPath: destURL.path) {
+                try FileManager.default.removeItem(at: destURL)
+            }
+            try content.write(to: destURL, atomically: true, encoding: .utf8)
+        } catch {
+            return 0
+        }
+
+        return validCount
+    }
+
+    /// Delete a saved JSONL file.
+    func deleteJSONLFile(at url: URL) {
+        try? FileManager.default.removeItem(at: url)
+    }
+
     /// List saved JSONL files.
     func savedFiles() -> [URL] {
         let contents = (try? FileManager.default.contentsOfDirectory(at: Self.jsonlDir, includingPropertiesForKeys: nil)) ?? []
