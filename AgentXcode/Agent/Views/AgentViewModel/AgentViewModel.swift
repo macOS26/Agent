@@ -5,6 +5,7 @@ import SQLite3
 enum APIProvider: String, CaseIterable {
     case claude = "claude"
     case openAI = "openAI"
+    case deepSeek = "deepSeek"
     case huggingFace = "huggingFace"
     case ollama = "ollama"
     case localOllama = "localOllama"
@@ -14,6 +15,7 @@ enum APIProvider: String, CaseIterable {
         switch self {
         case .claude: "Claude"
         case .openAI: "OpenAI"
+        case .deepSeek: "DeepSeek"
         case .huggingFace: "Hugging Face"
         case .ollama: "Ollama"
         case .localOllama: "Local Ollama"
@@ -59,6 +61,9 @@ final class AgentViewModel {
             }
             if selectedProvider == .openAI && openAIModels.isEmpty {
                 fetchOpenAIModels()
+            }
+            if selectedProvider == .deepSeek && deepSeekModels.isEmpty {
+                fetchDeepSeekModels()
             }
             if selectedProvider == .huggingFace && huggingFaceModels.isEmpty {
                 fetchHuggingFaceModels()
@@ -115,6 +120,23 @@ final class AgentViewModel {
         OpenAIModelInfo(id: "o3-mini", name: "o3-mini"),
         OpenAIModelInfo(id: "o3", name: "o3"),
     ]
+
+    // DeepSeek settings
+    var deepSeekAPIKey: String = KeychainService.shared.getDeepSeekAPIKey() ?? "" {
+        didSet { KeychainService.shared.setDeepSeekAPIKey(deepSeekAPIKey) }
+    }
+
+    var deepSeekModel: String = UserDefaults.standard.string(forKey: "deepSeekModel") ?? "deepseek-chat" {
+        didSet { UserDefaults.standard.set(deepSeekModel, forKey: "deepSeekModel") }
+    }
+
+    private static let defaultDeepSeekModels: [OpenAIModelInfo] = [
+        OpenAIModelInfo(id: "deepseek-chat", name: "DeepSeek Chat (V3)"),
+        OpenAIModelInfo(id: "deepseek-reasoner", name: "DeepSeek Reasoner (R1)"),
+    ]
+
+    var deepSeekModels: [OpenAIModelInfo] = []
+    var isFetchingDeepSeekModels = false
 
     // Hugging Face settings
     var huggingFaceAPIKey: String = KeychainService.shared.getHuggingFaceAPIKey() ?? "" {
@@ -528,6 +550,8 @@ final class AgentViewModel {
             fetchLocalOllamaModels()
         } else if selectedProvider == .openAI {
             fetchOpenAIModels()
+        } else if selectedProvider == .deepSeek {
+            fetchDeepSeekModels()
         } else if selectedProvider == .huggingFace {
             fetchHuggingFaceModels()
         }
@@ -1157,6 +1181,54 @@ final class AgentViewModel {
             guard let id = model["id"] as? String else { return nil }
             guard chatPrefixes.contains(where: { id.hasPrefix($0) }) else { return nil }
             // Skip dated snapshots if the base model is also available
+            return OpenAIModelInfo(id: id, name: id)
+        }.sorted { $0.name < $1.name }
+    }
+
+    // MARK: - DeepSeek Models
+
+    func fetchDeepSeekModels() {
+        isFetchingDeepSeekModels = true
+        let key = deepSeekAPIKey
+        Task {
+            defer { isFetchingDeepSeekModels = false }
+            guard !key.isEmpty else {
+                deepSeekModels = Self.defaultDeepSeekModels
+                return
+            }
+            do {
+                let models = try await Self.fetchDeepSeekModelsFromAPI(apiKey: key)
+                deepSeekModels = models.isEmpty ? Self.defaultDeepSeekModels : models
+                if deepSeekModel.isEmpty || !deepSeekModels.contains(where: { $0.id == deepSeekModel }) {
+                    deepSeekModel = deepSeekModels.first?.id ?? "deepseek-chat"
+                }
+            } catch {
+                appendLog("Failed to fetch DeepSeek models: \(error.localizedDescription)")
+                deepSeekModels = Self.defaultDeepSeekModels
+            }
+        }
+    }
+
+    private nonisolated static func fetchDeepSeekModelsFromAPI(apiKey: String) async throws -> [OpenAIModelInfo] {
+        guard let url = URL(string: "https://api.deepseek.com/models") else {
+            throw AgentError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 10
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200,
+              let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let modelsData = json["data"] as? [[String: Any]] else {
+            return []
+        }
+
+        return modelsData.compactMap { model -> OpenAIModelInfo? in
+            guard let id = model["id"] as? String else { return nil }
             return OpenAIModelInfo(id: id, name: id)
         }.sorted { $0.name < $1.name }
     }

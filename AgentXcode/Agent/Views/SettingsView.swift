@@ -84,6 +84,49 @@ struct SettingsView: View {
                         }
                     }
                 }
+            } else if viewModel.selectedProvider == .deepSeek {
+                // DeepSeek settings
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("DeepSeek API")
+                        .font(.headline)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("API Key").font(.caption).foregroundStyle(.secondary)
+                        LockedSecureField(text: $viewModel.deepSeekAPIKey, placeholder: "sk-...", lockKey: "lock.deepSeekAPIKey")
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Model").font(.caption).foregroundStyle(.secondary)
+                        HStack {
+                            if viewModel.deepSeekModels.isEmpty {
+                                TextField("Model name", text: $viewModel.deepSeekModel)
+                                    .textFieldStyle(.roundedBorder)
+                            } else {
+                                Picker("Model", selection: $viewModel.deepSeekModel) {
+                                    ForEach(viewModel.deepSeekModels) { model in
+                                        Text(model.name).tag(model.id)
+                                    }
+                                }
+                                .labelsHidden()
+                            }
+
+                            Button {
+                                viewModel.fetchDeepSeekModels()
+                            } label: {
+                                if viewModel.isFetchingDeepSeekModels {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(viewModel.isFetchingDeepSeekModels)
+                            .help("Fetch available models")
+                        }
+                    }
+                }
             } else if viewModel.selectedProvider == .huggingFace {
                 // Hugging Face settings
                 VStack(alignment: .leading, spacing: 10) {
@@ -179,7 +222,7 @@ struct SettingsView: View {
                     }
                 }
             } else if viewModel.selectedProvider == .foundationModel {
-                // Apple Foundation Models (on-device)
+                // Apple Foundation Models (on-device) + LoRA
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Apple Intelligence (On-Device)")
                         .font(.headline)
@@ -215,13 +258,13 @@ struct SettingsView: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
+
+                        Divider()
+
+                        // LoRA Training Section (inline)
+                        LoRASettingsView()
                     }
                 }
-
-                Divider()
-
-                // LoRA Training Section
-                LoRASettingsView()
             } else {
                 // Local Ollama settings
                 VStack(alignment: .leading, spacing: 10) {

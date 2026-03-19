@@ -755,6 +755,9 @@ extension AgentViewModel {
         case .openAI:
             modelName = openAIModel
             isVision = false
+        case .deepSeek:
+            modelName = deepSeekModel
+            isVision = false
         case .huggingFace:
             modelName = huggingFaceModel
             isVision = false
@@ -777,6 +780,8 @@ extension AgentViewModel {
         switch provider {
         case .openAI:
             openAICompatible = OpenAICompatibleService(apiKey: openAIAPIKey, model: openAIModel, baseURL: "https://api.openai.com/v1/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .openAI)
+        case .deepSeek:
+            openAICompatible = OpenAICompatibleService(apiKey: deepSeekAPIKey, model: deepSeekModel, baseURL: "https://api.deepseek.com/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .deepSeek)
         case .huggingFace:
             openAICompatible = OpenAICompatibleService(apiKey: huggingFaceAPIKey, model: huggingFaceModel, baseURL: "https://router.huggingface.co/v1/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .huggingFace)
         default:
