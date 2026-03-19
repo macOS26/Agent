@@ -33,17 +33,16 @@ struct ToolsView: View {
                     // Group tools by category
                     let tools = AgentTools.tools(for: selectedProvider)
                     let categories: [String: [AgentTools.ToolDef]] = [
-                        "Coding": tools.filter { $0.name.hasPrefix("read_") || $0.name.hasPrefix("write_") || $0.name.hasPrefix("edit_") || $0.name.hasPrefix("list_") || $0.name.hasPrefix("search_") },
+                        "Coding": tools.filter { ($0.name.hasPrefix("read_") || $0.name.hasPrefix("write_") || $0.name.hasPrefix("edit_") || $0.name.hasPrefix("list_") || $0.name.hasPrefix("search_")) && !$0.name.contains("agent_") && $0.name != "list_mcp_tools" && $0.name != "list_native_tools" },
                         "Git": tools.filter { $0.name.hasPrefix("git_") },
-                        "Automation": tools.filter { $0.name.hasPrefix("apple_event_") || $0.name.hasPrefix("run_") || $0.name == "execute_javascript" },
+                        "Automation": tools.filter { $0.name.hasPrefix("apple_event_") || $0.name.hasPrefix("run_") || $0.name == "execute_javascript" || $0.name == "list_mcp_tools" || $0.name == "list_native_tools" },
                         "Shell": tools.filter { $0.name.hasPrefix("execute_") && !$0.name.hasPrefix("execute_javascript") },
                         "Accessibility": tools.filter { $0.name.hasPrefix("ax_") },
-                        "Scripts": tools.filter { $0.name.hasPrefix("list_agent_") || $0.name.hasPrefix("read_agent_") || $0.name.hasPrefix("create_agent_") || $0.name.hasPrefix("update_agent_") || $0.name.hasPrefix("run_agent_") || $0.name.hasPrefix("delete_agent_") },
+                        "Scripts": tools.filter { $0.name.contains("agent_script") },
                         "SDEF": tools.filter { $0.name == "lookup_sdef" },
                         "Xcode": tools.filter { $0.name.hasPrefix("xcode_") },
                         "AppleScript": tools.filter { $0.name.hasPrefix("list_apple_") || $0.name.hasPrefix("run_apple_") || $0.name.hasPrefix("save_apple_") || $0.name.hasPrefix("delete_apple_") },
                         "JavaScript": tools.filter { $0.name.hasPrefix("list_javascript") || $0.name.hasPrefix("run_javascript") || $0.name.hasPrefix("save_javascript") || $0.name.hasPrefix("delete_javascript") },
-                        "Discovery": tools.filter { $0.name == "list_native_tools" || $0.name == "list_mcp_tools" },
                         "Core": tools.filter { $0.name == "task_complete" }
                     ]
                     
