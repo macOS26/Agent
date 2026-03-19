@@ -194,14 +194,11 @@ struct SettingsView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     } else {
-                        Text("No configuration needed — runs entirely on-device.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
                         HStack(alignment: .top, spacing: 6) {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .foregroundStyle(.orange)
                                 .font(.caption)
-                            Text("For AppleScript, type the exact syntax (e.g. display dialog \"hello\"). Best for very specific tasks. Due to its small context, does not use MCP.")
+                            Text("Apple Intelligence is not fully compatible with Agent! It is here for training purposes only. Apple AI does not have enough context.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
