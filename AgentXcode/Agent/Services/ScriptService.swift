@@ -210,7 +210,7 @@ final class ScriptService {
         try? fm.createDirectory(at: Self.agentDir, withIntermediateDirectories: true)
 
         // Create organized output subfolders
-        for sub in ["json", "photos", "images", "screenshots", "html", "applescript", "javascript"] {
+        for sub in ["json", "photos", "images", "screenshots", "html", "applescript", "javascript", "logs"] {
             try? fm.createDirectory(at: Self.agentDir.appendingPathComponent(sub), withIntermediateDirectories: true)
         }
 
