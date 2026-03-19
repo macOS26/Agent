@@ -1,9 +1,54 @@
 import Foundation
 
-// MARK: - HTTP Connection (JSON-RPC over HTTP/HTTPS)
+// MARK: - SSE Event Parser
+
+/// Incrementally parses Server-Sent Events (SSE) from a line stream.
+/// Handles the `event:`, `data:`, `id:` fields per the SSE specification.
+/// Per MCP spec (2025-03-26), only events with type "message" or no type are processed.
+struct SSEParser {
+    private(set) var currentEvent = ""
+    private(set) var currentData = ""
+
+    /// Process a single line from the SSE stream.
+    /// Returns a parsed JSON dict when a complete event is ready (blank line encountered).
+    mutating func processLine(_ line: String) -> [String: Any]? {
+        if line.isEmpty {
+            defer { currentEvent = ""; currentData = "" }
+            // Only process "message" events or events with no type (default per SSE spec)
+            guard !currentData.isEmpty,
+                  currentEvent.isEmpty || currentEvent == "message" else { return nil }
+            guard let jsonData = currentData.data(using: .utf8),
+                  let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else { return nil }
+            return json
+        } else if line.hasPrefix("event:") {
+            currentEvent = String(line.dropFirst(6)).trimmingCharacters(in: .whitespaces)
+        } else if line.hasPrefix("data:") {
+            let data = String(line.dropFirst(5)).trimmingCharacters(in: .whitespaces)
+            currentData = currentData.isEmpty ? data : currentData + "\n" + data
+        }
+        // Ignore "id:", "retry:", and comment lines (starting with :)
+        return nil
+    }
+
+    /// Flush any remaining buffered data (for when stream closes without a trailing blank line).
+    mutating func flush() -> [String: Any]? {
+        guard !currentData.isEmpty,
+              currentEvent.isEmpty || currentEvent == "message" else {
+            currentEvent = ""; currentData = ""
+            return nil
+        }
+        defer { currentEvent = ""; currentData = "" }
+        guard let jsonData = currentData.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else { return nil }
+        return json
+    }
+}
+
+// MARK: - HTTP Connection (JSON-RPC over Streamable HTTP)
 
 /// Manages MCP communication via HTTP POST requests (Streamable HTTP transport).
-/// Supports both direct JSON responses and SSE-streamed responses.
+/// Supports both direct JSON responses and true SSE streaming per MCP spec (2025-03-26).
+/// Uses URLSession.bytes(for:) for async line-by-line streaming instead of buffering.
 final class HTTPConnection: @unchecked Sendable, MCPConnection {
     private let serverURL: URL
     private let customHeaders: [String: String]
@@ -18,7 +63,7 @@ final class HTTPConnection: @unchecked Sendable, MCPConnection {
         self.customHeaders = headers
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 30
-        config.timeoutIntervalForResource = 120
+        config.timeoutIntervalForResource = 300
         self.session = URLSession(configuration: config)
     }
 
@@ -62,7 +107,8 @@ final class HTTPConnection: @unchecked Sendable, MCPConnection {
         }
         lock.unlock()
 
-        let (data, response) = try await session.data(for: request)
+        // Use streaming bytes for true SSE support
+        let (bytes, response) = try await session.bytes(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
             throw MCPClientError.connectionFailed("Invalid HTTP response")
@@ -75,9 +121,22 @@ final class HTTPConnection: @unchecked Sendable, MCPConnection {
             lock.unlock()
         }
 
+        // Handle session expiry (404 = session gone, need to re-initialize)
+        if httpResponse.statusCode == 404 {
+            lock.lock()
+            sessionId = nil
+            lock.unlock()
+            throw MCPClientError.connectionFailed("Session expired (404)")
+        }
+
         // Handle HTTP errors
         guard (200...299).contains(httpResponse.statusCode) else {
-            let body = String(data: data.prefix(512), encoding: .utf8) ?? ""
+            var errorBytes = Data()
+            for try await byte in bytes {
+                errorBytes.append(byte)
+                if errorBytes.count > 512 { break }
+            }
+            let body = String(data: errorBytes, encoding: .utf8) ?? ""
             throw MCPClientError.connectionFailed("HTTP \(httpResponse.statusCode): \(body)")
         }
 
@@ -85,8 +144,12 @@ final class HTTPConnection: @unchecked Sendable, MCPConnection {
         let contentType = httpResponse.value(forHTTPHeaderField: "Content-Type") ?? ""
 
         if contentType.contains("text/event-stream") {
-            return try parseSSEResponse(data, expectedId: id)
+            // True SSE streaming — parse events line by line as they arrive
+            return try await parseSSEStream(bytes, expectedId: id)
         } else {
+            // Direct JSON response
+            var data = Data()
+            for try await byte in bytes { data.append(byte) }
             guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
                 throw MCPClientError.invalidResponse
             }
@@ -120,7 +183,7 @@ final class HTTPConnection: @unchecked Sendable, MCPConnection {
         }
         lock.unlock()
 
-        // Fire-and-forget for notifications
+        // Fire-and-forget for notifications (server returns 202 Accepted)
         let task = session.dataTask(with: request)
         task.resume()
     }
@@ -131,7 +194,7 @@ final class HTTPConnection: @unchecked Sendable, MCPConnection {
         let sid = sessionId
         lock.unlock()
 
-        // Send DELETE to close session if we have one
+        // Send DELETE to close session per MCP spec
         if sid != nil {
             var request = URLRequest(url: serverURL)
             request.httpMethod = "DELETE"
@@ -155,37 +218,60 @@ final class HTTPConnection: @unchecked Sendable, MCPConnection {
         return nextId
     }
 
-    /// Parse an SSE response body into a JSON-RPC response dict.
-    /// SSE format: lines starting with "data:" contain JSON payloads.
-    private func parseSSEResponse(_ data: Data, expectedId: Int) throws -> [String: Any] {
-        guard let text = String(data: data, encoding: .utf8) else {
-            throw MCPClientError.invalidResponse
-        }
+    // MARK: - SSE Stream Parsing
 
+    /// Parse an SSE stream asynchronously using true streaming (line by line as data arrives).
+    /// Per MCP spec, the server MAY send notifications/progress before the final response.
+    private func parseSSEStream(_ bytes: URLSession.AsyncBytes, expectedId: Int) async throws -> [String: Any] {
+        var parser = SSEParser()
         var lastJSON: [String: Any]?
 
-        for line in text.components(separatedBy: "\n") {
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            guard trimmed.hasPrefix("data:") else { continue }
+        for try await line in bytes.lines {
+            if let json = parser.processLine(line) {
+                if Self.matchesId(json, expectedId: expectedId) { return json }
+                lastJSON = json
+            }
+        }
 
-            let jsonStr = String(trimmed.dropFirst(5)).trimmingCharacters(in: .whitespaces)
-            guard !jsonStr.isEmpty,
-                  let jsonData = jsonStr.data(using: .utf8),
-                  let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else {
-                continue
-            }
-
-            // Prefer the response matching our request ID
-            if let rid = json["id"] as? Int, rid == expectedId {
-                return json
-            }
-            if let rid = json["id"] as? String, let intId = Int(rid), intId == expectedId {
-                return json
-            }
+        // Handle trailing event data (server closed without final blank line)
+        if let json = parser.flush() {
+            if Self.matchesId(json, expectedId: expectedId) { return json }
             lastJSON = json
         }
 
         if let last = lastJSON { return last }
         throw MCPClientError.invalidResponse
+    }
+
+    /// Parse SSE from buffered data. Same logic as the stream parser, for unit testing.
+    static func parseSSEData(_ data: Data, expectedId: Int) throws -> [String: Any] {
+        guard let text = String(data: data, encoding: .utf8) else {
+            throw MCPClientError.invalidResponse
+        }
+
+        var parser = SSEParser()
+        var lastJSON: [String: Any]?
+
+        for line in text.components(separatedBy: "\n") {
+            if let json = parser.processLine(line) {
+                if matchesId(json, expectedId: expectedId) { return json }
+                lastJSON = json
+            }
+        }
+
+        if let json = parser.flush() {
+            if matchesId(json, expectedId: expectedId) { return json }
+            lastJSON = json
+        }
+
+        if let last = lastJSON { return last }
+        throw MCPClientError.invalidResponse
+    }
+
+    /// Check if a JSON-RPC response matches the expected request ID.
+    static func matchesId(_ json: [String: Any], expectedId: Int) -> Bool {
+        if let rid = json["id"] as? Int, rid == expectedId { return true }
+        if let rid = json["id"] as? String, let intId = Int(rid), intId == expectedId { return true }
+        return false
     }
 }
