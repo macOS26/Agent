@@ -52,6 +52,8 @@
 		AA100000000000000000B7 /* ToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000B6 /* ToolsView.swift */; };
 		AA100000000000000000B8 /* AgentOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000B9 /* AgentOptionsView.swift */; };
 		AA100000000000000000BB /* OpenAICompatibleService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000BA /* OpenAICompatibleService.swift */; };
+		AA100000000000000000BD /* LoRAAdapterManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000BC /* LoRAAdapterManager.swift */; };
+		AA100000000000000000BF /* LoRASettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000BE /* LoRASettingsView.swift */; };
 		BB10000000000000000030 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001A /* main.swift */; };
 		BB10000000000000000031 /* HelperProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001B /* HelperProtocol.swift */; };
 		BB10000000000000000032 /* Agent.app.toddbruss.helper.plist in Copy Daemon Plist */ = {isa = PBXBuildFile; fileRef = AA10000000000000000023 /* Agent.app.toddbruss.helper.plist */; };
@@ -174,6 +176,8 @@
 		AA10000000000000000027 /* Agent.app.toddbruss.user.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Agent.app.toddbruss.user.plist; sourceTree = "<group>"; };
 		AA10000000000000000028 /* OllamaService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaService.swift; sourceTree = "<group>"; };
 		AA100000000000000000BA /* OpenAICompatibleService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAICompatibleService.swift; sourceTree = "<group>"; };
+		AA100000000000000000BC /* LoRAAdapterManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoRAAdapterManager.swift; sourceTree = "<group>"; };
+		AA100000000000000000BE /* LoRASettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoRASettingsView.swift; sourceTree = "<group>"; };
 		AA10000000000000000029 /* ScriptService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptService.swift; sourceTree = "<group>"; };
 		AA1000000000000000002B /* XcodeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XcodeService.swift; sourceTree = "<group>"; };
 		AA1000000000000000002C /* ScriptingBridge.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ScriptingBridge.framework; path = System/Library/Frameworks/ScriptingBridge.framework; sourceTree = SDKROOT; };
@@ -394,6 +398,7 @@
 				AA1000000000000000001E /* ClaudeService.swift */,
 				AA10000000000000000028 /* OllamaService.swift */,
 				AA100000000000000000BA /* OpenAICompatibleService.swift */,
+				AA100000000000000000BC /* LoRAAdapterManager.swift */,
 				AA10000000000000000029 /* ScriptService.swift */,
 				AA1000000000000000002B /* XcodeService.swift */,
 				AA10000000000000000046 /* KeychainService.swift */,
@@ -418,6 +423,7 @@
 				AA1000000000000000007D /* AccessibilitySettingsView.swift */,
 				AA10000000000000000078 /* MessagesView.swift */,
 				AA1000000000000000005D /* SettingsView.swift */,
+				AA100000000000000000BE /* LoRASettingsView.swift */,
 				AA1000000000000000005E /* HistoryView.swift */,
 				AA1000000000000000007C /* TabBarView.swift */,
 				AA1000000000000000001B /* ContentView.swift */,
@@ -653,6 +659,8 @@
 				AA10000000000000000039 /* UserProtocol.swift in Sources */,
 				AA1000000000000000003A /* OllamaService.swift in Sources */,
 				AA100000000000000000BB /* OpenAICompatibleService.swift in Sources */,
+				AA100000000000000000BD /* LoRAAdapterManager.swift in Sources */,
+				AA100000000000000000BF /* LoRASettingsView.swift in Sources */,
 				AA1000000000000000003B /* ScriptService.swift in Sources */,
 				AA1000000000000000003D /* XcodeService.swift in Sources */,
 				AA1000000000000000003F /* DependencyChecker.swift in Sources */,

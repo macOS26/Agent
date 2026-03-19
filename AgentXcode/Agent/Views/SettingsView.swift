@@ -208,8 +208,23 @@ struct SettingsView: View {
                         .padding(8)
                         .background(.orange.opacity(0.08))
                         .clipShape(RoundedRectangle(cornerRadius: 6))
+
+                        // LoRA adapter status
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(LoRAAdapterManager.shared.isLoaded ? .green : .gray.opacity(0.4))
+                                .frame(width: 8, height: 8)
+                            Text(LoRAAdapterManager.shared.isLoaded ? "LoRA: \(LoRAAdapterManager.shared.adapterName)" : "No LoRA adapter")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
+
+                Divider()
+
+                // LoRA Training Section
+                LoRASettingsView()
             } else {
                 // Local Ollama settings
                 VStack(alignment: .leading, spacing: 10) {

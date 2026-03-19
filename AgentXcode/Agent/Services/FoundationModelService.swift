@@ -68,10 +68,18 @@ final class FoundationModelService {
         // Always create a fresh session — the on-device model's small context
         // gets polluted by prior turns, causing it to skip tools.
         NativeToolContext.projectFolder = projectFolder
-        let instructions = SystemPromptService.shared.prompt(for: .foundationModel, userName: userName, userHome: userHome)
+        var instructions = SystemPromptService.shared.prompt(for: .foundationModel, userName: userName, userHome: userHome)
+
+        // Note active LoRA adapter in instructions
+        let lora = LoRAAdapterManager.shared
+        if lora.isLoaded {
+            instructions += "\n[LoRA adapter '\(lora.adapterName)' is active]"
+        }
+
         print("=== Apple AI System Prompt ===\n\(instructions)\n=== End (\(instructions.count) chars) ===")
 
         let tools = makeEnabledNativeTools()
+        // The adapter asset is ready for when Apple's session API supports the adapter: parameter.
         let s = LanguageModelSession(model: .default, tools: tools, instructions: Instructions(instructions))
         session = s
         return s
