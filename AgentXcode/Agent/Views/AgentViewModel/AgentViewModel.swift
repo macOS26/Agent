@@ -4,6 +4,8 @@ import SQLite3
 
 enum APIProvider: String, CaseIterable {
     case claude = "claude"
+    case openAI = "openAI"
+    case huggingFace = "huggingFace"
     case ollama = "ollama"
     case localOllama = "localOllama"
     case foundationModel = "foundationModel"
@@ -11,6 +13,8 @@ enum APIProvider: String, CaseIterable {
     var displayName: String {
         switch self {
         case .claude: "Claude"
+        case .openAI: "OpenAI"
+        case .huggingFace: "Hugging Face"
         case .ollama: "Ollama"
         case .localOllama: "Local Ollama"
         case .foundationModel: "Apple Intelligence (Experimental)"
@@ -53,6 +57,12 @@ final class AgentViewModel {
             if selectedProvider == .claude && availableClaudeModels.isEmpty {
                 Task { await fetchClaudeModels() }
             }
+            if selectedProvider == .openAI && openAIModels.isEmpty {
+                fetchOpenAIModels()
+            }
+            if selectedProvider == .huggingFace && huggingFaceModels.isEmpty {
+                fetchHuggingFaceModels()
+            }
             // .foundationModel needs no setup — uses SystemLanguageModel.default
         }
     }
@@ -77,6 +87,54 @@ final class AgentViewModel {
     }
 
     let ollamaEndpoint = "https://ollama.com/api/chat"
+
+    // OpenAI settings
+    var openAIAPIKey: String = KeychainService.shared.getOpenAIAPIKey() ?? "" {
+        didSet { KeychainService.shared.setOpenAIAPIKey(openAIAPIKey) }
+    }
+
+    var openAIModel: String = UserDefaults.standard.string(forKey: "openAIModel") ?? "gpt-4.1-nano" {
+        didSet { UserDefaults.standard.set(openAIModel, forKey: "openAIModel") }
+    }
+
+    struct OpenAIModelInfo: Identifiable {
+        let id: String
+        let name: String
+    }
+
+    var openAIModels: [OpenAIModelInfo] = []
+    var isFetchingOpenAIModels = false
+
+    private static let defaultOpenAIModels: [OpenAIModelInfo] = [
+        OpenAIModelInfo(id: "gpt-4.1-nano", name: "GPT-4.1 Nano"),
+        OpenAIModelInfo(id: "gpt-4.1-mini", name: "GPT-4.1 Mini"),
+        OpenAIModelInfo(id: "gpt-4.1", name: "GPT-4.1"),
+        OpenAIModelInfo(id: "gpt-4o-mini", name: "GPT-4o Mini"),
+        OpenAIModelInfo(id: "gpt-4o", name: "GPT-4o"),
+        OpenAIModelInfo(id: "o4-mini", name: "o4-mini"),
+        OpenAIModelInfo(id: "o3-mini", name: "o3-mini"),
+        OpenAIModelInfo(id: "o3", name: "o3"),
+    ]
+
+    // Hugging Face settings
+    var huggingFaceAPIKey: String = KeychainService.shared.getHuggingFaceAPIKey() ?? "" {
+        didSet { KeychainService.shared.setHuggingFaceAPIKey(huggingFaceAPIKey) }
+    }
+
+    var huggingFaceModel: String = UserDefaults.standard.string(forKey: "huggingFaceModel") ?? "deepseek-ai/DeepSeek-V3-0324" {
+        didSet { UserDefaults.standard.set(huggingFaceModel, forKey: "huggingFaceModel") }
+    }
+
+    var huggingFaceModels: [OpenAIModelInfo] = []
+    var isFetchingHuggingFaceModels = false
+
+    private static let defaultHuggingFaceModels: [OpenAIModelInfo] = [
+        OpenAIModelInfo(id: "deepseek-ai/DeepSeek-V3-0324", name: "DeepSeek V3"),
+        OpenAIModelInfo(id: "deepseek-ai/DeepSeek-R1", name: "DeepSeek R1"),
+        OpenAIModelInfo(id: "Qwen/Qwen2.5-Coder-32B-Instruct", name: "Qwen 2.5 Coder 32B"),
+        OpenAIModelInfo(id: "meta-llama/Llama-3.3-70B-Instruct", name: "Llama 3.3 70B"),
+        OpenAIModelInfo(id: "mistralai/Mistral-Small-24B-Instruct-2501", name: "Mistral Small 24B"),
+    ]
 
     var maxHistoryBeforeSummary: Int = UserDefaults.standard.object(forKey: "agentMaxHistory") as? Int ?? 10 {
         didSet { UserDefaults.standard.set(maxHistoryBeforeSummary, forKey: "agentMaxHistory") }
@@ -468,6 +526,10 @@ final class AgentViewModel {
             fetchOllamaModels()
         } else if selectedProvider == .localOllama {
             fetchLocalOllamaModels()
+        } else if selectedProvider == .openAI {
+            fetchOpenAIModels()
+        } else if selectedProvider == .huggingFace {
+            fetchHuggingFaceModels()
         }
 
         // Xcode Command Line Tools check is handled by DependencyOverlay in ContentView
@@ -1045,6 +1107,106 @@ final class AgentViewModel {
                 appendLog("Failed to fetch local models: \(error.localizedDescription)")
             }
         }
+    }
+
+    // MARK: - OpenAI Models
+
+    func fetchOpenAIModels() {
+        isFetchingOpenAIModels = true
+        let key = openAIAPIKey
+        Task {
+            defer { isFetchingOpenAIModels = false }
+            guard !key.isEmpty else {
+                openAIModels = Self.defaultOpenAIModels
+                return
+            }
+            do {
+                let models = try await Self.fetchOpenAIModelsFromAPI(apiKey: key)
+                openAIModels = models.isEmpty ? Self.defaultOpenAIModels : models
+                if openAIModel.isEmpty || !openAIModels.contains(where: { $0.id == openAIModel }) {
+                    openAIModel = openAIModels.first?.id ?? "gpt-4.1-nano"
+                }
+            } catch {
+                appendLog("Failed to fetch OpenAI models: \(error.localizedDescription)")
+                openAIModels = Self.defaultOpenAIModels
+            }
+        }
+    }
+
+    private nonisolated static func fetchOpenAIModelsFromAPI(apiKey: String) async throws -> [OpenAIModelInfo] {
+        guard let url = URL(string: "https://api.openai.com/v1/models") else {
+            throw AgentError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 10
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200,
+              let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let modelsData = json["data"] as? [[String: Any]] else {
+            return []
+        }
+
+        // Filter to chat models only
+        let chatPrefixes = ["gpt-4", "gpt-3.5", "o1", "o3", "o4"]
+        return modelsData.compactMap { model -> OpenAIModelInfo? in
+            guard let id = model["id"] as? String else { return nil }
+            guard chatPrefixes.contains(where: { id.hasPrefix($0) }) else { return nil }
+            // Skip dated snapshots if the base model is also available
+            return OpenAIModelInfo(id: id, name: id)
+        }.sorted { $0.name < $1.name }
+    }
+
+    // MARK: - Hugging Face Models
+
+    func fetchHuggingFaceModels() {
+        isFetchingHuggingFaceModels = true
+        let key = huggingFaceAPIKey
+        Task {
+            defer { isFetchingHuggingFaceModels = false }
+            guard !key.isEmpty else {
+                huggingFaceModels = Self.defaultHuggingFaceModels
+                return
+            }
+            do {
+                let models = try await Self.fetchHuggingFaceModelsFromAPI(apiKey: key)
+                huggingFaceModels = models.isEmpty ? Self.defaultHuggingFaceModels : models
+                if huggingFaceModel.isEmpty || !huggingFaceModels.contains(where: { $0.id == huggingFaceModel }) {
+                    huggingFaceModel = huggingFaceModels.first?.id ?? "deepseek-ai/DeepSeek-V3-0324"
+                }
+            } catch {
+                appendLog("Failed to fetch HF models: \(error.localizedDescription)")
+                huggingFaceModels = Self.defaultHuggingFaceModels
+            }
+        }
+    }
+
+    private nonisolated static func fetchHuggingFaceModelsFromAPI(apiKey: String) async throws -> [OpenAIModelInfo] {
+        guard let url = URL(string: "https://router.huggingface.co/v1/models") else {
+            throw AgentError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 10
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200,
+              let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let modelsData = json["data"] as? [[String: Any]] else {
+            return []
+        }
+
+        return modelsData.compactMap { model -> OpenAIModelInfo? in
+            guard let id = model["id"] as? String else { return nil }
+            return OpenAIModelInfo(id: id, name: id)
+        }.sorted { $0.name < $1.name }
     }
 
     private nonisolated static func fetchModels(endpoint: String, apiKey: String) async throws -> [OllamaModelInfo] {

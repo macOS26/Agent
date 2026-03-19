@@ -41,6 +41,92 @@ struct SettingsView: View {
                         .labelsHidden()
                     }
                 }
+            } else if viewModel.selectedProvider == .openAI {
+                // OpenAI settings
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("OpenAI API")
+                        .font(.headline)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("API Key").font(.caption).foregroundStyle(.secondary)
+                        LockedSecureField(text: $viewModel.openAIAPIKey, placeholder: "sk-...", lockKey: "lock.openAIAPIKey")
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Model").font(.caption).foregroundStyle(.secondary)
+                        HStack {
+                            if viewModel.openAIModels.isEmpty {
+                                TextField("Model name", text: $viewModel.openAIModel)
+                                    .textFieldStyle(.roundedBorder)
+                            } else {
+                                Picker("Model", selection: $viewModel.openAIModel) {
+                                    ForEach(viewModel.openAIModels) { model in
+                                        Text(model.name).tag(model.id)
+                                    }
+                                }
+                                .labelsHidden()
+                            }
+
+                            Button {
+                                viewModel.fetchOpenAIModels()
+                            } label: {
+                                if viewModel.isFetchingOpenAIModels {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(viewModel.isFetchingOpenAIModels)
+                            .help("Fetch available models")
+                        }
+                    }
+                }
+            } else if viewModel.selectedProvider == .huggingFace {
+                // Hugging Face settings
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Hugging Face Inference")
+                        .font(.headline)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("API Key").font(.caption).foregroundStyle(.secondary)
+                        LockedSecureField(text: $viewModel.huggingFaceAPIKey, placeholder: "hf_...", lockKey: "lock.huggingFaceAPIKey")
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Model").font(.caption).foregroundStyle(.secondary)
+                        HStack {
+                            if viewModel.huggingFaceModels.isEmpty {
+                                TextField("Model name", text: $viewModel.huggingFaceModel)
+                                    .textFieldStyle(.roundedBorder)
+                            } else {
+                                Picker("Model", selection: $viewModel.huggingFaceModel) {
+                                    ForEach(viewModel.huggingFaceModels) { model in
+                                        Text(model.name).tag(model.id)
+                                    }
+                                }
+                                .labelsHidden()
+                            }
+
+                            Button {
+                                viewModel.fetchHuggingFaceModels()
+                            } label: {
+                                if viewModel.isFetchingHuggingFaceModels {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(viewModel.isFetchingHuggingFaceModels)
+                            .help("Fetch available models")
+                        }
+                    }
+                }
             } else if viewModel.selectedProvider == .ollama {
                 // Cloud Ollama settings
                 VStack(alignment: .leading, spacing: 10) {

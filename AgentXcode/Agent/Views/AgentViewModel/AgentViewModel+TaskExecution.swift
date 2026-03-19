@@ -1,3 +1,4 @@
+
 @preconcurrency import Foundation
 import MCPClient
 
@@ -408,6 +409,201 @@ extension AgentViewModel {
             return "Task complete: \(summary)"
         }
 
+        // MARK: - Web Automation (Phase 2) for Apple AI
+
+        // web_open
+        if name == "web_open" {
+            guard let urlString = input["url"] as? String,
+                  let url = URL(string: urlString) else {
+                return "Error: Invalid or missing URL"
+            }
+            let browserStr = input["browser"] as? String ?? "safari"
+            let browser = WebAutomationService.BrowserType(rawValue: browserStr) ?? .safari
+            do {
+                return try await WebAutomationService.shared.open(url: url, browser: browser)
+            } catch {
+                return "Error: \(error.localizedDescription)"
+            }
+        }
+
+        // web_find
+        if name == "web_find" {
+            let selector = input["selector"] as? String ?? ""
+            let strategyStr = input["strategy"] as? String ?? "auto"
+            let strategy = SelectorStrategy(rawValue: strategyStr) ?? .auto
+            let timeout = input["timeout"] as? Double ?? 10.0
+            let fuzzyThreshold = input["fuzzyThreshold"] as? Double ?? 0.6
+            let appBundleId = input["appBundleId"] as? String
+            do {
+                let output = try await WebAutomationService.shared.findElement(
+                    selector: selector, strategy: strategy, timeout: timeout,
+                    fuzzyThreshold: fuzzyThreshold, appBundleId: appBundleId
+                )
+                if let jsonData = try? JSONSerialization.data(withJSONObject: output, options: .prettyPrinted),
+                   let jsonStr = String(data: jsonData, encoding: .utf8) {
+                    return jsonStr
+                }
+                return "Found element: \(output)"
+            } catch {
+                return "Error: \(error.localizedDescription)"
+            }
+        }
+
+        // web_click
+        if name == "web_click" {
+            let selector = input["selector"] as? String ?? ""
+            let strategyStr = input["strategy"] as? String ?? "auto"
+            let strategy = SelectorStrategy(rawValue: strategyStr) ?? .auto
+            let appBundleId = input["appBundleId"] as? String
+            do {
+                return try await WebAutomationService.shared.click(
+                    selector: selector, strategy: strategy, appBundleId: appBundleId
+                )
+            } catch {
+                return "Error: \(error.localizedDescription)"
+            }
+        }
+
+        // web_type
+        if name == "web_type" {
+            let selector = input["selector"] as? String ?? ""
+            let text = input["text"] as? String ?? ""
+            let strategyStr = input["strategy"] as? String ?? "auto"
+            let strategy = SelectorStrategy(rawValue: strategyStr) ?? .auto
+            let verify = input["verify"] as? Bool ?? true
+            let appBundleId = input["appBundleId"] as? String
+            do {
+                return try await WebAutomationService.shared.type(
+                    text: text, selector: selector, strategy: strategy, verify: verify, appBundleId: appBundleId
+                )
+            } catch {
+                return "Error: \(error.localizedDescription)"
+            }
+        }
+
+        // web_execute_js
+        if name == "web_execute_js" {
+            let script = input["script"] as? String ?? ""
+            let browser = input["browser"] as? String
+            do {
+                let result = try await WebAutomationService.shared.executeJavaScript(script: script, browser: browser)
+                return result as? String ?? "Script executed"
+            } catch {
+                return "Error: \(error.localizedDescription)"
+            }
+        }
+
+        // web_get_url / web_get_title (via Selenium AgentScript)
+        if name == "web_get_url" || name == "web_get_title" {
+            let action = name == "web_get_url" ? "getUrl" : "getTitle"
+            let args = "{\"action\":\"\(action)\"}"
+            // Run Selenium via compile and execute
+            guard let compileCmd = scriptService.compileCommand(name: "Selenium") else {
+                return "Error: Selenium script not found"
+            }
+            let compileResult = await executeLocal(command: compileCmd)
+            if compileResult.status != 0 {
+                return "Compile failed: \(compileResult.output)"
+            }
+            let result = await scriptService.loadAndRunScript(name: "Selenium", arguments: args, captureStderr: false, isCancelled: nil) { _ in }
+            return result.output
+        }
+
+        // MARK: - Selenium WebDriver for Apple AI (via AgentScript)
+
+        // Helper for Selenium operations
+        func runSeleniumNative(action: String, args: String) async -> String {
+            let fullArgs = args.isEmpty ? "{\"action\":\"\(action)\"}" : args
+            guard let compileCmd = scriptService.compileCommand(name: "Selenium") else {
+                return "Error: Selenium script not found"
+            }
+            let compileResult = await executeLocal(command: compileCmd)
+            if compileResult.status != 0 {
+                return "Compile failed: \(compileResult.output)"
+            }
+            let result = await scriptService.loadAndRunScript(name: "Selenium", arguments: fullArgs, captureStderr: false, isCancelled: nil) { _ in }
+            return result.output
+        }
+
+        // selenium_start
+        if name == "selenium_start" {
+            let browser = input["browser"] as? String ?? "safari"
+            let port = input["port"] as? Int ?? 7055
+            let args = "{\"action\":\"start\",\"browser\":\"\(browser)\",\"port\":\(port)}"
+            return await runSeleniumNative(action: "start", args: args)
+        }
+
+        // selenium_stop
+        if name == "selenium_stop" {
+            let port = input["port"] as? Int ?? 7055
+            let args = "{\"action\":\"stop\",\"port\":\(port)}"
+            return await runSeleniumNative(action: "stop", args: args)
+        }
+
+        // selenium_navigate
+        if name == "selenium_navigate" {
+            guard let url = input["url"] as? String else { return "Error: URL required" }
+            let port = input["port"] as? Int ?? 7055
+            let args = "{\"action\":\"navigate\",\"url\":\"\(url)\",\"port\":\(port)}"
+            return await runSeleniumNative(action: "navigate", args: args)
+        }
+
+        // selenium_find
+        if name == "selenium_find" {
+            let strategy = input["strategy"] as? String ?? "css"
+            let value = input["value"] as? String ?? ""
+            let port = input["port"] as? Int ?? 7055
+            let args = "{\"action\":\"find\",\"strategy\":\"\(strategy)\",\"value\":\"\(value)\",\"port\":\(port)}"
+            return await runSeleniumNative(action: "find", args: args)
+        }
+
+        // selenium_click
+        if name == "selenium_click" {
+            let strategy = input["strategy"] as? String ?? "css"
+            let value = input["value"] as? String ?? ""
+            let port = input["port"] as? Int ?? 7055
+            let args = "{\"action\":\"click\",\"strategy\":\"\(strategy)\",\"value\":\"\(value)\",\"port\":\(port)}"
+            return await runSeleniumNative(action: "click", args: args)
+        }
+
+        // selenium_type
+        if name == "selenium_type" {
+            let strategy = input["strategy"] as? String ?? "css"
+            let value = input["value"] as? String ?? ""
+            let text = input["text"] as? String ?? ""
+            let port = input["port"] as? Int ?? 7055
+            let escapedText = text.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+            let args = "{\"action\":\"type\",\"strategy\":\"\(strategy)\",\"value\":\"\(value)\",\"text\":\"\(escapedText)\",\"port\":\(port)}"
+            return await runSeleniumNative(action: "type", args: args)
+        }
+
+        // selenium_execute
+        if name == "selenium_execute" {
+            let script = input["script"] as? String ?? ""
+            let port = input["port"] as? Int ?? 7055
+            let escapedScript = script.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+            let args = "{\"action\":\"execute\",\"script\":\"\(escapedScript)\",\"port\":\(port)}"
+            return await runSeleniumNative(action: "execute", args: args)
+        }
+
+        // selenium_screenshot
+        if name == "selenium_screenshot" {
+            let filename = input["filename"] as? String ?? "selenium_\(Int(Date().timeIntervalSince1970)).png"
+            let port = input["port"] as? Int ?? 7055
+            let args = "{\"action\":\"screenshot\",\"filename\":\"\(filename)\",\"port\":\(port)}"
+            return await runSeleniumNative(action: "screenshot", args: args)
+        }
+
+        // selenium_wait
+        if name == "selenium_wait" {
+            let strategy = input["strategy"] as? String ?? "css"
+            let value = input["value"] as? String ?? ""
+            let timeout = input["timeout"] as? Double ?? 10.0
+            let port = input["port"] as? Int ?? 7055
+            let args = "{\"action\":\"waitFor\",\"strategy\":\"\(strategy)\",\"value\":\"\(value)\",\"timeout\":\(timeout),\"port\":\(port)}"
+            return await runSeleniumNative(action: "waitFor", args: args)
+        }
+
         // Fallback
         return "Tool \(name) not implemented for Apple AI"
     }
@@ -557,6 +753,12 @@ extension AgentViewModel {
         case .claude:
             modelName = selectedModel
             isVision = false
+        case .openAI:
+            modelName = openAIModel
+            isVision = false
+        case .huggingFace:
+            modelName = huggingFaceModel
+            isVision = false
         case .ollama:
             modelName = ollamaModel
             isVision = selectedOllamaSupportsVision
@@ -572,6 +774,15 @@ extension AgentViewModel {
 
         let claude: ClaudeService? = provider == .claude
             ? ClaudeService(apiKey: apiKey, model: selectedModel, historyContext: historyContext, projectFolder: projectFolder) : nil
+        let openAICompatible: OpenAICompatibleService?
+        switch provider {
+        case .openAI:
+            openAICompatible = OpenAICompatibleService(apiKey: openAIAPIKey, model: openAIModel, baseURL: "https://api.openai.com/v1/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .openAI)
+        case .huggingFace:
+            openAICompatible = OpenAICompatibleService(apiKey: huggingFaceAPIKey, model: huggingFaceModel, baseURL: "https://router.huggingface.co/v1/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .huggingFace)
+        default:
+            openAICompatible = nil
+        }
         let ollama: OllamaService?
         switch provider {
         case .ollama:
@@ -632,6 +843,14 @@ extension AgentViewModel {
                 var textWasStreamed = false
                 if let claude {
                     response = try await claude.sendStreaming(messages: messages) { [weak self] delta in
+                        Task { @MainActor in
+                            self?.isThinking = false
+                            self?.appendStreamDelta(delta)
+                        }
+                    }
+                    textWasStreamed = true
+                } else if let openAICompatible {
+                    response = try await openAICompatible.sendStreaming(messages: messages) { [weak self] delta in
                         Task { @MainActor in
                             self?.isThinking = false
                             self?.appendStreamDelta(delta)
@@ -1940,6 +2159,67 @@ extension AgentViewModel {
                             }
                             appendLog(Self.preview(output, lines: 30))
                             commandsRun.append("ax_wait_for_element")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        // Smart element click (Phase 1 Improvement)
+                        if name == "ax_click_element" {
+                            let role = input["role"] as? String
+                            let title = input["title"] as? String
+                            let value = input["value"] as? String
+                            let appBundleId = input["appBundleId"] as? String
+                            let timeout = input["timeout"] as? Double ?? 5.0
+                            let verify = input["verify"] as? Bool ?? false
+                            appendLog("Clicking element (role: \(role ?? "any"), title: \(title ?? "any"))...")
+                            flushLog()
+                            let output = await Self.offMain {
+                                AccessibilityService.shared.clickElement(
+                                    role: role, title: title, value: value, appBundleId: appBundleId, timeout: timeout, verify: verify
+                                )
+                            }
+                            appendLog(Self.preview(output, lines: 30))
+                            commandsRun.append("ax_click_element")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        // Adaptive wait (Phase 1 Improvement)
+                        if name == "ax_wait_adaptive" {
+                            let role = input["role"] as? String
+                            let title = input["title"] as? String
+                            let value = input["value"] as? String
+                            let appBundleId = input["appBundleId"] as? String
+                            let timeout = input["timeout"] as? Double ?? 10.0
+                            let initialDelay = input["initialDelay"] as? Double ?? 0.1
+                            let maxDelay = input["maxDelay"] as? Double ?? 1.0
+                            appendLog("Waiting for element (adaptive, timeout: \(timeout)s)...")
+                            flushLog()
+                            let output = await Self.offMain {
+                                AccessibilityService.shared.waitForElementAdaptive(
+                                    role: role, title: title, value: value, appBundleId: appBundleId, timeout: timeout,
+                                    initialDelay: initialDelay, maxDelay: maxDelay
+                                )
+                            }
+                            appendLog(Self.preview(output, lines: 30))
+                            commandsRun.append("ax_wait_adaptive")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        // Type into element (Phase 1 Improvement)
+                        if name == "ax_type_into_element" {
+                            let role = input["role"] as? String
+                            let title = input["title"] as? String
+                            let text = input["text"] as? String ?? ""
+                            let appBundleId = input["appBundleId"] as? String
+                            let verify = input["verify"] as? Bool ?? true
+                            appendLog("Typing \(text.count) chars into element...")
+                            flushLog()
+                            let output = await Self.offMain {
+                                AccessibilityService.shared.typeTextIntoElement(
+                                    role: role, title: title, text: text, appBundleId: appBundleId, verify: verify
+                                )
+                            }
+                            appendLog(Self.preview(output, lines: 30))
+                            commandsRun.append("ax_type_into_element")
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 

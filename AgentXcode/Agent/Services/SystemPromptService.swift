@@ -15,6 +15,8 @@ final class SystemPromptService {
     /// File names for each provider's system prompt.
     static let fileNames: [APIProvider: String] = [
         .claude: "claude.txt",
+        .openAI: "openai.txt",
+        .huggingFace: "hugging_face.txt",
         .ollama: "ollama.txt",
         .localOllama: "local_ollama.txt",
         .foundationModel: "apple_ai.txt",
@@ -76,7 +78,7 @@ final class SystemPromptService {
     /// Uses {userName} and {userHome} as placeholders.
     private static func defaultPrompt(for provider: APIProvider) -> String {
         switch provider {
-        case .claude, .ollama, .localOllama:
+        case .claude, .openAI, .huggingFace, .ollama, .localOllama:
             return AgentTools.systemPrompt(userName: "{userName}", userHome: "{userHome}")
         case .foundationModel:
             return AgentTools.compactSystemPrompt(userName: "{userName}", userHome: "{userHome}")

@@ -1,3 +1,4 @@
+
 @preconcurrency import Foundation
 import MCPClient
 
@@ -86,6 +87,15 @@ extension AgentViewModel {
 
         let claude: ClaudeService? = provider == .claude
             ? ClaudeService(apiKey: apiKey, model: selectedModel, historyContext: tabHistoryContext) : nil
+        let openAICompatible: OpenAICompatibleService?
+        switch provider {
+        case .openAI:
+            openAICompatible = OpenAICompatibleService(apiKey: openAIAPIKey, model: openAIModel, baseURL: "https://api.openai.com/v1/chat/completions", historyContext: tabHistoryContext, provider: .openAI)
+        case .huggingFace:
+            openAICompatible = OpenAICompatibleService(apiKey: huggingFaceAPIKey, model: huggingFaceModel, baseURL: "https://router.huggingface.co/v1/chat/completions", historyContext: tabHistoryContext, provider: .huggingFace)
+        default:
+            openAICompatible = nil
+        }
         let ollama: OllamaService?
         switch provider {
         case .ollama:
@@ -116,6 +126,15 @@ extension AgentViewModel {
 
                 if let claude {
                     response = try await claude.sendStreaming(messages: messages) { [weak tab] delta in
+                        Task { @MainActor in
+                            tab?.isLLMThinking = false
+                            tab?.appendStreamDelta(delta)
+                        }
+                    }
+                    textWasStreamed = true
+                    tab.flushStreamBuffer()
+                } else if let openAICompatible {
+                    response = try await openAICompatible.sendStreaming(messages: messages) { [weak tab] delta in
                         Task { @MainActor in
                             tab?.isLLMThinking = false
                             tab?.appendStreamDelta(delta)
@@ -1091,6 +1110,76 @@ extension AgentViewModel {
             )
         }
 
+        // ax_click_element (Phase 1 Improvement)
+        if name == "ax_click_element" {
+            let role = input["role"] as? String
+            let title = input["title"] as? String
+            let value = input["value"] as? String
+            let appBundleId = input["appBundleId"] as? String
+            let timeout = input["timeout"] as? Double ?? 5.0
+            let verify = input["verify"] as? Bool ?? false
+            tab.appendLog("Clicking element (role: \(role ?? "any"), title: \(title ?? "any"))...")
+            tab.flush()
+            let output = await Self.offMain {
+                AccessibilityService.shared.clickElement(
+                    role: role, title: title, value: value, appBundleId: appBundleId, timeout: timeout, verify: verify
+                )
+            }
+            tab.appendLog(Self.preview(output, lines: 30))
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+        }
+
+        // ax_wait_adaptive (Phase 1 Improvement)
+        if name == "ax_wait_adaptive" {
+            let role = input["role"] as? String
+            let title = input["title"] as? String
+            let value = input["value"] as? String
+            let appBundleId = input["appBundleId"] as? String
+            let timeout = input["timeout"] as? Double ?? 10.0
+            let initialDelay = input["initialDelay"] as? Double ?? 0.1
+            let maxDelay = input["maxDelay"] as? Double ?? 1.0
+            tab.appendLog("Waiting for element (adaptive, timeout: \(timeout)s)...")
+            tab.flush()
+            let output = await Self.offMain {
+                AccessibilityService.shared.waitForElementAdaptive(
+                    role: role, title: title, value: value, appBundleId: appBundleId, timeout: timeout,
+                    initialDelay: initialDelay, maxDelay: maxDelay
+                )
+            }
+            tab.appendLog(Self.preview(output, lines: 30))
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+        }
+
+        // ax_type_into_element (Phase 1 Improvement)
+        if name == "ax_type_into_element" {
+            let role = input["role"] as? String
+            let title = input["title"] as? String
+            let text = input["text"] as? String ?? ""
+            let appBundleId = input["appBundleId"] as? String
+            let verify = input["verify"] as? Bool ?? true
+            tab.appendLog("Typing \(text.count) chars into element...")
+            tab.flush()
+            let output = await Self.offMain {
+                AccessibilityService.shared.typeTextIntoElement(
+                    role: role, title: title, text: text, appBundleId: appBundleId, verify: verify
+                )
+            }
+            tab.appendLog(Self.preview(output, lines: 30))
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+        }
+
         // ax_show_menu
         if name == "ax_show_menu" {
             let role = input["role"] as? String
@@ -1112,6 +1201,264 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
+        }
+
+        // MARK: - Web Automation (Phase 2)
+
+        // web_open
+        if name == "web_open" {
+            guard let urlString = input["url"] as? String,
+                  let url = URL(string: urlString) else {
+                let errorMsg = "Error: Invalid or missing URL"
+                tab.appendLog(errorMsg)
+                return TabToolResult(
+                    toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": errorMsg],
+                    isComplete: false
+                )
+            }
+            let browserStr = input["browser"] as? String ?? "safari"
+            let browser = WebAutomationService.BrowserType(rawValue: browserStr) ?? .safari
+            tab.appendLog("Opening \(urlString) in \(browser.rawValue)...")
+            tab.flush()
+            do {
+                let output = try await WebAutomationService.shared.open(url: url, browser: browser)
+                tab.appendLog(output)
+            } catch {
+                tab.appendLog("Error: \(error.localizedDescription)")
+            }
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": tab.logBuffer],
+                isComplete: false
+            )
+        }
+
+        // web_find
+        if name == "web_find" {
+            let selector = input["selector"] as? String ?? ""
+            let strategyStr = input["strategy"] as? String ?? "auto"
+            let strategy = SelectorStrategy(rawValue: strategyStr) ?? .auto
+            let timeout = input["timeout"] as? Double ?? 10.0
+            let fuzzyThreshold = input["fuzzyThreshold"] as? Double ?? 0.6
+            let appBundleId = input["appBundleId"] as? String
+            tab.appendLog("Finding element: \(selector)...")
+            tab.flush()
+            do {
+                let output = try await WebAutomationService.shared.findElement(
+                    selector: selector, strategy: strategy, timeout: timeout,
+                    fuzzyThreshold: fuzzyThreshold, appBundleId: appBundleId
+                )
+                if let jsonData = try? JSONSerialization.data(withJSONObject: output, options: .prettyPrinted),
+                   let jsonStr = String(data: jsonData, encoding: .utf8) {
+                    tab.appendLog(jsonStr)
+                } else {
+                    tab.appendLog("Found element: \(output)")
+                }
+            } catch {
+                tab.appendLog("Error: \(error.localizedDescription)")
+            }
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": tab.logBuffer],
+                isComplete: false
+            )
+        }
+
+        // web_click
+        if name == "web_click" {
+            let selector = input["selector"] as? String ?? ""
+            let strategyStr = input["strategy"] as? String ?? "auto"
+            let strategy = SelectorStrategy(rawValue: strategyStr) ?? .auto
+            let appBundleId = input["appBundleId"] as? String
+            tab.appendLog("Clicking element: \(selector)...")
+            tab.flush()
+            do {
+                let output = try await WebAutomationService.shared.click(
+                    selector: selector, strategy: strategy, appBundleId: appBundleId
+                )
+                tab.appendLog(output)
+            } catch {
+                tab.appendLog("Error: \(error.localizedDescription)")
+            }
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": tab.logBuffer],
+                isComplete: false
+            )
+        }
+
+        // web_type
+        if name == "web_type" {
+            let selector = input["selector"] as? String ?? ""
+            let text = input["text"] as? String ?? ""
+            let strategyStr = input["strategy"] as? String ?? "auto"
+            let strategy = SelectorStrategy(rawValue: strategyStr) ?? .auto
+            let verify = input["verify"] as? Bool ?? true
+            let appBundleId = input["appBundleId"] as? String
+            tab.appendLog("Typing \(text.count) chars into: \(selector)...")
+            tab.flush()
+            do {
+                let output = try await WebAutomationService.shared.type(
+                    text: text, selector: selector, strategy: strategy, verify: verify, appBundleId: appBundleId
+                )
+                tab.appendLog(output)
+            } catch {
+                tab.appendLog("Error: \(error.localizedDescription)")
+            }
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": tab.logBuffer],
+                isComplete: false
+            )
+        }
+
+        // web_execute_js
+        if name == "web_execute_js" {
+            let script = input["script"] as? String ?? ""
+            let browser = input["browser"] as? String
+            tab.appendLog("Executing JavaScript...")
+            tab.flush()
+            do {
+                let output = try await WebAutomationService.shared.executeJavaScript(script: script, browser: browser)
+                tab.appendLog(output as? String ?? "Script executed")
+            } catch {
+                tab.appendLog("Error: \(error.localizedDescription)")
+            }
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": tab.logBuffer],
+                isComplete: false
+            )
+        }
+
+        // web_get_url / web_get_title (via Selenium AgentScript)
+        if name == "web_get_url" || name == "web_get_title" {
+            let action = name == "web_get_url" ? "getUrl" : "getTitle"
+            tab.appendLog("\(name == "web_get_url" ? "Getting URL" : "Getting title")...")
+            tab.flush()
+            let args = "{\"action\":\"\(action)\"}"
+            // Run Selenium agent script
+            guard let compileCmd = scriptService.compileCommand(name: "Selenium") else {
+                let err = "Error: Selenium script not found"
+                tab.appendLog(err)
+                return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": err], isComplete: false)
+            }
+            let compileResult = await executeForTab(command: compileCmd)
+            if compileResult.status != 0 {
+                tab.appendLog("Compile failed: \(compileResult.output)")
+                return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": compileResult.output], isComplete: false)
+            }
+            let cancelFlag = tab._cancelFlag
+            let result = await scriptService.loadAndRunScriptViaProcess(name: "Selenium", arguments: args, captureStderr: false, isCancelled: { cancelFlag.value }) { chunk in }
+            tab.appendLog(result.output)
+            tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": result.output], isComplete: false)
+        }
+
+        // MARK: - Selenium WebDriver Tools (run via Selenium AgentScript)
+
+        // Helper function for Selenium operations
+        func runSeleniumHelper(tab: ScriptTab, args: String, logMessage: String) async -> TabToolResult {
+            tab.appendLog(logMessage)
+            tab.flush()
+            guard let compileCmd = scriptService.compileCommand(name: "Selenium") else {
+                let err = "Error: Selenium script not found"
+                tab.appendLog(err)
+                return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": err], isComplete: false)
+            }
+            let compileResult = await executeForTab(command: compileCmd)
+            if compileResult.status != 0 {
+                tab.appendLog("Compile failed: \(compileResult.output)")
+                return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": compileResult.output], isComplete: false)
+            }
+            let cancelFlag = tab._cancelFlag
+            let result = await scriptService.loadAndRunScriptViaProcess(name: "Selenium", arguments: args, captureStderr: false, isCancelled: { cancelFlag.value }) { chunk in }
+            tab.appendLog(result.output)
+            tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": result.output], isComplete: false)
+        }
+
+        // selenium_start
+        if name == "selenium_start" {
+            let browser = input["browser"] as? String ?? "safari"
+            let port = input["port"] as? Int ?? 7055
+            let args = "{\"action\":\"start\",\"browser\":\"\(browser)\",\"port\":\(port)}"
+            return await runSeleniumHelper(tab: tab, args: args, logMessage: "Starting Selenium session (\(browser))...")
+        }
+
+        // selenium_stop
+        if name == "selenium_stop" {
+            let port = input["port"] as? Int ?? 7055
+            let args = "{\"action\":\"stop\",\"port\":\(port)}"
+            return await runSeleniumHelper(tab: tab, args: args, logMessage: "Stopping Selenium session...")
+        }
+
+        // selenium_navigate
+        if name == "selenium_navigate" {
+            guard let url = input["url"] as? String else {
+                let errorMsg = "Error: URL required for selenium_navigate"
+                tab.appendLog(errorMsg)
+                return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": errorMsg], isComplete: false)
+            }
+            let port = input["port"] as? Int ?? 7055
+            let args = "{\"action\":\"navigate\",\"url\":\"\(url)\",\"port\":\(port)}"
+            return await runSeleniumHelper(tab: tab, args: args, logMessage: "Navigating to: \(url)...")
+        }
+
+        // selenium_find
+        if name == "selenium_find" {
+            let strategy = input["strategy"] as? String ?? "css"
+            let value = input["value"] as? String ?? ""
+            let port = input["port"] as? Int ?? 7055
+            let args = "{\"action\":\"find\",\"strategy\":\"\(strategy)\",\"value\":\"\(value)\",\"port\":\(port)}"
+            return await runSeleniumHelper(tab: tab, args: args, logMessage: "Finding element: \(strategy)=\(value)...")
+        }
+
+        // selenium_click
+        if name == "selenium_click" {
+            let strategy = input["strategy"] as? String ?? "css"
+            let value = input["value"] as? String ?? ""
+            let port = input["port"] as? Int ?? 7055
+            let args = "{\"action\":\"click\",\"strategy\":\"\(strategy)\",\"value\":\"\(value)\",\"port\":\(port)}"
+            return await runSeleniumHelper(tab: tab, args: args, logMessage: "Clicking element: \(strategy)=\(value)...")
+        }
+
+        // selenium_type
+        if name == "selenium_type" {
+            let strategy = input["strategy"] as? String ?? "css"
+            let value = input["value"] as? String ?? ""
+            let text = input["text"] as? String ?? ""
+            let port = input["port"] as? Int ?? 7055
+            let escapedText = text.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+            let args = "{\"action\":\"type\",\"strategy\":\"\(strategy)\",\"value\":\"\(value)\",\"text\":\"\(escapedText)\",\"port\":\(port)}"
+            return await runSeleniumHelper(tab: tab, args: args, logMessage: "Typing \(text.count) chars into: \(strategy)=\(value)...")
+        }
+
+        // selenium_execute
+        if name == "selenium_execute" {
+            let script = input["script"] as? String ?? ""
+            let port = input["port"] as? Int ?? 7055
+            let escapedScript = script.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+            let args = "{\"action\":\"execute\",\"script\":\"\(escapedScript)\",\"port\":\(port)}"
+            return await runSeleniumHelper(tab: tab, args: args, logMessage: "Executing JavaScript via Selenium...")
+        }
+
+        // selenium_screenshot
+        if name == "selenium_screenshot" {
+            let filename = input["filename"] as? String ?? "selenium_\(Int(Date().timeIntervalSince1970)).png"
+            let port = input["port"] as? Int ?? 7055
+            let args = "{\"action\":\"screenshot\",\"filename\":\"\(filename)\",\"port\":\(port)}"
+            return await runSeleniumHelper(tab: tab, args: args, logMessage: "Taking screenshot...")
+        }
+
+        // selenium_wait
+        if name == "selenium_wait" {
+            let strategy = input["strategy"] as? String ?? "css"
+            let value = input["value"] as? String ?? ""
+            let timeout = input["timeout"] as? Double ?? 10.0
+            let port = input["port"] as? Int ?? 7055
+            let args = "{\"action\":\"waitFor\",\"strategy\":\"\(strategy)\",\"value\":\"\(value)\",\"timeout\":\(timeout),\"port\":\(port)}"
+            return await runSeleniumHelper(tab: tab, args: args, logMessage: "Waiting for element: \(strategy)=\(value)...")
         }
 
         // MCP tools
