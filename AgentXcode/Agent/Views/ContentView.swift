@@ -10,6 +10,7 @@ struct ContentView: View {
     @State private var showDependencyOverlay = true
     @State private var showSearch = false
     @State private var searchText = ""
+    @FocusState private var isSearchFieldFocused: Bool
     @State private var currentMatchIndex = 0
     @State private var totalMatches = 0
     @State private var showMCPServers = false
@@ -204,6 +205,7 @@ struct ContentView: View {
                     TextField("Find in log...", text: $searchText)
                         .textFieldStyle(.roundedBorder)
                         .frame(maxWidth: 250)
+                        .focused($isSearchFieldFocused)
                         .onSubmit { nextMatch() }
                     if !searchText.isEmpty {
                         Text(totalMatches > 0 ? "\(currentMatchIndex + 1)/\(totalMatches)" : "0 results")
@@ -519,7 +521,11 @@ struct ContentView: View {
                 if event.modifierFlags.contains(.command),
                    event.charactersIgnoringModifiers == "f" {
                     showSearch.toggle()
-                    if !showSearch { searchText = "" }
+                    if showSearch {
+                        isSearchFieldFocused = true
+                    } else {
+                        searchText = ""
+                    }
                     return nil
                 }
 
