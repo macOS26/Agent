@@ -45,7 +45,6 @@
 		AA1000000000000000007B /* TabBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000007C /* TabBarView.swift */; };
 		AA1000000000000000007E /* AccessibilitySettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000007D /* AccessibilitySettingsView.swift */; };
 		AA1000000000000000007F /* AgentViewModel+TabTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000A0 /* AgentViewModel+TabTask.swift */; };
-		WEB1000000000000000001 /* WebAutomationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = WEB1000000000000000002 /* WebAutomationService.swift */; };
 		AA100000000000000000B1 /* SoundPlayerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000B0 /* SoundPlayerService.swift */; };
 		AA100000000000000000B3 /* StartupTwentiethAnniversaryMac.wav in Resources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000B2 /* StartupTwentiethAnniversaryMac.wav */; };
 		AA100000000000000000B5 /* ToolPreferencesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000B4 /* ToolPreferencesService.swift */; };
@@ -85,6 +84,7 @@
 		FF10000000000000000004 /* CodingServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000003 /* CodingServiceTests.swift */; };
 		FF10000000000000000006 /* AccessibilityRestrictionsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000005 /* AccessibilityRestrictionsTests.swift */; };
 		FF10000000000000000008 /* AccessibilityServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000007 /* AccessibilityServiceTests.swift */; };
+		WEB1000000000000000001 /* WebAutomationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = WEB1000000000000000002 /* WebAutomationService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -174,9 +174,6 @@
 		AA10000000000000000026 /* UserProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProtocol.swift; sourceTree = "<group>"; };
 		AA10000000000000000027 /* Agent.app.toddbruss.user.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Agent.app.toddbruss.user.plist; sourceTree = "<group>"; };
 		AA10000000000000000028 /* OllamaService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaService.swift; sourceTree = "<group>"; };
-		AA100000000000000000BA /* OpenAICompatibleService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAICompatibleService.swift; sourceTree = "<group>"; };
-		AA100000000000000000BC /* LoRAAdapterManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoRAAdapterManager.swift; sourceTree = "<group>"; };
-		AA100000000000000000BE /* LoRASettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoRASettingsView.swift; sourceTree = "<group>"; };
 		AA10000000000000000029 /* ScriptService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptService.swift; sourceTree = "<group>"; };
 		AA1000000000000000002B /* XcodeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XcodeService.swift; sourceTree = "<group>"; };
 		AA1000000000000000002C /* ScriptingBridge.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ScriptingBridge.framework; path = System/Library/Frameworks/ScriptingBridge.framework; sourceTree = SDKROOT; };
@@ -199,7 +196,6 @@
 		AA10000000000000000068 /* StatusDotView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusDotView.swift; sourceTree = "<group>"; };
 		AA10000000000000000069 /* ChatModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModels.swift; sourceTree = "<group>"; };
 		AA10000000000000000075 /* AccessibilityService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityService.swift; sourceTree = "<group>"; };
-		WEB1000000000000000002 /* WebAutomationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebAutomationService.swift; sourceTree = "<group>"; };
 		AA10000000000000000078 /* MessagesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesView.swift; sourceTree = "<group>"; };
 		AA1000000000000000007A /* ScriptTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptTab.swift; sourceTree = "<group>"; };
 		AA1000000000000000007C /* TabBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarView.swift; sourceTree = "<group>"; };
@@ -210,6 +206,9 @@
 		AA100000000000000000B4 /* ToolPreferencesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolPreferencesService.swift; sourceTree = "<group>"; };
 		AA100000000000000000B6 /* ToolsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolsView.swift; sourceTree = "<group>"; };
 		AA100000000000000000B9 /* AgentOptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentOptionsView.swift; sourceTree = "<group>"; };
+		AA100000000000000000BA /* OpenAICompatibleService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAICompatibleService.swift; sourceTree = "<group>"; };
+		AA100000000000000000BC /* LoRAAdapterManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoRAAdapterManager.swift; sourceTree = "<group>"; };
+		AA100000000000000000BE /* LoRASettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoRASettingsView.swift; sourceTree = "<group>"; };
 		BB1000000000000000001A /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		BB1000000000000000001B /* HelperProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperProtocol.swift; sourceTree = "<group>"; };
 		BB1000000000000000001C /* AgentHelper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = AgentHelper; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -240,6 +239,7 @@
 		FF10000000000000000003 /* CodingServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodingServiceTests.swift; sourceTree = "<group>"; };
 		FF10000000000000000005 /* AccessibilityRestrictionsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityRestrictionsTests.swift; sourceTree = "<group>"; };
 		FF10000000000000000007 /* AccessibilityServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityServiceTests.swift; sourceTree = "<group>"; };
+		WEB1000000000000000002 /* WebAutomationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebAutomationService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -886,7 +886,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 15;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 469UCUB275;
 				ENABLE_APP_SANDBOX = NO;
@@ -927,7 +927,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.13;
+				MARKETING_VERSION = 1.0.14;
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -953,7 +953,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 15;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 469UCUB275;
 				ENABLE_APP_SANDBOX = NO;
@@ -994,7 +994,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.13;
+				MARKETING_VERSION = 1.0.14;
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1161,13 +1161,13 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		XCSB000000000000000001 /* XCLocalSwiftPackageReference "../XcodeScriptingBridge" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ../XcodeScriptingBridge;
-		};
 		EA50MCP0000000001 /* XCLocalSwiftPackageReference "../AgentMCP" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../AgentMCP;
+		};
+		XCSB000000000000000001 /* XCLocalSwiftPackageReference "../XcodeScriptingBridge" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../XcodeScriptingBridge;
 		};
 /* End XCLocalSwiftPackageReference section */
 
