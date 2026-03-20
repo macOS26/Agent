@@ -11,6 +11,64 @@
 
 Agent! works with Claude API, Ollama Pro/Max Cloud, and local Ollama. Apple Intelligence is experimental (alpha). Local LLMs need 32-128GB RAM on Apple Silicon.
 
+## What's Supported
+
+### Multi-Provider LLM Support
+
+Agent! supports multiple LLM providers with seamless switching. Configure your preferred provider in Settings.
+
+| Provider | API Key | Vision | Notes |
+|----------|---------|--------|-------|
+| **Claude** | Anthropic API key | ✓ | Sonnet 4, Opus 4, Haiku 3.5 |
+| **OpenAI** | OpenAI API key | ✓ | GPT-4o, GPT-4 Turbo, GPT-3.5 |
+| **DeepSeek** | DeepSeek API key | ✓ | DeepSeek V2, DeepSeek Coder |
+| **Hugging Face** | Hugging Face API key | ✓ | Hosted inference API |
+| **Ollama Cloud** | Ollama Pro API key | Auto | Cloud-hosted Ollama models |
+| **Local Ollama** | None | Auto | Requires 32-128GB RAM on Apple Silicon |
+| **Apple Intelligence** | None | ✗ | Experimental alpha, on-device only |
+
+### System Requirements
+
+- **macOS 26+** (Tahoe)
+- **Xcode Command Line Tools** (auto-installed if missing)
+- **Apple Silicon recommended** for local LLMs
+
+### App Automation (50 apps via ScriptingBridge)
+
+| Category | Apps |
+|----------|------|
+| **Apple** | Mail, Messages, Music, Photos, Calendar, Contacts, Notes, Reminders, Finder, Safari, Terminal, System Events, System Settings |
+| **Productivity** | Pages, Numbers, Keynote, Xcode |
+| **Media** | Music, TV, QuickTime Player, Preview |
+| **Browsers** | Safari, Chrome, Firefox, Edge |
+| **Development** | Xcode, Simulator, Console |
+
+### Accessibility
+
+Full macOS Accessibility API for apps without AppleScript support:
+- UI inspection (windows, elements, properties)
+- Input simulation (typing, clicking, scrolling, key presses)
+- Screenshot capture
+- Works with any Mac app
+
+### MCP Servers
+
+| Server | Capability |
+|--------|------------|
+| **internet-names-mcp** | Domain availability, social handle checks |
+| **xcode-mcp-server** | Xcode building, running, screenshots, tests |
+| **appstore-mcp-server** | App Store search, rankings, keyword analysis |
+
+### AgentScripts
+
+29 bundled Swift scripts for common tasks:
+- Email: `CheckMail`, `EmailAccounts`, `OrganizeEmails`
+- Media: `NowPlaying`, `PlayPlaylist`, `ExtractAlbumArt`
+- Messaging: `SendMessage`, `SendGroupMessage`
+- System: `RunningApps`, `QuitApps`, `SystemInfo`
+- Web: `Selenium`, `WebForm`, `WebNavigate`, `WebScrape`
+- More: `CreateDMG`, `CapturePhoto`, `ListNotes`, `ListReminders`
+
 <img width="1056" height="597" alt="IMG_5716" src="https://github.com/user-attachments/assets/117cbeb8-46e4-4f92-8494-f6058a92059e" />
 
 ### Background
@@ -36,14 +94,6 @@ Agent uses SwiftUI, XPC, SMAppService, Apple Events, ScriptingBridge, Accessibil
 - [Available Tools](#available-tools)
 - [AgentScripts](#agentscripts)
 - [What Agent! Can Do](#what-agent-can-do)
-- [Requirements](#requirements)
-- [License](#license)
-  - [Autonomous Task Execution](#autonomous-task-execution)
-  - [AppleScript via osascript](#applescript-via-osascript)
-  - [Xcode Automation via ScriptingBridge](#xcode-automation-via-scriptingbridge)
-  - [Swift AgentScripts](#swift-agentscripts)
-  - [Keyboard Shortcuts](#keyboard-shortcuts)
-- [Requirements](#requirements)
 - [Agent! vs. OpenClaw on Mac](#agent-vs-openclaw-on-mac)
 - [License](#license)
 
@@ -55,8 +105,11 @@ Agent uses SwiftUI, XPC, SMAppService, Apple Events, ScriptingBridge, Accessibil
 
 - macOS 26 (Tahoe) or later
 - Xcode Command Line Tools (Agent will prompt to install if missing)
-- An API key for one of the supported providers:
+- An API key for your preferred provider:
   - **Claude** (Anthropic API key)
+  - **OpenAI** (OpenAI API key)
+  - **DeepSeek** (DeepSeek API key)
+  - **Hugging Face** (Hugging Face API key)
   - **Ollama Pro Cloud** (Ollama API key)
   - **Local Ollama** (no API key required, but requires significant RAM)
   - **Apple Intelligence** (no API key required — experimental alpha, runs on-device)
@@ -93,6 +146,21 @@ Click the **gear icon** (⚙️) to open Settings:
 1. Select **Claude** from the provider picker
 2. Enter your Anthropic API key (starts with `sk-ant-...`)
 3. Select a model (Sonnet 4, Opus 4, or Haiku 3.5)
+
+#### OpenAI API
+1. Select **OpenAI** from the provider picker
+2. Enter your OpenAI API key (starts with `sk-proj-...`)
+3. Select a model (GPT-4o, GPT-4 Turbo, or GPT-3.5)
+
+#### DeepSeek API
+1. Select **DeepSeek** from the provider picker
+2. Enter your DeepSeek API key
+3. Select a model (DeepSeek V2 or DeepSeek Coder)
+
+#### Hugging Face API
+1. Select **Hugging Face** from the provider picker
+2. Enter your Hugging Face API key
+3. Enter the model ID (e.g., `mistralai/Mistral-7B-Instruct-v0.3`)
 
 #### Ollama Pro Cloud
 1. Select **Ollama Cloud** from the provider picker
@@ -688,79 +756,9 @@ Agent streams responses token-by-token in real time. The activity log renders ma
 
 Attach screenshots or paste images directly into Agent. Images are encoded as base64 PNG and sent as vision content blocks. The AI can see what's on your screen and act on it.
 
-### Multi-Provider Support
-
-| Provider | API Key Required | Vision Support | Notes |
-|----------|------------------|----------------|-------|
-| **Claude** | Yes (Anthropic) | ✓ | Sonnet 4, Opus 4, Haiku 3.5 |
-| **Ollama Cloud** | Yes (Ollama Pro) | Auto-detected | Cloud-hosted Ollama |
-| **Local Ollama** | No | Auto-detected | Requires 32-128GB RAM |
-| **Apple Intelligence** | No | No | Experimental (alpha) — on-device, no API key needed |
-
-> **Apple Intelligence (Experimental):** Runs entirely on-device using Apple's Foundation Models framework. No configuration needed. Due to its small context window, best for very specific tasks — type exact AppleScript syntax for best results (e.g. `display dialog "hello"`). Does not use MCP. User-selectable tool subset via the Tools picker.
-
 ### Task Memory
 
 Agent persists task history using SwiftData. Recent task messages and older task summaries are injected into the system prompt, giving the AI memory across sessions.
-
----
-
-## What Agent! Can Do
-
-### Autonomous Task Execution
-
-Give Agent! a task in plain English. It figures out the commands, runs them, reads the output, adapts, and keeps going — up to 50 iterations per task. It remembers previous tasks and builds on past results.
-
-### AppleScript via osascript
-
-Agent runs `osascript` commands directly in the app process — not through XPC helpers — so they automatically inherit the app's macOS Automation permissions. This means AppleScript "just works" for controlling any Mac application that supports the Open Scripting Architecture.
-
-### Xcode Automation via ScriptingBridge
-
-Agent controls Xcode directly through Apple's ScriptingBridge framework:
-
-- **`xcode_build`** — opens a project, triggers a build, polls until completion, returns all errors and warnings
-- **`xcode_run`** — launches the active scheme
-- **`xcode_grant_permission`** — triggers the macOS Automation consent dialog
-
-### Swift AgentScripts
-
-Create custom automation scripts in Swift that compile to dylibs and run in-process:
-
-```swift
-import Foundation
-import MailBridge
-
-@_cdecl("script_main") public func scriptMain() -> Int32 {
-    guard let app: MailApplication = SBApplication(bundleIdentifier: "com.apple.mail") else {
-        return 1
-    }
-    
-    // Your automation code here
-    return 0
-}
-```
-
-Scripts inherit Agent's TCC permissions (Automation, Accessibility, Screen Recording).
-
-### Keyboard Shortcuts
-
-- **⌘W** — Close current tab (or quit if no tabs)
-- **⌘F** — Toggle search bar
-- **Escape** — Cancel running task or close search
-- **⌘V** — Paste image from clipboard (auto-detected)
-- **↑/↓** — Navigate prompt history
-
----
-
-## Requirements
-
-- **macOS 26.0+** (Tahoe)
-- **Xcode Command Line Tools** (Agent will prompt to install if missing)
-- **API Key** for Claude or Ollama Cloud, OR a local Ollama instance
-- **Apple Silicon** recommended for local Ollama (minimum 32GB RAM, 64-128GB recommended)
-
-> **Important:** We are not responsible for token costs incurred via Claude or Ollama Cloud. Monitor your usage.
 
 ---
 
