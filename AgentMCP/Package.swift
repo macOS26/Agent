@@ -1,9 +1,9 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 6.2
 import PackageDescription
 
 let package = Package(
     name: "AgentMCP",
-    platforms: [.macOS(.v14)],
+    platforms: [.macOS(.v26)],
     products: [
         // MCP Client library - embedded in Agent app to connect TO third-party MCP servers
         .library(name: "MCPClient", targets: ["MCPClient"]),

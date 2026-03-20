@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 // MARK: - SSE Event Parser
 
@@ -53,10 +54,12 @@ final class HTTPConnection: @unchecked Sendable, MCPConnection {
     private let serverURL: URL
     private let customHeaders: [String: String]
     private let session: URLSession
-    private var sessionId: String?
-    private var nextId: Int = 0
-    private let lock = NSLock()
-    private var alive = true
+    private struct State {
+        var sessionId: String?
+        var nextId: Int = 0
+        var alive: Bool = true
+    }
+    private let state = OSAllocatedUnfairLock(initialState: State())
 
     init(url: URL, headers: [String: String]) {
         self.serverURL = url
@@ -68,9 +71,7 @@ final class HTTPConnection: @unchecked Sendable, MCPConnection {
     }
 
     var isAlive: Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        return alive
+        state.withLock { $0.alive }
     }
 
     func sendRequest(method: String, params: [String: Any]?) async throws -> [String: Any] {
@@ -101,11 +102,9 @@ final class HTTPConnection: @unchecked Sendable, MCPConnection {
         }
 
         // Add session ID for session continuity
-        lock.lock()
-        if let sid = sessionId {
+        if let sid = state.withLock({ $0.sessionId }) {
             request.setValue(sid, forHTTPHeaderField: "Mcp-Session-Id")
         }
-        lock.unlock()
 
         // Use streaming bytes for true SSE support
         let (bytes, response) = try await session.bytes(for: request)
@@ -116,16 +115,12 @@ final class HTTPConnection: @unchecked Sendable, MCPConnection {
 
         // Capture session ID from server
         if let sid = httpResponse.value(forHTTPHeaderField: "Mcp-Session-Id") {
-            lock.lock()
-            sessionId = sid
-            lock.unlock()
+            state.withLock { $0.sessionId = sid }
         }
 
         // Handle session expiry (404 = session gone, need to re-initialize)
         if httpResponse.statusCode == 404 {
-            lock.lock()
-            sessionId = nil
-            lock.unlock()
+            state.withLock { $0.sessionId = nil }
             throw MCPClientError.connectionFailed("Session expired (404)")
         }
 
@@ -177,11 +172,9 @@ final class HTTPConnection: @unchecked Sendable, MCPConnection {
             request.setValue(value, forHTTPHeaderField: key)
         }
 
-        lock.lock()
-        if let sid = sessionId {
+        if let sid = state.withLock({ $0.sessionId }) {
             request.setValue(sid, forHTTPHeaderField: "Mcp-Session-Id")
         }
-        lock.unlock()
 
         // Fire-and-forget for notifications (server returns 202 Accepted)
         let task = session.dataTask(with: request)
@@ -189,18 +182,16 @@ final class HTTPConnection: @unchecked Sendable, MCPConnection {
     }
 
     func disconnect() {
-        lock.lock()
-        alive = false
-        let sid = sessionId
-        lock.unlock()
+        let sid = state.withLock { s -> String? in
+            s.alive = false
+            return s.sessionId
+        }
 
         // Send DELETE to close session per MCP spec
-        if sid != nil {
+        if let sid {
             var request = URLRequest(url: serverURL)
             request.httpMethod = "DELETE"
-            if let sid {
-                request.setValue(sid, forHTTPHeaderField: "Mcp-Session-Id")
-            }
+            request.setValue(sid, forHTTPHeaderField: "Mcp-Session-Id")
             for (key, value) in customHeaders {
                 request.setValue(value, forHTTPHeaderField: key)
             }
@@ -212,10 +203,10 @@ final class HTTPConnection: @unchecked Sendable, MCPConnection {
     }
 
     private func nextRequestId() -> Int {
-        lock.lock()
-        defer { lock.unlock() }
-        nextId += 1
-        return nextId
+        state.withLock { s in
+            s.nextId += 1
+            return s.nextId
+        }
     }
 
     // MARK: - SSE Stream Parsing

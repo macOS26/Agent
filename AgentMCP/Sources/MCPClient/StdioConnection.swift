@@ -1,4 +1,4 @@
-import Foundation
+@preconcurrency import Foundation
 
 // MARK: - Stdio Connection (JSON-RPC over pipes)
 
@@ -71,7 +71,8 @@ final class StdioConnection: @unchecked Sendable, MCPConnection {
 
                 if let id = matchedId, let continuation = self.pending.removeValue(forKey: id) {
                     self.lock.unlock()
-                    continuation.resume(returning: json)
+                    nonisolated(unsafe) let safeJSON = json
+                    continuation.resume(returning: safeJSON)
                     self.lock.lock()
                 }
             }
