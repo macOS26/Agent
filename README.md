@@ -5,28 +5,16 @@
 
 [![Swift 6.0](https://img.shields.io/badge/Swift-6.0-orange.svg)](https://swift.org)
 [![Website](https://img.shields.io/badge/website-macos26.app-blue.svg)](https://macos26.app)
-[![Version](https://img.shields.io/badge/version-1.0.11-red.svg)](https://github.com/macOS26/Agent)
+[![Version](https://img.shields.io/badge/version-1.0.14-red.svg)](https://github.com/macOS26/Agent)
 [![GitHub downloads](https://img.shields.io/github/downloads/macOS26/Agent/total.svg?v=4)](https://github.com/macOS26/Agent/releases)
 [![GitHub stars](https://img.shields.io/github/stars/macOS26/Agent.svg?style=social)](https://github.com/macOS26/Agent/stargazers)
 
-Agent! is designed for Ollama Cloud API with Pro or Max see https://ollama.com/pricing. laude API and Local Ollama LLMs are fully supported. Recommend 32GB - 128GB for local LLMs on Apple Silcon. Apple Intelligence is extremely experimental. If you know how to train LLMs using LoRA, I would love to colaborate.
+Agent! works with Claude API, Ollama Pro/Max Cloud, and local Ollama. Apple Intelligence is experimental (alpha). Local LLMs need 32-128GB RAM on Apple Silicon.
 
 <img width="1056" height="597" alt="IMG_5716" src="https://github.com/user-attachments/assets/117cbeb8-46e4-4f92-8494-f6058a92059e" />
 
-### How does it have all this tech?
-27 years ago, I started using FaceSpan and AppleScript to automate apps and tasks on macOS 9. Later I graduated to AppleScript Studio and AppleScript-ObjC. When Swift came out, I decided: no more Objective-C, starting with Swift 1. After OpenClaw made headlines, I thought to myself: what if we connected AppleScript to an LLM? What if we expanded that to work with ScriptingBridge for native Swift + AppleScript automation? What if we added raw AppleEvents, osascript, AX Accessibility, Launch Agent for user-space shell commands, and a privileged helper to automatically escalate to root, but only when absolutely necessary? What if I took 27 years of Mac desktop automation experience and created my own agentic AI for the entire Mac desktop? This is the result, and you will be amazed that Agent! is only a week old, a weekend experiment that has legs.
-
-### Success
-This is by far my most successful app. It's my first agentic AI app. I tried a few times before and failed. There was some secret sauce that I was missing, and one day a miracle happened. After creating a privileged helper using SMAppService, I used that app as a template to connect an AI up to a Launch Daemon, and it right away could perform many administrator functions, software updates, and more on your computer. Then I thought, how about we add a Launch Agent as its primary tool to run shell commands on your computer, unlocking a wealth of things your AI can do, all within its own fingertips. All you have to do is use plain English and tell the AI what you have in mind.
-
-### Claude Code
-Agent! has already written 50% of its own code. It can replace Claude Code and it's still a baby. I had this plan when Cursor came out. I wanted to create a Cursor killer. Well, this is it. With Ollama Pro you can create apps, write and improve code. It still has some rough edges to work out, but it can already replace Claude Code. And Agent! does not require a ton of user interaction. Once Agent! is on a mission, it will not stop until it completes it. Now if there is an API error, Agent! will stop, but that's about it, and you can just tell it to continue on the next prompt.
-
-### What about OpenClaw?
-Personally, I never tried it and I do not plan to. I write native Mac apps in my spare time. I don't need to deal with how insecure Node.js, NPM, and rogue NPM plugins can be, draining your bank account or buying a $3,000 domain on your behalf. That's not saying Agent! can't do that; it could if someone had access to your computer. So make sure you keep your password safe, and soon Agent! will support Passkeys and communicate with a WebAuthn server locally, where only your biometric can unlock Agent!
-
-### Virtual Buddy, UTM and Apple VMs
-Agent! fully supports Virtual Buddy and Apple VMs. Apple even has source code you can download to fire up your own VM. Sandboxing Agent! is a great way to see what it can do without affecting your main desktop. Once you trust what it can do, you can take its AgentScripts, AppleScripts, and JXA JavaScript and reuse or repurpose Agent! on your full desktop. While Agent! is still young, I have huge plans to expand its plugin dylib architecture and also expand on AX Accessibility, Automator, AppleScript apps, and more. We plan to use every automation tool and turn it into one very slick, neat app!
+### Background
+Agent! is the result of 27 years of Mac automation experience — from FaceSpan and AppleScript on macOS 9 through AppleScript Studio, AppleScript-ObjC, and now Swift. It connects LLMs to Apple Events, ScriptingBridge, Accessibility APIs, and XPC services for native macOS control.
 
 A native macOS autonomous AI agent built entirely in Swift.
 
@@ -40,63 +28,16 @@ Agent uses SwiftUI, XPC, SMAppService, Apple Events, ScriptingBridge, Accessibil
 ## Table of Contents
 
 - [Getting Started](#getting-started)
-  - [1. Prerequisites](#1-prerequisites)
-  - [2. Build and Run](#2-build-and-run)
-  - [3. Register Background Services](#3-register-background-services)
-  - [4. Approve in System Settings](#4-approve-in-system-settings)
-  - [5. Configure Your Provider](#5-configure-your-provider)
-  - [6. Set a Project Folder (optional)](#6-set-a-project-folder-optional)
-  - [7. Connect and Run](#7-connect-and-run)
 - [Security Hardening](#security-hardening)
-  - [Dual Privilege Model](#dual-privilege-model)
-  - [XPC Sandboxing](#xpc-sandboxing)
-  - [Entitlements](#entitlements)
-  - [TCC Permissions](#tcc-permissions-accessibility-screen-recording-automation)
-  - [Write Protection](#write-protection)
-  - [Root Escalation Audit Trail](#root-escalation-audit-trail)
 - [Messages Monitor](#messages-monitor)
-  - [How It Works](#how-it-works)
-  - [Message Format](#message-format)
-  - [Message Filter](#message-filter)
-  - [Recipient Approval](#recipient-approval)
-  - [How It Reads Messages](#how-it-reads-messages)
 - [Accessibility Integration](#accessibility-integration)
-  - [Permissions](#permissions)
-  - [Available Tools (12 total)](#available-tools-12-total)
-  - [Security Safeguards](#security-safeguards)
-  - [Implementation](#implementation)
 - [MCP Servers](#mcp-servers)
-  - [What is MCP?](#what-is-mcp)
-  - [Available MCP Servers](#available-mcp-servers)
-  - [Adding MCP Servers](#adding-mcp-servers)
-  - [Example MCP Server Configurations](#example-mcp-server-configurations)
-  - [Importing Server Configurations](#importing-server-configurations)
-  - [How MCP Tools Work](#how-mcp-tools-work)
-  - [Transport](#transport)
-  - [Tool Management](#tool-management)
 - [Architecture](#architecture)
-  - [Command Routing](#command-routing)
-  - [App Automation Priority](#app-automation-priority)
 - [Available Tools](#available-tools)
-  - [File Operations](#file-operations-5-tools)
-  - [Git Operations](#git-operations-6-tools)
-  - [Command Execution](#command-execution-3-tools)
-  - [Apple Event Query](#apple-event-query-1-tool)
-  - [Accessibility Tools](#accessibility-tools-12-tools)
-  - [AgentScripts](#agentscripts-6-tools)
-  - [Xcode Automation](#xcode-automation-5-tools)
-  - [Web](#web-1-tool)
-  - [Task Management](#task-management-1-tool)
-  - [MCP Tools](#mcp-tools)
 - [AgentScripts](#agentscripts)
-  - [Core Scripts (bundled)](#core-scripts-bundled)
-  - [Dynamic Apple Event Queries](#dynamic-apple-event-queries)
-  - [ScriptingBridges Library](#scriptingbridges-library)
-  - [Streaming & Markdown](#streaming--markdown)
-  - [Vision: Screenshot and Clipboard Support](#vision-screenshot-and-clipboard-support)
-  - [Multi-Provider Support](#multi-provider-support)
-  - [Task Memory](#task-memory)
 - [What Agent! Can Do](#what-agent-can-do)
+- [Requirements](#requirements)
+- [License](#license)
   - [Autonomous Task Execution](#autonomous-task-execution)
   - [AppleScript via osascript](#applescript-via-osascript)
   - [Xcode Automation via ScriptingBridge](#xcode-automation-via-scriptingbridge)
@@ -385,110 +326,21 @@ All code lives in `AccessibilityService.swift` as a self-contained service with 
 
 ## MCP Servers
 
-Agent! supports **MCP (Model Context Protocol)** servers, allowing you to extend its capabilities with custom tools and resources.
-
-### What is MCP?
-
-MCP is an open protocol that lets AI models interact with external tools, APIs, and data sources. Agent acts as an MCP **client**, connecting to MCP servers that expose tools and resources.
+Agent! supports **MCP (Model Context Protocol)** servers for extended functionality.
 
 ### Available MCP Servers
 
-Agent! includes support for several MCP servers out of the box:
-
-#### HelloWorld MCP Server
-A simple demonstration server providing a basic greeting tool:
-- `mcp_HelloWorld_hello` — Say hello to someone
-
-#### XCF (Xcode Features) MCP Server
-Comprehensive Xcode automation and Swift development tools:
-- Project management (`list_projects`, `select_project`, `show_current_project`)
-- Build automation (`build_project`, `run_project`)
-- Code analysis (`snippet`, `analyzer`, `analyze_swift_code`)
-- File operations (`read_dir`, etc.)
-- Environment utilities (`show_env`, `show_folder`)
-
-#### DemoHttp MCP Server
-HTTP-based demonstration server with utility functions:
-- `get_time` — Get current date and time
-- `calculate` — Evaluate math expressions (add, subtract, multiply, divide)
-- `reverse_string` — Reverse a text string
+- **internet-names-mcp** — Domain and social handle availability
+- **xcode-mcp-server** — Xcode project building, running, screenshots
+- **appstore-mcp-server** — App Store search, rankings, keywords
 
 ### Adding MCP Servers
 
-1. Click the **server icon** (rack) in the toolbar
-2. Click the **+** button to add a new server
-3. Configure the server:
+1. Click the **server icon** in toolbar → **+** to add
+2. Configure: Name, Command, Arguments, Environment, Transport (stdio/HTTP/SSE)
+3. Enable **Auto-start** to connect on launch
 
-| Field | Description | Example |
-|-------|-------------|---------|
-| **Name** | Display name for the server | `HelloWorld` |
-| **Command** | Executable path | `/usr/local/bin/node` |
-| **Arguments** | Command-line arguments | `mcp-server-hello/dist/index.js` |
-| **Environment** | Environment variables | `API_KEY=xxx` |
-| **Auto-start** | Connect on launch | ✓ |
-
-### Example MCP Server Configurations
-
-#### HelloWorld MCP Server
-```json
-{
-  "name": "HelloWorld",
-  "command": "/usr/local/bin/node",
-  "arguments": ["/path/to/mcp-server-hello/dist/index.js"],
-  "environment": {},
-  "transport": "stdio",
-  "enabled": true,
-  "autoStart": true
-}
-```
-
-#### XCF (Xcode Features) Server
-```json
-{
-  "xcf": {
-    "transport": "stdio",
-    "command": "/Applications/xcf.app/Contents/MacOS/xcf",
-    "env": {},
-    "args": [
-      "server"
-    ]
-  }
-}
-```
-
-#### DemoHttp MCP Server (HTTP Transport)
-```json
-{
-  "DemoHttp": {
-    "transport": "http",
-    "url": "http://localhost:8085/mcp"
-  }
-}
-```
-
-#### DemoHttp MCP Server (SSE Transport)
-```json
-{
-  "name": "DemoHttpSSE",
-  "command": "/usr/local/bin/node",
-  "arguments": ["/path/to/demo-http-mcp-server/dist/index.js"],
-  "environment": {
-    "PORT": "3001",
-    "USE_SSE": "true"
-  },
-  "transport": "sse",
-  "enabled": true,
-  "autoStart": true
-}
-```
-
-### Importing Server Configurations
-
-You can import server configurations as JSON:
-
-1. Click the **download icon** in the MCP Servers view
-2. Paste your JSON configuration
-3. Click **Import**
+---
 
 ### How MCP Tools Work
 
@@ -595,7 +447,7 @@ The AI follows this priority order when automating Mac applications:
 
 ## Available Tools
 
-Agent! provides **60+ tools** across multiple categories for autonomous task execution.
+Agent! provides **100+ tools** across multiple categories for autonomous task execution.
 
 ### File Operations (5 tools)
 
@@ -622,32 +474,56 @@ Agent! provides **60+ tools** across multiple categories for autonomous task exe
 
 | Tool | Description |
 |------|-------------|
-| `execute_shell_command` | Smart routing: TCC commands (osascript, screencapture) run in-process with full TCC permissions and stream in a tab; non-TCC commands route through the UserService LaunchAgent |
-| `execute_user_command` | Execute shell command as current user via LaunchAgent (no TCC) |
-| `execute_command` | Execute shell command as ROOT via privileged LaunchDaemon |
+| `execute_agent_command` | Execute as current user (no TCC) — for git, builds, file ops, CLI tools |
+| `execute_daemon_command` | Execute as ROOT via LaunchDaemon (no TCC) — for system packages, /Library |
+| `execute_shell_command` | Smart routing: TCC commands in-process, others via UserService |
 
 ### Apple Event Query (1 tool)
 
 | Tool | Description |
 |------|-------------|
-| `apple_event_query` | Query any scriptable Mac app dynamically via ScriptingBridge (zero compilation) |
+| `apple_event_query` | Query scriptable apps dynamically (zero compilation) |
+| `lookup_sdef` | Read app scripting dictionary before writing AppleScript |
 
-### Accessibility Tools (12 tools)
+### Accessibility Tools (22 tools)
 
 | Tool | Description |
 |------|-------------|
-| `ax_list_windows` | List all visible windows with positions and sizes |
-| `ax_inspect_element` | Inspect accessibility element at screen coordinates |
-| `ax_get_properties` | Get all properties of an accessibility element. Use SAME role/title/value from ax_wait_for_element to locate. |
-| `ax_type_text` | Simulate typing text at cursor or coordinates |
-| `ax_click` | Simulate mouse click at screen coordinates |
-| `ax_scroll` | Simulate scroll wheel at coordinates |
+| `ax_list_windows` | List visible windows |
+| `ax_inspect_element` | Inspect element at coordinates |
+| `ax_get_properties` | Get element properties |
+| `ax_get_children` | Get element children |
+| `ax_get_focused_element` | Get focused element |
+| `ax_find_element` | Find element by role/title/value |
+| `ax_wait_for_element` | Wait for element to appear |
+| `ax_wait_adaptive` | Wait with exponential backoff |
+| `ax_type_text` | Simulate typing |
+| `ax_click` | Simulate mouse click |
+| `ax_scroll` | Simulate scroll wheel |
 | `ax_press_key` | Simulate key press with modifiers |
-| `ax_perform_action` | Perform accessibility action (AXPress, AXConfirm, etc.) |
-| `ax_screenshot` | Capture screenshot of region or window |
-| `ax_check_permission` | Check if Accessibility permission is granted |
+| `ax_drag` | Perform drag operation |
+| `ax_perform_action` | Perform accessibility action |
+| `ax_set_properties` | Set element properties |
+| `ax_click_element` | Click element by role/title |
+| `ax_type_into_element` | Type into element by role/title |
+| `ax_show_menu` | Show context menu |
+| `ax_screenshot` | Capture screenshot |
+| `ax_check_permission` | Check Accessibility permission |
 | `ax_request_permission` | Request Accessibility permission |
-| `ax_get_audit_log` | Get recent accessibility audit log entries |
+| `ax_get_audit_log` | View accessibility audit log |
+
+### Saved Scripts (8 tools)
+
+| Tool | Description |
+|------|-------------|
+| `list_apple_scripts` | List saved AppleScripts |
+| `run_apple_script` | Run saved AppleScript |
+| `save_apple_script` | Save AppleScript for reuse |
+| `delete_apple_script` | Delete saved AppleScript |
+| `list_javascript` | List saved JXA scripts |
+| `run_javascript` | Run saved JXA script |
+| `save_javascript` | Save JXA for reuse |
+| `delete_javascript` | Delete saved JXA |
 
 ### AgentScripts (6 tools)
 
@@ -670,11 +546,31 @@ Agent! provides **60+ tools** across multiple categories for autonomous task exe
 | `xcode_select_project` | Select a project by number |
 | `xcode_grant_permission` | Grant macOS Automation permission for Xcode |
 
-### Web (1 tool)
+### Web Automation (7 tools)
 
 | Tool | Description |
 |------|-------------|
-| `web_search` | Search the web for current information |
+| `web_open` | Open a URL in Safari, Chrome, Firefox, or Edge |
+| `web_find` | Find element on page (auto-selects: AX → JS → Selenium) |
+| `web_click` | Click element by selector |
+| `web_type` | Type text into input field |
+| `web_execute_js` | Execute JavaScript in browser |
+| `web_get_url` | Get current URL from browser |
+| `web_get_title` | Get page title from browser |
+
+### Selenium WebDriver (8 tools)
+
+| Tool | Description |
+|------|-------------|
+| `selenium_start` | Start WebDriver session (Safari built-in, Chrome/Firefox need drivers) |
+| `selenium_stop` | End WebDriver session |
+| `selenium_navigate` | Navigate to URL |
+| `selenium_find` | Find element by CSS/XPath/id/name |
+| `selenium_click` | Click element |
+| `selenium_type` | Type text into element |
+| `selenium_execute` | Execute JavaScript |
+| `selenium_screenshot` | Take screenshot |
+| `selenium_wait` | Wait for element to appear |
 
 ### Task Management (1 tool)
 
@@ -684,28 +580,11 @@ Agent! provides **60+ tools** across multiple categories for autonomous task exe
 
 ### MCP Tools
 
-Agent! also supports MCP (Model Context Protocol) servers for extended functionality. Available MCP tools depend on configured servers:
+Agent! supports MCP (Model Context Protocol) servers. Currently configured servers include:
 
-**HelloWorld MCP** — Simple greeting tool
-- `mcp_HelloWorld_hello` — Say hello to someone
-
-**XCF MCP** — Xcode Features (17 tools)
-- `mcp_xcf_xcf` — Execute xcf actions
-- `mcp_xcf_help` / `mcp_xcf_xcf_help` / `mcp_xcf_show_help` — Help information
-- `mcp_xcf_snippet` — Extract code snippets from files
-- `mcp_xcf_analyzer` / `mcp_xcf_analyze_swift_code` — Analyze Swift code
-- `mcp_xcf_read_dir` — List directory contents
-- `mcp_xcf_use_xcf` — Activate XCF mode
-- `mcp_xcf_tools` — Show detailed tool reference
-- `mcp_xcf_grant_permission` — Grant Xcode automation permissions
-- `mcp_xcf_run_project` / `mcp_xcf_build_project` — Run/build project
-- `mcp_xcf_show_current_project` / `mcp_xcf_list_projects` / `mcp_xcf_select_project` — Project management
-- `mcp_xcf_show_env` / `mcp_xcf_show_folder` — Environment info
-
-**DemoHttp MCP** — HTTP-based demonstration server with utility functions:
-- `mcp_DemoHttp_get_time` — Get current date and time
-- `mcp_DemoHttp_calculate` — Evaluate math expressions (add, subtract, multiply, divide)
-- `mcp_DemoHttp_reverse_string` — Reverse a text string
+- **internet-names-mcp** — Domain and social handle availability
+- **xcode-mcp-server** — Xcode project building, running, screenshots
+- **appstore-mcp-server** — App Store search, rankings, keywords
 
 ---
 
@@ -729,15 +608,15 @@ Agent! includes a built-in Swift scripting system. Scripts live in `~/Documents/
 
 ### Core Scripts (bundled)
 
-The following scripts come pre-compiled in Agent.app/Contents/Resources/:
+29 scripts come pre-compiled in Agent.app/Contents/Resources/:
 
 | Script | Description |
 |--------|-------------|
+| `AccessibilityRecorder` | Record accessibility actions |
 | `AXDemo` | Accessibility API demonstration |
 | `CapturePhoto` | Capture photo from camera |
 | `CheckMail` | Check for new email messages |
 | `CreateDMG` | Create a DMG disk image |
-| `CurrentPlaylist` | Get current Music playlist |
 | `EmailAccounts` | List email accounts |
 | `ExtractAlbumArt` | Extract album artwork from Music |
 | `GenerateBridge` | Generate ScriptingBridge for any app |
@@ -749,21 +628,21 @@ The following scripts come pre-compiled in Agent.app/Contents/Resources/:
 | `NowPlaying` | Get currently playing track |
 | `NowPlayingHTML` | Now playing info as HTML |
 | `OrganizeEmails` | Organize email into folders |
-| `OrganizeOtherSubcategories` | Organize email subcategories |
 | `PlayPlaylist` | Play a Music playlist |
 | `PlayRandomFromCurrent` | Play random track from current playlist |
 | `QuitApps` | Quit running applications |
 | `RunningApps` | List running applications |
+| `SDEFtoJSON` | Convert SDEF to JSON |
 | `SafariSearch` | Search in Safari |
-| `SaveImageFromChat` | Save image from chat |
 | `SaveImageFromClipboard` | Save image from clipboard |
+| `Selenium` | WebDriver automation |
 | `SendGroupMessage` | Send group iMessage |
 | `SendMessage` | Send iMessage |
-| `TestCodingTools` | Test coding utilities |
-| `TestEnvVars` | Test environment variables |
-| `TestGenerateBridge` | Test bridge generation |
+| `SystemInfo` | Get system information |
 | `TodayEvents` | Get today's calendar events |
-| `WhatsPlaying` | What's playing info |
+| `WebForm` | Web form automation |
+| `WebNavigate` | Web navigation |
+| `WebScrape` | Web scraping |
 
 The AI can create, read, update, delete, compile, and run these scripts autonomously:
 
@@ -788,7 +667,7 @@ Agent includes an `apple_event_query` tool that lets the AI query any scriptable
 
 ### ScriptingBridges Library
 
-Agent ships with pre-generated Swift protocol definitions for **54+ macOS applications**:
+Agent ships with pre-generated Swift protocol definitions for **50 macOS applications**:
 
 | Category | Applications |
 |----------|--------------|
@@ -900,7 +779,7 @@ Scripts inherit Agent's TCC permissions (Automation, Accessibility, Screen Recor
 | **MCP support** | Yes (stdio, HTTP/SSE) | Yes |
 | **Messaging** | Native Apple Messages (iMessage/SMS) with per-recipient approval | WhatsApp, Telegram, Slack, Discord, iMessage, and more |
 | **Message reply** | Auto-replies task results via iMessage to approved senders | Platform-specific replies |
-| **App size** | 13.3 MB (v1.0.11) | ~90.5 MB unpacked (npm) |
+| **App size** | ~13 MB | ~90.5 MB unpacked (npm) |
 | **Installation** | Run the .app, install Xcode Command Line Tools (`xcode-select --install`) | `openclaw onboard` wizard |
 | **Dependencies** | Xcode Command Line Tools | Node.js + npm ecosystem |
 | **Apple Silicon** | Native ARM64 | Interpreted (Node.js) |
