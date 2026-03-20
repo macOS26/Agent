@@ -1623,10 +1623,10 @@ extension AgentViewModel {
                             } else {
                                 tab = openScriptTab(scriptName: "applescript")
                             }
-                            let preview = source.prefix(80).replacingOccurrences(of: "\n", with: " ")
+                            let preview = source.replacingOccurrences(of: "\n", with: " ")
                             appendLog("🍎 AppleScript (see tab)")
                             flushLog()
-                            tab.appendLog("🍎 \(preview)...")
+                            tab.appendLog("🍎 \(preview)")
                             tab.flush()
 
                             let result = await Self.offMain {

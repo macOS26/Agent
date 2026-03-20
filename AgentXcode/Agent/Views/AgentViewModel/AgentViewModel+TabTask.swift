@@ -664,8 +664,8 @@ extension AgentViewModel {
         // run_applescript (in-process, full TCC)
         if name == "run_applescript" {
             let source = input["source"] as? String ?? ""
-            let preview = source.prefix(80).replacingOccurrences(of: "\n", with: " ")
-            tab.appendLog("🍎 AppleScript: \(preview)...")
+            let preview = source.replacingOccurrences(of: "\n", with: " ")
+            tab.appendLog("🍎 AppleScript: \(preview)")
             tab.flush()
             let result = await Self.offMain {
                 NSAppleScriptService.shared.execute(source: source)
