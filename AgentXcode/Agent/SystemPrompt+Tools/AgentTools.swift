@@ -21,13 +21,13 @@ enum AgentTools {
         Never use execute_user_command or execute_command for Automation/Accessibility — no TCC.
 
         APP AUTOMATION PRIORITY:
-        1. apple_event_query — ObjC dispatch, no compile. Fast property reads. Use lookup_sdef first.
-        2. run_agent_script — ScriptingBridge Swift dylib, full TCC. NSAppleScript fallback if bridge has issues.
-        3. run_applescript — NSAppleScript in-process, full TCC. Quick AppleScript without compilation.
-        4. execute_javascript — JXA (JavaScript for Automation) via osascript -l JavaScript. Full TCC.
-        5. Accessibility tools (ax_*) — AXUIElement API for UI inspection/interaction.
-        6. run_osascript — osascript. Last resort for AppleScript.
-        Shell commands fill gaps: execute_user_command (user) / execute_command (root) for CLI tools.
+        1. run_agent_script — ScriptingBridge Swift dylib, full TCC. Best for persistent automation.
+        2. run_applescript — NSAppleScript in Agent process, full TCC. Quick AppleScript without compilation.
+        3. run_osascript — osascript in Agent process for one-off AppleScript.
+        4. execute_javascript — JXA (JavaScript for Automation) via osascript -l JavaScript.
+        5. apple_event_query — ObjC dispatch, no compile. Fast property reads. Use lookup_sdef first.
+        6. Accessibility tools (ax_*) — AXUIElement API for UI inspection/interaction. Last resort for Mac apps.
+        Shell commands fill gaps: execute_agent_command (user) / execute_daemon_command (root) for CLI tools.
 
         JAVASCRIPT FOR AUTOMATION (JXA):
         Use execute_javascript for JXA code: var app = Application('Finder'); app.selection()
@@ -390,7 +390,7 @@ enum AgentTools {
         // --- Core Tools ---
         ToolDef(
             name: "apple_event_query",
-            description: "PRIORITY 1 for app automation. Query a scriptable Mac app via ObjC dynamic dispatch. No compilation, instant results. Use lookup_sdef first to get valid keys.",
+            description: "Query a scriptable Mac app via ObjC dynamic dispatch. No compilation, instant results. Use lookup_sdef first to get valid keys.",
             properties: [
                 "bundle_id": ["type": "string", "description": "App bundle identifier (e.g. com.apple.Music)"],
                 "operations": [
@@ -754,7 +754,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: "run_agent_script",
-            description: "PRIORITY 1 for app automation. Compile and run a Swift dylib with full TCC using ScriptingBridge. Use existing scripts first (list_agent_scripts), create new ones with ScriptingBridge protocols. Use lookup_sdef and read_agent_script to check app dictionaries and bridge Swift files. NSAppleScript fallback if ScriptingBridge has issues. Output streams live — do NOT repeat stdout.",
+            description: "PRIORITY 1 for app automation. Compile and run a Swift dylib with full TCC. Use existing scripts first (list_agent_scripts), create new ones with ScriptingBridge protocols. Use lookup_sdef and read_agent_script to check app dictionaries and bridge Swift files. NSAppleScript fallback if ScriptingBridge has issues. Output streams live — do NOT repeat stdout.",
             properties: [
                 "name": ["type": "string", "description": "Script filename (without .swift)"],
                 "arguments": ["type": "string", "description": "Simple string passed via AGENT_SCRIPT_ARGS env var. For complex data, use JSON files instead."],
