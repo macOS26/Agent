@@ -250,6 +250,11 @@ final class AppleEventService: @unchecked Sendable {
 
     // MARK: - Helpers
 
+    /// Get a property value from an SBObject/SBApplication via ObjC dispatch.
+    /// The `import AppleEventBridges` at the top registers all bridge protocol
+    /// conformances (e.g. `SBApplication: MusicApplication`), which makes
+    /// ObjCSafePerform and KVC resolve selectors like `currentTrack`, `tracks()`,
+    /// etc. Without the bridges, many properties would return nil.
     private func getValue(from object: Any, key: String) -> Any? {
         guard let nsObj = object as? NSObject else { return nil }
         let sel = Selector(key)

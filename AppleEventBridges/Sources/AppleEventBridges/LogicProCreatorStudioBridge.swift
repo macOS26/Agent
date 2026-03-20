@@ -1,4 +1,3 @@
-@_exported import ScriptingBridgeCommon
 
 // MARK: LogicProCreatorStudioSavo
 @objc public enum LogicProCreatorStudioSavo : AEKeyword {

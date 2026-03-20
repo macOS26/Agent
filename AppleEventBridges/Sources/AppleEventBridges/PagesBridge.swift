@@ -1,4 +1,3 @@
-@_exported import ScriptingBridgeCommon
 
 // MARK: PagesSaveOptions
 @objc public enum PagesSaveOptions : AEKeyword {

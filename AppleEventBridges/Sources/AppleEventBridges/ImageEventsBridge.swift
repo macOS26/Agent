@@ -1,4 +1,3 @@
-@_exported import ScriptingBridgeCommon
 
 // MARK: ImageEventsSaveOptions
 @objc public enum ImageEventsSaveOptions : AEKeyword {

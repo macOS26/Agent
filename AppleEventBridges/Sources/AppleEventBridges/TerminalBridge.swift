@@ -1,4 +1,3 @@
-@_exported import ScriptingBridgeCommon
 
 // MARK: TerminalSaveOptions
 @objc public enum TerminalSaveOptions : AEKeyword {

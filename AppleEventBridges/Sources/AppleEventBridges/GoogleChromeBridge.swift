@@ -1,4 +1,3 @@
-@_exported import ScriptingBridgeCommon
 
 // MARK: GoogleChromeGenericMethods
 @objc public protocol GoogleChromeGenericMethods {

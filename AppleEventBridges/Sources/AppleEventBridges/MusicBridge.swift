@@ -1,4 +1,3 @@
-@_exported import ScriptingBridgeCommon
 
 // MARK: MusicEKnd
 @objc public enum MusicEKnd : AEKeyword {

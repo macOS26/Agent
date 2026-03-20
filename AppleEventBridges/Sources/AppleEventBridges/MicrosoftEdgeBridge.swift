@@ -1,4 +1,3 @@
-@_exported import ScriptingBridgeCommon
 
 // MARK: MicrosoftEdgeGenericMethods
 @objc public protocol MicrosoftEdgeGenericMethods {

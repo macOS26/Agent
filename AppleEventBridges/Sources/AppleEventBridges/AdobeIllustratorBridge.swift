@@ -1,4 +1,3 @@
-@_exported import ScriptingBridgeCommon
 
 // MARK: AdobeIllustratorESCM
 @objc public enum AdobeIllustratorESCM : AEKeyword {

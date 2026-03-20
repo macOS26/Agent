@@ -1,4 +1,3 @@
-@_exported import ScriptingBridgeCommon
 
 // MARK: ShortcutsSaveOptions
 @objc public enum ShortcutsSaveOptions : AEKeyword {

@@ -1,4 +1,3 @@
-@_exported import ScriptingBridgeCommon
 
 // MARK: ScriptEditorSavo
 @objc public enum ScriptEditorSavo : AEKeyword {

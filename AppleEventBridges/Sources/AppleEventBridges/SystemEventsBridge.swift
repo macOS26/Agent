@@ -1,4 +1,3 @@
-@_exported import ScriptingBridgeCommon
 
 // MARK: SystemEventsSaveOptions
 @objc public enum SystemEventsSaveOptions : AEKeyword {

@@ -1,4 +1,3 @@
-@_exported import ScriptingBridgeCommon
 
 // MARK: PhotosApplication
 @objc public protocol PhotosApplication: SBApplicationProtocol {
