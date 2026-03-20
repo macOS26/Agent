@@ -6,17 +6,14 @@ import Foundation
 // ScriptService adds/removes entries when scripts are created/deleted.
 let scriptNames = [
     "AccessibilityRecorder",
-    "AgentAccessibility",
     "AXDemo",
     "CapturePhoto",
     "CheckMail",
     "CreateDMG",
-    "CurrentPlaylist",
     "EmailAccounts",
     "ExtractAlbumArt",
     "GenerateBridge",
     "Hello",
-    "JSDialog",
     "ListHomeContents",
     "ListNotes",
     "ListReminders",
@@ -24,27 +21,18 @@ let scriptNames = [
     "NowPlaying",
     "NowPlayingHTML",
     "OrganizeEmails",
-    "OrganizeOtherSubcategories",
     "PlayPlaylist",
     "PlayRandomFromCurrent",
     "QuitApps",
     "RunningApps",
     "SafariSearch",
-    "SaveImageFromChat",
     "SaveImageFromClipboard",
     "SDEFtoJSON",
     "SendGroupMessage",
     "SendMessage",
     "Selenium",
     "SystemInfo",
-    "TestCodingTools",
-    "TestEnvVars",
-    "TestGenerateBridge",
     "TodayEvents",
-    "WebForm",
-    "WebNavigate",
-    "WebScrape",
-    "WhatsPlaying",
 ]
 
 // Scripting Bridge wrappers — generated from app .sdef files.
@@ -121,6 +109,8 @@ func parseDeps(for name: String) -> [Target.Dependency] {
                 deps.append(.init(stringLiteral: module))
             } else if module == "ScriptingBridgeCommon" {
                 deps.append(common)
+            } else if module == "AgentAccessibility" {
+                deps.append(.init(stringLiteral: "AgentAccessibility"))
             }
         }
         if !trimmed.isEmpty && !trimmed.hasPrefix("import ") &&
@@ -140,6 +130,8 @@ let package = Package(
     platforms: [.macOS(.v26)],
     products: scriptNames.map { .library(name: $0, type: .dynamic, targets: [$0]) },
     targets: [
+        // AgentAccessibility — shared accessibility helpers for scripts
+        .target(name: "AgentAccessibility", path: "Sources/AgentAccessibility"),
         // ScriptingBridgeCommon — shared protocols and types for all bridges
         .target(name: "ScriptingBridgeCommon", path: bridge,
                 exclude: bridgeNames.map { "\($0).swift" },
