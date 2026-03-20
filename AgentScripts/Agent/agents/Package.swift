@@ -136,7 +136,7 @@ let allBridgeFiles = ["ScriptingBridgeCommon.swift"] + bridgeNames.map { "\($0).
 let allScriptFiles = scriptNames.map { "\($0).swift" }
 
 let package = Package(
-    name: "AgentScripts",
+    name: "agents",
     platforms: [.macOS(.v15)],
     products: scriptNames.map { .library(name: $0, type: .dynamic, targets: [$0]) },
     targets: [
