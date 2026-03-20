@@ -481,7 +481,7 @@ struct ContentView: View {
                 .padding()
             }
         }
-        .frame(minWidth: 700, minHeight: 500)
+        .frame(minWidth: 900, minHeight: 500)
         .overlay {
             DependencyOverlay(status: dependencyStatus, isVisible: $showDependencyOverlay)
         }

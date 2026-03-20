@@ -219,8 +219,9 @@ Both services can be toggled on/off from the Agent UI:
 
 **To re-enable a disabled service:**
 1. Toggle it back on in the UI
-2. Click **Register** to re-register with SMAppService
-3. Approve in System Settings if prompted
+2. Click **Connect** to test connectivity
+3. Click **Register** to re-register with SMAppService
+4. Approve in System Settings if prompted
 
 **Use cases for disabling:**
 - Troubleshooting XPC communication issues

@@ -42,7 +42,7 @@ final class AgentViewModel {
             if !userEnabled {
                 // Kill and unregister the user agent
                 userService.shutdownAgent()
-                appendLog("User Agent: shut down")
+                appendLog("User Agent: shut down. To re-enable: click Connect, then click Register.")
             }
         }
     }
@@ -52,7 +52,7 @@ final class AgentViewModel {
             if !rootEnabled {
                 // Kill and unregister the daemon for security
                 helperService.shutdownDaemon()
-                appendLog("Launch Daemon: shut down for security")
+                appendLog("Launch Daemon: shut down. To re-enable: click Connect, then click Register.")
             }
         }
     }
