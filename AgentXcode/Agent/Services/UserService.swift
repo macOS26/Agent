@@ -66,6 +66,18 @@ final class UserService {
         }
     }
 
+    /// Completely shut down and unregister the user agent.
+    func shutdownAgent() {
+        let kill = Process()
+        kill.executableURL = URL(fileURLWithPath: "/usr/bin/pkill")
+        kill.arguments = ["-f", "AgentUser"]
+        try? kill.run()
+        kill.waitUntilExit()
+
+        let service = SMAppService.agent(plistName: "Agent.app.toddbruss.user.plist")
+        try? service.unregister()
+    }
+
     /// Kill any stale agent processes, unregister, and re-register.
     @discardableResult
     func restartAgent() -> String {

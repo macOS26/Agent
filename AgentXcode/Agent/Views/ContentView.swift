@@ -29,11 +29,15 @@ struct ContentView: View {
                     StatusDot(
                         isActive: viewModel.userServiceActive,
                         wasActive: viewModel.userWasActive,
-                        isBusy: viewModel.isRunning
+                        isBusy: viewModel.isRunning,
+                        enabled: viewModel.userEnabled
                     )
-                    Text("Agent")
+                    Toggle("User", isOn: $viewModel.userEnabled)
+                        .toggleStyle(.switch)
+                        .controlSize(.mini)
+                        .tint(.green)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(viewModel.userEnabled ? .secondary : .tertiary)
                     StatusDot(
                         isActive: viewModel.rootServiceActive,
                         wasActive: viewModel.rootWasActive,

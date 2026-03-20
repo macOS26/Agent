@@ -36,6 +36,16 @@ final class AgentViewModel {
     var rootServiceActive = false
     var userWasActive = false
     var rootWasActive = false
+    var userEnabled: Bool = UserDefaults.standard.object(forKey: "agentUserEnabled") as? Bool ?? true {
+        didSet {
+            UserDefaults.standard.set(userEnabled, forKey: "agentUserEnabled")
+            if !userEnabled {
+                // Kill and unregister the user agent
+                userService.shutdownAgent()
+                appendLog("User Agent: shut down")
+            }
+        }
+    }
     var rootEnabled: Bool = UserDefaults.standard.object(forKey: "agentRootEnabled") as? Bool ?? true {
         didSet {
             UserDefaults.standard.set(rootEnabled, forKey: "agentRootEnabled")
