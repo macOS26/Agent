@@ -5,6 +5,7 @@ import Foundation
 // Explicit script list — ScriptService adds/removes entries when scripts are created/deleted.
 // Scripts compile as dynamic libraries (.dylib) loaded into Agent! via dlopen.
 let scriptNames = [
+    "AccessibilityRecorder",
     "AgentAccessibility",
     "AXDemo",
     "CapturePhoto",
@@ -15,6 +16,7 @@ let scriptNames = [
     "ExtractAlbumArt",
     "GenerateBridge",
     "Hello",
+    "JSDialog",
     "ListHomeContents",
     "ListNotes",
     "ListReminders",
@@ -28,7 +30,9 @@ let scriptNames = [
     "QuitApps",
     "RunningApps",
     "SafariSearch",
+    "SaveImageFromChat",
     "SaveImageFromClipboard",
+    "SDEFtoJSON",
     "SendGroupMessage",
     "SendMessage",
     "Selenium",
@@ -37,6 +41,9 @@ let scriptNames = [
     "TestEnvVars",
     "TestGenerateBridge",
     "TodayEvents",
+    "WebForm",
+    "WebNavigate",
+    "WebScrape",
     "WhatsPlaying",
 ]
 
