@@ -788,7 +788,9 @@ final class AgentViewModel {
         guard let handle = agentReplyHandle else { return }
         agentReplyHandle = nil
 
-        let reply = String(summary.prefix(256))
+        // iMessage supports up to ~65KB, but we cap at 4000 chars for reliability
+        // (this is the practical limit before carriers may split messages)
+        let reply = String(summary.prefix(4000))
         // Escape for AppleScript
         let escaped = reply
             .replacingOccurrences(of: "\\", with: "\\\\")
