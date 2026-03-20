@@ -624,6 +624,8 @@ private struct LangDef {
         if t.range(of: #"^\[\d{2}:\d{2}:\d{2}\]"#, options: .regularExpression) != nil { return true }
         if t.range(of: #"^\S+\.\w+:\d+:"#, options: .regularExpression) != nil { return true }
         if looksLikeTerminalLine(t) { return true }
+        // Bare file paths (e.g. /Users/... or ~/Documents/...)
+        if t.hasPrefix("/") || t.hasPrefix("~/") { return true }
         return false
     }
 
