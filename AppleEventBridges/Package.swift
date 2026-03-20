@@ -52,6 +52,7 @@ let bridgeNames = [
     "UTMBridge",
     "VoiceOverBridge",
     "WishBridge",
+    "XcodeScriptingBridge",
 ]
 
 let bridgePath = "Sources/AppleEventBridges"

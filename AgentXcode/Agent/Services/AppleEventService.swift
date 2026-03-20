@@ -2,7 +2,6 @@ import Foundation
 import ScriptingBridge
 import AppKit
 import AppleEventBridges
-import XcodeScriptingBridge
 
 /// Executes dynamic Apple Event queries using ObjC runtime dispatch.
 /// No compilation needed — walks the object graph via value(forKey:) and NSInvocation.

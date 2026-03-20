@@ -1,6 +1,6 @@
 import Foundation
 import ScriptingBridge
-import XcodeScriptingBridge
+import AppleEventBridges
 
 /// Xcode automation via ScriptingBridge — build, run, list/select projects, grant permission.
 /// Modeled after xcf's best patterns: file:line:col error format, code snippets, build-before-run.
