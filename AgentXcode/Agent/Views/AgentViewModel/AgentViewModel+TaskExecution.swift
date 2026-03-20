@@ -1780,7 +1780,12 @@ extension AgentViewModel {
                         if name == "apple_event_query" {
                             let bundleID = input["bundle_id"] as? String ?? ""
                             let operations = input["operations"] as? [[String: Any]] ?? []
-                            appendLog("🍎 AE query: \(bundleID) (\(operations.count) ops)")
+                            let opsPreview = operations.compactMap { op -> String? in
+                                let action = op["action"] as? String ?? "?"
+                                let key = op["key"] as? String ?? op["method"] as? String ?? op["properties"].flatMap { "\($0)" } ?? ""
+                                return key.isEmpty ? action : "\(action) \(key)"
+                            }.joined(separator: " → ")
+                            appendLog("🍎 AE query: \(bundleID) → \(opsPreview)")
                             flushLog()
                             let opsData = try? JSONSerialization.data(withJSONObject: operations)
                             let output = await Self.offMain {
