@@ -618,16 +618,31 @@ private struct LangDef {
     private static let actQuoteRx: NSRegularExpression? = try? NSRegularExpression(
         pattern: ##"'[^'\n]*'|"[^"\n]*""##)
 
-    /// Check if a line is activity log output (timestamps or grep results)
+    /// Check if a line is activity log output (timestamps, grep results, or ls output)
     static func looksLikeActivityLogLine(_ line: String) -> Bool {
         let t = line.trimmingCharacters(in: .whitespaces)
         if t.range(of: #"^\[\d{2}:\d{2}:\d{2}\]"#, options: .regularExpression) != nil { return true }
         if t.range(of: #"^\S+\.\w+:\d+:"#, options: .regularExpression) != nil { return true }
+        if looksLikeTerminalLine(t) { return true }
         return false
+    }
+
+    /// Check if a single line looks like ls -la output (permissions string)
+    private static func looksLikeTerminalLine(_ t: String) -> Bool {
+        guard t.count > 10, let first = t.first, "d-lbcps".contains(first) else { return false }
+        let perm = t.prefix(10)
+        return perm.allSatisfy({ "drwx-lbcpsTt@+. ".contains($0) })
     }
 
     /// Highlight a single activity log line. Returns nil if the line is not activity-log output.
     static func highlightActivityLogLine(line: String, font: NSFont) -> NSAttributedString? {
+        let trimmed = line.trimmingCharacters(in: .whitespaces)
+
+        // Terminal output (ls -la) — use the full terminal highlighter
+        if looksLikeTerminalLine(trimmed) {
+            return highlightTerminalOutput(code: line, font: font)
+        }
+
         guard looksLikeActivityLogLine(line) else { return nil }
 
         let result = NSMutableAttributedString(string: line, attributes: [
