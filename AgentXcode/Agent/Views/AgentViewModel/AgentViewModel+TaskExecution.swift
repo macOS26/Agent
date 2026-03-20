@@ -2265,6 +2265,42 @@ extension AgentViewModel {
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
+                        // Highlight element (Phase 2, v1.0.16)
+                        if name == "ax_highlight_element" {
+                            let role = input["role"] as? String
+                            let title = input["title"] as? String
+                            let value = input["value"] as? String
+                            let appBundleId = input["appBundleId"] as? String
+                            let x = (input["x"] as? Double).map { CGFloat($0) }
+                            let y = (input["y"] as? Double).map { CGFloat($0) }
+                            let duration = input["duration"] as? Double ?? 2.0
+                            let color = input["color"] as? String ?? "green"
+                            appendLog("Highlighting element (duration: \(duration)s, color: \(color))...")
+                            flushLog()
+                            let output = await Self.offMain {
+                                AccessibilityService.shared.highlightElement(
+                                    role: role, title: title, value: value, appBundleId: appBundleId,
+                                    x: x, y: y, duration: duration, color: color
+                                )
+                            }
+                            appendLog(Self.preview(output, lines: 30))
+                            commandsRun.append("ax_highlight_element")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        // Get window frame (Phase 2, v1.0.16)
+                        if name == "ax_get_window_frame" {
+                            let windowId = input["windowId"] as? Int ?? 0
+                            appendLog("Getting frame for window \(windowId)...")
+                            flushLog()
+                            let output = await Self.offMain {
+                                AccessibilityService.shared.getWindowFrame(windowId: windowId)
+                            }
+                            appendLog(output)
+                            commandsRun.append("ax_get_window_frame")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
                         // Accessibility show menu (Phase 6)
                         if name == "ax_show_menu" {
                             let role = input["role"] as? String

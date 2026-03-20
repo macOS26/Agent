@@ -248,6 +248,8 @@ enum AgentTools {
         "ax_click_element":     #"ax_click_element {"role": "AXButton", "title": "Submit"}"#,
         "ax_wait_adaptive":     #"ax_wait_adaptive {"role": "AXTextField", "timeout": 10}"#,
         "ax_type_into_element": #"ax_type_into_element {"role": "AXTextField", "text": "hello@example.com"}"#,
+        "ax_highlight_element": #"ax_highlight_element {"role": "AXButton", "title": "Submit", "duration": 2.0}"#,
+        "ax_get_window_frame": #"ax_get_window_frame {"windowId": 1234}"#,
         "ax_show_menu":         #"ax_show_menu {"x": 100, "y": 200}"#,
         "list_apple_scripts":   "list_apple_scripts",
         "run_apple_script":     #"run_apple_script {"name": "Greeting"}"#,
@@ -717,6 +719,31 @@ enum AgentTools {
                 "verify": ["type": "boolean", "description": "Whether to verify the text was entered (default true)"],
             ],
             required: ["text"]
+        ),
+        // --- Accessibility Highlight Element (Phase 2, v1.0.16) ---
+        ToolDef(
+            name: "ax_highlight_element",
+            description: "Temporarily highlight an element on screen with a colored overlay. Useful for verification before performing actions. The highlight appears for a configurable duration then disappears automatically.",
+            properties: [
+                "role": ["type": "string", "description": "Accessibility role to find (e.g., 'AXButton', 'AXTextField')"],
+                "title": ["type": "string", "description": "Title or name to match (partial match)"],
+                "value": ["type": "string", "description": "Value to match (partial match) - useful for text fields with specific content"],
+                "appBundleId": ["type": "string", "description": "Optional bundle ID to search within a specific app"],
+                "x": ["type": "number", "description": "Screen X coordinate for position-based lookup"],
+                "y": ["type": "number", "description": "Screen Y coordinate for position-based lookup"],
+                "duration": ["type": "number", "description": "How long to show the highlight in seconds (default 2.0)"],
+                "color": ["type": "string", "description": "Highlight color: 'red', 'green', 'blue', 'yellow', 'purple' (default 'green')"],
+            ],
+            required: []
+        ),
+        // --- Accessibility Get Window Frame (Phase 2, v1.0.16) ---
+        ToolDef(
+            name: "ax_get_window_frame",
+            description: "Get the exact position and frame (x, y, width, height) of a window by its ID. Use ax_list_windows first to get window IDs. Returns precise coordinates for positioning screenshots or clicks.",
+            properties: [
+                "windowId": ["type": "integer", "description": "Window ID from ax_list_windows"],
+            ],
+            required: ["windowId"]
         ),
         // --- Script Management ---
         ToolDef(

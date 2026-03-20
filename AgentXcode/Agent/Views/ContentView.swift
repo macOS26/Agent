@@ -546,6 +546,80 @@ struct ContentView: View {
                         return nil
                     }
                 }
+                
+                // Keyboard shortcuts for common actions
+                // Cmd+N: New task (focus input)
+                if event.modifierFlags.contains(.command),
+                   event.charactersIgnoringModifiers == "n" {
+                    // Focus is already on text field, this is just a quick way to clear and start new
+                    return nil
+                }
+                
+                // Cmd+R: Run current task
+                if event.modifierFlags.contains(.command),
+                   event.charactersIgnoringModifiers == "r" {
+                    if let selId = viewModel.selectedTabId,
+                       let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+                        if !tab.taskInput.isEmpty && !tab.isLLMRunning {
+                            viewModel.runTabTask(tab: tab)
+                        }
+                    } else if !viewModel.taskInput.isEmpty && !viewModel.isRunning {
+                        viewModel.run()
+                    }
+                    return nil
+                }
+                
+                // Cmd+.: Cancel current task
+                if event.modifierFlags.contains(.command),
+                   event.charactersIgnoringModifiers == "." {
+                    if let selId = viewModel.selectedTabId,
+                       let tab = viewModel.scriptTabs.first(where: { $0.id == selId }),
+                       tab.isLLMRunning {
+                        viewModel.stopTabTask(tab: tab)
+                    } else if viewModel.isRunning {
+                        viewModel.stop()
+                    }
+                    return nil
+                }
+                
+                // Cmd+Shift+P: Open System Prompts
+                if event.modifierFlags.contains([.command, .shift]),
+                   event.charactersIgnoringModifiers == "p" {
+                    // System prompts window would be opened here
+                    // For now, focus on settings
+                    showSettings = true
+                    return nil
+                }
+                
+                // Cmd+Shift+M: Toggle Messages Monitor
+                if event.modifierFlags.contains([.command, .shift]),
+                   event.charactersIgnoringModifiers == "m" {
+                    viewModel.messagesMonitorEnabled.toggle()
+                    return nil
+                }
+                
+                // Cmd+1-9: Switch between tabs
+                if event.modifierFlags.contains(.command),
+                   let char = event.charactersIgnoringModifiers,
+                   let number = Int(char),
+                   number >= 1, number <= 9 {
+                    selectTab(number: number)
+                    return nil
+                }
+                
+                // Cmd+Shift+]: Next tab
+                if event.modifierFlags.contains(.command),
+                   event.keyCode == 124 { // Right arrow
+                    nextTab()
+                    return nil
+                }
+                
+                // Cmd+Shift+[: Previous tab
+                if event.modifierFlags.contains(.command),
+                   event.keyCode == 123 { // Left arrow
+                    previousTab()
+                    return nil
+                }
 
                 // Escape key to cancel active context (tab or main)
                 if event.keyCode == 53 {
@@ -595,5 +669,65 @@ struct ContentView: View {
     static func tabColor(for tabId: UUID, in tabs: [ScriptTab]) -> Color {
         guard let idx = tabs.firstIndex(where: { $0.id == tabId }) else { return .orange }
         return tabColors[idx % tabColors.count]
+    }
+}
+
+// MARK: - Keyboard Shortcuts
+
+extension ContentView {
+    /// Focus the text input field
+    func focusInput() {
+        // Input field is managed by SwiftUI focus state
+        // This is called from keyboard shortcut
+    }
+    
+    /// Navigate to next tab (cycle right)
+    func nextTab() {
+        if viewModel.scriptTabs.isEmpty { return }
+        guard let currentId = viewModel.selectedTabId else {
+            // On main tab - go to first script tab
+            if let firstTab = viewModel.scriptTabs.first {
+                viewModel.selectedTabId = firstTab.id
+            }
+            return
+        }
+        
+        guard let currentIndex = viewModel.scriptTabs.firstIndex(where: { $0.id == currentId }) else { return }
+        let nextIndex = (currentIndex + 1) % viewModel.scriptTabs.count
+        viewModel.selectedTabId = viewModel.scriptTabs[nextIndex].id
+        viewModel.persistScriptTabs()
+    }
+    
+    /// Navigate to previous tab (cycle left)
+    func previousTab() {
+        if viewModel.scriptTabs.isEmpty { return }
+        guard let currentId = viewModel.selectedTabId else {
+            // On main tab - go to last script tab
+            if let lastTab = viewModel.scriptTabs.last {
+                viewModel.selectedTabId = lastTab.id
+            }
+            return
+        }
+        
+        guard let currentIndex = viewModel.scriptTabs.firstIndex(where: { $0.id == currentId }) else { return }
+        let prevIndex = (currentIndex - 1 + viewModel.scriptTabs.count) % viewModel.scriptTabs.count
+        viewModel.selectedTabId = viewModel.scriptTabs[prevIndex].id
+        viewModel.persistScriptTabs()
+    }
+    
+    /// Navigate to tab by number (1-9)
+    func selectTab(number: Int) {
+        guard number >= 1, number <= 9 else { return }
+        if number == 1 {
+            // Cmd+1 = Main tab
+            viewModel.selectMainTab()
+            return
+        }
+        
+        // Cmd+2-9 = Script tabs (0-indexed from index 1)
+        let tabIndex = number - 2
+        guard tabIndex < viewModel.scriptTabs.count else { return }
+        viewModel.selectedTabId = viewModel.scriptTabs[tabIndex].id
+        viewModel.persistScriptTabs()
     }
 }

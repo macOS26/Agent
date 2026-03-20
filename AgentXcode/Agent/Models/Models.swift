@@ -5,14 +5,93 @@ enum AgentError: Error, LocalizedError {
     case apiError(statusCode: Int, message: String)
     case invalidResponse
     case invalidURL
+    case timeout(seconds: TimeInterval)
+    case serviceUnavailable(service: String)
+    case permissionDenied(permission: String)
+    case toolFailed(tool: String, reason: String)
+    case scriptError(script: String, message: String)
+    case xpcError(service: String, reason: String)
+    case mcpError(server: String, reason: String)
+    case accessibilityError(action: String, reason: String)
+    case networkError(underlying: Error)
+    case fileError(path: String, reason: String)
+    case notFound(item: String)
+    case invalidInput(field: String, reason: String)
+    case cancelled
+    case unknown(Error)
 
     var errorDescription: String? {
         switch self {
         case .noAPIKey: "No API key configured. Open Settings to add your Anthropic API key."
         case .apiError(let code, let msg): "API error (\(code)): \(msg)"
-        case .invalidResponse: "Invalid response from Claude API"
+        case .invalidResponse: "Invalid response from API"
         case .invalidURL: "Invalid URL"
+        case .timeout(let seconds): "Operation timed out after \(Int(seconds)) seconds"
+        case .serviceUnavailable(let service): "Service '\(service)' is not available. Try restarting the service or the app."
+        case .permissionDenied(let permission): "Permission denied: \(permission). Grant access in System Settings > Privacy & Security."
+        case .toolFailed(let tool, let reason): "Tool '\(tool)' failed: \(reason)"
+        case .scriptError(let script, let message): "Script '\(script)' error: \(message)"
+        case .xpcError(let service, let reason): "XPC communication with '\(service)' failed: \(reason)"
+        case .mcpError(let server, let reason): "MCP server '\(server)' error: \(reason)"
+        case .accessibilityError(let action, let reason): "Accessibility action '\(action)' failed: \(reason)"
+        case .networkError(let underlying): "Network error: \(underlying.localizedDescription)"
+        case .fileError(let path, let reason): "File error at '\(path)': \(reason)"
+        case .notFound(let item): "\(item) not found"
+        case .invalidInput(let field, let reason): "Invalid input for '\(field)': \(reason)"
+        case .cancelled: "Operation was cancelled"
+        case .unknown(let error): "Unexpected error: \(error.localizedDescription)"
         }
+    }
+    
+    var recoverySuggestion: String? {
+        switch self {
+        case .noAPIKey: "Add your API key in Settings (Cmd+,)"
+        case .apiError(let code, _):
+            switch code {
+            case 401, 403: "Verify your API key is correct and has not expired"
+            case 429: "Rate limit reached. Wait a moment and try again"
+            case 500...599: "Server error. Try again in a few seconds"
+            default: "Check your network connection and try again"
+            }
+        case .invalidResponse: "The API returned an unexpected response. Try again or check for service status"
+        case .timeout: "The operation took too long. Try breaking it into smaller steps"
+        case .serviceUnavailable: "Restart the service, or click Register in Settings to re-enable it"
+        case .permissionDenied: "Open System Settings > Privacy & Security and grant the required permission"
+        case .toolFailed: "Check the tool documentation and ensure parameters are correct"
+        case .scriptError: "Check script syntax with 'swift build' in the AgentScript directory"
+        case .xpcError: "Click Register in Settings to restart XPC services"
+        case .mcpError: "Check MCP server status and restart if needed"
+        case .accessibilityError: "Ensure Accessibility permission is granted in System Settings"
+        case .networkError: "Check your internet connection and try again"
+        case .fileError: "Verify the file exists and you have read/write permissions"
+        case .notFound: "Verify the item exists and the path is correct"
+        case .invalidInput: "Check the input format and try again"
+        case .cancelled: "The operation was cancelled by the user"
+        case .unknown: "Try restarting the app or report this issue"
+        case .invalidURL: nil
+        }
+    }
+    
+    /// Whether this error is recoverable by retrying
+    var isRecoverable: Bool {
+        switch self {
+        case .timeout, .networkError:
+            return true
+        case .serviceUnavailable, .xpcError:
+            return true
+        case .apiError(let code, _) where code >= 500:
+            return true
+        default:
+            return false
+        }
+    }
+    
+    /// Create AgentError from any Error
+    static func wrap(_ error: Error) -> AgentError {
+        if let agentError = error as? AgentError {
+            return agentError
+        }
+        return .unknown(error)
     }
 }
 

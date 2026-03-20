@@ -1597,6 +1597,178 @@ final class AccessibilityService: @unchecked Sendable {
         return nil
     }
 
+    // MARK: - Highlight Element (Phase 2 Feature)
+    
+    /// Highlight an element on screen with a colored overlay
+    /// - Parameters:
+    ///   - role: Accessibility role to find
+    ///   - title: Title to match (partial match)
+    ///   - value: Value to match (partial match)
+    ///   - appBundleId: Optional bundle ID to search within
+    ///   - x: Optional X coordinate for position-based lookup
+    ///   - y: Optional Y coordinate for position-based lookup
+    ///   - duration: How long to show the highlight (default 2.0 seconds)
+    ///   - color: Highlight color - "red", "green", "blue", "yellow", "purple" (default "green")
+    /// - Returns: JSON result with highlight status
+    func highlightElement(
+        role: String?,
+        title: String?,
+        value: String?,
+        appBundleId: String?,
+        x: CGFloat?,
+        y: CGFloat?,
+        duration: TimeInterval = 2.0,
+        color: String = "green"
+    ) -> String {
+        guard Self.hasAccessibilityPermission() else {
+            return errorJSON("Accessibility permission required.")
+        }
+        Self.logAudit("highlightElement(role: \(role ?? "nil"), title: \(title ?? "nil"), value: \(value ?? "nil"), app: \(appBundleId ?? "nil"), duration: \(duration)s)")
+        
+        // Find element
+        var element: AXUIElement?
+        
+        if let x = x, let y = y {
+            let systemWide = AXUIElementCreateSystemWide()
+            let copyResult = copyWithTimeout(systemWide: systemWide, x: x, y: y, timeout: Self.elementAtPositionTimeout)
+            if copyResult.timedOut {
+                return errorJSON("Element lookup timed out at (\(x), \(y))")
+            }
+            element = copyResult.element
+        } else if let bundleId = appBundleId {
+            let apps = NSWorkspace.shared.runningApplications
+            if let app = apps.first(where: { $0.bundleIdentifier == bundleId }),
+               let pid = app.processIdentifier as pid_t? {
+                element = findElementInApp(pid: pid, role: role, title: title, value: value)
+            }
+        } else {
+            element = findElementGlobally(role: role, title: title, value: value)
+        }
+        
+        guard let found = element else {
+            return errorJSON("Element not found for highlighting")
+        }
+        
+        // Get element position and size to calculate bounds
+        var positionRef: CFTypeRef?
+        var sizeRef: CFTypeRef?
+        var bounds = CGRect.zero
+        
+        // Get position
+        guard AXUIElementCopyAttributeValue(found, kAXPositionAttribute as CFString, &positionRef) == .success,
+              let positionValue = positionRef,
+              CFGetTypeID(positionValue) == AXValueGetTypeID() else {
+            return errorJSON("Could not get element position")
+        }
+        
+        var position = CGPoint.zero
+        guard AXValueGetValue(positionValue as! AXValue, .cgPoint, &position) else {
+            return errorJSON("Could not decode element position")
+        }
+        
+        // Get size
+        if AXUIElementCopyAttributeValue(found, kAXSizeAttribute as CFString, &sizeRef) == .success,
+           let sizeValue = sizeRef,
+           CFGetTypeID(sizeValue) == AXValueGetTypeID() {
+            var size = CGSize.zero
+            if AXValueGetValue(sizeValue as! AXValue, .cgSize, &size) {
+                bounds = CGRect(origin: position, size: size)
+            } else {
+                bounds = CGRect(origin: position, size: CGSize(width: 100, height: 30))
+            }
+        } else {
+            // Fallback size if not available
+            bounds = CGRect(origin: position, size: CGSize(width: 100, height: 30))
+        }
+        
+        // Create highlight window
+        let highlightColor: NSColor
+        switch color.lowercased() {
+        case "red": highlightColor = NSColor.red.withAlphaComponent(0.3)
+        case "blue": highlightColor = NSColor.blue.withAlphaComponent(0.3)
+        case "yellow": highlightColor = NSColor.yellow.withAlphaComponent(0.3)
+        case "purple": highlightColor = NSColor.purple.withAlphaComponent(0.3)
+        case "green": highlightColor = NSColor.green.withAlphaComponent(0.3)
+        default: highlightColor = NSColor.green.withAlphaComponent(0.3)
+        }
+        
+        DispatchQueue.main.async {
+            let window = NSWindow(
+                contentRect: bounds,
+                styleMask: [.borderless],
+                backing: .buffered,
+                defer: false
+            )
+            window.level = .floating
+            window.backgroundColor = highlightColor
+            window.ignoresMouseEvents = true
+            window.hasShadow = false
+            window.makeKeyAndOrderFront(nil)
+            
+            // Auto-close after duration
+            DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
+                window.close()
+            }
+        }
+        
+        return successJSON([
+            "message": "Element highlighted for \(duration) seconds",
+            "bounds": [
+                "x": bounds.origin.x,
+                "y": bounds.origin.y,
+                "width": bounds.width,
+                "height": bounds.height
+            ],
+            "color": color,
+            "duration": duration
+        ])
+    }
+    
+    // MARK: - Get Window Frame (Phase 2 Feature)
+    
+    /// Get the exact position and frame of a window by ID
+    /// - Parameter windowId: The window ID (from ax_list_windows)
+    /// - Returns: JSON result with window frame details
+    func getWindowFrame(windowId: Int) -> String {
+        guard Self.hasAccessibilityPermission() else {
+            return errorJSON("Accessibility permission required.")
+        }
+        Self.logAudit("getWindowFrame(windowId: \(windowId))")
+        
+        guard let windowList = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else {
+            return errorJSON("Could not get window list")
+        }
+        
+        for window in windowList {
+            guard let wid = window[kCGWindowNumber as String] as? Int,
+                  wid == windowId else { continue }
+            
+            let ownerPID = window[kCGWindowOwnerPID as String] as? Int32 ?? 0
+            let ownerName = window[kCGWindowOwnerName as String] as? String ?? "Unknown"
+            let windowName = window[kCGWindowName as String] as? String ?? ""
+            let layer = window[kCGWindowLayer as String] as? Int ?? 0
+            
+            if let bounds = window[kCGWindowBounds as String] as? [String: CGFloat] {
+                let appName = getProcessName(pid: ownerPID) ?? ownerName
+                return successJSON([
+                    "windowId": windowId,
+                    "ownerPID": Int(ownerPID),
+                    "ownerName": appName,
+                    "windowName": windowName,
+                    "layer": layer,
+                    "frame": [
+                        "x": bounds["X"] ?? 0,
+                        "y": bounds["Y"] ?? 0,
+                        "width": bounds["Width"] ?? 0,
+                        "height": bounds["Height"] ?? 0
+                    ]
+                ])
+            }
+        }
+        
+        return errorJSON("Window \(windowId) not found")
+    }
+    
     // MARK: - Audit Logging (Phase 5)
     
     private static nonisolated(unsafe) var auditLog: [String] = []
