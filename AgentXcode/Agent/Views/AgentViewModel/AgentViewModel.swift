@@ -783,6 +783,30 @@ final class AgentViewModel {
         messagesPolling = false
     }
 
+    /// Send an immediate acknowledgment via iMessage when a task starts.
+    private func sendAgentAck() {
+        guard let handle = agentReplyHandle else { return }
+        let ack = "Working on it..."
+        let escaped = ack.replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+        let script = """
+        tell application "Messages"
+            set targetService to 1st account whose service type = iMessage
+            set targetBuddy to participant "\(handle)" of targetService
+            send "\(escaped)" to targetBuddy
+        end tell
+        """
+        Task {
+            let result = await userService.execute(command: "osascript -e '\(script.replacingOccurrences(of: "'", with: "'\\''"))'")
+            if result.status == 0 {
+                appendLog("Agent! ack sent to \(handle)")
+            } else {
+                appendLog("Agent! ack failed: \(result.output.prefix(100))")
+            }
+            flushLog()
+        }
+    }
+
     /// Send a reply via iMessage to the handle that triggered the Agent! task.
     func sendAgentReply(_ summary: String) {
         guard let handle = agentReplyHandle else { return }
@@ -1037,6 +1061,8 @@ final class AgentViewModel {
             appendLog("Agent! prompt: \(prompt)")
             flushLog()
             agentReplyHandle = row.handleId
+            // Send immediate acknowledgment before starting task
+            sendAgentAck()
             taskInput = prompt
             run()
         }
