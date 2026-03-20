@@ -360,8 +360,24 @@ extension AgentViewModel {
             
             do {
                 try updated.write(to: URL(fileURLWithPath: path), atomically: true, encoding: .utf8)
-                let label = replaceAll ? "\(occurrences) occurrences" : "1 occurrence"
-                return "Replaced \(label) in \(path)"
+                // Build unified diff with more context (up to 10 lines each side)
+                let oldLines = old.components(separatedBy: "\n")
+                let newLines = new.components(separatedBy: "\n")
+                var diffOutput = "Replaced \(replaceAll ? "\(occurrences) occurrences" : "1 occurrence") in \(path)\n\nDiff:\n```diff\n"
+                if oldLines.count <= 10 {
+                    for line in oldLines { diffOutput += "- \(line)\n" }
+                } else {
+                    for line in oldLines.prefix(10) { diffOutput += "- \(line)\n" }
+                    diffOutput += "- ... (\(oldLines.count) lines total)\n"
+                }
+                if newLines.count <= 10 {
+                    for line in newLines { diffOutput += "+ \(line)\n" }
+                } else {
+                    for line in newLines.prefix(10) { diffOutput += "+ \(line)\n" }
+                    diffOutput += "+ ... (\(newLines.count) lines total)\n"
+                }
+                diffOutput += "```"
+                return diffOutput
             } catch {
                 return "Error: \(error.localizedDescription)"
             }
@@ -1084,10 +1100,20 @@ extension AgentViewModel {
                             let replaceAll = input["replace_all"] as? Bool ?? false
                             appendLog("📝 Edit: \(filePath)")
                             let output = await Self.offMain { CodingService.editFile(path: filePath, oldString: oldString, newString: newString, replaceAll: replaceAll) }
-                            // Show compact diff preview
-                            let oldPreview = Self.preview(oldString, lines: 3)
-                            let newPreview = Self.preview(newString, lines: 3)
-                            appendLog("```diff\n- \(oldPreview)\n+ \(newPreview)\n```")
+                            // Show unified diff with more context (up to 10 lines each side)
+                            let oldLines = oldString.components(separatedBy: "\n")
+                            let newLines = newString.components(separatedBy: "\n")
+                            let oldPreview = oldLines.count <= 10 ? oldString : oldLines.prefix(10).joined(separator: "\n") + "\n... (\(oldLines.count) lines total)"
+                            let newPreview = newLines.count <= 10 ? newString : newLines.prefix(10).joined(separator: "\n") + "\n... (\(newLines.count) lines total)"
+                            var diffOutput = "```diff\n"
+                            for line in oldPreview.components(separatedBy: "\n") {
+                                diffOutput += "- \(line)\n"
+                            }
+                            for line in newPreview.components(separatedBy: "\n") {
+                                diffOutput += "+ \(line)\n"
+                            }
+                            diffOutput += "```"
+                            appendLog(diffOutput)
                             appendLog(output)
                             commandsRun.append("edit_file: \(filePath)")
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
