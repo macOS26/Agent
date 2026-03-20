@@ -16,9 +16,9 @@ final class ToolPreferencesService {
 
     /// Tools enabled by default for Apple Intelligence (small context window).
     static let appleAIDefaults: Set<String> = [
-        "task_complete", "list_agent_scripts", "run_agent_script",
-        "list_native_tools", "apple_event_query",
-        "run_applescript", "run_osascript"
+        AgentTools.Name.taskComplete, AgentTools.Name.listAgentScripts, AgentTools.Name.runAgentScript,
+        AgentTools.Name.listNativeTools, AgentTools.Name.appleEventQuery,
+        AgentTools.Name.runApplescript, AgentTools.Name.runOsascript
     ]
 
     private init() {

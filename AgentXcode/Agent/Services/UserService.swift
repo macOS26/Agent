@@ -1,6 +1,123 @@
 import AppKit
 import ServiceManagement
 
+// MARK: - SMAppService Safe Wrapper
+/// Safely wraps SMAppService operations to prevent crashes from malformed/missing plists.
+/// The crash happens inside Objective-C code that Swift can't catch, so we verify
+/// the plist exists BEFORE calling SMAppService methods.
+enum SafeSMAppService {
+    /// The plist filename for user agent
+    static let userAgentPlistName = "Agent.app.toddbruss.user.plist"
+
+    /// Path to the plist inside the app bundle (where SMAppService reads from)
+    static var bundlePlistURL: URL? {
+        Bundle.main.bundleURL
+            .appendingPathComponent("Contents/Library/LaunchAgents")
+            .appendingPathComponent(userAgentPlistName)
+    }
+
+    /// Check if the user agent plist exists and is readable inside the app bundle
+    static func userAgentPlistExists() -> Bool {
+        guard let plistURL = bundlePlistURL else { return false }
+        let path = plistURL.path
+
+        // Check file exists
+        guard FileManager.default.fileExists(atPath: path) else { return false }
+
+        // Check file is readable
+        guard FileManager.default.isReadableFile(atPath: path) else { return false }
+
+        // Verify file has valid content (not empty, not corrupted)
+        guard let data = FileManager.default.contents(atPath: path),
+              !data.isEmpty,
+              let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil),
+              plist is [String: Any] else {
+            return false
+        }
+
+        return true
+    }
+    
+    /// Create user agent service ONLY if plist is valid
+    static func createUserAgent() -> SMAppService? {
+        // CRITICAL: Only create SMAppService if plist exists and is valid
+        // SMAppService crashes in Objective-C code if plist is malformed
+        guard userAgentPlistExists() else { return nil }
+        return SMAppService.agent(plistName: userAgentPlistName)
+    }
+    
+    /// Safely check if user agent is ready - returns false if any issue
+    static func isUserAgentReady() -> Bool {
+        // First verify plist exists
+        guard userAgentPlistExists() else { return false }
+        
+        // Create service and check status (may still crash in ObjC)
+        guard let service = createUserAgent() else { return false }
+        
+        // Accessing .status could crash if plist is malformed, but we validated above
+        return service.status == .enabled
+    }
+    
+    /// Safely register user agent with comprehensive error handling
+    static func registerUserAgent() -> (success: Bool, message: String) {
+        // First verify plist exists
+        guard userAgentPlistExists() else {
+            return (false, "User agent plist not found in app bundle. Rebuild and reinstall Agent.")
+        }
+        
+        guard let service = createUserAgent() else {
+            return (false, "User agent unavailable. Reinstall Agent.")
+        }
+        
+        let status = service.status
+        let statusName = statusNameFor(status)
+        
+        do {
+            try service.register()
+            return (true, "User agent registered. (was: \(statusName))")
+        } catch {
+            // Check if already enabled after attempted registration
+            if service.status == .enabled {
+                return (true, "User agent is active.")
+            }
+            if service.status == .requiresApproval {
+                SMAppService.openSystemSettingsLoginItems()
+                NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.LoginItems-Settings.extension")!)
+                return (false, "Please approve Agent in System Settings > Login Items.")
+            }
+            // Try re-registering if was enabled
+            if status == .enabled {
+                try? service.unregister()
+                do {
+                    try service.register()
+                    return (true, "User agent updated.")
+                } catch {
+                    return (false, "Update failed: \(error.localizedDescription)")
+                }
+            }
+            return (false, "Registration failed: \(error.localizedDescription)")
+        }
+    }
+    
+    /// Safely unregister user agent
+    static func unregisterUserAgent() {
+        guard userAgentPlistExists(),
+              let service = createUserAgent() else { return }
+        try? service.unregister()
+    }
+    
+    /// Get status name safely
+    private static func statusNameFor(_ status: SMAppService.Status) -> String {
+        switch status {
+        case .notRegistered: return "notRegistered"
+        case .enabled: return "enabled"
+        case .requiresApproval: return "requiresApproval"
+        case .notFound: return "notFound"
+        @unknown default: return "unknown"
+        }
+    }
+}
+
 final class UserOutputHandler: NSObject, UserProgressProtocol, @unchecked Sendable {
     private let handler: @Sendable (String) -> Void
 
@@ -23,47 +140,13 @@ final class UserService {
     nonisolated init() {}
 
     var userReady: Bool {
-        SMAppService.agent(plistName: "Agent.app.toddbruss.user.plist").status == .enabled
+        SafeSMAppService.isUserAgentReady()
     }
 
     @discardableResult
     func registerUser() -> String {
-        let service = SMAppService.agent(plistName: "Agent.app.toddbruss.user.plist")
-        let status = service.status
-
-        let statusName: String
-        switch status {
-        case .notRegistered: statusName = "notRegistered"
-        case .enabled: statusName = "enabled"
-        case .requiresApproval: statusName = "requiresApproval"
-        case .notFound: statusName = "notFound"
-        @unknown default: statusName = "unknown"
-        }
-
-        do {
-            try service.register()
-            return "User agent registered. (was: \(statusName))"
-        } catch {
-            let afterStatus = service.status
-            if afterStatus == .enabled {
-                return "User agent is active."
-            }
-            if afterStatus == .requiresApproval {
-                SMAppService.openSystemSettingsLoginItems()
-                NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.LoginItems-Settings.extension")!)
-                return "Please approve Agent in System Settings > Login Items. (was: \(statusName))"
-            }
-            if status == .enabled {
-                try? service.unregister()
-                do {
-                    try service.register()
-                    return "User agent updated."
-                } catch {
-                    return "Update failed: \(error.localizedDescription) (status: \(statusName))"
-                }
-            }
-            return "Registration failed: \(error.localizedDescription) (status: \(statusName))"
-        }
+        let result = SafeSMAppService.registerUserAgent()
+        return result.message
     }
 
     /// Completely shut down and unregister the user agent.
@@ -74,8 +157,7 @@ final class UserService {
         try? kill.run()
         kill.waitUntilExit()
 
-        let service = SMAppService.agent(plistName: "Agent.app.toddbruss.user.plist")
-        try? service.unregister()
+        SafeSMAppService.unregisterUserAgent()
     }
 
     /// Kill any stale agent processes, unregister, and re-register.
@@ -88,9 +170,7 @@ final class UserService {
         try? kill.run()
         kill.waitUntilExit()
 
-        // Unregister then re-register
-        let service = SMAppService.agent(plistName: "Agent.app.toddbruss.user.plist")
-        try? service.unregister()
+        SafeSMAppService.unregisterUserAgent()
         // Brief pause for launchd to clean up
         Thread.sleep(forTimeInterval: 0.5)
         return registerUser()

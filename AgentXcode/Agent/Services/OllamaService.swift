@@ -311,8 +311,47 @@ final class OllamaService {
         var parsedToolFromText = false
 
         if let text = message["content"] as? String, !text.isEmpty {
+            // Check for DeepSeek V3.1 tool calls with special token markers
+            if let deepSeekCalls = Self.extractDeepSeekToolCalls(from: text) {
+                let normalized = text.replacingOccurrences(of: "｜", with: "|").replacingOccurrences(of: "▁", with: "_")
+                if let markerStart = normalized.range(of: "<|tool_calls_begin|>") ?? normalized.range(of: "tool_calls_begin") {
+                    let beforeText = String(text[text.startIndex..<markerStart.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !beforeText.isEmpty {
+                        contentBlocks.append(["type": "text", "text": beforeText])
+                    }
+                }
+                for call in deepSeekCalls {
+                    contentBlocks.append([
+                        "type": "tool_use",
+                        "id": UUID().uuidString,
+                        "name": call.name,
+                        "input": call.input
+                    ])
+                }
+                parsedToolFromText = true
+            }
+            // Check for DeepSeek V3.2 DSML-style tool calls (<function_calls><invoke name="...">)
+            else if let dsmlCalls = Self.extractDSMLToolCalls(from: text) {
+                // Extract text before the first <function_calls> or <invoke tag
+                let cleaned = text.replacingOccurrences(of: "｜DSML｜", with: "").replacingOccurrences(of: "|DSML|", with: "")
+                if let markerStart = cleaned.range(of: "<function_calls>") ?? cleaned.range(of: "<invoke") {
+                    let beforeText = String(cleaned[cleaned.startIndex..<markerStart.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !beforeText.isEmpty {
+                        contentBlocks.append(["type": "text", "text": beforeText])
+                    }
+                }
+                for call in dsmlCalls {
+                    contentBlocks.append([
+                        "type": "tool_use",
+                        "id": UUID().uuidString,
+                        "name": call.name,
+                        "input": call.input
+                    ])
+                }
+                parsedToolFromText = true
+            }
             // Check if model wrote a tool call as plain text (common with Ollama models)
-            if let (toolName, nameRange, parsed) = Self.extractFirstToolCall(from: text) {
+            else if let (toolName, nameRange, parsed) = Self.extractFirstToolCall(from: text) {
                 let beforeText = String(text[..<nameRange.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
                 if !beforeText.isEmpty {
                     contentBlocks.append(["type": "text", "text": beforeText])
@@ -399,6 +438,10 @@ final class OllamaService {
         var fullText = ""
         var contentBlocks: [[String: Any]] = []
         let stopReason = "end_turn"
+        var insideToolCall = false
+        var pendingBuffer = ""  // Buffer text that might be the start of a tool call
+        var repetitionCount = 0
+        var lastSegment = ""
 
         // Ollama streaming returns NDJSON: one JSON object per line
         for try await line in bytes.lines {
@@ -413,7 +456,53 @@ final class OllamaService {
                let content = message["content"] as? String,
                !content.isEmpty {
                 fullText += content
-                onTextDelta(content)
+
+                // Repetition detection: if the model keeps emitting the same ~50 char segment, bail out
+                if fullText.count > 200 {
+                    let recentEnd = fullText.endIndex
+                    let recentStart = fullText.index(recentEnd, offsetBy: -min(60, fullText.count))
+                    let segment = String(fullText[recentStart..<recentEnd]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    if segment.count > 20 && segment == lastSegment {
+                        repetitionCount += 1
+                        if repetitionCount >= 3 {
+                            // Truncate the repeated text from fullText
+                            break
+                        }
+                    } else {
+                        lastSegment = segment
+                        repetitionCount = 0
+                    }
+                }
+
+                if insideToolCall { continue }
+
+                pendingBuffer += content
+
+                // Check if the buffer contains a confirmed tool call start
+                let check = pendingBuffer.replacingOccurrences(of: "｜", with: "|").replacingOccurrences(of: "▁", with: "_")
+                if check.contains("<|tool_calls_begin|>") || check.contains("<function_calls>") || check.contains("<invoke ") {
+                    insideToolCall = true
+                    // Flush any text before the marker
+                    let normalized = pendingBuffer.replacingOccurrences(of: "｜", with: "|").replacingOccurrences(of: "▁", with: "_")
+                    for marker in ["<|tool_calls_begin|>", "<function_calls>", "<invoke "] {
+                        if let range = normalized.range(of: marker) {
+                            let before = String(pendingBuffer[pendingBuffer.startIndex..<range.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+                            if !before.isEmpty { onTextDelta(before) }
+                            break
+                        }
+                    }
+                    pendingBuffer = ""
+                    continue
+                }
+
+                // If buffer might be the start of a tag, hold it back
+                if check.contains("<") {
+                    continue  // Keep buffering
+                }
+
+                // No tag detected — flush the buffer
+                onTextDelta(pendingBuffer)
+                pendingBuffer = ""
             }
 
             // Check for tool calls in streaming response
@@ -440,8 +529,36 @@ final class OllamaService {
             }
         }
 
+        // Flush any remaining buffered text (no tool call detected)
+        if !pendingBuffer.isEmpty && !insideToolCall {
+            onTextDelta(pendingBuffer)
+        }
+
         // Only parse tool calls from text if no native tool_calls were found
         var parsedToolFromText = false
+        if contentBlocks.isEmpty, let deepSeekCalls = Self.extractDeepSeekToolCalls(from: fullText) {
+            for call in deepSeekCalls {
+                contentBlocks.append([
+                    "type": "tool_use",
+                    "id": UUID().uuidString,
+                    "name": call.name,
+                    "input": call.input
+                ])
+            }
+            parsedToolFromText = true
+        }
+        // Check for DeepSeek V3.2 DSML format
+        if contentBlocks.isEmpty, let dsmlCalls = Self.extractDSMLToolCalls(from: fullText) {
+            for call in dsmlCalls {
+                contentBlocks.append([
+                    "type": "tool_use",
+                    "id": UUID().uuidString,
+                    "name": call.name,
+                    "input": call.input
+                ])
+            }
+            parsedToolFromText = true
+        }
         if contentBlocks.isEmpty, let (toolName, nameRange, parsed) = Self.extractFirstToolCall(from: fullText) {
             let beforeText = String(fullText[..<nameRange.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
             if !beforeText.isEmpty {
@@ -468,16 +585,7 @@ final class OllamaService {
     /// Find the earliest tool call by position in the text, parse its JSON args.
     /// Returns (toolName, rangeOfName, parsedArgs) or nil.
     nonisolated private static func extractFirstToolCall(from text: String) -> (String, Range<String.Index>, [String: Any])? {
-        let toolNames = [
-            "read_file", "write_file", "edit_file", "list_files", "search_files",
-            "git_status", "git_diff", "git_log", "git_commit", "git_diff_patch", "git_branch",
-            "apple_event_query",
-            "execute_agent_command", "execute_daemon_command", "task_complete",
-            "list_agent_scripts", "read_agent_script", "create_agent_script",
-            "update_agent_script", "run_agent_script", "delete_agent_script",
-            "xcode_build", "xcode_run", "xcode_list_projects",
-            "xcode_select_project", "xcode_grant_permission"
-        ]
+        let toolNames = AgentTools.toolNames
 
         var earliest: (String, Range<String.Index>, [String: Any])? = nil
 
@@ -497,6 +605,137 @@ final class OllamaService {
         }
 
         return earliest
+    }
+
+    /// Parse DeepSeek-style tool calls from text using special token markers.
+    /// V3.1 format: <｜tool▁call▁begin｜>function_name<｜tool▁sep｜>{"arg":"val"}<｜tool▁call▁end｜>
+    /// Also handles: <｜tool▁call▁begin｜>{"name":"...","parameters":{...}}<｜tool▁call▁end｜>
+    /// Unicode variants with fullwidth ｜ and half-width | are both supported.
+    nonisolated private static func extractDeepSeekToolCalls(from text: String) -> [(name: String, input: [String: Any])]? {
+        // Normalize: DeepSeek uses fullwidth ｜ (U+FF5C) and ▁ (U+2581) in tokens
+        let normalized = text
+            .replacingOccurrences(of: "｜", with: "|")
+            .replacingOccurrences(of: "▁", with: "_")
+            .replacingOccurrences(of: "\u{2581}", with: "_")
+
+        guard normalized.contains("tool_calls_begin") || normalized.contains("tool_call_begin") else {
+            return nil
+        }
+
+        var results: [(String, [String: Any])] = []
+        var searchRange = normalized.startIndex..<normalized.endIndex
+
+        while let beginRange = normalized.range(of: "tool_call_begin", range: searchRange) {
+            let afterBegin = beginRange.upperBound
+            guard let endRange = normalized.range(of: "tool_call_end", range: afterBegin..<normalized.endIndex) else { break }
+
+            let rawContent = String(normalized[afterBegin..<endRange.lowerBound])
+                .replacingOccurrences(of: "<|", with: "")
+                .replacingOccurrences(of: "|>", with: "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+
+            // V3.1 format: function_name\ntool_sep\n{"arg":"val"}
+            // After stripping <| and |>, tool_sep appears as plain text
+            if rawContent.contains("tool_sep") {
+                let parts = rawContent.components(separatedBy: "tool_sep")
+                let funcName = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
+                let argsText = parts.dropFirst().joined(separator: "tool_sep").trimmingCharacters(in: .whitespacesAndNewlines)
+                if !funcName.isEmpty {
+                    var params: [String: Any] = [:]
+                    if let data = argsText.data(using: .utf8),
+                       let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                        params = json
+                    }
+                    results.append((funcName, params))
+                }
+            }
+            // Legacy format: {"name": "...", "parameters": {...}}
+            else if let data = rawContent.data(using: .utf8),
+                    let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                    let name = json["name"] as? String {
+                let params = json["parameters"] as? [String: Any]
+                    ?? json["arguments"] as? [String: Any]
+                    ?? [:]
+                results.append((name, params))
+            }
+
+            searchRange = endRange.upperBound..<normalized.endIndex
+        }
+
+        return results.isEmpty ? nil : results
+    }
+
+    /// Parse DeepSeek V3.2 DSML-style tool calls from text.
+    /// V3.2 emits: <｜DSML｜function_calls><｜DSML｜invoke name="tool">
+    ///   <｜DSML｜parameter name="key" string="true">value</｜DSML｜parameter>
+    /// </｜DSML｜invoke></｜DSML｜function_calls>
+    /// Ollama strips the ｜DSML｜ tokens, leaving plain XML-like tags.
+    nonisolated private static func extractDSMLToolCalls(from text: String) -> [(name: String, input: [String: Any])]? {
+        // Strip any remaining DSML tokens
+        let cleaned = text
+            .replacingOccurrences(of: "｜DSML｜", with: "")
+            .replacingOccurrences(of: "|DSML|", with: "")
+
+        guard cleaned.contains("<function_calls>") || cleaned.contains("<invoke") else {
+            return nil
+        }
+
+        var results: [(String, [String: Any])] = []
+
+        // Find each <invoke name="...">...</invoke> block
+        let invokePattern = #"<invoke\s+name="([^"]+)">(.*?)</invoke>"#
+        guard let invokeRegex = try? NSRegularExpression(pattern: invokePattern, options: [.dotMatchesLineSeparators]) else {
+            return nil
+        }
+
+        let nsText = cleaned as NSString
+        let matches = invokeRegex.matches(in: cleaned, range: NSRange(location: 0, length: nsText.length))
+
+        for match in matches {
+            guard match.numberOfRanges >= 3 else { continue }
+            let name = nsText.substring(with: match.range(at: 1))
+            let body = nsText.substring(with: match.range(at: 2))
+
+            // Parse <parameter name="key" string="true|false">value</parameter>
+            var params: [String: Any] = [:]
+            let paramPattern = #"<parameter\s+name="([^"]+)"\s+string="(true|false)">(.*?)</parameter>"#
+            if let paramRegex = try? NSRegularExpression(pattern: paramPattern, options: [.dotMatchesLineSeparators]) {
+                let nsBody = body as NSString
+                let paramMatches = paramRegex.matches(in: body, range: NSRange(location: 0, length: nsBody.length))
+                for pm in paramMatches {
+                    guard pm.numberOfRanges >= 4 else { continue }
+                    let key = nsBody.substring(with: pm.range(at: 1))
+                    let isString = nsBody.substring(with: pm.range(at: 2)) == "true"
+                    let value = nsBody.substring(with: pm.range(at: 3))
+
+                    if isString {
+                        params[key] = value
+                    } else {
+                        // Try to parse as JSON value (number, bool, object, array)
+                        if let data = value.data(using: .utf8),
+                           let parsed = try? JSONSerialization.jsonObject(with: data) {
+                            params[key] = parsed
+                        } else {
+                            params[key] = value
+                        }
+                    }
+                }
+            }
+
+            // If no parameters found but body has JSON, try parsing it
+            if params.isEmpty {
+                let trimmedBody = body.trimmingCharacters(in: .whitespacesAndNewlines)
+                if trimmedBody.hasPrefix("{"),
+                   let data = trimmedBody.data(using: .utf8),
+                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                    params = json
+                }
+            }
+
+            results.append((name, params))
+        }
+
+        return results.isEmpty ? nil : results
     }
 
     /// Extract the first balanced JSON object from a string, ignoring trailing garbage.

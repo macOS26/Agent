@@ -5,8 +5,8 @@ import Foundation
 // Scripts compile as dynamic libraries (.dylib) loaded into Agent! via dlopen.
 // ScriptService adds/removes entries when scripts are created/deleted.
 let scriptNames = [
-    "AccessibilityRecorder",
     "AXDemo",
+    "AccessibilityRecorder",
     "CapturePhoto",
     "CheckMail",
     "CreateDMG",
@@ -25,68 +25,30 @@ let scriptNames = [
     "PlayRandomFromCurrent",
     "QuitApps",
     "RunningApps",
+    "SDEFtoJSON",
     "SafariSearch",
     "SaveImageFromClipboard",
-    "SDEFtoJSON",
+    "Selenium",
     "SendGroupMessage",
     "SendMessage",
-    "Selenium",
     "SystemInfo",
     "TodayEvents",
+    "WebForm",
+    "WebNavigate",
+    "WebScrape",
 ]
 
-// Bridge names match those in AppleEventBridges package
-let bridgeNames = [
-    "AdobeIllustratorBridge",
-    "AppleScriptUtilityBridge",
-    "AutomatorApplicationStubBridge",
-    "AutomatorBridge",
-    "BluetoothFileExchangeBridge",
-    "CalendarBridge",
-    "ConsoleBridge",
-    "ContactsBridge",
-    "DatabaseEventsBridge",
-    "DeveloperBridge",
-    "FinalCutProCreatorStudioBridge",
-    "FinderBridge",
-    "FirefoxBridge",
-    "FolderActionsSetupBridge",
-    "GoogleChromeBridge",
-    "ImageEventsBridge",
-    "InstrumentsBridge",
-    "KeynoteBridge",
-    "LogicProCreatorStudioBridge",
-    "MailBridge",
-    "MessagesBridge",
-    "MicrosoftEdgeBridge",
-    "MusicBridge",
-    "NotesBridge",
-    "NumbersBridge",
-    "NumbersCreatorStudioBridge",
-    "PagesBridge",
-    "PagesCreatorStudioBridge",
-    "PhotosBridge",
-    "PixelmatorProBridge",
-    "PreviewBridge",
-    "QuickTimePlayerBridge",
-    "RemindersBridge",
-    "SafariBridge",
-    "ScreenSharingBridge",
-    "ScriptEditorBridge",
-    "SeleniumBridge",
-    "ShortcutsBridge",
-    "ShortcutsEventsBridge",
-    "SimulatorBridge",
-    "SystemEventsBridge",
-    "SystemInformationBridge",
-    "SystemSettingsBridge",
-    "TVBridge",
-    "TerminalBridge",
-    "TextEditBridge",
-    "UTMBridge",
-    "VoiceOverBridge",
-    "WishBridge",
-]
+// Auto-detect bridge names from AppleEventBridges source files (single source of truth)
+let bridgeNames: [String] = {
+    let fileManager = FileManager.default
+    let currentPath = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+    let bridgesPath = currentPath.appendingPathComponent("../../../AppleEventBridges/Sources/AppleEventBridges")
+    guard let files = try? fileManager.contentsOfDirectory(atPath: bridgesPath.path) else { return [] }
+    return files
+        .filter { $0.hasSuffix("Bridge.swift") && $0 != "ScriptingBridgeCommon.swift" }
+        .map { $0.replacingOccurrences(of: ".swift", with: "") }
+        .sorted()
+}()
 
 let scripts = "Sources/Scripts"
 let bridgeNameSet = Set(bridgeNames)
@@ -96,9 +58,9 @@ let packageDependencies: [PackageDescription.Package.Dependency] = [
     .package(name: "AppleEventBridges", path: "../../../AppleEventBridges")
 ]
 
-// Build Target.Dependency array for each bridge
+// Build Target.Dependency for each bridge (explicit package reference)
 func bridgeDep(_ name: String) -> Target.Dependency {
-    .init(stringLiteral: name)
+    .product(name: name, package: "AppleEventBridges")
 }
 
 // Auto-detect bridge imports in each script

@@ -2,7 +2,14 @@
 import AppKit
 import SQLite3
 
-enum APIProvider: String, CaseIterable {
+/// Per-tab LLM configuration for multi-main-tab support
+struct LLMConfig: Codable {
+    var provider: APIProvider
+    var model: String
+    var displayName: String
+}
+
+enum APIProvider: String, CaseIterable, Codable {
     case claude = "claude"
     case openAI = "openAI"
     case deepSeek = "deepSeek"
@@ -374,10 +381,75 @@ final class AgentViewModel {
 
     func openScriptTab(scriptName: String) -> ScriptTab {
         let tab = ScriptTab(scriptName: scriptName)
+        // Inherit LLM config from the currently selected main tab
+        if let selId = selectedTabId,
+           let parent = scriptTabs.first(where: { $0.id == selId && $0.isMainTab }) {
+            tab.parentTabId = parent.id
+        }
         scriptTabs.append(tab)
         selectedTabId = tab.id
         persistScriptTabs()
         return tab
+    }
+
+    /// Create a new main tab with its own LLM provider/model.
+    @discardableResult
+    func createMainTab(config: LLMConfig) -> ScriptTab {
+        let tab = ScriptTab(llmConfig: config)
+        scriptTabs.append(tab)
+        selectedTabId = tab.id
+        persistScriptTabs()
+        return tab
+    }
+
+    /// Resolve the LLM provider and model for a given tab.
+    /// Main tabs use their own config; script tabs inherit from parent; fallback to global.
+    func resolvedLLMConfig(for tab: ScriptTab) -> (provider: APIProvider, model: String) {
+        if let config = tab.llmConfig {
+            return (config.provider, config.model)
+        }
+        if let parentId = tab.parentTabId,
+           let parent = scriptTabs.first(where: { $0.id == parentId }),
+           let config = parent.llmConfig {
+            return (config.provider, config.model)
+        }
+        return (selectedProvider, globalModelForProvider(selectedProvider))
+    }
+
+    /// Return the current global model ID for the given provider.
+    func globalModelForProvider(_ provider: APIProvider) -> String {
+        switch provider {
+        case .claude: return selectedModel
+        case .openAI: return openAIModel
+        case .deepSeek: return deepSeekModel
+        case .huggingFace: return huggingFaceModel
+        case .ollama: return ollamaModel
+        case .localOllama: return localOllamaModel
+        case .foundationModel: return "Apple Intelligence"
+        }
+    }
+
+    /// Return a human-readable display name for a model ID given its provider.
+    func modelDisplayName(provider: APIProvider, modelId: String) -> String {
+        switch provider {
+        case .claude:
+            return availableClaudeModels.first(where: { $0.id == modelId })?.displayName ?? modelId
+        case .openAI:
+            return openAIModels.first(where: { $0.id == modelId })?.name
+                ?? Self.defaultOpenAIModels.first(where: { $0.id == modelId })?.name ?? modelId
+        case .deepSeek:
+            return deepSeekModels.first(where: { $0.id == modelId })?.name
+                ?? Self.defaultDeepSeekModels.first(where: { $0.id == modelId })?.name ?? modelId
+        case .huggingFace:
+            return huggingFaceModels.first(where: { $0.id == modelId })?.name
+                ?? Self.defaultHuggingFaceModels.first(where: { $0.id == modelId })?.name ?? modelId
+        case .ollama:
+            return ollamaModels.first(where: { $0.id == modelId })?.name ?? modelId
+        case .localOllama:
+            return localOllamaModels.first(where: { $0.id == modelId })?.name ?? modelId
+        case .foundationModel:
+            return "Apple Intelligence"
+        }
     }
 
     func closeScriptTab(id: UUID) {
@@ -418,6 +490,10 @@ final class AgentViewModel {
         tab.isCancelled = true
         tab.cancelHandler?()
         tab.isRunning = false
+        // Also cancel any running LLM task
+        if tab.isLLMRunning {
+            stopTabTask(tab: tab)
+        }
     }
 
     func selectMainTab() {
@@ -436,7 +512,14 @@ final class AgentViewModel {
         UserDefaults.standard.set(selectedTabId?.uuidString, forKey: "agentSelectedTabId")
 
         let tabData = scriptTabs.map { tab in
-            (id: tab.id, scriptName: tab.scriptName, activityLog: tab.activityLog, exitCode: tab.exitCode)
+            let configJSON: String? = {
+                guard let config = tab.llmConfig,
+                      let data = try? JSONEncoder().encode(config) else { return nil }
+                return String(data: data, encoding: .utf8)
+            }()
+            return (id: tab.id, scriptName: tab.scriptName, activityLog: tab.activityLog,
+                    exitCode: tab.exitCode, llmConfigJSON: configJSON,
+                    parentTabIdString: tab.parentTabId?.uuidString)
         }
         ChatHistoryStore.shared.saveScriptTabs(tabData)
     }
@@ -628,6 +711,16 @@ final class AgentViewModel {
     func registerAgent() {
         let msg = userService.registerUser()
         appendLog(msg)
+    }
+
+    func unregisterDaemon() {
+        helperService.shutdownDaemon()
+        appendLog("Helper daemon unregistered.")
+    }
+
+    func unregisterAgent() {
+        userService.shutdownAgent()
+        appendLog("User agent unregistered.")
     }
 
     func testConnection() {
@@ -1105,11 +1198,11 @@ final class AgentViewModel {
                 try? await Task.sleep(nanoseconds: 2_000_000_000)
             }
         }
-        // Last resort: set to Int.max so the first poll finds nothing,
-        // then the next poll will use the correct latest ROWID
+        // Cannot read chat.db — open Full Disk Access settings for the user
         lastSeenMessageROWID = Int.max
-        appendLog("Messages monitor: could not read chat.db, will sync on next poll")
+        appendLog("Messages monitor: Full Disk Access required to read iMessages. Opening System Settings…")
         flushLog()
+        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")!)
     }
 
     /// Poll for new incoming messages; log from enabled handles, act on "Agent!" prefix.

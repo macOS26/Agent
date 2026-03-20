@@ -364,7 +364,7 @@ enum NativeToolContext {
 
 // MARK: - Native Shell Tool
 
-/// Arguments the model generates when calling execute_user_command.
+/// Arguments the model generates when calling execute_agent_command.
 @Generable
 private struct ShellCommandArgs {
     @Guide(description: "Shell command")
@@ -377,7 +377,7 @@ private struct NativeShellTool: Tool {
     typealias Arguments = ShellCommandArgs
     typealias Output = AgentToolOutput
 
-    let name = "execute_agent_command"
+    let name = AgentTools.Name.executeAgentCommand
     let description = "Run a shell command"
 
     func call(arguments: ShellCommandArgs) async throws -> AgentToolOutput {
@@ -500,7 +500,7 @@ private struct NativeAppleScriptTool: Tool {
     typealias Arguments = AppleScriptArgs
     typealias Output = AgentToolOutput
 
-    let name = "run_applescript"
+    let name = AgentTools.Name.runApplescript
     let description = "Run AppleScript. Example: display dialog \"Hello\""
 
     func call(arguments: AppleScriptArgs) async throws -> AgentToolOutput {
@@ -523,7 +523,7 @@ private struct NativeOsaScriptTool: Tool {
     typealias Arguments = OsaScriptArgs
     typealias Output = AgentToolOutput
 
-    let name = "run_osascript"
+    let name = AgentTools.Name.runOsascript
     let description = "Run osascript. Example: say \"hello\""
 
     func call(arguments: OsaScriptArgs) async throws -> AgentToolOutput {
@@ -543,7 +543,7 @@ private struct NativeJXATool: Tool {
     typealias Arguments = JXAArgs
     typealias Output = AgentToolOutput
 
-    let name = "execute_javascript"
+    let name = AgentTools.Name.executeJavascript
     let description = "Run JavaScript for Automation (JXA). Example: var app = Application('Finder'); app.selection()"
 
     func call(arguments: JXAArgs) async throws -> AgentToolOutput {
@@ -557,7 +557,7 @@ private struct NativeReadFileTool: Tool {
     typealias Arguments = ReadFileArgs
     typealias Output = AgentToolOutput
 
-    let name = "read_file"
+    let name = AgentTools.Name.readFile
     let description = "Read a file"
 
     func call(arguments: ReadFileArgs) async throws -> AgentToolOutput {
@@ -578,7 +578,7 @@ private struct NativeWriteFileTool: Tool {
     typealias Arguments = WriteFileArgs
     typealias Output = AgentToolOutput
 
-    let name = "write_file"
+    let name = AgentTools.Name.writeFile
     let description = "Write a file"
 
     func call(arguments: WriteFileArgs) async throws -> AgentToolOutput {
@@ -598,7 +598,7 @@ private struct NativeEditFileTool: Tool {
     typealias Arguments = EditFileArgs
     typealias Output = AgentToolOutput
 
-    let name = "edit_file"
+    let name = AgentTools.Name.editFile
     let description = "Edit a file"
 
     func call(arguments: EditFileArgs) async throws -> AgentToolOutput {
@@ -656,7 +656,7 @@ private struct NativeListFilesTool: Tool {
     typealias Arguments = GlobArgs
     typealias Output = AgentToolOutput
 
-    let name = "list_files"
+    let name = AgentTools.Name.listFiles
     let description = "Find files by pattern"
 
     func call(arguments: GlobArgs) async throws -> AgentToolOutput {
@@ -674,7 +674,7 @@ private struct NativeSearchFilesTool: Tool {
     typealias Arguments = SearchArgs
     typealias Output = AgentToolOutput
 
-    let name = "search_files"
+    let name = AgentTools.Name.searchFiles
     let description = "Search file contents"
 
     func call(arguments: SearchArgs) async throws -> AgentToolOutput {
@@ -694,7 +694,7 @@ private struct NativeTaskCompleteTool: Tool {
     typealias Arguments = TaskCompleteArgs
     typealias Output = AgentToolOutput
 
-    let name = "task_complete"
+    let name = AgentTools.Name.taskComplete
     let description = "Mark task done"
 
     func call(arguments: TaskCompleteArgs) async throws -> AgentToolOutput {
@@ -716,7 +716,7 @@ private struct NativeGitStatusTool: Tool {
     typealias Arguments = GitRepoArgs
     typealias Output = AgentToolOutput
 
-    let name = "git_status"
+    let name = AgentTools.Name.gitStatus
     let description = "Git status"
 
     func call(arguments: GitRepoArgs) async throws -> AgentToolOutput {
@@ -730,7 +730,7 @@ private struct NativeGitCommitTool: Tool {
     typealias Arguments = GitCommitArgs
     typealias Output = AgentToolOutput
 
-    let name = "git_commit"
+    let name = AgentTools.Name.gitCommit
     let description = "Git commit"
 
     func call(arguments: GitCommitArgs) async throws -> AgentToolOutput {
@@ -745,7 +745,7 @@ private struct NativeGitLogTool: Tool {
     typealias Arguments = GitLogArgs
     typealias Output = AgentToolOutput
 
-    let name = "git_log"
+    let name = AgentTools.Name.gitLog
     let description = "Git log"
 
     func call(arguments: GitLogArgs) async throws -> AgentToolOutput {
@@ -760,7 +760,7 @@ private struct NativeGitDiffTool: Tool {
     typealias Arguments = GitDiffArgs
     typealias Output = AgentToolOutput
 
-    let name = "git_diff"
+    let name = AgentTools.Name.gitDiff
     let description = "Git diff"
 
     func call(arguments: GitDiffArgs) async throws -> AgentToolOutput {
@@ -780,7 +780,7 @@ private struct NativeListNativeToolsTool: Tool {
     typealias Arguments = NoArgs
     typealias Output = AgentToolOutput
 
-    let name = "list_native_tools"
+    let name = AgentTools.Name.listNativeTools
     let description = "List all enabled native tools."
 
     func call(arguments: NoArgs) async throws -> AgentToolOutput {
@@ -799,7 +799,7 @@ private struct NativeListMCPToolsTool: Tool {
     typealias Arguments = NoArgs
     typealias Output = AgentToolOutput
 
-    let name = "list_mcp_tools"
+    let name = AgentTools.Name.listMcpTools
     let description = "List all enabled MCP tools."
 
     func call(arguments: NoArgs) async throws -> AgentToolOutput {
@@ -837,7 +837,7 @@ private struct NativeListAppleScriptsTool: Tool {
     typealias Arguments = NoArgs
     typealias Output = AgentToolOutput
 
-    let name = "list_apple_scripts"
+    let name = AgentTools.Name.listAppleScripts
     let description = "List saved AppleScripts"
 
     func call(arguments: NoArgs) async throws -> AgentToolOutput {
@@ -853,7 +853,7 @@ private struct NativeRunAppleScriptTool: Tool {
     typealias Arguments = AppleScriptNameArgs
     typealias Output = AgentToolOutput
 
-    let name = "run_apple_script"
+    let name = AgentTools.Name.runAppleScript
     let description = "Run a saved AppleScript by name"
 
     func call(arguments: AppleScriptNameArgs) async throws -> AgentToolOutput {
@@ -875,7 +875,7 @@ private struct NativeSaveAppleScriptTool: Tool {
     typealias Arguments = SaveAppleScriptArgs
     typealias Output = AgentToolOutput
 
-    let name = "save_apple_script"
+    let name = AgentTools.Name.saveAppleScript
     let description = "Save an AppleScript for reuse"
 
     func call(arguments: SaveAppleScriptArgs) async throws -> AgentToolOutput {
@@ -890,7 +890,7 @@ private struct NativeDeleteAppleScriptTool: Tool {
     typealias Arguments = AppleScriptNameArgs
     typealias Output = AgentToolOutput
 
-    let name = "delete_apple_script"
+    let name = AgentTools.Name.deleteAppleScript
     let description = "Delete a saved AppleScript"
 
     func call(arguments: AppleScriptNameArgs) async throws -> AgentToolOutput {

@@ -11,6 +11,7 @@ struct ContentView: View {
     @State private var showSearch = false
     @State private var searchText = ""
     @FocusState private var isSearchFieldFocused: Bool
+    @FocusState private var isTaskFieldFocused: Bool
     @State private var currentMatchIndex = 0
     @State private var totalMatches = 0
     @State private var showMCPServers = false
@@ -20,6 +21,7 @@ struct ContentView: View {
     @State private var showAccessibility = false
     @State private var showQuitConfirm = false
     @State private var showClearConfirm = false
+    @State private var showNewTabSheet = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -63,6 +65,13 @@ struct ContentView: View {
                         .font(.caption)
                         .foregroundStyle(viewModel.messagesMonitorEnabled ? .secondary : .tertiary)
                 }
+
+                Button("Unregister") {
+                    viewModel.unregisterAgent()
+                    viewModel.unregisterDaemon()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
 
                 Button("Register") {
                     viewModel.registerAgent()
@@ -403,7 +412,7 @@ struct ContentView: View {
                         }
                     }
 
-                    TextField("Ask about \(tab.scriptName)...", text: Binding(
+                    TextField(tab.isMainTab ? "Enter task..." : "Ask about \(tab.scriptName)...", text: Binding(
                         get: { tab.taskInput },
                         set: { tab.taskInput = $0 }
                     ))
@@ -417,7 +426,10 @@ struct ContentView: View {
                     Button("Run") { vm.runTabTask(tab: t) }
                         .buttonStyle(.borderedProminent)
                         .controlSize(.regular)
-                        .disabled(tab.taskInput.isEmpty || (viewModel.selectedProvider == .claude && viewModel.apiKey.isEmpty))
+                        .disabled(tab.taskInput.isEmpty || {
+                            let provider = tab.llmConfig?.provider ?? viewModel.selectedProvider
+                            return provider == .claude && viewModel.apiKey.isEmpty
+                        }())
                 }
                 .padding()
             } else {
@@ -467,6 +479,7 @@ struct ContentView: View {
 
                     TextField("Enter task...", text: $viewModel.taskInput)
                         .textFieldStyle(.roundedBorder)
+                        .focused($isTaskFieldFocused)
                         .onSubmit {
                             if !viewModel.taskInput.isEmpty {
                                 viewModel.run()
@@ -482,6 +495,7 @@ struct ContentView: View {
             }
         }
         .frame(minWidth: 900, minHeight: 500)
+        .onAppear { isTaskFieldFocused = true }
         .overlay {
             DependencyOverlay(status: dependencyStatus, isVisible: $showDependencyOverlay)
         }
@@ -490,6 +504,9 @@ struct ContentView: View {
             Button("Cancel", role: .cancel) { }
         } message: {
             Text("Are you sure you want to close the window and quit?")
+        }
+        .sheet(isPresented: $showNewTabSheet) {
+            NewMainTabSheet(viewModel: viewModel)
         }
         .onReceive(NotificationCenter.default.publisher(for: .appWillQuit)) { _ in
             viewModel.stopAll()
@@ -517,6 +534,13 @@ struct ContentView: View {
                     } else {
                         // Tabs exist but Main is selected — do nothing
                     }
+                    return nil
+                }
+
+                // Cmd+T to create a new main LLM tab
+                if event.modifierFlags.contains(.command),
+                   event.charactersIgnoringModifiers == "t" {
+                    showNewTabSheet = true
                     return nil
                 }
 

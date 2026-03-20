@@ -1,59 +1,18 @@
 // swift-tools-version: 6.2
 import PackageDescription
+import Foundation
 
-// Bridge names for individual targets (used by AgentScripts)
-let bridgeNames = [
-    "AdobeIllustratorBridge",
-    "AppleScriptUtilityBridge",
-    "AutomatorApplicationStubBridge",
-    "AutomatorBridge",
-    "BluetoothFileExchangeBridge",
-    "CalendarBridge",
-    "ConsoleBridge",
-    "ContactsBridge",
-    "DatabaseEventsBridge",
-    "DeveloperBridge",
-    "FinalCutProCreatorStudioBridge",
-    "FinderBridge",
-    "FirefoxBridge",
-    "FolderActionsSetupBridge",
-    "GoogleChromeBridge",
-    "ImageEventsBridge",
-    "InstrumentsBridge",
-    "KeynoteBridge",
-    "LogicProCreatorStudioBridge",
-    "MailBridge",
-    "MessagesBridge",
-    "MicrosoftEdgeBridge",
-    "MusicBridge",
-    "NotesBridge",
-    "NumbersBridge",
-    "NumbersCreatorStudioBridge",
-    "PagesBridge",
-    "PagesCreatorStudioBridge",
-    "PhotosBridge",
-    "PixelmatorProBridge",
-    "PreviewBridge",
-    "QuickTimePlayerBridge",
-    "RemindersBridge",
-    "SafariBridge",
-    "ScreenSharingBridge",
-    "ScriptEditorBridge",
-    "SeleniumBridge",
-    "ShortcutsBridge",
-    "ShortcutsEventsBridge",
-    "SimulatorBridge",
-    "SystemEventsBridge",
-    "SystemInformationBridge",
-    "SystemSettingsBridge",
-    "TVBridge",
-    "TerminalBridge",
-    "TextEditBridge",
-    "UTMBridge",
-    "VoiceOverBridge",
-    "WishBridge",
-    "XcodeScriptingBridge",
-]
+// Auto-detect bridge names from actual source files (single source of truth)
+let bridgeNames: [String] = {
+    let fileManager = FileManager.default
+    let currentPath = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+    let sourcesPath = currentPath.appendingPathComponent("Sources/AppleEventBridges")
+    guard let files = try? fileManager.contentsOfDirectory(atPath: sourcesPath.path) else { return [] }
+    return files
+        .filter { $0.hasSuffix("Bridge.swift") && $0 != "ScriptingBridgeCommon.swift" }
+        .map { $0.replacingOccurrences(of: ".swift", with: "") }
+        .sorted()
+}()
 
 let bridgePath = "Sources/AppleEventBridges"
 let commonTarget: Target.Dependency = "ScriptingBridgeCommon"

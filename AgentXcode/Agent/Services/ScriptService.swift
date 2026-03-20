@@ -46,6 +46,17 @@ final class ScriptService {
     private var bundleScripts: URL? {
         bundleSources?.appendingPathComponent("Scripts")
     }
+
+    /// Path to the AppleEventBridges package bundled in app resources
+    private static let bundledBridgesPath: URL? = {
+        Bundle.main.resourceURL?.appendingPathComponent("AppleEventBridges")
+    }()
+
+    /// Installed location: ~/Documents/AgentScript/AppleEventBridges/
+    static let installedBridgesPath: URL = {
+        FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Documents/AgentScript/AppleEventBridges")
+    }()
     // MARK: - Package.swift generation
 
     /// Generate a clean Package.swift from the actual files on disk.
@@ -62,19 +73,15 @@ final class ScriptService {
 
         let scriptList = scriptNames.map { "    \"\($0)\"," }.joined(separator: "\n")
 
-        // Read bridge names from AppleEventBridges package (single source of truth)
-        let bridgesPackagePath = Self.agentsDir
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appendingPathComponent("AppleEventBridges/Package.swift")
+        // Read bridge names from the installed copy at ~/Documents/AgentScript/AppleEventBridges/
+        let bridgesPackagePath = Self.installedBridgesPath.appendingPathComponent("Sources/AppleEventBridges")
         let bridgeNames: [String] = {
-            guard let content = try? String(contentsOf: bridgesPackagePath, encoding: .utf8),
-                  let arrayStart = content.range(of: "let bridgeNames = ["),
-                  let arrayEnd = content[arrayStart.upperBound...].range(of: "]") else { return [] }
-            let arrayContent = content[arrayStart.upperBound..<arrayEnd.lowerBound]
-            return arrayContent.components(separatedBy: "\n")
-                .map { $0.trimmingCharacters(in: .whitespaces).trimmingCharacters(in: CharacterSet(charactersIn: "\",")) }
-                .filter { !$0.isEmpty }
+            let fm = FileManager.default
+            guard let files = try? fm.contentsOfDirectory(atPath: bridgesPackagePath.path) else { return [] }
+            return files
+                .filter { $0.hasSuffix("Bridge.swift") && $0 != "ScriptingBridgeCommon.swift" }
+                .map { $0.replacingOccurrences(of: ".swift", with: "") }
+                .sorted()
         }()
 
         let content = """
@@ -96,14 +103,14 @@ final class ScriptService {
         let scripts = "Sources/Scripts"
         let bridgeNameSet = Set(bridgeNames)
 
-        // Local package dependency for shared bridges
+        // Local package dependency for shared bridges (installed at ~/Documents/AgentScript/AppleEventBridges/)
         let packageDependencies: [PackageDescription.Package.Dependency] = [
-            .package(name: "AppleEventBridges", path: "../../../AppleEventBridges")
+            .package(name: "AppleEventBridges", path: "\(Self.installedBridgesPath.path)")
         ]
 
-        // Build Target.Dependency array for each bridge
+        // Build Target.Dependency for each bridge (explicit package reference)
         func bridgeDep(_ name: String) -> Target.Dependency {
-            .init(stringLiteral: name)
+            .product(name: name, package: "AppleEventBridges")
         }
 
         // Auto-detect bridge imports in each script
@@ -184,8 +191,9 @@ final class ScriptService {
             copyEntirePackage()
             generatePackageSwift()
         } else {
-            // Existing install — add new scripts only
+            // Existing install — add new scripts and update bridges
             installNewScripts()
+            copyBridgesPackage()
         }
         copyBundledJSONFiles()
     }
@@ -236,7 +244,47 @@ final class ScriptService {
             try? fm.copyItem(at: src, to: dest.appendingPathComponent("Sources"))
         }
 
+        // Copy AppleEventBridges package
+        copyBridgesPackage()
+
         // Package.swift is generated from disk contents by generatePackageSwift()
+    }
+
+    /// Copy AppleEventBridges package to ~/Documents/AgentScript/AppleEventBridges/
+    /// Only copies new files — never overwrites or removes user-added bridges.
+    private func copyBridgesPackage() {
+        let fm = FileManager.default
+        guard let src = Self.bundledBridgesPath, fm.fileExists(atPath: src.path) else { return }
+        let dest = Self.installedBridgesPath
+
+        // Create destination if it doesn't exist
+        try? fm.createDirectory(at: dest, withIntermediateDirectories: true)
+
+        // Copy Package.swift (always update — generated from source files)
+        let srcPkg = src.appendingPathComponent("Package.swift")
+        let dstPkg = dest.appendingPathComponent("Package.swift")
+        if fm.fileExists(atPath: srcPkg.path) {
+            try? fm.removeItem(at: dstPkg)
+            try? fm.copyItem(at: srcPkg, to: dstPkg)
+        }
+
+        // Copy Sources/ directories, only adding files that don't already exist
+        let srcSources = src.appendingPathComponent("Sources")
+        let dstSources = dest.appendingPathComponent("Sources")
+        guard let sourceDirs = try? fm.contentsOfDirectory(atPath: srcSources.path) else { return }
+        for dir in sourceDirs {
+            let srcDir = srcSources.appendingPathComponent(dir)
+            let dstDir = dstSources.appendingPathComponent(dir)
+            try? fm.createDirectory(at: dstDir, withIntermediateDirectories: true)
+
+            guard let files = try? fm.contentsOfDirectory(atPath: srcDir.path) else { continue }
+            for file in files {
+                let dstFile = dstDir.appendingPathComponent(file)
+                if !fm.fileExists(atPath: dstFile.path) {
+                    try? fm.copyItem(at: srcDir.appendingPathComponent(file), to: dstFile)
+                }
+            }
+        }
     }
 
     // MARK: - Install new scripts
@@ -261,6 +309,7 @@ final class ScriptService {
         deleted.remove(name)
         UserDefaults.standard.set(Array(deleted), forKey: Self.deletedScriptsKey)
     }
+
 
     /// Copy bundled scripts that don't already exist (preserve user modifications)
     /// Skips scripts the user has explicitly deleted via delete_agent_script.

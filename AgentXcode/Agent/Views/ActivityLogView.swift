@@ -144,7 +144,25 @@ struct ActivityLogView: NSViewRepresentable {
             }
         }
 
-        coord.applySearchHighlighting(textView: textView, searchText: searchText, currentMatch: currentMatchIndex, onMatchCount: onMatchCount)
+        // Only run search highlighting when there's an active search or search was just cleared
+        if !searchText.isEmpty || !coord.lastSearch.isEmpty {
+            if searchChanged {
+                // User changed search text or match index — apply immediately
+                coord.pendingSearchWork?.cancel()
+                coord.applySearchHighlighting(textView: textView, searchText: searchText, currentMatch: currentMatchIndex, onMatchCount: onMatchCount)
+            } else if textChanged && !searchText.isEmpty {
+                // Text is streaming while search is active — debounce to avoid beach ball
+                coord.pendingSearchWork?.cancel()
+                let work = DispatchWorkItem { [weak coord] in
+                    guard let coord else { return }
+                    guard let tv = coord.latestTextView else { return }
+                    coord.applySearchHighlighting(textView: tv, searchText: coord.latestSearchText, currentMatch: coord.latestMatchIndex, onMatchCount: coord.latestMatchCallback)
+                }
+                coord.pendingSearchWork = work
+                coord.latestTextView = textView
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
+            }
+        }
         coord.lastSearch = searchText
         coord.lastMatchIndex = currentMatchIndex
 
@@ -236,6 +254,8 @@ struct ActivityLogView: NSViewRepresentable {
         var latestSearchText = ""
         var latestMatchIndex = 0
         var latestMatchCallback: ((Int) -> Void)?
+        /// Weak reference to text view for debounced search callbacks
+        weak var latestTextView: NSTextView?
         /// Track the last fully rendered text for incremental updates
         var lastRenderedText = ""
         /// Track which tab we last rendered — forces full rebuild on tab switch
@@ -311,6 +331,8 @@ struct ActivityLogView: NSViewRepresentable {
 
         /// Track previous search highlight ranges so we can remove only those
         var lastSearchRanges: [NSRange] = []
+        /// Debounce timer for search highlighting during streaming
+        var pendingSearchWork: DispatchWorkItem?
 
         /// Highlight search matches in the text view's text storage
         func applySearchHighlighting(textView: NSTextView, searchText: String, currentMatch: Int, onMatchCount: ((Int) -> Void)?) {

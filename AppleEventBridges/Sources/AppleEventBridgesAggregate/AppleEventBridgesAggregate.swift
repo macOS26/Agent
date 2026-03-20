@@ -1,8 +1,7 @@
 // AppleEventBridgesAggregate.swift
-// Re-exports all bridges for the Agent app convenience import
+// Re-exports based Apple only bridges for the Agent app convenience import
 
 @_exported import ScriptingBridgeCommon
-@_exported import AdobeIllustratorBridge
 @_exported import AppleScriptUtilityBridge
 @_exported import AutomatorApplicationStubBridge
 @_exported import AutomatorBridge
@@ -12,42 +11,25 @@
 @_exported import ContactsBridge
 @_exported import DatabaseEventsBridge
 @_exported import DeveloperBridge
-@_exported import FinalCutProCreatorStudioBridge
 @_exported import FinderBridge
-@_exported import FirefoxBridge
 @_exported import FolderActionsSetupBridge
-@_exported import GoogleChromeBridge
 @_exported import ImageEventsBridge
 @_exported import InstrumentsBridge
-@_exported import KeynoteBridge
-@_exported import LogicProCreatorStudioBridge
 @_exported import MailBridge
 @_exported import MessagesBridge
-@_exported import MicrosoftEdgeBridge
 @_exported import MusicBridge
-@_exported import NotesBridge
-@_exported import NumbersBridge
-@_exported import NumbersCreatorStudioBridge
-@_exported import PagesBridge
-@_exported import PagesCreatorStudioBridge
 @_exported import PhotosBridge
-@_exported import PixelmatorProBridge
 @_exported import PreviewBridge
 @_exported import QuickTimePlayerBridge
 @_exported import RemindersBridge
-@_exported import SafariBridge
 @_exported import ScreenSharingBridge
 @_exported import ScriptEditorBridge
-@_exported import SeleniumBridge
 @_exported import ShortcutsBridge
 @_exported import ShortcutsEventsBridge
-@_exported import SimulatorBridge
 @_exported import SystemEventsBridge
 @_exported import SystemInformationBridge
 @_exported import SystemSettingsBridge
 @_exported import TVBridge
 @_exported import TerminalBridge
 @_exported import TextEditBridge
-@_exported import UTMBridge
 @_exported import VoiceOverBridge
-@_exported import WishBridge

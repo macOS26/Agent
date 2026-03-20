@@ -64,157 +64,138 @@ struct FormOutput: Codable {
     let pageTitle: String?
 }
 
+func runJS(_ safari: SafariApplication, _ js: String, in doc: SafariDocument) -> String? {
+    safari.doJavaScript?(js, in: doc as Any) as? String
+}
+
 @_cdecl("script_main")
 public func scriptMain() -> Int32 {
     let home = NSHomeDirectory()
     let inputPath = "\(home)/Documents/AgentScript/json/WebForm_input.json"
     let outputPath = "\(home)/Documents/AgentScript/json/WebForm_output.json"
-    
+
     // Parse input
     var input: FormInput?
-    
-    // Try AGENT_SCRIPT_ARGS first
+
     if let argsString = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"],
        !argsString.isEmpty {
         if let data = argsString.data(using: .utf8) {
             input = try? JSONDecoder().decode(FormInput.self, from: data)
         }
     }
-    
-    // Try JSON file
+
     if input == nil,
        let data = FileManager.default.contents(atPath: inputPath) {
         input = try? JSONDecoder().decode(FormInput.self, from: data)
     }
-    
+
     guard let formInput = input else {
-        print("❌ No valid input provided")
+        print("No valid input provided")
         writeOutput(outputPath, success: false, errors: ["No valid input provided"])
         return 1
     }
-    
-    print("📝 WebForm Automation")
-    print("═══════════════════════════════════")
+
+    print("WebForm Automation")
+    print("===================================")
     print("Fields to fill: \(formInput.fields.count)")
-    
-    // Run form filling
-    let semaphore = DispatchSemaphore(value: 0)
-    var result: FormOutput?
-    
-    Task { @MainActor in
-        result = await fillForm(formInput)
-        semaphore.signal()
-    }
-    
-    semaphore.wait()
-    
-    // Write output
-    if let output = result {
-        writeOutput(outputPath, output: output)
-        return output.success ? 0 : 1
-    }
-    
-    return 1
+
+    let result = fillForm(formInput)
+    writeOutput(outputPath, output: result)
+    return result.success ? 0 : 1
 }
 
-@MainActor
-func fillForm(_ input: FormInput) async -> FormOutput {
+func fillForm(_ input: FormInput) -> FormOutput {
     var errors: [String] = []
     var filledCount = 0
     let timeout = input.timeout ?? 30.0
     let delayBetweenFields = input.delayBetweenFields ?? 0.1
     let verifyFields = input.verifyFields ?? true
-    
+
     // Connect to Safari
-    guard let safari: SBApplication<SAApplication> = SBApplication(bundleIdentifier: "com.apple.Safari") else {
+    guard let safari: SafariApplication = SBApplication(bundleIdentifier: "com.apple.Safari") else {
         return FormOutput(success: false, url: input.url ?? "", filledFields: 0, errors: ["Safari not available"], finalUrl: nil, pageTitle: nil)
     }
-    
+
     // Open URL if provided
     if let urlString = input.url {
-        print("🌐 Opening URL: \(urlString)")
-        let url = URL(string: urlString)!
-        
-        // Activate Safari
+        print("Opening URL: \(urlString)")
+
         safari.activate()
-        try? await Task.sleep(nanoseconds: 500_000_000)
-        
-        // Open URL
-        safari.open(url)
+        RunLoop.current.run(until: Date(timeIntervalSinceNow: 0.5))
+
+        if let url = URL(string: urlString) {
+            _ = safari.open?(url as Any)
+        }
         RunLoop.current.run(until: Date(timeIntervalSinceNow: 1.0))
     }
-    
+
     // Get front document
-    guard let frontDoc = safari.documents?().firstObject as? SADocument else {
+    guard let frontDoc = safari.documents?().firstObject as? SafariDocument else {
         return FormOutput(success: false, url: input.url ?? "", filledFields: 0, errors: ["No Safari document found"], finalUrl: nil, pageTitle: nil)
     }
-    
+
     // Fill each field
     for (index, field) in input.fields.enumerated() {
         print("  [\(index + 1)/\(input.fields.count)] Filling: \(field.selector)")
-        
-        let success = await fillField(safari: safari, document: frontDoc, field: field, verify: verifyFields)
-        
+
+        let success = fillField(safari: safari, document: frontDoc, field: field, verify: verifyFields)
+
         if success {
             filledCount += 1
         } else {
             errors.append("Failed to fill field: \(field.selector)")
         }
-        
+
         // Delay between fields
         if delayBetweenFields > 0 {
             RunLoop.current.run(until: Date(timeIntervalSinceNow: delayBetweenFields))
         }
     }
-    
+
     // Get final URL and title
     var finalUrl: String?
     var pageTitle: String?
-    
-    if let url = frontDoc.url {
+
+    if let url = frontDoc.URL {
         finalUrl = url
     }
-    
+
     if let name = frontDoc.name {
         pageTitle = name
     }
-    
+
     // Submit form if specified
     if let submitSelector = input.submit {
-        print("  🖱️ Clicking submit: \(submitSelector)")
-        
-        // Use JavaScript to click submit button
-        let js = "document.querySelector('\(submitSelector)')?.click();"
-        _ = frontDoc.doJavaScript?(js) as String?
-        
+        print("  Clicking submit: \(submitSelector)")
+
+        _ = runJS(safari, "document.querySelector('\(submitSelector)')?.click();", in: frontDoc)
+
         // Wait for success message if specified
         if let waitForSuccess = input.waitForSuccess {
-            print("  ⏳ Waiting for success: \(waitForSuccess)")
+            print("  Waiting for success: \(waitForSuccess)")
             let startTime = Date()
             var found = false
-            
+
             while Date().timeIntervalSince(startTime) < timeout {
-                let checkJS = "document.body.innerText.contains('\(waitForSuccess)')"
-                if let result = frontDoc.doJavaScript?(checkJS) as? String,
+                if let result = runJS(safari, "document.body.innerText.contains('\(waitForSuccess)')", in: frontDoc),
                    result == "true" {
                     found = true
                     break
                 }
-                try? await Task.sleep(nanoseconds: 500_000_000)
+                RunLoop.current.run(until: Date(timeIntervalSinceNow: 0.5))
             }
-            
+
             if !found {
                 errors.append("Success message not found: \(waitForSuccess)")
             }
         } else {
-            // Wait for page load
-            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            RunLoop.current.run(until: Date(timeIntervalSinceNow: 1.0))
         }
     }
-    
+
     let success = errors.isEmpty || filledCount > 0
-    print("✅ Filled \(filledCount)/\(input.fields.count) fields")
-    
+    print("Filled \(filledCount)/\(input.fields.count) fields")
+
     return FormOutput(
         success: success,
         url: input.url ?? "",
@@ -225,26 +206,22 @@ func fillForm(_ input: FormInput) async -> FormOutput {
     )
 }
 
-@MainActor
-func fillField(safari: SBApplication<SAApplication>, document: SADocument, field: FormField, verify: Bool) async -> Bool {
+func fillField(safari: SafariApplication, document: SafariDocument, field: FormField, verify: Bool) -> Bool {
     let selector = field.selector
     let value = field.value ?? ""
     let fieldType = field.type ?? "text"
-    let strategy = field.strategy ?? "css"
-    
-    // Escape selector for JavaScript
+
     let escapedSelector = selector
         .replacingOccurrences(of: "\\", with: "\\\\")
         .replacingOccurrences(of: "'", with: "\\'")
     let escapedValue = value
         .replacingOccurrences(of: "\\", with: "\\\\")
         .replacingOccurrences(of: "'", with: "\\'")
-    
+
     var js: String
-    
+
     switch fieldType {
     case "text", "textarea":
-        // Find element and set value
         js = """
         (function() {
             var el = document.querySelector('\(escapedSelector)');
@@ -255,7 +232,7 @@ func fillField(safari: SBApplication<SAApplication>, document: SADocument, field
             return 'filled';
         })()
         """
-        
+
     case "checkbox":
         let shouldCheck = field.action == "check"
         js = """
@@ -267,7 +244,7 @@ func fillField(safari: SBApplication<SAApplication>, document: SADocument, field
             return '\(shouldCheck ? "checked" : "unchecked")';
         })()
         """
-        
+
     case "radio":
         js = """
         (function() {
@@ -280,7 +257,7 @@ func fillField(safari: SBApplication<SAApplication>, document: SADocument, field
             return 'not found';
         })()
         """
-        
+
     case "select":
         js = """
         (function() {
@@ -291,42 +268,45 @@ func fillField(safari: SBApplication<SAApplication>, document: SADocument, field
             return 'selected';
         })()
         """
-        
+
     default:
-        // Default: set value
         js = "document.querySelector('\(escapedSelector)').value = '\(escapedValue)'; 'filled';"
     }
-    
+
     // Execute JavaScript
-    let result = document.doJavaScript?(js) as? String
-    
+    let result = runJS(safari, js, in: document)
+
     if result == "not found" {
-        print("    ⚠️ Element not found: \(selector)")
+        print("    Element not found: \(selector)")
         return false
     }
-    
+
     // Verify if requested
     if verify && fieldType == "text" {
         let verifyJS = "document.querySelector('\(escapedSelector)')?.value"
-        if let actualValue = document.doJavaScript?(verifyJS) as? String,
+        if let actualValue = runJS(safari, verifyJS, in: document),
            actualValue != value {
-            print("    ⚠️ Verification failed: expected '\(value)', got '\(actualValue)'")
-            // Try again with focus and type
+            print("    Verification failed: expected '\(value)', got '\(actualValue)'")
             return false
         }
     }
-    
-    print("    ✅ Filled: \(selector)")
+
+    print("    Filled: \(selector)")
     return true
 }
 
 func writeOutput(_ path: String, output: FormOutput) {
     let encoder = JSONEncoder()
     encoder.outputFormatting = .prettyPrinted
-    
+
     guard let data = try? encoder.encode(output) else { return }
     try? FileManager.default.createDirectory(atPath: (path as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
     try? data.write(to: URL(fileURLWithPath: path))
-    
-    print("\n📄 Output saved to: \(path)")
+
+    print("\nOutput saved to: \(path)")
+}
+
+func writeOutput(_ path: String, success: Bool, errors: [String]) {
+    let output = FormOutput(success: false, url: "", filledFields: 0, errors: errors, finalUrl: nil, pageTitle: nil)
+    writeOutput(path, output: output)
 }

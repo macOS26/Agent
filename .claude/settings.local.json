@@ -207,7 +207,11 @@
       "WebFetch(domain:help.openai.com)",
       "Bash(mkdir -p ~/Documents/AgentScript/logs)",
       "Bash(rm -f ~/Documents/AgentScript/screenshot_*.png)",
-      "Bash(mv ~/Documents/AgentScript/accessibility_audit.log ~/Documents/AgentScript/logs/)"
+      "Bash(mv ~/Documents/AgentScript/accessibility_audit.log ~/Documents/AgentScript/logs/)",
+      "Bash(xcf build:*)",
+      "Read(//Users/toddbruss/bin/**)",
+      "Read(//usr/local/bin/**)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\([p[''''name''''] for p in d[''''products'''']]\\)\")"
     ]
   }
 }

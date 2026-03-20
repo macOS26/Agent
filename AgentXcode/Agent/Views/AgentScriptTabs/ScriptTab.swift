@@ -23,6 +23,17 @@ final class ScriptTab: Identifiable {
     /// Thread-safe flag readable from any thread (for Sendable closures)
     nonisolated let _cancelFlag = AtomicFlag()
 
+    // MARK: - Multi-Main-Tab LLM Config
+
+    /// Non-nil when this is a "Main" tab with its own LLM provider/model
+    var llmConfig: LLMConfig?
+    /// Which main tab spawned this script tab (for LLM inheritance)
+    var parentTabId: UUID?
+    /// Whether this tab acts as an independent main tab
+    var isMainTab: Bool { llmConfig != nil }
+    /// Display name: LLM model name for main tabs, script name for script tabs
+    var displayTitle: String { llmConfig?.displayName ?? scriptName }
+
     // Log buffering (mirrors AgentViewModel pattern)
     var logBuffer = ""
     var logFlushTask: Task<Void, Never>?
@@ -53,6 +64,14 @@ final class ScriptTab: Identifiable {
         self.scriptName = scriptName
     }
 
+    /// Create a new main tab with its own LLM configuration.
+    init(llmConfig: LLMConfig, id: UUID = UUID()) {
+        self.id = id
+        self.scriptName = llmConfig.displayName
+        self.llmConfig = llmConfig
+        self.isRunning = false
+    }
+
     /// Restore a tab from persisted SwiftData record.
     init(record: ScriptTabRecord) {
         self.id = record.tabId
@@ -60,6 +79,13 @@ final class ScriptTab: Identifiable {
         self.activityLog = record.activityLog
         self.exitCode = record.exitCode == -999 ? nil : Int32(record.exitCode)
         self.isRunning = false
+        // Restore LLM config if present
+        if let json = record.llmConfigJSON, let data = json.data(using: .utf8) {
+            self.llmConfig = try? JSONDecoder().decode(LLMConfig.self, from: data)
+        }
+        if let parentStr = record.parentTabIdString {
+            self.parentTabId = UUID(uuidString: parentStr)
+        }
     }
 
     // MARK: - Logging

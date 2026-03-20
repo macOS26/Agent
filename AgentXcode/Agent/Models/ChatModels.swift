@@ -50,12 +50,17 @@ final class ScriptTabRecord {
     var scriptName: String
     var activityLog: String
     var exitCode: Int  // -999 = nil (SwiftData doesn't support optional Int32)
+    var llmConfigJSON: String?       // JSON-encoded LLMConfig for main tabs
+    var parentTabIdString: String?   // UUID string of parent main tab
 
-    init(tabId: UUID, scriptName: String, activityLog: String, exitCode: Int = -999) {
+    init(tabId: UUID, scriptName: String, activityLog: String, exitCode: Int = -999,
+         llmConfigJSON: String? = nil, parentTabIdString: String? = nil) {
         self.tabId = tabId
         self.scriptName = scriptName
         self.activityLog = activityLog
         self.exitCode = exitCode
+        self.llmConfigJSON = llmConfigJSON
+        self.parentTabIdString = parentTabIdString
     }
 }
 
@@ -287,7 +292,7 @@ final class ChatHistoryStore {
     // MARK: - Script Tab Persistence
 
     /// Save script tab data to SwiftData. Replaces any existing records.
-    func saveScriptTabs(_ tabs: [(id: UUID, scriptName: String, activityLog: String, exitCode: Int32?)]) {
+    func saveScriptTabs(_ tabs: [(id: UUID, scriptName: String, activityLog: String, exitCode: Int32?, llmConfigJSON: String?, parentTabIdString: String?)]) {
         guard let context else { return }
         // Delete old records
         try? context.delete(model: ScriptTabRecord.self)
@@ -297,7 +302,9 @@ final class ChatHistoryStore {
                 tabId: tab.id,
                 scriptName: tab.scriptName,
                 activityLog: tab.activityLog,
-                exitCode: tab.exitCode.map { Int($0) } ?? -999
+                exitCode: tab.exitCode.map { Int($0) } ?? -999,
+                llmConfigJSON: tab.llmConfigJSON,
+                parentTabIdString: tab.parentTabIdString
             )
             context.insert(record)
         }

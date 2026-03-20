@@ -36,7 +36,7 @@ A macOS SwiftUI app that uses SMAppService + a privileged Launch Daemon to give 
 
 ### Claude API Integration
 - Uses Anthropic Messages API (v2023-06-01) with SSE streaming
-- Tools: `execute_command` (root shell), `execute_user_command`, `task_complete`, `apple_event_query`, `run_agent_script`, etc.
+- Tools: `execute_daemon_command` (root shell), `execute_agent_command` (user shell), `task_complete`, `apple_event_query`, `run_agent_script`, etc.
 - Up to 50 iterations per task
 - LLM text streams token-by-token to activity log in real time
 - System prompt warns that ~ = /var/root in daemon context; uses actual user home path
@@ -48,7 +48,7 @@ A macOS SwiftUI app that uses SMAppService + a privileged Launch Daemon to give 
 2. **run_agent_script** — native Swift AgentScriptingBridge dylibs for persistent automation
 3. **NSAppleScript in scripts** — fallback if AgentScriptingBridge has issues with an app
 4. **osascript via Agent app** — last resort for one-off AppleScript; runs directly in the Agent app process (not via XPC) to inherit Automation permissions
-- Prefer `execute_user_command` for all tasks; only escalate to root when truly needed
+- Prefer `execute_agent_command` for all tasks; only escalate to root when truly needed
 - Chown/chmod files back to user after root operations
 
 ### Important Patterns

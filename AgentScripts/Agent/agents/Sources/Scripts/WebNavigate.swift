@@ -89,59 +89,47 @@ public func scriptMain() -> Int32 {
     let inputPath = "\(home)/Documents/AgentScript/json/WebNavigate_input.json"
     let outputPath = "\(home)/Documents/AgentScript/json/WebNavigate_output.json"
     let screenshotDir = "\(home)/Documents/AgentScript/screenshots"
-    
+
     // Parse input
     var input: NavigationInput?
-    
+
     if let argsString = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"],
        !argsString.isEmpty {
         if let data = argsString.data(using: .utf8) {
             input = try? JSONDecoder().decode(NavigationInput.self, from: data)
         }
     }
-    
+
     if input == nil,
        let data = FileManager.default.contents(atPath: inputPath) {
         input = try? JSONDecoder().decode(NavigationInput.self, from: data)
     }
-    
+
     guard let navInput = input else {
-        print("❌ No valid input provided")
+        print("No valid input provided")
         writeOutput(outputPath, success: false, errors: ["No valid input provided"], completedActions: 0)
         return 1
     }
-    
-    print("🌐 WebNavigate")
-    print("═══════════════════════════════════")
+
+    print("WebNavigate")
+    print("===================================")
     print("URL: \(navInput.url)")
-    
-    // Run navigation
-    let semaphore = DispatchSemaphore(value: 0)
-    var result: NavigationOutput?
-    
-    Task { @MainActor in
-        result = await performNavigation(navInput, screenshotDir: screenshotDir)
-        semaphore.signal()
-    }
-    
-    semaphore.wait()
-    
-    // Write output
-    if let output = result {
-        writeOutput(outputPath, output: output)
-        return output.success ? 0 : 1
-    }
-    
-    return 1
+
+    let result = performNavigation(navInput, screenshotDir: screenshotDir)
+    writeOutput(outputPath, output: result)
+    return result.success ? 0 : 1
 }
 
-@MainActor
-func performNavigation(_ input: NavigationInput, screenshotDir: String) async -> NavigationOutput {
+func runJS(_ safari: SafariApplication, _ js: String, in doc: SafariDocument) -> String? {
+    safari.doJavaScript?(js, in: doc as Any) as? String
+}
+
+func performNavigation(_ input: NavigationInput, screenshotDir: String) -> NavigationOutput {
     var errors: [String] = []
     var completedActions = 0
-    
+
     // Connect to Safari
-    guard let safari: SBApplication<SAApplication> = SBApplication(bundleIdentifier: "com.apple.Safari") else {
+    guard let safari: SafariApplication = SBApplication(bundleIdentifier: "com.apple.Safari") else {
         return NavigationOutput(
             success: false,
             url: input.url,
@@ -153,21 +141,22 @@ func performNavigation(_ input: NavigationInput, screenshotDir: String) async ->
             completedActions: 0
         )
     }
-    
+
     // Activate Safari
     safari.activate()
     RunLoop.current.run(until: Date(timeIntervalSinceNow: 0.5))
-    
+
     // Open URL
-    print("  📖 Opening URL...")
-    let url = URL(string: input.url)!
-    safari.open(url)
-    
+    print("  Opening URL...")
+    if let url = URL(string: input.url) {
+        _ = safari.open?(url as Any)
+    }
+
     // Wait for initial page load
     RunLoop.current.run(until: Date(timeIntervalSinceNow: 1.0))
-    
+
     // Get front document
-    guard let frontDoc = safari.documents?().firstObject as? SADocument else {
+    guard let frontDoc = safari.documents?().firstObject as? SafariDocument else {
         return NavigationOutput(
             success: false,
             url: input.url,
@@ -179,11 +168,11 @@ func performNavigation(_ input: NavigationInput, screenshotDir: String) async ->
             completedActions: 0
         )
     }
-    
+
     // Wait for condition if specified
     if let waitCondition = input.waitFor {
-        print("  ⏳ Waiting for: \(waitCondition.type)")
-        let waitSuccess = await waitForCondition(document: frontDoc, condition: waitCondition)
+        print("  Waiting for: \(waitCondition.type)")
+        let waitSuccess = waitForCondition(safari: safari, document: frontDoc, condition: waitCondition)
         if !waitSuccess {
             errors.append("Wait condition not met: \(waitCondition.type)")
         }
@@ -191,11 +180,11 @@ func performNavigation(_ input: NavigationInput, screenshotDir: String) async ->
         // Default: wait for page load
         RunLoop.current.run(until: Date(timeIntervalSinceNow: 2.0))
     }
-    
+
     // Execute actions if specified
     if let actions = input.actions {
         for action in actions {
-            let success = await executeAction(document: frontDoc, action: action)
+            let success = executeAction(safari: safari, document: frontDoc, action: action)
             if success {
                 completedActions += 1
             } else {
@@ -203,58 +192,53 @@ func performNavigation(_ input: NavigationInput, screenshotDir: String) async ->
             }
         }
     }
-    
+
     // Get final state
     var finalUrl: String?
     var title: String?
     var html: String?
     var screenshotPath: String?
-    
-    if let url = frontDoc.url {
+
+    if let url = frontDoc.URL {
         finalUrl = url
     }
-    
+
     if let name = frontDoc.name {
         title = name
     }
-    
+
     // Get HTML if requested
     if input.returnHtml == true {
-        let htmlJS = "document.documentElement.outerHTML"
-        html = frontDoc.doJavaScript?(htmlJS) as? String
+        html = runJS(safari, "document.documentElement.outerHTML", in: frontDoc)
     }
-    
+
     // Take screenshot if requested
     if input.screenshot == true {
-        // Use AccessibilityService screenshot via AppleScript
         let screenshotScript = """
         tell application "Safari"
             activate
             delay 0.5
         end tell
-        
+
         tell application "System Events"
             tell process "Safari"
                 set frontmost to true
             end tell
         end tell
         """
-        
+
         var err: NSDictionary?
         let appleScript = NSAppleScript(source: screenshotScript)
         appleScript?.executeAndReturnError(&err)
-        
-        // Create screenshot filename
+
         let filename = "navigate_\(Int(Date().timeIntervalSince1970)).png"
         screenshotPath = "\(screenshotDir)/\(filename)"
-        
-        // Note: Actual screenshot would be done via ax_screenshot tool
-        print("  📸 Screenshot would be saved to: \(screenshotPath ?? "")")
+        print("  Screenshot would be saved to: \(screenshotPath ?? "")")
     }
-    
+
     let success = errors.isEmpty || completedActions > 0
-    print("✅ Navigation complete")
-    
+    print("Navigation complete")
+
     return NavigationOutput(
         success: success,
         url: input.url,
@@ -267,136 +251,122 @@ func performNavigation(_ input: NavigationInput, screenshotDir: String) async ->
     )
 }
 
-@MainActor
-func waitForCondition(document: SADocument, condition: WaitCondition) async -> Bool {
+func waitForCondition(safari: SafariApplication, document: SafariDocument, condition: WaitCondition) -> Bool {
     let timeout = condition.timeout ?? 10.0
-    let startTime = Date()
-    
+
     switch condition.type {
     case "element":
         guard let selector = condition.selector else { return false }
         let js = "document.querySelector('\(selector)') !== null"
-        return waitForJS(document: document, js: js, timeout: timeout)
-        
+        return waitForJS(safari: safari, document: document, js: js, timeout: timeout)
+
     case "text":
         guard let text = condition.text else { return false }
         let js = "document.body.innerText.includes('\(text)')"
-        return waitForJS(document: document, js: js, timeout: timeout)
-        
+        return waitForJS(safari: safari, document: document, js: js, timeout: timeout)
+
     case "title":
         guard let text = condition.text else { return false }
         let js = "document.title.includes('\(text)')"
-        return waitForJS(document: document, js: js, timeout: timeout)
-        
+        return waitForJS(safari: safari, document: document, js: js, timeout: timeout)
+
     case "url":
         guard let text = condition.text else { return false }
         let js = "window.location.href.includes('\(text)')"
-        return waitForJS(document: document, js: js, timeout: timeout)
-        
+        return waitForJS(safari: safari, document: document, js: js, timeout: timeout)
+
     case "load":
         let js = "document.readyState === 'complete'"
-        return waitForJS(document: document, js: js, timeout: timeout)
-        
+        return waitForJS(safari: safari, document: document, js: js, timeout: timeout)
+
     case "hidden":
         guard let selector = condition.selector else { return false }
         let js = "document.querySelector('\(selector)') === null || document.querySelector('\(selector)').offsetWidth === 0"
-        return waitForJS(document: document, js: js, timeout: timeout)
-        
+        return waitForJS(safari: safari, document: document, js: js, timeout: timeout)
+
     default:
         return false
     }
 }
 
-@MainActor
-func waitForJS(document: SADocument, js: String, timeout: Double) -> Bool {
+func waitForJS(safari: SafariApplication, document: SafariDocument, js: String, timeout: Double) -> Bool {
     let startTime = Date()
-    
+
     while Date().timeIntervalSince(startTime) < timeout {
-        if let result = document.doJavaScript?(js) as? String,
+        if let result = runJS(safari, js, in: document),
            result == "true" {
             return true
         }
         RunLoop.current.run(until: Date(timeIntervalSinceNow: 0.2))
     }
-    
+
     return false
 }
 
-@MainActor
-func executeAction(document: SADocument, action: NavigationAction) async -> Bool {
+func executeAction(safari: SafariApplication, document: SafariDocument, action: NavigationAction) -> Bool {
     switch action.type {
     case "scroll":
-        return await executeScroll(document: document, action: action)
-        
+        return executeScroll(safari: safari, document: document, action: action)
+
     case "click":
-        return await executeClick(document: document, action: action)
-        
+        return executeClick(safari: safari, document: document, action: action)
+
     case "wait":
         let seconds = action.seconds ?? 1.0
         RunLoop.current.run(until: Date(timeIntervalSinceNow: seconds))
         return true
-        
+
     case "waitFor":
         guard let selector = action.selector else { return false }
         let timeout = action.timeout ?? 10.0
         let js = "document.querySelector('\(selector)') !== null"
-        return waitForJS(document: document, js: js, timeout: timeout)
-        
+        return waitForJS(safari: safari, document: document, js: js, timeout: timeout)
+
     case "hover":
-        return await executeHover(document: document, action: action)
-        
+        return executeHover(safari: safari, document: document, action: action)
+
     case "focus":
         guard let selector = action.selector else { return false }
         let js = "document.querySelector('\(selector)')?.focus(); true;"
-        _ = document.doJavaScript?(js) as String?
+        _ = runJS(safari, js, in: document)
         return true
-        
+
     case "type":
         guard let selector = action.selector,
               let text = action.text else { return false }
         let escapedText = text.replacingOccurrences(of: "'", with: "\\'")
         let js = "document.querySelector('\(selector)').value = '\(escapedText)'; true;"
-        _ = document.doJavaScript?(js) as String?
+        _ = runJS(safari, js, in: document)
         return true
-        
+
     default:
         return false
     }
 }
 
-@MainActor
-func executeScroll(document: SADocument, action: NavigationAction) async -> Bool {
+func executeScroll(safari: SafariApplication, document: SafariDocument, action: NavigationAction) -> Bool {
     if let selector = action.selector {
-        // Scroll to element
         let js = "document.querySelector('\(selector)')?.scrollIntoView({ behavior: 'smooth' }); true;"
-        _ = document.doJavaScript?(js) as String?
+        _ = runJS(safari, js, in: document)
     } else {
-        // Scroll by amount (would need offset parameter)
         let js = "window.scrollBy(0, 500); true;"
-        _ = document.doJavaScript?(js) as String?
+        _ = runJS(safari, js, in: document)
     }
     return true
 }
 
-@MainActor
-func executeClick(document: SADocument, action: NavigationAction) async -> Bool {
+func executeClick(safari: SafariApplication, document: SafariDocument, action: NavigationAction) -> Bool {
     guard let selector = action.selector else { return false }
-    
-    // Escape selector
     let escapedSelector = selector.replacingOccurrences(of: "'", with: "\\'")
     let js = "document.querySelector('\(escapedSelector)')?.click(); true;"
-    
-    if let result = document.doJavaScript?(js) as? String {
+    if let result = runJS(safari, js, in: document) {
         return result == "true"
     }
     return false
 }
 
-@MainActor
-func executeHover(document: SADocument, action: NavigationAction) async -> Bool {
+func executeHover(safari: SafariApplication, document: SafariDocument, action: NavigationAction) -> Bool {
     guard let selector = action.selector else { return false }
-    
-    // CSS hover simulation
     let js = """
     (function() {
         var el = document.querySelector('\(selector)');
@@ -406,8 +376,7 @@ func executeHover(document: SADocument, action: NavigationAction) async -> Bool 
         return true;
     })()
     """
-    
-    if let result = document.doJavaScript?(js) as? String {
+    if let result = runJS(safari, js, in: document) {
         return result == "true"
     }
     return false
@@ -416,12 +385,12 @@ func executeHover(document: SADocument, action: NavigationAction) async -> Bool 
 func writeOutput(_ path: String, output: NavigationOutput) {
     let encoder = JSONEncoder()
     encoder.outputFormatting = .prettyPrinted
-    
+
     guard let data = try? encoder.encode(output) else { return }
     try? FileManager.default.createDirectory(atPath: (path as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
     try? data.write(to: URL(fileURLWithPath: path))
-    
-    print("\n📄 Output saved to: \(path)")
+
+    print("\nOutput saved to: \(path)")
 }
 
 func writeOutput(_ path: String, success: Bool, errors: [String], completedActions: Int) {

@@ -1099,21 +1099,61 @@ extension AgentViewModel {
                             let newString = input["new_string"] as? String ?? ""
                             let replaceAll = input["replace_all"] as? Bool ?? false
                             appendLog("📝 Edit: \(filePath)")
+
+                            // Capture pre-edit content to find match line number
+                            let expandedPath = (filePath as NSString).expandingTildeInPath
+                            let preContent = (try? String(contentsOfFile: expandedPath, encoding: .utf8)) ?? ""
+                            let preLines = preContent.components(separatedBy: "\n")
+                            var matchLineStart: Int? = nil
+                            if let matchRange = preContent.range(of: oldString) {
+                                let before = preContent[preContent.startIndex..<matchRange.lowerBound]
+                                matchLineStart = before.components(separatedBy: "\n").count // 1-based
+                            }
+
                             let output = await Self.offMain { CodingService.editFile(path: filePath, oldString: oldString, newString: newString, replaceAll: replaceAll) }
-                            // Show unified diff with more context (up to 10 lines each side)
-                            let oldLines = oldString.components(separatedBy: "\n")
-                            let newLines = newString.components(separatedBy: "\n")
-                            let oldPreview = oldLines.count <= 10 ? oldString : oldLines.prefix(10).joined(separator: "\n") + "\n... (\(oldLines.count) lines total)"
-                            let newPreview = newLines.count <= 10 ? newString : newLines.prefix(10).joined(separator: "\n") + "\n... (\(newLines.count) lines total)"
-                            var diffOutput = "```diff\n"
-                            for line in oldPreview.components(separatedBy: "\n") {
-                                diffOutput += "- \(line)\n"
+
+                            // Show diff with line numbers and context if edit succeeded
+                            if output.hasPrefix("Replaced"), let startLine = matchLineStart {
+                                let oldLines = oldString.components(separatedBy: "\n")
+                                let newLines = newString.components(separatedBy: "\n")
+                                let postContent = (try? String(contentsOfFile: expandedPath, encoding: .utf8)) ?? ""
+                                let postLines = postContent.components(separatedBy: "\n")
+                                let ctx = 3
+
+                                var diffOutput = "```diff\n"
+                                // Context before
+                                let ctxStart = max(0, startLine - 1 - ctx)
+                                for i in ctxStart..<(startLine - 1) {
+                                    diffOutput += "\(i + 1)\t\(preLines[i])\n"
+                                }
+                                // Removed lines
+                                for (i, line) in oldLines.enumerated() {
+                                    diffOutput += "\(startLine + i) -\t\(line)\n"
+                                }
+                                // Added lines
+                                for (i, line) in newLines.enumerated() {
+                                    diffOutput += "\(startLine + i) +\t\(line)\n"
+                                }
+                                // Context after
+                                let afterStart = startLine - 1 + newLines.count
+                                let afterEnd = min(postLines.count, afterStart + ctx)
+                                for i in afterStart..<afterEnd {
+                                    diffOutput += "\(i + 1)\t\(postLines[i])\n"
+                                }
+                                diffOutput += "```"
+                                appendLog(diffOutput)
+                            } else if !output.hasPrefix("Replaced") {
+                                // Edit failed — show what was attempted
+                                var diffOutput = "```diff\n"
+                                for line in oldString.components(separatedBy: "\n") {
+                                    diffOutput += "- \(line)\n"
+                                }
+                                for line in newString.components(separatedBy: "\n") {
+                                    diffOutput += "+ \(line)\n"
+                                }
+                                diffOutput += "```"
+                                appendLog(diffOutput)
                             }
-                            for line in newPreview.components(separatedBy: "\n") {
-                                diffOutput += "+ \(line)\n"
-                            }
-                            diffOutput += "```"
-                            appendLog(diffOutput)
                             appendLog(output)
                             commandsRun.append("edit_file: \(filePath)")
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])

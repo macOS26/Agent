@@ -22,11 +22,11 @@ struct TabBarView: View {
 
                 ForEach(viewModel.scriptTabs) { tab in
                     let isDragging = draggingTabId == tab.id
-                    let color = ContentView.tabColor(for: tab.id, in: viewModel.scriptTabs)
+                    let color = tab.isMainTab ? Color.blue : ContentView.tabColor(for: tab.id, in: viewModel.scriptTabs)
                     TabItem(
-                        title: tab.scriptName,
+                        title: tab.displayTitle,
                         isSelected: viewModel.selectedTabId == tab.id,
-                        isRunning: tab.isRunning,
+                        isRunning: tab.isMainTab ? tab.isLLMRunning : tab.isRunning,
                         tint: color,
                         onSelect: { viewModel.selectedTabId = tab.id },
                         onClose: { viewModel.closeScriptTab(id: tab.id) }

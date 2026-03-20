@@ -98,6 +98,11 @@ private struct LangDef {
             return highlightTerminalOutput(code: cleanCode, font: font)
         }
 
+        // Use diff highlighter for diff blocks
+        if resolvedLang == "diff" {
+            return highlightDiffBlock(code: cleanCode, font: font)
+        }
+
         // Pre-capture theme colors for use in @Sendable enumerateMatches closures
         let colText = CodeBlockTheme.text
         let colIdent = CodeBlockTheme.ident
@@ -546,6 +551,103 @@ private struct LangDef {
         return outputIndicators >= 2
     }
 
+    // Path segment colors for multi-color file path highlighting
+    private static var pathHome: NSColor {
+        NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor(red: 0.5, green: 0.5, blue: 0.55, alpha: 1)   // dim gray
+            : NSColor(red: 0.45, green: 0.45, blue: 0.5, alpha: 1)
+    }
+    private static var pathTopDir: NSColor {
+        NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor(red: 0.6, green: 0.75, blue: 0.55, alpha: 1)  // muted green
+            : NSColor(red: 0.3, green: 0.5, blue: 0.25, alpha: 1)
+    }
+    private static var pathMiddle: NSColor {
+        NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor(red: 0.816, green: 0.659, blue: 1.0, alpha: 1)  // lavender
+            : NSColor(red: 0.4, green: 0.2, blue: 0.7, alpha: 1)
+    }
+    private static var pathFilename: NSColor {
+        NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor(red: 0.35, green: 0.7, blue: 1.0, alpha: 1)   // bright blue
+            : NSColor(red: 0.0, green: 0.3, blue: 0.8, alpha: 1)
+    }
+
+    /// Apply multi-color highlighting to a file path within an attributed string.
+    /// Segments: /Users/<user>/ → dim, top-level dir → green, middle dirs → cyan, filename → blue bold
+    private static func colorizePath(_ result: NSMutableAttributedString, pathRange: NSRange, path: String, bold: NSFont) {
+        var cursor = pathRange.location
+        let ns = path as NSString
+
+        // If path starts with /Users/<name>/ color that prefix dim
+        if path.hasPrefix("/Users/") || path.hasPrefix("/var/") {
+            // Find third slash: /Users/toddbruss/
+            var slashCount = 0
+            var homeEnd = 0
+            for (i, ch) in path.enumerated() {
+                if ch == "/" { slashCount += 1 }
+                if slashCount == 3 { homeEnd = i + 1; break }
+            }
+            if homeEnd == 0 { homeEnd = ns.length }
+            let homeRange = NSRange(location: cursor, length: homeEnd)
+            result.addAttribute(.foregroundColor, value: pathHome, range: homeRange)
+            cursor += homeEnd
+
+            // Next component is the top-level dir (e.g. Documents, Library)
+            let remaining = String(path.dropFirst(homeEnd))
+            if let slashIdx = remaining.firstIndex(of: "/") {
+                let topLen = remaining.distance(from: remaining.startIndex, to: slashIdx) + 1
+                let topRange = NSRange(location: cursor, length: topLen)
+                result.addAttribute(.foregroundColor, value: pathTopDir, range: topRange)
+                cursor += topLen
+            }
+        } else if path.hasPrefix("~/") {
+            // ~/ prefix → dim
+            let homeRange = NSRange(location: cursor, length: 2)
+            result.addAttribute(.foregroundColor, value: pathHome, range: homeRange)
+            cursor += 2
+
+            // Next component is the top-level dir
+            let remaining = String(path.dropFirst(2))
+            if let slashIdx = remaining.firstIndex(of: "/") {
+                let topLen = remaining.distance(from: remaining.startIndex, to: slashIdx) + 1
+                let topRange = NSRange(location: cursor, length: topLen)
+                result.addAttribute(.foregroundColor, value: pathTopDir, range: topRange)
+                cursor += topLen
+            }
+        }
+
+        // Find the filename (last component after final /)
+        let pathEnd = pathRange.location + pathRange.length
+        if let lastSlash = path.lastIndex(of: "/") {
+            let filenameStart = path.distance(from: path.startIndex, to: lastSlash) + 1
+            let filenameLen = ns.length - filenameStart
+            if filenameLen > 0 {
+                let filenameRange = NSRange(location: pathRange.location + filenameStart, length: filenameLen)
+                // Middle directories: everything between cursor and filename
+                let middleLen = (pathRange.location + filenameStart) - cursor
+                if middleLen > 0 {
+                    let middleRange = NSRange(location: cursor, length: middleLen)
+                    result.addAttribute(.foregroundColor, value: pathMiddle, range: middleRange)
+                }
+                // Filename → bright blue bold
+                result.addAttributes([.foregroundColor: pathFilename, .font: bold], range: filenameRange)
+            } else {
+                // Trailing slash, color remaining as middle
+                let middleLen = pathEnd - cursor
+                if middleLen > 0 {
+                    result.addAttribute(.foregroundColor, value: pathMiddle, range: NSRange(location: cursor, length: middleLen))
+                }
+            }
+        } else {
+            // No slash — entire thing is a filename
+            let remainLen = pathEnd - cursor
+            if remainLen > 0 {
+                result.addAttributes([.foregroundColor: pathFilename, .font: bold], range: NSRange(location: cursor, length: remainLen))
+            }
+        }
+    }
+
     // Terminal output theme colors
     private static var termDir: NSColor {
         NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
@@ -656,15 +758,140 @@ private struct LangDef {
             guard let mr = m?.range else { return }
             result.addAttributes([.foregroundColor: termPath, .font: bold], range: mr)
         }
-        // File paths in git output
+        // File paths in git output → multi-color segments
         actAbsPathRx?.enumerateMatches(in: line, range: r) { m, _, _ in
             guard let mr = m?.range(at: 1) else { return }
-            result.addAttribute(.foregroundColor, value: termPath, range: mr)
+            let pathStr = ns.substring(with: mr)
+            colorizePath(result, pathRange: mr, path: pathStr, bold: bold)
         }
         // Timestamps
         actTimestampRx?.enumerateMatches(in: line, range: r) { m, _, _ in
             guard let mr = m?.range else { return }
             result.addAttribute(.foregroundColor, value: termDate, range: mr)
+        }
+
+        return result
+    }
+
+    // MARK: - Diff Block Highlighting
+
+    /// Highlight a diff code block with red/green backgrounds for removed/added lines,
+    /// and line numbers for context. Format: "LINE_NUM -\tcode" or "LINE_NUM +\tcode" or "LINE_NUM\tcode"
+    private static func highlightDiffBlock(code: String, font: NSFont) -> NSAttributedString {
+        let text = CodeBlockTheme.text
+        let result = NSMutableAttributedString(string: code, attributes: [
+            .font: font, .foregroundColor: text
+        ])
+        let isDark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+
+        let removedBg = isDark
+            ? NSColor(red: 0.4, green: 0.1, blue: 0.1, alpha: 1.0)    // dark red
+            : NSColor(red: 1.0, green: 0.85, blue: 0.85, alpha: 1.0)
+        let addedBg = isDark
+            ? NSColor(red: 0.1, green: 0.3, blue: 0.1, alpha: 1.0)    // dark green
+            : NSColor(red: 0.85, green: 1.0, blue: 0.85, alpha: 1.0)
+        let lineNumColor = isDark
+            ? NSColor(red: 0.5, green: 0.5, blue: 0.55, alpha: 1)     // dim
+            : NSColor(red: 0.45, green: 0.45, blue: 0.5, alpha: 1)
+        let removedText = isDark
+            ? NSColor(red: 1.0, green: 0.7, blue: 0.7, alpha: 1)      // light red text
+            : NSColor(red: 0.6, green: 0.0, blue: 0.0, alpha: 1)
+        let addedText = isDark
+            ? NSColor(red: 0.7, green: 1.0, blue: 0.7, alpha: 1)      // light green text
+            : NSColor(red: 0.0, green: 0.5, blue: 0.0, alpha: 1)
+
+        // Line-numbered diff: "123 -\tcode" or "123 +\tcode" or "123\tcode"
+        let lineNumDiffRx = try? NSRegularExpression(
+            pattern: #"^(\d+)(\s[+-])?\t(.*)$"#, options: .anchorsMatchLines)
+        // Simple diff: "- code" or "+ code"
+        let simpleDiffRx = try? NSRegularExpression(
+            pattern: #"^([+-])\s(.*)$"#, options: .anchorsMatchLines)
+
+        let ns = code as NSString
+        let r = NSRange(location: 0, length: ns.length)
+
+        // Try line-numbered format first
+        var matched = false
+        lineNumDiffRx?.enumerateMatches(in: code, range: r) { m, _, _ in
+            guard let m else { return }
+            matched = true
+            let fullRange = m.range
+
+            // Color line number dim
+            let numRange = m.range(at: 1)
+            result.addAttribute(.foregroundColor, value: lineNumColor, range: numRange)
+
+            // Check for +/- marker
+            if m.range(at: 2).length > 0 {
+                let marker = ns.substring(with: m.range(at: 2)).trimmingCharacters(in: .whitespaces)
+                if marker == "-" {
+                    result.addAttribute(.backgroundColor, value: removedBg, range: fullRange)
+                    result.addAttribute(.foregroundColor, value: removedText, range: m.range(at: 3))
+                } else if marker == "+" {
+                    result.addAttribute(.backgroundColor, value: addedBg, range: fullRange)
+                    result.addAttribute(.foregroundColor, value: addedText, range: m.range(at: 3))
+                }
+            }
+        }
+
+        // Fallback to simple diff format if no line-numbered matches
+        if !matched {
+            simpleDiffRx?.enumerateMatches(in: code, range: r) { m, _, _ in
+                guard let m else { return }
+                let fullRange = m.range
+                let marker = ns.substring(with: m.range(at: 1))
+                if marker == "-" {
+                    result.addAttribute(.backgroundColor, value: removedBg, range: fullRange)
+                    result.addAttribute(.foregroundColor, value: removedText, range: fullRange)
+                } else if marker == "+" {
+                    result.addAttribute(.backgroundColor, value: addedBg, range: fullRange)
+                    result.addAttribute(.foregroundColor, value: addedText, range: fullRange)
+                }
+            }
+        }
+
+        return result
+    }
+
+    // MARK: - Hex Dump Detection & Highlighting
+
+    /// Address portion: "00000000:"
+    private static let hexDumpAddrRx: NSRegularExpression? = try? NSRegularExpression(
+        pattern: #"^[0-9a-f]{8}:"#, options: .anchorsMatchLines)
+    /// Hex byte groups: 2-4 hex char groups separated by spaces after the address
+    private static let hexDumpBytesRx: NSRegularExpression? = try? NSRegularExpression(
+        pattern: #"(?<=: )(?:[0-9a-f]{2,4}\s?)+"#, options: .anchorsMatchLines)
+    /// ASCII column: the text after two or more spaces following the hex bytes
+    private static let hexDumpAsciiRx: NSRegularExpression? = try? NSRegularExpression(
+        pattern: #"  (.+)$"#, options: .anchorsMatchLines)
+
+    private static func looksLikeHexDump(_ t: String) -> Bool {
+        t.range(of: #"^[0-9a-f]{8}: [0-9a-f]{2}"#, options: .regularExpression) != nil
+    }
+
+    private static func highlightHexDump(line: String, font: NSFont) -> NSAttributedString {
+        let result = NSMutableAttributedString(string: line, attributes: [
+            .font: font, .foregroundColor: CodeBlockTheme.text
+        ])
+        let ns = line as NSString
+        let r = NSRange(location: 0, length: ns.length)
+
+        // Address → dim gray
+        hexDumpAddrRx?.enumerateMatches(in: line, range: r) { m, _, _ in
+            guard let mr = m?.range else { return }
+            result.addAttribute(.foregroundColor, value: termDate, range: mr)
+        }
+
+        // Hex bytes → number color (yellow)
+        hexDumpBytesRx?.enumerateMatches(in: line, range: r) { m, _, _ in
+            guard let mr = m?.range else { return }
+            result.addAttribute(.foregroundColor, value: CodeBlockTheme.number, range: mr)
+        }
+
+        // ASCII column → cyan
+        hexDumpAsciiRx?.enumerateMatches(in: line, range: r) { m, _, _ in
+            guard let mr = m?.range(at: 1) else { return }
+            result.addAttribute(.foregroundColor, value: termPath, range: mr)
         }
 
         return result
@@ -696,6 +923,7 @@ private struct LangDef {
         let t = line.trimmingCharacters(in: .whitespaces)
         if t.range(of: #"^\[\d{2}:\d{2}:\d{2}\]"#, options: .regularExpression) != nil { return true }
         if t.range(of: #"^\S+\.\w+:\d+:"#, options: .regularExpression) != nil { return true }
+        if looksLikeHexDump(t) { return true }
         if looksLikeTerminalLine(t) { return true }
         if looksLikeGitOutput(t) { return true }
         // Compiler/SPM warnings and errors
@@ -716,6 +944,11 @@ private struct LangDef {
     static func highlightActivityLogLine(line: String, font: NSFont) -> NSAttributedString? {
         let trimmed = line.trimmingCharacters(in: .whitespaces)
 
+        // Hex dump output (xxd / hexdump)
+        if looksLikeHexDump(trimmed) {
+            return highlightHexDump(line: line, font: font)
+        }
+
         // Terminal output (ls -la) — use the full terminal highlighter
         if looksLikeTerminalLine(trimmed) {
             return highlightTerminalOutput(code: line, font: font)
@@ -735,18 +968,20 @@ private struct LangDef {
         let r = NSRange(location: 0, length: ns.length)
         let bold = NSFont.monospacedSystemFont(ofSize: font.pointSize, weight: .bold)
 
-        // Paths → cyan
-        let cPath = termPath
+        // Paths → multi-color segments (home dim, top-dir green, middle cyan, filename blue bold)
         actAbsPathRx?.enumerateMatches(in: line, range: r) { m, _, _ in
             guard let mr = m?.range(at: 1) else { return }
-            result.addAttribute(.foregroundColor, value: cPath, range: mr)
+            let pathStr = ns.substring(with: mr)
+            colorizePath(result, pathRange: mr, path: pathStr, bold: bold)
         }
 
-        // Grep file:line: → cyan path, yellow line number
+        // Grep file:line: → multi-color path, yellow line number
         let cNum = termSize
         actGrepFileRx?.enumerateMatches(in: line, range: r) { m, _, _ in
             guard let m else { return }
-            result.addAttribute(.foregroundColor, value: cPath, range: m.range(at: 1))
+            let pathRange = m.range(at: 1)
+            let pathStr = ns.substring(with: pathRange)
+            colorizePath(result, pathRange: pathRange, path: pathStr, bold: bold)
             result.addAttribute(.foregroundColor, value: cNum, range: m.range(at: 2))
         }
 

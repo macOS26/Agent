@@ -5,34 +5,135 @@ import Foundation
 /// while retaining the ability to augment with provider-specific additions.
 enum AgentTools {
 
+    // MARK: - Tool Name Constants (single source of truth)
+    enum Name {
+        // File Tools
+        static let readFile = "read_file"
+        static let writeFile = "write_file"
+        static let editFile = "edit_file"
+        static let listFiles = "list_files"
+        static let searchFiles = "search_files"
+        // Git Tools
+        static let gitStatus = "git_status"
+        static let gitDiff = "git_diff"
+        static let gitLog = "git_log"
+        static let gitCommit = "git_commit"
+        static let gitDiffPatch = "git_diff_patch"
+        static let gitBranch = "git_branch"
+        // Core Scripting
+        static let appleEventQuery = "apple_event_query"
+        static let runApplescript = "run_applescript"
+        static let runOsascript = "run_osascript"
+        static let executeJavascript = "execute_javascript"
+        // Shell Execution
+        static let executeAgentCommand = "execute_agent_command"
+        static let executeDaemonCommand = "execute_daemon_command"
+        // Task
+        static let taskComplete = "task_complete"
+        // Accessibility
+        static let axListWindows = "ax_list_windows"
+        static let axInspectElement = "ax_inspect_element"
+        static let axGetProperties = "ax_get_properties"
+        static let axPerformAction = "ax_perform_action"
+        static let axCheckPermission = "ax_check_permission"
+        static let axRequestPermission = "ax_request_permission"
+        static let axTypeText = "ax_type_text"
+        static let axClick = "ax_click"
+        static let axScroll = "ax_scroll"
+        static let axPressKey = "ax_press_key"
+        static let axScreenshot = "ax_screenshot"
+        static let axGetAuditLog = "ax_get_audit_log"
+        static let axSetProperties = "ax_set_properties"
+        static let axFindElement = "ax_find_element"
+        static let axGetFocusedElement = "ax_get_focused_element"
+        static let axGetChildren = "ax_get_children"
+        static let axDrag = "ax_drag"
+        static let axWaitForElement = "ax_wait_for_element"
+        static let axShowMenu = "ax_show_menu"
+        static let axClickElement = "ax_click_element"
+        static let axWaitAdaptive = "ax_wait_adaptive"
+        static let axTypeIntoElement = "ax_type_into_element"
+        static let axHighlightElement = "ax_highlight_element"
+        static let axGetWindowFrame = "ax_get_window_frame"
+        // Agent Script Management
+        static let listAgentScripts = "list_agent_scripts"
+        static let readAgentScript = "read_agent_script"
+        static let createAgentScript = "create_agent_script"
+        static let updateAgentScript = "update_agent_script"
+        static let runAgentScript = "run_agent_script"
+        static let deleteAgentScript = "delete_agent_script"
+        // SDEF
+        static let lookupSdef = "lookup_sdef"
+        // Xcode
+        static let xcodeBuild = "xcode_build"
+        static let xcodeRun = "xcode_run"
+        static let xcodeListProjects = "xcode_list_projects"
+        static let xcodeSelectProject = "xcode_select_project"
+        static let xcodeGrantPermission = "xcode_grant_permission"
+        // AppleScript Management
+        static let listAppleScripts = "list_apple_scripts"
+        static let runAppleScript = "run_apple_script"
+        static let saveAppleScript = "save_apple_script"
+        static let deleteAppleScript = "delete_apple_script"
+        // JavaScript Management
+        static let listJavascript = "list_javascript"
+        static let runJavascript = "run_javascript"
+        static let saveJavascript = "save_javascript"
+        static let deleteJavascript = "delete_javascript"
+        // Tool Discovery
+        static let listNativeTools = "list_native_tools"
+        static let listMcpTools = "list_mcp_tools"
+        // Web Automation
+        static let webOpen = "web_open"
+        static let webFind = "web_find"
+        static let webClick = "web_click"
+        static let webType = "web_type"
+        static let webExecuteJs = "web_execute_js"
+        static let webGetUrl = "web_get_url"
+        static let webGetTitle = "web_get_title"
+        // Selenium
+        static let seleniumStart = "selenium_start"
+        static let seleniumStop = "selenium_stop"
+        static let seleniumNavigate = "selenium_navigate"
+        static let seleniumFind = "selenium_find"
+        static let seleniumClick = "selenium_click"
+        static let seleniumType = "selenium_type"
+        static let seleniumExecute = "selenium_execute"
+        static let seleniumScreenshot = "selenium_screenshot"
+        static let seleniumWait = "selenium_wait"
+        // Ollama-only
+        static let webSearch = "web_search"
+    }
+
     // MARK: - System Prompt (full version for Claude/Ollama)
     static func systemPrompt(userName: String, userHome: String) -> String {
-        """
+        let n = Name.self
+        return """
         You are an autonomous macOS agent. User: "\(userName)", home: "\(userHome)".
         Your Documents folder is \(userHome)/Documents/
-        Act, don't explain. Never ask questions. Call task_complete when done.
+        Act, don't explain. Never ask questions. Call \(n.taskComplete) when done.
         Do NOT repeat script stdout — user sees it live.
 
         EXECUTION & TCC:
-        - run_agent_script / apple_event_query / run_osascript (TCC): in Agent process → ALL TCC.
-        - run_osascript (non-TCC): routes through UserService LaunchAgent, same as execute_user_command.
-        - execute_user_command: as \(userName), ~ = \(userHome). NO TCC. For git, builds, file ops, CLI tools.
-        - execute_command: ROOT via LaunchDaemon, ~ = /var/root, use "\(userHome)" for user files. NO TCC. Chown back.
-        Never use execute_user_command or execute_command for Automation/Accessibility — no TCC.
+        - \(n.runAgentScript) / \(n.appleEventQuery) / \(n.runOsascript) (TCC): in Agent process → ALL TCC.
+        - \(n.runOsascript) (non-TCC): routes through UserService LaunchAgent, same as \(n.executeAgentCommand).
+        - \(n.executeAgentCommand): as \(userName), ~ = \(userHome). NO TCC. For git, builds, file ops, CLI tools.
+        - \(n.executeDaemonCommand): ROOT via LaunchDaemon, ~ = /var/root, use "\(userHome)" for user files. NO TCC. Chown back.
+        Never use \(n.executeAgentCommand) or \(n.executeDaemonCommand) for Automation/Accessibility — no TCC.
 
         APP AUTOMATION PRIORITY:
-        1. run_agent_script — ScriptingBridge Swift dylib, full TCC. Best for persistent automation.
-        2. run_applescript — NSAppleScript in Agent process, full TCC. Quick AppleScript without compilation.
-        3. run_osascript — osascript in Agent process for one-off AppleScript.
-        4. execute_javascript — JXA (JavaScript for Automation) via osascript -l JavaScript.
-        5. apple_event_query — ObjC dispatch, no compile. Fast property reads. Use lookup_sdef first.
+        1. \(n.runAgentScript) — ScriptingBridge Swift dylib, full TCC. Best for persistent automation.
+        2. \(n.runApplescript) — NSAppleScript in Agent process, full TCC. Quick AppleScript without compilation.
+        3. \(n.runOsascript) — osascript in Agent process for one-off AppleScript.
+        4. \(n.executeJavascript) — JXA (JavaScript for Automation) via osascript -l JavaScript.
+        5. \(n.appleEventQuery) — ObjC dispatch, no compile. Fast property reads. Use \(n.lookupSdef) first.
         6. Accessibility tools (ax_*) — AXUIElement API for UI inspection/interaction. Last resort for Mac apps.
-        Shell commands fill gaps: execute_agent_command (user) / execute_daemon_command (root) for CLI tools.
+        Shell commands fill gaps: \(n.executeAgentCommand) (user) / \(n.executeDaemonCommand) (root) for CLI tools.
 
         AGENTSCRIPTS:
-        Scripts: ~/Documents/AgentScript/agents/. Tools: list/read/create/update/delete/run_agent_script.
+        Scripts: ~/Documents/AgentScript/agents/. Tools: list/read/create/update/delete/\(n.runAgentScript).
         ALWAYS list first — update existing, don't duplicate.
-        delete_agent_script blocklists so bundled scripts won't respawn. NEVER edit Package.swift manually.
+        \(n.deleteAgentScript) blocklists so bundled scripts won't respawn. NEVER edit Package.swift manually.
         AgentScripts are Swift — use the full Swift language, any Swift 6 framework, ScriptingBridge, NSAppleScript, Process(), AXUIElement.
 
         SCRIPT FORMAT:
@@ -52,7 +153,7 @@ enum AgentTools {
         Connect: guard let app: Protocol = SBApplication(bundleIdentifier: "...") else { return }
         Elements: app.accounts?() → SBElementArray, .object(at: i) as? Type
         Props: @objc optional, use ?. and ??
-        New bridge: run_agent_script GenerateBridge with args /Applications/App.app
+        New bridge: \(n.runAgentScript) GenerateBridge with args /Applications/App.app
 
         BRIDGES (import→protocol→bundleID):
         AppleScriptUtilityBridge→AppleScriptUtilityApplication→com.apple.AppleScriptUtility
@@ -92,67 +193,71 @@ enum AgentTools {
         UTMBridge→UTMApplication→com.utmapp.UTM
 
         SELENIUM WEBDRIVER AUTOMATION:
-        SeleniumBridge provides WebDriver-style browser automation via HTTP API (W3C WebDriver spec).
+        Native selenium_* tools provide WebDriver-style browser automation (W3C WebDriver spec).
         SafariDriver is built into macOS at /usr/bin/safaridriver — no download needed.
         For Chrome/Firefox: install chromedriver/geckodriver and run on default ports.
-        Use run_agent_script Selenium with JSON args: {"action":"start","browser":"safari"}
-        Actions: start, stop, navigate, find, click, type, getText, execute, screenshot, waitFor
-        Locator strategies: css, xpath, id, name, linktext, partiallinktext, tagname, classname
+        Tools: \(n.seleniumStart), \(n.seleniumStop), \(n.seleniumNavigate), \(n.seleniumFind), \(n.seleniumClick), \(n.seleniumType), \(n.seleniumExecute), \(n.seleniumScreenshot), \(n.seleniumWait).
+        Locator strategies: css, xpath, id, name, linktext, tagname, classname
         Example workflow:
-          1. run_agent_script Selenium with {"action":"start","browser":"safari"}
-          2. run_agent_script Selenium with {"action":"navigate","url":"https://example.com"}
-          3. run_agent_script Selenium with {"action":"click","strategy":"css","value":"#submit"}
-          4. run_agent_script Selenium with {"action":"screenshot","filename":"result.png"}
-          5. run_agent_script Selenium with {"action":"stop"}
+          1. \(n.seleniumStart) {"browser": "safari"}
+          2. \(n.seleniumNavigate) {"url": "https://example.com"}
+          3. \(n.seleniumClick) {"strategy": "css", "value": "#submit"}
+          4. \(n.seleniumScreenshot) {"filename": "result.png"}
+          5. \(n.seleniumStop)
 
         WEB AUTOMATION (Phase 2):
         Unified API that auto-selects best strategy: Accessibility → JavaScript → Selenium.
-        Tools: web_open, web_find, web_click, web_type, web_execute_js, web_get_url, web_get_title.
+        Tools: \(n.webOpen), \(n.webFind), \(n.webClick), \(n.webType), \(n.webExecuteJs), \(n.webGetUrl), \(n.webGetTitle).
         Strategies: 'auto' (default), 'accessibility', 'javascript', 'selenium'.
         Selectors: CSS (#id, .class), XPath (//div), accessibility (AXButton, [title='Submit']).
         For advanced control, use selenium_* tools directly for WebDriver operations.
 
         JAVASCRIPT FOR AUTOMATION (JXA):
-        Use execute_javascript for JXA code: var app = Application('Finder'); app.selection()
-        OR run JXA inside run_applescript via: run script jsCode in "JavaScript"
+        Use \(n.executeJavascript) for JXA code: var app = Application('Finder'); app.selection()
+        OR run JXA inside \(n.runApplescript) via: run script jsCode in "JavaScript"
         Example AppleScript wrapping JXA:
           set jsCode to "function run() { var app = Application.currentApplication(); app.includeStandardAdditions = true; return app.displayDialog('Hello').buttonReturned; }"
           run script jsCode in "JavaScript"
 
-        FILE TOOLS: read_file, write_file, edit_file (read first), list_files, search_files
-        write_file returns line count only — call read_file after to verify.
+        FILE TOOLS: \(n.readFile), \(n.writeFile), \(n.editFile) (read first), \(n.listFiles), \(n.searchFiles)
+        \(n.writeFile) returns line count only — call \(n.readFile) after to verify.
 
-        GIT: git_status, git_diff, git_log, git_commit, git_diff_patch, git_branch
+        GIT: \(n.gitStatus), \(n.gitDiff), \(n.gitLog), \(n.gitCommit), \(n.gitDiffPatch), \(n.gitBranch)
 
-        XCODE: xcode_list_projects, xcode_select_project, xcode_build, xcode_run, xcode_grant_permission
-        NEVER xcodebuild or swift build via shell. Workflow: read → edit → xcode_build → fix → commit.
+        XCODE: \(n.xcodeListProjects), \(n.xcodeSelectProject), \(n.xcodeBuild), \(n.xcodeRun), \(n.xcodeGrantPermission)
+        NEVER xcodebuild or swift build via shell. Workflow: read → edit → \(n.xcodeBuild) → fix → commit.
 
         ACCESSIBILITY (require TCC):
-        Read: ax_list_windows, ax_inspect_element, ax_get_properties, ax_get_children, ax_get_focused_element, ax_check_permission, ax_request_permission
-        Input: ax_type_text, ax_click, ax_scroll, ax_press_key, ax_drag
-        Action: ax_perform_action. Protected roles/actions can be disabled in Accessibility Settings.
-        Set: ax_set_properties (sets text, values, positions). Find: ax_find_element, ax_wait_for_element.
-        Smart: ax_click_element (click by role/title), ax_wait_adaptive (exponential backoff), ax_type_into_element (verified typing).
-        Other: ax_screenshot, ax_get_audit_log
+        Read: \(n.axListWindows), \(n.axInspectElement), \(n.axGetProperties), \(n.axGetChildren), \(n.axGetFocusedElement), \(n.axCheckPermission), \(n.axRequestPermission)
+        Input: \(n.axTypeText), \(n.axClick), \(n.axScroll), \(n.axPressKey), \(n.axDrag)
+        Action: \(n.axPerformAction). Protected roles/actions can be disabled in Accessibility Settings.
+        Set: \(n.axSetProperties) (sets text, values, positions). Find: \(n.axFindElement), \(n.axWaitForElement).
+        Smart: \(n.axClickElement) (click by role/title), \(n.axWaitAdaptive) (exponential backoff), \(n.axTypeIntoElement) (verified typing).
+        UI: \(n.axShowMenu) (open context menu), \(n.axHighlightElement) (visual highlight), \(n.axGetWindowFrame) (window geometry).
+        Other: \(n.axScreenshot), \(n.axGetAuditLog)
 
         APPLE EVENT QUERY:
         Pass bundle_id + operations: get {key} | iterate {properties, limit} | index {index} | call {method, arg} | filter {predicate}
         Restricted operations can be disabled in Settings.
 
         SDEF LOOKUP (51 app dictionaries bundled as JSON):
-        ALWAYS use lookup_sdef to read SDEFs — never sdef or find for .sdef files. \
-        Use before writing osascript, NSAppleScript, apple_event_query, or ScriptingBridge code. \
+        ALWAYS use \(n.lookupSdef) to read SDEFs — never sdef or find for .sdef files. \
+        Use before writing osascript, NSAppleScript, \(n.appleEventQuery), or ScriptingBridge code. \
         bundle_id="list" shows all apps. class_name drills into a specific class. \
-        Read bridge Swift files via read_agent_script for Swift names.
+        Read bridge Swift files via \(n.readAgentScript) for Swift names.
 
         IMAGE PATHS: Print file paths — UI renders clickable links.
 
         MCP TOOLS: mcp_* functions in your tool list. Never call a server's list/tools — your list IS the truth.
 
+        APPLESCRIPT MANAGEMENT: \(n.listAppleScripts), \(n.runAppleScript), \(n.saveAppleScript), \(n.deleteAppleScript)
+        JAVASCRIPT MANAGEMENT: \(n.listJavascript), \(n.runJavascript), \(n.saveJavascript), \(n.deleteJavascript)
+        TOOL DISCOVERY: \(n.listNativeTools), \(n.listMcpTools)
+
         NEVER DO:
-        - xcodebuild or swift build via shell → use xcode_build / run_agent_script
-        - xcode_build on ~/Documents/AgentScript/agents/ → use run_agent_script
-        - execute_user_command for AX/Automation → use run_agent_script
+        - xcodebuild or swift build via shell → use \(n.xcodeBuild) / \(n.runAgentScript)
+        - \(n.xcodeBuild) on ~/Documents/AgentScript/agents/ → use \(n.runAgentScript)
+        - \(n.executeAgentCommand) for AX/Automation → use \(n.runAgentScript)
         """
     }
 
@@ -169,23 +274,24 @@ enum AgentTools {
     }
 //TOOLS:
 //\(enabledAppleAIToolLines())
-    //execute_user_command {"command": "ls -la"}
-    //run_applescript {"source": "tell app \\"Finder\\" to get name of home"}
-    //run_osascript {"script": "display dialog \\"Hello\\""}
-    //task_complete {"summary": "Done"}
+    //\(Name.executeAgentCommand) {"command": "ls -la"}
+    //\(Name.runApplescript) {"source": "tell app \\"Finder\\" to get name of home"}
+    //\(Name.runOsascript) {"script": "display dialog \\"Hello\\""}
+    //\(Name.taskComplete) {"summary": "Done"}
     
     // MARK: - Compact System Prompt (for Apple Intelligence with limited context)
     @MainActor static func compactSystemPrompt(userName: String, userHome: String, projectFolder: String = "") -> String {
         let folder = projectFolder.isEmpty ? userHome : projectFolder
+        let n = Name.self
         return """
         You are a macOS assistant. User: \(userName), home: \(userHome).
         Working directory: \(folder)
 
         IMPORTANT RULES:
-        1. Use execute_user_command to run shell commands. WAIT for its output before proceeding.
-        2. After you get the tool result, respond with the output, then call task_complete.
-        3. Do NOT call task_complete until you have received and reported the tool output.
-        4. For questions or greetings: reply with text, then call task_complete.
+        1. Use \(n.executeAgentCommand) to run shell commands. WAIT for its output before proceeding.
+        2. After you get the tool result, respond with the output, then call \(n.taskComplete).
+        3. Do NOT call \(n.taskComplete) until you have received and reported the tool output.
+        4. For questions or greetings: reply with text, then call \(n.taskComplete).
         5. Always cd to the working directory first in shell commands.
         """
     }
@@ -204,63 +310,63 @@ enum AgentTools {
 
     /// Concrete examples for each tool shown in the Apple AI compact prompt.
     private static let toolExamples: [String: String] = [
-        "execute_agent_command": #"execute_user_command {"command": "ls -la"}"#,
-        "execute_daemon_command":      #"execute_command {"command": "whoami"}"#,
-        "run_applescript":      #"run_applescript {"source": "tell application \"Finder\" to get name of home"}"#,
-        "run_osascript":        #"run_osascript {"script": "display dialog \"Hello\""}"#,
-        "execute_javascript":   #"execute_javascript {"source": "var app = Application.currentApplication(); app.includeStandardAdditions = true; app.displayDialog('Hello')"}"#,
-        "read_file":            #"read_file {"file_path": "/Users/toddbruss/Documents/example.txt"}"#,
-        "write_file":           #"write_file {"file_path": "/Users/toddbruss/Documents/out.txt", "content": "hello"}"#,
-        "edit_file":            #"edit_file {"file_path": "/path/file.txt", "old_string": "old", "new_string": "new"}"#,
-        "list_files":           #"list_files {"pattern": "*.swift", "path": "/Users/toddbruss/Documents"}"#,
-        "search_files":         #"search_files {"pattern": "TODO", "path": "/Users/toddbruss/Documents"}"#,
-        "task_complete":        #"task_complete {"summary": "Done"}"#,
-        "git_status":           #"git_status {"path": "/Users/toddbruss/Documents/GitHub/MyRepo"}"#,
-        "git_commit":           #"git_commit {"path": "/Users/toddbruss/Documents/GitHub/MyRepo", "message": "fix: update"}"#,
-        "apple_event_query":    #"apple_event_query {"bundle_id": "com.apple.Music", "operations": [{"action": "get", "key": "currentTrack"}]}"#,
-        "run_agent_script":     #"run_agent_script {"name": "MyScript"}"#,
-        "list_agent_scripts":   "list_agent_scripts",
-        "read_agent_script":    #"read_agent_script {"name": "MyScript"}"#,
-        "create_agent_script":  #"create_agent_script {"name": "MyScript", "content": "..."}"#,
-        "update_agent_script":  #"update_agent_script {"name": "MyScript", "content": "..."}"#,
-        "delete_agent_script":  #"delete_agent_script {"name": "MyScript"}"#,
-        "lookup_sdef":          #"lookup_sdef {"bundle_id": "com.apple.Music"}"#,
-        "xcode_build":          #"xcode_build {"project_path": "/path/to/MyApp.xcodeproj"}"#,
-        "xcode_list_projects":  "xcode_list_projects",
-        "xcode_select_project": #"xcode_select_project {"number": 1}"#,
-        "xcode_run":            #"xcode_run {"project_path": "/path/to/MyApp.xcodeproj"}"#,
-        "xcode_grant_permission": "xcode_grant_permission",
-        "ax_list_windows":      "ax_list_windows",
-        "ax_check_permission":  "ax_check_permission",
-        "ax_request_permission": "ax_request_permission",
-        "ax_inspect_element":   #"ax_inspect_element {"x": 100, "y": 200}"#,
-        "ax_click":             #"ax_click {"x": 100, "y": 200}"#,
-        "ax_type_text":         #"ax_type_text {"text": "hello"}"#,
-        "ax_press_key":         #"ax_press_key {"keyCode": 36}"#,
-        "ax_screenshot":        "ax_screenshot",
-        "ax_get_audit_log":     "ax_get_audit_log",
-        "ax_set_properties":    #"ax_set_properties {"properties": {"AXValue": "hello"}}"#,
-        "ax_find_element":      #"ax_find_element {"role": "AXButton", "title": "Submit"}"#,
-        "ax_get_focused_element": "ax_get_focused_element",
-        "ax_get_children":      #"ax_get_children {"role": "AXWindow"}"#,
-        "ax_drag":              #"ax_drag {"fromX": 100, "fromY": 100, "toX": 200, "toY": 200}"#,
-        "ax_wait_for_element":  #"ax_wait_for_element {"role": "AXButton", "timeout": 5}"#,
-        "ax_click_element":     #"ax_click_element {"role": "AXButton", "title": "Submit"}"#,
-        "ax_wait_adaptive":     #"ax_wait_adaptive {"role": "AXTextField", "timeout": 10}"#,
-        "ax_type_into_element": #"ax_type_into_element {"role": "AXTextField", "text": "hello@example.com"}"#,
-        "ax_highlight_element": #"ax_highlight_element {"role": "AXButton", "title": "Submit", "duration": 2.0}"#,
-        "ax_get_window_frame": #"ax_get_window_frame {"windowId": 1234}"#,
-        "ax_show_menu":         #"ax_show_menu {"x": 100, "y": 200}"#,
-        "list_apple_scripts":   "list_apple_scripts",
-        "run_apple_script":     #"run_apple_script {"name": "Greeting"}"#,
-        "save_apple_script":    #"save_apple_script {"name": "Greeting", "source": "display dialog \"Hello!\""}"#,
-        "delete_apple_script":  #"delete_apple_script {"name": "Greeting"}"#,
-        "list_javascript":      "list_javascript",
-        "run_javascript":       #"run_javascript {"name": "HelloJXA"}"#,
-        "save_javascript":      #"save_javascript {"name": "HelloJXA", "source": "var app = Application.currentApplication(); app.includeStandardAdditions = true; app.displayDialog('Hello')"}"#,
-        "delete_javascript":    #"delete_javascript {"name": "HelloJXA"}"#,
-        "list_native_tools":    "list_native_tools",
-        "list_mcp_tools":       "list_mcp_tools",
+        Name.executeAgentCommand:  #"execute_agent_command {"command": "ls -la"}"#,
+        Name.executeDaemonCommand: #"execute_daemon_command {"command": "whoami"}"#,
+        Name.runApplescript:       #"run_applescript {"source": "tell application \"Finder\" to get name of home"}"#,
+        Name.runOsascript:         #"run_osascript {"script": "display dialog \"Hello\""}"#,
+        Name.executeJavascript:    #"execute_javascript {"source": "var app = Application.currentApplication(); app.includeStandardAdditions = true; app.displayDialog('Hello')"}"#,
+        Name.readFile:             #"read_file {"file_path": "/Users/toddbruss/Documents/example.txt"}"#,
+        Name.writeFile:            #"write_file {"file_path": "/Users/toddbruss/Documents/out.txt", "content": "hello"}"#,
+        Name.editFile:             #"edit_file {"file_path": "/path/file.txt", "old_string": "old", "new_string": "new"}"#,
+        Name.listFiles:            #"list_files {"pattern": "*.swift", "path": "/Users/toddbruss/Documents"}"#,
+        Name.searchFiles:          #"search_files {"pattern": "TODO", "path": "/Users/toddbruss/Documents"}"#,
+        Name.taskComplete:         #"task_complete {"summary": "Done"}"#,
+        Name.gitStatus:            #"git_status {"path": "/Users/toddbruss/Documents/GitHub/MyRepo"}"#,
+        Name.gitCommit:            #"git_commit {"path": "/Users/toddbruss/Documents/GitHub/MyRepo", "message": "fix: update"}"#,
+        Name.appleEventQuery:      #"apple_event_query {"bundle_id": "com.apple.Music", "operations": [{"action": "get", "key": "currentTrack"}]}"#,
+        Name.runAgentScript:       #"run_agent_script {"name": "MyScript"}"#,
+        Name.listAgentScripts:     "list_agent_scripts",
+        Name.readAgentScript:      #"read_agent_script {"name": "MyScript"}"#,
+        Name.createAgentScript:    #"create_agent_script {"name": "MyScript", "content": "..."}"#,
+        Name.updateAgentScript:    #"update_agent_script {"name": "MyScript", "content": "..."}"#,
+        Name.deleteAgentScript:    #"delete_agent_script {"name": "MyScript"}"#,
+        Name.lookupSdef:           #"lookup_sdef {"bundle_id": "com.apple.Music"}"#,
+        Name.xcodeBuild:           #"xcode_build {"project_path": "/path/to/MyApp.xcodeproj"}"#,
+        Name.xcodeListProjects:    "xcode_list_projects",
+        Name.xcodeSelectProject:   #"xcode_select_project {"number": 1}"#,
+        Name.xcodeRun:             #"xcode_run {"project_path": "/path/to/MyApp.xcodeproj"}"#,
+        Name.xcodeGrantPermission: "xcode_grant_permission",
+        Name.axListWindows:        "ax_list_windows",
+        Name.axCheckPermission:    "ax_check_permission",
+        Name.axRequestPermission:  "ax_request_permission",
+        Name.axInspectElement:     #"ax_inspect_element {"x": 100, "y": 200}"#,
+        Name.axClick:              #"ax_click {"x": 100, "y": 200}"#,
+        Name.axTypeText:           #"ax_type_text {"text": "hello"}"#,
+        Name.axPressKey:           #"ax_press_key {"keyCode": 36}"#,
+        Name.axScreenshot:         "ax_screenshot",
+        Name.axGetAuditLog:        "ax_get_audit_log",
+        Name.axSetProperties:      #"ax_set_properties {"properties": {"AXValue": "hello"}}"#,
+        Name.axFindElement:        #"ax_find_element {"role": "AXButton", "title": "Submit"}"#,
+        Name.axGetFocusedElement:  "ax_get_focused_element",
+        Name.axGetChildren:        #"ax_get_children {"role": "AXWindow"}"#,
+        Name.axDrag:               #"ax_drag {"fromX": 100, "fromY": 100, "toX": 200, "toY": 200}"#,
+        Name.axWaitForElement:     #"ax_wait_for_element {"role": "AXButton", "timeout": 5}"#,
+        Name.axClickElement:       #"ax_click_element {"role": "AXButton", "title": "Submit"}"#,
+        Name.axWaitAdaptive:       #"ax_wait_adaptive {"role": "AXTextField", "timeout": 10}"#,
+        Name.axTypeIntoElement:    #"ax_type_into_element {"role": "AXTextField", "text": "hello@example.com"}"#,
+        Name.axHighlightElement:   #"ax_highlight_element {"role": "AXButton", "title": "Submit", "duration": 2.0}"#,
+        Name.axGetWindowFrame:     #"ax_get_window_frame {"windowId": 1234}"#,
+        Name.axShowMenu:           #"ax_show_menu {"x": 100, "y": 200}"#,
+        Name.listAppleScripts:     "list_apple_scripts",
+        Name.runAppleScript:       #"run_apple_script {"name": "Greeting"}"#,
+        Name.saveAppleScript:      #"save_apple_script {"name": "Greeting", "source": "display dialog \"Hello!\""}"#,
+        Name.deleteAppleScript:    #"delete_apple_script {"name": "Greeting"}"#,
+        Name.listJavascript:       "list_javascript",
+        Name.runJavascript:        #"run_javascript {"name": "HelloJXA"}"#,
+        Name.saveJavascript:       #"save_javascript {"name": "HelloJXA", "source": "var app = Application.currentApplication(); app.includeStandardAdditions = true; app.displayDialog('Hello')"}"#,
+        Name.deleteJavascript:     #"delete_javascript {"name": "HelloJXA"}"#,
+        Name.listNativeTools:      "list_native_tools",
+        Name.listMcpTools:         "list_mcp_tools",
     ]
 
     @MainActor private static func enabledAppleAIToolLines() -> String {
@@ -283,7 +389,7 @@ enum AgentTools {
     nonisolated(unsafe) private static let commonTools: [ToolDef] = [
         // --- Coding Tools ---
         ToolDef(
-            name: "read_file",
+            name: Name.readFile,
             description: "Read file contents with line numbers. Use instead of `cat`. Returns numbered lines for easy reference in edit_file.",
             properties: [
                 "file_path": ["type": "string", "description": "Absolute path to the file to read"],
@@ -293,7 +399,7 @@ enum AgentTools {
             required: ["file_path"]
         ),
         ToolDef(
-            name: "write_file",
+            name: Name.writeFile,
             description: "Create or overwrite a file. Creates parent dirs automatically. Returns line count only — call read_file after to verify content.",
             properties: [
                 "file_path": ["type": "string", "description": "Absolute path to the file to write"],
@@ -302,7 +408,7 @@ enum AgentTools {
             required: ["file_path", "content"]
         ),
         ToolDef(
-            name: "edit_file",
+            name: Name.editFile,
             description: "Replace exact text in a file. Use instead of sed/awk. You MUST read_file first. The old_string must be unique unless replace_all is true.",
             properties: [
                 "file_path": ["type": "string", "description": "Absolute path to the file to edit"],
@@ -313,7 +419,7 @@ enum AgentTools {
             required: ["file_path", "old_string", "new_string"]
         ),
         ToolDef(
-            name: "list_files",
+            name: Name.listFiles,
             description: "Find files matching a glob pattern. Use instead of `find`. Excludes hidden files and .build directories.",
             properties: [
                 "pattern": ["type": "string", "description": "Glob pattern (e.g. \"*.swift\", \"Package.swift\")"],
@@ -322,7 +428,7 @@ enum AgentTools {
             required: ["pattern"]
         ),
         ToolDef(
-            name: "search_files",
+            name: Name.searchFiles,
             description: "Search file contents by regex pattern. Use instead of `grep`. Returns matching lines with file paths and line numbers.",
             properties: [
                 "pattern": ["type": "string", "description": "Regex pattern to search for"],
@@ -333,7 +439,7 @@ enum AgentTools {
         ),
         // --- Git Tools ---
         ToolDef(
-            name: "git_status",
+            name: Name.gitStatus,
             description: "Show current branch, staged/unstaged changes, and untracked files.",
             properties: [
                 "path": ["type": "string", "description": "Repository path (REQUIRED for git operations — provide the project directory)"],
@@ -341,7 +447,7 @@ enum AgentTools {
             required: []
         ),
         ToolDef(
-            name: "git_diff",
+            name: Name.gitDiff,
             description: "Show file changes as a unified diff. Can show staged changes, unstaged changes, or diff against a branch/commit.",
             properties: [
                 "path": ["type": "string", "description": "Repository path (REQUIRED for git operations — provide the project directory)"],
@@ -351,7 +457,7 @@ enum AgentTools {
             required: []
         ),
         ToolDef(
-            name: "git_log",
+            name: Name.gitLog,
             description: "Show recent commit history as one-line summaries.",
             properties: [
                 "path": ["type": "string", "description": "Repository path (REQUIRED for git operations — provide the project directory)"],
@@ -360,7 +466,7 @@ enum AgentTools {
             required: []
         ),
         ToolDef(
-            name: "git_commit",
+            name: Name.gitCommit,
             description: "Stage files and create a commit. If no files specified, stages all changes.",
             properties: [
                 "path": ["type": "string", "description": "Repository path (REQUIRED for git operations — provide the project directory)"],
@@ -370,7 +476,7 @@ enum AgentTools {
             required: ["message"]
         ),
         ToolDef(
-            name: "git_diff_patch",
+            name: Name.gitDiffPatch,
             description: "Apply a unified diff patch to files in the repository. Use for complex multi-line edits that are easier to express as a patch.",
             properties: [
                 "path": ["type": "string", "description": "Repository path (REQUIRED for git operations — provide the project directory)"],
@@ -379,7 +485,7 @@ enum AgentTools {
             required: ["patch"]
         ),
         ToolDef(
-            name: "git_branch",
+            name: Name.gitBranch,
             description: "Create a new git branch, optionally switching to it.",
             properties: [
                 "path": ["type": "string", "description": "Repository path (REQUIRED for git operations — provide the project directory)"],
@@ -390,7 +496,7 @@ enum AgentTools {
         ),
         // --- Core Tools ---
         ToolDef(
-            name: "apple_event_query",
+            name: Name.appleEventQuery,
             description: "Query a scriptable Mac app via ObjC dynamic dispatch. No compilation, instant results. Use lookup_sdef first to get valid keys.",
             properties: [
                 "bundle_id": ["type": "string", "description": "App bundle identifier (e.g. com.apple.Music)"],
@@ -416,7 +522,7 @@ enum AgentTools {
             required: ["bundle_id", "operations"]
         ),
         ToolDef(
-            name: "run_applescript",
+            name: Name.runApplescript,
             description: "Execute AppleScript code in-process via NSAppleScript with full TCC. Use lookup_sdef first to get correct terminology. For quick automation that doesn't need a compiled AgentScript.",
             properties: [
                 "source": ["type": "string", "description": "AppleScript source code to execute"],
@@ -424,7 +530,7 @@ enum AgentTools {
             required: ["source"]
         ),
         ToolDef(
-            name: "run_osascript",
+            name: Name.runOsascript,
             description: "Run AppleScript source code via osascript in-process with full TCC. Use for app automation via AppleScript. Prefer run_applescript or run_agent_script when available.",
             properties: [
                 "script": ["type": "string", "description": "AppleScript source code to execute"],
@@ -432,7 +538,7 @@ enum AgentTools {
             required: ["script"]
         ),
         ToolDef(
-            name: "execute_javascript",
+            name: Name.executeJavascript,
             description: "Run JavaScript for Automation (JXA) code via osascript. Use for app automation with JavaScript syntax. Example: var app = Application('Finder'); app.selection()",
             properties: [
                 "source": ["type": "string", "description": "JXA source code to execute"],
@@ -440,7 +546,7 @@ enum AgentTools {
             required: ["source"]
         ),
         ToolDef(
-            name: "execute_agent_command",
+            name: Name.executeAgentCommand,
             description: "Execute a shell command as the current user (no root). NO TCC permissions. Use for git, builds, file ops, homebrew, etc.",
             properties: [
                 "command": ["type": "string", "description": "The bash command to execute as the current user"],
@@ -448,7 +554,7 @@ enum AgentTools {
             required: ["command"]
         ),
         ToolDef(
-            name: "execute_daemon_command",
+            name: Name.executeDaemonCommand,
             description: "Execute a shell command with ROOT privileges via the privileged daemon. NO TCC. Only use when root is required: system packages, /System or /Library modifications, disk operations.",
             properties: [
                 "command": ["type": "string", "description": "The bash command to execute as root"],
@@ -456,7 +562,7 @@ enum AgentTools {
             required: ["command"]
         ),
         ToolDef(
-            name: "task_complete",
+            name: Name.taskComplete,
             description: "Signal that the task has been completed. Always call this when done.",
             properties: [
                 "summary": ["type": "string", "description": "Brief summary of what was accomplished"],
@@ -465,7 +571,7 @@ enum AgentTools {
         ),
         // --- Accessibility Tools ---
         ToolDef(
-            name: "ax_list_windows",
+            name: Name.axListWindows,
             description: "List all visible windows from all applications with their positions and sizes. Returns JSON array with window ID, owner PID, owner name, window name, and bounds.",
             properties: [
                 "limit": ["type": "integer", "description": "Maximum number of windows to return (default 50)"],
@@ -473,7 +579,7 @@ enum AgentTools {
             required: []
         ),
         ToolDef(
-            name: "ax_inspect_element",
+            name: Name.axInspectElement,
             description: "Inspect accessibility element at a screen coordinate. Returns the accessibility hierarchy for the element at position (x, y).",
             properties: [
                 "x": ["type": "number", "description": "Screen X coordinate"],
@@ -483,7 +589,7 @@ enum AgentTools {
             required: ["x", "y"]
         ),
         ToolDef(
-            name: "ax_get_properties",
+            name: Name.axGetProperties,
             description: "Get all properties of an accessibility element. Can find by role/title/value or by screen position. CRITICAL: If you just used ax_wait_for_element or ax_find_element, pass the SAME role/title/value parameters to this function.",
             properties: [
                 "role": ["type": "string", "description": "Accessibility role to find (e.g., 'AXButton', 'AXTextField')"],
@@ -496,7 +602,7 @@ enum AgentTools {
             required: []
         ),
         ToolDef(
-            name: "ax_perform_action",
+            name: Name.axPerformAction,
             description: "Perform an accessibility action on an element. SECURITY: Protected roles (AXSecureTextField, AXPasswordField) can be disabled in Accessibility Settings. CRITICAL: If you just used ax_wait_for_element or ax_find_element, pass the SAME role/title/value parameters to this function - the element locator must match exactly.",
             properties: [
                 "role": ["type": "string", "description": "Accessibility role to find (e.g., 'AXButton', 'AXTextField')"],
@@ -510,20 +616,20 @@ enum AgentTools {
             required: ["action"]
         ),
         ToolDef(
-            name: "ax_check_permission",
+            name: Name.axCheckPermission,
             description: "Check if Accessibility permission is granted to Agent.",
             properties: [:],
             required: []
         ),
         ToolDef(
-            name: "ax_request_permission",
+            name: Name.axRequestPermission,
             description: "Request Accessibility permission. Shows the macOS system prompt for the user to approve.",
             properties: [:],
             required: []
         ),
         // --- Accessibility Input Simulation (Phase 2) ---
         ToolDef(
-            name: "ax_type_text",
+            name: Name.axTypeText,
             description: "Simulate typing text at the current cursor position or at specific coordinates. Uses CGEvent keyboard simulation.",
             properties: [
                 "text": ["type": "string", "description": "Text to type"],
@@ -533,7 +639,7 @@ enum AgentTools {
             required: ["text"]
         ),
         ToolDef(
-            name: "ax_click",
+            name: Name.axClick,
             description: "Simulate a mouse click at screen coordinates.",
             properties: [
                 "x": ["type": "number", "description": "Screen X coordinate (required)"],
@@ -544,7 +650,7 @@ enum AgentTools {
             required: ["x", "y"]
         ),
         ToolDef(
-            name: "ax_scroll",
+            name: Name.axScroll,
             description: "Simulate scroll wheel at screen coordinates.",
             properties: [
                 "x": ["type": "number", "description": "Screen X coordinate"],
@@ -555,7 +661,7 @@ enum AgentTools {
             required: ["x", "y"]
         ),
         ToolDef(
-            name: "ax_press_key",
+            name: Name.axPressKey,
             description: "Simulate pressing a key with optional modifiers (Cmd, Option, Control, Shift).",
             properties: [
                 "keyCode": ["type": "integer", "description": "macOS virtual key code (e.g., 36=Return, 48=Tab, 51=Delete, 53=Escape, 123-126=Arrow keys)"],
@@ -565,7 +671,7 @@ enum AgentTools {
         ),
         // --- Accessibility Screenshots (Phase 4) ---
         ToolDef(
-            name: "ax_screenshot",
+            name: Name.axScreenshot,
             description: "Capture a screenshot of a screen region or specific window. Requires Screen Recording permission. Returns the path to the saved PNG file.",
             properties: [
                 "x": ["type": "number", "description": "X coordinate of region (optional, required for region capture)"],
@@ -578,7 +684,7 @@ enum AgentTools {
         ),
         // --- Accessibility Audit Log (Phase 5) ---
         ToolDef(
-            name: "ax_get_audit_log",
+            name: Name.axGetAuditLog,
             description: "Get recent accessibility audit log entries. Shows recent accessibility operations performed by the agent.",
             properties: [
                 "limit": ["type": "integer", "description": "Maximum number of entries to return (default 50)"],
@@ -587,7 +693,7 @@ enum AgentTools {
         ),
         // --- Accessibility Set Properties (Phase 6) ---
         ToolDef(
-            name: "ax_set_properties",
+            name: Name.axSetProperties,
             description: "Set accessibility property values on an element. CRITICAL for setting text fields, selections, slider values, etc. Can find element by role/title/value, by position, or within a specific app. CRITICAL: If you just used ax_wait_for_element or ax_find_element, pass the SAME role/title/value parameters to this function.",
             properties: [
                 "role": ["type": "string", "description": "Accessibility role to find (e.g., 'AXTextField', 'AXSlider')"],
@@ -602,7 +708,7 @@ enum AgentTools {
         ),
         // --- Accessibility Find Element (Phase 6) ---
         ToolDef(
-            name: "ax_find_element",
+            name: Name.axFindElement,
             description: "Find an accessibility element by role, title, or value with optional timeout. Returns element properties when found. Useful for waiting for UI elements to appear.",
             properties: [
                 "role": ["type": "string", "description": "Accessibility role to find (e.g., 'AXButton', 'AXTextField')"],
@@ -615,7 +721,7 @@ enum AgentTools {
         ),
         // --- Accessibility Get Focused Element (Phase 6) ---
         ToolDef(
-            name: "ax_get_focused_element",
+            name: Name.axGetFocusedElement,
             description: "Get the currently focused accessibility element. Can optionally filter by app. Returns element properties.",
             properties: [
                 "appBundleId": ["type": "string", "description": "Optional bundle ID to get focused element within a specific app"],
@@ -624,7 +730,7 @@ enum AgentTools {
         ),
         // --- Accessibility Get Children (Phase 6) ---
         ToolDef(
-            name: "ax_get_children",
+            name: Name.axGetChildren,
             description: "Get all children of an accessibility element. Useful for exploring UI hierarchy. CRITICAL: If you just used ax_wait_for_element or ax_find_element, pass the SAME role/title/value parameters to this function.",
             properties: [
                 "role": ["type": "string", "description": "Accessibility role to find parent element"],
@@ -639,7 +745,7 @@ enum AgentTools {
         ),
         // --- Accessibility Drag (Phase 6) ---
         ToolDef(
-            name: "ax_drag",
+            name: Name.axDrag,
             description: "Perform a drag operation from one point to another. Simulates mouse down, drag, and mouse up.",
             properties: [
                 "fromX": ["type": "number", "description": "Starting X coordinate"],
@@ -652,7 +758,7 @@ enum AgentTools {
         ),
         // --- Accessibility Wait For Element (Phase 6) ---
         ToolDef(
-            name: "ax_wait_for_element",
+            name: Name.axWaitForElement,
             description: "Wait for an accessibility element to appear, polling periodically until found or timeout. Returns element properties when found. CRITICAL: When calling ax_perform_action or ax_set_properties after this, use the SAME role/title/value parameters to locate the element.",
             properties: [
                 "role": ["type": "string", "description": "Accessibility role to find (e.g., 'AXButton', 'AXTextField')"],
@@ -666,7 +772,7 @@ enum AgentTools {
         ),
         // --- Accessibility Show Menu (Phase 6) ---
         ToolDef(
-            name: "ax_show_menu",
+            name: Name.axShowMenu,
             description: "Show context menu for an element. Uses AXShowMenu action if available, otherwise simulates right-click at element center. Protected roles can be disabled in Accessibility Settings. CRITICAL: If you just used ax_wait_for_element or ax_find_element, pass the SAME role/title/value parameters to this function.",
             properties: [
                 "role": ["type": "string", "description": "Accessibility role to find element"],
@@ -680,7 +786,7 @@ enum AgentTools {
         ),
         // --- Smart Element Click (Phase 1 Improvement) ---
         ToolDef(
-            name: "ax_click_element",
+            name: Name.axClickElement,
             description: "Click an element by finding it semantically (role/title) and clicking its center. More reliable than coordinate-based clicking for web automation. Finds element, gets its position/size, calculates center, and clicks.",
             properties: [
                 "role": ["type": "string", "description": "Accessibility role to find (e.g., 'AXButton', 'AXTextField')"],
@@ -694,7 +800,7 @@ enum AgentTools {
         ),
         // --- Adaptive Wait (Phase 1 Improvement) ---
         ToolDef(
-            name: "ax_wait_adaptive",
+            name: Name.axWaitAdaptive,
             description: "Wait for an element with exponential backoff polling. More efficient than fixed-interval polling for slow-loading content. Starts with short interval and increases up to max.",
             properties: [
                 "role": ["type": "string", "description": "Accessibility role to find (e.g., 'AXButton', 'AXTextField')"],
@@ -709,7 +815,7 @@ enum AgentTools {
         ),
         // --- Type into Element (Phase 1 Improvement) ---
         ToolDef(
-            name: "ax_type_into_element",
+            name: Name.axTypeIntoElement,
             description: "Type text into an element found by role/title. First tries AXValue set (fastest), falls back to CGEvent typing. Can verify the text was entered. Best for web form filling.",
             properties: [
                 "role": ["type": "string", "description": "Accessibility role of target element (e.g., 'AXTextField', 'AXTextArea')"],
@@ -722,7 +828,7 @@ enum AgentTools {
         ),
         // --- Accessibility Highlight Element (Phase 2, v1.0.16) ---
         ToolDef(
-            name: "ax_highlight_element",
+            name: Name.axHighlightElement,
             description: "Temporarily highlight an element on screen with a colored overlay. Useful for verification before performing actions. The highlight appears for a configurable duration then disappears automatically.",
             properties: [
                 "role": ["type": "string", "description": "Accessibility role to find (e.g., 'AXButton', 'AXTextField')"],
@@ -738,7 +844,7 @@ enum AgentTools {
         ),
         // --- Accessibility Get Window Frame (Phase 2, v1.0.16) ---
         ToolDef(
-            name: "ax_get_window_frame",
+            name: Name.axGetWindowFrame,
             description: "Get the exact position and frame (x, y, width, height) of a window by its ID. Use ax_list_windows first to get window IDs. Returns precise coordinates for positioning screenshots or clicks.",
             properties: [
                 "windowId": ["type": "integer", "description": "Window ID from ax_list_windows"],
@@ -747,13 +853,13 @@ enum AgentTools {
         ),
         // --- Script Management ---
         ToolDef(
-            name: "list_agent_scripts",
+            name: Name.listAgentScripts,
             description: "List all Swift automation scripts in ~/Documents/AgentScript/agents/",
             properties: [:],
             required: []
         ),
         ToolDef(
-            name: "read_agent_script",
+            name: Name.readAgentScript,
             description: "Read the source code of a Swift automation script.",
             properties: [
                 "name": ["type": "string", "description": "Script name (with or without .swift)"],
@@ -761,7 +867,7 @@ enum AgentTools {
             required: ["name"]
         ),
         ToolDef(
-            name: "create_agent_script",
+            name: Name.createAgentScript,
             description: "Create a new Swift automation script in ~/Documents/AgentScript/agents/",
             properties: [
                 "name": ["type": "string", "description": "Script filename (with or without .swift)"],
@@ -770,7 +876,7 @@ enum AgentTools {
             required: ["name", "content"]
         ),
         ToolDef(
-            name: "update_agent_script",
+            name: Name.updateAgentScript,
             description: "Update an existing Swift automation script.",
             properties: [
                 "name": ["type": "string", "description": "Script filename"],
@@ -779,7 +885,7 @@ enum AgentTools {
             required: ["name", "content"]
         ),
         ToolDef(
-            name: "run_agent_script",
+            name: Name.runAgentScript,
             description: "PRIORITY 1 for app automation. Compile and run a Swift dylib with full TCC. Use existing scripts first (list_agent_scripts), create new ones with ScriptingBridge protocols. Use lookup_sdef and read_agent_script to check app dictionaries and bridge Swift files. NSAppleScript fallback if ScriptingBridge has issues. Output streams live — do NOT repeat stdout.",
             properties: [
                 "name": ["type": "string", "description": "Script filename (without .swift)"],
@@ -788,7 +894,7 @@ enum AgentTools {
             required: ["name"]
         ),
         ToolDef(
-            name: "delete_agent_script",
+            name: Name.deleteAgentScript,
             description: "Delete a Swift automation script.",
             properties: [
                 "name": ["type": "string", "description": "Script filename"],
@@ -797,7 +903,7 @@ enum AgentTools {
         ),
         // --- SDEF Lookup ---
         ToolDef(
-            name: "lookup_sdef",
+            name: Name.lookupSdef,
             description: "Read an app's SDEF scripting dictionary. ALWAYS use this to read SDEFs — never use shell commands to find .sdef files. Returns commands, classes, properties, elements, and enums. Use before writing osascript, NSAppleScript, apple_event_query, or ScriptingBridge code.",
             properties: [
                 "bundle_id": ["type": "string", "description": "App bundle identifier (e.g. com.apple.Music). Use 'list' to see all available SDEFs."],
@@ -807,7 +913,7 @@ enum AgentTools {
         ),
         // --- Xcode ---
         ToolDef(
-            name: "xcode_build",
+            name: Name.xcodeBuild,
             description: "Build an Xcode project or workspace via ScriptingBridge. Blocks until build completes. Returns errors/warnings in file:line:col format with code snippets for context.",
             properties: [
                 "project_path": ["type": "string", "description": "Path to .xcodeproj or .xcworkspace"],
@@ -815,7 +921,7 @@ enum AgentTools {
             required: ["project_path"]
         ),
         ToolDef(
-            name: "xcode_run",
+            name: Name.xcodeRun,
             description: "Build then run an Xcode project via ScriptingBridge. Builds first — only runs if clean. Returns errors if build fails.",
             properties: [
                 "project_path": ["type": "string", "description": "Path to .xcodeproj or .xcworkspace"],
@@ -823,13 +929,13 @@ enum AgentTools {
             required: ["project_path"]
         ),
         ToolDef(
-            name: "xcode_list_projects",
+            name: Name.xcodeListProjects,
             description: "List all open Xcode projects and workspaces with numbered indices. Use the number with xcode_select_project to choose one.",
             properties: [:],
             required: []
         ),
         ToolDef(
-            name: "xcode_select_project",
+            name: Name.xcodeSelectProject,
             description: "Select an open Xcode project by its number from xcode_list_projects. Returns the project path for use with xcode_build/xcode_run.",
             properties: [
                 "number": ["type": "integer", "description": "Project number from the list (1-based)"],
@@ -837,20 +943,20 @@ enum AgentTools {
             required: ["number"]
         ),
         ToolDef(
-            name: "xcode_grant_permission",
+            name: Name.xcodeGrantPermission,
             description: "Grant macOS Automation permission so the agent can control Xcode via ScriptingBridge. Run this once before using xcode_build or xcode_run.",
             properties: [:],
             required: []
         ),
         // --- Saved AppleScripts ---
         ToolDef(
-            name: "list_apple_scripts",
+            name: Name.listAppleScripts,
             description: "List all saved AppleScript files in ~/Documents/AgentScript/applescript/.",
             properties: [:],
             required: []
         ),
         ToolDef(
-            name: "run_apple_script",
+            name: Name.runAppleScript,
             description: "Run a saved AppleScript by name. List first with list_apple_scripts.",
             properties: [
                 "name": ["type": "string", "description": "Name of the saved AppleScript (without .applescript extension)"],
@@ -858,7 +964,7 @@ enum AgentTools {
             required: ["name"]
         ),
         ToolDef(
-            name: "save_apple_script",
+            name: Name.saveAppleScript,
             description: "Save an AppleScript to ~/Documents/AgentScript/applescript/ for reuse.",
             properties: [
                 "name": ["type": "string", "description": "Name for the script (without .applescript extension)"],
@@ -867,7 +973,7 @@ enum AgentTools {
             required: ["name", "source"]
         ),
         ToolDef(
-            name: "delete_apple_script",
+            name: Name.deleteAppleScript,
             description: "Delete a saved AppleScript file.",
             properties: [
                 "name": ["type": "string", "description": "Name of the saved AppleScript to delete"],
@@ -876,13 +982,13 @@ enum AgentTools {
         ),
         // --- Saved JavaScript/JXA ---
         ToolDef(
-            name: "list_javascript",
+            name: Name.listJavascript,
             description: "List all saved JavaScript (JXA) files in ~/Documents/AgentScript/javascript/.",
             properties: [:],
             required: []
         ),
         ToolDef(
-            name: "run_javascript",
+            name: Name.runJavascript,
             description: "Run a saved JavaScript (JXA) script by name. List first with list_javascript.",
             properties: [
                 "name": ["type": "string", "description": "Name of the saved script (without .js extension)"],
@@ -890,7 +996,7 @@ enum AgentTools {
             required: ["name"]
         ),
         ToolDef(
-            name: "save_javascript",
+            name: Name.saveJavascript,
             description: "Save a JXA script to ~/Documents/AgentScript/javascript/ for reuse.",
             properties: [
                 "name": ["type": "string", "description": "Name for the script (without .js extension)"],
@@ -899,7 +1005,7 @@ enum AgentTools {
             required: ["name", "source"]
         ),
         ToolDef(
-            name: "delete_javascript",
+            name: Name.deleteJavascript,
             description: "Delete a saved JavaScript (JXA) file.",
             properties: [
                 "name": ["type": "string", "description": "Name of the saved script to delete"],
@@ -908,20 +1014,20 @@ enum AgentTools {
         ),
         // --- Tool Discovery ---
         ToolDef(
-            name: "list_native_tools",
+            name: Name.listNativeTools,
             description: "List all enabled native tools.",
             properties: [:],
             required: []
         ),
         ToolDef(
-            name: "list_mcp_tools",
+            name: Name.listMcpTools,
             description: "List all enabled MCP (Model Context Protocol) tools.",
             properties: [:],
             required: []
         ),
         // MARK: - Web Automation (Phase 2)
         ToolDef(
-            name: "web_open",
+            name: Name.webOpen,
             description: "Open a URL in the specified browser. Uses AppleScript for Safari/Firefox, falls back to NSWorkspace for others. Fastest way to open URLs in web automation.",
             properties: [
                 "url": ["type": "string", "description": "URL to open"],
@@ -930,7 +1036,7 @@ enum AgentTools {
             required: ["url"]
         ),
         ToolDef(
-            name: "web_find",
+            name: Name.webFind,
             description: "Find an element on a web page using the best available strategy. Auto-selects: Accessibility (Safari AX) → JavaScript (Safari/Firefox) → Selenium. Supports CSS selectors, XPath, and accessibility attributes. Returns element properties with source strategy.",
             properties: [
                 "selector": ["type": "string", "description": "Element selector: CSS (#id, .class), XPath (//div), or accessibility (AXButton, [title='Submit'])"],
@@ -942,7 +1048,7 @@ enum AgentTools {
             required: ["selector"]
         ),
         ToolDef(
-            name: "web_click",
+            name: Name.webClick,
             description: "Click a web element by selector. Auto-selects best strategy: AX click, JavaScript click, or Selenium click. Use after web_find to verify element exists.",
             properties: [
                 "selector": ["type": "string", "description": "Element selector to click"],
@@ -952,7 +1058,7 @@ enum AgentTools {
             required: ["selector"]
         ),
         ToolDef(
-            name: "web_type",
+            name: Name.webType,
             description: "Type text into a web element by selector. Auto-selects best strategy: AXValue set (fastest), JavaScript value set, or Selenium sendKeys. Verifies text was entered.",
             properties: [
                 "selector": ["type": "string", "description": "Element selector for input field"],
@@ -964,7 +1070,7 @@ enum AgentTools {
             required: ["selector", "text"]
         ),
         ToolDef(
-            name: "web_execute_js",
+            name: Name.webExecuteJs,
             description: "Execute JavaScript in the active browser. Works in Safari and Firefox via AppleScript, Chrome via Selenium. Returns the result of the script execution.",
             properties: [
                 "script": ["type": "string", "description": "JavaScript code to execute"],
@@ -973,7 +1079,7 @@ enum AgentTools {
             required: ["script"]
         ),
         ToolDef(
-            name: "web_get_url",
+            name: Name.webGetUrl,
             description: "Get the current URL from the active browser. Works via AppleScript for Safari/Firefox/Chrome or via Selenium session.",
             properties: [
                 "browser": ["type": "string", "description": "Optional browser bundle ID"],
@@ -981,7 +1087,7 @@ enum AgentTools {
             required: []
         ),
         ToolDef(
-            name: "web_get_title",
+            name: Name.webGetTitle,
             description: "Get the page title from the active browser.",
             properties: [
                 "browser": ["type": "string", "description": "Optional browser bundle ID"],
@@ -990,7 +1096,7 @@ enum AgentTools {
         ),
         // MARK: - Selenium WebDriver Tools
         ToolDef(
-            name: "selenium_start",
+            name: Name.seleniumStart,
             description: "Start a Selenium WebDriver session. SafariDriver is built into macOS. For Chrome/Firefox, install chromedriver/geckodriver. Returns session ID for subsequent calls.",
             properties: [
                 "browser": ["type": "string", "description": "Browser: 'safari' (default), 'chrome', 'firefox'"],
@@ -1000,7 +1106,7 @@ enum AgentTools {
             required: []
         ),
         ToolDef(
-            name: "selenium_stop",
+            name: Name.seleniumStop,
             description: "End the Selenium WebDriver session.",
             properties: [
                 "port": ["type": "integer", "description": "WebDriver port (default 7055)"],
@@ -1008,7 +1114,7 @@ enum AgentTools {
             required: []
         ),
         ToolDef(
-            name: "selenium_navigate",
+            name: Name.seleniumNavigate,
             description: "Navigate to a URL via Selenium WebDriver. More reliable than AppleScript for complex pages.",
             properties: [
                 "url": ["type": "string", "description": "URL to navigate to"],
@@ -1017,7 +1123,7 @@ enum AgentTools {
             required: ["url"]
         ),
         ToolDef(
-            name: "selenium_find",
+            name: Name.seleniumFind,
             description: "Find element via Selenium WebDriver with CSS or XPath selector. Returns element ID for subsequent operations.",
             properties: [
                 "strategy": ["type": "string", "description": "Locator strategy: 'css', 'xpath', 'id', 'name', 'linktext', 'tagname', 'classname'"],
@@ -1027,7 +1133,7 @@ enum AgentTools {
             required: ["strategy", "value"]
         ),
         ToolDef(
-            name: "selenium_click",
+            name: Name.seleniumClick,
             description: "Click an element via Selenium WebDriver. More reliable for dynamically loaded content.",
             properties: [
                 "strategy": ["type": "string", "description": "Locator strategy: 'css', 'xpath', 'id', 'name'"],
@@ -1037,7 +1143,7 @@ enum AgentTools {
             required: ["strategy", "value"]
         ),
         ToolDef(
-            name: "selenium_type",
+            name: Name.seleniumType,
             description: "Type text into an element via Selenium WebDriver. Simulates actual keyboard input.",
             properties: [
                 "strategy": ["type": "string", "description": "Locator strategy: 'css', 'xpath', 'id', 'name'"],
@@ -1048,7 +1154,7 @@ enum AgentTools {
             required: ["strategy", "value", "text"]
         ),
         ToolDef(
-            name: "selenium_execute",
+            name: Name.seleniumExecute,
             description: "Execute JavaScript in the Selenium session. Useful for scrolling, DOM manipulation, or extracting data.",
             properties: [
                 "script": ["type": "string", "description": "JavaScript code to execute"],
@@ -1058,7 +1164,7 @@ enum AgentTools {
             required: ["script"]
         ),
         ToolDef(
-            name: "selenium_screenshot",
+            name: Name.seleniumScreenshot,
             description: "Take a screenshot via Selenium WebDriver. Saves to ~/Documents/Agent/screenshots/.",
             properties: [
                 "filename": ["type": "string", "description": "Screenshot filename (default: auto-generated)"],
@@ -1067,7 +1173,7 @@ enum AgentTools {
             required: []
         ),
         ToolDef(
-            name: "selenium_wait",
+            name: Name.seleniumWait,
             description: "Wait for an element to appear via Selenium WebDriver. Uses explicit wait with timeout.",
             properties: [
                 "strategy": ["type": "string", "description": "Locator strategy: 'css', 'xpath', 'id', 'name'"],
@@ -1226,7 +1332,7 @@ enum AgentTools {
     /// Tools only available for Ollama providers (client-side web search via Tavily).
     nonisolated(unsafe) private static let ollamaOnlyTools: [ToolDef] = [
         ToolDef(
-            name: "web_search",
+            name: Name.webSearch,
             description: "Search the web for current information. Returns relevant web page titles, URLs, and content snippets. Use when you need up-to-date information or facts you're unsure about.",
             properties: [
                 "query": ["type": "string", "description": "The search query"],

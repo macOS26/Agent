@@ -83,27 +83,29 @@ extension AgentViewModel {
         \(tabContext)
         """
 
-        let provider = selectedProvider
+        let (provider, modelId) = resolvedLLMConfig(for: tab)
+        tab.appendLog("Model: \(provider.displayName) / \(modelId)")
+        tab.flush()
 
         let claude: ClaudeService? = provider == .claude
-            ? ClaudeService(apiKey: apiKey, model: selectedModel, historyContext: tabHistoryContext) : nil
+            ? ClaudeService(apiKey: apiKey, model: modelId, historyContext: tabHistoryContext) : nil
         let openAICompatible: OpenAICompatibleService?
         switch provider {
         case .openAI:
-            openAICompatible = OpenAICompatibleService(apiKey: openAIAPIKey, model: openAIModel, baseURL: "https://api.openai.com/v1/chat/completions", historyContext: tabHistoryContext, provider: .openAI)
+            openAICompatible = OpenAICompatibleService(apiKey: openAIAPIKey, model: modelId, baseURL: "https://api.openai.com/v1/chat/completions", historyContext: tabHistoryContext, provider: .openAI)
         case .deepSeek:
-            openAICompatible = OpenAICompatibleService(apiKey: deepSeekAPIKey, model: deepSeekModel, baseURL: "https://api.deepseek.com/chat/completions", historyContext: tabHistoryContext, provider: .deepSeek)
+            openAICompatible = OpenAICompatibleService(apiKey: deepSeekAPIKey, model: modelId, baseURL: "https://api.deepseek.com/chat/completions", historyContext: tabHistoryContext, provider: .deepSeek)
         case .huggingFace:
-            openAICompatible = OpenAICompatibleService(apiKey: huggingFaceAPIKey, model: huggingFaceModel, baseURL: "https://router.huggingface.co/v1/chat/completions", historyContext: tabHistoryContext, provider: .huggingFace)
+            openAICompatible = OpenAICompatibleService(apiKey: huggingFaceAPIKey, model: modelId, baseURL: "https://router.huggingface.co/v1/chat/completions", historyContext: tabHistoryContext, provider: .huggingFace)
         default:
             openAICompatible = nil
         }
         let ollama: OllamaService?
         switch provider {
         case .ollama:
-            ollama = OllamaService(apiKey: ollamaAPIKey, model: ollamaModel, endpoint: ollamaEndpoint, supportsVision: false, historyContext: tabHistoryContext, provider: .ollama)
+            ollama = OllamaService(apiKey: ollamaAPIKey, model: modelId, endpoint: ollamaEndpoint, supportsVision: false, historyContext: tabHistoryContext, provider: .ollama)
         case .localOllama:
-            ollama = OllamaService(apiKey: "", model: localOllamaModel, endpoint: localOllamaEndpoint, supportsVision: false, historyContext: tabHistoryContext, provider: .localOllama)
+            ollama = OllamaService(apiKey: "", model: modelId, endpoint: localOllamaEndpoint, supportsVision: false, historyContext: tabHistoryContext, provider: .localOllama)
         default:
             ollama = nil
         }
@@ -447,7 +449,7 @@ extension AgentViewModel {
             )
         }
 
-        // execute_user_command / execute_command
+        // execute_agent_command / execute_daemon_command
         if name == "execute_daemon_command" || name == "execute_agent_command" {
             let command = Self.prependWorkingDirectory(
                 input["command"] as? String ?? "", projectFolder: projectFolder)

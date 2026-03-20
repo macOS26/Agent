@@ -1,6 +1,124 @@
 import AppKit
 import ServiceManagement
 
+// MARK: - SMAppService Safe Wrapper for Daemon
+/// Safely wraps SMAppService daemon operations to prevent crashes from malformed/missing plists.
+/// The crash happens inside Objective-C code that Swift can't catch, so we verify
+/// the plist exists BEFORE calling SMAppService methods.
+enum SafeSMAppServiceDaemon {
+    /// The plist filename for daemon
+    static let daemonPlistName = "Agent.app.toddbruss.helper.plist"
+
+    /// Path to the plist inside the app bundle (where SMAppService reads from)
+    static var bundlePlistURL: URL? {
+        Bundle.main.bundleURL
+            .appendingPathComponent("Contents/Library/LaunchDaemons")
+            .appendingPathComponent(daemonPlistName)
+    }
+
+    /// Check if the daemon plist exists and is readable inside the app bundle
+    static func daemonPlistExists() -> Bool {
+        guard let plistURL = bundlePlistURL else { return false }
+        let path = plistURL.path
+
+        // Check file exists
+        guard FileManager.default.fileExists(atPath: path) else { return false }
+
+        // Check file is readable
+        guard FileManager.default.isReadableFile(atPath: path) else { return false }
+
+        // Verify file has valid content (not empty, not corrupted)
+        guard let data = FileManager.default.contents(atPath: path),
+              !data.isEmpty,
+              let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil),
+              plist is [String: Any] else {
+            return false
+        }
+
+        return true
+    }
+    
+    /// Create daemon service ONLY if plist is valid
+    static func createDaemon() -> SMAppService? {
+        // Note: For daemons, SMAppService may manage registration state internally
+        // We check existence but still allow creation for already-registered daemons
+        // CRITICAL: Only create if plist exists and is valid to prevent ObjC crash
+        guard daemonPlistExists() else { return nil }
+        return SMAppService.daemon(plistName: daemonPlistName)
+    }
+    
+    /// Safely check if daemon is ready - returns false if any issue
+    static func isDaemonReady() -> Bool {
+        // First verify plist exists
+        guard daemonPlistExists() else { return false }
+        
+        // Create service and check status (may still crash in ObjC)
+        guard let service = createDaemon() else { return false }
+        
+        // Accessing .status could crash if plist is malformed, but we validated above
+        return service.status == .enabled
+    }
+    
+    /// Safely register daemon with comprehensive error handling
+    static func registerDaemon() -> (success: Bool, message: String) {
+        // First verify plist exists
+        guard daemonPlistExists() else {
+            return (false, "Daemon plist not found in app bundle. Rebuild and reinstall Agent.")
+        }
+        
+        guard let service = createDaemon() else {
+            return (false, "Daemon service unavailable. Reinstall Agent.")
+        }
+        
+        let status = service.status
+        let statusName = statusNameFor(status)
+        
+        do {
+            try service.register()
+            return (true, "Helper daemon registered. (was: \(statusName))")
+        } catch {
+            // Check if already enabled after attempted registration
+            if service.status == .enabled {
+                return (true, "Helper daemon is active.")
+            }
+            if service.status == .requiresApproval {
+                SMAppService.openSystemSettingsLoginItems()
+                NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.LoginItems-Settings.extension")!)
+                return (false, "Please approve Agent in System Settings > Login Items.")
+            }
+            // Try re-registering if was enabled
+            if status == .enabled {
+                try? service.unregister()
+                do {
+                    try service.register()
+                    return (true, "Helper daemon updated.")
+                } catch {
+                    return (false, "Update failed: \(error.localizedDescription)")
+                }
+            }
+            return (false, "Registration failed: \(error.localizedDescription)")
+        }
+    }
+    
+    /// Safely unregister daemon
+    static func unregisterDaemon() {
+        guard daemonPlistExists(),
+              let service = createDaemon() else { return }
+        try? service.unregister()
+    }
+    
+    /// Get status name safely
+    private static func statusNameFor(_ status: SMAppService.Status) -> String {
+        switch status {
+        case .notRegistered: return "notRegistered"
+        case .enabled: return "enabled"
+        case .requiresApproval: return "requiresApproval"
+        case .notFound: return "notFound"
+        @unknown default: return "unknown"
+        }
+    }
+}
+
 final class OutputHandler: NSObject, HelperProgressProtocol, @unchecked Sendable {
     private let handler: @Sendable (String) -> Void
 
@@ -23,50 +141,13 @@ final class HelperService {
     nonisolated init() {}
 
     var helperReady: Bool {
-        SMAppService.daemon(plistName: "Agent.app.toddbruss.helper.plist").status == .enabled
+        SafeSMAppServiceDaemon.isDaemonReady()
     }
 
     @discardableResult
     func registerHelper() -> String {
-        let service = SMAppService.daemon(plistName: "Agent.app.toddbruss.helper.plist")
-        let status = service.status
-
-        // Log current status for diagnostics
-        let statusName: String
-        switch status {
-        case .notRegistered: statusName = "notRegistered"
-        case .enabled: statusName = "enabled"
-        case .requiresApproval: statusName = "requiresApproval"
-        case .notFound: statusName = "notFound"
-        @unknown default: statusName = "unknown"
-        }
-
-        // Always try to register regardless of status
-        do {
-            try service.register()
-            return "Helper daemon registered. (was: \(statusName))"
-        } catch {
-            let afterStatus = service.status
-            if afterStatus == .enabled {
-                return "Helper daemon is active."
-            }
-            if afterStatus == .requiresApproval {
-                SMAppService.openSystemSettingsLoginItems()
-                NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.LoginItems-Settings.extension")!)
-                return "Please approve Agent in System Settings > Login Items. (was: \(statusName))"
-            }
-            // Try unregister + re-register if it was already registered
-            if status == .enabled {
-                try? service.unregister()
-                do {
-                    try service.register()
-                    return "Helper daemon updated."
-                } catch {
-                    return "Update failed: \(error.localizedDescription) (status: \(statusName))"
-                }
-            }
-            return "Registration failed: \(error.localizedDescription) (status: \(statusName))"
-        }
+        let result = SafeSMAppServiceDaemon.registerDaemon()
+        return result.message
     }
 
     /// Completely shut down and unregister the daemon for security.
@@ -77,8 +158,7 @@ final class HelperService {
         try? kill.run()
         kill.waitUntilExit()
 
-        let service = SMAppService.daemon(plistName: "Agent.app.toddbruss.helper.plist")
-        try? service.unregister()
+        SafeSMAppServiceDaemon.unregisterDaemon()
     }
 
     /// Kill any stale daemon processes, unregister, and re-register.
@@ -91,9 +171,7 @@ final class HelperService {
         try? kill.run()
         kill.waitUntilExit()
 
-        // Unregister then re-register
-        let service = SMAppService.daemon(plistName: "Agent.app.toddbruss.helper.plist")
-        try? service.unregister()
+        SafeSMAppServiceDaemon.unregisterDaemon()
         // Brief pause for launchd to clean up
         Thread.sleep(forTimeInterval: 0.5)
         return registerHelper()
