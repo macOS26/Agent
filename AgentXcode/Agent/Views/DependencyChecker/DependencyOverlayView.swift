@@ -126,6 +126,7 @@ struct DependencyOverlay: View {
                         .foregroundColor(.secondary)
                 }
             }
+            Spacer()
         }
         .opacity(show ? 1 : 0)
         .offset(y: show ? 0 : 8)
@@ -145,6 +146,7 @@ struct DependencyOverlay: View {
                     .font(.system(size: 9, design: .monospaced))
                     .foregroundColor(ok ? .secondary : .orange)
             }
+            Spacer()
         }
         .opacity(show ? 1 : 0)
         .offset(y: show ? 0 : 8)

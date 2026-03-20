@@ -642,20 +642,9 @@ final class AgentViewModel {
             UserDefaults.standard.removeObject(forKey: "lastUserInstanceID")
         }
 
-        // Auto-fetch models on launch based on provider
-        if selectedProvider == .claude {
-            Task { await fetchClaudeModels() }
-        } else if selectedProvider == .ollama {
-            fetchOllamaModels()
-        } else if selectedProvider == .localOllama {
-            fetchLocalOllamaModels()
-        } else if selectedProvider == .openAI {
-            fetchOpenAIModels()
-        } else if selectedProvider == .deepSeek {
-            fetchDeepSeekModels()
-        } else if selectedProvider == .huggingFace {
-            fetchHuggingFaceModels()
-        }
+        // Models are fetched on-demand when the user switches providers,
+        // opens the new-tab sheet, or clicks refresh in settings.
+        // No auto-fetch on launch — avoids wasting API calls for inactive LLMs.
 
         // Xcode Command Line Tools check is handled by DependencyOverlay in ContentView
 

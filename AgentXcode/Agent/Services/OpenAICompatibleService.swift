@@ -229,9 +229,41 @@ final class OpenAICompatibleService {
 
         // Convert to Claude-compatible content blocks
         var contentBlocks: [[String: Any]] = []
+        var parsedToolFromText = false
 
         if let text = message["content"] as? String, !text.isEmpty {
-            contentBlocks.append(["type": "text", "text": text])
+            // Check for DeepSeek text-based tool calls before treating as plain text
+            if let deepSeekCalls = OllamaService.extractDeepSeekToolCalls(from: text) {
+                for call in deepSeekCalls {
+                    contentBlocks.append([
+                        "type": "tool_use",
+                        "id": UUID().uuidString,
+                        "name": call.name,
+                        "input": call.input
+                    ])
+                }
+                parsedToolFromText = true
+            } else if let dsmlCalls = OllamaService.extractDSMLToolCalls(from: text) {
+                for call in dsmlCalls {
+                    contentBlocks.append([
+                        "type": "tool_use",
+                        "id": UUID().uuidString,
+                        "name": call.name,
+                        "input": call.input
+                    ])
+                }
+                parsedToolFromText = true
+            } else if let (toolName, _, parsed) = OllamaService.extractFirstToolCall(from: text) {
+                contentBlocks.append([
+                    "type": "tool_use",
+                    "id": UUID().uuidString,
+                    "name": toolName,
+                    "input": parsed
+                ])
+                parsedToolFromText = true
+            } else {
+                contentBlocks.append(["type": "text", "text": text])
+            }
         }
 
         if let toolCalls = message["tool_calls"] as? [[String: Any]] {
@@ -265,7 +297,8 @@ final class OpenAICompatibleService {
             contentBlocks.append(["type": "text", "text": "(no response)"])
         }
 
-        let stopReason = finishReason == "tool_calls" ? "tool_use" : (finishReason == "length" ? "max_tokens" : "end_turn")
+        let hasToolCalls = (message["tool_calls"] != nil) || parsedToolFromText
+        let stopReason = hasToolCalls ? "tool_use" : (finishReason == "tool_calls" ? "tool_use" : (finishReason == "length" ? "max_tokens" : "end_turn"))
         return (contentBlocks, stopReason)
     }
 
@@ -356,12 +389,9 @@ final class OpenAICompatibleService {
 
         // Build Claude-compatible content blocks
         var contentBlocks: [[String: Any]] = []
+        var parsedToolFromText = false
 
-        if !fullText.isEmpty {
-            contentBlocks.append(["type": "text", "text": fullText])
-        }
-
-        // Convert accumulated tool calls
+        // Convert accumulated native tool calls first
         for index in toolCallAccum.keys.sorted() {
             guard let tc = toolCallAccum[index], !tc.name.isEmpty else { continue }
             let callId = tc.id.isEmpty ? "call_\(UUID().uuidString.prefix(8).lowercased())" : tc.id
@@ -381,11 +411,50 @@ final class OpenAICompatibleService {
             ])
         }
 
+        // If no native tool calls, check text for DeepSeek-style tool calls
+        if contentBlocks.isEmpty && !fullText.isEmpty {
+            if let deepSeekCalls = OllamaService.extractDeepSeekToolCalls(from: fullText) {
+                for call in deepSeekCalls {
+                    contentBlocks.append([
+                        "type": "tool_use",
+                        "id": UUID().uuidString,
+                        "name": call.name,
+                        "input": call.input
+                    ])
+                }
+                parsedToolFromText = true
+            } else if let dsmlCalls = OllamaService.extractDSMLToolCalls(from: fullText) {
+                for call in dsmlCalls {
+                    contentBlocks.append([
+                        "type": "tool_use",
+                        "id": UUID().uuidString,
+                        "name": call.name,
+                        "input": call.input
+                    ])
+                }
+                parsedToolFromText = true
+            } else if let (toolName, _, parsed) = OllamaService.extractFirstToolCall(from: fullText) {
+                contentBlocks.append([
+                    "type": "tool_use",
+                    "id": UUID().uuidString,
+                    "name": toolName,
+                    "input": parsed
+                ])
+                parsedToolFromText = true
+            }
+        }
+
+        // Add text if no tool calls were found from it
+        if !parsedToolFromText && !fullText.isEmpty {
+            contentBlocks.insert(["type": "text", "text": fullText], at: 0)
+        }
+
         if contentBlocks.isEmpty {
             contentBlocks.append(["type": "text", "text": "(no response)"])
         }
 
-        let stopReason = finishReason == "tool_calls" ? "tool_use" : (finishReason == "length" ? "max_tokens" : "end_turn")
+        let hasToolCalls = !toolCallAccum.isEmpty || parsedToolFromText
+        let stopReason = hasToolCalls ? "tool_use" : (finishReason == "tool_calls" ? "tool_use" : (finishReason == "length" ? "max_tokens" : "end_turn"))
         return (contentBlocks, stopReason)
     }
 }

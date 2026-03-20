@@ -514,9 +514,6 @@ struct ContentView: View {
             Task { await MCPService.shared.disconnectAll() }
         }
         .onAppear {
-            Task {
-                await viewModel.fetchClaudeModels()
-            }
             DispatchQueue.global(qos: .userInitiated).async {
                 let status = DependencyChecker.check()
                 DispatchQueue.main.async {

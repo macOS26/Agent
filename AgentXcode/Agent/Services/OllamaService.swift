@@ -480,16 +480,34 @@ final class OllamaService {
 
                 // Check if the buffer contains a confirmed tool call start
                 let check = pendingBuffer.replacingOccurrences(of: "｜", with: "|").replacingOccurrences(of: "▁", with: "_")
-                if check.contains("<|tool_calls_begin|>") || check.contains("<function_calls>") || check.contains("<invoke ") {
+
+                // Detect XML-style markers (V3.2 DSML, V3.1 special tokens)
+                var detectedMarker: String? = nil
+                for marker in ["<|tool_calls_begin|>", "<function_calls>", "<invoke "] {
+                    if check.contains(marker) { detectedMarker = marker; break }
+                }
+
+                // Detect plain-text tool calls (V3.1 style: tool_name{...} or tool_name {"..."})
+                if detectedMarker == nil {
+                    for toolName in AgentTools.toolNames {
+                        if let range = check.range(of: toolName) {
+                            // Verify it's followed by { or whitespace+{ (not just a substring in prose)
+                            let after = check[range.upperBound...]
+                            let trimmed = after.drop(while: { $0 == " " || $0 == "\n" })
+                            if trimmed.first == "{" {
+                                detectedMarker = toolName
+                                break
+                            }
+                        }
+                    }
+                }
+
+                if let marker = detectedMarker {
                     insideToolCall = true
                     // Flush any text before the marker
-                    let normalized = pendingBuffer.replacingOccurrences(of: "｜", with: "|").replacingOccurrences(of: "▁", with: "_")
-                    for marker in ["<|tool_calls_begin|>", "<function_calls>", "<invoke "] {
-                        if let range = normalized.range(of: marker) {
-                            let before = String(pendingBuffer[pendingBuffer.startIndex..<range.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
-                            if !before.isEmpty { onTextDelta(before) }
-                            break
-                        }
+                    if let range = check.range(of: marker) {
+                        let before = String(pendingBuffer[pendingBuffer.startIndex..<range.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+                        if !before.isEmpty { onTextDelta(before) }
                     }
                     pendingBuffer = ""
                     continue
@@ -497,7 +515,23 @@ final class OllamaService {
 
                 // If buffer might be the start of a tag, hold it back
                 if check.contains("<") {
-                    continue  // Keep buffering
+                    continue  // Keep buffering — might be XML tag
+                }
+
+                // If buffer ends with (or contains) a known tool name, hold it back
+                // because the '{' with arguments may arrive in the next chunk.
+                // But don't hold forever — flush if buffer grows too large without a '{'.
+                if pendingBuffer.count < 300 {
+                    var containsToolName = false
+                    for toolName in AgentTools.toolNames {
+                        if check.contains(toolName) {
+                            containsToolName = true
+                            break
+                        }
+                    }
+                    if containsToolName {
+                        continue  // Keep buffering — waiting for '{'
+                    }
                 }
 
                 // No tag detected — flush the buffer
@@ -584,7 +618,7 @@ final class OllamaService {
 
     /// Find the earliest tool call by position in the text, parse its JSON args.
     /// Returns (toolName, rangeOfName, parsedArgs) or nil.
-    nonisolated private static func extractFirstToolCall(from text: String) -> (String, Range<String.Index>, [String: Any])? {
+    nonisolated static func extractFirstToolCall(from text: String) -> (String, Range<String.Index>, [String: Any])? {
         let toolNames = AgentTools.toolNames
 
         var earliest: (String, Range<String.Index>, [String: Any])? = nil
@@ -611,7 +645,7 @@ final class OllamaService {
     /// V3.1 format: <｜tool▁call▁begin｜>function_name<｜tool▁sep｜>{"arg":"val"}<｜tool▁call▁end｜>
     /// Also handles: <｜tool▁call▁begin｜>{"name":"...","parameters":{...}}<｜tool▁call▁end｜>
     /// Unicode variants with fullwidth ｜ and half-width | are both supported.
-    nonisolated private static func extractDeepSeekToolCalls(from text: String) -> [(name: String, input: [String: Any])]? {
+    nonisolated static func extractDeepSeekToolCalls(from text: String) -> [(name: String, input: [String: Any])]? {
         // Normalize: DeepSeek uses fullwidth ｜ (U+FF5C) and ▁ (U+2581) in tokens
         let normalized = text
             .replacingOccurrences(of: "｜", with: "|")
@@ -670,7 +704,7 @@ final class OllamaService {
     ///   <｜DSML｜parameter name="key" string="true">value</｜DSML｜parameter>
     /// </｜DSML｜invoke></｜DSML｜function_calls>
     /// Ollama strips the ｜DSML｜ tokens, leaving plain XML-like tags.
-    nonisolated private static func extractDSMLToolCalls(from text: String) -> [(name: String, input: [String: Any])]? {
+    nonisolated static func extractDSMLToolCalls(from text: String) -> [(name: String, input: [String: Any])]? {
         // Strip any remaining DSML tokens
         let cleaned = text
             .replacingOccurrences(of: "｜DSML｜", with: "")
@@ -739,7 +773,7 @@ final class OllamaService {
     }
 
     /// Extract the first balanced JSON object from a string, ignoring trailing garbage.
-    nonisolated private static func extractFirstJSON(from text: String) -> [String: Any]? {
+    nonisolated static func extractFirstJSON(from text: String) -> [String: Any]? {
         var depth = 0
         var inString = false
         var escape = false

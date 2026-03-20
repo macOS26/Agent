@@ -41,7 +41,7 @@ final class ScriptService {
     // MARK: - Bundle paths
 
     private var bundleSources: URL? {
-        Bundle.main.resourceURL?.appendingPathComponent("Sources")
+        Bundle.main.resourceURL?.appendingPathComponent("AgentScript/agents/Sources")
     }
     private var bundleScripts: URL? {
         bundleSources?.appendingPathComponent("Scripts")
@@ -49,13 +49,13 @@ final class ScriptService {
 
     /// Path to the AppleEventBridges package bundled in app resources
     private static let bundledBridgesPath: URL? = {
-        Bundle.main.resourceURL?.appendingPathComponent("AppleEventBridges")
+        Bundle.main.resourceURL?.appendingPathComponent("bridges")
     }()
 
-    /// Installed location: ~/Documents/AgentScript/AppleEventBridges/
+    /// Installed location: ~/Documents/AgentScript/bridges/
     static let installedBridgesPath: URL = {
         FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Documents/AgentScript/AppleEventBridges")
+            .appendingPathComponent("Documents/AgentScript/bridges")
     }()
     // MARK: - Package.swift generation
 
@@ -73,7 +73,7 @@ final class ScriptService {
 
         let scriptList = scriptNames.map { "    \"\($0)\"," }.joined(separator: "\n")
 
-        // Read bridge names from the installed copy at ~/Documents/AgentScript/AppleEventBridges/
+        // Read bridge names from the installed copy at ~/Documents/AgentScript/bridges/
         let bridgesPackagePath = Self.installedBridgesPath.appendingPathComponent("Sources/AppleEventBridges")
         let bridgeNames: [String] = {
             let fm = FileManager.default
@@ -103,7 +103,7 @@ final class ScriptService {
         let scripts = "Sources/Scripts"
         let bridgeNameSet = Set(bridgeNames)
 
-        // Local package dependency for shared bridges (installed at ~/Documents/AgentScript/AppleEventBridges/)
+        // Local package dependency for shared bridges (installed at ~/Documents/AgentScript/bridges/)
         let packageDependencies: [PackageDescription.Package.Dependency] = [
             .package(name: "AppleEventBridges", path: "\(Self.installedBridgesPath.path)")
         ]
@@ -186,6 +186,14 @@ final class ScriptService {
         let fm = FileManager.default
         let agentsPath = Self.agentsDir.path
 
+        // Migrate: rename AppleEventBridges → bridges and regenerate Package.swift
+        let oldBridgesPath = fm.homeDirectoryForCurrentUser.appendingPathComponent("Documents/AgentScript/AppleEventBridges")
+        var didMigrateBridges = false
+        if fm.fileExists(atPath: oldBridgesPath.path) && !fm.fileExists(atPath: Self.installedBridgesPath.path) {
+            try? fm.moveItem(at: oldBridgesPath, to: Self.installedBridgesPath)
+            didMigrateBridges = true
+        }
+
         if !fm.fileExists(atPath: agentsPath) {
             // Fresh install — copy sources from bundle and generate Package.swift
             copyEntirePackage()
@@ -194,6 +202,10 @@ final class ScriptService {
             // Existing install — add new scripts and update bridges
             installNewScripts()
             copyBridgesPackage()
+            if didMigrateBridges {
+                // Regenerate Package.swift so dependency path points to bridges/
+                generatePackageSwift()
+            }
         }
         copyBundledJSONFiles()
     }
@@ -250,7 +262,7 @@ final class ScriptService {
         // Package.swift is generated from disk contents by generatePackageSwift()
     }
 
-    /// Copy AppleEventBridges package to ~/Documents/AgentScript/AppleEventBridges/
+    /// Copy AppleEventBridges package to ~/Documents/AgentScript/bridges/
     /// Only copies new files — never overwrites or removes user-added bridges.
     private func copyBridgesPackage() {
         let fm = FileManager.default
