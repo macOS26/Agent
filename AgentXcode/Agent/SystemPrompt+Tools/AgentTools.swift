@@ -29,32 +29,8 @@ enum AgentTools {
         6. Accessibility tools (ax_*) — AXUIElement API for UI inspection/interaction. Last resort for Mac apps.
         Shell commands fill gaps: execute_agent_command (user) / execute_daemon_command (root) for CLI tools.
 
-        JAVASCRIPT FOR AUTOMATION (JXA):
-        Use execute_javascript for JXA code: var app = Application('Finder'); app.selection()
-        OR run JXA inside run_applescript via: run script jsCode in "JavaScript"
-        Example AppleScript wrapping JXA:
-          set jsCode to "function run() { var app = Application.currentApplication(); app.includeStandardAdditions = true; return app.displayDialog('Hello').buttonReturned; }"
-          run script jsCode in "JavaScript"
-
-        FILE TOOLS: read_file, write_file, edit_file (read first), list_files, search_files
-        write_file returns line count only — call read_file after to verify.
-
-        GIT: git_status, git_diff, git_log, git_commit, git_diff_patch, git_branch
-
-        XCODE: xcode_list_projects, xcode_select_project, xcode_build, xcode_run, xcode_grant_permission
-        NEVER xcodebuild or swift build via shell. Workflow: read → edit → xcode_build → fix → commit.
-
-        ACCESSIBILITY (require TCC):
-        Read: ax_list_windows, ax_inspect_element, ax_get_properties, ax_get_children, ax_get_focused_element, ax_check_permission, ax_request_permission
-        Input: ax_type_text, ax_click, ax_scroll, ax_press_key, ax_drag
-        Action: ax_perform_action. Protected roles/actions can be disabled in Accessibility Settings.
-        Set: ax_set_properties (sets text, values, positions). Find: ax_find_element, ax_wait_for_element.
-        Smart: ax_click_element (click by role/title), ax_wait_adaptive (exponential backoff), ax_type_into_element (verified typing).
-        Other: ax_screenshot, ax_get_audit_log
-
         AGENTSCRIPTS:
-        Core scripts: pre-compiled dylibs in Agent.app/Contents/Resources/. Run via run_agent_script.
-        User scripts: ~/Documents/AgentScript/agents/. Tools: list/read/create/update/delete/run_agent_script.
+        Scripts: ~/Documents/AgentScript/agents/. Tools: list/read/create/update/delete/run_agent_script.
         ALWAYS list first — update existing, don't duplicate.
         delete_agent_script blocklists so bundled scripts won't respawn. NEVER edit Package.swift manually.
         AgentScripts are Swift — use the full Swift language, any Swift 6 framework, ScriptingBridge, NSAppleScript, Process(), AXUIElement.
@@ -135,6 +111,29 @@ enum AgentTools {
         Strategies: 'auto' (default), 'accessibility', 'javascript', 'selenium'.
         Selectors: CSS (#id, .class), XPath (//div), accessibility (AXButton, [title='Submit']).
         For advanced control, use selenium_* tools directly for WebDriver operations.
+
+        JAVASCRIPT FOR AUTOMATION (JXA):
+        Use execute_javascript for JXA code: var app = Application('Finder'); app.selection()
+        OR run JXA inside run_applescript via: run script jsCode in "JavaScript"
+        Example AppleScript wrapping JXA:
+          set jsCode to "function run() { var app = Application.currentApplication(); app.includeStandardAdditions = true; return app.displayDialog('Hello').buttonReturned; }"
+          run script jsCode in "JavaScript"
+
+        FILE TOOLS: read_file, write_file, edit_file (read first), list_files, search_files
+        write_file returns line count only — call read_file after to verify.
+
+        GIT: git_status, git_diff, git_log, git_commit, git_diff_patch, git_branch
+
+        XCODE: xcode_list_projects, xcode_select_project, xcode_build, xcode_run, xcode_grant_permission
+        NEVER xcodebuild or swift build via shell. Workflow: read → edit → xcode_build → fix → commit.
+
+        ACCESSIBILITY (require TCC):
+        Read: ax_list_windows, ax_inspect_element, ax_get_properties, ax_get_children, ax_get_focused_element, ax_check_permission, ax_request_permission
+        Input: ax_type_text, ax_click, ax_scroll, ax_press_key, ax_drag
+        Action: ax_perform_action. Protected roles/actions can be disabled in Accessibility Settings.
+        Set: ax_set_properties (sets text, values, positions). Find: ax_find_element, ax_wait_for_element.
+        Smart: ax_click_element (click by role/title), ax_wait_adaptive (exponential backoff), ax_type_into_element (verified typing).
+        Other: ax_screenshot, ax_get_audit_log
 
         APPLE EVENT QUERY:
         Pass bundle_id + operations: get {key} | iterate {properties, limit} | index {index} | call {method, arg} | filter {predicate}
