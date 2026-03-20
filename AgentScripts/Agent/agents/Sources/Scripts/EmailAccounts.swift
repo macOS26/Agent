@@ -11,8 +11,8 @@ func fetchEmailAccounts() {
     // Parse arguments from AGENT_SCRIPT_ARGS or JSON input
     let argsString = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""
     let home = NSHomeDirectory()
-    let inputPath = "\(home)/Documents/Agent/json/EmailAccounts_input.json"
-    let outputPath = "\(home)/Documents/Agent/json/EmailAccounts_output.json"
+    let inputPath = "\(home)/Documents/AgentScript/json/EmailAccounts_input.json"
+    let outputPath = "\(home)/Documents/AgentScript/json/EmailAccounts_output.json"
     
     // Default options
     var showDetails = true

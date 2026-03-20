@@ -11,8 +11,8 @@ func todayEvents() {
     // Parse arguments from AGENT_SCRIPT_ARGS or JSON input
     let argsString = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""
     let home = NSHomeDirectory()
-    let inputPath = "\(home)/Documents/Agent/json/TodayEvents_input.json"
-    let outputPath = "\(home)/Documents/Agent/json/TodayEvents_output.json"
+    let inputPath = "\(home)/Documents/AgentScript/json/TodayEvents_input.json"
+    let outputPath = "\(home)/Documents/AgentScript/json/TodayEvents_output.json"
     
     // Default options
     var showLocation = true

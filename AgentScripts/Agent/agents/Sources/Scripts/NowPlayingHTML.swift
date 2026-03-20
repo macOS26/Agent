@@ -15,7 +15,7 @@ public func scriptMain() -> Int32 {
 
 func generateNowPlayingHTML() {
     let home = NSHomeDirectory()
-    let outputDir = "\(home)/Documents/Agent/html"
+    let outputDir = "\(home)/Documents/AgentScript/html"
     let artworkFilename = "album_art.jpg"
     let htmlFilename = "now_playing.html"
     let artPath = "\(outputDir)/\(artworkFilename)"

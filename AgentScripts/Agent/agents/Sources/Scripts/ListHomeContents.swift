@@ -14,7 +14,7 @@ import FinderBridge
 //       - json=true (output to JSON file)
 //     Example: "folder=Documents,depth=2,json=true"
 //
-//   Option 2: JSON input file at ~/Documents/Agent/json/ListHomeContents_input.json
+//   Option 2: JSON input file at ~/Documents/AgentScript/json/ListHomeContents_input.json
 //     {
 //       "folder": "Documents",
 //       "depth": 2,
@@ -22,7 +22,7 @@ import FinderBridge
 //       "json": true
 //     }
 //
-// OUTPUT: ~/Documents/Agent/json/ListHomeContents_output.json
+// OUTPUT: ~/Documents/AgentScript/json/ListHomeContents_output.json
 //   {
 //     "success": true,
 //     "folder": "Documents",
@@ -40,8 +40,8 @@ public func scriptMain() -> Int32 {
 
 func listHomeContents() {
     let home = NSHomeDirectory()
-    let inputPath = "\(home)/Documents/Agent/json/ListHomeContents_input.json"
-    let jsonOutputPath = "\(home)/Documents/Agent/json/ListHomeContents_output.json"
+    let inputPath = "\(home)/Documents/AgentScript/json/ListHomeContents_input.json"
+    let jsonOutputPath = "\(home)/Documents/AgentScript/json/ListHomeContents_output.json"
     
     // Parse AGENT_SCRIPT_ARGS
     let argsString = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""

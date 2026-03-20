@@ -13,14 +13,14 @@ import MailBridge
 //       - json=true (output to JSON file)
 //     Example: "dryRun=true,limit=50,json=true"
 //
-//   Option 2: JSON input file at ~/Documents/Agent/json/OrganizeEmails_input.json
+//   Option 2: JSON input file at ~/Documents/AgentScript/json/OrganizeEmails_input.json
 //     {
 //       "dryRun": true,
 //       "limit": 50,
 //       "json": true
 //     }
 //
-// OUTPUT: ~/Documents/Agent/json/OrganizeEmails_output.json
+// OUTPUT: ~/Documents/AgentScript/json/OrganizeEmails_output.json
 // ============================================================================
 
 @_cdecl("script_main")
@@ -227,8 +227,8 @@ private func findBestFolder(subject: String, sender: String, availableFolders: [
 
 func organizeEmails() {
     let home = NSHomeDirectory()
-    let inputPath = "\(home)/Documents/Agent/json/OrganizeEmails_input.json"
-    let outputPath = "\(home)/Documents/Agent/json/OrganizeEmails_output.json"
+    let inputPath = "\(home)/Documents/AgentScript/json/OrganizeEmails_input.json"
+    let outputPath = "\(home)/Documents/AgentScript/json/OrganizeEmails_output.json"
     
     // Parse AGENT_SCRIPT_ARGS
     let argsString = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""

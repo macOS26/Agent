@@ -4,8 +4,8 @@ import MessagesBridge
 // ============================================================================
 // SendMessage - Unified script for sending messages and images via Messages
 //
-// INPUT: ~/Documents/Agent/json/SendMessage_input.json
-// OUTPUT: ~/Documents/Agent/json/SendMessage_output.json
+// INPUT: ~/Documents/AgentScript/json/SendMessage_input.json
+// OUTPUT: ~/Documents/AgentScript/json/SendMessage_output.json
 //
 // JSON fields:
 //   - recipient (required): Contact name, phone number, or email
@@ -25,8 +25,8 @@ import MessagesBridge
 @_cdecl("script_main")
 public func scriptMain() -> Int32 {
     // JSON file paths - read from input, write to output
-    let inputPath = "\(NSHomeDirectory())/Documents/Agent/json/SendMessage_input.json"
-    let outputPath = "\(NSHomeDirectory())/Documents/Agent/json/SendMessage_output.json"
+    let inputPath = "\(NSHomeDirectory())/Documents/AgentScript/json/SendMessage_input.json"
+    let outputPath = "\(NSHomeDirectory())/Documents/AgentScript/json/SendMessage_output.json"
     
     // Read input JSON
     guard let inputData = FileManager.default.contents(atPath: inputPath) else {

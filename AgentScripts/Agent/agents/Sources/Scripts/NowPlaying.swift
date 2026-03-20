@@ -10,14 +10,14 @@ import AppKit
 //     Format: "json=true" or "artwork=true" or "artwork=false"
 //     Example: "json=true,artwork=true"
 //
-//   Option 2: JSON input file at ~/Documents/Agent/json/NowPlaying_input.json
+//   Option 2: JSON input file at ~/Documents/AgentScript/json/NowPlaying_input.json
 //     {
 //       "json": true,
 //       "artwork": true,
-//       "saveArtworkTo": "~/Documents/Agent/images/custom.png"
+//       "saveArtworkTo": "~/Documents/AgentScript/images/custom.png"
 //     }
 //
-// OUTPUT: ~/Documents/Agent/json/NowPlaying_output.json
+// OUTPUT: ~/Documents/AgentScript/json/NowPlaying_output.json
 //   {
 //     "success": true,
 //     "playerState": "playing",
@@ -40,14 +40,14 @@ public func script_main() -> Int32 {
 
 func nowPlaying() {
     let home = NSHomeDirectory()
-    let inputPath = "\(home)/Documents/Agent/json/NowPlaying_input.json"
-    let outputPath = "\(home)/Documents/Agent/json/NowPlaying_output.json"
+    let inputPath = "\(home)/Documents/AgentScript/json/NowPlaying_input.json"
+    let outputPath = "\(home)/Documents/AgentScript/json/NowPlaying_output.json"
     
     // Parse AGENT_SCRIPT_ARGS
     let argsString = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""
     var outputJSON = false
     var extractArtwork = true
-    var artworkPath = "\(home)/Documents/Agent/images/now_playing.png"
+    var artworkPath = "\(home)/Documents/AgentScript/images/now_playing.png"
     
     if !argsString.isEmpty {
         let pairs = argsString.components(separatedBy: ",")

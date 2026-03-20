@@ -9,18 +9,18 @@ import AVFoundation
 //     Format: "param1=value1,param2=value2"
 //     Parameters:
 //       - camera=front|back|external (default: front, falls back to any available)
-//       - output=/path/to/file.jpg (default: ~/Documents/Agent/photos/)
+//       - output=/path/to/file.jpg (default: ~/Documents/AgentScript/photos/)
 //       - json=true (output JSON to file)
 //     Example: "camera=back,json=true"
 //
-//   Option 2: JSON input file at ~/Documents/Agent/json/CapturePhoto_input.json
+//   Option 2: JSON input file at ~/Documents/AgentScript/json/CapturePhoto_input.json
 //     {
 //       "camera": "front",
-//       "output": "~/Documents/Agent/photos/myphoto.jpg",
+//       "output": "~/Documents/AgentScript/photos/myphoto.jpg",
 //       "json": true
 //     }
 //
-// OUTPUT: ~/Documents/Agent/json/CapturePhoto_output.json
+// OUTPUT: ~/Documents/AgentScript/json/CapturePhoto_output.json
 //   {
 //     "success": true,
 //     "outputPath": "/Users/.../photo.jpg",
@@ -36,8 +36,8 @@ public func scriptMain() -> Int32 {
 
 func capturePhoto() {
     let home = NSHomeDirectory()
-    let inputPath = "\(home)/Documents/Agent/json/CapturePhoto_input.json"
-    let jsonOutputPath = "\(home)/Documents/Agent/json/CapturePhoto_output.json"
+    let inputPath = "\(home)/Documents/AgentScript/json/CapturePhoto_input.json"
+    let jsonOutputPath = "\(home)/Documents/AgentScript/json/CapturePhoto_output.json"
     
     // Parse AGENT_SCRIPT_ARGS
     let argsString = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""
@@ -74,7 +74,7 @@ func capturePhoto() {
     }
     
     // Set default output path if not specified
-    let photoDir = "\(home)/Documents/Agent/photos"
+    let photoDir = "\(home)/Documents/AgentScript/photos"
     let timestamp = ISO8601DateFormatter().string(from: Date()).replacingOccurrences(of: ":", with: "-")
     let finalPath = outputPath ?? "\(photoDir)/photo_\(timestamp).jpg"
     

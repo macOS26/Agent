@@ -9,7 +9,7 @@ public func scriptMain() -> Int32 {
 
 func getCurrentPlaylist() {
     let home = NSHomeDirectory()
-    let jsonOutputPath = "\(home)/Documents/Agent/json/CurrentPlaylist_output.json"
+    let jsonOutputPath = "\(home)/Documents/AgentScript/json/CurrentPlaylist_output.json"
     
     guard let music: MusicApplication = SBApplication(bundleIdentifier: "com.apple.Music") else {
         print("❌ Could not connect to Music.app")

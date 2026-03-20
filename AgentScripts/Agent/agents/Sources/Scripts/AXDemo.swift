@@ -14,7 +14,7 @@ import AgentAccessibility
 //       - json=true (output to JSON file)
 //     Example: "x=500,y=400,windows=15,json=true"
 //
-//   Option 2: JSON input file at ~/Documents/Agent/json/AXDemo_input.json
+//   Option 2: JSON input file at ~/Documents/AgentScript/json/AXDemo_input.json
 //     {
 //       "x": 500,
 //       "y": 400,
@@ -22,7 +22,7 @@ import AgentAccessibility
 //       "json": true
 //     }
 //
-// OUTPUT: ~/Documents/Agent/json/AXDemo_output.json
+// OUTPUT: ~/Documents/AgentScript/json/AXDemo_output.json
 //   {
 //     "success": true,
 //     "windows": [...],
@@ -39,8 +39,8 @@ public func scriptMain() -> Int32 {
 
 func axDemo() {
     let home = NSHomeDirectory()
-    let inputPath = "\(home)/Documents/Agent/json/AXDemo_input.json"
-    let jsonOutputPath = "\(home)/Documents/Agent/json/AXDemo_output.json"
+    let inputPath = "\(home)/Documents/AgentScript/json/AXDemo_input.json"
+    let jsonOutputPath = "\(home)/Documents/AgentScript/json/AXDemo_output.json"
     
     // Default values
     var inspectX: CGFloat = 500

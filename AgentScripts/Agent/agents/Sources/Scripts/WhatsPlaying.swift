@@ -9,13 +9,13 @@ import MusicBridge
 //     Format: "json=true" or "verbose=true"
 //     Example: "json=true"
 //
-//   Option 2: JSON input file at ~/Documents/Agent/json/WhatsPlaying_input.json
+//   Option 2: JSON input file at ~/Documents/AgentScript/json/WhatsPlaying_input.json
 //     {
 //       "json": true,
 //       "verbose": true
 //     }
 //
-// OUTPUT: ~/Documents/Agent/json/WhatsPlaying_output.json
+// OUTPUT: ~/Documents/AgentScript/json/WhatsPlaying_output.json
 //   {
 //     "success": true,
 //     "playerState": "playing",
@@ -33,8 +33,8 @@ public func scriptMain() -> Int32 {
 
 func whatsPlaying() {
     let home = NSHomeDirectory()
-    let inputPath = "\(home)/Documents/Agent/json/WhatsPlaying_input.json"
-    let outputPath = "\(home)/Documents/Agent/json/WhatsPlaying_output.json"
+    let inputPath = "\(home)/Documents/AgentScript/json/WhatsPlaying_input.json"
+    let outputPath = "\(home)/Documents/AgentScript/json/WhatsPlaying_output.json"
     
     // Parse AGENT_SCRIPT_ARGS
     let argsString = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""

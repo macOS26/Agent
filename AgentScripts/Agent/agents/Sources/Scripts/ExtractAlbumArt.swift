@@ -10,19 +10,19 @@ import AppKit
 //   Option 1: AGENT_SCRIPT_ARGS environment variable
 //     Format: "param1=value1,param2=value2"
 //     Parameters:
-//       - output=/path/to/file.jpg (output path, default: ~/Documents/Agent/images/)
+//       - output=/path/to/file.jpg (output path, default: ~/Documents/AgentScript/images/)
 //       - format=jpg|png|tiff (output format, default: jpg)
 //       - json=true (output to JSON file)
 //     Example: "output=~/Desktop/cover.jpg,format=jpg,json=true"
 //
-//   Option 2: JSON input file at ~/Documents/Agent/json/ExtractAlbumArt_input.json
+//   Option 2: JSON input file at ~/Documents/AgentScript/json/ExtractAlbumArt_input.json
 //     {
 //       "output": "~/Desktop/cover.jpg",
 //       "format": "jpg",
 //       "json": true
 //     }
 //
-// OUTPUT: ~/Documents/Agent/json/ExtractAlbumArt_output.json
+// OUTPUT: ~/Documents/AgentScript/json/ExtractAlbumArt_output.json
 //   {
 //     "success": true,
 //     "outputPath": "/Users/.../cover.jpg",
@@ -40,8 +40,8 @@ public func scriptMain() -> Int32 {
 
 func extractAlbumArt() {
     let home = NSHomeDirectory()
-    let inputPath = "\(home)/Documents/Agent/json/ExtractAlbumArt_input.json"
-    let jsonOutputPath = "\(home)/Documents/Agent/json/ExtractAlbumArt_output.json"
+    let inputPath = "\(home)/Documents/AgentScript/json/ExtractAlbumArt_input.json"
+    let jsonOutputPath = "\(home)/Documents/AgentScript/json/ExtractAlbumArt_output.json"
     
     // Parse AGENT_SCRIPT_ARGS
     let argsString = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""
@@ -102,7 +102,7 @@ func extractAlbumArt() {
     
     // Set default output path if not specified
     let sanitizedTrack = trackName.replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: ":", with: "-")
-    let imagesDir = "\(home)/Documents/Agent/images"
+    let imagesDir = "\(home)/Documents/AgentScript/images"
     try? FileManager.default.createDirectory(atPath: imagesDir, withIntermediateDirectories: true)
     
     let extension_: String

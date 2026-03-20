@@ -14,14 +14,14 @@ import MailBridge
 //       - json=true (output to JSON file)
 //     Example: "dryRun=true,limit=50,json=true"
 //
-//   Option 2: JSON input file at ~/Documents/Agent/json/OrganizeOtherSubcategories_input.json
+//   Option 2: JSON input file at ~/Documents/AgentScript/json/OrganizeOtherSubcategories_input.json
 //     {
 //       "dryRun": true,
 //       "limit": 50,
 //       "json": true
 //     }
 //
-// OUTPUT: ~/Documents/Agent/json/OrganizeOtherSubcategories_output.json
+// OUTPUT: ~/Documents/AgentScript/json/OrganizeOtherSubcategories_output.json
 // ============================================================================
 
 @_cdecl("script_main")
@@ -277,8 +277,8 @@ private func createMailbox(named name: String, in parentMailbox: String, account
 
 func organizeOtherSubcategories() {
     let home = NSHomeDirectory()
-    let inputPath = "\(home)/Documents/Agent/json/OrganizeOtherSubcategories_input.json"
-    let outputPath = "\(home)/Documents/Agent/json/OrganizeOtherSubcategories_output.json"
+    let inputPath = "\(home)/Documents/AgentScript/json/OrganizeOtherSubcategories_input.json"
+    let outputPath = "\(home)/Documents/AgentScript/json/OrganizeOtherSubcategories_output.json"
     
     // Parse AGENT_SCRIPT_ARGS
     let argsString = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""

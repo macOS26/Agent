@@ -118,7 +118,7 @@ func testGenerateBridge() -> Int32 {
     let args = argsString.components(separatedBy: " ").filter { !$0.isEmpty }
     let bridgesDir = args.first
         ?? FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Documents/Agent/agents/Sources/Z-ScriptingBridges").path
+            .appendingPathComponent("Documents/AgentScript/agents/Sources/Z-ScriptingBridges").path
 
     passed = 0
     failed = 0
@@ -128,7 +128,7 @@ func testGenerateBridge() -> Int32 {
     print("╚══════════════════════════════════════════════╝\n")
 
     let buildDir = FileManager.default.homeDirectoryForCurrentUser
-        .appendingPathComponent("Documents/Agent/agents").path
+        .appendingPathComponent("Documents/AgentScript/agents").path
     let generateBridgeBin = "\(buildDir)/.build/debug/GenerateBridge"
 
     print("Building GenerateBridge...")

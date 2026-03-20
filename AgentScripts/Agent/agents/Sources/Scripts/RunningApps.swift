@@ -11,8 +11,8 @@ func runningApps() {
     // Parse arguments from AGENT_SCRIPT_ARGS or JSON input
     let argsString = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""
     let home = NSHomeDirectory()
-    let inputPath = "\(home)/Documents/Agent/json/RunningApps_input.json"
-    let outputPath = "\(home)/Documents/Agent/json/RunningApps_output.json"
+    let inputPath = "\(home)/Documents/AgentScript/json/RunningApps_input.json"
+    let outputPath = "\(home)/Documents/AgentScript/json/RunningApps_output.json"
     
     // Default options
     var showHidden = false

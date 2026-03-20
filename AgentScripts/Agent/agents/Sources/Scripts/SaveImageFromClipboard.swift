@@ -9,13 +9,13 @@ import AppKit
 //     Format: "outputPath=/path/to/image.png" or just the path directly
 //     Example: "outputPath=~/Desktop/image.png"
 //
-//   Option 2: JSON input file at ~/Documents/Agent/json/SaveImageFromClipboard_input.json
+//   Option 2: JSON input file at ~/Documents/AgentScript/json/SaveImageFromClipboard_input.json
 //     {
 //       "outputPath": "~/Desktop/image.png",
 //       "format": "png"
 //     }
 //
-// OUTPUT: ~/Documents/Agent/json/SaveImageFromClipboard_output.json
+// OUTPUT: ~/Documents/AgentScript/json/SaveImageFromClipboard_output.json
 //   {
 //     "success": true,
 //     "outputPath": "/Users/.../image.png",
@@ -32,12 +32,12 @@ public func scriptMain() -> Int32 {
 
 func saveImageFromClipboard() {
     let home = NSHomeDirectory()
-    let inputPath = "\(home)/Documents/Agent/json/SaveImageFromClipboard_input.json"
-    let outputPathJSON = "\(home)/Documents/Agent/json/SaveImageFromClipboard_output.json"
+    let inputPath = "\(home)/Documents/AgentScript/json/SaveImageFromClipboard_input.json"
+    let outputPathJSON = "\(home)/Documents/AgentScript/json/SaveImageFromClipboard_output.json"
     
     // Parse AGENT_SCRIPT_ARGS
     let argsString = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""
-    var outputPath = "\(home)/Documents/Agent/images/clipboard_image.png"
+    var outputPath = "\(home)/Documents/AgentScript/images/clipboard_image.png"
     var format = "png"
     var outputJSON = false
     

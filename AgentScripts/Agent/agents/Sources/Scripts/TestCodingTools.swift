@@ -8,14 +8,14 @@ import Foundation
 //     Format: "test=all" or "test=write" or "test=edit" or "test=read"
 //     Example: "test=write,verbose=true"
 //
-//   Option 2: JSON input file at ~/Documents/Agent/json/TestCodingTools_input.json
+//   Option 2: JSON input file at ~/Documents/AgentScript/json/TestCodingTools_input.json
 //     {
 //       "test": "all",     // "all", "write", "edit", or "read"
 //       "verbose": true,
 //       "cleanup": true    // Remove test files after completion
 //     }
 //
-// OUTPUT: ~/Documents/Agent/json/TestCodingTools_output.json
+// OUTPUT: ~/Documents/AgentScript/json/TestCodingTools_output.json
 //   {
 //     "success": true,
 //     "tests": ["write", "edit", "read"],
@@ -38,9 +38,9 @@ public func scriptMain() -> Int32 {
 
 func testCodingTools() {
     let home = NSHomeDirectory()
-    let inputPath = "\(home)/Documents/Agent/json/TestCodingTools_input.json"
-    let outputPath = "\(home)/Documents/Agent/json/TestCodingTools_output.json"
-    let testDir = "\(home)/Documents/Agent/test_output"
+    let inputPath = "\(home)/Documents/AgentScript/json/TestCodingTools_input.json"
+    let outputPath = "\(home)/Documents/AgentScript/json/TestCodingTools_output.json"
+    let testDir = "\(home)/Documents/AgentScript/test_output"
     
     // Parse AGENT_SCRIPT_ARGS
     let argsString = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""
@@ -201,7 +201,7 @@ func testCodingTools() {
         "filesDeleted": filesDeleted
     ]
     
-    try? FileManager.default.createDirectory(atPath: "\(home)/Documents/Agent/json", withIntermediateDirectories: true)
+    try? FileManager.default.createDirectory(atPath: "\(home)/Documents/AgentScript/json", withIntermediateDirectories: true)
     if let out = try? JSONSerialization.data(withJSONObject: resultData, options: .prettyPrinted) {
         try? out.write(to: URL(fileURLWithPath: outputPath))
         print("\n📄 JSON saved to: \(outputPath)")

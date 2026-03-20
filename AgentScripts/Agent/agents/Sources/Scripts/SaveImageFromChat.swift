@@ -8,7 +8,10 @@ public func scriptMain() -> Int32 {
 }
 
 func saveImageFromClipboard() {
-    let outputPath = "/Users/toddbruss/Desktop/Agent/andrew_avatar_circle.png"
+    let home = NSHomeDirectory()
+    let imagesDir = "\(home)/Documents/AgentScript/images"
+    try? FileManager.default.createDirectory(atPath: imagesDir, withIntermediateDirectories: true)
+    let outputPath = "\(imagesDir)/clipboard_image.png"
 
     guard let image = NSPasteboard.general.readObjects(forClasses: [NSImage.self], options: nil)?.first as? NSImage else {
         print("No image found in clipboard.")

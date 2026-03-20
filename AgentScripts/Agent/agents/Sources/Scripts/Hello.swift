@@ -8,13 +8,13 @@ import Foundation
 //     Format: "verbose=true" or just run with no args for basic info
 //     Example: "verbose=true"
 //
-//   Option 2: JSON input file at ~/Documents/Agent/json/Hello_input.json
+//   Option 2: JSON input file at ~/Documents/AgentScript/json/Hello_input.json
 //     {
 //       "verbose": true,
 //       "json": true
 //     }
 //
-// OUTPUT: ~/Documents/Agent/json/Hello_output.json
+// OUTPUT: ~/Documents/AgentScript/json/Hello_output.json
 //   {
 //     "success": true,
 //     "currentDirectory": "/",
@@ -34,8 +34,8 @@ public func scriptMain() -> Int32 {
 
 func hello() {
     let home = NSHomeDirectory()
-    let inputPath = "\(home)/Documents/Agent/json/Hello_input.json"
-    let outputPath = "\(home)/Documents/Agent/json/Hello_output.json"
+    let inputPath = "\(home)/Documents/AgentScript/json/Hello_input.json"
+    let outputPath = "\(home)/Documents/AgentScript/json/Hello_output.json"
     
     // Parse AGENT_SCRIPT_ARGS
     let argsString = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""
@@ -112,7 +112,7 @@ func hello() {
             "osVersion": osVersion
         ]
         
-        try? FileManager.default.createDirectory(atPath: "\(home)/Documents/Agent/json", withIntermediateDirectories: true)
+        try? FileManager.default.createDirectory(atPath: "\(home)/Documents/AgentScript/json", withIntermediateDirectories: true)
         if let out = try? JSONSerialization.data(withJSONObject: result, options: .prettyPrinted) {
             try? out.write(to: URL(fileURLWithPath: outputPath))
             print("\n📄 JSON saved to: \(outputPath)")

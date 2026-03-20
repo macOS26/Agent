@@ -14,7 +14,7 @@ import MusicBridge
 //       - json=true (output to JSON file)
 //     Example: "playlist=Rock,shuffle=false,random=true,json=true"
 //
-//   Option 2: JSON input file at ~/Documents/Agent/json/PlayPlaylist_input.json
+//   Option 2: JSON input file at ~/Documents/AgentScript/json/PlayPlaylist_input.json
 //     {
 //       "playlist": "Rock Playlist",
 //       "shuffle": true,
@@ -22,7 +22,7 @@ import MusicBridge
 //       "json": true
 //     }
 //
-// OUTPUT: ~/Documents/Agent/json/PlayPlaylist_output.json
+// OUTPUT: ~/Documents/AgentScript/json/PlayPlaylist_output.json
 //   {
 //     "success": true,
 //     "playlist": "Rock Playlist",
@@ -44,8 +44,8 @@ public func scriptMain() -> Int32 {
 
 func playPlaylist() {
     let home = NSHomeDirectory()
-    let inputPath = "\(home)/Documents/Agent/json/PlayPlaylist_input.json"
-    let jsonOutputPath = "\(home)/Documents/Agent/json/PlayPlaylist_output.json"
+    let inputPath = "\(home)/Documents/AgentScript/json/PlayPlaylist_input.json"
+    let jsonOutputPath = "\(home)/Documents/AgentScript/json/PlayPlaylist_output.json"
     
     // Parse AGENT_SCRIPT_ARGS
     let argsString = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""

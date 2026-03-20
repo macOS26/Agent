@@ -9,14 +9,14 @@ import SafariBridge
 //     Format: "query=search+terms" or just the search terms directly
 //     Example: "query=swift+programming" or "swift programming"
 //
-//   Option 2: JSON input file at ~/Documents/Agent/json/SafariSearch_input.json
+//   Option 2: JSON input file at ~/Documents/AgentScript/json/SafariSearch_input.json
 //     {
 //       "query": "swift programming",
 //       "engine": "google",
 //       "newTab": true
 //     }
 //
-// OUTPUT: ~/Documents/Agent/json/SafariSearch_output.json
+// OUTPUT: ~/Documents/AgentScript/json/SafariSearch_output.json
 //   {
 //     "success": true,
 //     "query": "swift programming",
@@ -32,8 +32,8 @@ public func scriptMain() -> Int32 {
 
 func safariSearch() {
     let home = NSHomeDirectory()
-    let inputPath = "\(home)/Documents/Agent/json/SafariSearch_input.json"
-    let outputPath = "\(home)/Documents/Agent/json/SafariSearch_output.json"
+    let inputPath = "\(home)/Documents/AgentScript/json/SafariSearch_input.json"
+    let outputPath = "\(home)/Documents/AgentScript/json/SafariSearch_output.json"
     
     // Parse AGENT_SCRIPT_ARGS
     let argsString = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""

@@ -11,14 +11,14 @@ import SeleniumBridge
 //              '{"action":"navigate","url":"https://example.com"}'
 //              '{"action":"find","strategy":"css","value":"#search"}'
 //
-//   Option 2: JSON input file at ~/Documents/Agent/json/Selenium_input.json
+//   Option 2: JSON input file at ~/Documents/AgentScript/json/Selenium_input.json
 //     {
 //       "action": "start",
 //       "browser": "safari",
 //       "capabilities": { "browserName": "Safari" }
 //     }
 //
-// OUTPUT: ~/Documents/Agent/json/Selenium_output.json
+// OUTPUT: ~/Documents/AgentScript/json/Selenium_output.json
 //   {
 //     "success": true,
 //     "action": "start",
@@ -64,9 +64,9 @@ public func scriptMain() -> Int32 {
 
 func runSelenium() {
     let home = NSHomeDirectory()
-    let inputPath = "\(home)/Documents/Agent/json/Selenium_input.json"
-    let outputPath = "\(home)/Documents/Agent/json/Selenium_output.json"
-    let screenshotDir = "\(home)/Documents/Agent/screenshots"
+    let inputPath = "\(home)/Documents/AgentScript/json/Selenium_input.json"
+    let outputPath = "\(home)/Documents/AgentScript/json/Selenium_output.json"
+    let screenshotDir = "\(home)/Documents/AgentScript/screenshots"
     
     // Parse input
     let argsString = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""

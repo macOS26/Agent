@@ -3,8 +3,8 @@ import Foundation
 // Test script for AGENT_SCRIPT_ARGS environment variable and JSON I/O
 // This script verifies that:
 // 1. AGENT_SCRIPT_ARGS is correctly passed via run_agent_script
-// 2. JSON input files can be read from ~/Documents/Agent/
-// 3. JSON output files can be written to ~/Documents/Agent/
+// 2. JSON input files can be read from ~/Documents/AgentScript/
+// 3. JSON output files can be written to ~/Documents/AgentScript/
 
 @_cdecl("script_main")
 public func scriptMain() -> Int32 {
@@ -14,7 +14,7 @@ public func scriptMain() -> Int32 {
 
 func testEnvVars() {
     let home = NSHomeDirectory()
-    let jsonDir = "\(home)/Documents/Agent/json"
+    let jsonDir = "\(home)/Documents/AgentScript/json"
     let inputPath = "\(jsonDir)/TestEnvVars_input.json"
     let outputPath = "\(jsonDir)/TestEnvVars_output.json"
     

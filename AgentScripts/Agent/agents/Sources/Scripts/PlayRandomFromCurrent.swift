@@ -9,12 +9,12 @@ import MusicBridge
 //     Format: "json=true" or just run with no args
 //     Example: "json=true"
 //
-//   Option 2: JSON input file at ~/Documents/Agent/json/PlayRandomFromCurrent_input.json
+//   Option 2: JSON input file at ~/Documents/AgentScript/json/PlayRandomFromCurrent_input.json
 //     {
 //       "json": true
 //     }
 //
-// OUTPUT: ~/Documents/Agent/json/PlayRandomFromCurrent_output.json
+// OUTPUT: ~/Documents/AgentScript/json/PlayRandomFromCurrent_output.json
 //   {
 //     "success": true,
 //     "playlist": "Playlist Name",
@@ -32,8 +32,8 @@ public func scriptMain() -> Int32 {
 
 func playRandomFromCurrent() {
     let home = NSHomeDirectory()
-    let inputPath = "\(home)/Documents/Agent/json/PlayRandomFromCurrent_input.json"
-    let outputPath = "\(home)/Documents/Agent/json/PlayRandomFromCurrent_output.json"
+    let inputPath = "\(home)/Documents/AgentScript/json/PlayRandomFromCurrent_input.json"
+    let outputPath = "\(home)/Documents/AgentScript/json/PlayRandomFromCurrent_output.json"
     
     // Parse AGENT_SCRIPT_ARGS
     let argsString = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""
@@ -144,7 +144,7 @@ func playRandomFromCurrent() {
             "track": trackInfo
         ]
         
-        try? FileManager.default.createDirectory(atPath: "\(home)/Documents/Agent/json", withIntermediateDirectories: true)
+        try? FileManager.default.createDirectory(atPath: "\(home)/Documents/AgentScript/json", withIntermediateDirectories: true)
         if let out = try? JSONSerialization.data(withJSONObject: result, options: .prettyPrinted) {
             try? out.write(to: URL(fileURLWithPath: outputPath))
             print("\n📄 JSON saved to: \(outputPath)")
