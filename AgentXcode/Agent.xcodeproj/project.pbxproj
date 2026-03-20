@@ -51,6 +51,7 @@
 		AA100000000000000000B7 /* ToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000B6 /* ToolsView.swift */; };
 		AA100000000000000000B8 /* AgentOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000B9 /* AgentOptionsView.swift */; };
 		AA100000000000000000BB /* OpenAICompatibleService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000BA /* OpenAICompatibleService.swift */; };
+		AEB0000000000000000003 /* AppleEventBridges in Frameworks */ = {isa = PBXBuildFile; productRef = AEB0000000000000000002 /* AppleEventBridges */; };
 		AA100000000000000000BD /* LoRAAdapterManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000BC /* LoRAAdapterManager.swift */; };
 		AA100000000000000000BF /* LoRASettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000BE /* LoRASettingsView.swift */; };
 		BB10000000000000000030 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001A /* main.swift */; };
@@ -249,6 +250,7 @@
 			files = (
 				AA1000000000000000003E /* ScriptingBridge.framework in Frameworks */,
 				EA37C5522F636B86009D0A23 /* XcodeScriptingBridge in Frameworks */,
+				AEB0000000000000000003 /* AppleEventBridges in Frameworks */,
 				EA50MCP0000000003 /* MCPClient in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -532,6 +534,7 @@
 			name = "Agent!";
 			packageProductDependencies = (
 				EA37C5512F636B86009D0A23 /* XcodeScriptingBridge */,
+				AEB0000000000000000002 /* AppleEventBridges */,
 			);
 			productName = Agent;
 			productReference = AA10000000000000000024 /* Agent!.app */;
@@ -608,6 +611,7 @@
 			packageReferences = (
 				XCSB000000000000000001 /* XCLocalSwiftPackageReference "../XcodeScriptingBridge" */,
 				EA50MCP0000000001 /* XCLocalSwiftPackageReference "../AgentMCP" */,
+				AEB0000000000000000001 /* XCLocalSwiftPackageReference "../AppleEventBridges" */,
 			);
 			productRefGroup = AA10000000000000000042 /* Products */;
 			projectDirPath = "";
@@ -1169,6 +1173,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../XcodeScriptingBridge;
 		};
+		AEB0000000000000000001 /* XCLocalSwiftPackageReference "../AppleEventBridges" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../AppleEventBridges;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1179,6 +1187,10 @@
 		EA50MCP0000000002 /* MCPClient */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = MCPClient;
+		};
+		AEB0000000000000000002 /* AppleEventBridges */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AppleEventBridges;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

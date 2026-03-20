@@ -87,7 +87,6 @@ let bridgeNames = [
     "UTMBridge",
     "VoiceOverBridge",
     "WishBridge",
-    "XcodeScriptingBridge",
 ]
 
 let bridge = "Sources/XCFScriptingBridges"
@@ -125,28 +124,32 @@ func parseDeps(for name: String) -> [Target.Dependency] {
 let allBridgeFiles = ["ScriptingBridgeCommon.swift"] + bridgeNames.map { "\($0).swift" }
 let allScriptFiles = scriptNames.map { "\($0).swift" }
 
+let scriptProducts: [Product] = scriptNames.map {
+    .library(name: $0, type: .dynamic, targets: [$0])
+}
+
+let coreTargets: [Target] = [
+    .target(name: "AgentAccessibility", path: "Sources/AgentAccessibility"),
+    .target(name: "ScriptingBridgeCommon", path: bridge,
+            exclude: bridgeNames.map { "\($0).swift" },
+            sources: ["ScriptingBridgeCommon.swift"]),
+]
+
+let bridgeTargets: [Target] = bridgeNames.map { name in
+    .target(name: name, dependencies: [common], path: bridge,
+            exclude: allBridgeFiles.filter { $0 != "\(name).swift" },
+            sources: ["\(name).swift"])
+}
+
+let scriptTargets: [Target] = scriptNames.map { name in
+    .target(name: name, dependencies: parseDeps(for: name), path: scripts,
+            exclude: allScriptFiles.filter { $0 != "\(name).swift" },
+            sources: ["\(name).swift"])
+}
+
 let package = Package(
     name: "agents",
     platforms: [.macOS(.v26)],
-    products: scriptNames.map { .library(name: $0, type: .dynamic, targets: [$0]) },
-    targets: [
-        // AgentAccessibility — shared accessibility helpers for scripts
-        .target(name: "AgentAccessibility", path: "Sources/AgentAccessibility"),
-        // ScriptingBridgeCommon — shared protocols and types for all bridges
-        .target(name: "ScriptingBridgeCommon", path: bridge,
-                exclude: bridgeNames.map { "\($0).swift" },
-                sources: ["ScriptingBridgeCommon.swift"]),
-    ]
-    // Bridge targets — each wraps one app's scripting dictionary
-    + bridgeNames.map { name in
-        .target(name: name, dependencies: [common], path: bridge,
-                exclude: allBridgeFiles.filter { $0 != "\(name).swift" },
-                sources: ["\(name).swift"])
-    }
-    // Script targets — each compiles to a .dylib
-    + scriptNames.map { name in
-        .target(name: name, dependencies: parseDeps(for: name), path: scripts,
-                exclude: allScriptFiles.filter { $0 != "\(name).swift" },
-                sources: ["\(name).swift"])
-    }
+    products: scriptProducts,
+    targets: coreTargets + bridgeTargets + scriptTargets
 )
