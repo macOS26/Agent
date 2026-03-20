@@ -6,6 +6,7 @@ struct DependencyOverlay: View {
     @State private var showIcon = false
     @State private var showRow1 = false
     @State private var showRow2 = false
+    @State private var showRow3 = false
     @State private var dismissing = false
 
     var body: some View {
@@ -55,6 +56,11 @@ struct DependencyOverlay: View {
                         hint: "Installed with Xcode CLT",
                         show: showRow2)
 
+                    rowWithStatus(ok: status.appleIntelligence,
+                                  name: "Apple Intelligence",
+                                  status: status.appleIntelligenceStatus,
+                                  show: showRow3)
+
                     if !status.allGood {
                         HStack {
                             Button("Install") {
@@ -93,9 +99,10 @@ struct DependencyOverlay: View {
                 withAnimation(.easeOut(duration: 0.4)) { showIcon = true }
                 withAnimation(.easeOut(duration: 0.3).delay(0.3)) { showRow1 = true }
                 withAnimation(.easeOut(duration: 0.3).delay(0.5)) { showRow2 = true }
+                withAnimation(.easeOut(duration: 0.3).delay(0.7)) { showRow3 = true }
 
                 if status.allGood {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
                         dismiss()
                     }
                 }
@@ -118,6 +125,25 @@ struct DependencyOverlay: View {
                         .font(.system(size: 9, design: .monospaced))
                         .foregroundColor(.secondary)
                 }
+            }
+        }
+        .opacity(show ? 1 : 0)
+        .offset(y: show ? 0 : 8)
+    }
+
+    @ViewBuilder
+    private func rowWithStatus(ok: Bool, name: String, status: String, show: Bool) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: ok ? "checkmark.circle.fill" : "xmark.circle.fill")
+                .foregroundColor(ok ? .green : .orange)
+                .font(.system(size: 16))
+            VStack(alignment: .leading, spacing: 1) {
+                Text(name)
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundColor(.primary)
+                Text(status)
+                    .font(.system(size: 9, design: .monospaced))
+                    .foregroundColor(ok ? .secondary : .orange)
             }
         }
         .opacity(show ? 1 : 0)
