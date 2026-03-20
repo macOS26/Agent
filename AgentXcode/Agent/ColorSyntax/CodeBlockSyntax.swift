@@ -595,6 +595,12 @@ private struct LangDef {
     private static let termPathRx: NSRegularExpression? = try? NSRegularExpression(pattern: #"(?:^|\s)((?:/[\w.\-@]+)+/?)"#, options: .anchorsMatchLines)
     private static let termArrowRx: NSRegularExpression? = try? NSRegularExpression(pattern: #"\s->\s.*$"#, options: .anchorsMatchLines)
     private static let termErrorRx: NSRegularExpression? = try? NSRegularExpression(pattern: #"\b(?:error|Error|ERROR|fatal|FATAL|failed|FAILED|No such file|Permission denied|not found|cannot)\b"#)
+    private static let termWarningRx: NSRegularExpression? = try? NSRegularExpression(pattern: #"\b(?:warning|Warning|WARNING|deprecated|DEPRECATED|caution)\b"#)
+    private static var termWarning: NSColor {
+        NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor(red: 1.0, green: 0.8, blue: 0.2, alpha: 1)    // yellow
+            : NSColor(red: 0.7, green: 0.5, blue: 0.0, alpha: 1)
+    }
     private static let termSizeRx: NSRegularExpression? = try? NSRegularExpression(pattern: #"(?<=\s)\d{1,12}(?=\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))"#)
 
     // MARK: - Git Output Detection & Highlighting
@@ -692,6 +698,8 @@ private struct LangDef {
         if t.range(of: #"^\S+\.\w+:\d+:"#, options: .regularExpression) != nil { return true }
         if looksLikeTerminalLine(t) { return true }
         if looksLikeGitOutput(t) { return true }
+        // Compiler/SPM warnings and errors
+        if t.hasPrefix("warning:") || t.hasPrefix("error:") || t.hasPrefix("note:") { return true }
         // Bare file paths (e.g. /Users/... or ~/Documents/...)
         if t.hasPrefix("/") || t.hasPrefix("~/") { return true }
         return false
