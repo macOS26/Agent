@@ -1,54 +1,6 @@
 import Foundation
 import ScriptingBridge
 import AppKit
-import AdobeIllustratorBridge
-import AppleScriptUtilityBridge
-import AutomatorApplicationStubBridge
-import AutomatorBridge
-import BluetoothFileExchangeBridge
-import CalendarBridge
-import ConsoleBridge
-import ContactsBridge
-import DatabaseEventsBridge
-import DeveloperBridge
-import FinalCutProCreatorStudioBridge
-import FinderBridge
-import FirefoxBridge
-import FolderActionsSetupBridge
-import GoogleChromeBridge
-import ImageEventsBridge
-import InstrumentsBridge
-import KeynoteBridge
-import LogicProCreatorStudioBridge
-import MailBridge
-import MessagesBridge
-import MicrosoftEdgeBridge
-import MusicBridge
-import NotesBridge
-import NumbersBridge
-import NumbersCreatorStudioBridge
-import PagesBridge
-import PagesCreatorStudioBridge
-import PhotosBridge
-import PixelmatorProBridge
-import PreviewBridge
-import QuickTimePlayerBridge
-import RemindersBridge
-import SafariBridge
-import ScreenSharingBridge
-import ScriptEditorBridge
-import ShortcutsBridge
-import ShortcutsEventsBridge
-import SimulatorBridge
-import SystemEventsBridge
-import SystemInformationBridge
-import SystemSettingsBridge
-import TerminalBridge
-import TextEditBridge
-import TVBridge
-import UTMBridge
-import VoiceOverBridge
-import WishBridge
 
 /// Executes dynamic Apple Event queries using ObjC runtime dispatch.
 /// No compilation needed — walks the object graph via value(forKey:) and NSInvocation.
@@ -147,10 +99,17 @@ final class AppleEventService: @unchecked Sendable {
         // Pre-load SDEF so it's cached for hints during the query
         _ = SDEFService.shared.loadByBundleID(bundleID)
 
+        // Show available top-level properties as hints
+        let topKeys = SDEFService.shared.aeKeys(for: bundleID, className: "application")
+        let topHints = (topKeys.properties + topKeys.elements).prefix(15)
+        var output: [String] = []
+        if !topHints.isEmpty {
+            output.append("Available: \(topHints.joined(separator: ", "))\(topKeys.properties.count + topKeys.elements.count > 15 ? " ..." : "")")
+        }
+
         var cursor: Any = app
         var cursorClass = "application"
         var cursorPath: [String] = []  // tracks path for NSAppleScript fallback
-        var output: [String] = []
 
         for (i, op) in operations.enumerated() {
             guard let action = op["action"] as? String else {
@@ -171,8 +130,19 @@ final class AppleEventService: @unchecked Sendable {
                     // Track cursor class for SDEF hints on subsequent steps
                     if result is SBElementArray {
                         cursorClass = key
+                        // Show element type hints
+                        let childKeys = SDEFService.shared.aeKeys(for: bundleID, className: key)
+                        let childHints = (childKeys.properties + childKeys.elements).prefix(10)
+                        if !childHints.isEmpty {
+                            output.append("  \(key) properties: \(childHints.joined(separator: ", "))")
+                        }
                     } else if result is SBObject {
                         cursorClass = key
+                        let objKeys = SDEFService.shared.aeKeys(for: bundleID, className: key)
+                        let objHints = (objKeys.properties + objKeys.elements).prefix(10)
+                        if !objHints.isEmpty {
+                            output.append("  \(key) properties: \(objHints.joined(separator: ", "))")
+                        }
                     }
                     cursorPath.append(key)
                     cursor = result
