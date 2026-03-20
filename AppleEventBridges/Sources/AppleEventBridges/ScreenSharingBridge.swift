@@ -1,3 +1,4 @@
+@_exported import ScriptingBridgeCommon
 
 // MARK: ScreenSharingApplication
 @objc public protocol ScreenSharingApplication: SBApplicationProtocol {

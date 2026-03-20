@@ -1,3 +1,4 @@
+@_exported import ScriptingBridgeCommon
 
 // MARK: SystemInformationSavo
 @objc public enum SystemInformationSavo : AEKeyword {

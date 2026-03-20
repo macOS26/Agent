@@ -1,3 +1,4 @@
+@_exported import ScriptingBridgeCommon
 
 // MARK: FolderActionsSetupSaveOptions
 @objc public enum FolderActionsSetupSaveOptions : AEKeyword {

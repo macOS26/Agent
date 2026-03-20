@@ -1,3 +1,4 @@
+@_exported import ScriptingBridgeCommon
 
 // MARK: UTMSaveOptions
 @objc public enum UTMSaveOptions : AEKeyword {

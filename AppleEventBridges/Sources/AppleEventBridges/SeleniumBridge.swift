@@ -1,3 +1,4 @@
+@_exported import ScriptingBridgeCommon
 import Foundation
 
 // MARK: - WebDriver Protocol Implementation

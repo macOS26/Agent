@@ -1,3 +1,4 @@
+@_exported import ScriptingBridgeCommon
 
 // MARK: SystemSettingsSaveOptions
 @objc public enum SystemSettingsSaveOptions : AEKeyword {

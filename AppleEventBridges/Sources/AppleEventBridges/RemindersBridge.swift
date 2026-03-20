@@ -1,3 +1,4 @@
+@_exported import ScriptingBridgeCommon
 
 // MARK: RemindersSaveOptions
 @objc public enum RemindersSaveOptions : AEKeyword {

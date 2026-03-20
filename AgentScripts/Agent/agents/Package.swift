@@ -35,8 +35,7 @@ let scriptNames = [
     "TodayEvents",
 ]
 
-// Scripting Bridge wrappers — generated from app .sdef files.
-// Each becomes a target that scripts can `import`.
+// Bridge names match those in AppleEventBridges package
 let bridgeNames = [
     "AdobeIllustratorBridge",
     "AppleScriptUtilityBridge",
@@ -89,10 +88,18 @@ let bridgeNames = [
     "WishBridge",
 ]
 
-let bridge = "Sources/XCFScriptingBridges"
 let scripts = "Sources/Scripts"
-let common: Target.Dependency = "ScriptingBridgeCommon"
 let bridgeNameSet = Set(bridgeNames)
+
+// Local package dependency for shared bridges
+let packageDependencies: [PackageDescription.Package.Dependency] = [
+    .package(name: "AppleEventBridges", path: "../../../AppleEventBridges")
+]
+
+// Build Target.Dependency array for each bridge
+func bridgeDep(_ name: String) -> Target.Dependency {
+    .init(stringLiteral: name)
+}
 
 // Auto-detect bridge imports in each script
 func parseDeps(for name: String) -> [Target.Dependency] {
@@ -105,9 +112,9 @@ func parseDeps(for name: String) -> [Target.Dependency] {
         if trimmed.hasPrefix("import ") {
             let module = String(trimmed.dropFirst(7)).trimmingCharacters(in: .whitespaces)
             if bridgeNameSet.contains(module) {
-                deps.append(.init(stringLiteral: module))
+                deps.append(bridgeDep(module))
             } else if module == "ScriptingBridgeCommon" {
-                deps.append(common)
+                deps.append(bridgeDep("ScriptingBridgeCommon"))
             } else if module == "AgentAccessibility" {
                 deps.append(.init(stringLiteral: "AgentAccessibility"))
             }
@@ -120,8 +127,6 @@ func parseDeps(for name: String) -> [Target.Dependency] {
     return deps
 }
 
-// Exclude lists so SPM doesn't warn about unhandled files in shared directories
-let allBridgeFiles = ["ScriptingBridgeCommon.swift"] + bridgeNames.map { "\($0).swift" }
 let allScriptFiles = scriptNames.map { "\($0).swift" }
 
 let scriptProducts: [Product] = scriptNames.map {
@@ -130,16 +135,7 @@ let scriptProducts: [Product] = scriptNames.map {
 
 let coreTargets: [Target] = [
     .target(name: "AgentAccessibility", path: "Sources/AgentAccessibility"),
-    .target(name: "ScriptingBridgeCommon", path: bridge,
-            exclude: bridgeNames.map { "\($0).swift" },
-            sources: ["ScriptingBridgeCommon.swift"]),
 ]
-
-let bridgeTargets: [Target] = bridgeNames.map { name in
-    .target(name: name, dependencies: [common], path: bridge,
-            exclude: allBridgeFiles.filter { $0 != "\(name).swift" },
-            sources: ["\(name).swift"])
-}
 
 let scriptTargets: [Target] = scriptNames.map { name in
     .target(name: name, dependencies: parseDeps(for: name), path: scripts,
@@ -151,5 +147,6 @@ let package = Package(
     name: "agents",
     platforms: [.macOS(.v26)],
     products: scriptProducts,
-    targets: coreTargets + bridgeTargets + scriptTargets
+    dependencies: packageDependencies,
+    targets: coreTargets + scriptTargets
 )

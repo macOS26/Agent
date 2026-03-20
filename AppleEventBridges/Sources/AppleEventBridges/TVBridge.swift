@@ -1,3 +1,4 @@
+@_exported import ScriptingBridgeCommon
 
 // MARK: TVEPlS
 @objc public enum TVEPlS : AEKeyword {

@@ -1,3 +1,4 @@
+@_exported import ScriptingBridgeCommon
 
 // MARK: BluetoothFileExchangeApplication
 @objc public protocol BluetoothFileExchangeApplication: SBApplicationProtocol {

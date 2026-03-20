@@ -1,3 +1,4 @@
+@_exported import ScriptingBridgeCommon
 // MARK: MailSaveOptions
 @objc public enum MailSaveOptions : AEKeyword {
     case yes = 0x79657320 /* Save the file. */

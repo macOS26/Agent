@@ -1,3 +1,4 @@
+@_exported import ScriptingBridgeCommon
 
 // MARK: KeynoteSaveOptions
 @objc public enum KeynoteSaveOptions : AEKeyword {

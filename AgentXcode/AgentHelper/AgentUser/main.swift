@@ -129,13 +129,13 @@ func syncArray(named marker: String, with diskNames: Set<String>, in content: St
     return String(content[..<arrayStart.upperBound]) + "\n" + newArray + "\n" + String(content[arrayEnd.lowerBound...])
 }
 
-/// Sync scriptNames and bridgeNames in Package.swift with actual .swift files on disk.
+/// Sync scriptNames in Package.swift with actual .swift files on disk.
+/// Bridge names come from AppleEventBridges package (single source of truth).
 func syncPackage() {
     let fm = FileManager.default
     let home = fm.homeDirectoryForCurrentUser
     let agentsDir = home.appendingPathComponent("Documents/AgentScript/agents")
     let scriptsDir = agentsDir.appendingPathComponent("Sources/Scripts")
-    let bridgesDir = agentsDir.appendingPathComponent("Sources/XCFScriptingBridges")
     let packageURL = agentsDir.appendingPathComponent("Package.swift")
 
     guard fm.fileExists(atPath: packageURL.path) else { return }
@@ -149,16 +149,6 @@ func syncPackage() {
         let diskScripts = Set(files.filter { $0.hasSuffix(".swift") }
             .map { $0.replacingOccurrences(of: ".swift", with: "") })
         content = syncArray(named: "let scriptNames = [", with: diskScripts, in: content)
-    }
-
-    // Sync bridges (exclude ScriptingBridgeCommon and AgentScriptingBridge — managed separately)
-    if fm.fileExists(atPath: bridgesDir.path),
-       let files = try? fm.contentsOfDirectory(atPath: bridgesDir.path) {
-        let excluded: Set<String> = ["ScriptingBridgeCommon", "AgentScriptingBridge"]
-        let diskBridges = Set(files.filter { $0.hasSuffix(".swift") }
-            .map { $0.replacingOccurrences(of: ".swift", with: "") })
-            .subtracting(excluded)
-        content = syncArray(named: "let bridgeNames = [", with: diskBridges, in: content)
     }
 
     // Only write if something changed

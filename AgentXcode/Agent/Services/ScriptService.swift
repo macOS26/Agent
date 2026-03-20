@@ -9,7 +9,6 @@ final class ScriptService {
     }()
 
     private var sourcesDir: URL { Self.agentsDir.appendingPathComponent("Sources") }
-    private var bridgesDir: URL { sourcesDir.appendingPathComponent("XCFScriptingBridges") }
     private var scriptsDir: URL { sourcesDir.appendingPathComponent("Scripts") }
 
     /// Directory for saved AppleScript files
@@ -44,27 +43,15 @@ final class ScriptService {
     private var bundleSources: URL? {
         Bundle.main.resourceURL?.appendingPathComponent("Sources")
     }
-    private var bundleBridges: URL? {
-        bundleSources?.appendingPathComponent("XCFScriptingBridges")
-    }
     private var bundleScripts: URL? {
         bundleSources?.appendingPathComponent("Scripts")
     }
     // MARK: - Package.swift generation
 
     /// Generate a clean Package.swift from the actual files on disk.
-    /// No bundled file needed — always reflects current state.
+    /// Uses AppleEventBridges package dependency for bridge modules.
     private func generatePackageSwift() {
         let fm = FileManager.default
-
-        // Discover bridges on disk (exclude core files managed separately)
-        let coreFiles: Set<String> = ["ScriptingBridgeCommon", "AgentScriptingBridge", "AgentAccessibility"]
-        let bridgeFiles = (try? fm.contentsOfDirectory(atPath: bridgesDir.path)) ?? []
-        let bridgeNames = bridgeFiles
-            .filter { $0.hasSuffix(".swift") }
-            .map { $0.replacingOccurrences(of: ".swift", with: "") }
-            .filter { !coreFiles.contains($0) }
-            .sorted()
 
         // Discover scripts on disk
         let scriptFiles = (try? fm.contentsOfDirectory(atPath: scriptsDir.path)) ?? []
@@ -73,28 +60,53 @@ final class ScriptService {
             .map { $0.replacingOccurrences(of: ".swift", with: "") }
             .sorted()
 
-        let bridgeList = bridgeNames.map { "    \"\($0)\"," }.joined(separator: "\n")
         let scriptList = scriptNames.map { "    \"\($0)\"," }.joined(separator: "\n")
 
+        // Read bridge names from AppleEventBridges package (single source of truth)
+        let bridgesPackagePath = Self.agentsDir
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("AppleEventBridges/Package.swift")
+        let bridgeNames: [String] = {
+            guard let content = try? String(contentsOf: bridgesPackagePath, encoding: .utf8),
+                  let arrayStart = content.range(of: "let bridgeNames = ["),
+                  let arrayEnd = content[arrayStart.upperBound...].range(of: "]") else { return [] }
+            let arrayContent = content[arrayStart.upperBound..<arrayEnd.lowerBound]
+            return arrayContent.components(separatedBy: "\n")
+                .map { $0.trimmingCharacters(in: .whitespaces).trimmingCharacters(in: CharacterSet(charactersIn: "\",")) }
+                .filter { !$0.isEmpty }
+        }()
+
         let content = """
-        // swift-tools-version: 6.0
+        // swift-tools-version: 6.2
         import PackageDescription
         import Foundation
 
+        // Scripts compile as dynamic libraries (.dylib) loaded into Agent! via dlopen.
+        // ScriptService adds/removes entries when scripts are created/deleted.
         let scriptNames = [
         \(scriptList)
         ]
 
-        let bridge = "Sources/XCFScriptingBridges"
-        let scripts = "Sources/Scripts"
-        let common: Target.Dependency = "ScriptingBridgeCommon"
-
+        // Bridge names match those in AppleEventBridges package
         let bridgeNames = [
-        \(bridgeList)
+        \(bridgeNames.map { "    \"\($0)\"," }.joined(separator: "\n"))
         ]
 
+        let scripts = "Sources/Scripts"
         let bridgeNameSet = Set(bridgeNames)
 
+        // Local package dependency for shared bridges
+        let packageDependencies: [PackageDescription.Package.Dependency] = [
+            .package(name: "AppleEventBridges", path: "../../../AppleEventBridges")
+        ]
+
+        // Build Target.Dependency array for each bridge
+        func bridgeDep(_ name: String) -> Target.Dependency {
+            .init(stringLiteral: name)
+        }
+
+        // Auto-detect bridge imports in each script
         func parseDeps(for name: String) -> [Target.Dependency] {
             let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
                 .appendingPathComponent(scripts).appendingPathComponent("\\(name).swift")
@@ -105,9 +117,9 @@ final class ScriptService {
                 if trimmed.hasPrefix("import ") {
                     let module = String(trimmed.dropFirst(7)).trimmingCharacters(in: .whitespaces)
                     if bridgeNameSet.contains(module) {
-                        deps.append(.init(stringLiteral: module))
+                        deps.append(bridgeDep(module))
                     } else if module == "ScriptingBridgeCommon" {
-                        deps.append(common)
+                        deps.append(bridgeDep("ScriptingBridgeCommon"))
                     } else if module == "AgentAccessibility" {
                         deps.append(.init(stringLiteral: "AgentAccessibility"))
                     }
@@ -120,18 +132,15 @@ final class ScriptService {
             return deps
         }
 
-        let allBridgeFiles = ["ScriptingBridgeCommon.swift", "AgentScriptingBridge.swift", "AgentAccessibility.swift"] + bridgeNames.map { "\\($0).swift" }
         let allScriptFiles = scriptNames.map { "\\($0).swift" }
 
         let scriptProducts: [Product] = scriptNames.map {
             .library(name: $0, type: .dynamic, targets: [$0])
         }
 
-        let bridgeTargets: [Target] = bridgeNames.map { name in
-            .target(name: name, dependencies: [common], path: bridge,
-                    exclude: allBridgeFiles.filter { $0 != "\\(name).swift" },
-                    sources: ["\\(name).swift"])
-        }
+        let coreTargets: [Target] = [
+            .target(name: "AgentAccessibility", path: "Sources/AgentAccessibility"),
+        ]
 
         let scriptTargets: [Target] = scriptNames.map { name in
             .target(name: name, dependencies: parseDeps(for: name), path: scripts,
@@ -139,23 +148,12 @@ final class ScriptService {
                     sources: ["\\(name).swift"])
         }
 
-        let coreTargets: [Target] = [
-            .target(name: "ScriptingBridgeCommon", path: bridge,
-                    exclude: bridgeNames.map { "\\($0).swift" } + ["AgentScriptingBridge.swift", "AgentAccessibility.swift"],
-                    sources: ["ScriptingBridgeCommon.swift"]),
-            .target(name: "AgentScriptingBridge", dependencies: [common], path: bridge,
-                    exclude: allBridgeFiles.filter { $0 != "AgentScriptingBridge.swift" },
-                    sources: ["AgentScriptingBridge.swift"]),
-        ]
-
         let package = Package(
-            name: "AgentScripts",
-            platforms: [.macOS(.v15)],
-            products: [
-                .library(name: "AgentScriptingBridge", targets: ["AgentScriptingBridge"]),
-                .library(name: "AllBridges", targets: bridgeNames + ["ScriptingBridgeCommon", "AgentScriptingBridge"]),
-            ] + scriptProducts,
-            targets: coreTargets + bridgeTargets + scriptTargets
+            name: "agents",
+            platforms: [.macOS(.v26)],
+            products: scriptProducts,
+            dependencies: packageDependencies,
+            targets: coreTargets + scriptTargets
         )
         """
 
@@ -173,7 +171,7 @@ final class ScriptService {
 
     // MARK: - Ensure package
 
-    /// Ensure ~/Documents/AgentScript/agents/ exists with bridges, scripts, and Package.swift
+    /// Ensure ~/Documents/AgentScript/agents/ exists with scripts and Package.swift
     func ensurePackage() {
         packageLock.lock()
         defer { packageLock.unlock() }
@@ -186,8 +184,7 @@ final class ScriptService {
             copyEntirePackage()
             generatePackageSwift()
         } else {
-            // Existing install — update bridges, add new scripts only
-            updateBridges()
+            // Existing install — add new scripts only
             installNewScripts()
         }
         copyBundledJSONFiles()
@@ -240,35 +237,6 @@ final class ScriptService {
         }
 
         // Package.swift is generated from disk contents by generatePackageSwift()
-    }
-
-    // MARK: - Update bridges
-
-    /// Update bridge files from bundle if the bundle copy is newer
-    private func updateBridges() {
-        let fm = FileManager.default
-
-        guard let bundleDir = bundleBridges,
-              fm.fileExists(atPath: bundleDir.path) else { return }
-
-        if !fm.fileExists(atPath: bridgesDir.path) {
-            try? fm.createDirectory(at: bridgesDir, withIntermediateDirectories: true)
-        }
-
-        guard let files = try? fm.contentsOfDirectory(atPath: bundleDir.path) else { return }
-        for file in files where file.hasSuffix(".swift") {
-            let src = bundleDir.appendingPathComponent(file)
-            let dst = bridgesDir.appendingPathComponent(file)
-
-            if !fm.fileExists(atPath: dst.path) {
-                // New bridge — just copy
-                try? fm.copyItem(at: src, to: dst)
-            } else if isNewer(src, than: dst) {
-                // Bundle is newer — overwrite
-                try? fm.removeItem(at: dst)
-                try? fm.copyItem(at: src, to: dst)
-            }
-        }
     }
 
     // MARK: - Install new scripts

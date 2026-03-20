@@ -1,3 +1,4 @@
+@_exported import ScriptingBridgeCommon
 
 // MARK: SafariSaveOptions
 @objc public enum SafariSaveOptions : AEKeyword {

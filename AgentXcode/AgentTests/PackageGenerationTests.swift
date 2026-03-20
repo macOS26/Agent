@@ -16,24 +16,9 @@ struct PackageGenerationTests {
 
         let content = try? String(contentsOfFile: packagePath, encoding: .utf8)
         #expect(content?.contains("swift-tools-version") == true)
-        #expect(content?.contains("AgentScripts") == true)
+        #expect(content?.contains("AppleEventBridges") == true)
 
         _ = service.deleteScript(name: "pkg_test")
-    }
-
-    @Test("Package.swift includes XCFScriptingBridges targets when present")
-    func packageIncludesBridgesTarget() {
-        _ = service.createScript(name: "bridges_pkg_test", content: "// test")
-
-        let packagePath = ScriptService.agentsDir.appendingPathComponent("Package.swift").path
-        let content = try? String(contentsOfFile: packagePath, encoding: .utf8)
-        let bridgesDir = ScriptService.agentsDir
-            .appendingPathComponent("Sources/XCFScriptingBridges").path
-        if FileManager.default.fileExists(atPath: bridgesDir) {
-            #expect(content?.contains("XCFScriptingBridges") == true)
-        }
-
-        _ = service.deleteScript(name: "bridges_pkg_test")
     }
 
     @Test("Package.swift lists created script as dynamic library target")

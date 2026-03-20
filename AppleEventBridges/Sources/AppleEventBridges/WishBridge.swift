@@ -1,3 +1,4 @@
+@_exported import ScriptingBridgeCommon
 
 // MARK: WishGenericMethods
 @objc public protocol WishGenericMethods {

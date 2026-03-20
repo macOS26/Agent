@@ -1,3 +1,4 @@
+@_exported import ScriptingBridgeCommon
 
 // MARK: CalendarSaveOptions
 @objc public enum CalendarSaveOptions : AEKeyword {

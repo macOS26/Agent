@@ -1,3 +1,4 @@
+@_exported import ScriptingBridgeCommon
 
 // MARK: FinalCutProCreatorStudioSaveOptions
 @objc public enum FinalCutProCreatorStudioSaveOptions : AEKeyword {

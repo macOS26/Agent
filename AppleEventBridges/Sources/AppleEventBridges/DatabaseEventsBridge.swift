@@ -1,3 +1,4 @@
+@_exported import ScriptingBridgeCommon
 
 // MARK: DatabaseEventsSavo
 @objc public enum DatabaseEventsSavo : AEKeyword {

@@ -1,3 +1,4 @@
+@_exported import ScriptingBridgeCommon
 
 // MARK: DeveloperSavo
 @objc public enum DeveloperSavo : AEKeyword {

@@ -1,3 +1,4 @@
+@_exported import ScriptingBridgeCommon
 
 // MARK: VoiceOverClickCount
 @objc public enum VoiceOverClickCount : AEKeyword {

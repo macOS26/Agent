@@ -1,3 +1,4 @@
+@_exported import ScriptingBridgeCommon
 
 // MARK: PreviewSavo
 @objc public enum PreviewSavo : AEKeyword {

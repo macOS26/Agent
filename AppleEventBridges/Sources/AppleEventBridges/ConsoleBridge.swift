@@ -1,3 +1,4 @@
+@_exported import ScriptingBridgeCommon
 
 // MARK: ConsoleApplication
 @objc public protocol ConsoleApplication: SBApplicationProtocol {

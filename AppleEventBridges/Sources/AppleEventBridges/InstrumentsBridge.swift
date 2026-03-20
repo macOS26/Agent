@@ -1,3 +1,4 @@
+@_exported import ScriptingBridgeCommon
 
 // MARK: InstrumentsSaveOptions
 @objc public enum InstrumentsSaveOptions : AEKeyword {

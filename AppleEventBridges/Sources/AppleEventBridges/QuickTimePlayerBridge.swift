@@ -1,3 +1,4 @@
+@_exported import ScriptingBridgeCommon
 
 // MARK: QuickTimePlayerSaveOptions
 @objc public enum QuickTimePlayerSaveOptions : AEKeyword {

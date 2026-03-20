@@ -1,3 +1,4 @@
+@_exported import ScriptingBridgeCommon
 
 // MARK: NumbersSaveOptions
 @objc public enum NumbersSaveOptions : AEKeyword {

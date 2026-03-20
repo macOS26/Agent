@@ -1,3 +1,4 @@
+@_exported import ScriptingBridgeCommon
 
 // MARK: FinderPriv
 @objc public enum FinderPriv : AEKeyword {

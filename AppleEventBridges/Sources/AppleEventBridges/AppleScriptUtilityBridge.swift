@@ -1,3 +1,4 @@
+@_exported import ScriptingBridgeCommon
 
 // MARK: AppleScriptUtilityApplicationScriptsPositions
 @objc public enum AppleScriptUtilityApplicationScriptsPositions : AEKeyword {
