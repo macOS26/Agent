@@ -65,7 +65,7 @@
 		DD10000000000000000030 /* ScriptServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000001 /* ScriptServiceTests.swift */; };
 		DD10000000000000000031 /* ScriptingBridgesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000002 /* ScriptingBridgesTests.swift */; };
 		DD10000000000000000032 /* PackageGenerationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000003 /* PackageGenerationTests.swift */; };
-		EA37C5522F636B86009D0A23 /* AgentScriptingBridge in Frameworks */ = {isa = PBXBuildFile; productRef = EA37C5512F636B86009D0A23 /* AgentScriptingBridge */; };
+		EA37C5522F636B86009D0A23 /* XcodeScriptingBridge in Frameworks */ = {isa = PBXBuildFile; productRef = EA37C5512F636B86009D0A23 /* XcodeScriptingBridge */; };
 		EA37C5552F636B87009D0A23 /* Sources in Resources */ = {isa = PBXBuildFile; fileRef = EA37C5532F636B87009D0A23 /* Sources */; };
 		EA37C5562F636B87009D0A23 /* Package.swift in Resources */ = {isa = PBXBuildFile; fileRef = EA37C5542F636B87009D0A23 /* Package.swift */; };
 		EA50000000000000000001 /* send_message_input.json in Resources */ = {isa = PBXBuildFile; fileRef = EA50000000000000000005 /* send_message_input.json */; };
@@ -248,7 +248,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA1000000000000000003E /* ScriptingBridge.framework in Frameworks */,
-				EA37C5522F636B86009D0A23 /* AgentScriptingBridge in Frameworks */,
+				EA37C5522F636B86009D0A23 /* XcodeScriptingBridge in Frameworks */,
 				EA50MCP0000000003 /* MCPClient in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -531,7 +531,7 @@
 			);
 			name = "Agent!";
 			packageProductDependencies = (
-				EA37C5512F636B86009D0A23 /* AgentScriptingBridge */,
+				EA37C5512F636B86009D0A23 /* XcodeScriptingBridge */,
 			);
 			productName = Agent;
 			productReference = AA10000000000000000024 /* Agent!.app */;
@@ -606,7 +606,7 @@
 			);
 			mainGroup = AA10000000000000000040;
 			packageReferences = (
-				EA37C5502F636B85009D0A23 /* XCLocalSwiftPackageReference "../AgentScripts/Agent/agents" */,
+				XCSB000000000000000001 /* XCLocalSwiftPackageReference "../XcodeScriptingBridge" */,
 				EA50MCP0000000001 /* XCLocalSwiftPackageReference "../AgentMCP" */,
 			);
 			productRefGroup = AA10000000000000000042 /* Products */;
@@ -1161,9 +1161,9 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		EA37C5502F636B85009D0A23 /* XCLocalSwiftPackageReference "../AgentScripts/Agent/agents" */ = {
+		XCSB000000000000000001 /* XCLocalSwiftPackageReference "../XcodeScriptingBridge" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../AgentScripts/Agent/agents;
+			relativePath = ../XcodeScriptingBridge;
 		};
 		EA50MCP0000000001 /* XCLocalSwiftPackageReference "../AgentMCP" */ = {
 			isa = XCLocalSwiftPackageReference;
@@ -1172,9 +1172,9 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		EA37C5512F636B86009D0A23 /* AgentScriptingBridge */ = {
+		EA37C5512F636B86009D0A23 /* XcodeScriptingBridge */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = AgentScriptingBridge;
+			productName = XcodeScriptingBridge;
 		};
 		EA50MCP0000000002 /* MCPClient */ = {
 			isa = XCSwiftPackageProductDependency;
