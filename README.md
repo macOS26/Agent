@@ -208,6 +208,28 @@ Agent runs two XPC services registered through Apple's SMAppService:
 
 The AI defaults to **user-level execution** and only uses the privileged daemon when explicitly required for system-level operations. This follows the principle of least privilege.
 
+### Managing Background Services
+
+Both services can be toggled on/off from the Agent UI:
+
+| Service | UI Control | Behavior When Disabled |
+|---------|------------|------------------------|
+| **User Agent** | "User" toggle in header | Agent process killed, LaunchAgent unregistered from SMAppService |
+| **Privileged Daemon** | "Daemon" toggle in header | Daemon process killed, LaunchDaemon unregistered from SMAppService |
+
+**To re-enable a disabled service:**
+1. Toggle it back on in the UI
+2. Click **Register** to re-register with SMAppService
+3. Approve in System Settings if prompted
+
+**Use cases for disabling:**
+- Troubleshooting XPC communication issues
+- Temporarily preventing background operations
+- Security hardening (disable daemon when not needed)
+- Development/testing without background services
+
+The toggle state persists across app launches via UserDefaults.
+
 ### XPC Sandboxing
 
 All privileged operations go through XPC (Inter-Process Communication):
