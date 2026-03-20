@@ -103,10 +103,10 @@ final class AppleEventService: @unchecked Sendable {
 
         // Show available top-level properties as hints
         let topKeys = SDEFService.shared.aeKeys(for: bundleID, className: "application")
-        let topHints = (topKeys.properties + topKeys.elements).prefix(15)
+        let topHints = topKeys.properties + topKeys.elements
         var output: [String] = []
         if !topHints.isEmpty {
-            output.append("Available: \(topHints.joined(separator: ", "))\(topKeys.properties.count + topKeys.elements.count > 15 ? " ..." : "")")
+            output.append("Available: \(topHints.joined(separator: ", "))")
         }
 
         var cursor: Any = app
@@ -134,14 +134,14 @@ final class AppleEventService: @unchecked Sendable {
                         cursorClass = key
                         // Show element type hints
                         let childKeys = SDEFService.shared.aeKeys(for: bundleID, className: key)
-                        let childHints = (childKeys.properties + childKeys.elements).prefix(10)
+                        let childHints = childKeys.properties + childKeys.elements
                         if !childHints.isEmpty {
                             output.append("  \(key) properties: \(childHints.joined(separator: ", "))")
                         }
                     } else if result is SBObject {
                         cursorClass = key
                         let objKeys = SDEFService.shared.aeKeys(for: bundleID, className: key)
-                        let objHints = (objKeys.properties + objKeys.elements).prefix(10)
+                        let objHints = objKeys.properties + objKeys.elements
                         if !objHints.isEmpty {
                             output.append("  \(key) properties: \(objHints.joined(separator: ", "))")
                         }
