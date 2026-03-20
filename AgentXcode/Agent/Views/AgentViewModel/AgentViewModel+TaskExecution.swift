@@ -766,6 +766,11 @@ extension AgentViewModel {
         rootWasActive = false
         recentOutputHashes.removeAll()
 
+        // Start progress updates for iMessage requests (every 10 minutes)
+        if agentReplyHandle != nil {
+            startProgressUpdates(for: prompt)
+        }
+
         if !activityLog.isEmpty {
             logBuffer += "\n"
         }
@@ -923,6 +928,7 @@ extension AgentViewModel {
                     flushLog()
                     history.add(TaskRecord(prompt: prompt, summary: summary, commandsRun: commandsRun), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
                     ChatHistoryStore.shared.endCurrentTask(summary: summary)
+                    stopProgressUpdates()
                     sendAgentReply(summary)
                     isRunning = false
                     return
@@ -971,6 +977,8 @@ extension AgentViewModel {
                             history.add(TaskRecord(prompt: prompt, summary: summary, commandsRun: commandsRun), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
                             // End the task in SwiftData chat history
                             ChatHistoryStore.shared.endCurrentTask(summary: summary)
+                            // Stop progress updates before sending final reply
+                            stopProgressUpdates()
                             // Reply to the iMessage sender if this was an Agent! prompt
                             sendAgentReply(summary)
                             isRunning = false
@@ -2395,6 +2403,9 @@ extension AgentViewModel {
 
         // End the task in SwiftData chat history
         ChatHistoryStore.shared.endCurrentTask(summary: completionSummary.isEmpty ? nil : completionSummary, cancelled: Task.isCancelled)
+        
+        // Stop progress updates
+        stopProgressUpdates()
         
         flushLog()
         persistLogNow()

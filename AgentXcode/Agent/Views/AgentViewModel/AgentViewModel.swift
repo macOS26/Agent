@@ -331,6 +331,14 @@ final class AgentViewModel {
     var messagesPolling = false
     /// Handle ID to reply to when an Agent! task completes (nil = no reply needed)
     var agentReplyHandle: String?
+    /// Task for periodic progress updates during long-running tasks
+    private var progressUpdateTask: Task<Void, Never>?
+    /// Counter for progress updates sent
+    private var progressUpdateCount: Int = 0
+    /// Current task description for progress updates
+    private var currentTaskDescription: String = ""
+    /// Timestamp when the current task started
+    private var taskStartTime: Date?
 
     enum MessageFilter: String, CaseIterable {
         case fromOthers = "From Others"
@@ -725,6 +733,8 @@ final class AgentViewModel {
         helperService.onOutput = nil
         // Don't cancel userService — tabs may be using it for concurrent operations
         userService.onOutput = nil
+        // Stop progress updates
+        stopProgressUpdates()
         if !silent {
             appendLog("Cancelled by user.")
         }
@@ -853,6 +863,91 @@ final class AgentViewModel {
         Task {
             try? await Task.sleep(nanoseconds: 800_000_000)
             messagesPolling = false
+        }
+    }
+
+    // MARK: - Progress Updates for Long-Running Tasks
+    
+    /// Start periodic progress updates via iMessage for long-running tasks.
+    /// Sends an update every 10 minutes with elapsed time and current status.
+    func startProgressUpdates(for taskDescription: String) {
+        stopProgressUpdates() // Cancel any existing updates
+        
+        currentTaskDescription = taskDescription
+        taskStartTime = Date()
+        progressUpdateCount = 0
+        
+        progressUpdateTask = Task { [weak self] in
+            while !Task.isCancelled {
+                // Wait 10 minutes between updates
+                do {
+                    try await Task.sleep(for: .seconds(600))
+                } catch {
+                    break // Task cancelled
+                }
+                
+                guard let self = self, self.isRunning else { break }
+                
+                self.progressUpdateCount += 1
+                let elapsed: String
+                if let startTime = self.taskStartTime {
+                    let interval = Date().timeIntervalSince(startTime)
+                    let minutes = Int(interval) / 60
+                    let seconds = Int(interval) % 60
+                    if minutes > 0 {
+                        elapsed = "\(minutes)m \(seconds)s"
+                    } else {
+                        elapsed = "\(seconds)s"
+                    }
+                } else {
+                    elapsed = "unknown"
+                }
+                
+                let statusMessage: String
+                if self.isThinking {
+                    statusMessage = "thinking..."
+                } else if self.userServiceActive || self.rootServiceActive {
+                    statusMessage = "executing command..."
+                } else {
+                    statusMessage = "processing..."
+                }
+                
+                // Send progress update
+                let update = "⏳ Progress: \(elapsed) elapsed, \(statusMessage) (update #\(self.progressUpdateCount))"
+                self.sendProgressUpdate(update)
+            }
+        }
+    }
+    
+    /// Stop progress updates when task completes or is cancelled.
+    func stopProgressUpdates() {
+        progressUpdateTask?.cancel()
+        progressUpdateTask = nil
+        taskStartTime = nil
+        progressUpdateCount = 0
+        currentTaskDescription = ""
+    }
+    
+    /// Send a progress update message via iMessage.
+    private func sendProgressUpdate(_ message: String) {
+        guard let handle = agentReplyHandle else { return }
+        let escaped = message.replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+        let script = """
+        tell application "Messages"
+            set targetService to 1st account whose service type = iMessage
+            set targetBuddy to participant "\(handle)" of targetService
+            send "\(escaped)" to targetBuddy
+        end tell
+        """
+        Task {
+            let result = await userService.execute(command: "osascript -e '\(script.replacingOccurrences(of: "'", with: "'\\''"))'")
+            if result.status == 0 {
+                appendLog("Progress update sent: \(message)")
+            } else {
+                appendLog("Progress update failed: \(result.output.prefix(50))")
+            }
+            flushLog()
         }
     }
 
