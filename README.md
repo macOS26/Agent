@@ -93,7 +93,8 @@ Agent uses SwiftUI, XPC, SMAppService, Apple Events, ScriptingBridge, Accessibil
 - [Architecture](#architecture)
 - [Available Tools](#available-tools)
 - [AgentScripts](#agentscripts)
-- [What Agent! Can Do](#what-agent-can-do)
+
+- [What Agent! Can Automate](#what-agent-can-automate)
 - [Agent! vs. OpenClaw on Mac](#agent-vs-openclaw-on-mac)
 - [License](#license)
 
@@ -337,7 +338,7 @@ Accessibility requires explicit user approval in **System Settings > Privacy & S
 - `ax_check_permission` — Check if Accessibility access is granted
 - `ax_request_permission` — Trigger the macOS permission prompt
 
-### Available Tools (12 total)
+### Available Tools (22 tools)
 
 #### Read-Only Inspection
 
@@ -346,6 +347,8 @@ Accessibility requires explicit user approval in **System Settings > Privacy & S
 | `ax_list_windows` | List all visible windows with positions, sizes, and owner apps |
 | `ax_inspect_element` | Inspect the accessibility element at a screen coordinate (role, title, value, children) |
 | `ax_get_properties` | Get all properties of an element found by role, title, value, app bundle ID, or position. Use SAME role/title/value from ax_wait_for_element to locate. |
+| `ax_get_children` | Get all children of an accessibility element. Use SAME role/title/value from ax_wait_for_element or ax_find_element to locate the parent. |
+| `ax_get_focused_element` | Get the currently focused accessibility element |
 | `ax_screenshot` | Capture a screenshot of a region or specific window |
 | `ax_get_audit_log` | View recent accessibility operations (all actions are audit-logged) |
 
@@ -357,12 +360,25 @@ Accessibility requires explicit user approval in **System Settings > Privacy & S
 | `ax_click` | Simulate mouse clicks (left/right/middle, single/double) at screen coordinates |
 | `ax_scroll` | Simulate scroll wheel at screen coordinates |
 | `ax_press_key` | Simulate key presses with modifiers (Cmd+C, Option+Tab, etc.) |
+| `ax_drag` | Perform a drag operation from one point to another |
 
 #### UI Interaction
 
 | Tool | Description |
 |------|-------------|
 | `ax_perform_action` | Perform an accessibility action (AXPress, AXConfirm, etc.) on a UI element. Use SAME role/title/value from ax_wait_for_element or ax_find_element to locate the element. |
+| `ax_set_properties` | Set accessibility property values on an element (e.g., text fields, sliders, selections) |
+| `ax_show_menu` | Show context menu for an element (simulates right-click at element center) |
+
+#### Smart Automation
+
+| Tool | Description |
+|------|-------------|
+| `ax_find_element` | Find an accessibility element by role, title, or value with optional timeout |
+| `ax_wait_for_element` | Wait for an accessibility element to appear (polling until found or timeout) |
+| `ax_wait_adaptive` | Wait for an element with exponential backoff polling (efficient for slow-loading content) |
+| `ax_click_element` | Click an element by finding it semantically (role/title) and clicking its center |
+| `ax_type_into_element` | Type text into an element found by role/title (tries AXValue set first, falls back to CGEvent typing) |
 
 ### Security Safeguards
 
