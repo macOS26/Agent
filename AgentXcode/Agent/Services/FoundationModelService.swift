@@ -606,18 +606,46 @@ private struct NativeEditFileTool: Tool {
               let content = String(data: data, encoding: .utf8) else {
             return AgentToolOutput(result: "Error: Could not read \(arguments.file_path)")
         }
+        
+        let oldString = arguments.old_string
+        let newString = arguments.new_string
+        
+        // Check for identical strings
+        guard oldString != newString else {
+            return AgentToolOutput(result: "Error: old_string and new_string are identical - no changes needed")
+        }
+        
+        // Count occurrences
+        let occurrences = content.components(separatedBy: oldString).count - 1
+        
+        // Check if old_string exists
+        if occurrences == 0 {
+            // Try to give a helpful hint about whitespace differences
+            let trimmed = oldString.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmed.isEmpty && content.contains(trimmed) {
+                return AgentToolOutput(result: "Error: old_string not found (exact match). A similar string exists in \(arguments.file_path) — check whitespace/indentation differences.")
+            }
+            return AgentToolOutput(result: "Error: old_string not found in \(arguments.file_path)")
+        }
+        
+        // Check for multiple occurrences when replace_all not set
+        if arguments.replace_all != true && occurrences > 1 {
+            return AgentToolOutput(result: "Error: old_string appears \(occurrences) times in \(arguments.file_path). Provide more context to make it unique, or set replace_all=true.")
+        }
+        
         let newContent: String
         if arguments.replace_all == true {
-            newContent = content.replacingOccurrences(of: arguments.old_string, with: arguments.new_string)
+            newContent = content.replacingOccurrences(of: oldString, with: newString)
         } else {
-            guard let range = content.range(of: arguments.old_string) else {
+            guard let range = content.range(of: oldString) else {
                 return AgentToolOutput(result: "Error: old_string not found in \(arguments.file_path)")
             }
-            newContent = content.replacingCharacters(in: range, with: arguments.new_string)
+            newContent = content.replacingCharacters(in: range, with: newString)
         }
         do {
             try newContent.write(to: URL(fileURLWithPath: arguments.file_path), atomically: true, encoding: .utf8)
-            return AgentToolOutput(result: "Edit applied to \(arguments.file_path)")
+            let label = arguments.replace_all == true ? "\(occurrences) occurrences" : "1 occurrence"
+            return AgentToolOutput(result: "Replaced \(label) in \(arguments.file_path)")
         } catch {
             return AgentToolOutput(result: "Error: \(error.localizedDescription)")
         }

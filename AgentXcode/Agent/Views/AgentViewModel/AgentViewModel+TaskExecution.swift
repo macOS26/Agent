@@ -329,12 +329,42 @@ extension AgentViewModel {
             let path = input["file_path"] as? String ?? ""
             let old = input["old_string"] as? String ?? ""
             let new = input["new_string"] as? String ?? ""
+            let replaceAll = input["replace_all"] as? Bool ?? false
+            
+            guard old != new else { return "Error: old_string and new_string are identical - no changes needed" }
+            
             guard let data = FileManager.default.contents(atPath: path),
                   let content = String(data: data, encoding: .utf8) else { return "Error: cannot read \(path)" }
-            guard let range = content.range(of: old) else { return "Error: old_string not found" }
-            let updated = content.replacingCharacters(in: range, with: new)
-            do { try updated.write(to: URL(fileURLWithPath: path), atomically: true, encoding: .utf8); return "Edit applied" }
-            catch { return "Error: \(error.localizedDescription)" }
+            
+            let occurrences = content.components(separatedBy: old).count - 1
+            
+            if occurrences == 0 {
+                let trimmed = old.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmed.isEmpty && content.contains(trimmed) {
+                    return "Error: old_string not found (exact match). A similar string exists in \(path) — check whitespace/indentation."
+                }
+                return "Error: old_string not found in \(path)"
+            }
+            
+            if !replaceAll && occurrences > 1 {
+                return "Error: old_string appears \(occurrences) times in \(path). Provide more context to make it unique, or set replace_all=true."
+            }
+            
+            let updated: String
+            if replaceAll {
+                updated = content.replacingOccurrences(of: old, with: new)
+            } else {
+                guard let range = content.range(of: old) else { return "Error: old_string not found in \(path)" }
+                updated = content.replacingCharacters(in: range, with: new)
+            }
+            
+            do {
+                try updated.write(to: URL(fileURLWithPath: path), atomically: true, encoding: .utf8)
+                let label = replaceAll ? "\(occurrences) occurrences" : "1 occurrence"
+                return "Replaced \(label) in \(path)"
+            } catch {
+                return "Error: \(error.localizedDescription)"
+            }
         }
 
         // Git (via shell)
