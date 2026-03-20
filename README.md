@@ -1,7 +1,7 @@
 <img width="107" height="107" alt="Agent! Agentic AI for the rest of us only on  macOS Desktop" src="https://github.com/user-attachments/assets/245b3612-c354-4177-a500-3ee4f22a5111" />
 
 # Agent!
-The best automation tool on the planet
+Agentic AI for your entire  Mac Desktop 🤯
 
 [![Swift 6.0](https://img.shields.io/badge/Swift-6.0-orange.svg)](https://swift.org)
 [![Website](https://img.shields.io/badge/website-macos26.app-blue.svg)](https://macos26.app)
@@ -9,7 +9,6 @@ The best automation tool on the planet
 [![GitHub downloads](https://img.shields.io/github/downloads/macOS26/Agent/total.svg?v=4)](https://github.com/macOS26/Agent/releases)
 [![GitHub stars](https://img.shields.io/github/stars/macOS26/Agent.svg?style=social)](https://github.com/macOS26/Agent/stargazers)
 
-### Dream Big with true Agentic AI for your entire  Mac Desktop 🤯
 Agent! is designed for Ollama Cloud API with Pro or Max see https://ollama.com/pricing. laude API and Local Ollama LLMs are fully supported. Recommend 32GB - 128GB for local LLMs on Apple Silcon. Apple Intelligence is extremely experimental. If you know how to train LLMs using LoRA, I would love to colaborate.
 
 <img width="1056" height="597" alt="IMG_5716" src="https://github.com/user-attachments/assets/117cbeb8-46e4-4f92-8494-f6058a92059e" />
