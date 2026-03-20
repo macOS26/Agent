@@ -214,14 +214,35 @@ final class AppleEventService: @unchecked Sendable {
                     output.append("Error at step \(i): 'call' requires 'method'")
                     return output.joined(separator: "\n")
                 }
-                let result = callMethod(on: cursor, method: method, arg: op["arg"] as? String)
+                // Auto-convert "next track" → "nextTrack", "play pause" → "playPause"
+                let camelMethod = method.contains(" ") ? toCamelCase(method) : method
+                let result = callMethod(on: cursor, method: camelMethod, arg: op["arg"] as? String)
                 if let r = result {
                     if isScalar(r) {
-                        output.append("\(method)() = \(formatValue(r))")
+                        output.append("\(camelMethod)() = \(formatValue(r))")
                     }
                     cursor = r
                 } else {
-                    output.append("\(method)() called")
+                    // Verify the method actually exists
+                    let nsObj = cursor as? NSObject
+                    let sel = Selector(camelMethod)
+                    if nsObj?.responds(to: sel) == true {
+                        output.append("\(camelMethod)() executed (no return value)")
+                    } else {
+                        // Try AppleScript fallback for commands
+                        let appName = resolveAppName(bundleID)
+                        let asMethod = camelCaseToAppleScript(camelMethod)
+                        let script = "tell application \"\(appName)\" to \(asMethod)"
+                        let asResult = NSAppleScriptService.shared.execute(source: script)
+                        if asResult.success {
+                            output.append("\(camelMethod)() via AppleScript: \(asResult.output)")
+                        } else {
+                            let keys = SDEFService.shared.aeKeys(for: bundleID, className: cursorClass)
+                            let commands = keys.properties.filter { $0.contains(camelMethod.prefix(4).lowercased()) }
+                            let hint = commands.isEmpty ? "" : " Try: \(commands.joined(separator: ", "))"
+                            output.append("Error: '\(camelMethod)' not found on \(cursorClass).\(hint)")
+                        }
+                    }
                 }
 
             case "filter":
@@ -306,6 +327,13 @@ final class AppleEventService: @unchecked Sendable {
             }
         }
         return result
+    }
+
+    /// Convert "next track" or "next_track" to "nextTrack"
+    private func toCamelCase(_ input: String) -> String {
+        let words = input.split(whereSeparator: { $0 == " " || $0 == "_" })
+        guard let first = words.first else { return input }
+        return String(first).lowercased() + words.dropFirst().map { $0.prefix(1).uppercased() + $0.dropFirst() }.joined()
     }
 
     /// Safely call value(forKey:) catching ObjC exceptions
