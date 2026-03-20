@@ -136,7 +136,7 @@ After clicking Register, macOS will prompt you to approve the background service
 1. **System Settings** → **General** → **Login Items**
 2. Allow both **Agent** and **AgentHelper** (you may see two prompts)
 
-The privileged daemon requires explicit approval because it runs as root. Agent follows Apple's recommended XPC + SMAppService pattern for secure privilege escalation.
+The privileged daemon requires explicit approval because it runs with root privileges. Agent follows Apple's recommended XPC + SMAppService pattern for secure privilege separation.
 
 ### 5. Configure Your Provider
 
@@ -205,7 +205,7 @@ Agent runs two XPC services registered through Apple's SMAppService:
 | **User Agent** | `Agent.app.toddbruss.user` | User account | File editing, git, builds, scripts |
 | **Privileged Daemon** | `Agent.app.toddbruss.helper` | Root (via LaunchDaemon) | System packages, /Library, launchd, disk operations |
 
-The AI defaults to **user-level execution** and only escalates to root when necessary. This prevents accidental system damage and follows the principle of least privilege.
+The AI defaults to **user-level execution** and only uses the privileged daemon when explicitly required for system-level operations. This follows the principle of least privilege.
 
 ### XPC Sandboxing
 
@@ -269,14 +269,7 @@ Protected macOS APIs require user approval. Agent handles this correctly:
 - The AI must explicitly set `allow_writes: true` to permit them
 - This prevents accidental data loss from misinterpreted commands
 
-### Root Escalation Audit Trail
 
-When Agent executes commands as root, it logs:
-- The exact command executed
-- The reason for escalation
-- The result
-
-This provides a clear audit trail of privileged operations.
 
 ---
 
@@ -497,7 +490,7 @@ flowchart TD
 |------|---------|---------|-----|----------|
 | **In-Process** | Agent.app directly | User | ALL (Automation, Accessibility, Screen Recording) | osascript, screencapture, TCC-dependent commands |
 | **UserService XPC** | `Agent.app.toddbruss.user` (LaunchAgent) | User | None | git, find, grep, builds, file ops, homebrew |
-| **HelperService XPC** | `Agent.app.toddbruss.helper` (LaunchDaemon) | Root | None | System packages, /System, /Library, disk ops |
+| **HelperService XPC** | `Agent.app.toddbruss.helper` (LaunchDaemon) | Root | None | System packages, /System, /Library, disk operations |
 
 ### App Automation Priority
 
