@@ -651,6 +651,9 @@ extension AgentViewModel {
                 output = SDEFService.shared.summary(for: bundleID)
             }
             tab.appendLog("📖 SDEF: \(bundleID)\(className.map { " → \($0)" } ?? "")")
+            let preview = output.components(separatedBy: "\n").prefix(20).joined(separator: "\n")
+            let truncated = output.components(separatedBy: "\n").count > 20 ? "\n... (\(output.components(separatedBy: "\n").count) lines total)" : ""
+            tab.appendLog(preview + truncated)
             tab.flush()
             return TabToolResult(
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],

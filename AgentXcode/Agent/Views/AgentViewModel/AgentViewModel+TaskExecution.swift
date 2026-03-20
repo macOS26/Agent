@@ -1604,6 +1604,11 @@ extension AgentViewModel {
                                 output = SDEFService.shared.summary(for: bundleID)
                             }
                             appendLog("📖 SDEF: \(bundleID)\(className.map { " → \($0)" } ?? "")")
+                            // Show verbose output so user can see what was found
+                            let preview = output.components(separatedBy: "\n").prefix(20).joined(separator: "\n")
+                            let truncated = output.components(separatedBy: "\n").count > 20 ? "\n... (\(output.components(separatedBy: "\n").count) lines total)" : ""
+                            appendLog(preview + truncated)
+                            flushLog()
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
