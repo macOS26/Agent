@@ -76,7 +76,6 @@
 		EA60000000000000000001 /* SDEFs in Resources */ = {isa = PBXBuildFile; fileRef = EA60000000000000000002 /* SDEFs */; };
 		EA70000000000000000001 /* SDEFService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA70000000000000000002 /* SDEFService.swift */; };
 		EA80000000000000000001 /* NSAppleScriptService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA80000000000000000002 /* NSAppleScriptService.swift */; };
-		EA90000000000000000001 /* AllBridges in Frameworks */ = {isa = PBXBuildFile; productRef = EA90000000000000000002 /* AllBridges */; };
 		EAF3666F2F623D6A004B7E38 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = EAF3666E2F623D6A004B7E38 /* AppIcon.icon */; };
 		EAFA000000000000000001 /* FoundationModelService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAFA000000000000000002 /* FoundationModelService.swift */; };
 		EASP000000000000000001 /* SystemPromptService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EASP000000000000000002 /* SystemPromptService.swift */; };
@@ -250,7 +249,6 @@
 			files = (
 				AA1000000000000000003E /* ScriptingBridge.framework in Frameworks */,
 				EA37C5522F636B86009D0A23 /* AgentScriptingBridge in Frameworks */,
-				EA90000000000000000001 /* AllBridges in Frameworks */,
 				EA50MCP0000000003 /* MCPClient in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -534,7 +532,6 @@
 			name = "Agent!";
 			packageProductDependencies = (
 				EA37C5512F636B86009D0A23 /* AgentScriptingBridge */,
-				EA90000000000000000002 /* AllBridges */,
 			);
 			productName = Agent;
 			productReference = AA10000000000000000024 /* Agent!.app */;
@@ -1182,10 +1179,6 @@
 		EA50MCP0000000002 /* MCPClient */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = MCPClient;
-		};
-		EA90000000000000000002 /* AllBridges */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = AllBridges;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
