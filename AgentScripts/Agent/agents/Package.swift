@@ -137,7 +137,7 @@ let allScriptFiles = scriptNames.map { "\($0).swift" }
 
 let package = Package(
     name: "agents",
-    platforms: [.macOS(.v15)],
+    platforms: [.macOS(.v26)],
     products: scriptNames.map { .library(name: $0, type: .dynamic, targets: [$0]) },
     targets: [
         // ScriptingBridgeCommon — shared protocols and types for all bridges
