@@ -204,7 +204,10 @@
       "Bash(gh api:*)",
       "WebFetch(domain:platform.openai.com)",
       "WebFetch(domain:openai.com)",
-      "WebFetch(domain:help.openai.com)"
+      "WebFetch(domain:help.openai.com)",
+      "Bash(mkdir -p ~/Documents/AgentScript/logs)",
+      "Bash(rm -f ~/Documents/AgentScript/screenshot_*.png)",
+      "Bash(mv ~/Documents/AgentScript/accessibility_audit.log ~/Documents/AgentScript/logs/)"
     ]
   }
 }
