@@ -597,6 +597,73 @@ private struct LangDef {
     private static let termErrorRx: NSRegularExpression? = try? NSRegularExpression(pattern: #"\b(?:error|Error|ERROR|fatal|FATAL|failed|FAILED|No such file|Permission denied|not found|cannot)\b"#)
     private static let termSizeRx: NSRegularExpression? = try? NSRegularExpression(pattern: #"(?<=\s)\d{1,12}(?=\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))"#)
 
+    // MARK: - Git Output Detection & Highlighting
+
+    private static let gitStatRx: NSRegularExpression? = try? NSRegularExpression(
+        pattern: #"\d+ files? changed"#)
+    private static let gitInsertRx: NSRegularExpression? = try? NSRegularExpression(
+        pattern: #"\d+ insertions?\(\+\)"#)
+    private static let gitDeleteRx: NSRegularExpression? = try? NSRegularExpression(
+        pattern: #"\d+ deletions?\(-\)"#)
+    private static let gitModeRx: NSRegularExpression? = try? NSRegularExpression(
+        pattern: #"^\s*(?:delete|create|rename|copy|rewrite)\s+mode\s+\d+"#, options: .anchorsMatchLines)
+    private static let gitCommitRx: NSRegularExpression? = try? NSRegularExpression(
+        pattern: #"\[[a-zA-Z/\-]+ [0-9a-f]{7,}\]"#)
+
+    private static func looksLikeGitOutput(_ t: String) -> Bool {
+        if t.contains("files changed") || t.contains("file changed") { return true }
+        if t.hasPrefix("delete mode") || t.hasPrefix("create mode") || t.hasPrefix("rename ") { return true }
+        if t.range(of: #"^\[[\w/\-]+ [0-9a-f]{7,}\]"#, options: .regularExpression) != nil { return true }
+        return false
+    }
+
+    private static func highlightGitOutput(line: String, font: NSFont) -> NSAttributedString {
+        let result = NSMutableAttributedString(string: line, attributes: [
+            .font: font, .foregroundColor: CodeBlockTheme.text
+        ])
+        let ns = line as NSString
+        let r = NSRange(location: 0, length: ns.length)
+        let bold = NSFont.monospacedSystemFont(ofSize: font.pointSize, weight: .bold)
+
+        // "N files changed" — yellow
+        gitStatRx?.enumerateMatches(in: line, range: r) { m, _, _ in
+            guard let mr = m?.range else { return }
+            result.addAttributes([.foregroundColor: termSize, .font: bold], range: mr)
+        }
+        // "N insertions(+)" — green
+        gitInsertRx?.enumerateMatches(in: line, range: r) { m, _, _ in
+            guard let mr = m?.range else { return }
+            result.addAttribute(.foregroundColor, value: termExec, range: mr)
+        }
+        // "N deletions(-)" — red
+        gitDeleteRx?.enumerateMatches(in: line, range: r) { m, _, _ in
+            guard let mr = m?.range else { return }
+            result.addAttribute(.foregroundColor, value: termError, range: mr)
+        }
+        // "delete mode 100644" / "create mode" — keyword color
+        gitModeRx?.enumerateMatches(in: line, range: r) { m, _, _ in
+            guard let mr = m?.range else { return }
+            result.addAttribute(.foregroundColor, value: termDate, range: mr)
+        }
+        // [main abc1234] — commit ref in cyan bold
+        gitCommitRx?.enumerateMatches(in: line, range: r) { m, _, _ in
+            guard let mr = m?.range else { return }
+            result.addAttributes([.foregroundColor: termPath, .font: bold], range: mr)
+        }
+        // File paths in git output
+        actAbsPathRx?.enumerateMatches(in: line, range: r) { m, _, _ in
+            guard let mr = m?.range(at: 1) else { return }
+            result.addAttribute(.foregroundColor, value: termPath, range: mr)
+        }
+        // Timestamps
+        actTimestampRx?.enumerateMatches(in: line, range: r) { m, _, _ in
+            guard let mr = m?.range else { return }
+            result.addAttribute(.foregroundColor, value: termDate, range: mr)
+        }
+
+        return result
+    }
+
     // MARK: - Activity Log Line Highlighting
 
     private static let actTimestampRx: NSRegularExpression? = try? NSRegularExpression(
@@ -624,6 +691,7 @@ private struct LangDef {
         if t.range(of: #"^\[\d{2}:\d{2}:\d{2}\]"#, options: .regularExpression) != nil { return true }
         if t.range(of: #"^\S+\.\w+:\d+:"#, options: .regularExpression) != nil { return true }
         if looksLikeTerminalLine(t) { return true }
+        if looksLikeGitOutput(t) { return true }
         // Bare file paths (e.g. /Users/... or ~/Documents/...)
         if t.hasPrefix("/") || t.hasPrefix("~/") { return true }
         return false
@@ -643,6 +711,11 @@ private struct LangDef {
         // Terminal output (ls -la) — use the full terminal highlighter
         if looksLikeTerminalLine(trimmed) {
             return highlightTerminalOutput(code: line, font: font)
+        }
+
+        // Git output (files changed, delete mode, commit refs)
+        if looksLikeGitOutput(trimmed) {
+            return highlightGitOutput(line: line, font: font)
         }
 
         guard looksLikeActivityLogLine(line) else { return nil }
