@@ -39,7 +39,6 @@ let scriptNames = [
 // Each becomes a target that scripts can `import`.
 let bridgeNames = [
     "AdobeIllustratorBridge",
-    "AgentScriptingBridge",
     "AppleScriptUtilityBridge",
     "AutomatorApplicationStubBridge",
     "AutomatorBridge",
@@ -88,6 +87,7 @@ let bridgeNames = [
     "UTMBridge",
     "VoiceOverBridge",
     "WishBridge",
+    "XcodeScriptingBridge",
 ]
 
 let bridge = "Sources/XCFScriptingBridges"
