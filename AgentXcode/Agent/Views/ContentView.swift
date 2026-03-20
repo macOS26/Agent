@@ -204,7 +204,6 @@ struct ContentView: View {
                         .foregroundStyle(.secondary)
                     TextField("Find in log...", text: $searchText)
                         .textFieldStyle(.roundedBorder)
-                        .frame(maxWidth: 250)
                         .focused($isSearchFieldFocused)
                         .onSubmit { nextMatch() }
                     if !searchText.isEmpty {
