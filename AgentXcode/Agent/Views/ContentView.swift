@@ -164,15 +164,19 @@ struct ContentView: View {
                 .buttonStyle(.bordered)
                 .controlSize(.small)
                 .popover(isPresented: $showHistory) {
-                    HistoryView(history: viewModel.history)
+                    HistoryView(
+                        prompts: viewModel.currentTabPromptHistory,
+                        tabName: viewModel.currentTabName,
+                        onClear: { viewModel.clearCurrentTabPromptHistory() }
+                    )
                 }
 
                 Button { showClearConfirm = true } label: {
                     Image(systemName: "trash")
+                        .foregroundStyle(currentTabColor)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
-                .disabled(viewModel.isRunning)
                 .alert("Clear Log", isPresented: $showClearConfirm) {
                     Button("Clear", role: .destructive) { viewModel.clearSelectedLog() }
                     Button("Cancel", role: .cancel) { }
@@ -722,6 +726,15 @@ struct ContentView: View {
     static func tabColor(for tabId: UUID, in tabs: [ScriptTab]) -> Color {
         guard let idx = tabs.firstIndex(where: { $0.id == tabId }) else { return .orange }
         return tabColors[idx % tabColors.count]
+    }
+
+    /// Color for the currently selected tab.
+    private var currentTabColor: Color {
+        guard let selectedId = viewModel.selectedTabId else { return .red }
+        if let tab = viewModel.scriptTabs.first(where: { $0.id == selectedId }) {
+            return tab.isMainTab ? .blue : Self.tabColor(for: selectedId, in: viewModel.scriptTabs)
+        }
+        return .red
     }
 }
 

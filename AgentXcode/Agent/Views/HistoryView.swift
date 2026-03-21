@@ -1,59 +1,38 @@
 import SwiftUI
 
 struct HistoryView: View {
-    let history: TaskHistory
-
-    private let dateFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateStyle = .short
-        f.timeStyle = .short
-        return f
-    }()
+    let prompts: [String]
+    let tabName: String
+    let onClear: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
-                Text("Task History")
+                Text("\(tabName) History")
                     .font(.headline)
                 Spacer()
-                Text("\(history.records.count) tasks")
+                Text("\(prompts.count) prompts")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Button("Clear All") { history.clearAll() }
+                Button("Clear All") { onClear() }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
-                    .disabled(history.records.isEmpty)
+                    .disabled(prompts.isEmpty)
             }
             .padding()
 
             Divider()
 
-            if history.records.isEmpty {
-                Text("No tasks yet.")
+            if prompts.isEmpty {
+                Text("No prompts yet.")
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                List(history.records.reversed()) { record in
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Text(record.prompt)
-                                .font(.system(.body, weight: .medium))
-                                .lineLimit(2)
-                            Spacer()
-                            Text(dateFormatter.string(from: record.date))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        Text(record.summary)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        if !record.commandsRun.isEmpty {
-                            Text("\(record.commandsRun.count) commands")
-                                .font(.caption2)
-                                .foregroundStyle(.tertiary)
-                        }
-                    }
-                    .padding(.vertical, 2)
+                List(Array(prompts.reversed().enumerated()), id: \.offset) { _, prompt in
+                    Text(prompt)
+                        .font(.system(.body))
+                        .lineLimit(2)
+                        .padding(.vertical, 2)
                 }
             }
         }

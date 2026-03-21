@@ -321,6 +321,39 @@ final class AgentViewModel {
     private var historyIndex = -1
     private var savedInput = ""
 
+    /// Prompt history for whichever tab is currently selected.
+    var currentTabPromptHistory: [String] {
+        if let selectedId = selectedTabId,
+           let tab = scriptTabs.first(where: { $0.id == selectedId }) {
+            return tab.promptHistory
+        }
+        return promptHistory
+    }
+
+    /// Display name for the currently selected tab.
+    var currentTabName: String {
+        if let selectedId = selectedTabId,
+           let tab = scriptTabs.first(where: { $0.id == selectedId }) {
+            return tab.displayTitle
+        }
+        return "Main"
+    }
+
+    /// Clear prompt history for whichever tab is currently selected.
+    func clearCurrentTabPromptHistory() {
+        if let selectedId = selectedTabId,
+           let tab = scriptTabs.first(where: { $0.id == selectedId }) {
+            tab.promptHistory.removeAll()
+            tab.historyIndex = -1
+            tab.savedInput = ""
+        } else {
+            promptHistory.removeAll()
+            historyIndex = -1
+            savedInput = ""
+            UserDefaults.standard.removeObject(forKey: "agentPromptHistory")
+        }
+    }
+
     let helperService = HelperService()
     let userService = UserService()
     let scriptService = ScriptService()
