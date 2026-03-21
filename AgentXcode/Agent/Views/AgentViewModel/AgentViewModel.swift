@@ -2,6 +2,7 @@
 import AppKit
 import SQLite3
 import Speech
+import AVFoundation
 
 /// Per-tab LLM configuration for multi-main-tab support
 struct LLMConfig: Codable {
@@ -45,6 +46,7 @@ final class AgentViewModel {
     var activityLog = ChatHistoryStore.shared.buildActivityLogText(maxTasks: 3)
     var isRunning = false
     var isThinking = false
+    var isListening = false
     var userServiceActive = false
     var rootServiceActive = false
     var userWasActive = false
@@ -647,11 +649,15 @@ final class AgentViewModel {
     var hasAttachments: Bool { !attachedImages.isEmpty }
 
     // MARK: - Voice Input
-    
+
     /// Check if speech recognition is authorized
     var isSpeechRecognitionAuthorized: Bool {
         SFSpeechRecognizer.authorizationStatus() == .authorized
     }
+
+    var speechAudioEngine: AVAudioEngine?
+    var speechRecognitionRequest: SFSpeechAudioBufferRecognitionRequest?
+    var speechRecognitionTask: SFSpeechRecognitionTask?
     
     // MARK: - Init
 

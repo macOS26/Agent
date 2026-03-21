@@ -410,6 +410,14 @@ struct ContentView: View {
                     .controlSize(.regular)
                     .help("Paste image from clipboard")
 
+                    Button { vm.toggleDictation() } label: {
+                        Image(systemName: vm.isListening ? "mic.fill" : "mic")
+                            .foregroundStyle(vm.isListening ? .red : .primary)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.regular)
+                    .help(vm.isListening ? "Stop dictation" : "Start dictation")
+
                     if tab.isLLMThinking {
                         HStack(spacing: 4) {
                             ProgressView()
@@ -474,6 +482,14 @@ struct ContentView: View {
                     .buttonStyle(.bordered)
                     .controlSize(.regular)
                     .help("Paste image from clipboard")
+
+                    Button { viewModel.toggleDictation() } label: {
+                        Image(systemName: viewModel.isListening ? "mic.fill" : "mic")
+                            .foregroundStyle(viewModel.isListening ? .red : .primary)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.regular)
+                    .help(viewModel.isListening ? "Stop dictation" : "Start dictation")
 
                     if viewModel.isThinking {
                         HStack(spacing: 4) {
