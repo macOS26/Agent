@@ -48,50 +48,64 @@ struct AppleIntelligencePopover: View {
                     .foregroundStyle(.secondary)
             }
 
-            Toggle(isOn: $aiMediator.isEnabled) {
-                VStack(alignment: .leading) {
-                    Text("Enable Mediator")
-                        .font(.caption)
-                    Text("Observes conversations and adds context")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .toggleStyle(.switch)
-
-            if aiMediator.isEnabled {
-                Toggle(isOn: $aiMediator.showAnnotationsToUser) {
+            Grid(alignment: .leading, verticalSpacing: 8) {
+                GridRow {
                     VStack(alignment: .leading) {
-                        Text("Show annotations to user")
+                        Text("Enable Mediator")
                             .font(.caption)
-                        Text("Display [\u{F8FF}AI] tags in activity log")
+                        Text("Observes conversations and adds context")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
+                    Toggle("", isOn: $aiMediator.isEnabled)
+                        .toggleStyle(.switch)
+                        .controlSize(.mini)
+                        .labelsHidden()
                 }
-                .toggleStyle(.switch)
 
-                Toggle(isOn: $aiMediator.injectContextToLLM) {
-                    VStack(alignment: .leading) {
-                        Text("Inject context into LLM prompts")
-                            .font(.caption)
-                        Text("Enriches LLM requests with AI insights")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+                if aiMediator.isEnabled {
+                    GridRow {
+                        VStack(alignment: .leading) {
+                            Text("Show annotations to user")
+                                .font(.caption)
+                            Text("Display [\u{F8FF}AI] tags in activity log")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        Toggle("", isOn: $aiMediator.showAnnotationsToUser)
+                            .toggleStyle(.switch)
+                            .controlSize(.mini)
+                            .labelsHidden()
+                    }
+
+                    GridRow {
+                        VStack(alignment: .leading) {
+                            Text("Inject context into LLM prompts")
+                                .font(.caption)
+                            Text("Enriches LLM requests with AI insights")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        Toggle("", isOn: $aiMediator.injectContextToLLM)
+                            .toggleStyle(.switch)
+                            .controlSize(.mini)
+                            .labelsHidden()
+                    }
+
+                    GridRow {
+                        VStack(alignment: .leading) {
+                            Text("Capture training data")
+                                .font(.caption)
+                            Text("Records prompts, AI context, LLM responses, and summaries for LoRA JSONL")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        Toggle("", isOn: $aiMediator.trainingEnabled)
+                            .toggleStyle(.switch)
+                            .controlSize(.mini)
+                            .labelsHidden()
                     }
                 }
-                .toggleStyle(.switch)
-
-                Toggle(isOn: $aiMediator.trainingEnabled) {
-                    VStack(alignment: .leading) {
-                        Text("Capture training data")
-                            .font(.caption)
-                        Text("Records prompts, AI context, LLM responses, and summaries for LoRA JSONL")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .toggleStyle(.switch)
             }
         }
     }
