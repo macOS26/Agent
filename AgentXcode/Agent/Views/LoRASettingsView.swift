@@ -12,11 +12,15 @@ struct LoRASettingsView: View {
     @State private var pythonChecked = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 16) {
             adapterSection
-            Divider().padding(.vertical, 12)
+
+            Divider().background(Color.gray.opacity(0.3))
+
             dataSection
-            Divider().padding(.vertical, 12)
+
+            Divider().background(Color.gray.opacity(0.3))
+
             pythonSection
         }
         .alert("LoRA", isPresented: $showAlert) {
@@ -56,65 +60,68 @@ struct LoRASettingsView: View {
 
     private var adapterSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("LoRA Adapter (Apple Intelligence)")
-                .font(.headline)
+            Text("LoRA Adapter")
+                .font(.system(size: 14, weight: .bold, design: .monospaced))
+                .foregroundColor(.white)
 
             HStack(spacing: 6) {
                 Circle()
-                    .fill(adapterManager.isLoaded ? .green : .red.opacity(0.6))
+                    .fill(adapterManager.isLoaded ? Color.green : Color.red.opacity(0.6))
                     .frame(width: 8, height: 8)
                 Text(adapterManager.statusMessage)
-                    .font(.caption)
-                    .foregroundStyle(adapterManager.isLoaded ? .green : .secondary)
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundColor(adapterManager.isLoaded ? .green : .gray)
             }
 
             if !adapterManager.installedAdapters.isEmpty {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Installed:").font(.caption2).foregroundStyle(.secondary)
+                    Text("Installed:")
+                        .font(.system(size: 10, weight: .medium, design: .monospaced))
+                        .foregroundColor(.gray)
                     ForEach(adapterManager.installedAdapters, id: \.absoluteString) { url in
                         HStack(spacing: 6) {
                             let name = url.deletingPathExtension().lastPathComponent
                             let isActive = adapterManager.adapterURL == url
                             Circle()
-                                .fill(isActive ? .green : .gray.opacity(0.4))
+                                .fill(isActive ? Color.green : Color.gray.opacity(0.4))
                                 .frame(width: 6, height: 6)
                             Text(name)
-                                .font(.caption)
-                                .foregroundStyle(isActive ? .green : .primary)
+                                .font(.system(size: 11, design: .monospaced))
+                                .foregroundColor(isActive ? .green : .white)
                             Spacer()
                             if !isActive {
                                 Button("Load") { adapterManager.loadAdapter(from: url) }
-                                    .font(.caption2)
+                                    .font(.system(size: 10))
                                     .buttonStyle(.borderless)
+                                    .foregroundColor(.cyan)
                             }
                             Button("Remove") { adapterManager.uninstallAdapter(at: url) }
-                                .font(.caption2)
+                                .font(.system(size: 10))
                                 .buttonStyle(.borderless)
-                                .foregroundStyle(.red)
+                                .foregroundColor(.red.opacity(0.8))
                         }
                     }
                 }
                 .padding(6)
-                .background(.quaternary.opacity(0.3))
-                .clipShape(RoundedRectangle(cornerRadius: 4))
+                .background(Color.black.opacity(0.3))
+                .cornerRadius(4)
             }
 
             HStack(spacing: 8) {
                 Button("Install .fmadapter") { showAdapterPicker = true }
                     .buttonStyle(.bordered)
-                    .controlSize(.small)
 
                 if adapterManager.isLoaded {
                     Button("Unload") { adapterManager.unloadAdapter() }
                         .buttonStyle(.bordered)
-                        .controlSize(.small)
                         .tint(.red)
                 }
             }
 
-            Text("Train custom LoRA adapters with Apple's Python toolkit, then install the .fmadapter here for Apple Intelligence.")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+            Text("Train with Apple's Python toolkit, then install the .fmadapter here. It persists across launches.")
+                .font(.system(size: 10, design: .monospaced))
+                .foregroundColor(.gray.opacity(0.7))
+                .lineLimit(2)
         }
     }
 
@@ -123,40 +130,44 @@ struct LoRASettingsView: View {
     private var dataSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Training Data")
-                .font(.headline)
+                .font(.system(size: 14, weight: .bold, design: .monospaced))
+                .foregroundColor(.white)
 
             let files = adapterManager.savedFiles()
 
             if !files.isEmpty {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Saved JSONL files:").font(.caption2).foregroundStyle(.secondary)
+                    Text("Saved JSONL files:")
+                        .font(.system(size: 10, weight: .medium, design: .monospaced))
+                        .foregroundColor(.gray)
                     ForEach(files, id: \.absoluteString) { url in
                         HStack(spacing: 6) {
                             Image(systemName: "doc.text")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
+                                .font(.system(size: 10))
+                                .foregroundColor(.gray)
                             Text(url.lastPathComponent)
-                                .font(.caption)
+                                .font(.system(size: 11, design: .monospaced))
+                                .foregroundColor(.white)
                                 .lineLimit(1)
                             Spacer()
                             Button("Delete") { adapterManager.deleteJSONLFile(at: url) }
-                                .font(.caption2)
+                                .font(.system(size: 10))
                                 .buttonStyle(.borderless)
-                                .foregroundStyle(.red)
+                                .foregroundColor(.red.opacity(0.8))
                         }
                     }
                 }
                 .padding(6)
-                .background(.quaternary.opacity(0.3))
-                .clipShape(RoundedRectangle(cornerRadius: 4))
+                .background(Color.black.opacity(0.3))
+                .cornerRadius(4)
             } else {
                 Text("No JSONL files saved yet.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundColor(.gray)
             }
 
             HStack(spacing: 8) {
-                Button("Export Task History") {
+                Button("Export JSONL") {
                     if let url = adapterManager.exportTaskHistoryAsJSONL() {
                         alertMessage = "Saved to:\n\(url.path)"
                         NSWorkspace.shared.selectFile(url.path, inFileViewerRootedAtPath: url.deletingLastPathComponent().path)
@@ -166,62 +177,60 @@ struct LoRASettingsView: View {
                     showAlert = true
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.small)
 
                 Button("Import JSONL") {
                     showImportJSONLPicker = true
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.small)
 
                 Button("Open Folder") {
                     LoRAAdapterManager.revealInFinder()
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.small)
             }
 
-            Text("Export task history or import existing JSONL for LoRA training.")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+            Text("Export task history, then train with Apple's Python adapter toolkit.")
+                .font(.system(size: 10, design: .monospaced))
+                .foregroundColor(.gray.opacity(0.7))
+                .lineLimit(2)
         }
     }
 
-    // MARK: - Python Environment
+    // MARK: - Python / Training Environment
 
     private var pythonSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Training Environment")
-                .font(.headline)
+                .font(.system(size: 14, weight: .bold, design: .monospaced))
+                .foregroundColor(.white)
 
             HStack(spacing: 6) {
                 Circle()
-                    .fill(pythonAvailable ? .green : (pythonChecked ? .orange : .gray))
+                    .fill(pythonAvailable ? Color.green : (pythonChecked ? Color.orange : Color.gray))
                     .frame(width: 8, height: 8)
                 Text("Python: \(pythonVersion)")
-                    .font(.caption)
-                    .foregroundStyle(pythonAvailable ? .green : (pythonChecked ? .orange : .secondary))
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundColor(pythonAvailable ? .green : (pythonChecked ? .orange : .gray))
             }
 
             HStack(spacing: 6) {
                 Circle()
-                    .fill(LoRAAdapterManager.venvExists() ? .green : .red.opacity(0.6))
+                    .fill(LoRAAdapterManager.venvExists() ? Color.green : Color.red.opacity(0.6))
                     .frame(width: 8, height: 8)
                 Text(LoRAAdapterManager.venvExists() ? "Virtual env ready" : "No virtual env")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundColor(.gray)
             }
 
             HStack(spacing: 8) {
                 Button("Setup (Direct)") {
                     if let url = LoRAAdapterManager.generateSetupScript(homebrew: false) {
-                        alertMessage = "Setup script saved.\nRun in Terminal:\n\(url.path)"
+                        alertMessage = "Direct setup script saved.\nRun in Terminal:\n\(url.path)"
                         showAlert = true
                         LoRAAdapterManager.revealInFinder()
                     }
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.small)
 
                 Button("Setup (Homebrew)") {
                     if let url = LoRAAdapterManager.generateSetupScript(homebrew: true) {
@@ -231,22 +240,20 @@ struct LoRASettingsView: View {
                     }
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.small)
             }
 
             HStack(spacing: 8) {
                 Button("Open Terminal") { LoRAAdapterManager.openTerminal() }
                     .buttonStyle(.bordered)
-                    .controlSize(.small)
 
                 Button("Open Folder") { LoRAAdapterManager.revealInFinder() }
                     .buttonStyle(.bordered)
-                    .controlSize(.small)
             }
 
-            Text("1. Run a setup script in Terminal\n2. Download toolkit from developer.apple.com\n3. Export JSONL, train, install .fmadapter")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+            Text("1. Click a Setup script \u{2192} run it in Terminal\n2. Download toolkit from developer.apple.com\n3. Export JSONL \u{2192} train \u{2192} install .fmadapter")
+                .font(.system(size: 9, design: .monospaced))
+                .foregroundColor(.gray.opacity(0.7))
+                .lineLimit(4)
         }
     }
 }
