@@ -33,13 +33,6 @@ final class AppleIntelligenceMediator: ObservableObject {
         }
     }
     
-    /// Whether to explain tool calls to the user
-    @Published var explainToolCalls: Bool = UserDefaults.standard.bool(forKey: "appleIntelligenceExplainTools") {
-        didSet {
-            UserDefaults.standard.set(explainToolCalls, forKey: "appleIntelligenceExplainTools")
-        }
-    }
-    
     private var session: LanguageModelSession?
     
     /// Represents an Apple Intelligence annotation
@@ -71,7 +64,6 @@ final class AppleIntelligenceMediator: ObservableObject {
         if !UserDefaults.standard.bool(forKey: "appleIntelligenceMediatorConfigured") {
             showAnnotationsToUser = true
             injectContextToLLM = true
-            explainToolCalls = true
             UserDefaults.standard.set(true, forKey: "appleIntelligenceMediatorConfigured")
         }
     }
@@ -123,31 +115,6 @@ Be helpful but not verbose. The primary LLM is doing the actual work - you just 
             )
         }
         return session!
-    }
-    
-    /// Generate an annotation for a tool call that was just made
-    func annotateToolCall(toolName: String, toolInput: [String: Any], result: String) async -> Annotation? {
-        guard isEnabled && explainToolCalls && Self.isAvailable else { return nil }
-        
-        // Create a brief summary of what the tool did
-        let session = ensureSession()
-        let prompt = """
-Summarize this tool call in one simple sentence for a non-technical user:
-Tool: \(toolName)
-Input: \(toolInput.mapValues { "\($0)" }.description)
-Result: \(String(result.prefix(200)))
-
-Start with what was accomplished, not how. Example: "Read the project configuration file" not "Used read_file to..."
-"""
-        
-        do {
-            let response = try await session.respond(to: prompt)
-            let content = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
-            return Annotation(target: .user, content: content, timestamp: Date())
-        } catch {
-            // Fall back to a simple annotation
-            return Annotation(target: .user, content: "\(toolName) completed", timestamp: Date())
-        }
     }
     
     /// Generate context to inject into the LLM prompt based on user message
