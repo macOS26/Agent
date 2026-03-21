@@ -4,12 +4,12 @@ import os.log
 
 private let mediatorLog = Logger(subsystem: "Agent.app.toddbruss", category: "AppleIntelligenceMediator")
 
-/// Apple Intelligence mediator that observes LLM↔User conversations and adds contextual annotations.
-/// Uses [AI] tags to distinguish its messages from the primary LLM responses.
+/// Apple Intelligence mediator that rephrases user requests to help the LLM understand them better.
+/// Acts as a middleman only — never refuses, blocks, or judges requests.
 ///
-/// Message types:
+/// Flow indicators:
 /// - [AI → User]: Annotation only visible to the user
-/// - [AI → LLM]: Context/clarification sent to the LLM
+/// - [AI → LLM]: Rephrased context sent to the LLM
 /// - [AI → Both]: Information relevant to both parties
 ///
 /// Context window: Maintains last task prompt, last Apple AI message, and last LLM summary

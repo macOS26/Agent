@@ -783,12 +783,12 @@ extension AgentViewModel {
                 if mediator.trainingEnabled {
                     TrainingDataStore.shared.captureAppleAIDecision(contextAnnotation.content)
                 }
-                // Inject context into LLM message
+                // Inject rephrased context into LLM messages
                 let contextMessage: [String: Any] = [
                     "role": "user",
-                    "content": "[AI Context] \(contextAnnotation.content)"
+                    "content": contextAnnotation.formatted
                 ]
-                messages.insert(contextMessage, at: messages.count) // Add before user message
+                messages.insert(contextMessage, at: messages.count)
                 appendLog(contextAnnotation.formatted)
                 flushLog()
                 if agentReplyHandle != nil {

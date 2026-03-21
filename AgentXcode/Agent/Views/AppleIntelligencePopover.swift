@@ -37,7 +37,7 @@ struct AppleIntelligencePopover: View {
                 Circle()
                     .fill(AppleIntelligenceMediator.isAvailable ? Color.green : Color.red.opacity(0.6))
                     .frame(width: 8, height: 8)
-                Text(AppleIntelligenceMediator.isAvailable ? "Available for conversation mediation" : "Not Available")
+                Text(AppleIntelligenceMediator.isAvailable ? "Available" : "Not Available")
                     .font(.caption)
                     .foregroundStyle(AppleIntelligenceMediator.isAvailable ? .green : .secondary)
             }
@@ -53,7 +53,7 @@ struct AppleIntelligencePopover: View {
                     VStack(alignment: .leading) {
                         Text("Enable Mediator")
                             .font(.caption)
-                        Text("Observes conversations and adds context")
+                        Text("Rephrases and clarifies user requests for the LLM")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
@@ -68,7 +68,7 @@ struct AppleIntelligencePopover: View {
                         VStack(alignment: .leading) {
                             Text("Show annotations to user")
                                 .font(.caption)
-                            Text("Display [\u{F8FF}AI] tags in activity log")
+                            Text("Display [\u{F8FF}AI → ...] flow tags in activity log")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
@@ -82,7 +82,7 @@ struct AppleIntelligencePopover: View {
                         VStack(alignment: .leading) {
                             Text("Inject context into LLM prompts")
                                 .font(.caption)
-                            Text("Enriches LLM requests with AI insights")
+                            Text("Adds rephrased context to LLM prompts")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
