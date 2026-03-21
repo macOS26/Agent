@@ -84,7 +84,7 @@ struct AppleIntelligencePopover: View {
                     .foregroundStyle(.secondary)
             }
 
-            Text("Train custom LoRA adapters using Apple Intelligence, then use them with any LLM provider for enhanced responses.")
+            Text("Train custom LoRA adapters and install them as .fmadapter files for Apple Intelligence.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

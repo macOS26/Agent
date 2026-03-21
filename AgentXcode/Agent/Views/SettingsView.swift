@@ -292,6 +292,62 @@ struct SettingsView: View {
                 SystemPromptWindow.shared.show()
             }
 
+            // Apple Intelligence Mediator Section
+            Divider()
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Apple Intelligence Mediator")
+                    .font(.headline)
+                
+                HStack(spacing: 6) {
+                    Image(systemName: AppleIntelligenceMediator.isAvailable ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .foregroundStyle(AppleIntelligenceMediator.isAvailable ? .green : .red)
+                    Text(AppleIntelligenceMediator.isAvailable ? "Available for conversation mediation" : "Not Available")
+                        .font(.subheadline)
+                }
+                
+                if !AppleIntelligenceMediator.isAvailable {
+                    Text(AppleIntelligenceMediator.unavailabilityReason)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Toggle("Enable Apple Intelligence Mediator", isOn: $mediatorEnabled)
+                    .font(.subheadline)
+                
+                if mediatorEnabled {
+                    Toggle("Show annotations to user", isOn: $showAnnotationsToUser)
+                        .font(.caption)
+                    
+                    Toggle("Inject context into LLM prompts", isOn: $injectContextToLLM)
+                        .font(.caption)
+                    
+                    Toggle("Explain tool calls", isOn: $explainToolCalls)
+                        .font(.caption)
+                    
+                    Text("Apple Intelligence observes conversations and adds helpful context using [AI] tags.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .onAppear {
+                mediatorEnabled = AppleIntelligenceMediator.shared.isEnabled
+                showAnnotationsToUser = AppleIntelligenceMediator.shared.showAnnotationsToUser
+                injectContextToLLM = AppleIntelligenceMediator.shared.injectContextToLLM
+                explainToolCalls = AppleIntelligenceMediator.shared.explainToolCalls
+            }
+            .onChange(of: mediatorEnabled) { _, newValue in
+                AppleIntelligenceMediator.shared.isEnabled = newValue
+            }
+            .onChange(of: showAnnotationsToUser) { _, newValue in
+                AppleIntelligenceMediator.shared.showAnnotationsToUser = newValue
+            }
+            .onChange(of: injectContextToLLM) { _, newValue in
+                AppleIntelligenceMediator.shared.injectContextToLLM = newValue
+            }
+            .onChange(of: explainToolCalls) { _, newValue in
+                AppleIntelligenceMediator.shared.explainToolCalls = newValue
+            }
+
             // LoRA Training Section (available for all providers)
             Divider()
             VStack(alignment: .leading, spacing: 10) {
@@ -316,7 +372,7 @@ struct SettingsView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                Text("Train custom LoRA adapters using Apple Intelligence, then use them with any LLM provider for enhanced responses.")
+                Text("Train custom LoRA adapters and install them as .fmadapter files for Apple Intelligence.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
@@ -326,6 +382,13 @@ struct SettingsView: View {
         .padding(20)
         .frame(width: 360)
     }
+    
+    // MARK: - Apple Intelligence Mediator State
+    
+    @State private var mediatorEnabled = false
+    @State private var showAnnotationsToUser = true
+    @State private var injectContextToLLM = true
+    @State private var explainToolCalls = true
 }
 
 // MARK: - Locked Secure Field
