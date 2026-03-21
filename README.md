@@ -15,7 +15,9 @@ Agent! works with Claude API, Ollama Pro/Max Cloud, and local Ollama. Apple Inte
 
 ### Multi-Provider LLM Support
 
-Agent! supports multiple LLM providers with seamless switching. Configure your preferred provider in Settings.
+Agent! supports multiple LLM providers with seamless switching. Configure your preferred provider in Settings. 
+
+OpenAI, DeepSeek, HuggingFace is untested. If you have any issues please file an issue.
 
 | Provider | API Key | Vision | Notes |
 |----------|---------|--------|-------|
