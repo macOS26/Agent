@@ -11,6 +11,7 @@ enum AgentTools {
         static let readFile = "read_file"
         static let writeFile = "write_file"
         static let editFile = "edit_file"
+        static let createDiff = "create_diff"
         static let listFiles = "list_files"
         static let searchFiles = "search_files"
         // Git Tools
@@ -318,6 +319,7 @@ enum AgentTools {
         Name.readFile:             #"read_file {"file_path": "/Users/toddbruss/Documents/example.txt"}"#,
         Name.writeFile:            #"write_file {"file_path": "/Users/toddbruss/Documents/out.txt", "content": "hello"}"#,
         Name.editFile:             #"edit_file {"file_path": "/path/file.txt", "old_string": "old", "new_string": "new"}"#,
+        Name.createDiff:           #"create_diff {"source": "old text", "destination": "new text"}"#,
         Name.listFiles:            #"list_files {"pattern": "*.swift", "path": "/Users/toddbruss/Documents"}"#,
         Name.searchFiles:          #"search_files {"pattern": "TODO", "path": "/Users/toddbruss/Documents"}"#,
         Name.taskComplete:         #"task_complete {"summary": "Done"}"#,
@@ -417,6 +419,15 @@ enum AgentTools {
                 "replace_all": ["type": "boolean", "description": "Replace all occurrences (default false)"],
             ],
             required: ["file_path", "old_string", "new_string"]
+        ),
+        ToolDef(
+            name: Name.createDiff,
+            description: "Compare two text strings and return a pretty D1F diff showing retained, deleted, and inserted lines with emoji markers.",
+            properties: [
+                "source": ["type": "string", "description": "The original text"],
+                "destination": ["type": "string", "description": "The modified text"],
+            ],
+            required: ["source", "destination"]
         ),
         ToolDef(
             name: Name.listFiles,

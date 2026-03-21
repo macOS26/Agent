@@ -1,6 +1,7 @@
 
 @preconcurrency import Foundation
 import MCPClient
+import MultiLineDiff
 import os.log
 
 private let tabTaskLog = Logger(subsystem: "Agent.app.toddbruss", category: "TabTask")
@@ -250,6 +251,14 @@ extension AgentViewModel {
         }
 
         tabTaskLog.info("[\(tab.displayTitle)] executeTabTask finished after \(iterations) iteration(s), cancelled=\(Task.isCancelled)")
+
+        // If Messages tab task ended without task_complete, still send a reply
+        if tab.isMessagesTab, let handle = tab.replyHandle {
+            tab.replyHandle = nil
+            let reason = Task.isCancelled ? "(cancelled)" : iterations >= maxIter ? "(max iterations)" : "(incomplete)"
+            sendMessagesTabReply(reason, handle: handle)
+        }
+
         tab.flush()
         tab.isLLMRunning = false
         tab.isLLMThinking = false
@@ -271,6 +280,11 @@ extension AgentViewModel {
             let summary = input["summary"] as? String ?? "Done"
             tab.appendLog("✅ Completed: \(summary)")
             tab.flush()
+            // If this is the Messages tab, reply to the iMessage sender
+            if tab.isMessagesTab, let handle = tab.replyHandle {
+                tab.replyHandle = nil
+                sendMessagesTabReply(summary, handle: handle)
+            }
             return TabToolResult(toolResult: nil, isComplete: true)
         }
 

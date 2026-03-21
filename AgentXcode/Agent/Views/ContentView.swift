@@ -436,7 +436,7 @@ struct ContentView: View {
                         }
                     }
 
-                    TextField(tab.isMainTab ? "Enter task..." : "Ask about \(tab.scriptName)...", text: Binding(
+                    TextField(tab.isMainTab ? "Enter task..." : tab.isMessagesTab ? "Messages task..." : "Ask about \(tab.scriptName)...", text: Binding(
                         get: { tab.taskInput },
                         set: { tab.taskInput = $0 }
                     ))

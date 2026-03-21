@@ -52,15 +52,17 @@ final class ScriptTabRecord {
     var exitCode: Int  // -999 = nil (SwiftData doesn't support optional Int32)
     var llmConfigJSON: String?       // JSON-encoded LLMConfig for main tabs
     var parentTabIdString: String?   // UUID string of parent main tab
+    var isMessagesTab: Bool          // Dedicated Messages tab flag
 
     init(tabId: UUID, scriptName: String, activityLog: String, exitCode: Int = -999,
-         llmConfigJSON: String? = nil, parentTabIdString: String? = nil) {
+         llmConfigJSON: String? = nil, parentTabIdString: String? = nil, isMessagesTab: Bool = false) {
         self.tabId = tabId
         self.scriptName = scriptName
         self.activityLog = activityLog
         self.exitCode = exitCode
         self.llmConfigJSON = llmConfigJSON
         self.parentTabIdString = parentTabIdString
+        self.isMessagesTab = isMessagesTab
     }
 }
 
@@ -292,7 +294,7 @@ final class ChatHistoryStore {
     // MARK: - Script Tab Persistence
 
     /// Save script tab data to SwiftData. Replaces any existing records.
-    func saveScriptTabs(_ tabs: [(id: UUID, scriptName: String, activityLog: String, exitCode: Int32?, llmConfigJSON: String?, parentTabIdString: String?)]) {
+    func saveScriptTabs(_ tabs: [(id: UUID, scriptName: String, activityLog: String, exitCode: Int32?, llmConfigJSON: String?, parentTabIdString: String?, isMessagesTab: Bool)]) {
         guard let context else { return }
         // Delete old records
         try? context.delete(model: ScriptTabRecord.self)
@@ -304,7 +306,8 @@ final class ChatHistoryStore {
                 activityLog: tab.activityLog,
                 exitCode: tab.exitCode.map { Int($0) } ?? -999,
                 llmConfigJSON: tab.llmConfigJSON,
-                parentTabIdString: tab.parentTabIdString
+                parentTabIdString: tab.parentTabIdString,
+                isMessagesTab: tab.isMessagesTab
             )
             context.insert(record)
         }

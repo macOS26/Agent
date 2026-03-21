@@ -1,6 +1,7 @@
 
 @preconcurrency import Foundation
 import MCPClient
+import MultiLineDiff
 import os.log
 
 private let taskLog = Logger(subsystem: "Agent.app.toddbruss", category: "TaskExecution")
@@ -167,14 +168,14 @@ extension AgentViewModel {
             let old = input["old_string"] as? String ?? ""
             let new = input["new_string"] as? String ?? ""
             let replaceAll = input["replace_all"] as? Bool ?? false
-            
+
             guard old != new else { return "Error: old_string and new_string are identical - no changes needed" }
-            
+
             guard let data = FileManager.default.contents(atPath: path),
                   let content = String(data: data, encoding: .utf8) else { return "Error: cannot read \(path)" }
-            
+
             let occurrences = content.components(separatedBy: old).count - 1
-            
+
             if occurrences == 0 {
                 let trimmed = old.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !trimmed.isEmpty && content.contains(trimmed) {
@@ -182,11 +183,11 @@ extension AgentViewModel {
                 }
                 return "Error: old_string not found in \(path)"
             }
-            
+
             if !replaceAll && occurrences > 1 {
                 return "Error: old_string appears \(occurrences) times in \(path). Provide more context to make it unique, or set replace_all=true."
             }
-            
+
             let updated: String
             if replaceAll {
                 updated = content.replacingOccurrences(of: old, with: new)
@@ -194,30 +195,22 @@ extension AgentViewModel {
                 guard let range = content.range(of: old) else { return "Error: old_string not found in \(path)" }
                 updated = content.replacingCharacters(in: range, with: new)
             }
-            
+
             do {
                 try updated.write(to: URL(fileURLWithPath: path), atomically: true, encoding: .utf8)
-                // Build unified diff with more context (up to 10 lines each side)
-                let oldLines = old.components(separatedBy: "\n")
-                let newLines = new.components(separatedBy: "\n")
-                var diffOutput = "Replaced \(replaceAll ? "\(occurrences) occurrences" : "1 occurrence") in \(path)\n\nDiff:\n```diff\n"
-                if oldLines.count <= 10 {
-                    for line in oldLines { diffOutput += "- \(line)\n" }
-                } else {
-                    for line in oldLines.prefix(10) { diffOutput += "- \(line)\n" }
-                    diffOutput += "- ... (\(oldLines.count) lines total)\n"
-                }
-                if newLines.count <= 10 {
-                    for line in newLines { diffOutput += "+ \(line)\n" }
-                } else {
-                    for line in newLines.prefix(10) { diffOutput += "+ \(line)\n" }
-                    diffOutput += "+ ... (\(newLines.count) lines total)\n"
-                }
-                diffOutput += "```"
-                return diffOutput
+                let d1f = MultiLineDiff.generateASCIIDiff(source: old, destination: new)
+                let label = replaceAll ? "\(occurrences) occurrences" : "1 occurrence"
+                return "Replaced \(label) in \(path)\n\n\(d1f)"
             } catch {
                 return "Error: \(error.localizedDescription)"
             }
+        }
+
+        // D1F Diff
+        if name == "create_diff" {
+            let source = input["source"] as? String ?? ""
+            let destination = input["destination"] as? String ?? ""
+            return MultiLineDiff.generateASCIIDiff(source: source, destination: destination)
         }
 
         // Git (via shell)
@@ -947,63 +940,24 @@ extension AgentViewModel {
                             let replaceAll = input["replace_all"] as? Bool ?? false
                             appendLog("📝 Edit: \(filePath)")
 
-                            // Capture pre-edit content to find match line number
-                            let expandedPath = (filePath as NSString).expandingTildeInPath
-                            let preContent = (try? String(contentsOfFile: expandedPath, encoding: .utf8)) ?? ""
-                            let preLines = preContent.components(separatedBy: "\n")
-                            var matchLineStart: Int? = nil
-                            if let matchRange = preContent.range(of: oldString) {
-                                let before = preContent[preContent.startIndex..<matchRange.lowerBound]
-                                matchLineStart = before.components(separatedBy: "\n").count // 1-based
-                            }
-
                             let output = await Self.offMain { CodingService.editFile(path: filePath, oldString: oldString, newString: newString, replaceAll: replaceAll) }
 
-                            // Show diff with line numbers and context if edit succeeded
-                            if output.hasPrefix("Replaced"), let startLine = matchLineStart {
-                                let oldLines = oldString.components(separatedBy: "\n")
-                                let newLines = newString.components(separatedBy: "\n")
-                                let postContent = (try? String(contentsOfFile: expandedPath, encoding: .utf8)) ?? ""
-                                let postLines = postContent.components(separatedBy: "\n")
-                                let ctx = 3
+                            // Show D1F pretty diff
+                            let d1f = MultiLineDiff.generateASCIIDiff(source: oldString, destination: newString)
+                            appendLog(d1f)
 
-                                var diffOutput = "```diff\n"
-                                // Context before
-                                let ctxStart = max(0, startLine - 1 - ctx)
-                                for i in ctxStart..<(startLine - 1) {
-                                    diffOutput += "\(i + 1)\t\(preLines[i])\n"
-                                }
-                                // Removed lines
-                                for (i, line) in oldLines.enumerated() {
-                                    diffOutput += "\(startLine + i) -\t\(line)\n"
-                                }
-                                // Added lines
-                                for (i, line) in newLines.enumerated() {
-                                    diffOutput += "\(startLine + i) +\t\(line)\n"
-                                }
-                                // Context after
-                                let afterStart = startLine - 1 + newLines.count
-                                let afterEnd = min(postLines.count, afterStart + ctx)
-                                for i in afterStart..<afterEnd {
-                                    diffOutput += "\(i + 1)\t\(postLines[i])\n"
-                                }
-                                diffOutput += "```"
-                                appendLog(diffOutput)
-                            } else if !output.hasPrefix("Replaced") {
-                                // Edit failed — show what was attempted
-                                var diffOutput = "```diff\n"
-                                for line in oldString.components(separatedBy: "\n") {
-                                    diffOutput += "- \(line)\n"
-                                }
-                                for line in newString.components(separatedBy: "\n") {
-                                    diffOutput += "+ \(line)\n"
-                                }
-                                diffOutput += "```"
-                                appendLog(diffOutput)
-                            }
                             appendLog(output)
                             commandsRun.append("edit_file: \(filePath)")
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        if name == "create_diff" {
+                            let source = input["source"] as? String ?? ""
+                            let destination = input["destination"] as? String ?? ""
+                            let d1f = MultiLineDiff.generateASCIIDiff(source: source, destination: destination)
+                            appendLog(d1f)
+                            commandsRun.append("create_diff")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": d1f])
                         }
 
                         // MARK: Process-based tools (routed through UserService XPC)

@@ -31,8 +31,12 @@ final class ScriptTab: Identifiable {
     var parentTabId: UUID?
     /// Whether this tab acts as an independent main tab
     var isMainTab: Bool { llmConfig != nil }
+    /// Whether this is the dedicated Messages tab (for iMessage Agent! commands)
+    var isMessagesTab: Bool = false
+    /// The iMessage handle to reply to when a Messages tab task completes
+    var replyHandle: String?
     /// Display name: LLM model name for main tabs, script name for script tabs
-    var displayTitle: String { llmConfig?.displayName ?? scriptName }
+    var displayTitle: String { isMessagesTab ? "Messages" : llmConfig?.displayName ?? scriptName }
 
     // Log buffering (mirrors AgentViewModel pattern)
     var logBuffer = ""
@@ -79,6 +83,7 @@ final class ScriptTab: Identifiable {
         self.activityLog = record.activityLog
         self.exitCode = record.exitCode == -999 ? nil : Int32(record.exitCode)
         self.isRunning = false
+        self.isMessagesTab = record.isMessagesTab
         // Restore LLM config if present
         if let json = record.llmConfigJSON, let data = json.data(using: .utf8) {
             self.llmConfig = try? JSONDecoder().decode(LLMConfig.self, from: data)

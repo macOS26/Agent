@@ -11,10 +11,14 @@ struct MessagesView: View {
                 Text("Messages Monitor")
                     .font(.headline)
                 Spacer()
-                Toggle("", isOn: $viewModel.messagesMonitorEnabled)
-                    .toggleStyle(.switch)
-                    .controlSize(.mini)
-                    .tint(.green)
+                Button(action: {
+                    viewModel.messagesMonitorEnabled.toggle()
+                }) {
+                    Image(systemName: "message")
+                        .font(.system(size: 20))
+                        .foregroundStyle(viewModel.messagesMonitorEnabled ? .blue : .secondary)
+                }
+                .buttonStyle(PlainButtonStyle())
             }
 
             Picker("Active", selection: $viewModel.messageFilter) {

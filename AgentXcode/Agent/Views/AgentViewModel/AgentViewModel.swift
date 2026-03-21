@@ -561,7 +561,8 @@ final class AgentViewModel {
             }()
             return (id: tab.id, scriptName: tab.scriptName, activityLog: tab.activityLog,
                     exitCode: tab.exitCode, llmConfigJSON: configJSON,
-                    parentTabIdString: tab.parentTabId?.uuidString)
+                    parentTabIdString: tab.parentTabId?.uuidString,
+                    isMessagesTab: tab.isMessagesTab)
         }
         ChatHistoryStore.shared.saveScriptTabs(tabData)
     }
@@ -1064,7 +1065,7 @@ final class AgentViewModel {
     }
     
     /// Send a progress update message via iMessage.
-    private func sendProgressUpdate(_ message: String) {
+    func sendProgressUpdate(_ message: String) {
         guard let handle = agentReplyHandle else { return }
         let escaped = message.replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "\"", with: "\\\"")
@@ -1247,7 +1248,78 @@ final class AgentViewModel {
         NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")!)
     }
 
+    // MARK: - Messages Tab
+
+    /// Find or create the dedicated Messages tab. Always uses main tab's LLM settings.
+    func ensureMessagesTab() -> ScriptTab {
+        if let existing = scriptTabs.first(where: { $0.isMessagesTab }) {
+            return existing
+        }
+        let tab = ScriptTab(scriptName: "Messages")
+        tab.isMessagesTab = true
+        tab.isRunning = false
+        scriptTabs.append(tab)
+        persistScriptTabs()
+        return tab
+    }
+
+    /// Send an iMessage reply from the Messages tab after its task completes.
+    func sendMessagesTabReply(_ summary: String, handle: String) {
+        // Strip "Agent!" prefix from outgoing replies to avoid triggering another command
+        var reply = summary
+        if reply.hasPrefix("Agent!") {
+            reply = String(reply.dropFirst(6))
+            if reply.hasPrefix(" ") {
+                reply = String(reply.dropFirst())
+            }
+        }
+        let escaped = reply.replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+        let script = """
+        tell application "Messages"
+            set targetService to 1st account whose service type = iMessage
+            set targetBuddy to participant "\(handle)" of targetService
+            send "\(escaped)" to targetBuddy
+        end tell
+        """
+        Task {
+            let result = await userService.execute(command: "osascript -e '\(script.replacingOccurrences(of: "'", with: "'\\''"))'")
+            let msgTab = scriptTabs.first(where: { $0.isMessagesTab })
+            if result.status == 0 {
+                msgTab?.appendLog("Reply sent to \(handle)")
+            } else {
+                msgTab?.appendLog("Reply failed: \(result.output.prefix(100))")
+            }
+            msgTab?.flush()
+        }
+    }
+
+    /// Send an iMessage acknowledgment from the Messages tab.
+    private func sendMessagesTabAck(handle: String) {
+        let ack = "Working on it..."
+        let escaped = ack.replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+        let script = """
+        tell application "Messages"
+            set targetService to 1st account whose service type = iMessage
+            set targetBuddy to participant "\(handle)" of targetService
+            send "\(escaped)" to targetBuddy
+        end tell
+        """
+        Task {
+            let result = await userService.execute(command: "osascript -e '\(script.replacingOccurrences(of: "'", with: "'\\''"))'")
+            let msgTab = scriptTabs.first(where: { $0.isMessagesTab })
+            if result.status == 0 {
+                msgTab?.appendLog("Ack sent to \(handle)")
+            } else {
+                msgTab?.appendLog("Ack failed: \(result.output.prefix(100))")
+            }
+            msgTab?.flush()
+        }
+    }
+
     /// Poll for new incoming messages; log from enabled handles, act on "Agent!" prefix.
+    /// Routes messages to the dedicated Messages tab instead of the main/active tab.
     private func pollMessages() async {
         // If seed failed, try to reseed now
         if lastSeenMessageROWID == Int.max {
@@ -1278,7 +1350,7 @@ final class AgentViewModel {
 
             let approved = enabled.contains(row.handleId)
 
-            // Always show the message in the log
+            // Always show the message in the main log
             flashMessagesDot()
             if approved {
                 appendLog("iMessage (\(row.handleId)): \(row.text)")
@@ -1293,15 +1365,31 @@ final class AgentViewModel {
             let prompt = stripped.hasPrefix(" ")
                 ? String(stripped.dropFirst()).trimmingCharacters(in: .whitespaces)
                 : String(stripped).trimmingCharacters(in: .whitespaces)
-            guard !prompt.isEmpty, !isRunning else { continue }
+            guard !prompt.isEmpty else { continue }
 
-            appendLog("Agent! prompt: \(prompt)")
-            flushLog()
-            agentReplyHandle = row.handleId
-            // Send immediate acknowledgment before starting task
-            sendAgentAck()
-            taskInput = prompt
-            run()
+            // Route to dedicated Messages tab
+            let msgTab = ensureMessagesTab()
+
+            // Skip if Messages tab is already running a task
+            guard !msgTab.isLLMRunning else {
+                msgTab.appendLog("Busy — skipped: \(prompt)")
+                msgTab.flush()
+                continue
+            }
+
+            msgTab.replyHandle = row.handleId
+            msgTab.appendLog("iMessage from \(row.handleId): \(prompt)")
+            msgTab.flush()
+
+            // Send immediate ack
+            sendMessagesTabAck(handle: row.handleId)
+
+            // Select the Messages tab so the user sees it
+            selectedTabId = msgTab.id
+
+            // Run the task on the Messages tab (uses main tab's LLM config via resolvedLLMConfig fallback)
+            msgTab.taskInput = prompt
+            runTabTask(tab: msgTab)
         }
     }
 
