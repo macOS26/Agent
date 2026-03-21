@@ -723,6 +723,7 @@ final class AgentViewModel {
     var speechAudioEngine: AVAudioEngine?
     var speechRecognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     var speechRecognitionTask: SFSpeechRecognitionTask?
+    var preDictationText: String = ""
     
     // MARK: - Init
 

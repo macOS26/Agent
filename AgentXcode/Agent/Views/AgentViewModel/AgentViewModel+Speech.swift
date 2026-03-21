@@ -79,6 +79,9 @@ extension AgentViewModel {
         speechRecognitionRequest = request
         isListening = true
 
+        // Capture existing text so dictation appends rather than replaces
+        preDictationText = taskInput
+
         speechRecognitionTask = recognizer.recognitionTask(with: request) { @Sendable result, error in
             let transcription = result?.bestTranscription.formattedString
             let isFinal = result?.isFinal ?? false
@@ -87,7 +90,9 @@ extension AgentViewModel {
                 guard let self else { return }
 
                 if let transcription {
-                    self.taskInput = transcription
+                    let prefix = self.preDictationText
+                    let separator = prefix.isEmpty || prefix.hasSuffix(" ") ? "" : " "
+                    self.taskInput = prefix + separator + transcription
                 }
 
                 if hasError || isFinal {
