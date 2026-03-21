@@ -549,6 +549,9 @@ struct ContentView: View {
                 let status = DependencyChecker.check()
                 DispatchQueue.main.async {
                     dependencyStatus = status
+                    if status.allGood {
+                        showDependencyOverlay = false
+                    }
                 }
             }
             NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
