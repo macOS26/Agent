@@ -1,6 +1,7 @@
 @preconcurrency import Foundation
 import AppKit
 import SQLite3
+import Speech
 
 /// Per-tab LLM configuration for multi-main-tab support
 struct LLMConfig: Codable {
@@ -645,6 +646,13 @@ final class AgentViewModel {
     var agentReady: Bool { userService.userReady }
     var hasAttachments: Bool { !attachedImages.isEmpty }
 
+    // MARK: - Voice Input
+    
+    /// Check if speech recognition is authorized
+    var isSpeechRecognitionAuthorized: Bool {
+        SFSpeechRecognizer.authorizationStatus() == .authorized
+    }
+    
     // MARK: - Init
 
     init() {

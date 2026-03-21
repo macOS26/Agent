@@ -20,7 +20,7 @@ final class SystemPromptService {
         .huggingFace: "hugging_face.txt",
         .ollama: "ollama.txt",
         .localOllama: "local_ollama.txt",
-        // Note: foundationModel removed - Apple Intelligence is now used for LoRA training only
+        .foundationModel: "foundation_model.txt",
     ]
 
     /// Version header prefix embedded in each prompt file.

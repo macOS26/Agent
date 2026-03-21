@@ -710,6 +710,25 @@ extension AgentViewModel {
         var commandsRun: [String] = []
         var completionSummary = ""
         var consecutiveNoTool = 0
+        
+        // Apple Intelligence mediator for contextual annotations
+        let mediator = AppleIntelligenceMediator.shared
+        var appleAIAnnotations: [AppleIntelligenceMediator.Annotation] = []
+
+        // Optional: Add Apple Intelligence context to user message
+        if mediator.isEnabled && mediator.injectContextToLLM {
+            if let contextAnnotation = await mediator.contextualizeUserMessage(prompt) {
+                appleAIAnnotations.append(contextAnnotation)
+                // Inject context into LLM message
+                let contextMessage: [String: Any] = [
+                    "role": "user",
+                    "content": "[AI Context] \(contextAnnotation.content)"
+                ]
+                messages.insert(contextMessage, at: messages.count) // Add before user message
+                appendLog("[AI → LLM] \(contextAnnotation.content)")
+                flushLog()
+            }
+        }
 
         var iterations = 0
         let maxIterations = self.maxIterations
@@ -790,6 +809,16 @@ extension AgentViewModel {
                         if name == "task_complete" {
                             let summary = input["summary"] as? String ?? "Done"
                             completionSummary = summary
+                            
+                            // Apple Intelligence summary annotation
+                            if mediator.isEnabled && mediator.showAnnotationsToUser && !commandsRun.isEmpty {
+                                if let summaryAnnotation = await mediator.summarizeCompletion(summary: summary, commandsRun: commandsRun) {
+                                    appleAIAnnotations.append(summaryAnnotation)
+                                    appendLog(summaryAnnotation.formatted)
+                                    flushLog()
+                                }
+                            }
+                            
                             appendLog("✅ Completed: \(summary)")
                             flushLog()
                             history.add(TaskRecord(prompt: prompt, summary: summary, commandsRun: commandsRun), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
