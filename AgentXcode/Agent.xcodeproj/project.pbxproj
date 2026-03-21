@@ -66,8 +66,6 @@
 		DD10000000000000000030 /* ScriptServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000001 /* ScriptServiceTests.swift */; };
 		DD10000000000000000031 /* ScriptingBridgesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000002 /* ScriptingBridgesTests.swift */; };
 		DD10000000000000000032 /* PackageGenerationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000003 /* PackageGenerationTests.swift */; };
-		/* Removed: Sources/Package.swift folder copies — scripts live at ~/Documents/AgentScript/ */
-		/* Removed: AppleEventBridges folder copy — linked as SPM dependency, copying includes .build/.swiftpm artifacts */
 		EA50000000000000000001 /* send_message_input.json in Resources */ = {isa = PBXBuildFile; fileRef = EA50000000000000000005 /* send_message_input.json */; };
 		EA50000000000000000002 /* send_message_output.json in Resources */ = {isa = PBXBuildFile; fileRef = EA50000000000000000006 /* send_message_output.json */; };
 		EA50000000000000000003 /* send_image_input.json in Resources */ = {isa = PBXBuildFile; fileRef = EA50000000000000000007 /* send_image_input.json */; };
@@ -83,7 +81,6 @@
 		EE10000000000000000004 /* ObjCTry.m in Sources */ = {isa = PBXBuildFile; fileRef = EE10000000000000000002 /* ObjCTry.m */; };
 		FF10000000000000000002 /* PackageAutoDiscoveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000001 /* PackageAutoDiscoveryTests.swift */; };
 		FF10000000000000000004 /* CodingServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000003 /* CodingServiceTests.swift */; };
-		FF10000000000000000006 /* AccessibilityRestrictionsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000005 /* AccessibilityRestrictionsTests.swift */; };
 		FF10000000000000000008 /* AccessibilityServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000007 /* AccessibilityServiceTests.swift */; };
 		WEB1000000000000000001 /* WebAutomationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = WEB1000000000000000002 /* WebAutomationService.swift */; };
 /* End PBXBuildFile section */
@@ -159,24 +156,6 @@
 		};
 /* End PBXCopyFilesBuildPhase section */
 
-/* Begin PBXShellScriptBuildPhase section */
-		EA00SCRIPT000000000001 /* Copy Agent Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Copy Agent Resources";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "RESOURCES_DIR=\"${BUILT_PRODUCTS_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}\"\nSRC_ROOT=\"${SRCROOT}/..\"\n\n# Clean up stale folder from previous builds\nrm -rf \"${RESOURCES_DIR}/AppleEventBridges\"\n\n# Copy AgentScript/agents (Package.swift + Sources only)\nmkdir -p \"${RESOURCES_DIR}/AgentScript/agents\"\nrsync -a --delete \\\n  --exclude '.build' --exclude '.swiftpm' --exclude 'build' --exclude '.git' \\\n  \"${SRC_ROOT}/AgentScripts/Agent/agents/Package.swift\" \\\n  \"${RESOURCES_DIR}/AgentScript/agents/\"\nrsync -a --delete \\\n  --exclude '.build' --exclude '.swiftpm' --exclude 'build' --exclude '.git' \\\n  \"${SRC_ROOT}/AgentScripts/Agent/agents/Sources\" \\\n  \"${RESOURCES_DIR}/AgentScript/agents/\"\n\n# Copy AppleEventBridges as 'bridges' (Package.swift + Sources only)\nmkdir -p \"${RESOURCES_DIR}/bridges\"\nrsync -a --delete \\\n  --exclude '.build' --exclude '.swiftpm' --exclude 'build' --exclude '.git' \\\n  \"${SRC_ROOT}/AppleEventBridges/Package.swift\" \\\n  \"${RESOURCES_DIR}/bridges/\"\nrsync -a --delete \\\n  --exclude '.build' --exclude '.swiftpm' --exclude 'build' --exclude '.git' \\\n  \"${SRC_ROOT}/AppleEventBridges/Sources\" \\\n  \"${RESOURCES_DIR}/bridges/\"\n";
-		};
-/* End PBXShellScriptBuildPhase section */
-
 /* Begin PBXFileReference section */
 		AA1000000000000000001A /* AgentApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentApp.swift; sourceTree = "<group>"; };
 		AA1000000000000000001B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -239,7 +218,6 @@
 		DD10000000000000000002 /* ScriptingBridgesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptingBridgesTests.swift; sourceTree = "<group>"; };
 		DD10000000000000000003 /* PackageGenerationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageGenerationTests.swift; sourceTree = "<group>"; };
 		DD10000000000000000004 /* AgentTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AgentTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		/* Removed: orphaned folder refs — now handled by "Copy Agent Resources" script phase */
 		EA50000000000000000005 /* send_message_input.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = send_message_input.json; path = ../AgentScripts/Agent/send_message_input.json; sourceTree = SOURCE_ROOT; };
 		EA50000000000000000006 /* send_message_output.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = send_message_output.json; path = ../AgentScripts/Agent/send_message_output.json; sourceTree = SOURCE_ROOT; };
 		EA50000000000000000007 /* send_image_input.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = send_image_input.json; path = ../AgentScripts/Agent/send_image_input.json; sourceTree = SOURCE_ROOT; };
@@ -256,7 +234,6 @@
 		EE10000000000000000003 /* Agent-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Agent-Bridging-Header.h"; sourceTree = "<group>"; };
 		FF10000000000000000001 /* PackageAutoDiscoveryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageAutoDiscoveryTests.swift; sourceTree = "<group>"; };
 		FF10000000000000000003 /* CodingServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodingServiceTests.swift; sourceTree = "<group>"; };
-		FF10000000000000000005 /* AccessibilityRestrictionsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityRestrictionsTests.swift; sourceTree = "<group>"; };
 		FF10000000000000000007 /* AccessibilityServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityServiceTests.swift; sourceTree = "<group>"; };
 		WEB1000000000000000002 /* WebAutomationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebAutomationService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -301,10 +278,21 @@
 			children = (
 				AA10000000000000000041 /* Agent */,
 				BB10000000000000000040 /* AgentHelper */,
+				CC10000000000000000040 /* AgentUser */,
 				DD10000000000000000040 /* AgentTests */,
 				AA10000000000000000042 /* Products */,
 				AA10000000000000000043 /* Frameworks */,
 			);
+			sourceTree = "<group>";
+		};
+		EE10000000000000000010 /* ObjC */ = {
+			isa = PBXGroup;
+			children = (
+				EE10000000000000000003 /* Agent-Bridging-Header.h */,
+				EE10000000000000000001 /* ObjCTry.h */,
+				EE10000000000000000002 /* ObjCTry.m */,
+			);
+			path = ObjC;
 			sourceTree = "<group>";
 		};
 		AA10000000000000000041 /* Agent */ = {
@@ -316,10 +304,8 @@
 				EADF39CA2F68BFC400CD01E5 /* Models */,
 				EADF39C72F68BF2100CD01E5 /* Views */,
 				EADF39C62F68BEF100CD01E5 /* Services */,
+				EE10000000000000000010 /* ObjC */,
 				AA1000000000000000001A /* AgentApp.swift */,
-				EE10000000000000000001 /* ObjCTry.h */,
-				EE10000000000000000002 /* ObjCTry.m */,
-				EE10000000000000000003 /* Agent-Bridging-Header.h */,
 				EAF3666E2F623D6A004B7E38 /* AppIcon.icon */,
 				AA10000000000000000021 /* Assets.xcassets */,
 				AA100000000000000000B2 /* StartupTwentiethAnniversaryMac.wav */,
@@ -359,7 +345,6 @@
 			children = (
 				BB1000000000000000001A /* main.swift */,
 				BB1000000000000000001B /* HelperProtocol.swift */,
-				CC10000000000000000040 /* AgentUser */,
 			);
 			path = AgentHelper;
 			sourceTree = "<group>";
@@ -397,7 +382,6 @@
 				DD10000000000000000003 /* PackageGenerationTests.swift */,
 				FF10000000000000000001 /* PackageAutoDiscoveryTests.swift */,
 				FF10000000000000000003 /* CodingServiceTests.swift */,
-				FF10000000000000000005 /* AccessibilityRestrictionsTests.swift */,
 				FF10000000000000000007 /* AccessibilityServiceTests.swift */,
 			);
 			path = AgentTests;
@@ -658,6 +642,24 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		EA00SCRIPT000000000001 /* Copy Agent Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Copy Agent Resources";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "RESOURCES_DIR=\"${BUILT_PRODUCTS_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}\"\nSRC_ROOT=\"${SRCROOT}/..\"\n\n# Clean up stale folder from previous builds\nrm -rf \"${RESOURCES_DIR}/AppleEventBridges\"\n\n# Copy AgentScript/agents (Package.swift + Sources only)\nmkdir -p \"${RESOURCES_DIR}/AgentScript/agents\"\nrsync -a --delete \\\n  --exclude '.build' --exclude '.swiftpm' --exclude 'build' --exclude '.git' \\\n  \"${SRC_ROOT}/AgentScripts/Agent/agents/Package.swift\" \\\n  \"${RESOURCES_DIR}/AgentScript/agents/\"\nrsync -a --delete \\\n  --exclude '.build' --exclude '.swiftpm' --exclude 'build' --exclude '.git' \\\n  \"${SRC_ROOT}/AgentScripts/Agent/agents/Sources\" \\\n  \"${RESOURCES_DIR}/AgentScript/agents/\"\n\n# Copy AppleEventBridges as 'bridges' (Package.swift + Sources only)\nmkdir -p \"${RESOURCES_DIR}/bridges\"\nrsync -a --delete \\\n  --exclude '.build' --exclude '.swiftpm' --exclude 'build' --exclude '.git' \\\n  \"${SRC_ROOT}/AppleEventBridges/Package.swift\" \\\n  \"${RESOURCES_DIR}/bridges/\"\nrsync -a --delete \\\n  --exclude '.build' --exclude '.swiftpm' --exclude 'build' --exclude '.git' \\\n  \"${SRC_ROOT}/AppleEventBridges/Sources\" \\\n  \"${RESOURCES_DIR}/bridges/\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		AA10000000000000000050 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -744,7 +746,6 @@
 				DD10000000000000000032 /* PackageGenerationTests.swift in Sources */,
 				FF10000000000000000002 /* PackageAutoDiscoveryTests.swift in Sources */,
 				FF10000000000000000004 /* CodingServiceTests.swift in Sources */,
-				FF10000000000000000006 /* AccessibilityRestrictionsTests.swift in Sources */,
 				FF10000000000000000008 /* AccessibilityServiceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -956,7 +957,7 @@
 				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = YES;
 				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "Agent/Agent-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "Agent/ObjC/Agent-Bridging-Header.h";
 				SWIFT_VERSION = 6.0;
 			};
 			name = Debug;
@@ -1023,7 +1024,7 @@
 				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = YES;
 				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "Agent/Agent-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "Agent/ObjC/Agent-Bridging-Header.h";
 				SWIFT_VERSION = 6.0;
 			};
 			name = Release;

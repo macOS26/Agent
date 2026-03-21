@@ -1,5 +1,8 @@
 // AppleEventBridgesAggregate.swift
 // Re-exports based Apple only bridges for the Agent app convenience import
+// More bridges can be imported from AppleEventBridges/Sources/AppleEventBridges swift package
+// For future: A mix of individual bridges can be used directly for creating custom automated AI tools inside Agent!
+// There is a good change there will be a scripting bridge workflow AI wizard
 
 @_exported import ScriptingBridgeCommon
 @_exported import AppleScriptUtilityBridge
