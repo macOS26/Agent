@@ -82,13 +82,7 @@ final class AppleIntelligenceMediator: ObservableObject {
 
         /// Formatted output with appropriate tag
         var formatted: String {
-            let tag: String
-            switch target {
-            case .user: tag = "[\u{F8FF}AI → User]"
-            case .llm: tag = "[\u{F8FF}AI → LLM]"
-            case .both: tag = "[\u{F8FF}AI → Both]"
-            }
-            return "\(tag) \(content)"
+            return "Apple AI: \(content)"
         }
     }
 

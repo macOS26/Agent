@@ -678,7 +678,7 @@ extension AgentViewModel {
         }
         trimToRecentTasks()
         appendLog("--- New Task ---")
-        appendLog("Task: \(prompt)")
+        appendLog("User: \(prompt)")
 
         // Use ChatHistoryStore for LLM context (summaries for older tasks, full messages for recent)
         let historyContext = ChatHistoryStore.shared.buildLLMContext()
@@ -789,7 +789,7 @@ extension AgentViewModel {
                     "content": "[AI Context] \(contextAnnotation.content)"
                 ]
                 messages.insert(contextMessage, at: messages.count) // Add before user message
-                appendLog("[AI → LLM] \(contextAnnotation.content)")
+                appendLog("Apple AI: \(contextAnnotation.content)")
                 flushLog()
                 if agentReplyHandle != nil {
                     sendProgressUpdate("[\u{F8FF}AI] \(contextAnnotation.content)")
@@ -826,6 +826,8 @@ extension AgentViewModel {
                 let response: (content: [[String: Any]], stopReason: String)
                 var textWasStreamed = false
                 let streamStart = CFAbsoluteTimeGetCurrent()
+                appendLog("LLM:")
+                flushLog()
                 if let claude {
                     response = try await claude.sendStreaming(messages: messages) { [weak self] delta in
                         Task { @MainActor in
