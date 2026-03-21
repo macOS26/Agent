@@ -297,7 +297,7 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Apple Intelligence Mediator")
                     .font(.headline)
-                
+
                 HStack(spacing: 6) {
                     Image(systemName: AppleIntelligenceMediator.isAvailable ? "checkmark.circle.fill" : "xmark.circle.fill")
                         .foregroundStyle(AppleIntelligenceMediator.isAvailable ? .green : .red)

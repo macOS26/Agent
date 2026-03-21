@@ -112,7 +112,27 @@ extension AgentViewModel {
 
         // Build on existing conversation or start fresh
         var messages: [[String: Any]] = tab.llmMessages
-        messages.append(["role": "user", "content": prompt])
+
+        if !attachedImagesBase64.isEmpty {
+            tab.appendLog("(\(attachedImagesBase64.count) screenshot(s) attached)")
+            tab.flush()
+            var contentBlocks: [[String: Any]] = attachedImagesBase64.map { base64 in
+                [
+                    "type": "image",
+                    "source": [
+                        "type": "base64",
+                        "media_type": "image/png",
+                        "data": base64
+                    ] as [String: Any]
+                ]
+            }
+            contentBlocks.append(["type": "text", "text": prompt])
+            messages.append(["role": "user", "content": contentBlocks])
+            attachedImages.removeAll()
+            attachedImagesBase64.removeAll()
+        } else {
+            messages.append(["role": "user", "content": prompt])
+        }
 
         var iterations = 0
         let maxIter = maxIterations
