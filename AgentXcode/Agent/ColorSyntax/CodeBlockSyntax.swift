@@ -881,7 +881,9 @@ private struct LangDef {
         }
 
         // Apply code syntax highlighting to the content portion
-        let syntaxHighlighted = highlight(code: codeContent, language: nil, font: font)
+        // guessLanguage often fails on single lines — default to swift for D1F diffs
+        let guessedLang = guessLanguage(from: codeContent) ?? "swift"
+        let syntaxHighlighted = highlight(code: codeContent, language: guessedLang, font: font)
 
         // Build the full line: emoji prefix + syntax-highlighted code
         let result = NSMutableAttributedString(string: line, attributes: [
