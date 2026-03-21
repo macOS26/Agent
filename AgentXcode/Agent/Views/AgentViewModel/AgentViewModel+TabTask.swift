@@ -1,6 +1,9 @@
 
 @preconcurrency import Foundation
 import MCPClient
+import os.log
+
+private let tabTaskLog = Logger(subsystem: "Agent.app.toddbruss", category: "TabTask")
 
 // MARK: - Tab Task Execution
 
@@ -50,6 +53,7 @@ extension AgentViewModel {
 
     func executeTabTask(tab: ScriptTab, prompt: String) async {
         tab.isLLMRunning = true
+        tabTaskLog.info("[\(tab.displayTitle)] executeTabTask started: \(prompt.prefix(80))")
 
         tab.appendLog("--- Tab Task ---")
         tab.appendLog("Prompt: \(prompt)")
@@ -84,6 +88,7 @@ extension AgentViewModel {
         """
 
         let (provider, modelId) = resolvedLLMConfig(for: tab)
+        tabTaskLog.info("[\(tab.displayTitle)] resolved LLM: \(provider.displayName) / \(modelId)")
         tab.appendLog("Model: \(provider.displayName) / \(modelId)")
         tab.flush()
 
@@ -140,11 +145,13 @@ extension AgentViewModel {
 
         while !Task.isCancelled && iterations < maxIter {
             iterations += 1
+            tabTaskLog.info("[\(tab.displayTitle)] iteration \(iterations)/\(maxIter)")
 
             do {
                 tab.isLLMThinking = true
                 let response: (content: [[String: Any]], stopReason: String)
                 var textWasStreamed = false
+                let streamStart = CFAbsoluteTimeGetCurrent()
 
                 if let claude {
                     response = try await claude.sendStreaming(messages: messages) { [weak tab] delta in
@@ -176,6 +183,8 @@ extension AgentViewModel {
                 } else {
                     throw AgentError.noAPIKey
                 }
+                let streamElapsed = CFAbsoluteTimeGetCurrent() - streamStart
+                tabTaskLog.info("[\(tab.displayTitle)] stream completed in \(String(format: "%.2f", streamElapsed))s, stopReason=\(response.stopReason)")
                 tab.isLLMThinking = false
                 guard !Task.isCancelled else { break }
 
@@ -228,6 +237,7 @@ extension AgentViewModel {
 
             } catch {
                 if !Task.isCancelled {
+                    tabTaskLog.error("[\(tab.displayTitle)] LLM error at iteration \(iterations): \(error.localizedDescription)")
                     tab.appendLog("Error: \(error.localizedDescription)")
                 }
                 break
@@ -235,9 +245,11 @@ extension AgentViewModel {
         }
 
         if iterations >= maxIter {
+            tabTaskLog.warning("[\(tab.displayTitle)] hit max iterations (\(maxIter))")
             tab.appendLog("Reached maximum iterations (\(maxIter))")
         }
 
+        tabTaskLog.info("[\(tab.displayTitle)] executeTabTask finished after \(iterations) iteration(s), cancelled=\(Task.isCancelled)")
         tab.flush()
         tab.isLLMRunning = false
         tab.isLLMThinking = false

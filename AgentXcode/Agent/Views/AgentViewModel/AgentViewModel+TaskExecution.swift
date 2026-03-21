@@ -1,6 +1,9 @@
 
 @preconcurrency import Foundation
 import MCPClient
+import os.log
+
+private let taskLog = Logger(subsystem: "Agent.app.toddbruss", category: "TaskExecution")
 
 // MARK: - Task Execution
 
@@ -611,6 +614,7 @@ extension AgentViewModel {
     // MARK: - Task Execution Loop
 
     func executeTask(_ prompt: String) async {
+        taskLog.info("[main] executeTask started: \(prompt.prefix(80))")
         isRunning = true
         userWasActive = false
         rootWasActive = false
@@ -717,6 +721,7 @@ extension AgentViewModel {
 
         // Optional: Add Apple Intelligence context to user message
         if mediator.isEnabled && mediator.injectContextToLLM {
+            taskLog.info("[main] Apple AI mediator: contextualizing user message...")
             if let contextAnnotation = await mediator.contextualizeUserMessage(prompt) {
                 appleAIAnnotations.append(contextAnnotation)
                 // Inject context into LLM message
@@ -727,6 +732,9 @@ extension AgentViewModel {
                 messages.insert(contextMessage, at: messages.count) // Add before user message
                 appendLog("[AI → LLM] \(contextAnnotation.content)")
                 flushLog()
+                if agentReplyHandle != nil {
+                    sendProgressUpdate("[\u{F8FF}AI] \(contextAnnotation.content)")
+                }
             }
         }
 
@@ -735,11 +743,13 @@ extension AgentViewModel {
 
         while !Task.isCancelled && iterations < maxIterations {
             iterations += 1
+            taskLog.info("[main] iteration \(iterations)/\(maxIterations)")
 
             do {
                 isThinking = true
                 let response: (content: [[String: Any]], stopReason: String)
                 var textWasStreamed = false
+                let streamStart = CFAbsoluteTimeGetCurrent()
                 if let claude {
                     response = try await claude.sendStreaming(messages: messages) { [weak self] delta in
                         Task { @MainActor in
@@ -767,6 +777,8 @@ extension AgentViewModel {
                 } else {
                     throw AgentError.noAPIKey
                 }
+                let streamElapsed = CFAbsoluteTimeGetCurrent() - streamStart
+                taskLog.info("[main] stream completed in \(String(format: "%.2f", streamElapsed))s, stopReason=\(response.stopReason)")
                 flushStreamBuffer()
                 isThinking = false
                 guard !Task.isCancelled else { break }
@@ -812,10 +824,14 @@ extension AgentViewModel {
                             
                             // Apple Intelligence summary annotation
                             if mediator.isEnabled && mediator.showAnnotationsToUser && !commandsRun.isEmpty {
+                                taskLog.info("[main] Apple AI mediator: summarizing completion...")
                                 if let summaryAnnotation = await mediator.summarizeCompletion(summary: summary, commandsRun: commandsRun) {
                                     appleAIAnnotations.append(summaryAnnotation)
                                     appendLog(summaryAnnotation.formatted)
                                     flushLog()
+                                    if agentReplyHandle != nil {
+                                        sendProgressUpdate("[\u{F8FF}AI] \(summaryAnnotation.content)")
+                                    }
                                 }
                             }
                             
@@ -2264,12 +2280,17 @@ extension AgentViewModel {
 
             } catch {
                 if !Task.isCancelled {
+                    taskLog.error("[main] LLM error at iteration \(iterations): \(error.localizedDescription)")
                     appendLog("Error: \(error.localizedDescription)")
                     // Apple Intelligence error explanation
                     if mediator.isEnabled && mediator.showAnnotationsToUser {
+                        taskLog.info("[main] Apple AI mediator: explaining error...")
                         if let errorAnnotation = await mediator.explainError(toolName: "LLM request", error: error.localizedDescription) {
                             appendLog(errorAnnotation.formatted)
                             flushLog()
+                            if agentReplyHandle != nil {
+                                sendProgressUpdate("[\u{F8FF}AI] \(errorAnnotation.content)")
+                            }
                         }
                     }
                 }
@@ -2283,10 +2304,14 @@ extension AgentViewModel {
 
         // Apple Intelligence: suggest next steps after completion
         if mediator.isEnabled && mediator.showAnnotationsToUser && !completionSummary.isEmpty {
+            taskLog.info("[main] Apple AI mediator: suggesting next steps...")
             let context = "Task: \(prompt)\nResult: \(completionSummary)\nCommands: \(commandsRun.joined(separator: ", "))"
             if let nextSteps = await mediator.suggestNextSteps(context: context) {
                 appendLog(nextSteps.formatted)
                 flushLog()
+                if agentReplyHandle != nil {
+                    sendProgressUpdate("[\u{F8FF}AI] \(nextSteps.content)")
+                }
             }
         }
 
@@ -2302,6 +2327,7 @@ extension AgentViewModel {
         // Stop progress updates
         stopProgressUpdates()
         
+        taskLog.info("[main] executeTask finished after \(iterations) iteration(s), cancelled=\(Task.isCancelled)")
         flushLog()
         persistLogNow()
         isRunning = false
