@@ -915,8 +915,6 @@ private struct LangDef {
         pattern: #"(?:^|\s)(\.?/?(?:[\w.@+\-]+/)+[\w.@+\-]+/?)"#, options: .anchorsMatchLines)
     private static let actFlagRx: NSRegularExpression? = try? NSRegularExpression(
         pattern: #"(?<=\s)-{1,2}[\w][\w\-]*"#)
-    private static let actQuoteRx: NSRegularExpression? = try? NSRegularExpression(
-        pattern: ##"'[^'\n]*'|"[^"\n]*""##)
 
     /// Check if a line is activity log output (timestamps, grep results, or ls output)
     static func looksLikeActivityLogLine(_ line: String) -> Bool {
@@ -1005,12 +1003,6 @@ private struct LangDef {
             result.addAttribute(.foregroundColor, value: cFlag, range: mr)
         }
 
-        // Quoted strings → string color
-        let cStr = CodeBlockTheme.string
-        actQuoteRx?.enumerateMatches(in: line, range: r) { m, _, _ in
-            guard let mr = m?.range else { return }
-            result.addAttribute(.foregroundColor, value: cStr, range: mr)
-        }
 
         // Timestamps [HH:MM:SS] → dim
         let cTime = termDate
