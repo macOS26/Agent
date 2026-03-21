@@ -44,8 +44,7 @@ struct AppleIntelligencePopover: View {
                     .font(.caption)
                 Toggle("Inject context into LLM prompts", isOn: $aiMediator.injectContextToLLM)
                     .font(.caption)
-                Toggle("Explain tool calls", isOn: $aiMediator.explainToolCalls)
-                    .font(.caption)
+
             }
 
             Text("Apple Intelligence observes conversations and adds helpful context using [\u{F8FF}AI] tags.")
