@@ -30,6 +30,23 @@ struct ContentView: View {
         VStack(spacing: 0) {
             // Header
             HStack {
+                // Service status indicators (left side)
+                StatusDot(
+                    isActive: viewModel.userServiceActive,
+                    wasActive: viewModel.userWasActive,
+                    isBusy: viewModel.isRunning,
+                    enabled: viewModel.userEnabled
+                )
+                .help("User Agent: \(viewModel.userServiceActive ? "Running" : (viewModel.userEnabled ? "Stopped" : "Disabled"))")
+
+                StatusDot(
+                    isActive: viewModel.rootServiceActive,
+                    wasActive: viewModel.rootWasActive,
+                    isBusy: viewModel.isRunning,
+                    enabled: viewModel.rootEnabled
+                )
+                .help("Daemon: \(viewModel.rootServiceActive ? "Running" : (viewModel.rootEnabled ? "Stopped" : "Disabled"))")
+
                 Spacer()
 
                 // Services popover button — gear color reflects overall system health
