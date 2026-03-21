@@ -2265,6 +2265,13 @@ extension AgentViewModel {
             } catch {
                 if !Task.isCancelled {
                     appendLog("Error: \(error.localizedDescription)")
+                    // Apple Intelligence error explanation
+                    if mediator.isEnabled && mediator.showAnnotationsToUser {
+                        if let errorAnnotation = await mediator.explainError(toolName: "LLM request", error: error.localizedDescription) {
+                            appendLog(errorAnnotation.formatted)
+                            flushLog()
+                        }
+                    }
                 }
                 break
             }
@@ -2272,6 +2279,15 @@ extension AgentViewModel {
 
         if iterations >= maxIterations {
             appendLog("Reached maximum iterations (\(maxIterations))")
+        }
+
+        // Apple Intelligence: suggest next steps after completion
+        if mediator.isEnabled && mediator.showAnnotationsToUser && !completionSummary.isEmpty {
+            let context = "Task: \(prompt)\nResult: \(completionSummary)\nCommands: \(commandsRun.joined(separator: ", "))"
+            if let nextSteps = await mediator.suggestNextSteps(context: context) {
+                appendLog(nextSteps.formatted)
+                flushLog()
+            }
         }
 
         // Always save history if task didn't call task_complete
