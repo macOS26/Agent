@@ -91,7 +91,7 @@ final class AgentViewModel {
     var servicesGearHelp: String {
         let userStatus = userPingOK ? "connected" : (userEnabled ? "not responding" : "disabled")
         let rootStatus = daemonPingOK ? "connected" : (rootEnabled ? "not responding" : "disabled")
-        return "Services — Agent: \(userStatus), Daemon: \(rootStatus)"
+        return "Background Agents — Agent: \(userStatus), Daemon: \(rootStatus)"
     }
 
     var selectedProvider: APIProvider = {
