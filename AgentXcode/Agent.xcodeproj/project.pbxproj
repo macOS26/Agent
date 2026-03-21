@@ -21,10 +21,6 @@
 		AA1000000000000000003B /* ScriptService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000029 /* ScriptService.swift */; };
 		AA1000000000000000003D /* XcodeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002B /* XcodeService.swift */; };
 		AA1000000000000000003E /* ScriptingBridge.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002C /* ScriptingBridge.framework */; };
-		BB10000000000000000011 /* AccessibilityService+InputSimulation.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB10000000000000000001 /* AccessibilityService+InputSimulation.swift */; };
-		BB10000000000000000012 /* AccessibilityService+Screenshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB10000000000000000002 /* AccessibilityService+Screenshot.swift */; };
-		BB10000000000000000013 /* AccessibilityService+Elements.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB10000000000000000003 /* AccessibilityService+Elements.swift */; };
-		BB10000000000000000014 /* AccessibilityService+SmartClick.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB10000000000000000004 /* AccessibilityService+SmartClick.swift */; };
 		BB10000000000000000015 /* AgentViewModel+Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB10000000000000000005 /* AgentViewModel+Helpers.swift */; };
 		AA1000000000000000003F /* DependencyChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002D /* DependencyChecker.swift */; };
 		AA10000000000000000044 /* DependencyOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002E /* DependencyOverlayView.swift */; };
@@ -198,10 +194,6 @@
 		AA10000000000000000061 /* ActivityLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityLogView.swift; sourceTree = "<group>"; };
 		AA10000000000000000068 /* StatusDotView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusDotView.swift; sourceTree = "<group>"; };
 		AA10000000000000000069 /* ChatModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModels.swift; sourceTree = "<group>"; };
-		BB10000000000000000001 /* AccessibilityService+InputSimulation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AccessibilityService+InputSimulation.swift"; sourceTree = "<group>"; };
-		BB10000000000000000002 /* AccessibilityService+Screenshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AccessibilityService+Screenshot.swift"; sourceTree = "<group>"; };
-		BB10000000000000000003 /* AccessibilityService+Elements.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AccessibilityService+Elements.swift"; sourceTree = "<group>"; };
-		BB10000000000000000004 /* AccessibilityService+SmartClick.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AccessibilityService+SmartClick.swift"; sourceTree = "<group>"; };
 		BB10000000000000000005 /* AgentViewModel+Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+Helpers.swift"; sourceTree = "<group>"; };
 		AA10000000000000000075 /* AccessibilityService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityService.swift; sourceTree = "<group>"; };
 		AA10000000000000000078 /* MessagesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesView.swift; sourceTree = "<group>"; };
@@ -410,10 +402,6 @@
 				AA10000000000000000046 /* KeychainService.swift */,
 				AA1000000000000000002F /* AppleEventService.swift */,
 				AA10000000000000000075 /* AccessibilityService.swift */,
-				BB10000000000000000001 /* AccessibilityService+InputSimulation.swift */,
-				BB10000000000000000002 /* AccessibilityService+Screenshot.swift */,
-				BB10000000000000000003 /* AccessibilityService+Elements.swift */,
-				BB10000000000000000004 /* AccessibilityService+SmartClick.swift */,
 				WEB1000000000000000002 /* WebAutomationService.swift */,
 				EA80000000000000000002 /* NSAppleScriptService.swift */,
 				EA70000000000000000002 /* SDEFService.swift */,
@@ -723,10 +711,6 @@
 				AA10000000000000000044 /* DependencyOverlayView.swift in Sources */,
 				AA10000000000000000045 /* AppleEventService.swift in Sources */,
 				AA10000000000000000076 /* AccessibilityService.swift in Sources */,
-				BB10000000000000000011 /* AccessibilityService+InputSimulation.swift in Sources */,
-				BB10000000000000000012 /* AccessibilityService+Screenshot.swift in Sources */,
-				BB10000000000000000013 /* AccessibilityService+Elements.swift in Sources */,
-				BB10000000000000000014 /* AccessibilityService+SmartClick.swift in Sources */,
 				WEB1000000000000000001 /* WebAutomationService.swift in Sources */,
 				EA80000000000000000001 /* NSAppleScriptService.swift in Sources */,
 				EA70000000000000000001 /* SDEFService.swift in Sources */,
