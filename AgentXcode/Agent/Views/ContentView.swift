@@ -54,18 +54,6 @@ struct ContentView: View {
                         .tint(.green)
                         .font(.caption)
                         .foregroundStyle(viewModel.rootEnabled ? .secondary : .tertiary)
-                    StatusDot(
-                        isActive: viewModel.messagesPolling,
-                        wasActive: viewModel.messagesMonitorEnabled,
-                        isBusy: false,
-                        enabled: viewModel.messagesMonitorEnabled
-                    )
-                    Toggle("Messages", isOn: $viewModel.messagesMonitorEnabled)
-                        .toggleStyle(.switch)
-                        .controlSize(.mini)
-                        .tint(.green)
-                        .font(.caption)
-                        .foregroundStyle(viewModel.messagesMonitorEnabled ? .secondary : .tertiary)
                 }
 
                 Button("Unregister") {
@@ -90,11 +78,15 @@ struct ContentView: View {
 
                 Spacer()
 
-                Button { showMessages.toggle() } label: {
-                    Image(systemName: "message")
+                Button {
+                    showMessages.toggle()
+                } label: {
+                    Image(systemName: viewModel.messagesMonitorEnabled ? "message.fill" : "message")
+                        .foregroundStyle(viewModel.messagesMonitorEnabled ? .green : .secondary)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
+                .help(viewModel.messagesMonitorEnabled ? "Messages Monitor: ON (click to configure)" : "Messages Monitor: OFF (click to configure)")
                 .popover(isPresented: $showMessages) {
                     MessagesView(viewModel: viewModel)
                 }
