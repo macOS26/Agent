@@ -63,6 +63,7 @@ struct ContentView: View {
                 Button { showServices.toggle() } label: {
                     Image(systemName: "gearshape.2")
                         .foregroundStyle(viewModel.servicesGearColor)
+                        .frame(width: 20, height: 16)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
@@ -76,6 +77,7 @@ struct ContentView: View {
                 } label: {
                     Image(systemName: viewModel.messagesMonitorEnabled ? "message.fill" : "message")
                         .foregroundStyle(viewModel.messagesMonitorEnabled ? .blue : .secondary)
+                        .frame(width: 20, height: 16)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
@@ -86,6 +88,7 @@ struct ContentView: View {
 
                 Button { showAccessibility.toggle() } label: {
                     Image(systemName: "hand.raised")
+                        .frame(width: 20, height: 16)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
@@ -95,6 +98,7 @@ struct ContentView: View {
 
                 Button { showMCPServers.toggle() } label: {
                     Image(systemName: "server.rack")
+                        .frame(width: 20, height: 16)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
@@ -104,6 +108,7 @@ struct ContentView: View {
 
                 Button { showTools.toggle() } label: {
                     Image(systemName: "wrench.and.screwdriver")
+                        .frame(width: 20, height: 16)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
@@ -113,6 +118,7 @@ struct ContentView: View {
 
                 Button { showSettings.toggle() } label: {
                     Image(systemName: "cpu")
+                        .frame(width: 20, height: 16)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
@@ -126,6 +132,7 @@ struct ContentView: View {
                 } label: {
                     Image(systemName: AppleIntelligenceMediator.isAvailable ? "brain.fill" : "brain")
                         .foregroundStyle(aiMediator.isEnabled ? .blue : .secondary)
+                        .frame(width: 20, height: 16)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
@@ -136,6 +143,7 @@ struct ContentView: View {
 
                 Button { showOptions.toggle() } label: {
                     Image(systemName: "slider.horizontal.3")
+                        .frame(width: 20, height: 16)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
@@ -145,6 +153,7 @@ struct ContentView: View {
 
                 Button { showHistory.toggle() } label: {
                     Image(systemName: "clock.arrow.circlepath")
+                        .frame(width: 20, height: 16)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
@@ -159,6 +168,7 @@ struct ContentView: View {
                 Button { showClearConfirm = true } label: {
                     Image(systemName: "trash")
                         .foregroundStyle(currentTabColor)
+                        .frame(width: 20, height: 16)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
