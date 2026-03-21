@@ -13,6 +13,8 @@ Agent! works with Claude API, Ollama Pro/Max Cloud, and local Ollama. Local LLMs
 
 ## What's Supported
 
+<img width="1501" height="900" alt="Screenshot 2026-03-21 at 3 44 08 AM" src="https://github.com/user-attachments/assets/f293be2a-8e58-4a4c-b266-af2bb4dde1af" />
+
 ### Multi-Provider LLM Support
 
 Agent! supports multiple LLM providers with seamless switching. Configure your preferred provider in Settings. 
