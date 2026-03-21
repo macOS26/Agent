@@ -23,7 +23,7 @@ struct AppleIntelligencePopover: View {
             .padding(20)
         }
         .frame(width: 380)
-        .frame(maxHeight: 680)
+        .frame(maxHeight: 700)
     }
 
     // MARK: - Mediator Section
