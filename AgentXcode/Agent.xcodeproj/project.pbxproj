@@ -285,16 +285,6 @@
 			);
 			sourceTree = "<group>";
 		};
-		EE10000000000000000010 /* ObjC */ = {
-			isa = PBXGroup;
-			children = (
-				EE10000000000000000003 /* Agent-Bridging-Header.h */,
-				EE10000000000000000001 /* ObjCTry.h */,
-				EE10000000000000000002 /* ObjCTry.m */,
-			);
-			path = ObjC;
-			sourceTree = "<group>";
-		};
 		AA10000000000000000041 /* Agent */ = {
 			isa = PBXGroup;
 			children = (
@@ -508,6 +498,16 @@
 				AA1000000000000000007A /* ScriptTab.swift */,
 			);
 			path = AgentScriptTabs;
+			sourceTree = "<group>";
+		};
+		EE10000000000000000010 /* ObjC */ = {
+			isa = PBXGroup;
+			children = (
+				EE10000000000000000003 /* Agent-Bridging-Header.h */,
+				EE10000000000000000001 /* ObjCTry.h */,
+				EE10000000000000000002 /* ObjCTry.m */,
+			);
+			path = ObjC;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
