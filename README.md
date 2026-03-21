@@ -9,7 +9,7 @@
 [![GitHub downloads](https://img.shields.io/github/downloads/macOS26/Agent/total.svg?v=4)](https://github.com/macOS26/Agent/releases)
 [![GitHub stars](https://img.shields.io/github/stars/macOS26/Agent.svg?style=social)](https://github.com/macOS26/Agent/stargazers)
 
-Agent! works with Claude API, Ollama Pro/Max Cloud, and local Ollama. Apple Intelligence is experimental (alpha). Local LLMs need 32-128GB RAM on Apple Silicon.
+Agent! works with Claude API, Ollama Pro/Max Cloud, and local Ollama. Local LLMs need 32-128GB RAM on Apple Silicon.
 
 ## What's Supported
 
@@ -27,7 +27,24 @@ OpenAI, DeepSeek, HuggingFace is untested. If you have any issues please file an
 | **Hugging Face** | Hugging Face API key | ✓ | Hosted inference API |
 | **Ollama Cloud** | Ollama Pro API key | Auto | Cloud-hosted Ollama models |
 | **Local Ollama** | None | Auto | Requires 32-128GB RAM on Apple Silicon |
-| **Apple Intelligence** | None | ✗ | Experimental alpha, on-device only |
+
+### Apple Intelligence Mediator
+
+Apple Intelligence serves as a **communication mediator** between the LLM and the user, not as an LLM provider. It observes conversations and adds helpful context using on-device intelligence:
+
+| Feature | Description |
+|---------|-------------|
+| **Error Explanations** | Translates technical errors into user-friendly explanations |
+| **Next Step Suggestions** | Suggests logical follow-up actions after task completion |
+| **Context Injection** | Clarifies ambiguous user messages for the LLM |
+| **Conversation Summaries** | Provides brief summaries of completed tasks |
+
+Annotations are tagged with `[AI]` prefixes to distinguish them from LLM responses:
+- `[AI → User]` — User-facing explanations
+- `[AI → LLM]` — Context injected into LLM prompts
+- `[AI → Both]` — Information for both parties
+
+Enable Apple Intelligence Mediator in Settings to enhance communication clarity. Requires Apple Intelligence-capable Mac running macOS 26+.
 
 ### System Requirements
 
@@ -116,7 +133,6 @@ Agent uses SwiftUI, XPC, SMAppService, Apple Events, ScriptingBridge, Accessibil
   - **Hugging Face** (Hugging Face API key)
   - **Ollama Pro Cloud** (Ollama API key)
   - **Local Ollama** (no API key required, but requires significant RAM)
-  - **Apple Intelligence** (no API key required — experimental alpha, runs on-device)
 
 ### 2. Build and Run
 
