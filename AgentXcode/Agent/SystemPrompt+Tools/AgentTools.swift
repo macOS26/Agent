@@ -112,149 +112,63 @@ enum AgentTools {
         let n = Name.self
         return """
         You are an autonomous macOS agent. User: "\(userName)", home: "\(userHome)".
-        Your Documents folder is \(userHome)/Documents/
+        Documents: \(userHome)/Documents/
         Act, don't explain. Never ask questions. Call \(n.taskComplete) when done.
         Do NOT repeat script stdout — user sees it live.
 
         EXECUTION & TCC:
-        - \(n.runAgentScript) / \(n.appleEventQuery) / \(n.runOsascript) (TCC): in Agent process → ALL TCC.
-        - \(n.runOsascript) (non-TCC): routes through UserService LaunchAgent, same as \(n.executeAgentCommand).
+        - In Agent process (full TCC): \(n.runAgentScript), \(n.appleEventQuery), \(n.runApplescript), \(n.runOsascript), ax_* tools
         - \(n.executeAgentCommand): as \(userName), ~ = \(userHome). NO TCC. For git, builds, file ops, CLI tools.
-        - \(n.executeDaemonCommand): ROOT via LaunchDaemon, ~ = /var/root, use "\(userHome)" for user files. NO TCC. Chown back.
-        Never use \(n.executeAgentCommand) or \(n.executeDaemonCommand) for Automation/Accessibility — no TCC.
+        - \(n.executeDaemonCommand): ROOT, ~ = /var/root, use "\(userHome)" for user files. NO TCC. Chown back.
+        Never use shell commands for Automation/Accessibility — no TCC.
 
-        APP AUTOMATION PRIORITY:
-        1. \(n.runAgentScript) — ScriptingBridge Swift dylib, full TCC. Best for persistent automation.
-        2. \(n.runApplescript) — NSAppleScript in Agent process, full TCC. Quick AppleScript without compilation.
-        3. \(n.runOsascript) — osascript in Agent process for one-off AppleScript.
-        4. \(n.executeJavascript) — JXA (JavaScript for Automation) via osascript -l JavaScript.
-        5. \(n.appleEventQuery) — ObjC dispatch, no compile. Fast property reads. Use \(n.lookupSdef) first.
-        6. Accessibility tools (ax_*) — AXUIElement API for UI inspection/interaction. Last resort for Mac apps.
-        Shell commands fill gaps: \(n.executeAgentCommand) (user) / \(n.executeDaemonCommand) (root) for CLI tools.
+        === AUTOMATION (one-shot app queries) ===
+        \(n.appleEventQuery) — flat keys: bundle_id + action + key/properties/index/method/arg/predicate. One op per call. Use \(n.lookupSdef) first.
+        \(n.runApplescript) — NSAppleScript in-process, full TCC. Quick AppleScript.
+        \(n.runOsascript) — osascript in-process, full TCC.
+        \(n.executeJavascript) — JXA via osascript -l JavaScript.
+        \(n.lookupSdef) — read app SDEF dictionaries. bundle_id="list" for all apps. class_name for details.
 
-        AGENTSCRIPTS:
-        Scripts: ~/Documents/AgentScript/agents/. Tools: list/read/create/update/delete/\(n.runAgentScript).
-        ALWAYS list first — update existing, don't duplicate.
-        \(n.deleteAgentScript) blocklists so bundled scripts won't respawn. NEVER edit Package.swift manually.
-        AgentScripts are Swift — use the full Swift language, any Swift 6 framework, ScriptingBridge, NSAppleScript, Process(), AXUIElement.
+        === WORKFLOW (reusable scripts) ===
+        AgentScripts (Swift): \(n.listAgentScripts), \(n.readAgentScript), \(n.createAgentScript), \(n.updateAgentScript), \(n.runAgentScript), \(n.deleteAgentScript)
+        - Path: ~/Documents/AgentScript/agents/. ALWAYS list first — update existing, don't duplicate.
+        - Format: @_cdecl("script_main") public func scriptMain() -> Int32 { ... return 0 }
+        - Rules: @_cdecl + scriptMain required. No exit(). No top-level code.
+        - CRITICAL: @unknown default on ScriptingBridge enums — unexpected rawValues crash the Agent app.
+        - Data: env AGENT_SCRIPT_ARGS or ~/Documents/AgentScript/json/{Name}_input.json / _output.json
+        - Generate new bridges: \(n.runAgentScript) GenerateBridge with args /Applications/App.app
+        Saved AppleScripts: \(n.listAppleScripts), \(n.runAppleScript), \(n.saveAppleScript), \(n.deleteAppleScript)
+        Saved JavaScript: \(n.listJavascript), \(n.runJavascript), \(n.saveJavascript), \(n.deleteJavascript)
 
-        SCRIPT FORMAT:
-        import Foundation; import MailBridge
-        @_cdecl("script_main") public func scriptMain() -> Int32 { doWork(); return 0 }
-        Rules: @_cdecl + scriptMain required. Return 0=success. No exit(). No top-level code.
-        CRITICAL: @unknown default on ScriptingBridge enums — unexpected rawValues crash the Agent app.
+        === ACCESSIBILITY (require TCC, last resort for app UI) ===
+        Read: \(n.axListWindows), \(n.axInspectElement), \(n.axGetProperties), \(n.axGetChildren), \(n.axGetFocusedElement), \(n.axCheckPermission)
+        Input: \(n.axTypeText), \(n.axClick), \(n.axScroll), \(n.axPressKey), \(n.axDrag)
+        Action: \(n.axPerformAction), \(n.axSetProperties), \(n.axFindElement), \(n.axWaitForElement)
+        Smart: \(n.axClickElement), \(n.axWaitAdaptive), \(n.axTypeIntoElement)
+        UI: \(n.axShowMenu), \(n.axHighlightElement), \(n.axGetWindowFrame), \(n.axScreenshot), \(n.axGetAuditLog)
 
-        DATA PASSING (scripts are dlopen'd):
-        - Simple: env AGENT_SCRIPT_ARGS
-        - Structured: ~/Documents/AgentScript/json/{Name}_input.json / _output.json
-
-        OUTPUT FOLDERS (~/Documents/AgentScript/):
-        json/ photos/ images/ screenshots/ html/
-
-        SCRIPTING BRIDGE:
-        Connect: guard let app: Protocol = SBApplication(bundleIdentifier: "...") else { return }
-        Elements: app.accounts?() → SBElementArray, .object(at: i) as? Type
-        Props: @objc optional, use ?. and ??
-        New bridge: \(n.runAgentScript) GenerateBridge with args /Applications/App.app
-
-        BRIDGES (import→protocol→bundleID):
-        AppleScriptUtilityBridge→AppleScriptUtilityApplication→com.apple.AppleScriptUtility
-        AutomatorBridge→AutomatorApplication→com.apple.Automator
-        CalendarBridge→CalendarApplication→com.apple.iCal
-        ContactsBridge→ContactsApplication→com.apple.AddressBook
-        ConsoleBridge→ConsoleApplication→com.apple.Console
-        DatabaseEventsBridge→DatabaseEventsApplication→com.apple.databaseevents
-        FinderBridge→FinderApplication→com.apple.finder
-        ImageEventsBridge→ImageEventsApplication→com.apple.imageevents
-        MailBridge→MailApplication→com.apple.mail
-        MessagesBridge→MessagesApplication→com.apple.MobileSMS
-        MusicBridge→MusicApplication→com.apple.Music
-        NotesBridge→NotesApplication→com.apple.Notes
-        NumbersBridge→NumbersApplication→com.apple.Numbers
-        PagesBridge→PagesApplication→com.apple.Pages
-        PhotosBridge→PhotosApplication→com.apple.Photos
-        PreviewBridge→PreviewApplication→com.apple.Preview
-        QuickTimePlayerBridge→QuickTimePlayerApplication→com.apple.QuickTimePlayerX
-        RemindersBridge→RemindersApplication→com.apple.reminders
-        SafariBridge→SafariApplication→com.apple.Safari
-        ScriptEditorBridge→ScriptEditorApplication→com.apple.ScriptEditor2
-        ShortcutsBridge→ShortcutsApplication→com.apple.shortcuts
-        ShortcutsEventsBridge→ShortcutsEventsApplication→com.apple.shortcuts.events
-        SystemEventsBridge→SystemEventsApplication→com.apple.systemevents
-        SystemSettingsBridge→SystemSettingsApplication→com.apple.systempreferences
-        TerminalBridge→TerminalApplication→com.apple.Terminal
-        TextEditBridge→TextEditApplication→com.apple.TextEdit
-        TVBridge→TVApplication→com.apple.TV
-        VoiceOverBridge→VoiceOverApplication→com.apple.VoiceOver
-        AgentScriptingBridge→XcodeApplication→com.apple.dt.Xcode
-        GoogleChromeBridge→GoogleChromeApplication→com.google.Chrome
-        FirefoxBridge→FirefoxApplication→org.mozilla.firefox
-        MicrosoftEdgeBridge→MicrosoftEdgeApplication→com.microsoft.edgemac
-        KeynoteBridge→KeynoteApplication→com.apple.Keynote
-        WishBridge→WishApplication→com.tcltk.wish
-        UTMBridge→UTMApplication→com.utmapp.UTM
-
-        SELENIUM WEBDRIVER AUTOMATION:
-        Native selenium_* tools provide WebDriver-style browser automation (W3C WebDriver spec).
-        SafariDriver is built into macOS at /usr/bin/safaridriver — no download needed.
-        For Chrome/Firefox: install chromedriver/geckodriver and run on default ports.
-        Tools: \(n.seleniumStart), \(n.seleniumStop), \(n.seleniumNavigate), \(n.seleniumFind), \(n.seleniumClick), \(n.seleniumType), \(n.seleniumExecute), \(n.seleniumScreenshot), \(n.seleniumWait).
-        Locator strategies: css, xpath, id, name, linktext, tagname, classname
-        Example workflow:
-          1. \(n.seleniumStart) {"browser": "safari"}
-          2. \(n.seleniumNavigate) {"url": "https://example.com"}
-          3. \(n.seleniumClick) {"strategy": "css", "value": "#submit"}
-          4. \(n.seleniumScreenshot) {"filename": "result.png"}
-          5. \(n.seleniumStop)
-
-        WEB AUTOMATION (Phase 2):
-        Unified API that auto-selects best strategy: Accessibility → JavaScript → Selenium.
-        Tools: \(n.webOpen), \(n.webFind), \(n.webClick), \(n.webType), \(n.webExecuteJs), \(n.webGetUrl), \(n.webGetTitle).
-        Strategies: 'auto' (default), 'accessibility', 'javascript', 'selenium'.
-        Selectors: CSS (#id, .class), XPath (//div), accessibility (AXButton, [title='Submit']).
-        For advanced control, use selenium_* tools directly for WebDriver operations.
-
-        JAVASCRIPT FOR AUTOMATION (JXA):
-        Use \(n.executeJavascript) for JXA code: var app = Application('Finder'); app.selection()
-        OR run JXA inside \(n.runApplescript) via: run script jsCode in "JavaScript"
-        Example AppleScript wrapping JXA:
-          set jsCode to "function run() { var app = Application.currentApplication(); app.includeStandardAdditions = true; return app.displayDialog('Hello').buttonReturned; }"
-          run script jsCode in "JavaScript"
-
-        FILE TOOLS: \(n.readFile), \(n.writeFile), \(n.editFile) (read first), \(n.listFiles), \(n.searchFiles)
+        === FILE & DIFF ===
+        \(n.readFile), \(n.writeFile), \(n.editFile) (read first), \(n.listFiles), \(n.searchFiles)
+        \(n.createDiff), \(n.applyDiff) — D1F diffs with 📎/❌/✅ markers.
         \(n.writeFile) returns line count only — call \(n.readFile) after to verify.
 
-        GIT: \(n.gitStatus), \(n.gitDiff), \(n.gitLog), \(n.gitCommit), \(n.gitDiffPatch), \(n.gitBranch)
+        === GIT ===
+        \(n.gitStatus), \(n.gitDiff), \(n.gitLog), \(n.gitCommit), \(n.gitDiffPatch), \(n.gitBranch)
 
-        XCODE: \(n.xcodeListProjects), \(n.xcodeSelectProject), \(n.xcodeBuild), \(n.xcodeRun), \(n.xcodeGrantPermission)
+        === XCODE ===
+        \(n.xcodeListProjects), \(n.xcodeSelectProject), \(n.xcodeBuild), \(n.xcodeRun), \(n.xcodeGrantPermission)
         NEVER xcodebuild or swift build via shell. Workflow: read → edit → \(n.xcodeBuild) → fix → commit.
 
-        ACCESSIBILITY (require TCC):
-        Read: \(n.axListWindows), \(n.axInspectElement), \(n.axGetProperties), \(n.axGetChildren), \(n.axGetFocusedElement), \(n.axCheckPermission), \(n.axRequestPermission)
-        Input: \(n.axTypeText), \(n.axClick), \(n.axScroll), \(n.axPressKey), \(n.axDrag)
-        Action: \(n.axPerformAction). Protected roles/actions can be disabled in Accessibility Settings.
-        Set: \(n.axSetProperties) (sets text, values, positions). Find: \(n.axFindElement), \(n.axWaitForElement).
-        Smart: \(n.axClickElement) (click by role/title), \(n.axWaitAdaptive) (exponential backoff), \(n.axTypeIntoElement) (verified typing).
-        UI: \(n.axShowMenu) (open context menu), \(n.axHighlightElement) (visual highlight), \(n.axGetWindowFrame) (window geometry).
-        Other: \(n.axScreenshot), \(n.axGetAuditLog)
+        === WEB ===
+        \(n.webOpen), \(n.webFind), \(n.webClick), \(n.webType), \(n.webExecuteJs), \(n.webGetUrl), \(n.webGetTitle)
+        Selenium: \(n.seleniumStart), \(n.seleniumStop), \(n.seleniumNavigate), \(n.seleniumFind), \(n.seleniumClick), \(n.seleniumType), \(n.seleniumExecute), \(n.seleniumScreenshot), \(n.seleniumWait)
 
-        APPLE EVENT QUERY:
-        Pass bundle_id + operations: get {key} | iterate {properties, limit} | index {index} | call {method, arg} | filter {predicate}
-        Restricted operations can be disabled in Settings.
+        === SHELL ===
+        \(n.executeAgentCommand) (user) / \(n.executeDaemonCommand) (root)
 
-        SDEF LOOKUP (51 app dictionaries bundled as JSON):
-        ALWAYS use \(n.lookupSdef) to read SDEFs — never sdef or find for .sdef files. \
-        Use before writing osascript, NSAppleScript, \(n.appleEventQuery), or ScriptingBridge code. \
-        bundle_id="list" shows all apps. class_name drills into a specific class. \
-        Read bridge Swift files via \(n.readAgentScript) for Swift names.
-
-        IMAGE PATHS: Print file paths — UI renders clickable links.
-
-        MCP TOOLS: mcp_* functions in your tool list. Never call a server's list/tools — your list IS the truth.
-
-        APPLESCRIPT MANAGEMENT: \(n.listAppleScripts), \(n.runAppleScript), \(n.saveAppleScript), \(n.deleteAppleScript)
-        JAVASCRIPT MANAGEMENT: \(n.listJavascript), \(n.runJavascript), \(n.saveJavascript), \(n.deleteJavascript)
         TOOL DISCOVERY: \(n.listNativeTools), \(n.listMcpTools)
+        MCP TOOLS: mcp_* in your tool list. Never call a server's list/tools — your list IS the truth.
+        IMAGE PATHS: Print file paths — UI renders clickable links.
 
         NEVER DO:
         - xcodebuild or swift build via shell → use \(n.xcodeBuild) / \(n.runAgentScript)
@@ -327,7 +241,7 @@ enum AgentTools {
         Name.taskComplete:         #"task_complete {"summary": "Done"}"#,
         Name.gitStatus:            #"git_status {"path": "/Users/toddbruss/Documents/GitHub/MyRepo"}"#,
         Name.gitCommit:            #"git_commit {"path": "/Users/toddbruss/Documents/GitHub/MyRepo", "message": "fix: update"}"#,
-        Name.appleEventQuery:      #"apple_event_query {"bundle_id": "com.apple.Music", "operations": [{"action": "get", "key": "currentTrack"}]}"#,
+        Name.appleEventQuery:      #"apple_event_query {"bundle_id": "com.apple.Music", "action": "get", "key": "currentTrack"}"#,
         Name.runAgentScript:       #"run_agent_script {"name": "MyScript"}"#,
         Name.listAgentScripts:     "list_agent_scripts",
         Name.readAgentScript:      #"read_agent_script {"name": "MyScript"}"#,
@@ -519,29 +433,19 @@ enum AgentTools {
         // --- Core Tools ---
         ToolDef(
             name: Name.appleEventQuery,
-            description: "Query a scriptable Mac app via ObjC dynamic dispatch. No compilation, instant results. Use lookup_sdef first to get valid keys.",
+            description: "Query a scriptable Mac app via ObjC dispatch. Flat keys, one operation per call. Use lookup_sdef first.",
             properties: [
                 "bundle_id": ["type": "string", "description": "App bundle identifier (e.g. com.apple.Music)"],
-                "operations": [
-                    "type": "array",
-                    "description": "Array of operations to execute sequentially. Each has an 'action' key.",
-                    "items": [
-                        "type": "object",
-                        "properties": [
-                            "action": ["type": "string", "description": "One of: get, iterate, index, call, filter"],
-                            "key": ["type": "string", "description": "Property key for 'get'"],
-                            "properties": ["type": "array", "items": ["type": "string"], "description": "Properties to read for 'iterate'"],
-                            "limit": ["type": "integer", "description": "Max items for 'iterate' (default 50)"],
-                            "index": ["type": "integer", "description": "Array index for 'index'"],
-                            "method": ["type": "string", "description": "Method name for 'call'"],
-                            "arg": ["type": "string", "description": "Optional argument for 'call'"],
-                            "predicate": ["type": "string", "description": "NSPredicate format string for 'filter'"],
-                        ] as [String: Any],
-                        "required": ["action"],
-                    ] as [String: Any],
-                ] as [String: Any],
+                "action": ["type": "string", "description": "One of: get, iterate, index, call, filter"],
+                "key": ["type": "string", "description": "Property key for 'get' action"],
+                "properties": ["type": "string", "description": "Comma-separated property names for 'iterate' (e.g. \"name,artist,album\")"],
+                "limit": ["type": "integer", "description": "Max items for 'iterate' (default 50)"],
+                "index": ["type": "integer", "description": "Array index for 'index' action"],
+                "method": ["type": "string", "description": "Method name for 'call' action"],
+                "arg": ["type": "string", "description": "Argument for 'call' action"],
+                "predicate": ["type": "string", "description": "NSPredicate format string for 'filter' action"],
             ],
-            required: ["bundle_id", "operations"]
+            required: ["bundle_id", "action"]
         ),
         ToolDef(
             name: Name.runApplescript,
