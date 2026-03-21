@@ -326,8 +326,16 @@ extension AgentViewModel {
             let replaceAll = input["replace_all"] as? Bool ?? false
             tab.appendLog("📝 Edit: \(filePath)")
             let output = await Self.offMain { CodingService.editFile(path: filePath, oldString: oldString, newString: newString, replaceAll: replaceAll) }
-            let d1f = MultiLineDiff.generateASCIIDiff(source: oldString, destination: newString)
-            tab.appendLog(d1f)
+            let diff = MultiLineDiff.createDiff(source: oldString, destination: newString, includeMetadata: true)
+            let d1f = MultiLineDiff.displayDiff(diff: diff, source: oldString, format: .ai)
+            var diffLog = d1f
+            if let meta = diff.metadata, let startLine = meta.sourceStartLine {
+                diffLog += "\n📍 Changes start at line \(startLine + 1)"
+                if let total = meta.sourceTotalLines {
+                    diffLog += " (of \(total) lines)"
+                }
+            }
+            tab.appendLog(diffLog)
             tab.appendLog(output)
             tab.flush()
             return TabToolResult(
@@ -340,13 +348,58 @@ extension AgentViewModel {
         if name == "create_diff" {
             let source = input["source"] as? String ?? ""
             let destination = input["destination"] as? String ?? ""
-            let d1f = MultiLineDiff.generateASCIIDiff(source: source, destination: destination)
-            tab.appendLog(d1f)
+            let diff = MultiLineDiff.createDiff(source: source, destination: destination, includeMetadata: true)
+            let d1f = MultiLineDiff.displayDiff(diff: diff, source: source, format: .ai)
+            let summary = MultiLineDiff.generateDiffSummary(source: source, destination: destination)
+            var result = d1f + "\n\n" + summary
+            if let meta = diff.metadata, let startLine = meta.sourceStartLine {
+                result += "\n📍 Changes start at line \(startLine + 1)"
+            }
+            tab.appendLog(result)
             tab.flush()
             return TabToolResult(
-                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": d1f],
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": result],
                 isComplete: false
             )
+        }
+
+        // apply_diff
+        if name == "apply_diff" {
+            let filePath = input["file_path"] as? String ?? ""
+            let asciiDiff = input["diff"] as? String ?? ""
+            tab.appendLog("📝 Apply D1F diff: \(filePath)")
+            let expandedPath = (filePath as NSString).expandingTildeInPath
+            guard let data = FileManager.default.contents(atPath: expandedPath),
+                  let source = String(data: data, encoding: .utf8) else {
+                let err = "Error: cannot read \(filePath)"
+                tab.appendLog(err)
+                tab.flush()
+                return TabToolResult(
+                    toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": err],
+                    isComplete: false
+                )
+            }
+            do {
+                let patched = try MultiLineDiff.applyASCIIDiff(to: source, asciiDiff: asciiDiff)
+                try patched.write(to: URL(fileURLWithPath: expandedPath), atomically: true, encoding: .utf8)
+                let verifyDiff = MultiLineDiff.createAndDisplayDiff(source: source, destination: patched, format: .ai)
+                tab.appendLog(verifyDiff)
+                let output = "Applied diff to \(filePath)"
+                tab.appendLog(output)
+                tab.flush()
+                return TabToolResult(
+                    toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                    isComplete: false
+                )
+            } catch {
+                let err = "Error applying diff: \(error.localizedDescription)"
+                tab.appendLog(err)
+                tab.flush()
+                return TabToolResult(
+                    toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": err],
+                    isComplete: false
+                )
+            }
         }
 
         // list_files

@@ -12,6 +12,7 @@ enum AgentTools {
         static let writeFile = "write_file"
         static let editFile = "edit_file"
         static let createDiff = "create_diff"
+        static let applyDiff = "apply_diff"
         static let listFiles = "list_files"
         static let searchFiles = "search_files"
         // Git Tools
@@ -320,6 +321,7 @@ enum AgentTools {
         Name.writeFile:            #"write_file {"file_path": "/Users/toddbruss/Documents/out.txt", "content": "hello"}"#,
         Name.editFile:             #"edit_file {"file_path": "/path/file.txt", "old_string": "old", "new_string": "new"}"#,
         Name.createDiff:           #"create_diff {"source": "old text", "destination": "new text"}"#,
+        Name.applyDiff:            #"apply_diff {"file_path": "/path/file.txt", "diff": "📎 line1\n❌ old\n✅ new\n📎 line3"}"#,
         Name.listFiles:            #"list_files {"pattern": "*.swift", "path": "/Users/toddbruss/Documents"}"#,
         Name.searchFiles:          #"search_files {"pattern": "TODO", "path": "/Users/toddbruss/Documents"}"#,
         Name.taskComplete:         #"task_complete {"summary": "Done"}"#,
@@ -428,6 +430,15 @@ enum AgentTools {
                 "destination": ["type": "string", "description": "The modified text"],
             ],
             required: ["source", "destination"]
+        ),
+        ToolDef(
+            name: Name.applyDiff,
+            description: "Apply a D1F ASCII diff (📎 retain, ❌ delete, ✅ insert) to a file. The diff must use emoji line prefixes. Returns the patched file content.",
+            properties: [
+                "file_path": ["type": "string", "description": "Absolute path to the file to patch"],
+                "diff": ["type": "string", "description": "D1F ASCII diff text with 📎/❌/✅ line prefixes"],
+            ],
+            required: ["file_path", "diff"]
         ),
         ToolDef(
             name: Name.listFiles,

@@ -198,9 +198,19 @@ extension AgentViewModel {
 
             do {
                 try updated.write(to: URL(fileURLWithPath: path), atomically: true, encoding: .utf8)
-                let d1f = MultiLineDiff.generateASCIIDiff(source: old, destination: new)
+                let diff = MultiLineDiff.createDiff(source: old, destination: new, includeMetadata: true)
+                let d1f = MultiLineDiff.displayDiff(diff: diff, source: old, format: .ai)
                 let label = replaceAll ? "\(occurrences) occurrences" : "1 occurrence"
-                return "Replaced \(label) in \(path)\n\n\(d1f)"
+                var result = "Replaced \(label) in \(path)\n\n\(d1f)"
+                if let meta = diff.metadata {
+                    if let startLine = meta.sourceStartLine {
+                        result += "\n📍 Changes start at line \(startLine + 1)"
+                    }
+                    if let total = meta.sourceTotalLines {
+                        result += " (of \(total) lines)"
+                    }
+                }
+                return result
             } catch {
                 return "Error: \(error.localizedDescription)"
             }
@@ -210,7 +220,32 @@ extension AgentViewModel {
         if name == "create_diff" {
             let source = input["source"] as? String ?? ""
             let destination = input["destination"] as? String ?? ""
-            return MultiLineDiff.generateASCIIDiff(source: source, destination: destination)
+            let diff = MultiLineDiff.createDiff(source: source, destination: destination, includeMetadata: true)
+            let d1f = MultiLineDiff.displayDiff(diff: diff, source: source, format: .ai)
+            var result = d1f
+            if let meta = diff.metadata {
+                result += "\n\n" + MultiLineDiff.generateDiffSummary(source: source, destination: destination)
+                if let startLine = meta.sourceStartLine {
+                    result += "\n📍 Changes start at line \(startLine + 1)"
+                }
+            }
+            return result
+        }
+
+        // D1F Apply ASCII Diff
+        if name == "apply_diff" {
+            let path = input["file_path"] as? String ?? ""
+            let asciiDiff = input["diff"] as? String ?? ""
+            guard let data = FileManager.default.contents(atPath: path),
+                  let source = String(data: data, encoding: .utf8) else { return "Error: cannot read \(path)" }
+            do {
+                let patched = try MultiLineDiff.applyASCIIDiff(to: source, asciiDiff: asciiDiff)
+                try patched.write(to: URL(fileURLWithPath: path), atomically: true, encoding: .utf8)
+                let verifyDiff = MultiLineDiff.createAndDisplayDiff(source: source, destination: patched, format: .ai)
+                return "Applied diff to \(path)\n\n\(verifyDiff)"
+            } catch {
+                return "Error applying diff: \(error.localizedDescription)"
+            }
         }
 
         // Git (via shell)
@@ -942,9 +977,17 @@ extension AgentViewModel {
 
                             let output = await Self.offMain { CodingService.editFile(path: filePath, oldString: oldString, newString: newString, replaceAll: replaceAll) }
 
-                            // Show D1F pretty diff
-                            let d1f = MultiLineDiff.generateASCIIDiff(source: oldString, destination: newString)
-                            appendLog(d1f)
+                            // Show D1F pretty diff with metadata
+                            let diff = MultiLineDiff.createDiff(source: oldString, destination: newString, includeMetadata: true)
+                            let d1f = MultiLineDiff.displayDiff(diff: diff, source: oldString, format: .ai)
+                            var diffLog = d1f
+                            if let meta = diff.metadata, let startLine = meta.sourceStartLine {
+                                diffLog += "\n📍 Changes start at line \(startLine + 1)"
+                                if let total = meta.sourceTotalLines {
+                                    diffLog += " (of \(total) lines)"
+                                }
+                            }
+                            appendLog(diffLog)
 
                             appendLog(output)
                             commandsRun.append("edit_file: \(filePath)")
@@ -954,10 +997,44 @@ extension AgentViewModel {
                         if name == "create_diff" {
                             let source = input["source"] as? String ?? ""
                             let destination = input["destination"] as? String ?? ""
-                            let d1f = MultiLineDiff.generateASCIIDiff(source: source, destination: destination)
-                            appendLog(d1f)
+                            let diff = MultiLineDiff.createDiff(source: source, destination: destination, includeMetadata: true)
+                            let d1f = MultiLineDiff.displayDiff(diff: diff, source: source, format: .ai)
+                            let summary = MultiLineDiff.generateDiffSummary(source: source, destination: destination)
+                            var result = d1f + "\n\n" + summary
+                            if let meta = diff.metadata, let startLine = meta.sourceStartLine {
+                                result += "\n📍 Changes start at line \(startLine + 1)"
+                            }
+                            appendLog(result)
                             commandsRun.append("create_diff")
-                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": d1f])
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": result])
+                        }
+
+                        if name == "apply_diff" {
+                            let filePath = input["file_path"] as? String ?? ""
+                            let asciiDiff = input["diff"] as? String ?? ""
+                            appendLog("📝 Apply D1F diff: \(filePath)")
+                            let expandedPath = (filePath as NSString).expandingTildeInPath
+                            guard let data = FileManager.default.contents(atPath: expandedPath),
+                                  let source = String(data: data, encoding: .utf8) else {
+                                let err = "Error: cannot read \(filePath)"
+                                appendLog(err)
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
+                                continue
+                            }
+                            do {
+                                let patched = try MultiLineDiff.applyASCIIDiff(to: source, asciiDiff: asciiDiff)
+                                try patched.write(to: URL(fileURLWithPath: expandedPath), atomically: true, encoding: .utf8)
+                                let verifyDiff = MultiLineDiff.createAndDisplayDiff(source: source, destination: patched, format: .ai)
+                                appendLog(verifyDiff)
+                                let output = "Applied diff to \(filePath)"
+                                appendLog(output)
+                                commandsRun.append("apply_diff: \(filePath)")
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                            } catch {
+                                let err = "Error applying diff: \(error.localizedDescription)"
+                                appendLog(err)
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
+                            }
                         }
 
                         // MARK: Process-based tools (routed through UserService XPC)
