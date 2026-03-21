@@ -878,33 +878,33 @@ private struct LangDef {
         if trimmed.hasPrefix("❌ ") {
             // Deleted line — red
             bg = isDark
-                ? NSColor(red: 0.4, green: 0.1, blue: 0.1, alpha: 1.0)
-                : NSColor(red: 1.0, green: 0.85, blue: 0.85, alpha: 1.0)
+                ? NSColor(red: 0.35, green: 0.08, blue: 0.08, alpha: 1.0)
+                : NSColor(red: 0.95, green: 0.80, blue: 0.80, alpha: 1.0)
             fg = isDark
-                ? NSColor(red: 1.0, green: 0.7, blue: 0.7, alpha: 1.0)
-                : NSColor(red: 0.6, green: 0.0, blue: 0.0, alpha: 1.0)
+                ? NSColor(red: 0.95, green: 0.65, blue: 0.65, alpha: 1.0)
+                : NSColor(red: 0.55, green: 0.0, blue: 0.0, alpha: 1.0)
         } else if trimmed.hasPrefix("✅ ") {
             // Inserted line — green
             bg = isDark
-                ? NSColor(red: 0.1, green: 0.3, blue: 0.1, alpha: 1.0)
-                : NSColor(red: 0.85, green: 1.0, blue: 0.85, alpha: 1.0)
+                ? NSColor(red: 0.08, green: 0.25, blue: 0.08, alpha: 1.0)
+                : NSColor(red: 0.80, green: 0.95, blue: 0.80, alpha: 1.0)
             fg = isDark
-                ? NSColor(red: 0.7, green: 1.0, blue: 0.7, alpha: 1.0)
-                : NSColor(red: 0.0, green: 0.5, blue: 0.0, alpha: 1.0)
+                ? NSColor(red: 0.65, green: 0.95, blue: 0.65, alpha: 1.0)
+                : NSColor(red: 0.0, green: 0.45, blue: 0.0, alpha: 1.0)
         } else if trimmed.hasPrefix("📎 ") {
             // Retained line — subtle blue
             bg = isDark
-                ? NSColor(red: 0.12, green: 0.14, blue: 0.22, alpha: 1.0)
-                : NSColor(red: 0.92, green: 0.94, blue: 1.0, alpha: 1.0)
+                ? NSColor(red: 0.10, green: 0.12, blue: 0.19, alpha: 1.0)
+                : NSColor(red: 0.87, green: 0.89, blue: 0.95, alpha: 1.0)
             fg = isDark
-                ? NSColor(red: 0.65, green: 0.75, blue: 0.9, alpha: 1.0)
-                : NSColor(red: 0.25, green: 0.3, blue: 0.5, alpha: 1.0)
+                ? NSColor(red: 0.60, green: 0.70, blue: 0.85, alpha: 1.0)
+                : NSColor(red: 0.22, green: 0.27, blue: 0.45, alpha: 1.0)
         } else if trimmed.hasPrefix("📍 ") {
             // Location info — dim
             bg = .clear
             fg = isDark
-                ? NSColor(red: 0.5, green: 0.5, blue: 0.55, alpha: 1.0)
-                : NSColor(red: 0.45, green: 0.45, blue: 0.5, alpha: 1.0)
+                ? NSColor(red: 0.45, green: 0.45, blue: 0.50, alpha: 1.0)
+                : NSColor(red: 0.40, green: 0.40, blue: 0.45, alpha: 1.0)
         } else {
             // 📊 summary or ❓ unknown — default
             bg = .clear
