@@ -60,13 +60,6 @@ struct LoRASettingsView: View {
                 .font(.headline)
 
             HStack(spacing: 6) {
-                Image(systemName: FoundationModelService.isAvailable ? "checkmark.circle.fill" : "xmark.circle.fill")
-                    .foregroundStyle(FoundationModelService.isAvailable ? .green : .red)
-                Text(FoundationModelService.isAvailable ? "Apple Intelligence Available" : "Not Available")
-                    .font(.subheadline)
-            }
-
-            HStack(spacing: 6) {
                 Circle()
                     .fill(adapterManager.isLoaded ? .green : .red.opacity(0.6))
                     .frame(width: 8, height: 8)
