@@ -65,8 +65,8 @@ func hello() {
         if let j = json["json"] as? Bool { outputJSON = j }
     }
     
-    print("Hello from Swift Script!")
-    print("========================")
+    print("Hello from Swift Script! 👋")
+    print("===========================")
     
     let currentDir = FileManager.default.currentDirectoryPath
     let homeDir = FileManager.default.homeDirectoryForCurrentUser.path
@@ -76,7 +76,7 @@ func hello() {
     let osVersion = ProcessInfo.processInfo.operatingSystemVersionString
     let date = Date()
     
-    print("Current directory: \(currentDir)")
+    print("Current directory: \(currentDir)")  // edited
     print("Home directory: \(homeDir)")
     print("User name: \(userName)")
     print("Full name: \(fullName)")
@@ -86,7 +86,7 @@ func hello() {
     
     if verbose {
         print("")
-        print("=== Verbose Info ===")
+        print("=== Verbose Output ===")
         print("Process ID: \(ProcessInfo.processInfo.processIdentifier)")
         print("Arguments: \(CommandLine.arguments)")
         print("Environment variables:")
@@ -98,6 +98,16 @@ func hello() {
             print("  ... and \(env.count - 20) more")
         }
     }
+    
+    // Display system information summary
+    print("")
+    print("📊 System Information Summary")
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print("👤 User:        \(userName) (\(fullName))")
+    print("💻 Hostname:    \(hostName)")
+    print("🍎 macOS:       \(osVersion)")
+    print("📅 Timestamp:   \(ISO8601DateFormatter().string(from: date))")
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     
     // Write JSON output if requested
     if outputJSON {
@@ -118,4 +128,6 @@ func hello() {
             print("\n📄 JSON saved to: \(outputPath)")
         }
     }
+    
+    print("\n✅ Script completed successfully!")
 }

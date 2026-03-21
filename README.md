@@ -48,6 +48,12 @@ Annotations are tagged with `[AI]` prefixes to distinguish them from LLM resp
 
 Enable Apple Intelligence Mediator in Settings to enhance communication clarity. Requires Apple Intelligence-capable Mac running macOS 26+.
 
+**Recent Enhancements:**
+- **Timeout Protection**: 10-second timeout prevents LLM tabs from hanging when Apple Intelligence is slow to respond
+- **OS Log Diagnostics**: Built-in os.log diagnostics for debugging mediator behavior
+- **Brain Button Integration**: Toggle Apple Intelligence mediator directly from the brain button in the toolbar
+- **LoRA Training**: Apple Intelligence can also be used for LoRA adapter training with the main LLM
+
 ### System Requirements
 
 - **macOS 26+** (Tahoe)
@@ -322,6 +328,14 @@ Protected macOS APIs require user approval. Agent handles this correctly:
 
 Agent! includes a built-in **Apple Messages monitor** that lets you control your Mac remotely via iMessage. Send a text message starting with `Agent!` from any approved contact and Agent will execute it as a task — then reply with the result.
 
+### Dedicated Messages Tab
+
+Agent! now features a dedicated **Messages tab** (green) specifically for iMessage Agent! commands. This tab:
+- Uses the main LLM for processing (not a separate model)
+- Provides a focused interface for remote command execution
+- Shows real-time message monitoring status
+- Integrates seamlessly with the Messages Monitor popover
+
 ### How It Works
 
 1. Toggle **Messages** ON in the toolbar (green switch next to "Messages")
@@ -571,13 +585,22 @@ The AI follows this priority order when automating Mac applications:
 
 Agent! provides **100+ tools** across multiple categories for autonomous task execution.
 
-### File Operations (5 tools)
+### Diff Tools (2 tools)
+
+| Tool | Description |
+|------|-------------|
+| `create_diff` | Compare two text strings and return a pretty D1F diff with emoji markers (📎 retain, ❌ delete, ✅ insert) |
+| `apply_diff` | Apply a D1F ASCII diff to a file for precise multi-line edits |
+
+### File Operations (7 tools)
 
 | Tool | Description |
 |------|-------------|
 | `read_file` | Read file contents with line numbers |
 | `write_file` | Create or overwrite a file |
-| `edit_file` | Replace exact text in a file |
+| `edit_file` | Replace exact text in a file (shows D1F diff preview) |
+| `create_diff` | Compare two text strings and return a pretty D1F diff |
+| `apply_diff` | Apply a D1F ASCII diff to a file |
 | `list_files` | Find files matching a glob pattern |
 | `search_files` | Search file contents by regex pattern |
 
@@ -775,6 +798,19 @@ The AI can create, read, update, delete, compile, and run these scripts autonomo
 - `update_agent_script` — modify an existing script
 - `run_agent_script` — compile with `swift build --product <name>` and execute
 - `delete_agent_script` — remove a script
+
+### D1F Diff Integration
+
+Agent includes the **D1F (Diff 1 Format)** package integrated as a local dependency for pretty diff output:
+
+- **create_diff** — Compare two text strings and get a visual diff with emoji markers:
+  - 📎 Retained lines (unchanged)
+  - ❌ Deleted lines (removed)
+  - ✅ Inserted lines (added)
+- **apply_diff** — Apply D1F ASCII diffs directly to files
+- **edit_file** — Shows D1F diff preview when replacing text
+
+The D1F package lives in the project folder as a local Swift package dependency, enabling clear visual diffs for file edits without external dependencies.
 
 ### Dynamic Apple Event Queries
 

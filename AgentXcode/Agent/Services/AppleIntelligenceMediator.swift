@@ -57,9 +57,9 @@ final class AppleIntelligenceMediator: ObservableObject {
         var formatted: String {
             let tag: String
             switch target {
-            case .user: tag = "[AI → User]"
-            case .llm: tag = "[AI → LLM]"
-            case .both: tag = "[AI → Both]"
+            case .user: tag = "[\u{F8FF}AI → User]"
+            case .llm: tag = "[\u{F8FF}AI → LLM]"
+            case .both: tag = "[\u{F8FF}AI → Both]"
             }
             return "\(tag) \(content)"
         }
@@ -227,6 +227,9 @@ Keep it to 1-2 sentences. Do not include any tags.
         do {
             let content = try await respondWithTimeout(session, prompt: prompt, label: "explainError")
             let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.isEmpty {
+                return nil
+            }
             return Annotation(target: .user, content: trimmed, timestamp: Date())
         } catch {
             mediatorLog.warning("[explainError] Apple AI failed or timed out: \(error.localizedDescription)")

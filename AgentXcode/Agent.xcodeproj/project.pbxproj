@@ -56,7 +56,6 @@
 		AA100000000000000000C1 /* NewMainTabSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000C0 /* NewMainTabSheet.swift */; };
 		AEB0000000000000000003 /* AppleEventBridges in Frameworks */ = {isa = PBXBuildFile; productRef = AEB0000000000000000002 /* AppleEventBridges */; };
 		BB10000000000000000015 /* AgentViewModel+Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB10000000000000000005 /* AgentViewModel+Helpers.swift */; };
-		FF10000000000000000011 /* AgentViewModel+Speech.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000010 /* AgentViewModel+Speech.swift */; };
 		BB10000000000000000017 /* AppleIntelligencePopover.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB10000000000000000007 /* AppleIntelligencePopover.swift */; };
 		BB10000000000000000030 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001A /* main.swift */; };
 		BB10000000000000000031 /* HelperProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001B /* HelperProtocol.swift */; };
@@ -66,10 +65,10 @@
 		CC10000000000000000031 /* UserProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1000000000000000001B /* UserProtocol.swift */; };
 		CC10000000000000000032 /* Agent.app.toddbruss.user.plist in Copy Agent Plist */ = {isa = PBXBuildFile; fileRef = AA10000000000000000027 /* Agent.app.toddbruss.user.plist */; };
 		CC10000000000000000033 /* AgentUser in Copy User Agent */ = {isa = PBXBuildFile; fileRef = CC1000000000000000001C /* AgentUser */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		D1F0000000000000000003 /* MultiLineDiff in Frameworks */ = {isa = PBXBuildFile; productRef = D1F0000000000000000002 /* MultiLineDiff */; };
 		DD10000000000000000030 /* ScriptServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000001 /* ScriptServiceTests.swift */; };
 		DD10000000000000000031 /* ScriptingBridgesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000002 /* ScriptingBridgesTests.swift */; };
 		DD10000000000000000032 /* PackageGenerationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000003 /* PackageGenerationTests.swift */; };
-		D1F0000000000000000003 /* MultiLineDiff in Frameworks */ = {isa = PBXBuildFile; productRef = D1F0000000000000000002 /* MultiLineDiff */; };
 		EA50MCP0000000003 /* MCPClient in Frameworks */ = {isa = PBXBuildFile; productRef = EA50MCP0000000002 /* MCPClient */; };
 		EA60000000000000000001 /* SDEFs in Resources */ = {isa = PBXBuildFile; fileRef = EA60000000000000000002 /* SDEFs */; };
 		EA6EA3842F6E35CF003FDB6C /* send_image_output.json in Resources */ = {isa = PBXBuildFile; fileRef = EA6EA3812F6E35CF003FDB6C /* send_image_output.json */; };
@@ -87,6 +86,7 @@
 		FF10000000000000000002 /* PackageAutoDiscoveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000001 /* PackageAutoDiscoveryTests.swift */; };
 		FF10000000000000000004 /* CodingServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000003 /* CodingServiceTests.swift */; };
 		FF10000000000000000008 /* AccessibilityServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000007 /* AccessibilityServiceTests.swift */; };
+		FF10000000000000000011 /* AgentViewModel+Speech.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000010 /* AgentViewModel+Speech.swift */; };
 		WEB1000000000000000001 /* WebAutomationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = WEB1000000000000000002 /* WebAutomationService.swift */; };
 /* End PBXBuildFile section */
 
@@ -214,7 +214,6 @@
 		AA100000000000000000BE /* LoRASettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoRASettingsView.swift; sourceTree = "<group>"; };
 		AA100000000000000000C0 /* NewMainTabSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewMainTabSheet.swift; sourceTree = "<group>"; };
 		BB10000000000000000005 /* AgentViewModel+Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+Helpers.swift"; sourceTree = "<group>"; };
-		FF10000000000000000010 /* AgentViewModel+Speech.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+Speech.swift"; sourceTree = "<group>"; };
 		BB10000000000000000007 /* AppleIntelligencePopover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleIntelligencePopover.swift; sourceTree = "<group>"; };
 		BB1000000000000000001A /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		BB1000000000000000001B /* HelperProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperProtocol.swift; sourceTree = "<group>"; };
@@ -244,6 +243,7 @@
 		FF10000000000000000001 /* PackageAutoDiscoveryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageAutoDiscoveryTests.swift; sourceTree = "<group>"; };
 		FF10000000000000000003 /* CodingServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodingServiceTests.swift; sourceTree = "<group>"; };
 		FF10000000000000000007 /* AccessibilityServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityServiceTests.swift; sourceTree = "<group>"; };
+		FF10000000000000000010 /* AgentViewModel+Speech.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+Speech.swift"; sourceTree = "<group>"; };
 		WEB1000000000000000002 /* WebAutomationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebAutomationService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -984,9 +984,9 @@
 				INFOPLIST_KEY_NSLocationUsageDescription = "Agent! needs location access for scripts that use GPS data.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Agent! needs location access for scripts that use GPS data.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Agent! needs microphone access for speech-to-text dictation and scripts that record audio.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Agent! needs speech recognition to transcribe your voice into the task input field.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Agent! needs photo library access for scripts that read or save photos.";
 				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Agent! needs reminders access for scripts that manage reminders.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Agent! needs speech recognition to transcribe your voice into the task input field.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -1052,9 +1052,9 @@
 				INFOPLIST_KEY_NSLocationUsageDescription = "Agent! needs location access for scripts that use GPS data.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Agent! needs location access for scripts that use GPS data.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Agent! needs microphone access for speech-to-text dictation and scripts that record audio.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Agent! needs speech recognition to transcribe your voice into the task input field.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Agent! needs photo library access for scripts that read or save photos.";
 				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Agent! needs reminders access for scripts that manage reminders.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Agent! needs speech recognition to transcribe your voice into the task input field.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -1230,13 +1230,13 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../AppleEventBridges;
 		};
-		EA50MCP0000000001 /* XCLocalSwiftPackageReference "../AgentMCP" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ../AgentMCP;
-		};
 		D1F0000000000000000001 /* XCLocalSwiftPackageReference "../MultiLineDiff" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../MultiLineDiff;
+		};
+		EA50MCP0000000001 /* XCLocalSwiftPackageReference "../AgentMCP" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../AgentMCP;
 		};
 /* End XCLocalSwiftPackageReference section */
 
@@ -1245,13 +1245,13 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = AppleEventBridges;
 		};
-		EA50MCP0000000002 /* MCPClient */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = MCPClient;
-		};
 		D1F0000000000000000002 /* MultiLineDiff */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = MultiLineDiff;
+		};
+		EA50MCP0000000002 /* MCPClient */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = MCPClient;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
