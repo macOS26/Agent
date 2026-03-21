@@ -7,8 +7,9 @@ struct AppleIntelligencePopover: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 mediatorSection
-                Divider().padding(.vertical, 10)
+                Divider().padding(.vertical, 12)
                 loraHeaderSection
+                Divider().padding(.vertical, 12)
                 LoRASettingsView()
             }
             .padding(20)
@@ -71,15 +72,6 @@ struct AppleIntelligencePopover: View {
 
             if !FoundationModelService.isAvailable {
                 Text(FoundationModelService.unavailabilityReason)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            HStack(spacing: 6) {
-                Circle()
-                    .fill(LoRAAdapterManager.shared.isLoaded ? .green : .gray.opacity(0.4))
-                    .frame(width: 8, height: 8)
-                Text(LoRAAdapterManager.shared.isLoaded ? "LoRA: \(LoRAAdapterManager.shared.adapterName)" : "No LoRA adapter loaded")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

@@ -12,11 +12,11 @@ struct LoRASettingsView: View {
     @State private var pythonChecked = false
 
     var body: some View {
-        Group {
+        VStack(alignment: .leading, spacing: 0) {
             adapterSection
-            Divider()
+            Divider().padding(.vertical, 12)
             dataSection
-            Divider()
+            Divider().padding(.vertical, 12)
             pythonSection
         }
         .alert("LoRA", isPresented: $showAlert) {
