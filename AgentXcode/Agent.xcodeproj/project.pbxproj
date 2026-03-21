@@ -650,7 +650,7 @@
 			packageReferences = (
 				EA50MCP0000000001 /* XCLocalSwiftPackageReference "../AgentMCP" */,
 				AEB0000000000000000001 /* XCLocalSwiftPackageReference "../AppleEventBridges" */,
-				D1F0000000000000000001 /* XCLocalSwiftPackageReference "../../swift-multi-line-diff" */,
+				D1F0000000000000000001 /* XCLocalSwiftPackageReference "../MultiLineDiff" */,
 			);
 			productRefGroup = AA10000000000000000042 /* Products */;
 			projectDirPath = "";
@@ -1234,9 +1234,9 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../AgentMCP;
 		};
-		D1F0000000000000000001 /* XCLocalSwiftPackageReference "../../swift-multi-line-diff" */ = {
+		D1F0000000000000000001 /* XCLocalSwiftPackageReference "../MultiLineDiff" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../../swift-multi-line-diff;
+			relativePath = ../MultiLineDiff;
 		};
 /* End XCLocalSwiftPackageReference section */
 
