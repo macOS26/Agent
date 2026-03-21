@@ -54,6 +54,7 @@
 		AA100000000000000000BD /* LoRAAdapterManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000BC /* LoRAAdapterManager.swift */; };
 		AA100000000000000000BF /* LoRASettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000BE /* LoRASettingsView.swift */; };
 		AA100000000000000000C1 /* NewMainTabSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000C0 /* NewMainTabSheet.swift */; };
+		EATD000000000000000001 /* TrainingData.swift in Sources */ = {isa = PBXBuildFile; fileRef = EATD000000000000000002 /* TrainingData.swift */; };
 		AEB0000000000000000003 /* AppleEventBridges in Frameworks */ = {isa = PBXBuildFile; productRef = AEB0000000000000000002 /* AppleEventBridges */; };
 		BB10000000000000000015 /* AgentViewModel+Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB10000000000000000005 /* AgentViewModel+Helpers.swift */; };
 		BB10000000000000000017 /* AppleIntelligencePopover.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB10000000000000000007 /* AppleIntelligencePopover.swift */; };
@@ -213,6 +214,7 @@
 		AA100000000000000000BC /* LoRAAdapterManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoRAAdapterManager.swift; sourceTree = "<group>"; };
 		AA100000000000000000BE /* LoRASettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoRASettingsView.swift; sourceTree = "<group>"; };
 		AA100000000000000000C0 /* NewMainTabSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewMainTabSheet.swift; sourceTree = "<group>"; };
+		EATD000000000000000002 /* TrainingData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingData.swift; sourceTree = "<group>"; };
 		BB10000000000000000005 /* AgentViewModel+Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+Helpers.swift"; sourceTree = "<group>"; };
 		BB10000000000000000007 /* AppleIntelligencePopover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleIntelligencePopover.swift; sourceTree = "<group>"; };
 		BB1000000000000000001A /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
@@ -475,6 +477,7 @@
 			children = (
 				AA10000000000000000020 /* Models.swift */,
 				AA10000000000000000069 /* ChatModels.swift */,
+				EATD000000000000000002 /* TrainingData.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -758,6 +761,7 @@
 				EE10000000000000000004 /* ObjCTry.m in Sources */,
 				AA10000000000000000036 /* Models.swift in Sources */,
 				AA10000000000000000070 /* ChatModels.swift in Sources */,
+				EATD000000000000000001 /* TrainingData.swift in Sources */,
 				AA10000000000000000079 /* ScriptTab.swift in Sources */,
 				AA1000000000000000007B /* TabBarView.swift in Sources */,
 			);

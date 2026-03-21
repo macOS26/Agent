@@ -197,7 +197,13 @@ final class FoundationModelService {
                       let summary = input["summary"] as? String, !summary.isEmpty {
                 // Model wrote no text — surface the summary so the user sees a response
                 onTextDelta(summary)
+            } else {
+                // Blank response with tool call — provide fallback message
+                onTextDelta("Processing your request...")
             }
+        } else if fullText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            // Blank response — provide fallback to avoid empty messages
+            onTextDelta("I'll continue with the task.")
         } else {
             onTextDelta(normalizeNewlines(fullText))
         }

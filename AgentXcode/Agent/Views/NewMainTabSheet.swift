@@ -10,7 +10,11 @@ struct NewMainTabSheet: View {
 
     init(viewModel: AgentViewModel) {
         self.viewModel = viewModel
-        self._provider = State(initialValue: viewModel.selectedProvider)
+        // Ensure we never start with foundationModel - it's not a selectable provider
+        let initialProvider = APIProvider.selectableProviders.contains(viewModel.selectedProvider)
+            ? viewModel.selectedProvider
+            : .ollama
+        self._provider = State(initialValue: initialProvider)
     }
 
     var body: some View {
@@ -113,9 +117,9 @@ struct NewMainTabSheet: View {
             ollamaModelPicker(models: viewModel.localOllamaModels, fetch: { viewModel.fetchLocalOllamaModels() })
 
         case .foundationModel:
-            // Apple Intelligence is for LoRA training only, not direct task execution
-            Text("Apple Intelligence (LoRA training only)")
-                .foregroundStyle(.secondary)
+            // foundationModel is never selectable - this case should never be reached
+            // It's used internally for LoRA training only
+            EmptyView()
         }
     }
 

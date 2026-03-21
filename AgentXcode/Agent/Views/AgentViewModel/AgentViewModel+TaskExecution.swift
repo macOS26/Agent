@@ -709,6 +709,9 @@ extension AgentViewModel {
             isVision = false
         }
         appendLog("Model: \(provider.displayName) / \(modelName)\(isVision ? " (vision)" : "")")
+
+        // Start training data capture for Apple AI LoRA fine-tuning
+        TrainingDataStore.shared.startCapture(userPrompt: prompt, modelUsed: modelName)
         flushLog()
 
         let claude: ClaudeService? = provider == .claude
@@ -733,6 +736,8 @@ extension AgentViewModel {
         default:
             ollama = nil
         }
+        let foundationModelService: FoundationModelService? = provider == .foundationModel
+            ? FoundationModelService(historyContext: historyContext, projectFolder: projectFolder) : nil
         // Prepend last task as conversation context so the LLM knows what just happened
         var messages: [[String: Any]] = history.lastTaskMessages()
 
@@ -772,6 +777,8 @@ extension AgentViewModel {
             taskLog.info("[main] Apple AI mediator: contextualizing user message...")
             if let contextAnnotation = await mediator.contextualizeUserMessage(prompt) {
                 appleAIAnnotations.append(contextAnnotation)
+                // Capture Apple AI decision for training
+                TrainingDataStore.shared.captureAppleAIDecision(contextAnnotation.content)
                 // Inject context into LLM message
                 let contextMessage: [String: Any] = [
                     "role": "user",
@@ -795,6 +802,23 @@ extension AgentViewModel {
 
             do {
                 isThinking = true
+
+                // Log messages being sent to the LLM
+                taskLog.info("[main] Sending \(messages.count) messages to LLM:")
+                for (idx, msg) in messages.enumerated() {
+                    let role = msg["role"] as? String ?? "?"
+                    let preview: String
+                    if let text = msg["content"] as? String {
+                        preview = String(text.prefix(120))
+                    } else if let blocks = msg["content"] as? [[String: Any]] {
+                        let types = blocks.compactMap { $0["type"] as? String }
+                        preview = "[\(blocks.count) blocks: \(types.joined(separator: ", "))]"
+                    } else {
+                        preview = "(unknown content type)"
+                    }
+                    taskLog.info("[main]   [\(idx)] \(role): \(preview)")
+                }
+
                 let response: (content: [[String: Any]], stopReason: String)
                 var textWasStreamed = false
                 let streamStart = CFAbsoluteTimeGetCurrent()
@@ -816,6 +840,14 @@ extension AgentViewModel {
                     textWasStreamed = true
                 } else if let ollama {
                     response = try await ollama.sendStreaming(messages: messages) { [weak self] delta in
+                        Task { @MainActor in
+                            self?.isThinking = false
+                            self?.appendStreamDelta(delta)
+                        }
+                    }
+                    textWasStreamed = true
+                } else if let foundationModelService {
+                    response = try await foundationModelService.sendStreaming(messages: messages) { [weak self] delta in
                         Task { @MainActor in
                             self?.isThinking = false
                             self?.appendStreamDelta(delta)
@@ -880,6 +912,8 @@ extension AgentViewModel {
                                     if agentReplyHandle != nil {
                                         sendProgressUpdate("[\u{F8FF}AI] \(summaryAnnotation.content)")
                                     }
+                                    // Capture Apple AI annotation for training
+                                    TrainingDataStore.shared.captureAppleAIAnnotation(summaryAnnotation.content)
                                 }
                             }
                             
@@ -888,6 +922,8 @@ extension AgentViewModel {
                             history.add(TaskRecord(prompt: prompt, summary: summary, commandsRun: commandsRun), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
                             // End the task in SwiftData chat history
                             ChatHistoryStore.shared.endCurrentTask(summary: summary)
+                            // Finish training data capture
+                            TrainingDataStore.shared.finishCapture(taskSummary: summary, successful: true)
                             // Stop progress updates before sending final reply
                             stopProgressUpdates()
                             // Reply to the iMessage sender if this was an Agent! prompt
@@ -2311,12 +2347,13 @@ extension AgentViewModel {
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
-                        // Client-side web search via Tavily (for Ollama providers)
+                        // Client-side web search via Ollama API (primary) or Tavily (backup)
                         if name == "web_search" {
                             let query = input["query"] as? String ?? ""
                             appendLog("Web search: \(query)")
                             flushLog()
-                            let output = await Self.performTavilySearch(query: query, apiKey: tavilyAPIKey)
+                            // Use Ollama web_search API for Ollama provider, Tavily as backup
+                            let output = await Self.performWebSearch(query: query, apiKey: tavilyAPIKey, provider: selectedProvider)
                             appendLog(Self.preview(output, lines: 5))
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
@@ -2407,9 +2444,104 @@ extension AgentViewModel {
         rootWasActive = false
     }
 
-    // MARK: - Tavily Web Search
-
+    // MARK: - Web Search (Ollama API + Tavily Backup)
+    
+    /// Perform web search using Ollama API for Ollama provider, Tavily as backup for other providers
     nonisolated private static func performTavilySearch(query: String, apiKey: String) async -> String {
+        // Try Tavily as the default implementation
+        return await performTavilySearchInternal(query: query, apiKey: apiKey)
+    }
+    
+    /// Perform web search using the appropriate API based on provider
+    nonisolated private static func performWebSearch(query: String, apiKey: String, provider: APIProvider) async -> String {
+        // For Ollama provider, try Ollama web_search API first
+        if provider == .ollama || provider == .localOllama {
+            if let ollamaKey = KeychainService.shared.getOllamaAPIKey(), !ollamaKey.isEmpty {
+                let ollamaResult = await performOllamaWebSearch(query: query, apiKey: ollamaKey)
+                // If Ollama search succeeds, return it
+                if !ollamaResult.hasPrefix("Error:") {
+                    return ollamaResult
+                }
+                // Fall back to Tavily if Ollama search fails
+            }
+        }
+        
+        // Use Tavily as primary or backup
+        return await performTavilySearchInternal(query: query, apiKey: apiKey)
+    }
+    
+    /// Ollama Web Search API (cloud-only, requires API key)
+    nonisolated private static func performOllamaWebSearch(query: String, apiKey: String) async -> String {
+        guard !apiKey.isEmpty else {
+            return "Error: Ollama API key not set. Add it in Settings."
+        }
+        
+        guard let url = URL(string: "https://ollama.com/api/web_search") else {
+            return "Error: Invalid Ollama search URL"
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 30
+        
+        let body: [String: Any] = [
+            "query": query,
+            "max_results": 5
+        ]
+        
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+            let (data, response) = try await URLSession.shared.data(for: request)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                return "Error: Invalid response from Ollama"
+            }
+            
+            guard httpResponse.statusCode == 200 else {
+                let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
+                // Fall back to Tavily indication
+                return "Error: Ollama API returned \(httpResponse.statusCode): \(errorBody)"
+            }
+            
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                return "Error: Failed to parse Ollama response"
+            }
+            
+            // Ollama web_search returns results in a similar format
+            // Structure: {"results": [{"title": "...", "url": "...", "content": "..."}]}
+            if let results = json["results"] as? [[String: Any]], !results.isEmpty {
+                var output = ""
+                for (i, result) in results.enumerated() {
+                    let title = result["title"] as? String ?? "Untitled"
+                    let resultUrl = result["url"] as? String ?? ""
+                    let content = result["content"] as? String ?? result["snippet"] as? String ?? ""
+                    output += "\(i + 1). \(title)\n   \(resultUrl)\n   \(content)\n\n"
+                }
+                return output.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            
+            // Alternative format: {"web_search_results": [...]}
+            if let results = json["web_search_results"] as? [[String: Any]], !results.isEmpty {
+                var output = ""
+                for (i, result) in results.enumerated() {
+                    let title = result["title"] as? String ?? "Untitled"
+                    let resultUrl = result["url"] as? String ?? ""
+                    let content = result["content"] as? String ?? result["snippet"] as? String ?? ""
+                    output += "\(i + 1). \(title)\n   \(resultUrl)\n   \(content)\n\n"
+                }
+                return output.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            
+            return "No search results found for '\(query)'"
+        } catch {
+            return "Error: \(error.localizedDescription)"
+        }
+    }
+    
+    /// Tavily Web Search API (backup for all providers)
+    nonisolated private static func performTavilySearchInternal(query: String, apiKey: String) async -> String {
         guard !apiKey.isEmpty else {
             return "Error: Tavily API key not set. Add it in Settings."
         }

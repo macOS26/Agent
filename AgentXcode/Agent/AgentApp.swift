@@ -43,7 +43,6 @@ struct AgentApp: App {
                         }
                     }
                 }
-                .frame(minWidth: 960)
         }
         .windowResizability(.contentSize)
         .commands {

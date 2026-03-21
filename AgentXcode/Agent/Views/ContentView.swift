@@ -488,7 +488,7 @@ struct ContentView: View {
                 .padding()
             }
         }
-        .frame(minHeight: 500)
+        .frame(minWidth: 600, minHeight: 500)
         .onAppear { isTaskFieldFocused = true }
         .overlay {
             DependencyOverlay(status: dependencyStatus, isVisible: $showDependencyOverlay)

@@ -259,6 +259,8 @@ extension AgentViewModel {
         logFlushTask = nil
         activityLog = ""
         ChatHistoryStore.shared.clearAll()
+        // Clear Apple AI conversation context when log is cleared
+        AppleIntelligenceMediator.shared.clearContext()
         // Clean up cached image snapshots
         try? FileManager.default.removeItem(at: Self.logImageCacheDir)
         try? FileManager.default.createDirectory(at: Self.logImageCacheDir, withIntermediateDirectories: true)

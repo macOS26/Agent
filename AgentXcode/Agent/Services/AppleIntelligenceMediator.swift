@@ -11,12 +11,18 @@ private let mediatorLog = Logger(subsystem: "Agent.app.toddbruss", category: "Ap
 /// - [AI → User]: Annotation only visible to the user
 /// - [AI → LLM]: Context/clarification sent to the LLM
 /// - [AI → Both]: Information relevant to both parties
+///
+/// Context window: Maintains last task prompt, last Apple AI message, and last LLM summary
+/// so Apple Intelligence has context when a new task starts.
 @MainActor
 final class AppleIntelligenceMediator: ObservableObject {
     static let shared = AppleIntelligenceMediator()
 
     /// Timeout for Apple Intelligence calls (seconds). Prevents hanging LLM tasks.
     private static let responseTimeout: TimeInterval = 10
+
+    /// Maximum context window size (approximate token limit for context)
+    private static let maxContextTokens: Int = 4096
 
     /// Whether Apple Intelligence mediation is enabled
     @Published var isEnabled: Bool = UserDefaults.standard.bool(forKey: "appleIntelligenceMediatorEnabled") {
@@ -38,6 +44,20 @@ final class AppleIntelligenceMediator: ObservableObject {
             UserDefaults.standard.set(injectContextToLLM, forKey: "appleIntelligenceInjectToLLM")
         }
     }
+
+    // MARK: - Conversation Context (for Apple AI session)
+
+    /// Last task prompt from the user
+    private var lastUserPrompt: String?
+
+    /// Last Apple AI annotation (for context continuity)
+    private var lastAppleAIMessage: String?
+
+    /// Last LLM response summary (truncated to fit context window)
+    private var lastLLMResponse: String?
+
+    /// Running summary of conversation for context
+    private var conversationSummary: String?
 
     private var session: LanguageModelSession?
 
@@ -99,11 +119,50 @@ final class AppleIntelligenceMediator: ObservableObject {
         }
     }
 
-    private func ensureSession() -> LanguageModelSession {
-        // Always create a fresh session to avoid stale/stuck state
-        let s = LanguageModelSession(
-            model: .default,
-            instructions: Instructions("""
+    // MARK: - Context Management
+
+    /// Update the conversation context after each exchange
+    func updateContext(userPrompt: String?, appleAIMessage: String?, llmResponse: String?) {
+        if let prompt = userPrompt {
+            // Keep prompts within context limits
+            lastUserPrompt = String(prompt.prefix(500))
+        }
+        if let aiMsg = appleAIMessage {
+            // Keep AI messages brief
+            lastAppleAIMessage = String(aiMsg.prefix(200))
+        }
+        if let llm = llmResponse {
+            // Truncate LLM response to avoid blowing context window
+            lastLLMResponse = String(llm.prefix(1000))
+        }
+    }
+
+    /// Build context string for the session instructions (fits within ~4096 token window)
+    /// Each part is kept brief to avoid blowing the context limit
+    private func buildContextInstructions() -> String {
+        var contextParts: [String] = []
+
+        // Previous conversation context (keep each part brief)
+        if let prompt = lastUserPrompt, !prompt.isEmpty {
+            // Truncate to ~100 chars for context (already stored as 500 max)
+            contextParts.append("Previous user prompt: \"\(String(prompt.prefix(100)))\"")
+        }
+        if let aiMsg = lastAppleAIMessage, !aiMsg.isEmpty {
+            // Already stored as 200 max, show as-is
+            contextParts.append("Your previous annotation: \"\(aiMsg)\"")
+        }
+        if let llm = lastLLMResponse, !llm.isEmpty {
+            // Already stored as 1000 max, show first 200 chars in context
+            contextParts.append("Previous LLM response: \"\(String(llm.prefix(200)))\"")
+        }
+        if let summary = conversationSummary, !summary.isEmpty {
+            // Already stored compact, show as-is
+            contextParts.append("Conversation summary: \"\(summary)\"")
+        }
+
+        let contextBlock = contextParts.isEmpty ? "" : "\n\n--- Conversation Context ---\n" + contextParts.joined(separator: "\n") + "\n---\n"
+
+        return """
 You are a helpful mediator between a user and an AI assistant (LLM). Your role is to observe conversations
 and provide brief, helpful context annotations. You annotate with specific tags:
 - [AI → User] for user-facing explanations
@@ -115,9 +174,17 @@ Keep annotations concise (1-2 sentences max). Your goal is to:
 2. Provide helpful context to the LLM when the user's intent is unclear
 3. Summarize what just happened after significant actions
 4. Suggest next steps when appropriate
-
+\(contextBlock)
 Be helpful but not verbose. The primary LLM is doing the actual work - you just add clarity.
-""")
+Use the conversation context above to maintain continuity across tasks.
+"""
+    }
+
+    private func ensureSession() -> LanguageModelSession {
+        // Always create a fresh session with current context to avoid stale/stuck state
+        let s = LanguageModelSession(
+            model: .default,
+            instructions: Instructions(buildContextInstructions())
         )
         session = s
         return s
@@ -151,11 +218,15 @@ Be helpful but not verbose. The primary LLM is doing the actual work - you just 
     }
 
     /// Generate context to inject into the LLM prompt based on user message
+    /// Also updates conversation context for future Apple AI calls
     func contextualizeUserMessage(_ message: String) async -> Annotation? {
         guard isEnabled && injectContextToLLM && Self.isAvailable else {
             mediatorLog.debug("[contextualize] Skipped: enabled=\(self.isEnabled) inject=\(self.injectContextToLLM) available=\(Self.isAvailable)")
             return nil
         }
+
+        // Store user prompt for context continuity (truncate to fit within context window)
+        lastUserPrompt = String(message.prefix(500))
 
         let session = ensureSession()
         let prompt = """
@@ -174,6 +245,8 @@ Do not include any tags - just the context or CLEAR.
             if trimmed == "CLEAR" || trimmed.isEmpty {
                 return nil
             }
+            // Store this AI message for context continuity (keep brief)
+            lastAppleAIMessage = String(trimmed.prefix(200))
             return Annotation(target: .llm, content: trimmed, timestamp: Date())
         } catch {
             mediatorLog.warning("[contextualize] Apple AI failed or timed out: \(error.localizedDescription)")
@@ -183,25 +256,54 @@ Do not include any tags - just the context or CLEAR.
     }
 
     /// Generate a summary annotation after the LLM completes a task
+    /// Updates conversation context for future Apple AI calls
+    /// When there are no tool calls (just conversation), paraphrases or summarizes the LLM's response
     func summarizeCompletion(summary: String, commandsRun: [String]) async -> Annotation? {
         guard isEnabled && showAnnotationsToUser && Self.isAvailable else { return nil }
 
-        // Don't summarize if there were no commands (just conversation)
-        guard !commandsRun.isEmpty else { return nil }
+        // Store a truncated version for context (keep within token limits)
+        let summaryForContext: String
+        if summary.count > 500 {
+            summaryForContext = String(summary.prefix(200)) + "..."
+        } else {
+            summaryForContext = summary
+        }
+        lastLLMResponse = summaryForContext
 
         let session = ensureSession()
-        let prompt = """
+        
+        // Different behavior based on whether tools were used
+        let prompt: String
+        if commandsRun.isEmpty {
+            // No tool calls - paraphrase or summarize the LLM's conversational response
+            prompt = """
+The AI assistant just responded to the user without using any tools. Response: "\(String(summary.prefix(800)))"
+
+Paraphrase or summarize the key insight for the user in 1-2 sentences. Make it helpful and actionable.
+If the response is already concise or unclear, you can say "CLEAR" to skip.
+"""
+        } else {
+            // Tools were used - summarize what was accomplished
+            prompt = """
 The AI assistant just completed a task. Original summary: "\(summary)"
+Commands executed: \(commandsRun.joined(separator: ", "))
 
 Provide a one-line summary of what was accomplished for the user. Focus on the outcome, not the process.
 If the task was simple, you can say "CLEAR" to skip the annotation.
 """
+        }
 
         do {
             let content = try await respondWithTimeout(session, prompt: prompt, label: "summarize")
             let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
             if trimmed == "CLEAR" || trimmed.isEmpty {
                 return nil
+            }
+            // Store this AI message for context continuity (keep brief)
+            lastAppleAIMessage = String(trimmed.prefix(200))
+            // Update running conversation summary (compact form)
+            if let prompt = lastUserPrompt {
+                conversationSummary = "Task: \(String(prompt.prefix(80))) → Result: \(String(trimmed.prefix(80)))"
             }
             return Annotation(target: .both, content: trimmed, timestamp: Date())
         } catch {
@@ -265,9 +367,32 @@ Do not include any tags.
         }
     }
 
-    /// Clear the session to start fresh (call when switching contexts)
+    /// Clear the session and conversation context to start fresh (call when switching contexts or starting a new conversation)
     func resetSession() {
         mediatorLog.info("Session reset")
         session = nil
+        lastUserPrompt = nil
+        lastAppleAIMessage = nil
+        lastLLMResponse = nil
+        conversationSummary = nil
+    }
+
+    /// Clear all conversation context (call when user clears the chat)
+    func clearContext() {
+        lastUserPrompt = nil
+        lastAppleAIMessage = nil
+        lastLLMResponse = nil
+        conversationSummary = nil
+        session = nil
+    }
+
+    /// Get the current conversation context for debugging/inspection
+    func getContextStatus() -> String {
+        var parts: [String] = []
+        if let prompt = lastUserPrompt { parts.append("Last user prompt: \(prompt.prefix(100))...") }
+        if let aiMsg = lastAppleAIMessage { parts.append("Last Apple AI: \(aiMsg.prefix(100))...") }
+        if let llm = lastLLMResponse { parts.append("Last LLM: \(String(llm.prefix(100)))...") }
+        if let summary = conversationSummary { parts.append("Summary: \(summary)") }
+        return parts.isEmpty ? "No context stored" : parts.joined(separator: "\n")
     }
 }

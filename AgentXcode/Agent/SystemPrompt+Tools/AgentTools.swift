@@ -180,13 +180,10 @@ enum AgentTools {
     // MARK: - Tool List per Provider (for ToolsView)
 
     /// Returns the tools available for a given provider.
+    /// Web search via Tavily is now available for all providers as a backup search option.
     static func tools(for provider: APIProvider) -> [ToolDef] {
-        switch provider {
-        case .ollama, .localOllama:
-            return commonTools + ollamaOnlyTools
-        default:
-            return commonTools
-        }
+        // All providers get web_search as a backup search option
+        return commonTools + webSearchTools
     }
 //TOOLS:
 //\(enabledAppleAIToolLines())
@@ -1255,8 +1252,8 @@ enum AgentTools {
         ]
     }
 
-    /// Tools only available for Ollama providers (client-side web search via Tavily).
-    nonisolated(unsafe) private static let ollamaOnlyTools: [ToolDef] = [
+    /// Web search tool available for all providers (client-side via Tavily).
+    nonisolated(unsafe) private static let webSearchTools: [ToolDef] = [
         ToolDef(
             name: Name.webSearch,
             description: "Search the web for current information. Returns relevant web page titles, URLs, and content snippets. Use when you need up-to-date information or facts you're unsure about.",
@@ -1268,9 +1265,11 @@ enum AgentTools {
     ]
 
     /// Provider-aware Ollama/OpenAI format — filters tools by per-provider preferences.
+    /// Web search via Tavily is now available for all providers.
     @MainActor static func ollamaTools(for provider: APIProvider) -> [[String: Any]] {
         let prefs = ToolPreferencesService.shared
-        var tools = (commonTools + ollamaOnlyTools)
+        // All providers get web_search as a backup search option
+        var tools = (commonTools + webSearchTools)
             .filter { prefs.isEnabled(provider, $0.name) }
             .map { tool in
                 ollamaTool(name: tool.name, description: tool.description,
