@@ -803,37 +803,36 @@ struct ServicesPopover: View {
             Text("Services")
                 .font(.headline)
             
-            // User Launch Agent
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 6) {
+            Grid(alignment: .leading, verticalSpacing: 10) {
+                GridRow {
                     StatusDot(
                         isActive: viewModel.userServiceActive,
                         wasActive: viewModel.userWasActive,
                         isBusy: viewModel.isRunning,
                         enabled: viewModel.userEnabled
                     )
-                    Toggle("User Agent", isOn: $viewModel.userEnabled)
+                    Text("User Agent")
+                        .font(.caption)
+                    Toggle("", isOn: $viewModel.userEnabled)
                         .toggleStyle(.switch)
                         .controlSize(.mini)
                         .tint(.green)
-                        .font(.caption)
+                        .labelsHidden()
                 }
-            }
-            
-            // Daemon Launch Agent
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 6) {
+                GridRow {
                     StatusDot(
                         isActive: viewModel.rootServiceActive,
                         wasActive: viewModel.rootWasActive,
                         isBusy: viewModel.isRunning,
                         enabled: viewModel.rootEnabled
                     )
-                    Toggle("Daemon Agent", isOn: $viewModel.rootEnabled)
+                    Text("Daemon Agent")
+                        .font(.caption)
+                    Toggle("", isOn: $viewModel.rootEnabled)
                         .toggleStyle(.switch)
                         .controlSize(.mini)
                         .tint(.green)
-                        .font(.caption)
+                        .labelsHidden()
                 }
             }
             
