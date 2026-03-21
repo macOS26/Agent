@@ -43,8 +43,9 @@ struct AgentApp: App {
                         }
                     }
                 }
+                .frame(minWidth: 960)
         }
-        .windowResizability(.contentMinSize)
+        .windowResizability(.contentSize)
         .commands {
             CommandGroup(after: .windowArrangement) {
                 Button("System Prompts") {

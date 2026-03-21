@@ -55,9 +55,10 @@ Full macOS Accessibility API for apps without AppleScript support:
 
 | Server | Capability |
 |--------|------------|
-| **internet-names-mcp** | Domain availability, social handle checks |
-| **xcode-mcp-server** | Xcode building, running, screenshots, tests |
-| **appstore-mcp-server** | App Store search, rankings, keyword analysis |
+| **internet-names-mcp** | Domain availability, social handle checks — https://github.com/drewster99/InternetNamesMCP |
+| **xcode-mcp-server** | Xcode building, running, screenshots, tests — https://github.com/drewster99/xcode-mcp-server |
+| **appstore-mcp-server** | App Store search, rankings, keyword analysis — https://github.com/drewster99/appstore-mcp-server |
+| **XCF** | External MCP server — https://xcf.ai |
 
 ### AgentScripts
 
@@ -430,9 +431,10 @@ Agent! supports **MCP (Model Context Protocol)** servers for extended functional
 
 ### Available MCP Servers
 
-- **internet-names-mcp** — Domain and social handle availability
-- **xcode-mcp-server** — Xcode project building, running, screenshots
-- **appstore-mcp-server** — App Store search, rankings, keywords
+- **internet-names-mcp** — Domain and social handle availability — https://github.com/drewster99/InternetNamesMCP
+- **xcode-mcp-server** — Xcode project building, running, screenshots — https://github.com/drewster99/xcode-mcp-server
+- **appstore-mcp-server** — App Store search, rankings, keywords — https://github.com/drewster99/appstore-mcp-server
+- **XCF** — External MCP server — https://xcf.ai
 
 ### Adding MCP Servers
 
@@ -682,9 +684,10 @@ Agent! provides **100+ tools** across multiple categories for autonomous task ex
 
 Agent! supports MCP (Model Context Protocol) servers. Currently configured servers include:
 
-- **internet-names-mcp** — Domain and social handle availability
-- **xcode-mcp-server** — Xcode project building, running, screenshots
-- **appstore-mcp-server** — App Store search, rankings, keywords
+- **internet-names-mcp** — Domain and social handle availability — https://github.com/drewster99/InternetNamesMCP
+- **xcode-mcp-server** — Xcode project building, running, screenshots — https://github.com/drewster99/xcode-mcp-server
+- **appstore-mcp-server** — App Store search, rankings, keywords — https://github.com/drewster99/appstore-mcp-server
+- **XCF** — External MCP server — https://xcf.ai
 
 ---
 

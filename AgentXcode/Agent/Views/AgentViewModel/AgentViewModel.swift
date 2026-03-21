@@ -501,6 +501,39 @@ final class AgentViewModel {
         persistScriptTabs()
     }
 
+    /// Ensure an LLM tab is selected when a task comes in:
+    /// 1. If currently on a main LLM tab, stay there
+    /// 2. If on a script tab with a parent, switch to the parent LLM tab
+    /// 3. Otherwise, switch to main tab
+    func ensureLLMTabSelected() {
+        if selectedTabId == nil {
+            // Already on main tab
+            return
+        }
+
+        guard let currentTab = scriptTabs.first(where: { $0.id == selectedTabId }) else {
+            // Tab not found, go to main
+            selectMainTab()
+            return
+        }
+
+        if currentTab.isMainTab {
+            // Already on an LLM main tab, stay there
+            return
+        }
+
+        // On a script tab - find its parent
+        if let parentId = currentTab.parentTabId,
+           let parentTab = scriptTabs.first(where: { $0.id == parentId && $0.isMainTab }) {
+            // Switch to parent LLM tab
+            selectedTabId = parentTab.id
+            persistScriptTabs()
+        } else {
+            // No parent found or not a main tab, go to main
+            selectMainTab()
+        }
+    }
+
     // MARK: - Script Tab Persistence
 
     /// Save open script tabs: order/selected to UserDefaults, log data to SwiftData.
@@ -752,8 +785,8 @@ final class AgentViewModel {
             return
         }
 
-        // Switch to main tab so user sees the task output
-        selectMainTab()
+        // Switch to appropriate LLM tab: current LLM tab, parent LLM tab if on child, or main tab
+        ensureLLMTabSelected()
 
         // Stop any running task before starting a new one
         if isRunning {
