@@ -218,10 +218,10 @@
 		DD10000000000000000002 /* ScriptingBridgesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptingBridgesTests.swift; sourceTree = "<group>"; };
 		DD10000000000000000003 /* PackageGenerationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageGenerationTests.swift; sourceTree = "<group>"; };
 		DD10000000000000000004 /* AgentTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AgentTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		EA50000000000000000005 /* send_message_input.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = send_message_input.json; path = ../AgentScripts/Agent/json/send_message_input.json; sourceTree = SOURCE_ROOT; };
-		EA50000000000000000006 /* send_message_output.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = send_message_output.json; path = ../AgentScripts/Agent/json/send_message_output.json; sourceTree = SOURCE_ROOT; };
-		EA50000000000000000007 /* send_image_input.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = send_image_input.json; path = ../AgentScripts/Agent/json/send_image_input.json; sourceTree = SOURCE_ROOT; };
-		EA50000000000000000008 /* send_image_output.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = send_image_output.json; path = ../AgentScripts/Agent/json/send_image_output.json; sourceTree = SOURCE_ROOT; };
+		EA50000000000000000005 /* send_message_input.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = send_message_input.json; path = ../AgentScripts/Agent/json/messages/send_message_input.json; sourceTree = SOURCE_ROOT; };
+		EA50000000000000000006 /* send_message_output.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = send_message_output.json; path = ../AgentScripts/Agent/json/messages/send_message_output.json; sourceTree = SOURCE_ROOT; };
+		EA50000000000000000007 /* send_image_input.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = send_image_input.json; path = ../AgentScripts/Agent/json/messages/send_image_input.json; sourceTree = SOURCE_ROOT; };
+		EA50000000000000000008 /* send_image_output.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = send_image_output.json; path = ../AgentScripts/Agent/json/messages/send_image_output.json; sourceTree = SOURCE_ROOT; };
 		EA60000000000000000002 /* SDEFs */ = {isa = PBXFileReference; lastKnownFileType = folder; path = SDEFs; sourceTree = "<group>"; };
 		EA70000000000000000002 /* SDEFService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDEFService.swift; sourceTree = "<group>"; };
 		EA80000000000000000002 /* NSAppleScriptService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NSAppleScriptService.swift; sourceTree = "<group>"; };
