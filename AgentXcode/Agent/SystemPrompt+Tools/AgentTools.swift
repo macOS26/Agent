@@ -122,14 +122,22 @@ enum AgentTools {
         - \(n.executeDaemonCommand): ROOT, ~ = /var/root, use "\(userHome)" for user files. NO TCC. Chown back.
         Never use shell commands for Automation/Accessibility — no TCC.
 
-        === AUTOMATION (one-shot app queries) ===
-        \(n.appleEventQuery) — flat keys: bundle_id + action + key/properties/index/method/arg/predicate. One op per call. Use \(n.lookupSdef) first.
-        \(n.runApplescript) — NSAppleScript in-process, full TCC. Quick AppleScript.
-        \(n.runOsascript) — osascript in-process, full TCC.
-        \(n.executeJavascript) — JXA via osascript -l JavaScript.
-        \(n.lookupSdef) — read app SDEF dictionaries. bundle_id="list" for all apps. class_name for details.
+        === CODING: FILE & DIFF ===
+        \(n.readFile), \(n.writeFile), \(n.editFile) (read first), \(n.listFiles), \(n.searchFiles)
+        \(n.createDiff), \(n.applyDiff) — D1F diffs with 📎/❌/✅ markers.
+        \(n.writeFile) returns line count only — call \(n.readFile) after to verify.
 
-        === WORKFLOW (reusable scripts) ===
+        === CODING: GIT ===
+        \(n.gitStatus), \(n.gitDiff), \(n.gitLog), \(n.gitCommit), \(n.gitDiffPatch), \(n.gitBranch)
+
+        === CODING: XCODE ===
+        \(n.xcodeListProjects), \(n.xcodeSelectProject), \(n.xcodeBuild), \(n.xcodeRun), \(n.xcodeGrantPermission)
+        NEVER xcodebuild or swift build via shell. Workflow: read → edit → \(n.xcodeBuild) → fix → commit.
+
+        === CODING: SHELL ===
+        \(n.executeAgentCommand) (user) / \(n.executeDaemonCommand) (root)
+
+        === AGENT SCRIPTS (reusable Swift scripts) ===
         AgentScripts (Swift): \(n.listAgentScripts), \(n.readAgentScript), \(n.createAgentScript), \(n.updateAgentScript), \(n.runAgentScript), \(n.deleteAgentScript)
         - Path: ~/Documents/AgentScript/agents/. ALWAYS list first — update existing, don't duplicate.
         - Format: @_cdecl("script_main") public func scriptMain() -> Int32 { ... return 0 }
@@ -137,8 +145,17 @@ enum AgentTools {
         - CRITICAL: @unknown default on ScriptingBridge enums — unexpected rawValues crash the Agent app.
         - Data: env AGENT_SCRIPT_ARGS or ~/Documents/AgentScript/json/{Name}_input.json / _output.json
         - Generate new bridges: \(n.runAgentScript) GenerateBridge with args /Applications/App.app
+
+        === AUTOMATION: APPLESCRIPT & OSASCRIPT ===
+        \(n.runApplescript) — NSAppleScript in-process, full TCC. Quick AppleScript.
+        \(n.runOsascript) — osascript in-process, full TCC.
+        \(n.executeJavascript) — JXA via osascript -l JavaScript.
         Saved AppleScripts: \(n.listAppleScripts), \(n.runAppleScript), \(n.saveAppleScript), \(n.deleteAppleScript)
         Saved JavaScript: \(n.listJavascript), \(n.runJavascript), \(n.saveJavascript), \(n.deleteJavascript)
+
+        === AUTOMATION: APPLE EVENTS ===
+        \(n.appleEventQuery) — flat keys: bundle_id + action + key/properties/index/method/arg/predicate. One op per call. Use \(n.lookupSdef) first.
+        \(n.lookupSdef) — read app SDEF dictionaries. bundle_id="list" for all apps. class_name for details.
 
         === ACCESSIBILITY (require TCC, last resort for app UI) ===
         Read: \(n.axListWindows), \(n.axInspectElement), \(n.axGetProperties), \(n.axGetChildren), \(n.axGetFocusedElement), \(n.axCheckPermission)
@@ -147,24 +164,9 @@ enum AgentTools {
         Smart: \(n.axClickElement), \(n.axWaitAdaptive), \(n.axTypeIntoElement)
         UI: \(n.axShowMenu), \(n.axHighlightElement), \(n.axGetWindowFrame), \(n.axScreenshot), \(n.axGetAuditLog)
 
-        === FILE & DIFF ===
-        \(n.readFile), \(n.writeFile), \(n.editFile) (read first), \(n.listFiles), \(n.searchFiles)
-        \(n.createDiff), \(n.applyDiff) — D1F diffs with 📎/❌/✅ markers.
-        \(n.writeFile) returns line count only — call \(n.readFile) after to verify.
-
-        === GIT ===
-        \(n.gitStatus), \(n.gitDiff), \(n.gitLog), \(n.gitCommit), \(n.gitDiffPatch), \(n.gitBranch)
-
-        === XCODE ===
-        \(n.xcodeListProjects), \(n.xcodeSelectProject), \(n.xcodeBuild), \(n.xcodeRun), \(n.xcodeGrantPermission)
-        NEVER xcodebuild or swift build via shell. Workflow: read → edit → \(n.xcodeBuild) → fix → commit.
-
-        === WEB ===
+        === WEB BROWSER ===
         \(n.webOpen), \(n.webFind), \(n.webClick), \(n.webType), \(n.webExecuteJs), \(n.webGetUrl), \(n.webGetTitle)
         Selenium: \(n.seleniumStart), \(n.seleniumStop), \(n.seleniumNavigate), \(n.seleniumFind), \(n.seleniumClick), \(n.seleniumType), \(n.seleniumExecute), \(n.seleniumScreenshot), \(n.seleniumWait)
-
-        === SHELL ===
-        \(n.executeAgentCommand) (user) / \(n.executeDaemonCommand) (root)
 
         TOOL DISCOVERY: \(n.listNativeTools), \(n.listMcpTools)
         MCP TOOLS: mcp_* in your tool list. Never call a server's list/tools — your list IS the truth.
@@ -427,23 +429,119 @@ enum AgentTools {
             ],
             required: ["name"]
         ),
-        // --- Core Tools ---
+        // --- Coding: Xcode ---
         ToolDef(
-            name: Name.appleEventQuery,
-            description: "Query a scriptable Mac app via ObjC dispatch. Flat keys, one operation per call. Use lookup_sdef first.",
+            name: Name.xcodeBuild,
+            description: "Build an Xcode project or workspace via ScriptingBridge. Blocks until build completes. Returns errors/warnings in file:line:col format with code snippets for context.",
             properties: [
-                "bundle_id": ["type": "string", "description": "App bundle identifier (e.g. com.apple.Music)"],
-                "action": ["type": "string", "description": "One of: get, iterate, index, call, filter"],
-                "key": ["type": "string", "description": "Property key for 'get' action"],
-                "properties": ["type": "string", "description": "Comma-separated property names for 'iterate' (e.g. \"name,artist,album\")"],
-                "limit": ["type": "integer", "description": "Max items for 'iterate' (default 50)"],
-                "index": ["type": "integer", "description": "Array index for 'index' action"],
-                "method": ["type": "string", "description": "Method name for 'call' action"],
-                "arg": ["type": "string", "description": "Argument for 'call' action"],
-                "predicate": ["type": "string", "description": "NSPredicate format string for 'filter' action"],
+                "project_path": ["type": "string", "description": "Path to .xcodeproj or .xcworkspace"],
             ],
-            required: ["bundle_id", "action"]
+            required: ["project_path"]
         ),
+        ToolDef(
+            name: Name.xcodeRun,
+            description: "Build then run an Xcode project via ScriptingBridge. Builds first — only runs if clean. Returns errors if build fails.",
+            properties: [
+                "project_path": ["type": "string", "description": "Path to .xcodeproj or .xcworkspace"],
+            ],
+            required: ["project_path"]
+        ),
+        ToolDef(
+            name: Name.xcodeListProjects,
+            description: "List all open Xcode projects and workspaces with numbered indices. Use the number with xcode_select_project to choose one.",
+            properties: [:],
+            required: []
+        ),
+        ToolDef(
+            name: Name.xcodeSelectProject,
+            description: "Select an open Xcode project by its number from xcode_list_projects. Returns the project path for use with xcode_build/xcode_run.",
+            properties: [
+                "number": ["type": "integer", "description": "Project number from the list (1-based)"],
+            ],
+            required: ["number"]
+        ),
+        ToolDef(
+            name: Name.xcodeGrantPermission,
+            description: "Grant macOS Automation permission so the agent can control Xcode via ScriptingBridge. Run this once before using xcode_build or xcode_run.",
+            properties: [:],
+            required: []
+        ),
+        // --- Coding: Shell ---
+        ToolDef(
+            name: Name.executeAgentCommand,
+            description: "Execute a shell command as the current user (no root). NO TCC permissions. Use for git, builds, file ops, homebrew, etc.",
+            properties: [
+                "command": ["type": "string", "description": "The bash command to execute as the current user"],
+            ],
+            required: ["command"]
+        ),
+        ToolDef(
+            name: Name.executeDaemonCommand,
+            description: "Execute a shell command with ROOT privileges via the privileged daemon. NO TCC. Only use when root is required: system packages, /System or /Library modifications, disk operations.",
+            properties: [
+                "command": ["type": "string", "description": "The bash command to execute as root"],
+            ],
+            required: ["command"]
+        ),
+        ToolDef(
+            name: Name.taskComplete,
+            description: "Signal that the task has been completed. Always call this when done.",
+            properties: [
+                "summary": ["type": "string", "description": "Brief summary of what was accomplished"],
+            ],
+            required: ["summary"]
+        ),
+        // --- Agent Scripts (reusable Swift scripts) ---
+        ToolDef(
+            name: Name.listAgentScripts,
+            description: "List all Swift automation scripts in ~/Documents/AgentScript/agents/",
+            properties: [:],
+            required: []
+        ),
+        ToolDef(
+            name: Name.readAgentScript,
+            description: "Read the source code of a Swift automation script.",
+            properties: [
+                "name": ["type": "string", "description": "Script name (with or without .swift)"],
+            ],
+            required: ["name"]
+        ),
+        ToolDef(
+            name: Name.createAgentScript,
+            description: "Create a new Swift automation script in ~/Documents/AgentScript/agents/",
+            properties: [
+                "name": ["type": "string", "description": "Script filename (with or without .swift)"],
+                "content": ["type": "string", "description": "Swift source code"],
+            ],
+            required: ["name", "content"]
+        ),
+        ToolDef(
+            name: Name.updateAgentScript,
+            description: "Update an existing Swift automation script.",
+            properties: [
+                "name": ["type": "string", "description": "Script filename"],
+                "content": ["type": "string", "description": "New Swift source code"],
+            ],
+            required: ["name", "content"]
+        ),
+        ToolDef(
+            name: Name.runAgentScript,
+            description: "PRIORITY 1 for app automation. Compile and run a Swift dylib with full TCC. Use existing scripts first (list_agent_scripts), create new ones with ScriptingBridge protocols. Use lookup_sdef and read_agent_script to check app dictionaries and bridge Swift files. NSAppleScript fallback if ScriptingBridge has issues. Output streams live — do NOT repeat stdout.",
+            properties: [
+                "name": ["type": "string", "description": "Script filename (without .swift)"],
+                "arguments": ["type": "string", "description": "Simple string passed via AGENT_SCRIPT_ARGS env var. For complex data, use JSON files instead."],
+            ],
+            required: ["name"]
+        ),
+        ToolDef(
+            name: Name.deleteAgentScript,
+            description: "Delete a Swift automation script.",
+            properties: [
+                "name": ["type": "string", "description": "Script filename"],
+            ],
+            required: ["name"]
+        ),
+        // --- Automation: AppleScript & osascript ---
         ToolDef(
             name: Name.runApplescript,
             description: "Execute AppleScript code in-process via NSAppleScript with full TCC. Use lookup_sdef first to get correct terminology. For quick automation that doesn't need a compiled AgentScript.",
@@ -468,29 +566,96 @@ enum AgentTools {
             ],
             required: ["source"]
         ),
+        // --- Automation: Apple Events ---
         ToolDef(
-            name: Name.executeAgentCommand,
-            description: "Execute a shell command as the current user (no root). NO TCC permissions. Use for git, builds, file ops, homebrew, etc.",
+            name: Name.appleEventQuery,
+            description: "Query a scriptable Mac app via ObjC dispatch. Flat keys, one operation per call. Use lookup_sdef first.",
             properties: [
-                "command": ["type": "string", "description": "The bash command to execute as the current user"],
+                "bundle_id": ["type": "string", "description": "App bundle identifier (e.g. com.apple.Music)"],
+                "action": ["type": "string", "description": "One of: get, iterate, index, call, filter"],
+                "key": ["type": "string", "description": "Property key for 'get' action"],
+                "properties": ["type": "string", "description": "Comma-separated property names for 'iterate' (e.g. \"name,artist,album\")"],
+                "limit": ["type": "integer", "description": "Max items for 'iterate' (default 50)"],
+                "index": ["type": "integer", "description": "Array index for 'index' action"],
+                "method": ["type": "string", "description": "Method name for 'call' action"],
+                "arg": ["type": "string", "description": "Argument for 'call' action"],
+                "predicate": ["type": "string", "description": "NSPredicate format string for 'filter' action"],
             ],
-            required: ["command"]
+            required: ["bundle_id", "action"]
+        ),
+        // --- Automation: SDEF Lookup ---
+        ToolDef(
+            name: Name.lookupSdef,
+            description: "Read an app's SDEF scripting dictionary. ALWAYS use this to read SDEFs — never use shell commands to find .sdef files. Returns commands, classes, properties, elements, and enums. Use before writing osascript, NSAppleScript, apple_event_query, or ScriptingBridge code.",
+            properties: [
+                "bundle_id": ["type": "string", "description": "App bundle identifier (e.g. com.apple.Music). Use 'list' to see all available SDEFs."],
+                "class_name": ["type": "string", "description": "Optional: get details for a specific class (e.g. 'track', 'application')"],
+            ],
+            required: ["bundle_id"]
+        ),
+        // --- Saved AppleScripts ---
+        ToolDef(
+            name: Name.listAppleScripts,
+            description: "List all saved AppleScript files in ~/Documents/AgentScript/applescript/.",
+            properties: [:],
+            required: []
         ),
         ToolDef(
-            name: Name.executeDaemonCommand,
-            description: "Execute a shell command with ROOT privileges via the privileged daemon. NO TCC. Only use when root is required: system packages, /System or /Library modifications, disk operations.",
+            name: Name.runAppleScript,
+            description: "Run a saved AppleScript by name. List first with list_apple_scripts.",
             properties: [
-                "command": ["type": "string", "description": "The bash command to execute as root"],
+                "name": ["type": "string", "description": "Name of the saved AppleScript (without .applescript extension)"],
             ],
-            required: ["command"]
+            required: ["name"]
         ),
         ToolDef(
-            name: Name.taskComplete,
-            description: "Signal that the task has been completed. Always call this when done.",
+            name: Name.saveAppleScript,
+            description: "Save an AppleScript to ~/Documents/AgentScript/applescript/ for reuse.",
             properties: [
-                "summary": ["type": "string", "description": "Brief summary of what was accomplished"],
+                "name": ["type": "string", "description": "Name for the script (without .applescript extension)"],
+                "source": ["type": "string", "description": "AppleScript source code"],
             ],
-            required: ["summary"]
+            required: ["name", "source"]
+        ),
+        ToolDef(
+            name: Name.deleteAppleScript,
+            description: "Delete a saved AppleScript file.",
+            properties: [
+                "name": ["type": "string", "description": "Name of the saved AppleScript to delete"],
+            ],
+            required: ["name"]
+        ),
+        // --- Saved JavaScript/JXA ---
+        ToolDef(
+            name: Name.listJavascript,
+            description: "List all saved JavaScript (JXA) files in ~/Documents/AgentScript/javascript/.",
+            properties: [:],
+            required: []
+        ),
+        ToolDef(
+            name: Name.runJavascript,
+            description: "Run a saved JavaScript (JXA) script by name. List first with list_javascript.",
+            properties: [
+                "name": ["type": "string", "description": "Name of the saved script (without .js extension)"],
+            ],
+            required: ["name"]
+        ),
+        ToolDef(
+            name: Name.saveJavascript,
+            description: "Save a JXA script to ~/Documents/AgentScript/javascript/ for reuse.",
+            properties: [
+                "name": ["type": "string", "description": "Name for the script (without .js extension)"],
+                "source": ["type": "string", "description": "JavaScript for Automation source code"],
+            ],
+            required: ["name", "source"]
+        ),
+        ToolDef(
+            name: Name.deleteJavascript,
+            description: "Delete a saved JavaScript (JXA) file.",
+            properties: [
+                "name": ["type": "string", "description": "Name of the saved script to delete"],
+            ],
+            required: ["name"]
         ),
         // --- Accessibility Tools ---
         ToolDef(
@@ -773,167 +938,6 @@ enum AgentTools {
                 "windowId": ["type": "integer", "description": "Window ID from ax_list_windows"],
             ],
             required: ["windowId"]
-        ),
-        // --- Script Management ---
-        ToolDef(
-            name: Name.listAgentScripts,
-            description: "List all Swift automation scripts in ~/Documents/AgentScript/agents/",
-            properties: [:],
-            required: []
-        ),
-        ToolDef(
-            name: Name.readAgentScript,
-            description: "Read the source code of a Swift automation script.",
-            properties: [
-                "name": ["type": "string", "description": "Script name (with or without .swift)"],
-            ],
-            required: ["name"]
-        ),
-        ToolDef(
-            name: Name.createAgentScript,
-            description: "Create a new Swift automation script in ~/Documents/AgentScript/agents/",
-            properties: [
-                "name": ["type": "string", "description": "Script filename (with or without .swift)"],
-                "content": ["type": "string", "description": "Swift source code"],
-            ],
-            required: ["name", "content"]
-        ),
-        ToolDef(
-            name: Name.updateAgentScript,
-            description: "Update an existing Swift automation script.",
-            properties: [
-                "name": ["type": "string", "description": "Script filename"],
-                "content": ["type": "string", "description": "New Swift source code"],
-            ],
-            required: ["name", "content"]
-        ),
-        ToolDef(
-            name: Name.runAgentScript,
-            description: "PRIORITY 1 for app automation. Compile and run a Swift dylib with full TCC. Use existing scripts first (list_agent_scripts), create new ones with ScriptingBridge protocols. Use lookup_sdef and read_agent_script to check app dictionaries and bridge Swift files. NSAppleScript fallback if ScriptingBridge has issues. Output streams live — do NOT repeat stdout.",
-            properties: [
-                "name": ["type": "string", "description": "Script filename (without .swift)"],
-                "arguments": ["type": "string", "description": "Simple string passed via AGENT_SCRIPT_ARGS env var. For complex data, use JSON files instead."],
-            ],
-            required: ["name"]
-        ),
-        ToolDef(
-            name: Name.deleteAgentScript,
-            description: "Delete a Swift automation script.",
-            properties: [
-                "name": ["type": "string", "description": "Script filename"],
-            ],
-            required: ["name"]
-        ),
-        // --- SDEF Lookup ---
-        ToolDef(
-            name: Name.lookupSdef,
-            description: "Read an app's SDEF scripting dictionary. ALWAYS use this to read SDEFs — never use shell commands to find .sdef files. Returns commands, classes, properties, elements, and enums. Use before writing osascript, NSAppleScript, apple_event_query, or ScriptingBridge code.",
-            properties: [
-                "bundle_id": ["type": "string", "description": "App bundle identifier (e.g. com.apple.Music). Use 'list' to see all available SDEFs."],
-                "class_name": ["type": "string", "description": "Optional: get details for a specific class (e.g. 'track', 'application')"],
-            ],
-            required: ["bundle_id"]
-        ),
-        // --- Xcode ---
-        ToolDef(
-            name: Name.xcodeBuild,
-            description: "Build an Xcode project or workspace via ScriptingBridge. Blocks until build completes. Returns errors/warnings in file:line:col format with code snippets for context.",
-            properties: [
-                "project_path": ["type": "string", "description": "Path to .xcodeproj or .xcworkspace"],
-            ],
-            required: ["project_path"]
-        ),
-        ToolDef(
-            name: Name.xcodeRun,
-            description: "Build then run an Xcode project via ScriptingBridge. Builds first — only runs if clean. Returns errors if build fails.",
-            properties: [
-                "project_path": ["type": "string", "description": "Path to .xcodeproj or .xcworkspace"],
-            ],
-            required: ["project_path"]
-        ),
-        ToolDef(
-            name: Name.xcodeListProjects,
-            description: "List all open Xcode projects and workspaces with numbered indices. Use the number with xcode_select_project to choose one.",
-            properties: [:],
-            required: []
-        ),
-        ToolDef(
-            name: Name.xcodeSelectProject,
-            description: "Select an open Xcode project by its number from xcode_list_projects. Returns the project path for use with xcode_build/xcode_run.",
-            properties: [
-                "number": ["type": "integer", "description": "Project number from the list (1-based)"],
-            ],
-            required: ["number"]
-        ),
-        ToolDef(
-            name: Name.xcodeGrantPermission,
-            description: "Grant macOS Automation permission so the agent can control Xcode via ScriptingBridge. Run this once before using xcode_build or xcode_run.",
-            properties: [:],
-            required: []
-        ),
-        // --- Saved AppleScripts ---
-        ToolDef(
-            name: Name.listAppleScripts,
-            description: "List all saved AppleScript files in ~/Documents/AgentScript/applescript/.",
-            properties: [:],
-            required: []
-        ),
-        ToolDef(
-            name: Name.runAppleScript,
-            description: "Run a saved AppleScript by name. List first with list_apple_scripts.",
-            properties: [
-                "name": ["type": "string", "description": "Name of the saved AppleScript (without .applescript extension)"],
-            ],
-            required: ["name"]
-        ),
-        ToolDef(
-            name: Name.saveAppleScript,
-            description: "Save an AppleScript to ~/Documents/AgentScript/applescript/ for reuse.",
-            properties: [
-                "name": ["type": "string", "description": "Name for the script (without .applescript extension)"],
-                "source": ["type": "string", "description": "AppleScript source code"],
-            ],
-            required: ["name", "source"]
-        ),
-        ToolDef(
-            name: Name.deleteAppleScript,
-            description: "Delete a saved AppleScript file.",
-            properties: [
-                "name": ["type": "string", "description": "Name of the saved AppleScript to delete"],
-            ],
-            required: ["name"]
-        ),
-        // --- Saved JavaScript/JXA ---
-        ToolDef(
-            name: Name.listJavascript,
-            description: "List all saved JavaScript (JXA) files in ~/Documents/AgentScript/javascript/.",
-            properties: [:],
-            required: []
-        ),
-        ToolDef(
-            name: Name.runJavascript,
-            description: "Run a saved JavaScript (JXA) script by name. List first with list_javascript.",
-            properties: [
-                "name": ["type": "string", "description": "Name of the saved script (without .js extension)"],
-            ],
-            required: ["name"]
-        ),
-        ToolDef(
-            name: Name.saveJavascript,
-            description: "Save a JXA script to ~/Documents/AgentScript/javascript/ for reuse.",
-            properties: [
-                "name": ["type": "string", "description": "Name for the script (without .js extension)"],
-                "source": ["type": "string", "description": "JavaScript for Automation source code"],
-            ],
-            required: ["name", "source"]
-        ),
-        ToolDef(
-            name: Name.deleteJavascript,
-            description: "Delete a saved JavaScript (JXA) file.",
-            properties: [
-                "name": ["type": "string", "description": "Name of the saved script to delete"],
-            ],
-            required: ["name"]
         ),
         // --- Tool Discovery ---
         ToolDef(
