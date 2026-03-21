@@ -865,6 +865,64 @@ private struct LangDef {
     private static let hexDumpAsciiRx: NSRegularExpression? = try? NSRegularExpression(
         pattern: #"  (.+)$"#, options: .anchorsMatchLines)
 
+    // MARK: - D1F Diff Line Highlighting
+
+    /// Highlight a D1F diff line with colored backgrounds matching the emoji markers.
+    private static func highlightD1FLine(line: String, font: NSFont) -> NSAttributedString {
+        let isDark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        let trimmed = line.trimmingCharacters(in: .whitespaces)
+
+        let bg: NSColor
+        let fg: NSColor
+
+        if trimmed.hasPrefix("❌ ") {
+            // Deleted line — red
+            bg = isDark
+                ? NSColor(red: 0.4, green: 0.1, blue: 0.1, alpha: 1.0)
+                : NSColor(red: 1.0, green: 0.85, blue: 0.85, alpha: 1.0)
+            fg = isDark
+                ? NSColor(red: 1.0, green: 0.7, blue: 0.7, alpha: 1.0)
+                : NSColor(red: 0.6, green: 0.0, blue: 0.0, alpha: 1.0)
+        } else if trimmed.hasPrefix("✅ ") {
+            // Inserted line — green
+            bg = isDark
+                ? NSColor(red: 0.1, green: 0.3, blue: 0.1, alpha: 1.0)
+                : NSColor(red: 0.85, green: 1.0, blue: 0.85, alpha: 1.0)
+            fg = isDark
+                ? NSColor(red: 0.7, green: 1.0, blue: 0.7, alpha: 1.0)
+                : NSColor(red: 0.0, green: 0.5, blue: 0.0, alpha: 1.0)
+        } else if trimmed.hasPrefix("📎 ") {
+            // Retained line — subtle blue
+            bg = isDark
+                ? NSColor(red: 0.12, green: 0.14, blue: 0.22, alpha: 1.0)
+                : NSColor(red: 0.92, green: 0.94, blue: 1.0, alpha: 1.0)
+            fg = isDark
+                ? NSColor(red: 0.65, green: 0.75, blue: 0.9, alpha: 1.0)
+                : NSColor(red: 0.25, green: 0.3, blue: 0.5, alpha: 1.0)
+        } else if trimmed.hasPrefix("📍 ") {
+            // Location info — dim
+            bg = .clear
+            fg = isDark
+                ? NSColor(red: 0.5, green: 0.5, blue: 0.55, alpha: 1.0)
+                : NSColor(red: 0.45, green: 0.45, blue: 0.5, alpha: 1.0)
+        } else {
+            // 📊 summary or ❓ unknown — default
+            bg = .clear
+            fg = NSColor.labelColor
+        }
+
+        let result = NSMutableAttributedString(string: line, attributes: [
+            .font: font,
+            .foregroundColor: fg
+        ])
+        if bg != .clear {
+            result.addAttribute(.backgroundColor, value: bg, range: NSRange(location: 0, length: (line as NSString).length))
+        }
+        return result
+    }
+
+    // MARK: - Hex Dump Detection & Highlighting
+
     private static func looksLikeHexDump(_ t: String) -> Bool {
         t.range(of: #"^[0-9a-f]{8}: [0-9a-f]{2}"#, options: .regularExpression) != nil
     }
@@ -924,11 +982,18 @@ private struct LangDef {
         if looksLikeHexDump(t) { return true }
         if looksLikeTerminalLine(t) { return true }
         if looksLikeGitOutput(t) { return true }
+        if looksLikeD1FLine(t) { return true }
         // Compiler/SPM warnings and errors
         if t.hasPrefix("warning:") || t.hasPrefix("error:") || t.hasPrefix("note:") { return true }
         // Bare file paths (e.g. /Users/... or ~/Documents/...)
         if t.hasPrefix("/") || t.hasPrefix("~/") { return true }
         return false
+    }
+
+    /// Check if a line is D1F diff output (📎/❌/✅/📍/📊 prefixed)
+    private static func looksLikeD1FLine(_ t: String) -> Bool {
+        t.hasPrefix("📎 ") || t.hasPrefix("❌ ") || t.hasPrefix("✅ ") ||
+        t.hasPrefix("📍 ") || t.hasPrefix("📊 ") || t.hasPrefix("❓ ")
     }
 
     /// Check if a single line looks like ls -la output (permissions string)
@@ -941,6 +1006,11 @@ private struct LangDef {
     /// Highlight a single activity log line. Returns nil if the line is not activity-log output.
     static func highlightActivityLogLine(line: String, font: NSFont) -> NSAttributedString? {
         let trimmed = line.trimmingCharacters(in: .whitespaces)
+
+        // D1F diff output (📎/❌/✅ prefixed lines)
+        if looksLikeD1FLine(trimmed) {
+            return highlightD1FLine(line: line, font: font)
+        }
 
         // Hex dump output (xxd / hexdump)
         if looksLikeHexDump(trimmed) {
