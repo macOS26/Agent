@@ -1289,8 +1289,6 @@ final class AgentViewModel {
 
             guard approved else { continue }
 
-            // Only act on "Agent!" commands
-            guard row.text.hasPrefix("Agent!") else { continue }
             let stripped = row.text.dropFirst(6) // drop "Agent!"
             let prompt = stripped.hasPrefix(" ")
                 ? String(stripped.dropFirst()).trimmingCharacters(in: .whitespaces)
