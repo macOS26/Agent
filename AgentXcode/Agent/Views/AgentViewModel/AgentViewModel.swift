@@ -53,12 +53,15 @@ final class AgentViewModel {
     var rootServiceActive = false
     var userWasActive = false
     var rootWasActive = false
+    var userPingOK = false
+    var daemonPingOK = false
     var userEnabled: Bool = UserDefaults.standard.object(forKey: "agentUserEnabled") as? Bool ?? true {
         didSet {
             UserDefaults.standard.set(userEnabled, forKey: "agentUserEnabled")
             if !userEnabled {
                 // Kill and unregister the user agent
                 userService.shutdownAgent()
+                userPingOK = false
                 appendLog("User Agent: shut down. To re-enable: click Connect, then click Register.")
             }
         }
@@ -69,6 +72,7 @@ final class AgentViewModel {
             if !rootEnabled {
                 // Kill and unregister the daemon for security
                 helperService.shutdownDaemon()
+                daemonPingOK = false
                 appendLog("Launch Daemon: shut down. To re-enable: click Connect, then click Register.")
             }
         }
@@ -78,17 +82,15 @@ final class AgentViewModel {
     var servicesGearColor: Color {
         if !userEnabled && !rootEnabled { return .gray }
         if !userEnabled || !rootEnabled { return .yellow }
-        let userOK = userServiceActive || (userWasActive && isRunning)
-        let rootOK = rootServiceActive || (rootWasActive && isRunning)
-        if userOK && rootOK { return .green }
-        if !userOK && !rootOK { return .red }
+        if userPingOK && daemonPingOK { return .green }
+        if !userPingOK && !daemonPingOK { return .red }
         return .yellow
     }
 
     /// Tooltip for the gear icon
     var servicesGearHelp: String {
-        let userStatus = userServiceActive ? "running" : (userEnabled ? "stopped" : "disabled")
-        let rootStatus = rootServiceActive ? "running" : (rootEnabled ? "stopped" : "disabled")
+        let userStatus = userPingOK ? "connected" : (userEnabled ? "not responding" : "disabled")
+        let rootStatus = daemonPingOK ? "connected" : (rootEnabled ? "not responding" : "disabled")
         return "Services — Agent: \(userStatus), Daemon: \(rootStatus)"
     }
 
@@ -778,12 +780,15 @@ final class AgentViewModel {
             try? await Task.sleep(nanoseconds: 500_000_000)
             appendLog("Warming up the engines...")
             var userOK = await userService.ping()
+            userPingOK = userOK
             appendLog("User agent: \(userOK ? "ping OK" : "no response")")
             var daemonOK = false
             if rootEnabled {
                 daemonOK = await helperService.ping()
+                daemonPingOK = daemonOK
                 appendLog("Launch Daemon: \(daemonOK ? "ping OK" : "no response")")
             } else {
+                daemonPingOK = false
                 appendLog("Launch Daemon: disabled")
             }
             if !userOK {
@@ -791,6 +796,7 @@ final class AgentViewModel {
                 _ = userService.restartAgent()
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
                 userOK = await userService.ping()
+                userPingOK = userOK
                 appendLog("User agent: \(userOK ? "mended — ping OK" : "still NOT responding")")
             }
             if rootEnabled && !daemonOK {
@@ -798,6 +804,7 @@ final class AgentViewModel {
                 _ = helperService.restartDaemon()
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
                 daemonOK = await helperService.ping()
+                daemonPingOK = daemonOK
                 appendLog("Launch Daemon: \(daemonOK ? "mended — ping OK" : "still NOT responding")")
             }
             if !userOK || (rootEnabled && !daemonOK) {
@@ -820,11 +827,13 @@ final class AgentViewModel {
 
     func unregisterDaemon() {
         helperService.shutdownDaemon()
+        daemonPingOK = false
         appendLog("Helper daemon unregistered.")
     }
 
     func unregisterAgent() {
         userService.shutdownAgent()
+        userPingOK = false
         appendLog("User agent unregistered.")
     }
 
@@ -832,14 +841,17 @@ final class AgentViewModel {
         appendLog("Testing connections...")
         Task {
             var userOK = await userService.ping()
+            userPingOK = userOK
             appendLog("User agent: \(userOK ? "ping OK" : "no response")")
             var daemonOK = await helperService.ping()
+            daemonPingOK = daemonOK
             appendLog("Launch Daemon: \(daemonOK ? "ping OK" : "no response")")
             if !userOK {
                 appendLog("User agent: mending...")
                 _ = userService.restartAgent()
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
                 userOK = await userService.ping()
+                userPingOK = userOK
                 appendLog("User agent: \(userOK ? "mended — ping OK" : "still NOT responding")")
             }
             if !daemonOK {
@@ -847,6 +859,7 @@ final class AgentViewModel {
                 _ = helperService.restartDaemon()
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
                 daemonOK = await helperService.ping()
+                daemonPingOK = daemonOK
                 appendLog("Launch Daemon: \(daemonOK ? "mended — ping OK" : "still NOT responding")")
             }
             if !userOK || !daemonOK {
