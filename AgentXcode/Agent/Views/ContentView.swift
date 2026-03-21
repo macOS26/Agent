@@ -24,59 +24,25 @@ struct ContentView: View {
     @State private var showQuitConfirm = false
     @State private var showClearConfirm = false
     @State private var showNewTabSheet = false
+    @State private var showServices = false
 
     var body: some View {
         VStack(spacing: 0) {
             // Header
             HStack {
-                HStack(spacing: 6) {
-                    StatusDot(
-                        isActive: viewModel.userServiceActive,
-                        wasActive: viewModel.userWasActive,
-                        isBusy: viewModel.isRunning,
-                        enabled: viewModel.userEnabled
-                    )
-                    Toggle("User", isOn: $viewModel.userEnabled)
-                        .toggleStyle(.switch)
-                        .controlSize(.mini)
-                        .tint(.green)
-                        .font(.caption)
-                        .foregroundStyle(viewModel.userEnabled ? .secondary : .tertiary)
-                    StatusDot(
-                        isActive: viewModel.rootServiceActive,
-                        wasActive: viewModel.rootWasActive,
-                        isBusy: viewModel.isRunning,
-                        enabled: viewModel.rootEnabled
-                    )
-                    Toggle("Daemon", isOn: $viewModel.rootEnabled)
-                        .toggleStyle(.switch)
-                        .controlSize(.mini)
-                        .tint(.green)
-                        .font(.caption)
-                        .foregroundStyle(viewModel.rootEnabled ? .secondary : .tertiary)
-                }
-
-                Button("Unregister") {
-                    viewModel.unregisterAgent()
-                    viewModel.unregisterDaemon()
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-
-                Button("Register") {
-                    viewModel.registerAgent()
-                    viewModel.registerDaemon()
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-
-                Button("Connect") {
-                    viewModel.testConnection()
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-
                 Spacer()
+
+                // Services popover button — gear color reflects overall system health
+                Button { showServices.toggle() } label: {
+                    Image(systemName: "gearshape.2")
+                        .foregroundStyle(viewModel.servicesGearColor)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .help(viewModel.servicesGearHelp)
+                .popover(isPresented: $showServices) {
+                    ServicesPopover(viewModel: viewModel)
+                }
 
                 Button {
                     showMessages.toggle()
@@ -522,7 +488,7 @@ struct ContentView: View {
                 .padding()
             }
         }
-        .frame(minWidth: 900, minHeight: 500)
+        .frame(minHeight: 500)
         .onAppear { isTaskFieldFocused = true }
         .overlay {
             DependencyOverlay(status: dependencyStatus, isVisible: $showDependencyOverlay)
@@ -787,5 +753,79 @@ extension ContentView {
         guard tabIndex < viewModel.scriptTabs.count else { return }
         viewModel.selectedTabId = viewModel.scriptTabs[tabIndex].id
         viewModel.persistScriptTabs()
+    }
+}
+
+// MARK: - Services Popover
+
+struct ServicesPopover: View {
+    @Bindable var viewModel: AgentViewModel
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Services")
+                .font(.headline)
+            
+            // User Launch Agent
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) {
+                    StatusDot(
+                        isActive: viewModel.userServiceActive,
+                        wasActive: viewModel.userWasActive,
+                        isBusy: viewModel.isRunning,
+                        enabled: viewModel.userEnabled
+                    )
+                    Toggle("User Agent", isOn: $viewModel.userEnabled)
+                        .toggleStyle(.switch)
+                        .controlSize(.mini)
+                        .tint(.green)
+                        .font(.caption)
+                }
+            }
+            
+            // Daemon Launch Agent
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) {
+                    StatusDot(
+                        isActive: viewModel.rootServiceActive,
+                        wasActive: viewModel.rootWasActive,
+                        isBusy: viewModel.isRunning,
+                        enabled: viewModel.rootEnabled
+                    )
+                    Toggle("Daemon Agent", isOn: $viewModel.rootEnabled)
+                        .toggleStyle(.switch)
+                        .controlSize(.mini)
+                        .tint(.green)
+                        .font(.caption)
+                }
+            }
+            
+            Divider()
+            
+            // Action Buttons
+            HStack(spacing: 8) {
+                Button("Unregister") {
+                    viewModel.unregisterAgent()
+                    viewModel.unregisterDaemon()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                
+                Button("Register") {
+                    viewModel.registerAgent()
+                    viewModel.registerDaemon()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                
+                Button("Connect") {
+                    viewModel.testConnection()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+        }
+        .padding(16)
+        .frame(width: 320)
     }
 }

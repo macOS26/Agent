@@ -1,5 +1,6 @@
 @preconcurrency import Foundation
 import AppKit
+import SwiftUI
 import SQLite3
 import Speech
 import AVFoundation
@@ -33,6 +34,7 @@ enum APIProvider: String, CaseIterable, Codable {
     }
     
     /// Providers selectable in the UI for task execution
+    /// Note: foundationModel (Apple Intelligence) is NOT included - it's for LoRA training only, not direct task execution
     static var selectableProviders: [APIProvider] {
         [.claude, .openAI, .deepSeek, .huggingFace, .ollama, .localOllama]
     }
@@ -72,8 +74,37 @@ final class AgentViewModel {
         }
     }
 
-    var selectedProvider: APIProvider = { APIProvider(rawValue: UserDefaults.standard.string(forKey: "agentProvider") ?? "ollama") ?? .ollama }() {
+    /// Gear icon color reflecting overall service health
+    var servicesGearColor: Color {
+        if !userEnabled && !rootEnabled { return .gray }
+        if !userEnabled || !rootEnabled { return .yellow }
+        let userOK = userServiceActive || (userWasActive && isRunning)
+        let rootOK = rootServiceActive || (rootWasActive && isRunning)
+        if userOK && rootOK { return .green }
+        if !userOK && !rootOK { return .red }
+        return .yellow
+    }
+
+    /// Tooltip for the gear icon
+    var servicesGearHelp: String {
+        let userStatus = userServiceActive ? "running" : (userEnabled ? "stopped" : "disabled")
+        let rootStatus = rootServiceActive ? "running" : (rootEnabled ? "stopped" : "disabled")
+        return "Services — Agent: \(userStatus), Daemon: \(rootStatus)"
+    }
+
+    var selectedProvider: APIProvider = {
+        let rawValue = UserDefaults.standard.string(forKey: "agentProvider") ?? "ollama"
+        let provider = APIProvider(rawValue: rawValue) ?? .ollama
+        // foundationModel is NEVER a valid selection - it's for LoRA training only
+        // If somehow stored, fall back to ollama
+        return APIProvider.selectableProviders.contains(provider) ? provider : .ollama
+    }() {
         didSet {
+            // Ensure foundationModel can never be stored as selected provider
+            guard APIProvider.selectableProviders.contains(selectedProvider) else {
+                selectedProvider = .ollama
+                return
+            }
             UserDefaults.standard.set(selectedProvider.rawValue, forKey: "agentProvider")
             if selectedProvider == .ollama && ollamaModels.isEmpty {
                 fetchOllamaModels()
@@ -93,8 +124,6 @@ final class AgentViewModel {
             if selectedProvider == .huggingFace && huggingFaceModels.isEmpty {
                 fetchHuggingFaceModels()
             }
-            // Apple Intelligence is no longer a direct LLM provider
-            // It's used for LoRA training only
         }
     }
 
