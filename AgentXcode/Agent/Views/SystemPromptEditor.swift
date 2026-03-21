@@ -205,7 +205,7 @@ final class SystemPromptWindow {
     }
 }
 
-// MARK: - System Prompts View (tabbed editor for all 4 providers)
+// MARK: - System Prompts View (tabbed editor for all 6 providers)
 
 struct SystemPromptsView: View {
     @State private var selectedProvider: APIProvider = .claude
@@ -214,14 +214,20 @@ struct SystemPromptsView: View {
 
     private let service = SystemPromptService.shared
 
-    // HSB: equal brightness (0.85), equal saturation (0.5), equidistant hues (120° apart)
+    // HSB: equidistant hues (60° apart) with matched saturation/brightness
     private let providerLabels: [(APIProvider, String, Color, NSColor)] = [
-        (.claude,          "Claude",   Color(hue: 0.0/360,   saturation: 0.5, brightness: 0.85),   // red 0°
-                                       NSColor(hue: 0.0/360,   saturation: 0.5, brightness: 0.85, alpha: 1.0)),
-        (.ollama,          "Ollama",   Color(hue: 120.0/360, saturation: 0.6, brightness: 0.65),   // green 120°
-                                       NSColor(hue: 120.0/360, saturation: 0.6, brightness: 0.65, alpha: 1.0)),
-        (.localOllama,     "Local",    Color(hue: 240.0/360, saturation: 0.6, brightness: 0.80),   // blue 240°
-                                       NSColor(hue: 240.0/360, saturation: 0.6, brightness: 0.80, alpha: 1.0)),
+        (.claude,          "Claude",       Color(hue: 0.0/360,   saturation: 0.5, brightness: 0.85),   // red 0°
+                                           NSColor(hue: 0.0/360,   saturation: 0.5, brightness: 0.85, alpha: 1.0)),
+        (.openAI,          "OpenAI",       Color(hue: 60.0/360,  saturation: 0.5, brightness: 0.85),   // gold 60°
+                                           NSColor(hue: 60.0/360,  saturation: 0.5, brightness: 0.85, alpha: 1.0)),
+        (.ollama,          "Ollama",       Color(hue: 120.0/360, saturation: 0.6, brightness: 0.65),   // green 120°
+                                           NSColor(hue: 120.0/360, saturation: 0.6, brightness: 0.65, alpha: 1.0)),
+        (.deepSeek,        "DeepSeek",     Color(hue: 180.0/360, saturation: 0.5, brightness: 0.80),   // cyan 180°
+                                           NSColor(hue: 180.0/360, saturation: 0.5, brightness: 0.80, alpha: 1.0)),
+        (.localOllama,     "Local",        Color(hue: 240.0/360, saturation: 0.6, brightness: 0.80),   // blue 240°
+                                           NSColor(hue: 240.0/360, saturation: 0.6, brightness: 0.80, alpha: 1.0)),
+        (.huggingFace,     "HuggingFace",  Color(hue: 300.0/360, saturation: 0.5, brightness: 0.80),   // magenta 300°
+                                           NSColor(hue: 300.0/360, saturation: 0.5, brightness: 0.80, alpha: 1.0)),
     ]
 
     private func tabColor(for provider: APIProvider) -> Color {
