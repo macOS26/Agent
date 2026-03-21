@@ -987,7 +987,7 @@ extension AgentViewModel {
                                     diffLog += " (of \(total) lines)"
                                 }
                             }
-                            appendLog(diffLog)
+                            appendRawOutput(diffLog + "\n")
 
                             appendLog(output)
                             commandsRun.append("edit_file: \(filePath)")
@@ -1004,7 +1004,7 @@ extension AgentViewModel {
                             if let meta = diff.metadata, let startLine = meta.sourceStartLine {
                                 result += "\n📍 Changes start at line \(startLine + 1)"
                             }
-                            appendLog(result)
+                            appendRawOutput(result + "\n")
                             commandsRun.append("create_diff")
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": result])
                         }
@@ -1025,7 +1025,7 @@ extension AgentViewModel {
                                 let patched = try MultiLineDiff.applyASCIIDiff(to: source, asciiDiff: asciiDiff)
                                 try patched.write(to: URL(fileURLWithPath: expandedPath), atomically: true, encoding: .utf8)
                                 let verifyDiff = MultiLineDiff.createAndDisplayDiff(source: source, destination: patched, format: .ai)
-                                appendLog(verifyDiff)
+                                appendRawOutput(verifyDiff + "\n")
                                 let output = "Applied diff to \(filePath)"
                                 appendLog(output)
                                 commandsRun.append("apply_diff: \(filePath)")
