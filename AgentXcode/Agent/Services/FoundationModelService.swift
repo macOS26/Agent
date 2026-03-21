@@ -2,8 +2,18 @@ import FoundationModels
 import Foundation
 
 /// On-device language model provider using Apple's Foundation Models framework.
+/// 
+/// This service provides Apple Intelligence for LoRA adapter training. Apple Intelligence
+/// captures response patterns that can be exported as JSONL training data, then used to
+/// create .fmadapter files that enhance other LLM providers.
+///
+/// Note: Apple Intelligence is NOT directly selectable as a task-execution LLM due to
+/// its limited context window. Instead:
+/// 1. Use Claude/Ollama/etc. for actual task execution
+/// 2. Use Apple Intelligence for LoRA training data generation
+/// 3. Apply trained adapters to enhance responses from other providers
+///
 /// Requires macOS 26.0+ with Apple Intelligence enabled.
-/// Uses native Tool protocol for structured tool calling.
 @MainActor
 final class FoundationModelService {
     let historyContext: String

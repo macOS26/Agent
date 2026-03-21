@@ -11,7 +11,7 @@ struct ToolsView: View {
                 Text("Tools")
                     .font(.title3).bold()
                 Picker("Provider", selection: $selectedProvider) {
-                    ForEach(APIProvider.allCases, id: \.self) { p in
+                    ForEach(APIProvider.selectableProviders, id: \.self) { p in
                         Text(p.displayName).tag(p)
                     }
                 }

@@ -20,7 +20,7 @@ final class SystemPromptService {
         .huggingFace: "hugging_face.txt",
         .ollama: "ollama.txt",
         .localOllama: "local_ollama.txt",
-        .foundationModel: "apple_ai.txt",
+        // Note: foundationModel removed - Apple Intelligence is now used for LoRA training only
     ]
 
     /// Version header prefix embedded in each prompt file.
@@ -115,11 +115,6 @@ final class SystemPromptService {
     /// The built-in default prompt template for each provider.
     /// Uses {userName} and {userHome} as placeholders.
     private static func defaultPrompt(for provider: APIProvider) -> String {
-        switch provider {
-        case .claude, .openAI, .deepSeek, .huggingFace, .ollama, .localOllama:
-            return AgentTools.systemPrompt(userName: "{userName}", userHome: "{userHome}")
-        case .foundationModel:
-            return AgentTools.compactSystemPrompt(userName: "{userName}", userHome: "{userHome}")
-        }
+        return AgentTools.systemPrompt(userName: "{userName}", userHome: "{userHome}")
     }
 }

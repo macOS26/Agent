@@ -10,7 +10,7 @@ struct SettingsView: View {
                 Text("LLM Provider")
                     .font(.headline)
                 Picker("AI", selection: $viewModel.selectedProvider) {
-                    ForEach(APIProvider.allCases, id: \.self) { provider in
+                    ForEach(APIProvider.selectableProviders, id: \.self) { provider in
                         Text(provider.displayName).tag(provider)
                     }
                 }
@@ -221,50 +221,6 @@ struct SettingsView: View {
                         }
                     }
                 }
-            } else if viewModel.selectedProvider == .foundationModel {
-                // Apple Foundation Models (on-device) + LoRA
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Apple Intelligence (On-Device)")
-                        .font(.headline)
-                    HStack(spacing: 6) {
-                        Image(systemName: FoundationModelService.isAvailable ? "checkmark.circle.fill" : "xmark.circle.fill")
-                            .foregroundStyle(FoundationModelService.isAvailable ? .green : .red)
-                        Text(FoundationModelService.isAvailable ? "Available" : "Not available")
-                            .font(.subheadline)
-                    }
-                    if !FoundationModelService.isAvailable {
-                        Text(FoundationModelService.unavailabilityReason)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    } else {
-                        HStack(alignment: .top, spacing: 6) {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundStyle(.orange)
-                                .font(.caption)
-                            Text("Apple Intelligence is not fully compatible with Agent! It is here for training purposes only. Apple AI does not have enough context.")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding(8)
-                        .background(.orange.opacity(0.08))
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-
-                        // LoRA adapter status
-                        HStack(spacing: 6) {
-                            Circle()
-                                .fill(LoRAAdapterManager.shared.isLoaded ? .green : .gray.opacity(0.4))
-                                .frame(width: 8, height: 8)
-                            Text(LoRAAdapterManager.shared.isLoaded ? "LoRA: \(LoRAAdapterManager.shared.adapterName)" : "No LoRA adapter")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-
-                        Divider()
-
-                        // LoRA Training Section (inline)
-                        LoRASettingsView()
-                    }
-                }
             } else {
                 // Local Ollama settings
                 VStack(alignment: .leading, spacing: 10) {
@@ -334,6 +290,37 @@ struct SettingsView: View {
             // System Prompts Editor
             Button("Edit System Prompts...") {
                 SystemPromptWindow.shared.show()
+            }
+
+            // LoRA Training Section (available for all providers)
+            Divider()
+            VStack(alignment: .leading, spacing: 10) {
+                Text("LoRA Training (Apple Intelligence)")
+                    .font(.headline)
+                HStack(spacing: 6) {
+                    Image(systemName: FoundationModelService.isAvailable ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .foregroundStyle(FoundationModelService.isAvailable ? .green : .red)
+                    Text(FoundationModelService.isAvailable ? "Apple Intelligence Available" : "Not Available")
+                        .font(.subheadline)
+                }
+                if !FoundationModelService.isAvailable {
+                    Text(FoundationModelService.unavailabilityReason)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(LoRAAdapterManager.shared.isLoaded ? .green : .gray.opacity(0.4))
+                        .frame(width: 8, height: 8)
+                    Text(LoRAAdapterManager.shared.isLoaded ? "LoRA: \(LoRAAdapterManager.shared.adapterName)" : "No LoRA adapter loaded")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Text("Train custom LoRA adapters using Apple Intelligence, then use them with any LLM provider for enhanced responses.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                LoRASettingsView()
             }
         }
         .padding(20)

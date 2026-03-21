@@ -16,7 +16,7 @@ enum APIProvider: String, CaseIterable, Codable {
     case huggingFace = "huggingFace"
     case ollama = "ollama"
     case localOllama = "localOllama"
-    case foundationModel = "foundationModel"
+    case foundationModel = "foundationModel"  // Used for LoRA training only, not selectable in UI
 
     var displayName: String {
         switch self {
@@ -26,8 +26,13 @@ enum APIProvider: String, CaseIterable, Codable {
         case .huggingFace: "Hugging Face"
         case .ollama: "Ollama"
         case .localOllama: "Local Ollama"
-        case .foundationModel: "Apple Intelligence (Experimental)"
+        case .foundationModel: "Apple Intelligence (LoRA Training)"
         }
+    }
+    
+    /// Providers selectable in the UI for task execution
+    static var selectableProviders: [APIProvider] {
+        [.claude, .openAI, .deepSeek, .huggingFace, .ollama, .localOllama]
     }
 }
 
@@ -85,7 +90,8 @@ final class AgentViewModel {
             if selectedProvider == .huggingFace && huggingFaceModels.isEmpty {
                 fetchHuggingFaceModels()
             }
-            // .foundationModel needs no setup — uses SystemLanguageModel.default
+            // Apple Intelligence is no longer a direct LLM provider
+            // It's used for LoRA training only
         }
     }
 

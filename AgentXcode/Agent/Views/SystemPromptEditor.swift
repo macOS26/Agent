@@ -214,16 +214,14 @@ struct SystemPromptsView: View {
 
     private let service = SystemPromptService.shared
 
-    // HSB: equal brightness (0.85), equal saturation (0.5), equidistant hues (90° apart)
+    // HSB: equal brightness (0.85), equal saturation (0.5), equidistant hues (120° apart)
     private let providerLabels: [(APIProvider, String, Color, NSColor)] = [
         (.claude,          "Claude",   Color(hue: 0.0/360,   saturation: 0.5, brightness: 0.85),   // red 0°
                                        NSColor(hue: 0.0/360,   saturation: 0.5, brightness: 0.85, alpha: 1.0)),
-        (.ollama,          "Ollama",   Color(hue: 130.0/360, saturation: 0.6, brightness: 0.65),   // green 130°
-                                       NSColor(hue: 130.0/360, saturation: 0.6, brightness: 0.65, alpha: 1.0)),
-        (.localOllama,     "Local",    Color(hue: 220.0/360, saturation: 0.6, brightness: 0.80),   // blue 220°
-                                       NSColor(hue: 220.0/360, saturation: 0.6, brightness: 0.80, alpha: 1.0)),
-        (.foundationModel, "Apple AI", Color(hue: 270.0/360, saturation: 0.5, brightness: 0.65),   // violet 270°
-                                       NSColor(hue: 270.0/360, saturation: 0.5, brightness: 0.65, alpha: 1.0)),
+        (.ollama,          "Ollama",   Color(hue: 120.0/360, saturation: 0.6, brightness: 0.65),   // green 120°
+                                       NSColor(hue: 120.0/360, saturation: 0.6, brightness: 0.65, alpha: 1.0)),
+        (.localOllama,     "Local",    Color(hue: 240.0/360, saturation: 0.6, brightness: 0.80),   // blue 240°
+                                       NSColor(hue: 240.0/360, saturation: 0.6, brightness: 0.80, alpha: 1.0)),
     ]
 
     private func tabColor(for provider: APIProvider) -> Color {

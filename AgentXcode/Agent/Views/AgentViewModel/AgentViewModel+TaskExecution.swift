@@ -681,16 +681,6 @@ extension AgentViewModel {
         default:
             ollama = nil
         }
-        let foundationModel: FoundationModelService? = provider == .foundationModel
-            ? FoundationModelService(historyContext: historyContext, projectFolder: projectFolder) : nil
-        if foundationModel != nil {
-            NativeToolContext.taskCompleteSummary = nil
-            NativeToolContext.lastToolOutput = ""
-            NativeToolContext.toolCallCount = 0
-            NativeToolContext.toolHandler = { [weak self] toolName, input in
-                await self?.executeNativeTool(toolName, input: input) ?? "Error: agent unavailable"
-            }
-        }
         // Prepend last task as conversation context so the LLM knows what just happened
         var messages: [[String: Any]] = history.lastTaskMessages()
 
@@ -755,34 +745,12 @@ extension AgentViewModel {
                         }
                     }
                     textWasStreamed = true
-                } else if let foundationModel {
-                    response = try await foundationModel.sendStreaming(messages: messages) { [weak self] delta in
-                        Task { @MainActor in
-                            self?.isThinking = false
-                            self?.appendStreamDelta(delta)
-                        }
-                    }
-                    textWasStreamed = true
                 } else {
                     throw AgentError.noAPIKey
                 }
                 flushStreamBuffer()
                 isThinking = false
                 guard !Task.isCancelled else { break }
-
-                // Check if Apple AI called task_complete via native tool system
-                if let summary = NativeToolContext.taskCompleteSummary {
-                    NativeToolContext.taskCompleteSummary = nil
-                    completionSummary = summary
-                    appendLog("✅ Completed: \(summary)")
-                    flushLog()
-                    history.add(TaskRecord(prompt: prompt, summary: summary, commandsRun: commandsRun), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
-                    ChatHistoryStore.shared.endCurrentTask(summary: summary)
-                    stopProgressUpdates()
-                    sendAgentReply(summary)
-                    isRunning = false
-                    return
-                }
 
                 var toolResults: [[String: Any]] = []
                 var hasToolUse = false
@@ -2257,25 +2225,7 @@ extension AgentViewModel {
                     messages.append(["role": "user", "content": "Continue with the task. Call task_complete when finished."])
                 } else if !hasToolUse {
                     consecutiveNoTool += 1
-                    // Apple Intelligence: text-only = final answer, auto-complete
-                    if provider == .foundationModel {
-                        // Grab the text response as the completion summary
-                        let textResponse = response.content.compactMap { block -> String? in
-                            guard block["type"] as? String == "text" else { return nil }
-                            return block["text"] as? String
-                        }.joined(separator: "\n")
-                        let summary = NativeToolContext.lastToolOutput.isEmpty
-                            ? (textResponse.isEmpty ? "Done" : String(textResponse.prefix(500)))
-                            : NativeToolContext.lastToolOutput
-                        NativeToolContext.lastToolOutput = ""
-                        completionSummary = summary
-                        history.add(TaskRecord(prompt: prompt, summary: summary, commandsRun: commandsRun), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
-                        ChatHistoryStore.shared.endCurrentTask(summary: summary)
-                        sendAgentReply(summary)
-                        isRunning = false
-                        return
-                    }
-                    // Give other models up to 3 nudges to use tools before giving up
+                    // Give models up to 3 nudges to use tools before giving up
                     if consecutiveNoTool >= 3 {
                         appendLog("(model not using tools — stopping)")
                         break

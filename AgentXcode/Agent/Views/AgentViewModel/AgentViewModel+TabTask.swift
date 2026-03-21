@@ -109,8 +109,6 @@ extension AgentViewModel {
         default:
             ollama = nil
         }
-        let foundationModel: FoundationModelService? = provider == .foundationModel
-            ? FoundationModelService(historyContext: tabHistoryContext) : nil
 
         // Build on existing conversation or start fresh
         var messages: [[String: Any]] = tab.llmMessages
@@ -148,15 +146,6 @@ extension AgentViewModel {
                     tab.flushStreamBuffer()
                 } else if let ollama {
                     response = try await ollama.sendStreaming(messages: messages) { [weak tab] delta in
-                        Task { @MainActor in
-                            tab?.isLLMThinking = false
-                            tab?.appendStreamDelta(delta)
-                        }
-                    }
-                    textWasStreamed = true
-                    tab.flushStreamBuffer()
-                } else if let foundationModel {
-                    response = try await foundationModel.sendStreaming(messages: messages) { [weak tab] delta in
                         Task { @MainActor in
                             tab?.isLLMThinking = false
                             tab?.appendStreamDelta(delta)
@@ -208,10 +197,7 @@ extension AgentViewModel {
                     consecutiveNoTool = 0
                 } else if !hasToolUse {
                     consecutiveNoTool += 1
-                    // Apple Intelligence: text-only = final answer, stop immediately
-                    if provider == .foundationModel {
-                        break
-                    }
+                    // Give models up to 3 nudges to use tools before giving up
                     if consecutiveNoTool >= 3 {
                         tab.appendLog("(model not using tools — stopping)")
                         break

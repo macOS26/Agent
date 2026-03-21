@@ -22,7 +22,7 @@ struct NewMainTabSheet: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Provider").font(.caption).foregroundStyle(.secondary)
                 Picker("Provider", selection: $provider) {
-                    ForEach(APIProvider.allCases, id: \.self) { p in
+                    ForEach(APIProvider.selectableProviders, id: \.self) { p in
                         Text(p.displayName).tag(p)
                     }
                 }
@@ -113,7 +113,8 @@ struct NewMainTabSheet: View {
             ollamaModelPicker(models: viewModel.localOllamaModels, fetch: { viewModel.fetchLocalOllamaModels() })
 
         case .foundationModel:
-            Text("Apple Intelligence (on-device)")
+            // Apple Intelligence is for LoRA training only, not direct task execution
+            Text("Apple Intelligence (LoRA training only)")
                 .foregroundStyle(.secondary)
         }
     }
@@ -182,12 +183,11 @@ struct NewMainTabSheet: View {
     // MARK: - Helpers
 
     private var canCreate: Bool {
-        if provider == .foundationModel { return true }
         return !selectedModelId.isEmpty
     }
 
     private var validationMessage: String {
-        if selectedModelId.isEmpty && provider != .foundationModel {
+        if selectedModelId.isEmpty {
             return "Select a model to continue"
         }
         return ""
@@ -222,7 +222,7 @@ struct NewMainTabSheet: View {
         case .localOllama:
             if viewModel.localOllamaModels.isEmpty { viewModel.fetchLocalOllamaModels() }
         case .foundationModel:
-            break
+            break  // No models to fetch for Apple Intelligence
         }
     }
 }

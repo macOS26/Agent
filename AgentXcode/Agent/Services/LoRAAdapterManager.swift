@@ -2,8 +2,18 @@ import Foundation
 import AppKit
 import FoundationModels
 
-/// Manages LoRA adapter files for Apple Intelligence.
-/// Handles install, load, unload, and persistence of .fmadapter files.
+/// Manages LoRA adapter files for Apple Intelligence training.
+/// 
+/// LoRA adapters are trained using Apple Intelligence on-device, capturing
+/// response patterns and behaviors. While Apple Intelligence itself is not
+/// directly selectable as an LLM provider (due to context limitations), the
+/// trained adapters can be used to enhance any connected LLM provider.
+///
+/// Workflow:
+/// 1. Export task history as JSONL training data
+/// 2. Train using Apple's Python toolkit (developer.apple.com)
+/// 3. Install the resulting .fmadapter file
+/// 4. The adapter enhances responses from Claude, Ollama, or other providers
 @MainActor @Observable
 final class LoRAAdapterManager {
     static let shared = LoRAAdapterManager()
@@ -14,7 +24,7 @@ final class LoRAAdapterManager {
     var adapterURL: URL?
     var installedAdapters: [URL] = []
 
-    /// The loaded adapter asset.
+    /// The loaded adapter asset (trained with Apple Intelligence).
     private(set) var adapter: SystemLanguageModel.Adapter?
 
     private static let adapterDir: URL = {
