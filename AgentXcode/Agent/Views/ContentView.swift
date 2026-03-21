@@ -18,6 +18,7 @@ struct ContentView: View {
     @State private var showTools = false
     @State private var showOptions = false
     @ObservedObject private var aiMediator = AppleIntelligenceMediator.shared
+    @State private var showAIPopover = false
     @State private var showMessages = false
     @State private var showAccessibility = false
     @State private var showQuitConfirm = false
@@ -136,14 +137,17 @@ struct ContentView: View {
 
                 // Apple Intelligence Mediator Toggle Button
                 Button {
-                    aiMediator.isEnabled.toggle()
+                    showAIPopover.toggle()
                 } label: {
                     Image(systemName: AppleIntelligenceMediator.isAvailable ? "brain.fill" : "brain")
                         .foregroundStyle(aiMediator.isEnabled ? .blue : .secondary)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
-                .help("Toggle Apple Intelligence Mediator")
+                .help("Apple Intelligence Settings")
+                .popover(isPresented: $showAIPopover) {
+                    AppleIntelligencePopover()
+                }
 
                 Button { showOptions.toggle() } label: {
                     Image(systemName: "slider.horizontal.3")

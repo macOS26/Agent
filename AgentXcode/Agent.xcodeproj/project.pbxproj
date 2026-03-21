@@ -22,6 +22,7 @@
 		AA1000000000000000003D /* XcodeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002B /* XcodeService.swift */; };
 		AA1000000000000000003E /* ScriptingBridge.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002C /* ScriptingBridge.framework */; };
 		BB10000000000000000015 /* AgentViewModel+Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB10000000000000000005 /* AgentViewModel+Helpers.swift */; };
+		BB10000000000000000017 /* AppleIntelligencePopover.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB10000000000000000007 /* AppleIntelligencePopover.swift */; };
 		AA1000000000000000003F /* DependencyChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002D /* DependencyChecker.swift */; };
 		AA10000000000000000044 /* DependencyOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002E /* DependencyOverlayView.swift */; };
 		AA10000000000000000045 /* AppleEventService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002F /* AppleEventService.swift */; };
@@ -210,6 +211,7 @@
 		AA100000000000000000BA /* OpenAICompatibleService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAICompatibleService.swift; sourceTree = "<group>"; };
 		AA100000000000000000BC /* LoRAAdapterManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoRAAdapterManager.swift; sourceTree = "<group>"; };
 		AA100000000000000000BE /* LoRASettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoRASettingsView.swift; sourceTree = "<group>"; };
+		BB10000000000000000007 /* AppleIntelligencePopover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleIntelligencePopover.swift; sourceTree = "<group>"; };
 		AA100000000000000000C0 /* NewMainTabSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewMainTabSheet.swift; sourceTree = "<group>"; };
 		BB1000000000000000001A /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		BB1000000000000000001B /* HelperProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperProtocol.swift; sourceTree = "<group>"; };
@@ -425,6 +427,7 @@
 				AA10000000000000000078 /* MessagesView.swift */,
 				AA1000000000000000005D /* SettingsView.swift */,
 				AA100000000000000000BE /* LoRASettingsView.swift */,
+				BB10000000000000000007 /* AppleIntelligencePopover.swift */,
 				AA100000000000000000C0 /* NewMainTabSheet.swift */,
 				AA1000000000000000005E /* HistoryView.swift */,
 				AA1000000000000000007C /* TabBarView.swift */,
@@ -707,6 +710,7 @@
 				AA100000000000000000BB /* OpenAICompatibleService.swift in Sources */,
 				AA100000000000000000BD /* LoRAAdapterManager.swift in Sources */,
 				AA100000000000000000BF /* LoRASettingsView.swift in Sources */,
+				BB10000000000000000017 /* AppleIntelligencePopover.swift in Sources */,
 				AA100000000000000000C1 /* NewMainTabSheet.swift in Sources */,
 				AA1000000000000000003B /* ScriptService.swift in Sources */,
 				AA1000000000000000003D /* XcodeService.swift in Sources */,
