@@ -412,7 +412,7 @@ struct ContentView: View {
 
                     Button { vm.toggleDictation() } label: {
                         Image(systemName: vm.isListening ? "mic.fill" : "mic")
-                            .foregroundStyle(vm.isListening ? .red : .primary)
+                            .foregroundStyle(vm.isListening ? Color.blue : .primary)
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.regular)
@@ -485,7 +485,7 @@ struct ContentView: View {
 
                     Button { viewModel.toggleDictation() } label: {
                         Image(systemName: viewModel.isListening ? "mic.fill" : "mic")
-                            .foregroundStyle(viewModel.isListening ? .red : .primary)
+                            .foregroundStyle(viewModel.isListening ? Color.blue : .primary)
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.regular)

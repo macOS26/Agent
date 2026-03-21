@@ -1,5 +1,5 @@
 import Foundation
-import Speech
+@preconcurrency import Speech
 import AVFoundation
 
 // MARK: - Speech-to-Text Dictation
@@ -15,8 +15,8 @@ extension AgentViewModel {
     }
 
     func startDictation() {
-        SFSpeechRecognizer.requestAuthorization { [weak self] status in
-            Task { @MainActor in
+        SFSpeechRecognizer.requestAuthorization { @Sendable status in
+            Task { @MainActor [weak self] in
                 guard let self else { return }
                 switch status {
                 case .authorized:
@@ -62,7 +62,7 @@ extension AgentViewModel {
         let inputNode = engine.inputNode
         let recordingFormat = inputNode.outputFormat(forBus: 0)
 
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { buffer, _ in
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { @Sendable buffer, _ in
             request.append(buffer)
         }
 
@@ -79,15 +79,18 @@ extension AgentViewModel {
         speechRecognitionRequest = request
         isListening = true
 
-        speechRecognitionTask = recognizer.recognitionTask(with: request) { [weak self] result, error in
-            Task { @MainActor in
+        speechRecognitionTask = recognizer.recognitionTask(with: request) { @Sendable result, error in
+            let transcription = result?.bestTranscription.formattedString
+            let isFinal = result?.isFinal ?? false
+            let hasError = error != nil
+            Task { @MainActor [weak self] in
                 guard let self else { return }
 
-                if let result {
-                    self.taskInput = result.bestTranscription.formattedString
+                if let transcription {
+                    self.taskInput = transcription
                 }
 
-                if error != nil || (result?.isFinal ?? false) {
+                if hasError || isFinal {
                     self.stopDictation()
                 }
             }
