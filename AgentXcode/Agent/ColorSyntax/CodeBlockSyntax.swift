@@ -867,54 +867,56 @@ private struct LangDef {
 
     // MARK: - D1F Diff Line Highlighting
 
-    /// Highlight a D1F diff line with colored backgrounds matching the emoji markers.
+    /// Highlight a D1F diff line: background stripe for the diff marker, code syntax for the text.
     private static func highlightD1FLine(line: String, font: NSFont) -> NSAttributedString {
         let isDark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
         let trimmed = line.trimmingCharacters(in: .whitespaces)
 
-        let bg: NSColor
-        let fg: NSColor
+        // Strip emoji prefix to get the code content for syntax highlighting
+        let codeContent: String
+        if let spaceIdx = trimmed.firstIndex(of: " "), trimmed.distance(from: trimmed.startIndex, to: spaceIdx) <= 2 {
+            codeContent = String(trimmed[trimmed.index(after: spaceIdx)...])
+        } else {
+            codeContent = trimmed
+        }
 
+        // Apply code syntax highlighting to the content portion
+        let syntaxHighlighted = highlight(code: codeContent, language: nil, font: font)
+
+        // Build the full line: emoji prefix + syntax-highlighted code
+        let result = NSMutableAttributedString(string: line, attributes: [
+            .font: font, .foregroundColor: NSColor.labelColor
+        ])
+
+        // Find where the code content starts in the original line and overlay syntax colors
+        if let contentRange = line.range(of: codeContent) {
+            let nsContentRange = NSRange(contentRange, in: line)
+            // Copy syntax foreground colors onto the original line
+            syntaxHighlighted.enumerateAttribute(.foregroundColor, in: NSRange(location: 0, length: syntaxHighlighted.length)) { value, range, _ in
+                guard let color = value as? NSColor else { return }
+                let shifted = NSRange(location: nsContentRange.location + range.location, length: range.length)
+                result.addAttribute(.foregroundColor, value: color, range: shifted)
+            }
+        }
+
+        // Apply background stripe based on D1F marker
+        let bg: NSColor
         if trimmed.hasPrefix("❌ ") {
-            // Deleted line — red
             bg = isDark
                 ? NSColor(red: 0.35, green: 0.08, blue: 0.08, alpha: 1.0)
                 : NSColor(red: 0.95, green: 0.80, blue: 0.80, alpha: 1.0)
-            fg = isDark
-                ? NSColor(red: 0.95, green: 0.65, blue: 0.65, alpha: 1.0)
-                : NSColor(red: 0.55, green: 0.0, blue: 0.0, alpha: 1.0)
         } else if trimmed.hasPrefix("✅ ") {
-            // Inserted line — green
             bg = isDark
                 ? NSColor(red: 0.08, green: 0.25, blue: 0.08, alpha: 1.0)
                 : NSColor(red: 0.80, green: 0.95, blue: 0.80, alpha: 1.0)
-            fg = isDark
-                ? NSColor(red: 0.55, green: 0.85, blue: 0.55, alpha: 1.0)
-                : NSColor(red: 0.0, green: 0.35, blue: 0.0, alpha: 1.0)
         } else if trimmed.hasPrefix("📎 ") {
-            // Retained line — subtle blue
             bg = isDark
                 ? NSColor(red: 0.10, green: 0.12, blue: 0.19, alpha: 1.0)
                 : NSColor(red: 0.87, green: 0.89, blue: 0.95, alpha: 1.0)
-            fg = isDark
-                ? NSColor(red: 0.60, green: 0.70, blue: 0.85, alpha: 1.0)
-                : NSColor(red: 0.22, green: 0.27, blue: 0.45, alpha: 1.0)
-        } else if trimmed.hasPrefix("📍 ") {
-            // Location info — dim
-            bg = .clear
-            fg = isDark
-                ? NSColor(red: 0.45, green: 0.45, blue: 0.50, alpha: 1.0)
-                : NSColor(red: 0.40, green: 0.40, blue: 0.45, alpha: 1.0)
         } else {
-            // 📊 summary or ❓ unknown — default
             bg = .clear
-            fg = NSColor.labelColor
         }
 
-        let result = NSMutableAttributedString(string: line, attributes: [
-            .font: font,
-            .foregroundColor: fg
-        ])
         if bg != .clear {
             result.addAttribute(.backgroundColor, value: bg, range: NSRange(location: 0, length: (line as NSString).length))
         }
