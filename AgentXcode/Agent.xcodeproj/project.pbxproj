@@ -298,11 +298,8 @@
 				AA1000000000000000001A /* AgentApp.swift */,
 				EAE00000000000000001 /* UX */,
 				EAE00000000000000002 /* Sound */,
+				EA50J00000000000001 /* JSON */,
 				AA10000000000000000022 /* Agent.entitlements */,
-				EA50000000000000000005 /* send_message_input.json */,
-				EA50000000000000000006 /* send_message_output.json */,
-				EA50000000000000000007 /* send_image_input.json */,
-				EA50000000000000000008 /* send_image_output.json */,
 				EA60000000000000000002 /* SDEFs */,
 				BB10000000000000000041 /* LaunchDaemons */,
 				CC10000000000000000041 /* LaunchAgents */,
@@ -524,6 +521,25 @@
 				AA100000000000000000B2 /* StartupTwentiethAnniversaryMac.wav */,
 			);
 			path = Sound;
+			sourceTree = "<group>";
+		};
+		EA50J00000000000001 /* JSON */ = {
+			isa = PBXGroup;
+			children = (
+				EA50J00000000000002 /* messages */,
+			);
+			name = JSON;
+			sourceTree = "<group>";
+		};
+		EA50J00000000000002 /* messages */ = {
+			isa = PBXGroup;
+			children = (
+				EA50000000000000000005 /* send_message_input.json */,
+				EA50000000000000000006 /* send_message_output.json */,
+				EA50000000000000000007 /* send_image_input.json */,
+				EA50000000000000000008 /* send_image_output.json */,
+			);
+			path = messages;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
