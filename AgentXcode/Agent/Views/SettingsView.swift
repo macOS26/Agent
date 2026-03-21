@@ -292,9 +292,6 @@ struct SettingsView: View {
                 SystemPromptWindow.shared.show()
             }
 
-            // LoRA Training Section
-            Divider()
-            LoRASettingsView()
         }
         .padding(20)
         .frame(width: 360)
