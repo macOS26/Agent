@@ -133,6 +133,17 @@ struct ContentView: View {
                     SettingsView(viewModel: viewModel)
                 }
 
+                // Apple Intelligence Mediator Toggle Button
+                Button {
+                    AppleIntelligenceMediator.shared.isEnabled.toggle()
+                } label: {
+                    Image(systemName: AppleIntelligenceMediator.isAvailable ? "brain.fill" : "brain")
+                        .foregroundStyle(AppleIntelligenceMediator.shared.isEnabled ? .blue : .secondary)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .help("Toggle Apple Intelligence Mediator")
+
                 Button { showOptions.toggle() } label: {
                     Image(systemName: "slider.horizontal.3")
                 }
