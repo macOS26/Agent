@@ -2,7 +2,7 @@
 
 # Agent!
 ## 🧠 Agentic AI for the  Mac Desktop 
-### Now with Apple Intelligence
+Now with Apple Intelligence
 
 [![Swift 6.2](https://img.shields.io/badge/Swift-6.2-aqua.svg)](https://swift.org)
 [![Website](https://img.shields.io/badge/website-macos26.app-blue.svg)](https://macos26.app)
