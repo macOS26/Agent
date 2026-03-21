@@ -66,7 +66,7 @@ struct ContentView: View {
                         .frame(width: 20, height: 16)
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.small)
+                .controlSize(.mini)
                 .help(viewModel.servicesGearHelp)
                 .popover(isPresented: $showServices) {
                     ServicesPopover(viewModel: viewModel)
@@ -80,7 +80,7 @@ struct ContentView: View {
                         .frame(width: 20, height: 16)
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.small)
+                .controlSize(.mini)
                 .help(viewModel.messagesMonitorEnabled ? "Messages Monitor: ON (click to configure)" : "Messages Monitor: OFF (click to configure)")
                 .popover(isPresented: $showMessages) {
                     MessagesView(viewModel: viewModel)
@@ -91,7 +91,7 @@ struct ContentView: View {
                         .frame(width: 20, height: 16)
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.small)
+                .controlSize(.mini)
                 .popover(isPresented: $showAccessibility) {
                     AccessibilitySettingsView()
                 }
@@ -101,7 +101,7 @@ struct ContentView: View {
                         .frame(width: 20, height: 16)
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.small)
+                .controlSize(.mini)
                 .popover(isPresented: $showMCPServers) {
                     MCPServersView()
                 }
@@ -111,7 +111,7 @@ struct ContentView: View {
                         .frame(width: 20, height: 16)
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.small)
+                .controlSize(.mini)
                 .popover(isPresented: $showTools) {
                     ToolsView(selectedProvider: $viewModel.selectedProvider)
                 }
@@ -121,7 +121,7 @@ struct ContentView: View {
                         .frame(width: 20, height: 16)
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.small)
+                .controlSize(.mini)
                 .popover(isPresented: $showSettings) {
                     SettingsView(viewModel: viewModel)
                 }
@@ -135,7 +135,7 @@ struct ContentView: View {
                         .frame(width: 20, height: 16)
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.small)
+                .controlSize(.mini)
                 .help("Apple Intelligence Settings")
                 .popover(isPresented: $showAIPopover) {
                     AppleIntelligencePopover()
@@ -146,7 +146,7 @@ struct ContentView: View {
                         .frame(width: 20, height: 16)
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.small)
+                .controlSize(.mini)
                 .popover(isPresented: $showOptions) {
                     AgentOptionsView(viewModel: viewModel)
                 }
@@ -156,7 +156,7 @@ struct ContentView: View {
                         .frame(width: 20, height: 16)
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.small)
+                .controlSize(.mini)
                 .popover(isPresented: $showHistory) {
                     HistoryView(
                         prompts: viewModel.currentTabPromptHistory,
@@ -171,7 +171,7 @@ struct ContentView: View {
                         .frame(width: 20, height: 16)
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.small)
+                .controlSize(.mini)
                 .alert("Clear Log", isPresented: $showClearConfirm) {
                     Button("Clear", role: .destructive) { viewModel.clearSelectedLog() }
                     Button("Cancel", role: .cancel) { }
@@ -201,13 +201,13 @@ struct ContentView: View {
                     Image(systemName: "folder")
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.small)
+                .controlSize(.mini)
                 .help("Pick project folder or file")
 
                 TextField("Project folder or file...", text: $viewModel.projectFolder)
                     .textContentType(.none)
                     .textFieldStyle(.roundedBorder)
-                    .controlSize(.small)
+                    .controlSize(.mini)
 
                 Button {
                     viewModel.projectFolder = ""
@@ -216,7 +216,7 @@ struct ContentView: View {
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.small)
+                .controlSize(.mini)
                 .help("Clear project folder")
                 .disabled(viewModel.projectFolder.isEmpty)
             }
@@ -243,13 +243,13 @@ struct ContentView: View {
                             Image(systemName: "chevron.up")
                         }
                         .buttonStyle(.bordered)
-                        .controlSize(.small)
+                        .controlSize(.mini)
                         .disabled(totalMatches == 0)
                         Button { nextMatch() } label: {
                             Image(systemName: "chevron.down")
                         }
                         .buttonStyle(.bordered)
-                        .controlSize(.small)
+                        .controlSize(.mini)
                         .disabled(totalMatches == 0)
                     }
                     Spacer()
@@ -295,7 +295,7 @@ struct ContentView: View {
                                     .foregroundStyle(tabColor)
                             }
                             .buttonStyle(.bordered)
-                            .controlSize(.small)
+                            .controlSize(.mini)
                         }
                         if tab.isLLMRunning {
                             let vm = viewModel
@@ -306,7 +306,7 @@ struct ContentView: View {
                                     .foregroundStyle(tabColor)
                             }
                             .buttonStyle(.bordered)
-                            .controlSize(.small)
+                            .controlSize(.mini)
                         }
                     }
                     .padding(12)
@@ -331,7 +331,7 @@ struct ContentView: View {
                                 .foregroundStyle(.red)
                         }
                         .buttonStyle(.bordered)
-                        .controlSize(.small)
+                        .controlSize(.mini)
                         .padding(12)
                     }
                 }
@@ -420,7 +420,7 @@ struct ContentView: View {
                     if tab.isLLMThinking {
                         HStack(spacing: 4) {
                             ProgressView()
-                                .controlSize(.small)
+                                .controlSize(.mini)
                             Text("Thinking...")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -428,7 +428,7 @@ struct ContentView: View {
                     } else if tab.isLLMRunning {
                         HStack(spacing: 4) {
                             ProgressView()
-                                .controlSize(.small)
+                                .controlSize(.mini)
                             Text("Running...")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -493,7 +493,7 @@ struct ContentView: View {
                     if viewModel.isThinking {
                         HStack(spacing: 4) {
                             ProgressView()
-                                .controlSize(.small)
+                                .controlSize(.mini)
                             Text("Thinking...")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -501,7 +501,7 @@ struct ContentView: View {
                     } else if viewModel.isRunning {
                         HStack(spacing: 4) {
                             ProgressView()
-                                .controlSize(.small)
+                                .controlSize(.mini)
                             Text(viewModel.rootServiceActive ? "Root..." : viewModel.userServiceActive ? "Executing..." : "Running...")
                                 .font(.caption)
                                 .foregroundStyle(viewModel.rootServiceActive ? .orange : .secondary)
@@ -846,20 +846,20 @@ struct ServicesPopover: View {
                     viewModel.unregisterDaemon()
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.small)
+                .controlSize(.mini)
                 
                 Button("Register") {
                     viewModel.registerAgent()
                     viewModel.registerDaemon()
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.small)
+                .controlSize(.mini)
                 
                 Button("Connect") {
                     viewModel.testConnection()
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.small)
+                .controlSize(.mini)
             }
         }
         .padding(16)
