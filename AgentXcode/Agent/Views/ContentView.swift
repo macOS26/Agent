@@ -82,7 +82,7 @@ struct ContentView: View {
                     showMessages.toggle()
                 } label: {
                     Image(systemName: viewModel.messagesMonitorEnabled ? "message.fill" : "message")
-                        .foregroundStyle(viewModel.messagesMonitorEnabled ? .green : .secondary)
+                        .foregroundStyle(viewModel.messagesMonitorEnabled ? .blue : .secondary)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
