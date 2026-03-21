@@ -164,21 +164,14 @@ final class AppleIntelligenceMediator: ObservableObject {
         let contextBlock = contextParts.isEmpty ? "" : "\n\n--- Conversation Context ---\n" + contextParts.joined(separator: "\n") + "\n---\n"
 
         return """
-You are a helpful mediator between a user and an AI assistant (LLM). Your role is to observe conversations
-and provide brief, helpful context annotations. You annotate with specific tags:
-- [AI → User] for user-facing explanations
-- [AI → LLM] for LLM context injection
-- [AI → Both] for information relevant to both
+You are a brief assistant that adds helpful context to conversations between a user and an AI (LLM).
 
-Keep annotations concise (1-2 sentences max). Your goal is to:
-1. Explain complex tool calls to users in simple terms
-2. Provide helpful context to the LLM when the user's intent is unclear
-3. Summarize what just happened after significant actions
-4. Suggest next steps when appropriate
-\(contextBlock)
-Be helpful but not verbose. The primary LLM is doing the actual work - you just add clarity.
-Use the conversation context above to maintain continuity across tasks.
-\(trainingEnabled ? "\n⚡ TRAINING MODE ACTIVE: Your interjections, the user prompt, the LLM response, and your task summary are being captured as LoRA training data. Provide high-quality, clear annotations — they will be used to fine-tune a future Apple Intelligence adapter." : "")
+Rules:
+- Reply with 1 sentence only. Never multiple lines.
+- Never include tags, labels, or prefixes like [AI], LLM:, User:, CLEAR, etc.
+- Just give the plain helpful text. Nothing else.
+\(contextBlock)\
+\(trainingEnabled ? "Training mode is active. Give high-quality, clear annotations for LoRA fine-tuning." : "")
 """
     }
 
@@ -234,17 +227,13 @@ Use the conversation context above to maintain continuity across tasks.
         let prompt = """
 The user said: "\(message)"
 
-If this message is ambiguous, incomplete, or could benefit from additional context, provide a brief clarification.
-If the message is clear and complete, respond with just: "CLEAR"
-Otherwise, provide 1 sentence of helpful context that would help an AI assistant understand the request better.
-
-Do not include any tags - just the context or CLEAR.
+If this is clear, reply with nothing. Otherwise reply with 1 sentence of context to help the AI assistant.
 """
 
         do {
             let content = try await respondWithTimeout(session, prompt: prompt, label: "contextualize")
-            let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
-            if trimmed == "CLEAR" || trimmed.isEmpty {
+            let trimmed = sanitize(content)
+            if trimmed.isEmpty {
                 return nil
             }
             // Store this AI message for context continuity (keep brief)
@@ -277,28 +266,24 @@ Do not include any tags - just the context or CLEAR.
         // Different behavior based on whether tools were used
         let prompt: String
         if commandsRun.isEmpty {
-            // No tool calls - paraphrase or summarize the LLM's conversational response
             prompt = """
-The AI assistant just responded to the user without using any tools. Response: "\(String(summary.prefix(800)))"
+The AI responded: "\(String(summary.prefix(800)))"
 
-Paraphrase or summarize the key insight for the user in 1-2 sentences. Make it helpful and actionable.
-If the response is already concise or unclear, you can say "CLEAR" to skip.
+Summarize the key point in 1 sentence. If trivial, reply with nothing.
 """
         } else {
-            // Tools were used - summarize what was accomplished
             prompt = """
-The AI assistant just completed a task. Original summary: "\(summary)"
-Commands executed: \(commandsRun.joined(separator: ", "))
+Task completed. Summary: "\(summary)"
+Commands: \(commandsRun.joined(separator: ", "))
 
-Provide a one-line summary of what was accomplished for the user. Focus on the outcome, not the process.
-If the task was simple, you can say "CLEAR" to skip the annotation.
+Summarize the outcome in 1 sentence. If trivial, reply with nothing.
 """
         }
 
         do {
             let content = try await respondWithTimeout(session, prompt: prompt, label: "summarize")
-            let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
-            if trimmed == "CLEAR" || trimmed.isEmpty {
+            let trimmed = sanitize(content)
+            if trimmed.isEmpty {
                 return nil
             }
             // Store this AI message for context continuity (keep brief)
@@ -321,16 +306,14 @@ If the task was simple, you can say "CLEAR" to skip the annotation.
 
         let session = ensureSession()
         let prompt = """
-An error occurred during \(toolName):
-\(error.prefix(300))
+Error in \(toolName): \(error.prefix(300))
 
-Explain this error in simple terms for the user, and suggest what they might do next.
-Keep it to 1-2 sentences. Do not include any tags.
+Explain in 1 sentence and suggest a fix.
 """
 
         do {
             let content = try await respondWithTimeout(session, prompt: prompt, label: "explainError")
-            let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
+            let trimmed = sanitize(content)
             if trimmed.isEmpty {
                 return nil
             }
@@ -350,18 +333,16 @@ Keep it to 1-2 sentences. Do not include any tags.
         let prompt = """
 Context: \(context.prefix(500))
 
-Suggest 1-2 logical next steps the user might want to take. Be specific and actionable.
-Format as a brief suggestion. If there are no obvious next steps, respond with "CLEAR".
-Do not include any tags.
+Suggest the next step in 1 sentence. If none obvious, reply with nothing.
 """
 
         do {
             let content = try await respondWithTimeout(session, prompt: prompt, label: "nextSteps")
-            let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
-            if trimmed == "CLEAR" || trimmed.isEmpty {
+            let trimmed = sanitize(content)
+            if trimmed.isEmpty {
                 return nil
             }
-            return Annotation(target: .user, content: "Next steps: \(trimmed)", timestamp: Date())
+            return Annotation(target: .user, content: trimmed, timestamp: Date())
         } catch {
             mediatorLog.warning("[nextSteps] Apple AI failed or timed out: \(error.localizedDescription)")
             self.session = nil
@@ -386,6 +367,29 @@ Do not include any tags.
         lastLLMResponse = nil
         conversationSummary = nil
         session = nil
+    }
+
+    /// Strip tags, labels, and junk that Apple AI sometimes echoes back
+    private func sanitize(_ raw: String) -> String {
+        var text = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Remove any [AI ...] tags, [AI → User], LLM:, CLEAR, etc.
+        let patterns = [
+            #"\[AI\s*→?\s*(?:User|LLM|Both)\]"#,
+            #"\[AI\s+Context\]"#,
+            #"(?i)^CLEAR$"#,
+            #"(?i)^LLM:\s*$"#,
+        ]
+        for pattern in patterns {
+            if let regex = try? NSRegularExpression(pattern: pattern, options: .anchorsMatchLines) {
+                text = regex.stringByReplacingMatches(in: text, range: NSRange(text.startIndex..., in: text), withTemplate: "")
+            }
+        }
+        // Collapse multiple newlines/whitespace into single space, trim again
+        text = text.components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+        return text
     }
 
     /// Get the current conversation context for debugging/inspection
