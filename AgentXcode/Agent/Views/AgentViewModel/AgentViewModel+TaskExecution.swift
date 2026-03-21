@@ -199,7 +199,10 @@ extension AgentViewModel {
             do {
                 try updated.write(to: URL(fileURLWithPath: path), atomically: true, encoding: .utf8)
                 let diff = MultiLineDiff.createDiff(source: old, destination: new, includeMetadata: true)
-                let d1f = MultiLineDiff.displayDiff(diff: diff, source: old, format: .ai)
+                var d1f = MultiLineDiff.displayDiff(diff: diff, source: old, format: .ai)
+                if d1f.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    d1f = "❌ " + old + "\n" + "✅ " + new
+                }
                 let label = replaceAll ? "\(occurrences) occurrences" : "1 occurrence"
                 var result = "Replaced \(label) in \(path)\n\n\(d1f)"
                 if let meta = diff.metadata {
@@ -979,7 +982,11 @@ extension AgentViewModel {
 
                             // Show D1F pretty diff with metadata
                             let diff = MultiLineDiff.createDiff(source: oldString, destination: newString, includeMetadata: true)
-                            let d1f = MultiLineDiff.displayDiff(diff: diff, source: oldString, format: .ai)
+                            var d1f = MultiLineDiff.displayDiff(diff: diff, source: oldString, format: .ai)
+                            // displayDiff can be empty for single-line character changes — show lines directly
+                            if d1f.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                d1f = "❌ " + oldString + "\n" + "✅ " + newString
+                            }
                             var diffLog = d1f
                             if let meta = diff.metadata, let startLine = meta.sourceStartLine {
                                 diffLog += "\n📍 Changes start at line \(startLine + 1)"

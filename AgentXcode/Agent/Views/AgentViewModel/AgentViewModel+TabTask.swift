@@ -327,7 +327,10 @@ extension AgentViewModel {
             tab.appendLog("📝 Edit: \(filePath)")
             let output = await Self.offMain { CodingService.editFile(path: filePath, oldString: oldString, newString: newString, replaceAll: replaceAll) }
             let diff = MultiLineDiff.createDiff(source: oldString, destination: newString, includeMetadata: true)
-            let d1f = MultiLineDiff.displayDiff(diff: diff, source: oldString, format: .ai)
+            var d1f = MultiLineDiff.displayDiff(diff: diff, source: oldString, format: .ai)
+            if d1f.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                d1f = "❌ " + oldString + "\n" + "✅ " + newString
+            }
             var diffLog = d1f
             if let meta = diff.metadata, let startLine = meta.sourceStartLine {
                 diffLog += "\n📍 Changes start at line \(startLine + 1)"
