@@ -889,8 +889,8 @@ private struct LangDef {
                 ? NSColor(red: 0.08, green: 0.25, blue: 0.08, alpha: 1.0)
                 : NSColor(red: 0.80, green: 0.95, blue: 0.80, alpha: 1.0)
             fg = isDark
-                ? NSColor(red: 0.65, green: 0.95, blue: 0.65, alpha: 1.0)
-                : NSColor(red: 0.0, green: 0.45, blue: 0.0, alpha: 1.0)
+                ? NSColor(red: 0.55, green: 0.85, blue: 0.55, alpha: 1.0)
+                : NSColor(red: 0.0, green: 0.35, blue: 0.0, alpha: 1.0)
         } else if trimmed.hasPrefix("📎 ") {
             // Retained line — subtle blue
             bg = isDark
