@@ -25,6 +25,8 @@ final class SystemPromptService {
 
     /// Version header prefix embedded in each prompt file.
     private static let versionPrefix = "// Agent! v"
+    /// Custom header prefix for user-edited prompts (never auto-overwritten).
+    private static let customPrefix = "// Agent! custom v"
 
     /// Current app version from the bundle.
     private static let appVersion: String = {
@@ -45,13 +47,20 @@ final class SystemPromptService {
             if !fm.fileExists(atPath: url.path) {
                 needsWrite = true
             } else if let existing = try? String(contentsOf: url, encoding: .utf8),
-                      let firstLine = existing.components(separatedBy: "\n").first,
-                      firstLine.hasPrefix(Self.versionPrefix) {
-                // File has a version stamp — replace if version changed
-                let fileVersion = String(firstLine.dropFirst(Self.versionPrefix.count))
-                needsWrite = fileVersion != Self.appVersion
+                      let firstLine = existing.components(separatedBy: "\n").first {
+                if firstLine.hasPrefix(Self.customPrefix) {
+                    // User-edited prompt — never overwrite automatically
+                    needsWrite = false
+                } else if firstLine.hasPrefix(Self.versionPrefix) {
+                    // Default prompt — replace if version changed
+                    let fileVersion = String(firstLine.dropFirst(Self.versionPrefix.count))
+                    needsWrite = fileVersion != Self.appVersion
+                } else {
+                    // No version stamp — replace with versioned prompt
+                    needsWrite = true
+                }
             } else {
-                // No version stamp — replace with versioned prompt
+                // Unreadable or empty — replace with default
                 needsWrite = true
             }
 
@@ -78,9 +87,9 @@ final class SystemPromptService {
             .replacingOccurrences(of: "{userHome}", with: userHome)
     }
 
-    /// Remove the version comment line from prompt content.
+    /// Remove the version/custom comment line from prompt content.
     private static func stripVersionLine(_ text: String) -> String {
-        if text.hasPrefix(versionPrefix) {
+        if text.hasPrefix(customPrefix) || text.hasPrefix(versionPrefix) {
             let lines = text.components(separatedBy: "\n")
             return lines.dropFirst().joined(separator: "\n")
         }
@@ -96,11 +105,12 @@ final class SystemPromptService {
         return Self.stripVersionLine(raw)
     }
 
-    /// Save an edited template back to disk (prepends version header).
+    /// Save an edited template back to disk (prepends custom header to prevent auto-overwrite).
     func saveTemplate(_ content: String, for provider: APIProvider) {
         guard let fileName = Self.fileNames[provider] else { return }
         let url = Self.systemDir.appendingPathComponent(fileName)
-        let versioned = Self.versionPrefix + Self.appVersion + "\n" + Self.stripVersionLine(content)
+        let stripped = Self.stripVersionLine(content)
+        let versioned = Self.customPrefix + Self.appVersion + "\n" + stripped
         try? versioned.write(to: url, atomically: true, encoding: .utf8)
     }
 
