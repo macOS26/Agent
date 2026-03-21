@@ -890,14 +890,19 @@ private struct LangDef {
             .font: font, .foregroundColor: NSColor.labelColor
         ])
 
-        // Find where the code content starts in the original line and overlay syntax colors
+        // Find where the code content starts in the original line and overlay syntax colors + bold fonts
         if let contentRange = line.range(of: codeContent) {
             let nsContentRange = NSRange(contentRange, in: line)
-            // Copy syntax foreground colors onto the original line
-            syntaxHighlighted.enumerateAttribute(.foregroundColor, in: NSRange(location: 0, length: syntaxHighlighted.length)) { value, range, _ in
-                guard let color = value as? NSColor else { return }
+            let syntaxRange = NSRange(location: 0, length: syntaxHighlighted.length)
+            // Copy foreground colors and font (bold) from syntax highlighter
+            syntaxHighlighted.enumerateAttributes(in: syntaxRange) { attrs, range, _ in
                 let shifted = NSRange(location: nsContentRange.location + range.location, length: range.length)
-                result.addAttribute(.foregroundColor, value: color, range: shifted)
+                if let color = attrs[.foregroundColor] as? NSColor {
+                    result.addAttribute(.foregroundColor, value: color, range: shifted)
+                }
+                if let attrFont = attrs[.font] as? NSFont {
+                    result.addAttribute(.font, value: attrFont, range: shifted)
+                }
             }
         }
 
