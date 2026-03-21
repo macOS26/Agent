@@ -66,12 +66,12 @@
 		DD10000000000000000030 /* ScriptServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000001 /* ScriptServiceTests.swift */; };
 		DD10000000000000000031 /* ScriptingBridgesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000002 /* ScriptingBridgesTests.swift */; };
 		DD10000000000000000032 /* PackageGenerationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000003 /* PackageGenerationTests.swift */; };
-		EA50000000000000000001 /* send_message_input.json in Resources */ = {isa = PBXBuildFile; fileRef = EA50000000000000000005 /* send_message_input.json */; };
-		EA50000000000000000002 /* send_message_output.json in Resources */ = {isa = PBXBuildFile; fileRef = EA50000000000000000006 /* send_message_output.json */; };
-		EA50000000000000000003 /* send_image_input.json in Resources */ = {isa = PBXBuildFile; fileRef = EA50000000000000000007 /* send_image_input.json */; };
-		EA50000000000000000004 /* send_image_output.json in Resources */ = {isa = PBXBuildFile; fileRef = EA50000000000000000008 /* send_image_output.json */; };
 		EA50MCP0000000003 /* MCPClient in Frameworks */ = {isa = PBXBuildFile; productRef = EA50MCP0000000002 /* MCPClient */; };
 		EA60000000000000000001 /* SDEFs in Resources */ = {isa = PBXBuildFile; fileRef = EA60000000000000000002 /* SDEFs */; };
+		EA6EA3842F6E35CF003FDB6C /* send_image_output.json in Resources */ = {isa = PBXBuildFile; fileRef = EA6EA3812F6E35CF003FDB6C /* send_image_output.json */; };
+		EA6EA3852F6E35CF003FDB6C /* send_message_output.json in Resources */ = {isa = PBXBuildFile; fileRef = EA6EA3832F6E35CF003FDB6C /* send_message_output.json */; };
+		EA6EA3862F6E35CF003FDB6C /* send_image_input.json in Resources */ = {isa = PBXBuildFile; fileRef = EA6EA3802F6E35CF003FDB6C /* send_image_input.json */; };
+		EA6EA3872F6E35CF003FDB6C /* send_message_input.json in Resources */ = {isa = PBXBuildFile; fileRef = EA6EA3822F6E35CF003FDB6C /* send_message_input.json */; };
 		EA70000000000000000001 /* SDEFService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA70000000000000000002 /* SDEFService.swift */; };
 		EA80000000000000000001 /* NSAppleScriptService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA80000000000000000002 /* NSAppleScriptService.swift */; };
 		EAF3666F2F623D6A004B7E38 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = EAF3666E2F623D6A004B7E38 /* AppIcon.icon */; };
@@ -218,11 +218,11 @@
 		DD10000000000000000002 /* ScriptingBridgesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptingBridgesTests.swift; sourceTree = "<group>"; };
 		DD10000000000000000003 /* PackageGenerationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageGenerationTests.swift; sourceTree = "<group>"; };
 		DD10000000000000000004 /* AgentTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AgentTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		EA50000000000000000005 /* send_message_input.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = send_message_input.json; path = ../AgentScripts/Agent/json/messages/send_message_input.json; sourceTree = SOURCE_ROOT; };
-		EA50000000000000000006 /* send_message_output.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = send_message_output.json; path = ../AgentScripts/Agent/json/messages/send_message_output.json; sourceTree = SOURCE_ROOT; };
-		EA50000000000000000007 /* send_image_input.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = send_image_input.json; path = ../AgentScripts/Agent/json/messages/send_image_input.json; sourceTree = SOURCE_ROOT; };
-		EA50000000000000000008 /* send_image_output.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = send_image_output.json; path = ../AgentScripts/Agent/json/messages/send_image_output.json; sourceTree = SOURCE_ROOT; };
 		EA60000000000000000002 /* SDEFs */ = {isa = PBXFileReference; lastKnownFileType = folder; path = SDEFs; sourceTree = "<group>"; };
+		EA6EA3802F6E35CF003FDB6C /* send_image_input.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = send_image_input.json; sourceTree = "<group>"; };
+		EA6EA3812F6E35CF003FDB6C /* send_image_output.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = send_image_output.json; sourceTree = "<group>"; };
+		EA6EA3822F6E35CF003FDB6C /* send_message_input.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = send_message_input.json; sourceTree = "<group>"; };
+		EA6EA3832F6E35CF003FDB6C /* send_message_output.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = send_message_output.json; sourceTree = "<group>"; };
 		EA70000000000000000002 /* SDEFService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDEFService.swift; sourceTree = "<group>"; };
 		EA80000000000000000002 /* NSAppleScriptService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NSAppleScriptService.swift; sourceTree = "<group>"; };
 		EAF3666E2F623D6A004B7E38 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
@@ -373,6 +373,17 @@
 			path = AgentTests;
 			sourceTree = "<group>";
 		};
+		EA50J00000000000001 /* JSON */ = {
+			isa = PBXGroup;
+			children = (
+				EA6EA3802F6E35CF003FDB6C /* send_image_input.json */,
+				EA6EA3812F6E35CF003FDB6C /* send_image_output.json */,
+				EA6EA3822F6E35CF003FDB6C /* send_message_input.json */,
+				EA6EA3832F6E35CF003FDB6C /* send_message_output.json */,
+			);
+			name = JSON;
+			sourceTree = "<group>";
+		};
 		EADF39C62F68BEF100CD01E5 /* Services */ = {
 			isa = PBXGroup;
 			children = (
@@ -496,16 +507,6 @@
 			path = AgentScriptTabs;
 			sourceTree = "<group>";
 		};
-		EE10000000000000000010 /* ObjC */ = {
-			isa = PBXGroup;
-			children = (
-				EE10000000000000000003 /* Agent-Bridging-Header.h */,
-				EE10000000000000000001 /* ObjCTry.h */,
-				EE10000000000000000002 /* ObjCTry.m */,
-			);
-			path = ObjC;
-			sourceTree = "<group>";
-		};
 		EAE00000000000000001 /* UX */ = {
 			isa = PBXGroup;
 			children = (
@@ -523,23 +524,14 @@
 			path = Sound;
 			sourceTree = "<group>";
 		};
-		EA50J00000000000001 /* JSON */ = {
+		EE10000000000000000010 /* ObjC */ = {
 			isa = PBXGroup;
 			children = (
-				EA50J00000000000002 /* messages */,
+				EE10000000000000000003 /* Agent-Bridging-Header.h */,
+				EE10000000000000000001 /* ObjCTry.h */,
+				EE10000000000000000002 /* ObjCTry.m */,
 			);
-			name = JSON;
-			sourceTree = "<group>";
-		};
-		EA50J00000000000002 /* messages */ = {
-			isa = PBXGroup;
-			children = (
-				EA50000000000000000005 /* send_message_input.json */,
-				EA50000000000000000006 /* send_message_output.json */,
-				EA50000000000000000007 /* send_image_input.json */,
-				EA50000000000000000008 /* send_image_output.json */,
-			);
-			path = messages;
+			path = ObjC;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -663,10 +655,10 @@
 			files = (
 				AA10000000000000000037 /* Assets.xcassets in Resources */,
 				EAF3666F2F623D6A004B7E38 /* AppIcon.icon in Resources */,
-				EA50000000000000000001 /* send_message_input.json in Resources */,
-				EA50000000000000000002 /* send_message_output.json in Resources */,
-				EA50000000000000000003 /* send_image_input.json in Resources */,
-				EA50000000000000000004 /* send_image_output.json in Resources */,
+				EA6EA3842F6E35CF003FDB6C /* send_image_output.json in Resources */,
+				EA6EA3852F6E35CF003FDB6C /* send_message_output.json in Resources */,
+				EA6EA3862F6E35CF003FDB6C /* send_image_input.json in Resources */,
+				EA6EA3872F6E35CF003FDB6C /* send_message_input.json in Resources */,
 				AA100000000000000000B3 /* StartupTwentiethAnniversaryMac.wav in Resources */,
 				EA60000000000000000001 /* SDEFs in Resources */,
 			);
