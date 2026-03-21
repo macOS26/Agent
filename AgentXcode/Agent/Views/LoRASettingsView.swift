@@ -56,8 +56,15 @@ struct LoRASettingsView: View {
 
     private var adapterSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("LoRA Adapter")
+            Text("LoRA Adapter (Apple Intelligence)")
                 .font(.headline)
+
+            HStack(spacing: 6) {
+                Image(systemName: FoundationModelService.isAvailable ? "checkmark.circle.fill" : "xmark.circle.fill")
+                    .foregroundStyle(FoundationModelService.isAvailable ? .green : .red)
+                Text(FoundationModelService.isAvailable ? "Apple Intelligence Available" : "Not Available")
+                    .font(.subheadline)
+            }
 
             HStack(spacing: 6) {
                 Circle()
@@ -112,7 +119,7 @@ struct LoRASettingsView: View {
                 }
             }
 
-            Text("Train with Apple's Python toolkit, then install the .fmadapter here.")
+            Text("Train custom LoRA adapters with Apple's Python toolkit, then install the .fmadapter here for Apple Intelligence.")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }

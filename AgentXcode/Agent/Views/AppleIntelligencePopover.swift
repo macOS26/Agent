@@ -8,8 +8,6 @@ struct AppleIntelligencePopover: View {
             VStack(alignment: .leading, spacing: 0) {
                 mediatorSection
                 Divider().padding(.vertical, 12)
-                loraHeaderSection
-                Divider().padding(.vertical, 12)
                 LoRASettingsView()
             }
             .padding(20)
@@ -56,29 +54,4 @@ struct AppleIntelligencePopover: View {
         }
     }
 
-    // MARK: - LoRA Header
-
-    private var loraHeaderSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("LoRA Training (Apple Intelligence)")
-                .font(.headline)
-
-            HStack(spacing: 6) {
-                Image(systemName: FoundationModelService.isAvailable ? "checkmark.circle.fill" : "xmark.circle.fill")
-                    .foregroundStyle(FoundationModelService.isAvailable ? .green : .red)
-                Text(FoundationModelService.isAvailable ? "Apple Intelligence Available" : "Not Available")
-                    .font(.subheadline)
-            }
-
-            if !FoundationModelService.isAvailable {
-                Text(FoundationModelService.unavailabilityReason)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            Text("Train custom LoRA adapters and install them as .fmadapter files for Apple Intelligence.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-    }
 }
