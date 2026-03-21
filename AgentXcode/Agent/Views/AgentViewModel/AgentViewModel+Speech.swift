@@ -87,7 +87,7 @@ extension AgentViewModel {
             let isFinal = result?.isFinal ?? false
             let hasError = error != nil
             Task { @MainActor [weak self] in
-                guard let self else { return }
+                guard let self, self.isListening else { return }
 
                 if let transcription {
                     let prefix = self.preDictationText
