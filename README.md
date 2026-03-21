@@ -3,7 +3,7 @@
 # Agent!
 ## Agentic AI for your entire  Mac Desktop 🤯
 
-[![Swift 6.0](https://img.shields.io/badge/Swift-6.0-orange.svg)](https://swift.org)
+[![Swift 6.2](https://img.shields.io/badge/Swift-6.2-aqua.svg)](https://swift.org)
 [![Website](https://img.shields.io/badge/website-macos26.app-blue.svg)](https://macos26.app)
 [![Version](https://img.shields.io/badge/version-1.0.16-red.svg)](https://github.com/macOS26/Agent)
 [![GitHub downloads](https://img.shields.io/github/downloads/macOS26/Agent/total.svg?v=4)](https://github.com/macOS26/Agent/releases)
