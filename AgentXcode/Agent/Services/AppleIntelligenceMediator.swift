@@ -80,9 +80,15 @@ final class AppleIntelligenceMediator: ObservableObject {
         let content: String
         let timestamp: Date
 
-        /// Formatted output with appropriate tag
+        /// Formatted output with appropriate flow tag
         var formatted: String {
-            return "Apple AI: \(content)"
+            let arrow: String
+            switch target {
+            case .user: arrow = "\u{F8FF}AI → User"
+            case .llm:  arrow = "\u{F8FF}AI → LLM"
+            case .both: arrow = "\u{F8FF}AI → Both"
+            }
+            return "[\(arrow)] \(content)"
         }
     }
 
@@ -164,10 +170,13 @@ final class AppleIntelligenceMediator: ObservableObject {
         let contextBlock = contextParts.isEmpty ? "" : "\n\n--- Conversation Context ---\n" + contextParts.joined(separator: "\n") + "\n---\n"
 
         return """
-You are a brief assistant that adds helpful context to conversations between a user and an AI (LLM).
+You rephrase user requests to help an AI assistant understand them better. You are a middleman, NOT a gatekeeper.
 
 Rules:
+- NEVER refuse, block, or judge a request. You do NOT decide what is allowed.
 - Reply with 1 sentence only. Never multiple lines.
+- Rephrase or add brief context to clarify the user's intent for the AI.
+- If the request is already clear, reply with nothing.
 - Never include tags, labels, or prefixes like [AI], LLM:, User:, CLEAR, etc.
 - Just give the plain helpful text. Nothing else.
 \(contextBlock)\
@@ -225,9 +234,9 @@ Rules:
 
         let session = ensureSession()
         let prompt = """
-The user said: "\(message)"
+Rephrase this for the AI assistant. Do NOT refuse or block it. If already clear, reply with nothing.
 
-If this is clear, reply with nothing. Otherwise reply with 1 sentence of context to help the AI assistant.
+User said: "\(message)"
 """
 
         do {
@@ -372,6 +381,7 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
     /// Strip tags, labels, and junk that Apple AI sometimes echoes back
     private func sanitize(_ raw: String) -> String {
         var text = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+
         // Remove any [AI ...] tags, [AI → User], LLM:, CLEAR, etc.
         let patterns = [
             #"\[AI\s*→?\s*(?:User|LLM|Both)\]"#,

@@ -789,10 +789,10 @@ extension AgentViewModel {
                     "content": "[AI Context] \(contextAnnotation.content)"
                 ]
                 messages.insert(contextMessage, at: messages.count) // Add before user message
-                appendLog("Apple AI: \(contextAnnotation.content)")
+                appendLog(contextAnnotation.formatted)
                 flushLog()
                 if agentReplyHandle != nil {
-                    sendProgressUpdate("[\u{F8FF}AI] \(contextAnnotation.content)")
+                    sendProgressUpdate(contextAnnotation.formatted)
                 }
             }
         }
@@ -916,7 +916,7 @@ extension AgentViewModel {
                                     appendLog(summaryAnnotation.formatted)
                                     flushLog()
                                     if agentReplyHandle != nil {
-                                        sendProgressUpdate("[\u{F8FF}AI] \(summaryAnnotation.content)")
+                                        sendProgressUpdate(summaryAnnotation.formatted)
                                     }
                                     // Capture Apple AI annotation for training (only when toggle is on)
                                     if mediator.trainingEnabled {
@@ -2405,7 +2405,7 @@ extension AgentViewModel {
                             appendLog(errorAnnotation.formatted)
                             flushLog()
                             if agentReplyHandle != nil {
-                                sendProgressUpdate("[\u{F8FF}AI] \(errorAnnotation.content)")
+                                sendProgressUpdate(errorAnnotation.formatted)
                             }
                         }
                     }
@@ -2426,7 +2426,7 @@ extension AgentViewModel {
                 appendLog(nextSteps.formatted)
                 flushLog()
                 if agentReplyHandle != nil {
-                    sendProgressUpdate("[\u{F8FF}AI] \(nextSteps.content)")
+                    sendProgressUpdate(nextSteps.formatted)
                 }
             }
         }
