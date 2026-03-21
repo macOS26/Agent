@@ -326,13 +326,25 @@ extension AgentViewModel {
             let replaceAll = input["replace_all"] as? Bool ?? false
             tab.appendLog("📝 Edit: \(filePath)")
             let output = await Self.offMain { CodingService.editFile(path: filePath, oldString: oldString, newString: newString, replaceAll: replaceAll) }
-            let oldPreview = Self.preview(oldString, lines: 3)
-            let newPreview = Self.preview(newString, lines: 3)
-            tab.appendLog("```diff\n- \(oldPreview)\n+ \(newPreview)\n```")
+            let d1f = MultiLineDiff.generateASCIIDiff(source: oldString, destination: newString)
+            tab.appendLog(d1f)
             tab.appendLog(output)
             tab.flush()
             return TabToolResult(
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+        }
+
+        // create_diff
+        if name == "create_diff" {
+            let source = input["source"] as? String ?? ""
+            let destination = input["destination"] as? String ?? ""
+            let d1f = MultiLineDiff.generateASCIIDiff(source: source, destination: destination)
+            tab.appendLog(d1f)
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": d1f],
                 isComplete: false
             )
         }
