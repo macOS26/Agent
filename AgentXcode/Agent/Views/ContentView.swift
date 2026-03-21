@@ -31,20 +31,30 @@ struct ContentView: View {
             // Header
             HStack {
                 // Service status indicators (left side)
-                StatusDot(
-                    isActive: viewModel.userServiceActive,
-                    wasActive: viewModel.userWasActive,
-                    isBusy: viewModel.isRunning,
-                    enabled: viewModel.userEnabled
-                )
+                HStack(spacing: 4) {
+                    StatusDot(
+                        isActive: viewModel.userServiceActive,
+                        wasActive: viewModel.userWasActive,
+                        isBusy: viewModel.isRunning,
+                        enabled: viewModel.userEnabled
+                    )
+                    Text("Agent")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
                 .help("User Agent: \(viewModel.userServiceActive ? "Running" : (viewModel.userEnabled ? "Stopped" : "Disabled"))")
 
-                StatusDot(
-                    isActive: viewModel.rootServiceActive,
-                    wasActive: viewModel.rootWasActive,
-                    isBusy: viewModel.isRunning,
-                    enabled: viewModel.rootEnabled
-                )
+                HStack(spacing: 4) {
+                    StatusDot(
+                        isActive: viewModel.rootServiceActive,
+                        wasActive: viewModel.rootWasActive,
+                        isBusy: viewModel.isRunning,
+                        enabled: viewModel.rootEnabled
+                    )
+                    Text("Daemon")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
                 .help("Daemon: \(viewModel.rootServiceActive ? "Running" : (viewModel.rootEnabled ? "Stopped" : "Disabled"))")
 
                 Spacer()
