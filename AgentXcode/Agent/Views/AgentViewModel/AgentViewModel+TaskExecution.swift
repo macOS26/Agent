@@ -826,7 +826,6 @@ extension AgentViewModel {
                 let response: (content: [[String: Any]], stopReason: String)
                 var textWasStreamed = false
                 let streamStart = CFAbsoluteTimeGetCurrent()
-                appendLog("LLM:")
                 flushLog()
                 if let claude {
                     response = try await claude.sendStreaming(messages: messages) { [weak self] delta in
