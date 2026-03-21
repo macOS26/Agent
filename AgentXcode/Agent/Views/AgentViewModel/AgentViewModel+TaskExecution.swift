@@ -710,8 +710,10 @@ extension AgentViewModel {
         }
         appendLog("Model: \(provider.displayName) / \(modelName)\(isVision ? " (vision)" : "")")
 
-        // Start training data capture for Apple AI LoRA fine-tuning
-        TrainingDataStore.shared.startCapture(userPrompt: prompt, modelUsed: modelName)
+        // Start training data capture for Apple AI LoRA fine-tuning (only when toggle is on)
+        if AppleIntelligenceMediator.shared.trainingEnabled {
+            TrainingDataStore.shared.startCapture(userPrompt: prompt, modelUsed: modelName)
+        }
         flushLog()
 
         let claude: ClaudeService? = provider == .claude
@@ -777,8 +779,10 @@ extension AgentViewModel {
             taskLog.info("[main] Apple AI mediator: contextualizing user message...")
             if let contextAnnotation = await mediator.contextualizeUserMessage(prompt) {
                 appleAIAnnotations.append(contextAnnotation)
-                // Capture Apple AI decision for training
-                TrainingDataStore.shared.captureAppleAIDecision(contextAnnotation.content)
+                // Capture Apple AI decision for training (only when toggle is on)
+                if mediator.trainingEnabled {
+                    TrainingDataStore.shared.captureAppleAIDecision(contextAnnotation.content)
+                }
                 // Inject context into LLM message
                 let contextMessage: [String: Any] = [
                     "role": "user",
@@ -912,8 +916,10 @@ extension AgentViewModel {
                                     if agentReplyHandle != nil {
                                         sendProgressUpdate("[\u{F8FF}AI] \(summaryAnnotation.content)")
                                     }
-                                    // Capture Apple AI annotation for training
-                                    TrainingDataStore.shared.captureAppleAIAnnotation(summaryAnnotation.content)
+                                    // Capture Apple AI annotation for training (only when toggle is on)
+                                    if mediator.trainingEnabled {
+                                        TrainingDataStore.shared.captureAppleAIAnnotation(summaryAnnotation.content)
+                                    }
                                 }
                             }
                             
@@ -922,8 +928,10 @@ extension AgentViewModel {
                             history.add(TaskRecord(prompt: prompt, summary: summary, commandsRun: commandsRun), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
                             // End the task in SwiftData chat history
                             ChatHistoryStore.shared.endCurrentTask(summary: summary)
-                            // Finish training data capture
-                            TrainingDataStore.shared.finishCapture(taskSummary: summary, successful: true)
+                            // Finish training data capture (only when toggle is on)
+                            if mediator.trainingEnabled {
+                                TrainingDataStore.shared.finishCapture(taskSummary: summary, successful: true)
+                            }
                             // Stop progress updates before sending final reply
                             stopProgressUpdates()
                             // Reply to the iMessage sender if this was an Agent! prompt

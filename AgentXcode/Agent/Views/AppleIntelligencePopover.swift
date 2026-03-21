@@ -81,6 +81,17 @@ struct AppleIntelligencePopover: View {
                     }
                 }
                 .toggleStyle(.switch)
+
+                Toggle(isOn: $aiMediator.trainingEnabled) {
+                    VStack(alignment: .leading) {
+                        Text("Capture training data")
+                            .font(.caption)
+                        Text("Records prompts, AI context, LLM responses, and summaries for LoRA JSONL")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .toggleStyle(.switch)
             }
         }
     }

@@ -45,6 +45,13 @@ final class AppleIntelligenceMediator: ObservableObject {
         }
     }
 
+    /// Whether training data capture is active (captures user prompts, Apple AI interjections, LLM responses, and task summaries for LoRA JSONL)
+    @Published var trainingEnabled: Bool = UserDefaults.standard.bool(forKey: "appleIntelligenceTrainingEnabled") {
+        didSet {
+            UserDefaults.standard.set(trainingEnabled, forKey: "appleIntelligenceTrainingEnabled")
+        }
+    }
+
     // MARK: - Conversation Context (for Apple AI session)
 
     /// Last task prompt from the user
@@ -177,6 +184,7 @@ Keep annotations concise (1-2 sentences max). Your goal is to:
 \(contextBlock)
 Be helpful but not verbose. The primary LLM is doing the actual work - you just add clarity.
 Use the conversation context above to maintain continuity across tasks.
+\(trainingEnabled ? "\n⚡ TRAINING MODE ACTIVE: Your interjections, the user prompt, the LLM response, and your task summary are being captured as LoRA training data. Provide high-quality, clear annotations — they will be used to fine-tune a future Apple Intelligence adapter." : "")
 """
     }
 
