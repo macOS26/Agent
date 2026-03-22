@@ -19,7 +19,9 @@ enum APIProvider: String, CaseIterable, Codable {
     case huggingFace = "huggingFace"
     case ollama = "ollama"
     case localOllama = "localOllama"
-    case foundationModel = "foundationModel"  // Used for LoRA training only, not selectable in UI
+    case foundationModel = "foundationModel"  // runs in the
+        // background, Used for LoRA training & mediator tasks,
+        //not selectable in UI
 
     var displayName: String {
         switch self {
