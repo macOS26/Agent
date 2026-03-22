@@ -29,9 +29,10 @@ struct MessagesView: View {
                 }) {
                     Image(systemName: viewModel.messagesMonitorEnabled ? "message.fill" : "message")
                         .foregroundStyle(viewModel.messagesMonitorEnabled ? .blue : .secondary)
+                        .frame(height: 16)
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.small)
+                .controlSize(.regular)
             }
 
             Divider()
