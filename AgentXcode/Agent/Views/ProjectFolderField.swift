@@ -28,16 +28,15 @@ struct ProjectFolderField: View {
                     }
                 } label: {
                     Image(systemName: "folder")
-                        .frame(width: 20, height: 16)
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.mini)
+                .controlSize(.small)
                 .help("Pick project folder or file")
-                
+
                 TextField("Project folder or file...", text: $projectFolder)
                     .textContentType(.none)
                     .textFieldStyle(.roundedBorder)
-                    .controlSize(.mini)
+                    .controlSize(.small)
                     .focused($isTextFieldFocused)
                     .onSubmit {
                         if !projectFolder.isEmpty {
@@ -54,17 +53,16 @@ struct ProjectFolderField: View {
                             showRecentFolders = true
                         }
                     }
-                
+
                 Button {
                     projectFolder = ""
                     showRecentFolders = false
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundStyle(.secondary)
-                        .frame(width: 20, height: 16)
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.mini)
+                .controlSize(.small)
                 .help("Clear project folder")
                 .disabled(projectFolder.isEmpty)
             }
