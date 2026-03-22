@@ -71,16 +71,22 @@ struct ToolsView: View {
                                         // Sync Services group toggle with launch agent/daemon
                                         if groupName == "Services", let vm = viewModel {
                                             if !enabled {
-                                                // Turning off — warn and disable both
                                                 pendingServiceState = false
                                                 showServiceWarning = true
                                             } else {
-                                                // Turning on — re-enable both
                                                 vm.userEnabled = true
                                                 vm.rootEnabled = true
                                             }
                                         }
-                                    }
+                                    },
+                                    onToolToggled: groupName == "Services" ? { toolName, enabled in
+                                        guard let vm = viewModel else { return }
+                                        if toolName == "execute_agent_command" {
+                                            vm.userEnabled = enabled
+                                        } else if toolName == "execute_daemon_command" {
+                                            vm.rootEnabled = enabled
+                                        }
+                                    } : nil
                                 )
                             }
                         }
@@ -151,6 +157,7 @@ struct GroupRowView: View {
     let isCollapsed: Bool
     let toggleCollapse: () -> Void
     let onGroupToggled: (Bool) -> Void
+    var onToolToggled: ((String, Bool) -> Void)? = nil
 
     var body: some View {
         let groupEnabled = prefs.isGroupEnabled(groupName)
@@ -203,6 +210,8 @@ struct GroupRowView: View {
                         let enabled = prefs.isEnabled(provider, tool.name)
                         Button {
                             prefs.toggle(provider, tool.name)
+                            let nowEnabled = prefs.isEnabled(provider, tool.name)
+                            onToolToggled?(tool.name, nowEnabled)
                         } label: {
                             Text(tool.name)
                                 .font(.caption2)

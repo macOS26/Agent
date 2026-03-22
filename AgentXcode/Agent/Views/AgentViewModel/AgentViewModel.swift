@@ -99,7 +99,7 @@ final class AgentViewModel {
         }
     }
 
-    /// Keep the Services tool group in sync with userEnabled/rootEnabled.
+    /// Keep the Services tool group and individual tools in sync with userEnabled/rootEnabled.
     private func syncServicesGroup() {
         let prefs = ToolPreferencesService.shared
         let groupOn = prefs.isGroupEnabled("Services")
@@ -108,6 +108,15 @@ final class AgentViewModel {
             prefs.toggleGroup("Services")
         } else if !bothOn && groupOn {
             prefs.toggleGroup("Services")
+        }
+        // Sync individual tool enabled state with service toggles
+        let agentToolOn = prefs.isEnabled(selectedProvider, "execute_agent_command")
+        if userEnabled != agentToolOn {
+            prefs.toggle(selectedProvider, "execute_agent_command")
+        }
+        let daemonToolOn = prefs.isEnabled(selectedProvider, "execute_daemon_command")
+        if rootEnabled != daemonToolOn {
+            prefs.toggle(selectedProvider, "execute_daemon_command")
         }
     }
 
