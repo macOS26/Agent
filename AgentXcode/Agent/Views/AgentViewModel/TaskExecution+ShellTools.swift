@@ -1,0 +1,206 @@
+@preconcurrency import Foundation
+import os.log
+
+private let shellLog = Logger(subsystem: "Agent.app.toddbruss", category: "ShellTools")
+
+// MARK: - Shell Execution Tools
+extension AgentViewModel {
+
+    /// Execute a command via UserService XPC with streaming output.
+    func executeViaUserAgent(command: String) async -> (status: Int32, output: String) {
+        resetStreamCounters()
+        userServiceActive = true
+        userWasActive = true
+        userService.onOutput = { [weak self] chunk in
+            self?.appendRawOutput(chunk)
+        }
+        let result = await userService.execute(command: command)
+        userService.onOutput = nil
+        userServiceActive = false
+
+        // Only show exit code on failure; streaming already displayed the output
+        if result.status != 0 {
+            appendLog("exit code: \(result.status)")
+        }
+        flushLog()
+        return result
+    }
+
+    /// Runs a command directly in the Agent app process (not via XPC).
+    /// Used for osascript so it inherits the app's Automation permissions.
+    nonisolated func executeLocal(command: String) async -> (status: Int32, output: String) {
+        await withCheckedContinuation { continuation in
+            DispatchQueue.global().async {
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: "/bin/bash")
+                process.arguments = ["-c", command]
+
+                var env = ProcessInfo.processInfo.environment
+                env["HOME"] = FileManager.default.homeDirectoryForCurrentUser.path
+                process.environment = env
+
+                let stdoutPipe = Pipe()
+                let stderrPipe = Pipe()
+                process.standardOutput = stdoutPipe
+                process.standardError = stderrPipe
+
+                do {
+                    try process.run()
+                } catch {
+                    continuation.resume(returning: (-1, "Failed to launch: \(error.localizedDescription)"))
+                    return
+                }
+
+                // Read pipes then wait — osascript output is small, no deadlock risk
+                let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+                let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+                process.waitUntilExit()
+
+                var output = String(data: stdoutData, encoding: .utf8) ?? ""
+                let errStr = String(data: stderrData, encoding: .utf8) ?? ""
+                if !errStr.isEmpty {
+                    if !output.isEmpty { output += "\n" }
+                    output += errStr
+                }
+
+                continuation.resume(returning: (process.terminationStatus, output))
+            }
+        }
+    }
+
+    /// Run a command in the Agent app process with streaming output.
+    /// Inherits Agent's TCC permissions (Automation, Accessibility, ScreenRecording).
+    nonisolated func executeLocalStreaming(command: String, onOutput: @escaping @Sendable (String) -> Void) async -> (status: Int32, output: String) {
+        await withCheckedContinuation { continuation in
+            DispatchQueue.global().async {
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: "/bin/bash")
+                process.arguments = ["-c", command]
+
+                var env = ProcessInfo.processInfo.environment
+                env["HOME"] = FileManager.default.homeDirectoryForCurrentUser.path
+                process.environment = env
+
+                let pipe = Pipe()
+                process.standardOutput = pipe
+                process.standardError = pipe
+
+                do {
+                    try process.run()
+                } catch {
+                    let msg = "Failed to launch: \(error.localizedDescription)"
+                    onOutput(msg)
+                    continuation.resume(returning: (-1, msg))
+                    return
+                }
+
+                // Stream output chunks as they arrive
+                var collected = ""
+                let handle = pipe.fileHandleForReading
+                while true {
+                    let data = handle.availableData
+                    if data.isEmpty { break }
+                    if let chunk = String(data: data, encoding: .utf8) {
+                        collected += chunk
+                        onOutput(chunk)
+                    }
+                }
+                process.waitUntilExit()
+
+                continuation.resume(returning: (process.terminationStatus, collected))
+            }
+        }
+    }
+
+    /// Returns true if the command contains osascript and should run locally.
+    nonisolated static func isOsascriptCommand(_ command: String) -> Bool {
+        command.contains("osascript") || command.contains("/usr/bin/osascript")
+    }
+
+    /// Returns true if the command needs TCC permissions and should open in a tab.
+    nonisolated static func needsTCCTab(_ command: String) -> Bool {
+        let lower = command.lowercased()
+        return lower.contains("osascript") || lower.contains("screencapture")
+            || lower.contains("applescript") || lower.contains("accessibility")
+            || lower.contains("tccutil") || lower.contains("automator")
+    }
+
+    /// Prepend working directory to relative paths in commands
+    nonisolated static func prependWorkingDirectory(_ command: String, projectFolder: String) -> String {
+        let dir = projectFolder.isEmpty ? "." : projectFolder
+        // If command starts with cd, don't modify it
+        if command.hasPrefix("cd ") { return command }
+        // If command has absolute paths, don't modify it
+        if command.contains(" /") { return command }
+        // Otherwise prepend "cd dir && " to run in project folder
+        return "cd '\(dir)' && \(command)"
+    }
+
+    /// Extract cd target from command if successful
+    nonisolated static func extractCdTarget(_ command: String, relativeTo: String) -> String? {
+        // Check if this is a cd command that succeeded
+        let trimmed = command.trimmingCharacters(in: .whitespaces)
+        guard trimmed.hasPrefix("cd ") else { return nil }
+        
+        let pathPart = String(trimmed.dropFirst(3)).trimmingCharacters(in: .whitespaces)
+        let targetPath: String
+        
+        if pathPart.hasPrefix("/") {
+            targetPath = pathPart
+        } else if pathPart.hasPrefix("~") {
+            targetPath = (pathPart as NSString).expandingTildeInPath
+        } else {
+            targetPath = (relativeTo as NSString).appendingPathComponent(pathPart)
+        }
+        
+        return targetPath
+    }
+
+    /// Check path before operations
+    nonisolated static func checkPath(_ path: String?) -> String? {
+        guard let path = path, !path.isEmpty else { return nil }
+        // Expand tilde
+        let expandedPath = (path as NSString).expandingTildeInPath
+        
+        // Check if exists
+        var isDir: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: expandedPath, isDirectory: &isDir) else {
+            return "Error: Path '\(path)' does not exist"
+        }
+        guard isDir.boolValue else {
+            return "Error: '\(path)' is not a directory"
+        }
+        
+        return nil
+    }
+
+    /// Collapse heredocs for display
+    nonisolated static func collapseHeredocs(_ command: String) -> String {
+        // Simple collapse: replace heredoc content with placeholder
+        let lines = command.split(separator: "\n", omittingEmptySubsequences: false)
+        var result: [String] = []
+        var inHeredoc = false
+        var heredocMarker = ""
+        
+        for line in lines {
+            if inHeredoc {
+                if line == heredocMarker {
+                    result.append(String(line))
+                    inHeredoc = false
+                }
+                // Skip heredoc content in display
+            } else if line.contains("<<") {
+                let markerStart = line.firstIndex(of: "'") ?? line.firstIndex(of: "\"") ?? line.endIndex
+                if markerStart != line.endIndex {
+                    heredocMarker = String(line[markerStart...].dropFirst().split(separator: "'").first ?? "")
+                }
+                result.append(String(line))
+                inHeredoc = true
+            } else {
+                result.append(String(line))
+            }
+        }
+        
+        return result.joined(separator: "\n")
+    }
+}
