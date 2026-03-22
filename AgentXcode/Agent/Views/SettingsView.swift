@@ -283,15 +283,16 @@ struct SettingsView: View {
                 }
             }
 
-            // Web Search (Tavily) — for Ollama providers only
-            if viewModel.selectedProvider == .ollama || viewModel.selectedProvider == .localOllama {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Web Search")
-                        .font(.headline)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Tavily API Key").font(.caption).foregroundStyle(.secondary)
-                        LockedSecureField(text: $viewModel.tavilyAPIKey, placeholder: "tvly-...", lockKey: "lock.tavilyAPIKey")
-                    }
+            // Web Search (Tavily) — available for all providers
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Web Search")
+                    .font(.headline)
+                Text("Tavily provides web search for all LLM providers.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Tavily API Key").font(.caption).foregroundStyle(.secondary)
+                    LockedSecureField(text: $viewModel.tavilyAPIKey, placeholder: "tvly-...", lockKey: "lock.tavilyAPIKey")
                 }
             }
 

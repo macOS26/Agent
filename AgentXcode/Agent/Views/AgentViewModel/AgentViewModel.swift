@@ -164,7 +164,7 @@ final class AgentViewModel {
         didSet { KeychainService.shared.setOllamaAPIKey(ollamaAPIKey) }
     }
 
-    // Tavily web search API key (for Ollama providers)
+    // Tavily web search API key (available for all providers)
     var tavilyAPIKey: String = KeychainService.shared.getTavilyAPIKey() ?? "" {
         didSet { KeychainService.shared.setTavilyAPIKey(tavilyAPIKey) }
     }
