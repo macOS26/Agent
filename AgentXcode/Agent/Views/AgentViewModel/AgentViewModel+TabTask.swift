@@ -1854,12 +1854,12 @@ extension AgentViewModel {
             )
         }
 
-        // Unhandled tool
-        let msg = "Tool '\(name)' is not available in tab context"
-        tab.appendLog(msg)
+        // Fallback: delegate to main executeNativeTool which handles all tools
+        let output = await executeNativeTool(name, input: input)
+        tab.appendLog(output)
         tab.flush()
         return TabToolResult(
-            toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": msg],
+            toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
             isComplete: false
         )
     }
