@@ -28,25 +28,45 @@ extension AgentViewModel {
             return
         }
 
-        if tab.isLLMRunning {
-            stopTabTask(tab: tab)
-        }
-
         tab.addToHistory(task)
         tab.taskInput = ""
 
+        // Queue if already running
+        if tab.isLLMRunning {
+            tab.taskQueue.append(task)
+            tab.appendLog("📋 Queued (\(tab.taskQueue.count)): \(task)")
+            tab.flush()
+            return
+        }
+
+        startTabTask(tab: tab, prompt: task)
+    }
+
+    /// Start executing a task on a tab (not queued).
+    private func startTabTask(tab: ScriptTab, prompt: String) {
         tab.runningLLMTask = Task {
-            await executeTabTask(tab: tab, prompt: task)
+            await executeTabTask(tab: tab, prompt: prompt)
+            // When done, run next queued task
+            if !tab.taskQueue.isEmpty && !tab.isCancelled {
+                let next = tab.taskQueue.removeFirst()
+                startTabTask(tab: tab, prompt: next)
+            }
         }
     }
 
-    /// Stop the LLM task running on a script tab.
+    /// Stop the LLM task running on a script tab and clear its queue.
     func stopTabTask(tab: ScriptTab) {
+        let queueCount = tab.taskQueue.count
+        tab.taskQueue.removeAll()
         tab.runningLLMTask?.cancel()
         tab.runningLLMTask = nil
         tab.isLLMRunning = false
         tab.isLLMThinking = false
-        tab.appendLog("Cancelled by user.")
+        if queueCount > 0 {
+            tab.appendLog("Cancelled by user. \(queueCount) queued task(s) cleared.")
+        } else {
+            tab.appendLog("Cancelled by user.")
+        }
         tab.flush()
     }
 

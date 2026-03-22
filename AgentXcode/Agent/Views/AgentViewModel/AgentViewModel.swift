@@ -435,6 +435,7 @@ final class AgentViewModel {
     let history = TaskHistory.shared
     var isCancelled = false
     private var runningTask: Task<Void, Never>?
+    var mainTaskQueue: [String] = []
     @ObservationIgnored private var terminationObserver: Any?
 
     // MARK: - Messages Monitor
@@ -939,22 +940,34 @@ final class AgentViewModel {
         // Switch to appropriate LLM tab: current LLM tab, parent LLM tab if on child, or main tab
         ensureLLMTabSelected()
 
-        // Stop any running task before starting a new one
-        if isRunning {
-            stop(silent: true)
-        }
-
-        // Start a new task in SwiftData chat history
-        ChatHistoryStore.shared.startNewTask(prompt: task)
-        
         promptHistory.append(task)
         UserDefaults.standard.set(promptHistory, forKey: "agentPromptHistory")
         historyIndex = -1
         savedInput = ""
         taskInput = ""
 
+        // Queue if already running
+        if isRunning {
+            mainTaskQueue.append(task)
+            appendLog("📋 Queued (\(mainTaskQueue.count)): \(task)")
+            flushLog()
+            return
+        }
+
+        startMainTask(task)
+    }
+
+    /// Start executing a task on the main tab (not queued).
+    private func startMainTask(_ task: String) {
+        ChatHistoryStore.shared.startNewTask(prompt: task)
+
         runningTask = Task {
             await executeTask(task)
+            // When done, run next queued task
+            if !mainTaskQueue.isEmpty && !isCancelled {
+                let next = mainTaskQueue.removeFirst()
+                startMainTask(next)
+            }
         }
     }
 
@@ -992,6 +1005,8 @@ final class AgentViewModel {
     }
 
     func stop(silent: Bool = false) {
+        let queueCount = mainTaskQueue.count
+        mainTaskQueue.removeAll()
         isCancelled = true
         runningTask?.cancel()
         runningTask = nil
@@ -1002,7 +1017,11 @@ final class AgentViewModel {
         // Stop progress updates
         stopProgressUpdates()
         if !silent {
-            appendLog("Cancelled by user.")
+            if queueCount > 0 {
+                appendLog("Cancelled by user. \(queueCount) queued task(s) cleared.")
+            } else {
+                appendLog("Cancelled by user.")
+            }
         }
         flushLog()
         persistLogNow()
