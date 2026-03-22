@@ -3030,7 +3030,7 @@ extension AgentViewModel {
                                     flushLog()
                                     
                                     // Restart Ollama via UserService XPC
-                                    let restartResult = await userService.execute(command: "pkill -f 'ollama serve' && sleep 2 && open /Applications/Ollama.app")
+                                    _ = await userService.execute(command: "pkill -f 'ollama serve' && sleep 2 && open /Applications/Ollama.app")
                                     appendLog("🔄 Restart command executed")
                                     flushLog()
                                     
@@ -3073,7 +3073,7 @@ extension AgentViewModel {
                                 flushLog()
                                 
                                 // Restart Ollama via UserService XPC
-                                let restartResult = await userService.execute(command: "pkill -f 'ollama serve' && sleep 3 && open /Applications/Ollama.app && sleep 10")
+                                _ = await userService.execute(command: "pkill -f 'ollama serve' && sleep 3 && open /Applications/Ollama.app && sleep 10")
                                 appendLog("Ollama restart attempted. Please check Ollama application status.")
                                 flushLog()
                             }

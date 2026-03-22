@@ -296,13 +296,13 @@ extension AgentViewModel {
                     
                     // Determine error source for better logging
                     var errorSource = "Unknown"
-                    if let claude = claude {
+                    if claude != nil {
                         errorSource = "Claude API"
-                    } else if let openAICompatible = openAICompatible {
+                    } else if openAICompatible != nil {
                         errorSource = "\(provider.displayName) API"
-                    } else if let ollama = ollama {
+                    } else if ollama != nil {
                         errorSource = "Ollama API"
-                    } else if let foundationModelService = foundationModelService {
+                    } else if foundationModelService != nil {
                         errorSource = "Apple Intelligence"
                     }
                     
@@ -347,7 +347,7 @@ extension AgentViewModel {
                                     tab.appendLog("⚠️ Ollama server not responding. Attempting to restart...")
                                     
                                     // Restart Ollama via UserService XPC
-                                    let restartResult = await userService.execute(command: "pkill -f 'ollama serve' && sleep 2 && open /Applications/Ollama.app")
+                                    _ = await userService.execute(command: "pkill -f 'ollama serve' && sleep 2 && open /Applications/Ollama.app")
                                     tab.appendLog("🔄 Restart command executed")
                                     
                                     // Wait longer for Ollama startup
@@ -379,7 +379,7 @@ extension AgentViewModel {
                                 tab.appendLog("🔄 Max retries reached. Attempting final Ollama restart...")
                                 
                                 // Restart Ollama via UserService XPC
-                                let restartResult = await userService.execute(command: "pkill -f 'ollama serve' && sleep 3 && open /Applications/Ollama.app && sleep 10")
+                                _ = await userService.execute(command: "pkill -f 'ollama serve' && sleep 3 && open /Applications/Ollama.app && sleep 10")
                                 tab.appendLog("Ollama restart attempted. Please check Ollama application status.")
                             }
                             
