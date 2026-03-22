@@ -11,11 +11,12 @@ struct ToolsView: View {
         "Automation": ({ ["run_applescript", "run_osascript", "execute_javascript"].contains($0.name) || ["list_apple_scripts", "run_apple_script", "save_apple_script", "delete_apple_script"].contains($0.name) }, "gearshape.2"),
         "Experimental": ({ ["apple_event_query", "lookup_sdef", "xcode_grant_permission", "list_javascript", "run_javascript", "save_javascript", "delete_javascript"].contains($0.name) }, "flask"),
         "Accessibility": ({ $0.name.hasPrefix("ax_") }, "accessibility"),
-        "Core": ({ ["task_complete", "list_tools", "list_mcp_tools", "load_groups", "unload_groups", "web_search", "write_text", "transform_text", "send_message", "about_self", "fix_text", "execute_agent_command", "execute_daemon_command", "plan_mode"].contains($0.name) || $0.name.contains("agent_script") }, "checkmark.circle"),
+        "Core": ({ ["task_complete", "list_tools", "list_mcp_tools", "load_groups", "unload_groups", "web_search", "write_text", "transform_text", "send_message", "about_self", "fix_text", "plan_mode"].contains($0.name) || $0.name.contains("agent_script") }, "checkmark.circle"),
+        "Services": ({ ["execute_agent_command", "execute_daemon_command"].contains($0.name) }, "server.rack"),
         "Web": ({ ($0.name.hasPrefix("web_") && $0.name != "web_search") || $0.name.hasPrefix("selenium_") }, "globe"),
     ]
     
-    static let groupOrder: [String] = ["Core", "Coding", "Automation", "Accessibility", "Web", "Experimental"]
+    static let groupOrder: [String] = ["Core", "Services", "Coding", "Automation", "Accessibility", "Web", "Experimental"]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
