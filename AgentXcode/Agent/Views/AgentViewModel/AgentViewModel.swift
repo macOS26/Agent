@@ -104,9 +104,7 @@ final class AgentViewModel {
         let servicesGroupOff = !ToolPreferencesService.shared.isGroupEnabled("Services")
         if servicesGroupOff { return .yellow }
         if !userEnabled && !rootEnabled { return .gray }
-        if !userEnabled || !rootEnabled { return .yellow }
-        if userPingOK && daemonPingOK { return .green }
-        if !userPingOK && !daemonPingOK { return .red }
+        if userEnabled && rootEnabled { return .green }
         return .yellow
     }
 
