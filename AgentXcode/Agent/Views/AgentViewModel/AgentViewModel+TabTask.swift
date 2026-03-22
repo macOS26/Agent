@@ -64,6 +64,7 @@ extension AgentViewModel {
         tab.isLLMRunning = false
         tab.isLLMThinking = false
         tab.currentTaskPrompt = ""
+        tab.currentAppleAIPrompt = ""
         if queueCount > 0 {
             tab.appendLog("Cancelled by user. \(queueCount) queued task(s) cleared.")
         } else {
@@ -187,6 +188,7 @@ extension AgentViewModel {
             tabTaskLog.info("[\(tab.displayTitle)] Apple AI mediator: contextualizing user message...")
             if let contextAnnotation = await mediator.contextualizeUserMessage(prompt) {
                 appleAIAnnotations.append(contextAnnotation)
+                tab.currentAppleAIPrompt = contextAnnotation.content
                 if mediator.trainingEnabled {
                     TrainingDataStore.shared.captureAppleAIDecision(contextAnnotation.content)
                 }

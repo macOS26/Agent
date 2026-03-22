@@ -1310,6 +1310,7 @@ extension AgentViewModel {
             taskLog.info("[main] Apple AI mediator: contextualizing user message...")
             if let contextAnnotation = await mediator.contextualizeUserMessage(prompt) {
                 appleAIAnnotations.append(contextAnnotation)
+                currentAppleAIPrompt = contextAnnotation.content
                 // Capture Apple AI decision for training (only when toggle is on)
                 if mediator.trainingEnabled {
                     TrainingDataStore.shared.captureAppleAIDecision(contextAnnotation.content)

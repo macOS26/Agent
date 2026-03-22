@@ -53,6 +53,7 @@ final class ScriptTab: Identifiable {
     var llmMessages: [[String: Any]] = []
     var taskQueue: [String] = []
     var currentTaskPrompt: String = ""
+    var currentAppleAIPrompt: String = ""
 
     // MARK: - Per-Tab Project Folder
 

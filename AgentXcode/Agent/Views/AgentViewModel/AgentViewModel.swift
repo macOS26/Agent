@@ -454,6 +454,7 @@ final class AgentViewModel {
     private var runningTask: Task<Void, Never>?
     var mainTaskQueue: [String] = []
     var currentTaskPrompt: String = ""
+    var currentAppleAIPrompt: String = ""
     @ObservationIgnored private var terminationObserver: Any?
 
     // MARK: - Messages Monitor
@@ -1049,6 +1050,7 @@ final class AgentViewModel {
         isRunning = false
         isThinking = false
         currentTaskPrompt = ""
+        currentAppleAIPrompt = ""
         userServiceActive = false
         rootServiceActive = false
         userWasActive = false

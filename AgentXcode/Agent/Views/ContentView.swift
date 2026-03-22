@@ -25,6 +25,7 @@ struct ContentView: View {
     @State private var showClearConfirm = false
     @State private var showNewTabSheet = false
     @State private var showServices = false
+    @State private var showAppleAIBanner = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -326,34 +327,57 @@ struct ContentView: View {
 
             // Current task banner with cancel button
             if let prompt = activeTaskPrompt, !prompt.isEmpty {
-                HStack(spacing: 6) {
-                    Image(systemName: "play.fill")
-                        .font(.caption2)
-                        .foregroundStyle(.white)
-                    Text(prompt)
-                        .font(.caption)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                        .foregroundStyle(.white)
-                    Spacer()
-                    Button {
-                        if let selId = viewModel.selectedTabId,
-                           let tab = viewModel.scriptTabs.first(where: { $0.id == selId }),
-                           tab.isLLMRunning {
-                            viewModel.stopTabTask(tab: tab)
-                        } else {
-                            viewModel.stop()
+                VStack(spacing: 0) {
+                    HStack(spacing: 6) {
+                        Button { showAppleAIBanner.toggle() } label: {
+                            Image(systemName: activeAppleAIPrompt != nil ? "brain.fill" : "play.fill")
+                                .font(.caption2)
+                                .foregroundStyle(.white)
                         }
-                    } label: {
-                        Label("Cancel", systemImage: "xmark.circle.fill")
+                        .buttonStyle(.plain)
+                        .help(activeAppleAIPrompt != nil ? "Toggle Apple AI prompt" : "Running")
+                        Text(prompt)
                             .font(.caption)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
                             .foregroundStyle(.white)
+                        Spacer()
+                        Button {
+                            if let selId = viewModel.selectedTabId,
+                               let tab = viewModel.scriptTabs.first(where: { $0.id == selId }),
+                               tab.isLLMRunning {
+                                viewModel.stopTabTask(tab: tab)
+                            } else {
+                                viewModel.stop()
+                            }
+                        } label: {
+                            Label("Cancel", systemImage: "xmark.circle.fill")
+                                .font(.caption)
+                                .foregroundStyle(.white)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 5)
+                    .background(Color.green.opacity(0.7))
+
+                    // Apple AI prompt row (toggled by tapping brain icon)
+                    if showAppleAIBanner, let aiPrompt = activeAppleAIPrompt {
+                        HStack(spacing: 6) {
+                            Image(systemName: "brain")
+                                .font(.caption2)
+                                .foregroundStyle(.white.opacity(0.8))
+                            Text(aiPrompt)
+                                .font(.caption)
+                                .lineLimit(2)
+                                .foregroundStyle(.white.opacity(0.9))
+                            Spacer()
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 4)
+                        .background(Color.blue.opacity(0.6))
+                    }
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 5)
-                .background(Color.green.opacity(0.7))
             }
 
             // Activity Log — switches between main and script tab
@@ -767,6 +791,17 @@ struct ContentView: View {
             return tab.isLLMRunning ? tab.currentTaskPrompt : nil
         }
         return viewModel.isRunning ? viewModel.currentTaskPrompt : nil
+    }
+
+    /// The Apple AI annotation for the currently running task.
+    private var activeAppleAIPrompt: String? {
+        if let selId = viewModel.selectedTabId,
+           let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+            let p = tab.currentAppleAIPrompt
+            return p.isEmpty ? nil : p
+        }
+        let p = viewModel.currentAppleAIPrompt
+        return p.isEmpty ? nil : p
     }
 
     /// Color for the currently selected tab.
