@@ -6,7 +6,7 @@ struct SettingsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Provider toggle
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 12) {
                 Text("LLM Provider")
                     .font(.headline)
                 

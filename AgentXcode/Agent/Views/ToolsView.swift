@@ -7,7 +7,7 @@ struct ToolsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 12) {
                 Text("Tools")
                     .font(.headline)
                 

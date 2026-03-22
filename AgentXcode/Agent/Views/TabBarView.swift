@@ -88,7 +88,7 @@ private struct TabItem: View {
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
-                .opacity(isHovering || isSelected ? 1 : 0)
+                .opacity(isHovering || isSelected || isRunning ? 1 : 0)
             }
             if isRunning {
                 ProgressView()
