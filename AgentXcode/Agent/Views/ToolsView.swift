@@ -127,6 +127,7 @@ struct GroupRowView: View {
 
     var body: some View {
         let groupEnabled = prefs.isGroupEnabled(groupName)
+        let offColor: Color = groupName == "Services" ? .yellow : .red
 
         VStack(alignment: .leading, spacing: 4) {
             // Group header with collapse toggle and group toggle
@@ -134,20 +135,20 @@ struct GroupRowView: View {
                 // Collapse arrow
                 Image(systemName: (isCollapsed || !groupEnabled) ? "chevron.right" : "chevron.down")
                     .font(.caption2)
-                    .foregroundColor(groupEnabled ? .secondary : .red.opacity(0.5))
+                    .foregroundColor(groupEnabled ? .secondary : offColor.opacity(0.5))
 
                 // Group icon and name
                 Image(systemName: icon)
                     .font(.caption)
-                    .foregroundColor(groupEnabled ? .primary : .red.opacity(0.6))
+                    .foregroundColor(groupEnabled ? (groupName == "Services" ? .green : .primary) : offColor.opacity(0.6))
                 Text(groupName)
                     .font(.caption).bold()
-                    .foregroundColor(groupEnabled ? .secondary : .red.opacity(0.6))
+                    .foregroundColor(groupEnabled ? .secondary : offColor.opacity(0.6))
 
                 // Tool count
                 Text("\(groupTools.count)")
                     .font(.caption2)
-                    .foregroundColor(groupEnabled ? .gray : .red.opacity(0.4))
+                    .foregroundColor(groupEnabled ? .gray : offColor.opacity(0.4))
 
                 Spacer()
 
