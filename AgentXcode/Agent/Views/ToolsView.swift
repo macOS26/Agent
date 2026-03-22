@@ -18,7 +18,7 @@ struct ToolsView: View {
         "Web": ({ ($0.name.hasPrefix("web_") && $0.name != "web_search") || $0.name.hasPrefix("selenium_") }, "globe"),
     ]
     
-    static let groupOrder: [String] = ["Core", "User Agent", "Launch Daemon", "Coding", "Automation", "Accessibility", "Web", "Experimental"]
+    static let groupOrder: [String] = ["Core", "Coding", "Automation", "Accessibility", "Web", "User Agent", "Launch Daemon", "Experimental"]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
