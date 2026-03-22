@@ -7,47 +7,75 @@ struct HistoryView: View {
     let tabName: String
     let onClear: () -> Void
     var onRerun: ((String) -> Void)? = nil
-    
+
     @State private var selectedTaskType: TaskViewType = .prompts
-    
+
     enum TaskViewType: String, CaseIterable {
         case prompts = "Prompts"
         case errors = "Error History"
         case summaries = "Task Summaries"
     }
-    
+
     private var currentItems: [String] {
         switch selectedTaskType {
-        case .prompts:
-            return prompts
-        case .errors:
-            return errorHistory
-        case .summaries:
-            return taskSummaries
+        case .prompts: return prompts
+        case .errors: return errorHistory
+        case .summaries: return taskSummaries
         }
     }
-    
-    private var canRerun: Bool {
-        selectedTaskType == .prompts
-    }
-    
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("\(tabName) History")
-                .font(.headline)
-            
-            Picker(selection: $selectedTaskType) {
-                ForEach(TaskViewType.allCases, id: \.self) { type in
-                    Text(type.rawValue).tag(type)
+        VStack(alignment: .leading, spacing: 0) {
+            // Header
+            VStack(alignment: .leading, spacing: 12) {
+                Text("\(tabName) History")
+                    .font(.headline)
+
+                Text("View past prompts, errors, and task summaries.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Picker(selection: $selectedTaskType) {
+                    ForEach(TaskViewType.allCases, id: \.self) { type in
+                        Text(type.rawValue).tag(type)
+                    }
+                } label: {
+                    EmptyView()
                 }
-            } label: {
-                EmptyView()
+                .pickerStyle(.segmented)
             }
-            .pickerStyle(.segmented)
-            .padding(.horizontal)
-            
+            .padding()
+            .padding(.bottom, 4)
+
             Divider()
-            
+
+            // Content
+            if currentItems.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: emptyIcon)
+                        .font(.system(size: 32))
+                        .foregroundStyle(.secondary)
+                    Text("No \(selectedTaskType.rawValue.lowercased()) yet.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 40)
+            } else {
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 0) {
+                        ForEach(Array(currentItems.reversed().enumerated()), id: \.offset) { _, item in
+                            historyRow(item)
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+                .frame(maxHeight: 340)
+            }
+
+            Divider()
+
+            // Footer
             HStack {
                 Text("\(currentItems.count) entries")
                     .font(.caption)
@@ -58,82 +86,71 @@ struct HistoryView: View {
                     .controlSize(.small)
                     .disabled(currentItems.isEmpty)
             }
-            .padding(.horizontal)
-            .padding(.bottom, 8)
+            .padding()
+            .padding(.bottom, 15)
+        }
+        .frame(width: 460)
+    }
 
-            if currentItems.isEmpty {
-                Text("No \(selectedTaskType.rawValue.lowercased()) yet.")
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                List(Array(currentItems.reversed().enumerated()), id: \.offset) { index, item in
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Text(item)
-                                .font(.system(.body))
-                                .lineLimit(selectedTaskType == .prompts ? 2 : 4)
-                                .textSelection(.enabled)
-                            
-                            Spacer()
-                            
-                            if canRerun, let onRerun = onRerun {
-                                Button(action: {
-                                    // Extract just the prompt text from history items
-                                    let promptText: String
-                                    if selectedTaskType == .prompts {
-                                        // Prompts are stored directly
-                                        promptText = item
-                                    } else {
-                                        // For error/summary items, extract the actual prompt if possible
-                                        // This is a simple extraction - might need refinement
-                                        if let promptStart = item.range(of: "] ") {
-                                            let afterBracket = item[promptStart.upperBound...]
-                                            promptText = String(afterBracket)
-                                        } else {
-                                            promptText = item
-                                        }
-                                    }
-                                    onRerun(promptText)
-                                }) {
-                                    Image(systemName: "arrow.clockwise")
-                                        .font(.caption)
-                                        .foregroundStyle(.blue)
-                                }
-                                .buttonStyle(.plain)
-                                .help("Rerun this prompt in current tab")
-                            }
-                        }
-                        
-                        if selectedTaskType == .errors {
-                            HStack {
-                                Image(systemName: "exclamationmark.triangle.fill")
-                                    .foregroundColor(.orange)
-                                    .font(.caption)
-                                Text("Error entry - check logs for details")
-                                    .font(.caption)
-                                    .foregroundColor(.orange)
-                            }
-                            .padding(.top, 2)
-                        }
-                        
-                        if selectedTaskType == .summaries {
-                            HStack {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(.green)
-                                    .font(.caption)
-                                Text("Task summary - completed successfully")
-                                    .font(.caption)
-                                    .foregroundColor(.green)
-                            }
-                            .padding(.top, 2)
+    // MARK: - Row
+
+    @ViewBuilder
+    private func historyRow(_ item: String) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Divider()
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(item)
+                        .font(.system(.caption))
+                        .lineLimit(selectedTaskType == .prompts ? 2 : 4)
+                        .textSelection(.enabled)
+
+                    if selectedTaskType == .errors {
+                        HStack(spacing: 3) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.orange)
+                                .font(.caption2)
+                            Text("Error")
+                                .font(.caption2)
+                                .foregroundColor(.orange)
                         }
                     }
-                    .padding(.vertical, 4)
+
+                    if selectedTaskType == .summaries {
+                        HStack(spacing: 3) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                                .font(.caption2)
+                            Text("Completed")
+                                .font(.caption2)
+                                .foregroundColor(.green)
+                        }
+                    }
+                }
+
+                Spacer()
+
+                if selectedTaskType == .prompts, let onRerun {
+                    Button {
+                        onRerun(item)
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.caption)
+                            .foregroundStyle(.blue)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Rerun this prompt")
                 }
             }
+            .padding(.vertical, 8)
         }
-        .padding(.bottom, 15)
-        .frame(width: 600)
-        .frame(maxHeight: 500)
+    }
+
+    private var emptyIcon: String {
+        switch selectedTaskType {
+        case .prompts: return "text.bubble"
+        case .errors: return "exclamationmark.triangle"
+        case .summaries: return "checkmark.circle"
+        }
     }
 }
