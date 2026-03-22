@@ -1,4 +1,8 @@
-<img width="107" height="107" alt="Agent! Agentic AI for the rest of us only on  macOS Desktop" src="https://github.com/user-attachments/assets/245b3612-c354-4177-a500-3ee4f22a5111" />
+[![Swift 6.2](https://img.shields.io/badge/Swift-6.2-aqua.svg)](https://swift.org)
+[![Website](https://img.shields.io/badge/website-macos26.app-blue.svg)](https://macos26.app)
+[![Version](https://img.shields.io/badge/version-1.0.16-red.svg)](https://github.com/macOS26/Agent)
+[![GitHub downloads](https://img.shields.io/github/downloads/macOS26/Agent/total.svg?v=4)](https://github.com/macOS26/Agent/releases)
+[![GitHub stars](https://img.shields.io/github/stars/macOS26/Agent.svg?style=social)](https://github.com/macOS26/Agent/stargazers)
 
 # Agent! for macOS26
 ## 🧠 Agentic AI for the  Mac Desktop 
@@ -6,17 +10,15 @@ Now with Apple Intelligence
 
 Agent! already has proven to be a Cursor and Claude Code killer in just two weekends. With Agent! you can form a coding plan. Apple Intelligence interprets the plan and passes it to the main LLM. In a few minutes the plan is ready. Agent! asks for plan approval and away you go. You even do this from your iPhone via messages with the "Agent! " prefix
 
-[![Swift 6.2](https://img.shields.io/badge/Swift-6.2-aqua.svg)](https://swift.org)
-[![Website](https://img.shields.io/badge/website-macos26.app-blue.svg)](https://macos26.app)
-[![Version](https://img.shields.io/badge/version-1.0.16-red.svg)](https://github.com/macOS26/Agent)
-[![GitHub downloads](https://img.shields.io/github/downloads/macOS26/Agent/total.svg?v=4)](https://github.com/macOS26/Agent/releases)
-[![GitHub stars](https://img.shields.io/github/stars/macOS26/Agent.svg?style=social)](https://github.com/macOS26/Agent/stargazers)
+<img width="1919" height="1080" alt="Screenshot 2026-03-22 at 1 58 57 AM" src="https://github.com/user-attachments/assets/fa9a1734-180b-433a-93f3-2f6801e20282" />
+
+
 
 Agent! works with Claude API, Ollama Pro/Max Cloud, and local Ollama. Local LLMs need 32-128GB RAM on Apple Silicon.
 
 ## What's Supported
 
-<img width="1501" height="900" alt="Screenshot 2026-03-21 at 3 44 08 AM" src="https://github.com/user-attachments/assets/f293be2a-8e58-4a4c-b266-af2bb4dde1af" />
+<img width="643" height="839" alt="Screenshot 2026-03-22 at 2 13 13 AM" src="https://github.com/user-attachments/assets/c1ffbedf-1d93-4371-a6d4-5e65b0f8df92" />
 
 ### Multi-Provider LLM Support
 
