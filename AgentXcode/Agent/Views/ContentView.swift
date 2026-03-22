@@ -57,22 +57,39 @@ struct ContentView: View {
                 }
                 .help("Daemon: \(viewModel.rootServiceActive ? "Running" : (viewModel.rootEnabled ? "Stopped" : "Disabled"))")
 
-                // Thinking/Running indicator
-                if viewModel.isThinking {
-                    HStack(spacing: 4) {
-                        ProgressView()
-                            .controlSize(.mini)
-                        Text("Thinking...")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                // Unified status spinner — main tab or active script tab
+                if let selId = viewModel.selectedTabId,
+                   let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+                    let color = tab.isMainTab ? Color.blue : Self.tabColor(for: selId, in: viewModel.scriptTabs)
+                    if tab.isLLMThinking {
+                        HStack(spacing: 4) {
+                            ProgressView().controlSize(.mini)
+                            Text("Thinking...")
+                                .font(.caption).foregroundStyle(color)
+                        }
+                    } else if tab.isLLMRunning {
+                        HStack(spacing: 4) {
+                            ProgressView().controlSize(.mini)
+                            Text(tab.taskQueue.isEmpty ? "Running..." : "Running... +\(tab.taskQueue.count) queued")
+                                .font(.caption).foregroundStyle(color)
+                        }
                     }
-                } else if viewModel.isRunning {
-                    HStack(spacing: 4) {
-                        ProgressView()
-                            .controlSize(.mini)
-                        Text(viewModel.rootServiceActive ? "Root..." : viewModel.userServiceActive ? "Executing..." : "Running...")
-                            .font(.caption)
-                            .foregroundStyle(viewModel.rootServiceActive ? .orange : .secondary)
+                } else {
+                    if viewModel.isThinking {
+                        HStack(spacing: 4) {
+                            ProgressView().controlSize(.mini)
+                            Text("Thinking...")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                    } else if viewModel.isRunning {
+                        HStack(spacing: 4) {
+                            ProgressView().controlSize(.mini)
+                            Text(viewModel.mainTaskQueue.isEmpty
+                                 ? (viewModel.rootServiceActive ? "Root..." : viewModel.userServiceActive ? "Executing..." : "Running...")
+                                 : "Running... +\(viewModel.mainTaskQueue.count) queued")
+                                .font(.caption)
+                                .foregroundStyle(viewModel.rootServiceActive ? .orange : .secondary)
+                        }
                     }
                 }
 
@@ -453,24 +470,6 @@ struct ContentView: View {
                     .buttonStyle(.bordered)
                     .controlSize(.regular)
                     .help(vm.isListening ? "Stop dictation" : "Start dictation")
-
-                    if tab.isLLMThinking {
-                        HStack(spacing: 4) {
-                            ProgressView()
-                                .controlSize(.mini)
-                            Text("Thinking...")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    } else if tab.isLLMRunning {
-                        HStack(spacing: 4) {
-                            ProgressView()
-                                .controlSize(.mini)
-                            Text("Running...")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
 
                     TextField(tab.isMainTab ? "Enter task..." : tab.isMessagesTab ? "Messages task..." : "Ask about \(tab.scriptName)...", text: Binding(
                         get: { tab.taskInput },
