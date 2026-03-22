@@ -220,20 +220,36 @@ struct ContentView: View {
 
             // Project folder/file (main tab)
             if viewModel.selectedTabId == nil {
-                ProjectFolderField(projectFolder: $viewModel.projectFolder)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 6)
+                HStack(spacing: 4) {
+                    ProjectFolderField(projectFolder: $viewModel.projectFolder)
+                    TokenBadge(
+                        taskIn: viewModel.taskInputTokens,
+                        taskOut: viewModel.taskOutputTokens,
+                        sessionIn: viewModel.sessionInputTokens,
+                        sessionOut: viewModel.sessionOutputTokens
+                    )
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
             }
 
             // Per-tab project folder (when a tab is selected)
             if let selectedId = viewModel.selectedTabId,
                let tab = viewModel.scriptTabs.first(where: { $0.id == selectedId }) {
-                ProjectFolderField(
-                    projectFolder: Binding(
-                        get: { tab.projectFolder },
-                        set: { tab.projectFolder = $0; viewModel.persistScriptTabs() }
+                HStack(spacing: 4) {
+                    ProjectFolderField(
+                        projectFolder: Binding(
+                            get: { tab.projectFolder },
+                            set: { tab.projectFolder = $0; viewModel.persistScriptTabs() }
+                        )
                     )
-                )
+                    TokenBadge(
+                        taskIn: viewModel.taskInputTokens,
+                        taskOut: viewModel.taskOutputTokens,
+                        sessionIn: viewModel.sessionInputTokens,
+                        sessionOut: viewModel.sessionOutputTokens
+                    )
+                }
                 .padding(.horizontal, 8)
                 .padding(.vertical, 6)
             }

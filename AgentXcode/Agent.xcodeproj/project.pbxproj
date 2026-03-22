@@ -63,6 +63,7 @@
 		AA100000000000000000B3 /* StartupTwentiethAnniversaryMac.wav in Resources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000B2 /* StartupTwentiethAnniversaryMac.wav */; };
 		AA100000000000000000B5 /* ToolPreferencesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000B4 /* ToolPreferencesService.swift */; };
 		AA100000000000000000B7 /* ToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000B6 /* ToolsView.swift */; };
+		AA10000000000000000104 /* TokenBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000105 /* TokenBadge.swift */; };
 		AA100000000000000000B8 /* AgentOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000B9 /* AgentOptionsView.swift */; };
 		AA100000000000000000BB /* OpenAICompatibleService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000BA /* OpenAICompatibleService.swift */; };
 		AA100000000000000000BD /* LoRAAdapterManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000BC /* LoRAAdapterManager.swift */; };
@@ -239,6 +240,7 @@
 		AA100000000000000000B2 /* StartupTwentiethAnniversaryMac.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = StartupTwentiethAnniversaryMac.wav; sourceTree = "<group>"; };
 		AA100000000000000000B4 /* ToolPreferencesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolPreferencesService.swift; sourceTree = "<group>"; };
 		AA100000000000000000B6 /* ToolsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolsView.swift; sourceTree = "<group>"; };
+		AA10000000000000000105 /* TokenBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenBadge.swift; sourceTree = "<group>"; };
 		AA100000000000000000B9 /* AgentOptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentOptionsView.swift; sourceTree = "<group>"; };
 		AA100000000000000000BA /* OpenAICompatibleService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAICompatibleService.swift; sourceTree = "<group>"; };
 		AA100000000000000000BC /* LoRAAdapterManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoRAAdapterManager.swift; sourceTree = "<group>"; };
@@ -475,6 +477,7 @@
 				AA10000000000000000061 /* ActivityLogView.swift */,
 				AA10000000000000000068 /* StatusDotView.swift */,
 				AA100000000000000000B6 /* ToolsView.swift */,
+				AA10000000000000000105 /* TokenBadge.swift */,
 				AA10000000000000000100 /* ProjectFolderField.swift */,
 				AA100000000000000000B9 /* AgentOptionsView.swift */,
 				EASP000000000000000004 /* SystemPromptEditor.swift */,
@@ -787,6 +790,7 @@
 				AA100000000000000000B5 /* ToolPreferencesService.swift in Sources */,
 				AA10000000000000000103 /* RecentFoldersService.swift in Sources */,
 				AA100000000000000000B7 /* ToolsView.swift in Sources */,
+				AA10000000000000000104 /* TokenBadge.swift in Sources */,
 				AA100000000000000000B8 /* AgentOptionsView.swift in Sources */,
 				AA1000000000000000007E /* AccessibilitySettingsView.swift in Sources */,
 				AA10000000000000000077 /* MessagesView.swift in Sources */,

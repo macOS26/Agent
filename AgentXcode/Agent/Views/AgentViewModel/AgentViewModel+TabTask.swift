@@ -181,7 +181,7 @@ extension AgentViewModel {
 
             do {
                 tab.isLLMThinking = true
-                let response: (content: [[String: Any]], stopReason: String)
+                let response: (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int)
                 var textWasStreamed = false
                 let streamStart = CFAbsoluteTimeGetCurrent()
 
@@ -195,37 +195,45 @@ extension AgentViewModel {
                     textWasStreamed = true
                     tab.flushStreamBuffer()
                 } else if let openAICompatible {
-                    response = try await openAICompatible.sendStreaming(messages: messages) { [weak tab] delta in
+                    let r = try await openAICompatible.sendStreaming(messages: messages) { [weak tab] delta in
                         Task { @MainActor in
                             tab?.isLLMThinking = false
                             tab?.appendStreamDelta(delta)
                         }
                     }
+                    response = (r.content, r.stopReason, 0, 0)
                     textWasStreamed = true
                     tab.flushStreamBuffer()
                 } else if let ollama {
-                    response = try await ollama.sendStreaming(messages: messages) { [weak tab] delta in
+                    let r = try await ollama.sendStreaming(messages: messages) { [weak tab] delta in
                         Task { @MainActor in
                             tab?.isLLMThinking = false
                             tab?.appendStreamDelta(delta)
                         }
                     }
+                    response = (r.content, r.stopReason, 0, 0)
                     textWasStreamed = true
                     tab.flushStreamBuffer()
                 } else if let foundationModelService {
-                    response = try await foundationModelService.sendStreaming(messages: messages) { [weak tab] delta in
+                    let r = try await foundationModelService.sendStreaming(messages: messages) { [weak tab] delta in
                         Task { @MainActor in
                             tab?.isLLMThinking = false
                             tab?.appendStreamDelta(delta)
                         }
                     }
+                    response = (r.content, r.stopReason, 0, 0)
                     textWasStreamed = true
                     tab.flushStreamBuffer()
                 } else {
                     throw AgentError.noAPIKey
                 }
+                // Track token usage
+                taskInputTokens += response.inputTokens
+                taskOutputTokens += response.outputTokens
+                sessionInputTokens += response.inputTokens
+                sessionOutputTokens += response.outputTokens
                 let streamElapsed = CFAbsoluteTimeGetCurrent() - streamStart
-                tabTaskLog.info("[\(tab.displayTitle)] stream completed in \(String(format: "%.2f", streamElapsed))s, stopReason=\(response.stopReason)")
+                tabTaskLog.info("[\(tab.displayTitle)] stream completed in \(String(format: "%.2f", streamElapsed))s, stopReason=\(response.stopReason), tokens: \(response.inputTokens)in/\(response.outputTokens)out")
                 tab.isLLMThinking = false
                 guard !Task.isCancelled else { break }
 
@@ -262,7 +270,8 @@ extension AgentViewModel {
                 tab.llmMessages = messages
 
                 if hasToolUse && !toolResults.isEmpty {
-                    messages.append(["role": "user", "content": toolResults])
+                    let truncatedResults = Self.truncateToolResults(toolResults)
+                    messages.append(["role": "user", "content": truncatedResults])
                     tab.llmMessages = messages
                     consecutiveNoTool = 0
                 } else if !hasToolUse {
