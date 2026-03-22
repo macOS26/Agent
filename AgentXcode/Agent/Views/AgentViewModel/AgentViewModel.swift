@@ -372,6 +372,29 @@ final class AgentViewModel {
         }
         return "Main"
     }
+    
+    /// Error history for UI display
+    var errorHistory: [String] {
+        ErrorHistory.shared.recentErrors(limit: 50).map { error in
+            let formatter = DateFormatter()
+            formatter.dateFormat = "HH:mm:ss"
+            let time = formatter.string(from: error.timestamp)
+            let message = error.message.truncate(to: 100)
+            return "[\(time)] \(error.errorType): \(message)"
+        }
+    }
+    
+    /// Task summaries for UI display
+    var taskSummaries: [String] {
+        history.records.suffix(50).map { record in
+            let formatter = DateFormatter()
+            formatter.dateFormat = "HH:mm:ss"
+            let time = formatter.string(from: record.date)
+            let prompt = record.prompt.truncate(to: 80)
+            let summary = record.summary.truncate(to: 100)
+            return "[\(time)] \(prompt) → \(summary)"
+        }
+    }
 
     /// Clear prompt history for whichever tab is currently selected.
     func clearCurrentTabPromptHistory() {

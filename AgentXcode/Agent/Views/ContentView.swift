@@ -179,8 +179,21 @@ struct ContentView: View {
                 .popover(isPresented: $showHistory) {
                     HistoryView(
                         prompts: viewModel.currentTabPromptHistory,
+                        errorHistory: viewModel.errorHistory,
+                        taskSummaries: viewModel.taskSummaries,
                         tabName: viewModel.currentTabName,
-                        onClear: { viewModel.clearCurrentTabPromptHistory() }
+                        onClear: { viewModel.clearCurrentTabPromptHistory() },
+                        onRerun: { prompt in
+                            // Set the prompt in the current tab's input field and run it
+                            if let selectedId = viewModel.selectedTabId,
+                               let tab = viewModel.scriptTabs.first(where: { $0.id == selectedId }) {
+                                tab.taskInput = prompt
+                                viewModel.runTabTask(tab: tab)
+                            } else {
+                                viewModel.taskInput = prompt
+                                viewModel.run()
+                            }
+                        }
                     )
                 }
 

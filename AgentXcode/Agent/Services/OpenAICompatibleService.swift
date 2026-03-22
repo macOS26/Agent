@@ -164,7 +164,7 @@ final class OpenAICompatibleService {
             "messages": chatMessages,
             "tools": tools,
             "stream": false,
-            "max_tokens": 8192
+            "max_tokens": 2048
         ]
 
         let bodyData = try JSONSerialization.data(withJSONObject: body)
@@ -184,7 +184,7 @@ final class OpenAICompatibleService {
             "messages": chatMessages,
             "tools": tools,
             "stream": true,
-            "max_tokens": 8192
+            "max_tokens": 2048
         ]
 
         let bodyData = try JSONSerialization.data(withJSONObject: body)

@@ -154,7 +154,7 @@ final class OllamaService {
             "tools": tools,
             "stream": false,
             "options": [
-                "num_predict": 8192,
+                "num_predict": 2048,
                 "num_ctx": 16384
             ] as [String: Any]
         ]
@@ -257,7 +257,7 @@ final class OllamaService {
             "tools": tools,
             "stream": true,
             "options": [
-                "num_predict": 8192,
+                "num_predict": 2048,
                 "num_ctx": 16384
             ] as [String: Any]
         ]

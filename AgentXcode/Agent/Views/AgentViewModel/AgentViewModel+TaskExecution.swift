@@ -1181,26 +1181,6 @@ extension AgentViewModel {
         return "Tool \(name) not implemented for Apple AI"
     }
 
-    /// Execute a command via UserService XPC with streaming output.
-    private func executeViaUserAgent(command: String) async -> (status: Int32, output: String) {
-        resetStreamCounters()
-        userServiceActive = true
-        userWasActive = true
-        userService.onOutput = { [weak self] chunk in
-            self?.appendRawOutput(chunk)
-        }
-        let result = await userService.execute(command: command)
-        userService.onOutput = nil
-        userServiceActive = false
-
-        // Only show exit code on failure; streaming already displayed the output
-        if result.status != 0 {
-            appendLog("exit code: \(result.status)")
-        }
-        flushLog()
-        return result
-    }
-
     // MARK: - Local Execution (osascript)
 
     /// Runs a command directly in the Agent app process (not via XPC).
@@ -3076,7 +3056,60 @@ extension AgentViewModel {
                         // Check if we've already retried this timeout
                         if timeoutRetryCount < maxTimeoutRetries {
                             timeoutRetryCount += 1
-                            let retryMessage = "\(errorSource) timeout detected (attempt \(timeoutRetryCount)/\(maxTimeoutRetries)) — retrying in 10 seconds..."
+                            
+                            // Special handling for Ollama timeouts - check server health
+                            if errorSource == "Ollama API" || errorSource == "Local Ollama" {
+                                appendLog("🔍 Checking Ollama server health...")
+                                flushLog()
+                                
+                                // Run Ollama health check in background
+                                let healthCheckResult = await Self.offMain {
+                                    let healthCheckTask = Process()
+                                    healthCheckTask.executableURL = URL(fileURLWithPath: "/usr/bin/curl")
+                                    healthCheckTask.arguments = ["-s", "-f", "http://localhost:11434/api/tags", "--max-time", "5"]
+                                    
+                                    let pipe = Pipe()
+                                    healthCheckTask.standardOutput = pipe
+                                    healthCheckTask.standardError = pipe
+                                    
+                                    do {
+                                        try healthCheckTask.run()
+                                        healthCheckTask.waitUntilExit()
+                                        return healthCheckTask.terminationStatus
+                                    } catch {
+                                        return -1
+                                    }
+                                }
+                                
+                                if healthCheckResult != 0 {
+                                    appendLog("⚠️ Ollama server not responding. Attempting to restart...")
+                                    flushLog()
+                                    
+                                    // Try to restart Ollama
+                                    let restartResult = await executeViaUserAgent(command: "pkill -f 'ollama serve' && sleep 2 && open /Applications/Ollama.app")
+                                    appendLog("🔄 Restart command executed")
+                                    flushLog()
+                                    
+                                    // Wait longer for Ollama startup
+                                    let startupDelay = TimeInterval(min(10 * timeoutRetryCount, 30)) // Exponential backoff up to 30 seconds
+                                    let retryMessage = "\(errorSource) timeout detected (attempt \(timeoutRetryCount)/\(maxTimeoutRetries)) — Ollama restart attempted, waiting \(Int(startupDelay)) seconds..."
+                                    appendLog(retryMessage)
+                                    flushLog()
+                                    if agentReplyHandle != nil {
+                                        sendProgressUpdate(retryMessage)
+                                    }
+                                    
+                                    try? await Task.sleep(for: .seconds(startupDelay))
+                                    if Task.isCancelled { break }
+                                    continue
+                                } else {
+                                    appendLog("✅ Ollama server is running but API timed out")
+                                    flushLog()
+                                }
+                            }
+                            
+                            let retryDelay = TimeInterval(min(10 * timeoutRetryCount, 30)) // Exponential backoff up to 30 seconds
+                            let retryMessage = "\(errorSource) timeout detected (attempt \(timeoutRetryCount)/\(maxTimeoutRetries)) — retrying in \(Int(retryDelay)) seconds..."
                             appendLog(retryMessage)
                             flushLog()
                             if agentReplyHandle != nil {
@@ -3084,13 +3117,23 @@ extension AgentViewModel {
                             }
                             
                             // Log to task log for debugging
-                            taskLog.info("[main] \(errorSource) timeout, retry \(timeoutRetryCount)/\(maxTimeoutRetries)")
+                            taskLog.info("[main] \(errorSource) timeout, retry \(timeoutRetryCount)/\(maxTimeoutRetries), waiting \(retryDelay)s")
                             
-                            try? await Task.sleep(for: .seconds(10))
+                            try? await Task.sleep(for: .seconds(retryDelay))
                             if Task.isCancelled { break }
                             continue
                         } else {
-                            // Max retries reached
+                            // Max retries reached - try final Ollama restart if applicable
+                            if (errorSource == "Ollama API" || errorSource == "Local Ollama") && timeoutRetryCount == maxTimeoutRetries {
+                                appendLog("🔄 Max retries reached. Attempting final Ollama restart...")
+                                flushLog()
+                                
+                                // Run Ollama restart script
+                                let restartResult = await executeViaUserAgent(command: "pkill -f 'ollama serve' && sleep 3 && open /Applications/Ollama.app && sleep 10")
+                                appendLog("Ollama restart attempted. Please check Ollama application status.")
+                                flushLog()
+                            }
+                            
                             let timeoutMessage = "\(errorSource) timeout after \(maxTimeoutRetries) retries. Please check your network connection or try a different LLM provider."
                             appendLog(timeoutMessage)
                             flushLog()

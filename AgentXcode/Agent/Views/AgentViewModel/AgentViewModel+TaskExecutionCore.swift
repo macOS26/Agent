@@ -128,26 +128,6 @@ extension AgentViewModel {
         return "Tool \(name) not implemented for Apple AI"
     }
     
-    /// Execute a command via UserService XPC with streaming output.
-    private func executeViaUserAgent(command: String) async -> (status: Int32, output: String) {
-        resetStreamCounters()
-        userServiceActive = true
-        userWasActive = true
-        userService.onOutput = { [weak self] chunk in
-            self?.appendRawOutput(chunk)
-        }
-        let result = await userService.execute(command: command)
-        userService.onOutput = nil
-        userServiceActive = false
-        
-        // Only show exit code on failure; streaming already displayed the output
-        if result.status != 0 {
-            appendLog("exit code: \(result.status)")
-        }
-        flushLog()
-        return result
-    }
-    
     // MARK: - Local Execution (osascript)
     
     /// Runs a command directly in the Agent app process (not via XPC).

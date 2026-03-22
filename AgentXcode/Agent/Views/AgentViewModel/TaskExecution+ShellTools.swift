@@ -7,6 +7,7 @@ private let shellLog = Logger(subsystem: "Agent.app.toddbruss", category: "Shell
 extension AgentViewModel {
 
     /// Execute a command via UserService XPC with streaming output.
+    /// Used by TabTask and TaskExecution for Ollama restart commands.
     func executeViaUserAgent(command: String) async -> (status: Int32, output: String) {
         resetStreamCounters()
         userServiceActive = true

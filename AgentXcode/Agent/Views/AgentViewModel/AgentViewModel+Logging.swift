@@ -1,4 +1,5 @@
 import AppKit
+import Foundation
 
 // MARK: - Logging, Streaming & Media
 

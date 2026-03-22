@@ -67,7 +67,7 @@ final class ClaudeService {
 
         let body: [String: Any] = [
             "model": model,
-            "max_tokens": 8192,
+            "max_tokens": 2048,
             "system": systemPrompt,
             "tools": tools,
             "messages": withFolderPrefix(messages)
@@ -125,7 +125,7 @@ final class ClaudeService {
 
         let body: [String: Any] = [
             "model": model,
-            "max_tokens": 8192,
+            "max_tokens": 2048,
             "system": systemPrompt,
             "tools": tools,
             "messages": withFolderPrefix(messages),
