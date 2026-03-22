@@ -838,7 +838,7 @@ final class AccessibilityService: @unchecked Sendable {
     // MARK: - Find Element (Phase 6)
     
     /// Find an element by role, title, or other criteria with optional timeout
-    func findElement(role: String?, title: String?, value: String?, appBundleId: String?, timeout: TimeInterval = 5.0) -> String {
+    func findElement(role: String?, title: String?, value: String?, appBundleId: String?, timeout: TimeInterval = automationFinishTimeout) -> String {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
@@ -1152,7 +1152,7 @@ final class AccessibilityService: @unchecked Sendable {
     // MARK: - Wait For Element (Phase 6)
     
     /// Wait for an element to appear, polling periodically
-    func waitForElement(role: String?, title: String?, value: String?, appBundleId: String?, timeout: TimeInterval = 10.0, pollInterval: TimeInterval = 0.5) -> String {
+    func waitForElement(role: String?, title: String?, value: String?, appBundleId: String?, timeout: TimeInterval = automationFinishTimeout, pollInterval: TimeInterval = 0.5) -> String {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
@@ -1287,7 +1287,7 @@ final class AccessibilityService: @unchecked Sendable {
     ///   - timeout: Maximum time to wait for element to appear (default 5 seconds)
     ///   - verify: Whether to verify the click succeeded via screenshot (default false)
     /// - Returns: JSON result with click position and verification status
-    func clickElement(role: String?, title: String?, value: String?, appBundleId: String?, timeout: TimeInterval = 5.0, verify: Bool = false) -> String {
+    func clickElement(role: String?, title: String?, value: String?, appBundleId: String?, timeout: TimeInterval = automationFinishTimeout, verify: Bool = false) -> String {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
@@ -1403,9 +1403,9 @@ final class AccessibilityService: @unchecked Sendable {
         title: String?,
         value: String?,
         appBundleId: String?,
-        timeout: TimeInterval = 10.0,
+        timeout: TimeInterval = automationFinishTimeout,
         initialDelay: TimeInterval = 0.1,
-        maxDelay: TimeInterval = 1.0,
+        maxDelay: TimeInterval = automationMaxDelay,
         multiplier: Double = 1.5
     ) -> String {
         guard Self.hasAccessibilityPermission() else {
@@ -1506,7 +1506,7 @@ final class AccessibilityService: @unchecked Sendable {
         Self.logAudit("typeTextIntoElement(role: \(role ?? "nil"), title: \(title ?? "nil"), text: \(text.count) chars, verify: \(verify))")
         
         // Find element first
-        let findResult = findElement(role: role, title: title, value: nil, appBundleId: appBundleId, timeout: 5.0)
+        let findResult = findElement(role: role, title: title, value: nil, appBundleId: appBundleId, timeout: automationStartTimeout)
         
         // Extract position from find result
         guard findResult.contains("\"success\": true") else {
@@ -1554,7 +1554,7 @@ final class AccessibilityService: @unchecked Sendable {
     
     private func typeTextFallback(role: String?, title: String?, text: String, appBundleId: String?) -> String {
         // Find element position and click to focus
-        let findResult = findElement(role: role, title: title, value: nil, appBundleId: appBundleId, timeout: 5.0)
+        let findResult = findElement(role: role, title: title, value: nil, appBundleId: appBundleId, timeout: automationStartTimeout)
         
         // Parse position from JSON result
         // Look for "AXPosition" : { "x": ..., "y": ... }

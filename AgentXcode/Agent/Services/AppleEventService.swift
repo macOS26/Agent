@@ -66,7 +66,7 @@ final class AppleEventService: @unchecked Sendable {
         do {
             try process.run()
             // Wait with timeout — don't block forever
-            let deadline = DispatchTime.now() + 10
+            let deadline = DispatchTime.now() + automationFinishTimeout
             let semaphore = DispatchSemaphore(value: 0)
             DispatchQueue.global().async {
                 process.waitUntilExit()

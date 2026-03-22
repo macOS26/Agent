@@ -104,6 +104,15 @@ let toolStartTimeout: TimeInterval = 15
 /// Timeout for an internal tool call to finish once started (seconds).
 let toolFinishTimeout: TimeInterval = 3600
 
+/// Timeout for automation calls (Accessibility, Selenium, AppleScript, JavaScript) to start (seconds).
+let automationStartTimeout: TimeInterval = 5
+
+/// Timeout for automation calls to finish once started (seconds).
+let automationFinishTimeout: TimeInterval = 20
+
+/// Maximum delay between automation retries (seconds).
+let automationMaxDelay: TimeInterval = 5
+
 // MARK: - Task History
 
 struct TaskRecord: Codable, Identifiable {

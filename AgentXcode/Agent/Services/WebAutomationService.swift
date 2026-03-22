@@ -12,7 +12,7 @@ final class WebAutomationService: @unchecked Sendable {
     /// Cache for element lookups to reduce repeated searches
     private nonisolated(unsafe) var elementCache: [String: CachedElement] = [:]
     private let cacheLock = NSLock()
-    private let cacheTTL: TimeInterval = 5.0 // 5 seconds
+    private let cacheTTL: TimeInterval = automationMaxDelay
     
     struct CachedElement {
         let element: [String: Any]
@@ -61,7 +61,7 @@ final class WebAutomationService: @unchecked Sendable {
     func findElement(
         selector: String,
         strategy: SelectorStrategy = .auto,
-        timeout: TimeInterval = 10.0,
+        timeout: TimeInterval = automationFinishTimeout,
         fuzzyThreshold: Double = 0.6,
         appBundleId: String? = nil
     ) async throws -> [String: Any] {
@@ -142,7 +142,7 @@ final class WebAutomationService: @unchecked Sendable {
                 title: title,
                 value: nil,
                 appBundleId: appBundleId,
-                timeout: 5.0,
+                timeout: automationFinishTimeout,
                 verify: false
             )
             return result
