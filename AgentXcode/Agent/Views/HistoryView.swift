@@ -42,6 +42,8 @@ struct HistoryView: View {
                 }
             }
         }
-        .frame(width: 500, height: 400)
+        .padding(.bottom, 15)
+        .frame(width: 500)
+        .frame(maxHeight: 400)
     }
 }

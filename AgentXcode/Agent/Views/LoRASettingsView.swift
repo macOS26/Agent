@@ -59,7 +59,7 @@ struct LoRASettingsView: View {
     // MARK: - Adapter Section
 
     private var adapterSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 12) {
             Text("LoRA Adapter")
                 .font(.headline)
 
@@ -129,7 +129,7 @@ struct LoRASettingsView: View {
     // MARK: - Training Data Section
 
     private var dataSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 12) {
             Text("Training Data")
                 .font(.headline)
 
@@ -201,7 +201,7 @@ struct LoRASettingsView: View {
     // MARK: - Python / Training Environment
 
     private var pythonSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 12) {
             Text("Training Environment")
                 .font(.headline)
 

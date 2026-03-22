@@ -92,6 +92,7 @@ struct MCPServersView: View {
             }
         }
         .padding(16)
+        .padding(.bottom, 15)
         .frame(width: 420)
         .frame(maxHeight: 500)
         .sheet(isPresented: $showingAddServer) {

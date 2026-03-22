@@ -105,8 +105,9 @@ struct ToolsView: View {
                 .controlSize(.small)
             }
             .padding()
+            .padding(.bottom, 15)
         }
-        .frame(width: 460, height: 460)
+        .frame(width: 460)
     }
 }
 

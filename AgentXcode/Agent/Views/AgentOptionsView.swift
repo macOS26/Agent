@@ -109,6 +109,7 @@ struct AgentOptionsView: View {
             }
         }
         .padding(20)
+        .padding(.bottom, 15)
         .frame(width: 360)
     }
 

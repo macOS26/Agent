@@ -263,6 +263,7 @@ struct AccessibilitySettingsView: View {
                 aeSection(title: "Apple Event Write Selectors", items: AppleEventsEnabledIDs.writeSelectors)
             }
             .padding(16)
+            .padding(.bottom, 15)
         }
         .frame(width: 500)
         .frame(maxHeight: 500)

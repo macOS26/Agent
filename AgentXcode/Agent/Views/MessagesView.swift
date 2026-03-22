@@ -98,6 +98,7 @@ struct MessagesView: View {
             }
         }
         .padding(16)
+        .padding(.bottom, 15)
         .frame(width: 380)
         .frame(maxHeight: 480)
         .onAppear {
