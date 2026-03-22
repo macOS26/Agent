@@ -1327,7 +1327,19 @@ extension AgentViewModel {
 
         while !Task.isCancelled && iterations < maxIterations {
             iterations += 1
-            taskLog.info("[main] iteration \(iterations)/\(maxIterations)")
+
+            // Prune old messages every 8 iterations to save tokens
+            if iterations > 1 && iterations % 8 == 0 && messages.count > 14 {
+                let beforeCount = messages.count
+                Self.pruneMessages(&messages)
+                taskLog.info("[main] pruned messages: \(beforeCount) → \(messages.count)")
+            }
+            // Strip base64 images from older messages
+            if iterations > 2 {
+                Self.stripOldImages(&messages)
+            }
+
+            taskLog.info("[main] iteration \(iterations)/\(maxIterations), messages=\(messages.count)")
 
             do {
                 isThinking = true
@@ -3145,6 +3157,65 @@ extension AgentViewModel {
             var updated = result
             updated["content"] = content
             return updated
+        }
+    }
+
+    // MARK: - Message Pruning
+
+    /// Prune old messages to reduce token usage on long tasks.
+    /// Keeps the first user message and the most recent messages.
+    /// Middle messages are summarized into a compact text block.
+    static func pruneMessages(_ messages: inout [[String: Any]], keepRecent: Int = 6) {
+        guard messages.count > keepRecent + 4 else { return }
+
+        let firstMsg = messages[0]
+        let recentMessages = Array(messages.suffix(keepRecent))
+        let middleMessages = Array(messages.dropFirst(1).dropLast(keepRecent))
+
+        // Build compact summary of middle messages
+        var summaryLines: [String] = []
+        for msg in middleMessages {
+            let role = msg["role"] as? String ?? "?"
+            if let text = msg["content"] as? String {
+                summaryLines.append("\(role): \(String(text.prefix(150)))")
+            } else if let blocks = msg["content"] as? [[String: Any]] {
+                for block in blocks {
+                    let type = block["type"] as? String ?? ""
+                    if type == "tool_use", let name = block["name"] as? String {
+                        summaryLines.append("tool: \(name)")
+                    } else if type == "tool_result" {
+                        let content = block["content"] as? String ?? ""
+                        let preview = content.hasPrefix("Error") ? String(content.prefix(100)) : "OK"
+                        summaryLines.append("result: \(preview)")
+                    } else if type == "text", let text = block["text"] as? String {
+                        summaryLines.append("\(role): \(String(text.prefix(150)))")
+                    } else if type == "image" {
+                        summaryLines.append("[image removed]")
+                    }
+                }
+            }
+        }
+        let summary = summaryLines.joined(separator: "\n")
+
+        messages = [firstMsg]
+        messages.append(["role": "user", "content": "Summary of previous \(middleMessages.count) messages:\n\(summary)"])
+        messages.append(["role": "assistant", "content": "Understood, continuing."])
+        messages.append(contentsOf: recentMessages)
+    }
+
+    /// Strip base64 image data from older messages to save tokens.
+    static func stripOldImages(_ messages: inout [[String: Any]], keepRecentCount: Int = 4) {
+        let cutoff = max(0, messages.count - keepRecentCount)
+        for i in 0..<cutoff {
+            guard var blocks = messages[i]["content"] as? [[String: Any]] else { continue }
+            var changed = false
+            for j in 0..<blocks.count {
+                if blocks[j]["type"] as? String == "image" {
+                    blocks[j] = ["type": "text", "text": "[screenshot removed]"]
+                    changed = true
+                }
+            }
+            if changed { messages[i]["content"] = blocks }
         }
     }
 
