@@ -50,6 +50,15 @@
 		AA100000000000000000C6 /* TaskExecution+GitTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000C7 /* TaskExecution+GitTools.swift */; };
 		AA100000000000000000C8 /* AgentViewModel+TaskExecutionCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000C9 /* AgentViewModel+TaskExecutionCore.swift */; };
 		AA100000000000000000CA /* AgentViewModel+ScriptManagement.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000CB /* AgentViewModel+ScriptManagement.swift */; };
+		AA100000000000000000CC /* AgentViewModel+WebAutomation.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000CD /* AgentViewModel+WebAutomation.swift */; };
+		AA100000000000000000CE /* TaskExecution+WebTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000CF /* TaskExecution+WebTools.swift */; };
+		AA100000000000000000D0 /* AgentViewModel+AccessibilityTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000D1 /* AgentViewModel+AccessibilityTools.swift */; };
+		AA100000000000000000D2 /* AgentViewModel+FileOperations.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000D3 /* AgentViewModel+FileOperations.swift */; };
+		AA100000000000000000D4 /* AgentViewModel+TaskLoop.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000D5 /* AgentViewModel+TaskLoop.swift */; };
+		AA100000000000000000D6 /* AgentViewModel+WebSearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000D7 /* AgentViewModel+WebSearch.swift */; };
+		AA100000000000000000D8 /* TaskExecution+AutomationTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000D9 /* TaskExecution+AutomationTools.swift */; };
+		AA100000000000000000DA /* TaskExecution+FileTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000DB /* TaskExecution+FileTools.swift */; };
+		AA100000000000000000DC /* TaskExecution+ProcessTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000DD /* TaskExecution+ProcessTools.swift */; };
 		AA100000000000000000B1 /* SoundPlayerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000B0 /* SoundPlayerService.swift */; };
 		AA100000000000000000B3 /* StartupTwentiethAnniversaryMac.wav in Resources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000B2 /* StartupTwentiethAnniversaryMac.wav */; };
 		AA100000000000000000B5 /* ToolPreferencesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000B4 /* ToolPreferencesService.swift */; };
@@ -217,6 +226,15 @@
 		AA100000000000000000C7 /* TaskExecution+GitTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskExecution+GitTools.swift"; sourceTree = "<group>"; };
 		AA100000000000000000C9 /* AgentViewModel+TaskExecutionCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TaskExecutionCore.swift"; sourceTree = "<group>"; };
 		AA100000000000000000CB /* AgentViewModel+ScriptManagement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+ScriptManagement.swift"; sourceTree = "<group>"; };
+		AA100000000000000000CD /* AgentViewModel+WebAutomation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+WebAutomation.swift"; sourceTree = "<group>"; };
+		AA100000000000000000CF /* TaskExecution+WebTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskExecution+WebTools.swift"; sourceTree = "<group>"; };
+		AA100000000000000000D1 /* AgentViewModel+AccessibilityTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+AccessibilityTools.swift"; sourceTree = "<group>"; };
+		AA100000000000000000D3 /* AgentViewModel+FileOperations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+FileOperations.swift"; sourceTree = "<group>"; };
+		AA100000000000000000D5 /* AgentViewModel+TaskLoop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TaskLoop.swift"; sourceTree = "<group>"; };
+		AA100000000000000000D7 /* AgentViewModel+WebSearch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+WebSearch.swift"; sourceTree = "<group>"; };
+		AA100000000000000000D9 /* TaskExecution+AutomationTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskExecution+AutomationTools.swift"; sourceTree = "<group>"; };
+		AA100000000000000000DB /* TaskExecution+FileTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskExecution+FileTools.swift"; sourceTree = "<group>"; };
+		AA100000000000000000DD /* TaskExecution+ProcessTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskExecution+ProcessTools.swift"; sourceTree = "<group>"; };
 		AA100000000000000000B0 /* SoundPlayerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundPlayerService.swift; sourceTree = "<group>"; };
 		AA100000000000000000B2 /* StartupTwentiethAnniversaryMac.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = StartupTwentiethAnniversaryMac.wav; sourceTree = "<group>"; };
 		AA100000000000000000B4 /* ToolPreferencesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolPreferencesService.swift; sourceTree = "<group>"; };
@@ -487,6 +505,15 @@
 				AA100000000000000000C7 /* TaskExecution+GitTools.swift */,
 				AA100000000000000000C9 /* AgentViewModel+TaskExecutionCore.swift */,
 				AA100000000000000000CB /* AgentViewModel+ScriptManagement.swift */,
+				AA100000000000000000CD /* AgentViewModel+WebAutomation.swift */,
+				AA100000000000000000CF /* TaskExecution+WebTools.swift */,
+				AA100000000000000000D1 /* AgentViewModel+AccessibilityTools.swift */,
+				AA100000000000000000D3 /* AgentViewModel+FileOperations.swift */,
+				AA100000000000000000D5 /* AgentViewModel+TaskLoop.swift */,
+				AA100000000000000000D7 /* AgentViewModel+WebSearch.swift */,
+				AA100000000000000000D9 /* TaskExecution+AutomationTools.swift */,
+				AA100000000000000000DB /* TaskExecution+FileTools.swift */,
+				AA100000000000000000DD /* TaskExecution+ProcessTools.swift */,
 				BB10000000000000000005 /* AgentViewModel+Helpers.swift */,
 				FF10000000000000000010 /* AgentViewModel+Speech.swift */,
 			);
@@ -787,6 +814,7 @@
 				EATD000000000000000001 /* TrainingData.swift in Sources */,
 				AA10000000000000000079 /* ScriptTab.swift in Sources */,
 				AA1000000000000000007B /* TabBarView.swift in Sources */,
+				AA100000000000000000C2 /* TaskExecution+ShellTools.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

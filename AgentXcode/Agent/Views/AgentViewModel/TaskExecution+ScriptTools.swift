@@ -272,23 +272,4 @@ extension AgentViewModel {
         return ["type": "tool_result", "tool_use_id": toolId, "content": result.output.isEmpty ? "(no output)" : result.output]
     }
 
-    // MARK: - Utility Functions
-
-    /// Generate an automatic script name from source content
-    nonisolated static func autoScriptName(from source: String) -> String {
-        // Extract first non-empty, non-comment line as name hint
-        let lines = source.components(separatedBy: "\n")
-        for line in lines {
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            if trimmed.isEmpty || trimmed.hasPrefix("--") || trimmed.hasPrefix("//") || trimmed.hasPrefix("#") {
-                continue
-            }
-            // Use first 30 chars, sanitized for filename
-            let name = String(trimmed.prefix(30))
-                .replacingOccurrences(of: "[^a-zA-Z0-9_-]", with: "_", options: .regularExpression)
-                .trimmingCharacters(in: CharacterSet(charactersIn: "_").union(.whitespaces))
-            return name.isEmpty ? "script_\(Int(Date().timeIntervalSince1970))" : name
-        }
-        return "script_\(Int(Date().timeIntervalSince1970))"
-    }
 }

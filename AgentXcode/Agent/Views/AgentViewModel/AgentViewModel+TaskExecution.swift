@@ -48,7 +48,7 @@ extension AgentViewModel {
             let script = input["script"] as? String ?? input["command"] as? String ?? ""
             let escaped = script.replacingOccurrences(of: "'", with: "'\\''")
             let command = "osascript -e '\(escaped)'"
-            let result = await executeTCCStreaming(command: command) { _ in }
+            let result = await Self.executeTCCStreaming(command: command) { _ in }
             if result.status == 0 {
                 let _ = scriptService.saveAppleScript(name: Self.autoScriptName(from: script), source: script)
             }
@@ -60,7 +60,7 @@ extension AgentViewModel {
             let script = input["source"] as? String ?? input["script"] as? String ?? ""
             let escaped = script.replacingOccurrences(of: "'", with: "'\\''")
             let command = "osascript -l JavaScript -e '\(escaped)'"
-            let result = await executeTCCStreaming(command: command) { _ in }
+            let result = await Self.executeTCCStreaming(command: command) { _ in }
             if result.status == 0 {
                 let _ = scriptService.saveJavaScript(name: Self.autoScriptName(from: script), source: script)
             }
@@ -81,7 +81,7 @@ extension AgentViewModel {
             if let args = input["arguments"] as? String {
                 fullCmd = "AGENT_SCRIPT_ARGS='\(args)' \(cmd)"
             }
-            let result = await executeTCC(command: fullCmd)
+            let result = await Self.executeTCC(command: fullCmd)
             return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
         }
         if name == "read_agent_script" {
@@ -137,7 +137,7 @@ extension AgentViewModel {
                 return "Error: JXA script '\(scriptName)' not found. Use list_javascript first."
             }
             let escaped = source.replacingOccurrences(of: "'", with: "'\\''")
-            let result = await executeTCCStreaming(command: "osascript -l JavaScript -e '\(escaped)'") { _ in }
+            let result = await Self.executeTCCStreaming(command: "osascript -l JavaScript -e '\(escaped)'") { _ in }
             return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
         }
 
@@ -1830,7 +1830,7 @@ extension AgentViewModel {
                                 rootServiceActive = false
                             } else if Self.needsTCCPermissions(command) {
                                 // TCC commands run in Agent process to inherit TCC permissions
-                                result = await executeTCC(command: command)
+                                result = await Self.executeTCC(command: command)
                             } else {
                                 // Non-TCC, non-root commands → User LaunchAgent via XPC
                                 result = await executeViaUserAgent(command: command)
@@ -2067,7 +2067,7 @@ extension AgentViewModel {
                             tab.appendLog("🍏 \(script)")
                             tab.flush()
 
-                            let result = await executeTCCStreaming(command: command) { [weak tab] chunk in
+                            let result = await Self.executeTCCStreaming(command: command) { [weak tab] chunk in
                                 Task { @MainActor in tab?.appendOutput(chunk) }
                             }
 
@@ -2117,7 +2117,7 @@ extension AgentViewModel {
                             tab.appendLog("🟨 \(script.prefix(80))...")
                             tab.flush()
 
-                            let result = await executeTCCStreaming(command: command) { [weak tab] chunk in
+                            let result = await Self.executeTCCStreaming(command: command) { [weak tab] chunk in
                                 Task { @MainActor in tab?.appendOutput(chunk) }
                             }
 
@@ -2326,7 +2326,7 @@ extension AgentViewModel {
                             tab.appendLog("🟨 \(scriptName)")
                             tab.flush()
 
-                            let result = await executeTCCStreaming(command: command) { [weak tab] chunk in
+                            let result = await Self.executeTCCStreaming(command: command) { [weak tab] chunk in
                                 Task { @MainActor in tab?.appendOutput(chunk) }
                             }
 
