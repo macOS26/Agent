@@ -12,13 +12,9 @@ Agent! already has proven to be a Cursor and Claude Code killer in just two week
 
 <img width="1919" height="1080" alt="Screenshot 2026-03-22 at 1 58 57 AM" src="https://github.com/user-attachments/assets/fa9a1734-180b-433a-93f3-2f6801e20282" />
 
-
-
 Agent! works with Claude API, Ollama Pro/Max Cloud, and local Ollama. Local LLMs need 32-128GB RAM on Apple Silicon.
 
 ## What's Supported
-
-<img width="643" height="839" alt="Screenshot 2026-03-22 at 2 13 13 AM" src="https://github.com/user-attachments/assets/c1ffbedf-1d93-4371-a6d4-5e65b0f8df92" />
 
 ### Multi-Provider LLM Support
 
@@ -34,6 +30,9 @@ OpenAI, DeepSeek, HuggingFace is untested. If you have any issues please file an
 | **Hugging Face** | Hugging Face API key | ✓ | Hosted inference API |
 | **Ollama Cloud** | Ollama Pro API key | Auto | Cloud-hosted Ollama models |
 | **Local Ollama** | None | Auto | Requires 32-128GB RAM on Apple Silicon |
+
+### A look at Agent in Action
+<img width="643" height="839" alt="Screenshot 2026-03-22 at 2 13 13 AM" src="https://github.com/user-attachments/assets/c1ffbedf-1d93-4371-a6d4-5e65b0f8df92" />
 
 ### Apple Intelligence Mediator
 
