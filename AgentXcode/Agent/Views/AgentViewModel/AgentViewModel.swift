@@ -731,6 +731,8 @@ final class AgentViewModel {
     var speechRecognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     var speechRecognitionTask: SFSpeechRecognitionTask?
     var preDictationText: String = ""
+    /// Tracks which tab was selected when dictation started, so speech goes to the correct input field
+    var preDictationTabId: UUID?
     
     // MARK: - Init
 

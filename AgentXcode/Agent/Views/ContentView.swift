@@ -423,8 +423,9 @@ struct ContentView: View {
                     TextField(tab.isMainTab ? "Enter task..." : tab.isMessagesTab ? "Messages task..." : "Ask about \(tab.scriptName)...", text: Binding(
                         get: { tab.taskInput },
                         set: { tab.taskInput = $0 }
-                    ))
+                    ), axis: .vertical)
                         .textFieldStyle(.roundedBorder)
+                        .lineLimit(1...8)
                         .onSubmit {
                             if !tab.taskInput.isEmpty {
                                 vm.runTabTask(tab: t)
@@ -493,9 +494,10 @@ struct ContentView: View {
                         }
                     }
 
-                    TextField("Enter task...", text: $viewModel.taskInput)
+                    TextField("Enter task...", text: $viewModel.taskInput, axis: .vertical)
                         .textFieldStyle(.roundedBorder)
                         .focused($isTaskFieldFocused)
+                        .lineLimit(1...8)
                         .onSubmit {
                             if !viewModel.taskInput.isEmpty {
                                 viewModel.run()

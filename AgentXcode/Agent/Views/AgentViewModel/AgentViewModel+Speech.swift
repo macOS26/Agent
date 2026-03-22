@@ -41,6 +41,8 @@ extension AgentViewModel {
         speechRecognitionRequest = nil
         speechAudioEngine = nil
         isListening = false
+        // Clear the pre-dictation snapshot when stopping
+        preDictationTabId = nil
     }
 
     // MARK: - Private
@@ -79,8 +81,15 @@ extension AgentViewModel {
         speechRecognitionRequest = request
         isListening = true
 
-        // Capture existing text so dictation appends rather than replaces
-        preDictationText = taskInput
+        // Capture the currently selected tab and its existing text
+        // so dictation appends to the correct input field
+        preDictationTabId = selectedTabId
+        if let tabId = selectedTabId,
+           let tab = scriptTabs.first(where: { $0.id == tabId }) {
+            preDictationText = tab.taskInput
+        } else {
+            preDictationText = taskInput
+        }
 
         speechRecognitionTask = recognizer.recognitionTask(with: request) { @Sendable result, error in
             let transcription = result?.bestTranscription.formattedString
@@ -92,7 +101,15 @@ extension AgentViewModel {
                 if let transcription {
                     let prefix = self.preDictationText
                     let separator = prefix.isEmpty || prefix.hasSuffix(" ") ? "" : " "
-                    self.taskInput = prefix + separator + transcription
+                    let newText = prefix + separator + transcription
+                    
+                    // Route to the correct input based on which tab was active when dictation started
+                    if let tabId = self.preDictationTabId,
+                       let tab = self.scriptTabs.first(where: { $0.id == tabId }) {
+                        tab.taskInput = newText
+                    } else {
+                        self.taskInput = newText
+                    }
                 }
 
                 if hasError || isFinal {

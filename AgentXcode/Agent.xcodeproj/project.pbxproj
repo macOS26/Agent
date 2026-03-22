@@ -179,7 +179,7 @@
 		AA10000000000000000021 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA10000000000000000022 /* Agent.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Agent.entitlements; sourceTree = "<group>"; };
 		AA10000000000000000023 /* Agent.app.toddbruss.helper.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Agent.app.toddbruss.helper.plist; sourceTree = "<group>"; };
-		AA10000000000000000024 /* Agent!.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Agent!.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA10000000000000000024 /* Agent!.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Agent.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA10000000000000000025 /* UserService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserService.swift; sourceTree = "<group>"; };
 		AA10000000000000000026 /* UserProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProtocol.swift; sourceTree = "<group>"; };
 		AA10000000000000000027 /* Agent.app.toddbruss.user.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Agent.app.toddbruss.user.plist; sourceTree = "<group>"; };
@@ -593,7 +593,7 @@
 				D1F0000000000000000002 /* MultiLineDiff */,
 			);
 			productName = Agent;
-			productReference = AA10000000000000000024 /* Agent!.app */;
+			productReference = AA10000000000000000024 /* Agent.app */;
 			productType = "com.apple.product-type.application";
 		};
 		BB10000000000000000060 /* AgentHelper */ = {
