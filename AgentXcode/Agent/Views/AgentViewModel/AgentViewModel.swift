@@ -99,15 +99,23 @@ final class AgentViewModel {
         }
     }
 
-    /// Keep service tool groups in sync with userEnabled/rootEnabled.
+    /// Keep service tool groups and individual tools in sync with userEnabled/rootEnabled.
     private func syncServicesGroup() {
         let prefs = ToolPreferencesService.shared
         // Sync User Agent group
         let agentGroupOn = prefs.isGroupEnabled("User Agent")
         if userEnabled != agentGroupOn { prefs.toggleGroup("User Agent") }
+        // Sync individual tool — re-enable if service turned on
+        if userEnabled && !prefs.isEnabled(selectedProvider, "execute_agent_command") {
+            prefs.toggle(selectedProvider, "execute_agent_command")
+        }
         // Sync Launch Daemon group
         let daemonGroupOn = prefs.isGroupEnabled("Launch Daemon")
         if rootEnabled != daemonGroupOn { prefs.toggleGroup("Launch Daemon") }
+        // Sync individual tool — re-enable if service turned on
+        if rootEnabled && !prefs.isEnabled(selectedProvider, "execute_daemon_command") {
+            prefs.toggle(selectedProvider, "execute_daemon_command")
+        }
     }
 
     /// Gear icon color reflecting overall service health
