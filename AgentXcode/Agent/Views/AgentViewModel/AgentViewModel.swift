@@ -34,8 +34,10 @@ enum APIProvider: String, CaseIterable, Codable {
     }
     
     /// Providers selectable in the UI for task execution
+    /// Note: foundationModel (Apple Intelligence) is NOT selectable - it's for LoRA training only.
+    /// Apple Intelligence is an assistant to LLMs and users, not a direct LLM provider.
     static var selectableProviders: [APIProvider] {
-        [.claude, .openAI, .deepSeek, .huggingFace, .ollama, .localOllama, .foundationModel]
+        [.claude, .openAI, .deepSeek, .huggingFace, .ollama, .localOllama]
     }
 }
 

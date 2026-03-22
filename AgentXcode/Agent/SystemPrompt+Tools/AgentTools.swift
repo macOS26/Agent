@@ -108,13 +108,17 @@ enum AgentTools {
     }
 
     // MARK: - System Prompt (full version for Claude/Ollama)
-    static func systemPrompt(userName: String, userHome: String) -> String {
+    static func systemPrompt(userName: String, userHome: String, projectFolder: String = "") -> String {
+        let folder = projectFolder.isEmpty ? userHome : projectFolder
         let n = Name.self
         return """
         You are an autonomous macOS agent. User: "\(userName)", home: "\(userHome)".
         Documents: \(userHome)/Documents/
         Act, don't explain. Never ask questions. Call \(n.taskComplete) when done.
         Do NOT repeat script stdout — user sees it live.
+
+        CURRENT PROJECT FOLDER: \(folder)
+        Always cd to this directory before running any shell commands. Use it as the default for all file operations. You may go outside it when needed.
 
         EXECUTION & TCC:
         - In Agent process (full TCC): \(n.runAgentScript), \(n.appleEventQuery), \(n.runApplescript), \(n.runOsascript), ax_* tools

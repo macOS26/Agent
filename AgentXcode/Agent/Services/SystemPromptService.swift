@@ -71,9 +71,9 @@ final class SystemPromptService {
         }
     }
 
-    /// Read the on-disk prompt for a provider, substituting {userName} and {userHome}.
+    /// Read the on-disk prompt for a provider, substituting {userName}, {userHome}, and {projectFolder}.
     /// Strips the version comment line before returning.
-    func prompt(for provider: APIProvider, userName: String, userHome: String) -> String {
+    func prompt(for provider: APIProvider, userName: String, userHome: String, projectFolder: String = "") -> String {
         ensureDefaults()
         guard let fileName = Self.fileNames[provider] else { return "" }
         let url = Self.systemDir.appendingPathComponent(fileName)
@@ -82,9 +82,11 @@ final class SystemPromptService {
         }
         // Strip version header before use
         let content = Self.stripVersionLine(template)
+        let folder = projectFolder.isEmpty ? userHome : projectFolder
         return content
             .replacingOccurrences(of: "{userName}", with: userName)
             .replacingOccurrences(of: "{userHome}", with: userHome)
+            .replacingOccurrences(of: "{projectFolder}", with: folder)
     }
 
     /// Remove the version/custom comment line from prompt content.
@@ -123,8 +125,8 @@ final class SystemPromptService {
     }
 
     /// The built-in default prompt template for each provider.
-    /// Uses {userName} and {userHome} as placeholders.
+    /// Uses {userName}, {userHome}, and {projectFolder} as placeholders.
     private static func defaultPrompt(for provider: APIProvider) -> String {
-        return AgentTools.systemPrompt(userName: "{userName}", userHome: "{userHome}")
+        return AgentTools.systemPrompt(userName: "{userName}", userHome: "{userHome}", projectFolder: "{projectFolder}")
     }
 }

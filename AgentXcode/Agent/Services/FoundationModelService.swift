@@ -81,7 +81,7 @@ final class FoundationModelService {
         // Always create a fresh session — the on-device model's small context
         // gets polluted by prior turns, causing it to skip tools.
         NativeToolContext.projectFolder = projectFolder
-        var instructions = SystemPromptService.shared.prompt(for: .foundationModel, userName: userName, userHome: userHome)
+        var instructions = SystemPromptService.shared.prompt(for: .foundationModel, userName: userName, userHome: userHome, projectFolder: projectFolder)
 
         // Note active LoRA adapter in instructions
         let lora = LoRAAdapterManager.shared
