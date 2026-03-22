@@ -425,7 +425,7 @@ extension AgentViewModel {
             guard let compileCmd = scriptService.compileCommand(name: "Selenium") else {
                 return "Error: Selenium script not found"
             }
-            let compileResult = await userService.execute(command: compileCmd)
+            let compileResult = await Self.executeTCC(command: compileCmd)
             if compileResult.status != 0 {
                 return "Compile failed: \(compileResult.output)"
             }
@@ -441,7 +441,7 @@ extension AgentViewModel {
             guard let compileCmd = scriptService.compileCommand(name: "Selenium") else {
                 return "Error: Selenium script not found"
             }
-            let compileResult = await userService.execute(command: compileCmd)
+            let compileResult = await Self.executeTCC(command: compileCmd)
             if compileResult.status != 0 {
                 return "Compile failed: \(compileResult.output)"
             }
