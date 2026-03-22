@@ -2,20 +2,27 @@
 
 ## Status: IN PROGRESS
 
-**Last Updated:** March 22, 2025
+**Last Updated:** March 22, 2025 - Phase 1 nearly complete
 
 ## Completed Work:
-- ✅ Phase 1 partial: TaskExecution extensions created (ShellTools, FileTools, GitTools)
+- ✅ Phase 1: TaskExecution extensions created and added to project
+  - TaskExecution+ShellTools.swift (205 lines)
+  - TaskExecution+FileTools.swift (272 lines)  
+  - TaskExecution+GitTools.swift (77 lines)
+  - TaskExecution+ScriptTools.swift (294 lines) - NEW
+  - TaskExecution+AutomationTools.swift (559 lines) - NEW
+  - TaskExecution+WebTools.swift (216 lines) - NEW
+  - TaskExecution+ProcessTools.swift (151 lines) - NEW
 - ✅ System prompt reorganized into SystemPrompt+Tools/ directory
-- ✅ Build succeeds with all changes
+- ✅ Build succeeds with all changes (0 errors)
 
 ## Files Over 1000 Lines - Current Status
 
 | File | Lines | Status |
 |------|-------|--------|
-| AgentViewModel+TaskExecution.swift | 2622 | 🔨 In Progress - Extensions created, need integration |
+| AgentViewModel+TaskExecution.swift | 2622 | 🔨 Extensions created - need to remove duplicated code from main file |
 | AccessibilityService.swift | 1841 | ⏳ Pending split |
-| AgentViewModel.swift | 1800 | ⏳ Pending split |
+| AgentViewModel.swift | 1802 | ⏳ Pending split |
 | AgentViewModel+TabTask.swift | 1758 | ⏳ Pending split |
 | AgentTools.swift | 1421 | ✅ DONE - Reorganized into SystemPrompt+Tools/ |
 | CodeBlockSyntax.swift | 1211 | ⏳ Pending split |
@@ -36,6 +43,10 @@
 - Agent/Views/AgentViewModel/TaskExecution+ShellTools.swift (205 lines)
 - Agent/Views/AgentViewModel/TaskExecution+FileTools.swift (272 lines)
 - Agent/Views/AgentViewModel/TaskExecution+GitTools.swift (77 lines)
+- Agent/Views/AgentViewModel/TaskExecution+ScriptTools.swift (294 lines) - NEW
+- Agent/Views/AgentViewModel/TaskExecution+AutomationTools.swift (559 lines) - NEW
+- Agent/Views/AgentViewModel/TaskExecution+WebTools.swift (216 lines) - NEW
+- Agent/Views/AgentViewModel/TaskExecution+ProcessTools.swift (151 lines) - NEW
 
 ## Execution Order
 
@@ -43,10 +54,11 @@
 1. ✅ TaskExecution+ShellTools.swift - executeViaUserAgent, executeLocal, executeLocalStreaming
 2. ✅ TaskExecution+FileTools.swift - file operation handlers
 3. ✅ TaskExecution+GitTools.swift - git tool handlers
-4. ⏳ TaskExecution+ScriptTools.swift - script management tools
-5. ⏳ TaskExecution+AutomationTools.swift - Apple Events, Xcode, accessibility
-6. ⏳ TaskExecution+WebTools.swift - web automation, Selenium
-7. ⏳ TaskExecution.swift - main loop and executeNativeTool orchestration
+4. ✅ TaskExecution+ScriptTools.swift - script management tools - CREATED
+5. ✅ TaskExecution+AutomationTools.swift - Apple Events, Xcode, accessibility - CREATED
+6. ✅ TaskExecution+WebTools.swift - web automation, Selenium - CREATED
+7. ✅ TaskExecution+ProcessTools.swift - MCP tools, tool discovery - CREATED
+8. ⏳ AgentViewModel+TaskExecution.swift - CLEANUP: Remove duplicated code (keep only executeTask loop)
 
 ### Phase 2: AccessibilityService.swift (1841 → ~6 files) ⏳
 1. AccessibilityService+Element.swift - element inspection, properties
