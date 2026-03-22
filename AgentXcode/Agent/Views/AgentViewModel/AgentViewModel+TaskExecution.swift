@@ -1944,7 +1944,7 @@ extension AgentViewModel {
                         }
 
                         // Load additional tool groups mid-task
-                        if name == "load_tools" {
+                        if name == "load_groups" {
                             if let groups = input["groups"] as? [String] {
                                 let validGroups = Set(groups).intersection(Set(ToolPreferencesService.toolGroups.keys))
                                 if activeGroups != nil {
@@ -1952,7 +1952,23 @@ extension AgentViewModel {
                                 } else {
                                     activeGroups = validGroups
                                 }
-                                let output = "Loaded groups: \(validGroups.sorted().joined(separator: ", ")). \(activeGroups?.count ?? 0) groups now active."
+                                let output = "Loaded groups: \(validGroups.sorted().joined(separator: ", ")). \(activeGroups?.count ?? 0) groups active."
+                                appendLog("🔧 \(output)")
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                            } else {
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Error: groups array required"])
+                            }
+                        }
+
+                        if name == "unload_groups" {
+                            if let groups = input["groups"] as? [String] {
+                                let toRemove = Set(groups)
+                                if activeGroups != nil {
+                                    activeGroups = activeGroups!.subtracting(toRemove)
+                                    // Always keep Core
+                                    activeGroups!.insert("Core")
+                                }
+                                let output = "Unloaded groups: \(toRemove.sorted().joined(separator: ", ")). \(activeGroups?.count ?? 0) groups active."
                                 appendLog("🔧 \(output)")
                                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                             } else {

@@ -85,7 +85,8 @@ enum AgentTools {
         // Tool Discovery
         static let listNativeTools = "list_tools"
         static let listMcpTools = "list_mcp_tools"
-        static let loadTools = "load_tools"
+        static let loadGroups = "load_groups"
+        static let unloadGroups = "unload_groups"
         // Web Automation
         static let webOpen = "web_open"
         static let webFind = "web_find"
@@ -137,7 +138,7 @@ enum AgentTools {
         Data: AGENT_SCRIPT_ARGS env or json/{Name}_input.json/_output.json.
         Generate bridges: run_agent_script GenerateBridge with args /Applications/App.app
 
-        load_tools: If you need tools not in your current set, call load_tools with group names.
+        load_groups/unload_groups: Load or unload tool groups mid-task. Groups: Coding, Automation, Accessibility, Web.
         MCP TOOLS: mcp_* in your tool list — never call a server's list/tools.
         IMAGE PATHS: Print paths — UI renders clickable links. No emojis in conversation tool output.
         """
@@ -952,10 +953,18 @@ enum AgentTools {
             required: []
         ),
         ToolDef(
-            name: Name.loadTools,
-            description: "Load additional tool groups. Available: Coding, Automation, Accessibility, Web.",
+            name: Name.loadGroups,
+            description: "Load tool groups into the active session. Available: Coding, Automation, Accessibility, Web.",
             properties: [
                 "groups": ["type": "array", "items": ["type": "string"] as [String: Any], "description": "Group names to load"] as [String: Any],
+            ],
+            required: ["groups"]
+        ),
+        ToolDef(
+            name: Name.unloadGroups,
+            description: "Unload tool groups from the active session to reduce token usage.",
+            properties: [
+                "groups": ["type": "array", "items": ["type": "string"] as [String: Any], "description": "Group names to unload"] as [String: Any],
             ],
             required: ["groups"]
         ),
