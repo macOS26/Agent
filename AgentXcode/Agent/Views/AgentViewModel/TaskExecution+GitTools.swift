@@ -6,7 +6,7 @@ private let gitLog = Logger(subsystem: "Agent.app.toddbruss", category: "GitTool
 // MARK: - Git Tool Helpers
 extension AgentViewModel {
 
-    /// Handle git_status tool
+    /// Handle git_status tool - uses User LaunchAgent (no TCC required)
     func handleGitStatus(path: String?) async -> String {
         let cmd = CodingService.buildGitStatusCommand(path: path)
         let result = await executeViaUserAgent(command: cmd)
@@ -15,7 +15,7 @@ extension AgentViewModel {
         return output
     }
     
-    /// Handle git_diff tool
+    /// Handle git_diff tool - uses User LaunchAgent (no TCC required)
     func handleGitDiff(path: String?, staged: Bool, target: String?) async -> String {
         let cmd = CodingService.buildGitDiffCommand(path: path, staged: staged, target: target)
         let result = await executeViaUserAgent(command: cmd)
@@ -30,7 +30,7 @@ extension AgentViewModel {
         return output
     }
     
-    /// Handle git_log tool
+    /// Handle git_log tool - uses User LaunchAgent (no TCC required)
     func handleGitLog(path: String?, count: Int?) async -> String {
         let cmd = CodingService.buildGitLogCommand(path: path, count: count)
         let result = await executeViaUserAgent(command: cmd)
@@ -43,14 +43,14 @@ extension AgentViewModel {
         return output
     }
     
-    /// Handle git_commit tool
+    /// Handle git_commit tool - uses User LaunchAgent (no TCC required)
     func handleGitCommit(path: String?, message: String, files: [String]?) async -> String {
         let cmd = CodingService.buildGitCommitCommand(path: path, message: message, files: files)
         let result = await executeViaUserAgent(command: cmd)
         return result.output.isEmpty ? "(no output, exit code: \(result.status))" : result.output
     }
     
-    /// Handle git_branch tool
+    /// Handle git_branch tool - uses User LaunchAgent (no TCC required)
     func handleGitBranch(path: String?, name: String, checkout: Bool) async -> String {
         let cmd = CodingService.buildGitBranchCommand(path: path, name: name, checkout: checkout)
         let result = await executeViaUserAgent(command: cmd)
@@ -59,7 +59,7 @@ extension AgentViewModel {
             : result.output
     }
     
-    /// Handle git_diff_patch tool
+    /// Handle git_diff_patch tool - uses User LaunchAgent (no TCC required)
     func handleGitDiffPatch(path: String?, patch: String) async -> String {
         let tempName = "agent_patch_\(UUID().uuidString).patch"
         let tempPath = "/tmp/\(tempName)"

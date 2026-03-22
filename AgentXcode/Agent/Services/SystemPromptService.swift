@@ -22,6 +22,17 @@ final class SystemPromptService {
         .localOllama: "local_ollama.txt",
         .foundationModel: "foundation_model.txt",
     ]
+    
+    /// Compact prompt file names for each provider.
+    static let compactFileNames: [APIProvider: String] = [
+        .claude: "claude_compact.txt",
+        .openAI: "openai_compact.txt",
+        .deepSeek: "deepseek_compact.txt",
+        .huggingFace: "hugging_face_compact.txt",
+        .ollama: "ollama_compact.txt",
+        .localOllama: "local_ollama_compact.txt",
+        .foundationModel: "foundation_model_compact.txt",
+    ]
 
     /// Version header prefix embedded in each prompt file.
     private static let versionPrefix = "// Agent! v"
@@ -75,16 +86,58 @@ final class SystemPromptService {
                 try? defaultPrompt.write(to: url, atomically: true, encoding: .utf8)
             }
         }
+        
+        // Also ensure compact prompts exist
+        for (provider, fileName) in Self.compactFileNames {
+            let url = Self.systemDir.appendingPathComponent(fileName)
+            let needsWrite: Bool
+            if !fm.fileExists(atPath: url.path) {
+                needsWrite = true
+            } else if let existing = try? String(contentsOf: url, encoding: .utf8),
+                      let firstLine = existing.components(separatedBy: "\n").first {
+                if firstLine.hasPrefix(Self.readOnlyPrefix) {
+                    // READ ONLY prompt — never overwrite automatically
+                    needsWrite = false
+                } else if firstLine.hasPrefix(Self.customPrefix) {
+                    // User-edited prompt — update on version change (preserves custom edits)
+                    let fileVersion = String(firstLine.dropFirst(Self.customPrefix.count))
+                    needsWrite = fileVersion != Self.appVersion
+                } else if firstLine.hasPrefix(Self.versionPrefix) {
+                    // Default prompt — replace if version changed
+                    let fileVersion = String(firstLine.dropFirst(Self.versionPrefix.count))
+                    needsWrite = fileVersion != Self.appVersion
+                } else {
+                    // No version stamp — replace with versioned prompt
+                    needsWrite = true
+                }
+            } else {
+                // Unreadable or empty — replace with default
+                needsWrite = true
+            }
+
+            if needsWrite {
+                let defaultPrompt = Self.versionPrefix + Self.appVersion + "\n" + Self.defaultCompactPrompt(for: provider)
+                try? defaultPrompt.write(to: url, atomically: true, encoding: .utf8)
+            }
+        }
     }
 
     /// Read the on-disk prompt for a provider, substituting {userName}, {userHome}, and {projectFolder}.
     /// Strips the version comment line before returning.
-    func prompt(for provider: APIProvider, userName: String, userHome: String, projectFolder: String = "") -> String {
+    func prompt(for provider: APIProvider, userName: String, userHome: String, projectFolder: String = "", style: PromptStyle = .full) -> String {
         ensureDefaults()
-        guard let fileName = Self.fileNames[provider] else { return "" }
+        let fileName: String
+        switch style {
+        case .full:
+            guard let fn = Self.fileNames[provider] else { return "" }
+            fileName = fn
+        case .compact:
+            guard let fn = Self.compactFileNames[provider] else { return "" }
+            fileName = fn
+        }
         let url = Self.systemDir.appendingPathComponent(fileName)
         guard let template = try? String(contentsOf: url, encoding: .utf8) else {
-            return Self.defaultPrompt(for: provider)
+            return style == .compact ? Self.defaultCompactPrompt(for: provider) : Self.defaultPrompt(for: provider)
         }
         // Strip version header before use
         let content = Self.stripVersionLine(template)
@@ -149,5 +202,11 @@ final class SystemPromptService {
     /// Uses {userName}, {userHome}, and {projectFolder} as placeholders.
     private static func defaultPrompt(for provider: APIProvider) -> String {
         return AgentTools.systemPrompt(userName: "{userName}", userHome: "{userHome}", projectFolder: "{projectFolder}")
+    }
+    
+    /// The built-in default compact prompt template for each provider.
+    /// Uses {userName}, {userHome}, and {projectFolder} as placeholders.
+    private static func defaultCompactPrompt(for provider: APIProvider) -> String {
+        return AgentTools.compactSystemPrompt(userName: "{userName}", userHome: "{userHome}", projectFolder: "{projectFolder}")
     }
 }

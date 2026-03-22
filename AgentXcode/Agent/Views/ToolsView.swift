@@ -3,6 +3,28 @@ import SwiftUI
 struct ToolsView: View {
     @Binding var selectedProvider: APIProvider
     @Bindable var prefs = ToolPreferencesService.shared
+    @State private var collapsedGroups: Set<String> = []
+    
+    // Group definitions matching ToolPreferencesService
+    static let groups: [String: (filter: (AgentTools.ToolDef) -> Bool, icon: String)] = [
+        "Coding": ({ ($0.name.hasPrefix("read_") || $0.name.hasPrefix("write_") || $0.name.hasPrefix("edit_") || $0.name.hasPrefix("list_") || $0.name.hasPrefix("search_")) && !$0.name.contains("agent_") && $0.name != "list_mcp_tools" && $0.name != "list_native_tools" }, "doc.text"),
+        "Git": ({ $0.name.hasPrefix("git_") }, "branch"),
+        "Automation": ({ $0.name.hasPrefix("apple_event_") || $0.name.hasPrefix("run_") || $0.name == "execute_javascript" }, "gearshape.2"),
+        "Shell": ({ $0.name.hasPrefix("execute_") && !$0.name.hasPrefix("execute_javascript") }, "terminal"),
+        "Accessibility": ({ $0.name.hasPrefix("ax_") }, "accessibility"),
+        "Scripts": ({ $0.name.contains("agent_script") }, "scroll"),
+        "SDEF": ({ $0.name == "lookup_sdef" }, "book"),
+        "Xcode": ({ $0.name.hasPrefix("xcode_") }, "xcode"),
+        "AppleScript": ({ $0.name.hasPrefix("list_apple_") || $0.name.hasPrefix("run_apple_") || $0.name.hasPrefix("save_apple_") || $0.name.hasPrefix("delete_apple_") }, "applescript"),
+        "JavaScript": ({ $0.name.hasPrefix("list_javascript") || $0.name.hasPrefix("run_javascript") || $0.name.hasPrefix("save_javascript") || $0.name.hasPrefix("delete_javascript") }, "curlybraces"),
+        "Core": ({ $0.name == "task_complete" || $0.name == "list_native_tools" || $0.name == "list_mcp_tools" }, "checkmark.circle"),
+        "Web": ({ $0.name.hasPrefix("web_") && !$0.name.hasPrefix("web_search") }, "globe"),
+        "Selenium": ({ $0.name.hasPrefix("selenium_") }, "network"),
+        "Web Search": ({ $0.name == "web_search" }, "magnifyingglass"),
+        "Conversation": ({ ["write_text", "transform_text", "send_message", "about_self", "fix_text"].contains($0.name) }, "bubble.left.and.bubble.right")
+    ]
+    
+    static let groupOrder: [String] = ["Core", "Coding", "Git", "Shell", "Xcode", "Scripts", "SDEF", "Automation", "AppleScript", "JavaScript", "Accessibility", "Web", "Selenium", "Web Search", "Conversation"]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -29,51 +51,23 @@ struct ToolsView: View {
 
             // Tag cloud — native tools only, sorted alphabetically
             ScrollView {
-                FlowLayout(spacing: 4) {
-                    // Group tools by category
+                VStack(alignment: .leading, spacing: 0) {
                     let tools = AgentTools.tools(for: selectedProvider)
-                    let categories: [String: [AgentTools.ToolDef]] = [
-                        "Coding": tools.filter { ($0.name.hasPrefix("read_") || $0.name.hasPrefix("write_") || $0.name.hasPrefix("edit_") || $0.name.hasPrefix("list_") || $0.name.hasPrefix("search_")) && !$0.name.contains("agent_") && $0.name != "list_mcp_tools" && $0.name != "list_native_tools" },
-                        "Git": tools.filter { $0.name.hasPrefix("git_") },
-                        "Automation": tools.filter { $0.name.hasPrefix("apple_event_") || $0.name.hasPrefix("run_") || $0.name == "execute_javascript" },
-                        "Shell": tools.filter { $0.name.hasPrefix("execute_") && !$0.name.hasPrefix("execute_javascript") },
-                        "Accessibility": tools.filter { $0.name.hasPrefix("ax_") },
-                        "Scripts": tools.filter { $0.name.contains("agent_script") },
-                        "SDEF": tools.filter { $0.name == "lookup_sdef" },
-                        "Xcode": tools.filter { $0.name.hasPrefix("xcode_") },
-                        "AppleScript": tools.filter { $0.name.hasPrefix("list_apple_") || $0.name.hasPrefix("run_apple_") || $0.name.hasPrefix("save_apple_") || $0.name.hasPrefix("delete_apple_") },
-                        "JavaScript": tools.filter { $0.name.hasPrefix("list_javascript") || $0.name.hasPrefix("run_javascript") || $0.name.hasPrefix("save_javascript") || $0.name.hasPrefix("delete_javascript") },
-                        "Core": tools.filter { $0.name == "task_complete" || $0.name == "list_native_tools" || $0.name == "list_mcp_tools" }
-                    ]
                     
-                    ForEach(Array(categories.keys).sorted(), id: \.self) { category in
-                        if let categoryTools = categories[category], !categoryTools.isEmpty {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(category)
-                                    .font(.caption).bold()
-                                    .foregroundStyle(.secondary)
-                                    .padding(.leading, 4)
-                                    .padding(.top, 8)
-                                
-                                FlowLayout(spacing: 4) {
-                                    ForEach(categoryTools.sorted(by: { $0.name < $1.name }), id: \.name) { tool in
-                                        let enabled = prefs.isEnabled(selectedProvider, tool.name)
-                                        Button {
-                                            prefs.toggle(selectedProvider, tool.name)
-                                        } label: {
-                                            Text(tool.name)
-                                                .font(.caption2)
-                                                .padding(.horizontal, 6)
-                                                .padding(.vertical, 2)
-                                                .background(enabled ? Color.accentColor.opacity(0.2) : Color.secondary.opacity(0.1))
-                                                .foregroundStyle(enabled ? .primary : .tertiary)
-                                                .clipShape(Capsule())
-                                                .overlay(Capsule().stroke(enabled ? Color.accentColor.opacity(0.5) : Color.clear, lineWidth: 0.5))
-                                        }
-                                        .buttonStyle(.plain)
-                                        .help(tool.description.components(separatedBy: ". ").first ?? tool.description)
-                                    }
-                                }
+                    ForEach(Self.groupOrder, id: \.self) { groupName in
+                        if let groupInfo = Self.groups[groupName] {
+                            let groupTools = tools.filter { groupInfo.filter($0) }.sorted(by: { $0.name < $1.name })
+                            
+                            if !groupTools.isEmpty {
+                                GroupRowView(
+                                    groupName: groupName,
+                                    icon: groupInfo.icon,
+                                    groupTools: groupTools,
+                                    provider: selectedProvider,
+                                    prefs: prefs,
+                                    isCollapsed: collapsedGroups.contains(groupName),
+                                    toggleCollapse: { toggleGroup(groupName) }
+                                )
                             }
                         }
                     }
@@ -91,15 +85,14 @@ struct ToolsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
-                Button("Enable All") { prefs.enableAll(for: selectedProvider) }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
+                Button("Enable All") {
+                    prefs.enableAllGroups()
+                    prefs.enableAll(for: selectedProvider)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
                 Button("Disable All") {
-                    for tool in all {
-                        if prefs.isEnabled(selectedProvider, tool.name) {
-                            prefs.toggle(selectedProvider, tool.name)
-                        }
-                    }
+                    prefs.disableAllGroups()
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
@@ -108,6 +101,98 @@ struct ToolsView: View {
             .padding(.bottom, 15)
         }
         .frame(width: 460)
+    }
+    
+    private func toggleGroup(_ groupName: String) {
+        withAnimation(.easeInOut(duration: 0.15)) {
+            if collapsedGroups.contains(groupName) {
+                collapsedGroups.remove(groupName)
+            } else {
+                collapsedGroups.insert(groupName)
+            }
+        }
+    }
+}
+
+// MARK: - Group Row View
+
+struct GroupRowView: View {
+    let groupName: String
+    let icon: String
+    let groupTools: [AgentTools.ToolDef]
+    let provider: APIProvider
+    let prefs: ToolPreferencesService
+    let isCollapsed: Bool
+    let toggleCollapse: () -> Void
+
+    var body: some View {
+        let groupEnabled = prefs.isGroupEnabled(groupName)
+
+        VStack(alignment: .leading, spacing: 4) {
+            // Group header with collapse toggle and group toggle
+            HStack(spacing: 6) {
+                // Collapse arrow
+                Image(systemName: isCollapsed ? "chevron.right" : "chevron.down")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+
+                // Group icon and name
+                Image(systemName: icon)
+                    .font(.caption)
+                    .foregroundStyle(groupEnabled ? .primary : .tertiary)
+                Text(groupName)
+                    .font(.caption).bold()
+                    .foregroundStyle(groupEnabled ? .secondary : .tertiary)
+
+                // Tool count
+                Text("\(groupTools.count)")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+
+                Spacer()
+
+                // Group toggle switch
+                Toggle("", isOn: Binding(
+                    get: { groupEnabled },
+                    set: { _ in prefs.toggleGroup(groupName) }
+                ))
+                .toggleStyle(.switch)
+                .controlSize(.mini)
+                .labelsHidden()
+            }
+            .padding(.leading, 4)
+            .padding(.top, 8)
+            .contentShape(Rectangle())
+            .onTapGesture { toggleCollapse() }
+
+            // Tool buttons (collapsible)
+            if !isCollapsed {
+                FlowLayout(spacing: 4) {
+                    ForEach(groupTools, id: \.name) { tool in
+                        let enabled = groupEnabled && prefs.isEnabled(provider, tool.name)
+                        Button {
+                            guard groupEnabled else { return }
+                            prefs.toggle(provider, tool.name)
+                        } label: {
+                            Text(tool.name)
+                                .font(.caption2)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(enabled ? Color.accentColor.opacity(0.2) : Color.secondary.opacity(0.1))
+                                .foregroundStyle(enabled ? .primary : .tertiary)
+                                .clipShape(Capsule())
+                                .overlay(Capsule().stroke(enabled ? Color.accentColor.opacity(0.5) : Color.clear, lineWidth: 0.5))
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(!groupEnabled)
+                        .help(groupEnabled
+                            ? (tool.description.components(separatedBy: ". ").first ?? tool.description)
+                            : "Enable \(groupName) group first")
+                    }
+                }
+                .opacity(groupEnabled ? 1.0 : 0.4)
+            }
+        }
     }
 }
 

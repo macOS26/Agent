@@ -238,15 +238,40 @@ enum AgentTools {
         let folder = projectFolder.isEmpty ? userHome : projectFolder
         let n = Name.self
         return """
-        You are a macOS assistant. User: \(userName), home: \(userHome).
-        Working directory: \(folder)
-
-        IMPORTANT RULES:
-        1. Use \(n.executeAgentCommand) to run shell commands. WAIT for its output before proceeding.
-        2. After you get the tool result, respond with the output, then call \(n.taskComplete).
-        3. Do NOT call \(n.taskComplete) until you have received and reported the tool output.
-        4. For questions or greetings: reply with text, then call \(n.taskComplete).
-        5. Always cd to the working directory first in shell commands.
+        You are an autonomous macOS agent for \(userName).
+        
+        CORE RULES:
+        - Act, don't explain. Never ask questions. Call \(n.taskComplete) when done.
+        - Don't repeat script stdout — user sees it live.
+        - Current folder: \(folder) (default for operations)
+        
+        TOOL PRIORITY:
+        1. Native tools (\(n.readFile), \(n.writeFile), \(n.editFile), git_*, xcode_*)
+        2. MCP tools (mcp_*)
+        3. Shell (\(n.executeAgentCommand), \(n.executeDaemonCommand)) ONLY if native/MCP unavailable
+        
+        TCC PERMISSIONS:
+        - Full TCC in Agent: \(n.runAgentScript), \(n.appleEventQuery), \(n.runApplescript), \(n.runOsascript), ax_*
+        - User shell: \(n.executeAgentCommand) (as \(userName), ~=\(userHome)) — NO TCC
+        - Root shell: \(n.executeDaemonCommand) — NO TCC
+        Never use shell commands for Automation/Accessibility — no TCC.
+        
+        KEY TOOL CATEGORIES:
+        • File/Diff: \(n.readFile), \(n.writeFile), \(n.editFile), \(n.listFiles), \(n.searchFiles), \(n.createDiff), \(n.applyDiff)
+        • Git: \(n.gitStatus), \(n.gitDiff), \(n.gitLog), \(n.gitCommit), \(n.gitDiffPatch), \(n.gitBranch)
+        • Xcode: \(n.xcodeBuild) (PREFERRED) → MCP → xcodebuild shell (LAST RESORT)
+        • Agent Scripts: \(n.listAgentScripts), \(n.readAgentScript), \(n.createAgentScript), \(n.updateAgentScript), \(n.runAgentScript), \(n.deleteAgentScript)
+        • Automation: \(n.runApplescript), \(n.runOsascript), \(n.executeJavascript), \(n.appleEventQuery), \(n.lookupSdef)
+        • Accessibility: ax_* tools (last resort for UI)
+        • Web: web_*, selenium_*
+        
+        CRITICAL DON'Ts:
+        - Never use shell for file/coding when native tools exist
+        - Never use xcodebuild/swift build via shell when \(n.xcodeBuild) or MCP available
+        - Never use \(n.executeAgentCommand) for AX/Automation (use \(n.runAgentScript))
+        - Never build AgentScripts with \(n.xcodeBuild) (use \(n.runAgentScript))
+        
+        ALWAYS: \(n.xcodeBuild) → MCP → Shell (last resort)
         """
     }
 
@@ -1130,7 +1155,7 @@ enum AgentTools {
             description: "Execute JavaScript in the Selenium session. Useful for scrolling, DOM manipulation, or extracting data.",
             properties: [
                 "script": ["type": "string", "description": "JavaScript code to execute"],
-                "args": ["type": "array", "description": "Optional arguments for the script"],
+                "args": ["type": "array", "description": "Optional arguments for the script", "items": ["type": "string"] as [String: Any]] as [String: Any],
                 "port": ["type": "integer", "description": "WebDriver port (default 7055)"],
             ],
             required: ["script"]
@@ -1239,9 +1264,14 @@ enum AgentTools {
                     result[key] = sanitizeSchema(val)
                 }
             }
-            // Ensure "properties" is always an object if present
-            if result["properties"] == nil {
+            // Ensure "properties" is always an object for object-type schemas
+            if (result["type"] as? String) == "object" && result["properties"] == nil {
                 result["properties"] = [:] as [String: Any]
+            }
+            // Fix OpenAI array schema: ensure "items" field exists for array types
+            if result["type"] as? String == "array" && result["items"] == nil {
+                // OpenAI requires "items" for array types - use empty object schema as default
+                result["items"] = ["type": "object"] as [String: Any]
             }
             return result
         } else if let arr = value as? [Any] {
@@ -1286,15 +1316,19 @@ enum AgentTools {
     // MARK: - Ollama (OpenAI) Format
 
     /// Convert a ToolDef to OpenAI/Ollama tool schema.
+    /// Applies schema sanitization to fix OpenAI-specific issues (e.g., array items requirement).
     static func ollamaTool(name: String, description: String, properties: [String: Any], required: [String]) -> [String: Any] {
-        [
+        // Sanitize properties to ensure OpenAI schema compliance
+        let sanitizedProperties = sanitizeSchema(properties) as? [String: Any] ?? properties
+        
+        return [
             "type": "function",
             "function": [
                 "name": name,
                 "description": description,
                 "parameters": [
                     "type": "object",
-                    "properties": properties,
+                    "properties": sanitizedProperties,
                     "required": required,
                 ] as [String: Any],
             ] as [String: Any],

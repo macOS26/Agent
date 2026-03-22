@@ -62,7 +62,7 @@ final class ClaudeService {
         return result
     }
 
-    func send(messages: [[String: Any]]) async throws -> (content: [[String: Any]], stopReason: String) {
+    func send(messages: [[String: Any]]) async throws -> (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int) {
         guard !apiKey.isEmpty else { throw AgentError.noAPIKey }
 
         let body: [String: Any] = [
@@ -86,7 +86,7 @@ final class ClaudeService {
     /// Network I/O and response parsing off the main thread
     nonisolated private static func performRequest(
         bodyData: Data, apiKey: String, apiVersion: String, url: URL
-    ) async throws -> (content: [[String: Any]], stopReason: String) {
+    ) async throws -> (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int) {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
@@ -112,7 +112,11 @@ final class ClaudeService {
             throw AgentError.invalidResponse
         }
 
-        return (content, stopReason)
+        let usage = json["usage"] as? [String: Any]
+        let inputTokens = usage?["input_tokens"] as? Int ?? 0
+        let outputTokens = usage?["output_tokens"] as? Int ?? 0
+
+        return (content, stopReason, inputTokens, outputTokens)
     }
 
     // MARK: - Streaming
@@ -120,7 +124,7 @@ final class ClaudeService {
     func sendStreaming(
         messages: [[String: Any]],
         onTextDelta: @escaping @Sendable (String) -> Void
-    ) async throws -> (content: [[String: Any]], stopReason: String) {
+    ) async throws -> (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int) {
         guard !apiKey.isEmpty else { throw AgentError.noAPIKey }
 
         let body: [String: Any] = [
@@ -145,7 +149,7 @@ final class ClaudeService {
     nonisolated private static func performStreamingRequest(
         bodyData: Data, apiKey: String, apiVersion: String, url: URL,
         onTextDelta: @escaping @Sendable (String) -> Void
-    ) async throws -> (content: [[String: Any]], stopReason: String) {
+    ) async throws -> (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int) {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
@@ -178,6 +182,8 @@ final class ClaudeService {
         var inToolUse = false
         var inServerToolUse = false
         var pendingServerResult: [String: Any]?
+        var inputTokens = 0
+        var outputTokens = 0
 
         for try await line in bytes.lines {
             guard line.hasPrefix("data: ") else { continue }
@@ -187,6 +193,12 @@ final class ClaudeService {
                   let type = event["type"] as? String else { continue }
 
             switch type {
+            case "message_start":
+                if let message = event["message"] as? [String: Any],
+                   let usage = message["usage"] as? [String: Any] {
+                    inputTokens = usage["input_tokens"] as? Int ?? 0
+                }
+
             case "content_block_start":
                 if let block = event["content_block"] as? [String: Any],
                    let blockType = block["type"] as? String {
@@ -255,12 +267,15 @@ final class ClaudeService {
                    let reason = delta["stop_reason"] as? String {
                     stopReason = reason
                 }
+                if let usage = event["usage"] as? [String: Any] {
+                    outputTokens = usage["output_tokens"] as? Int ?? outputTokens
+                }
 
             default:
                 break
             }
         }
 
-        return (contentBlocks, stopReason)
+        return (contentBlocks, stopReason, inputTokens, outputTokens)
     }
 }

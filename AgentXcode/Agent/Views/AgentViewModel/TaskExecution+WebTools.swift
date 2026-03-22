@@ -94,13 +94,13 @@ extension AgentViewModel {
         }
     }
 
-    /// Handle web_get_url / web_get_title tools
+    /// Handle web_get_url / web_get_title tools (compile via User LaunchAgent)
     func handleWebGetUrlOrTitle(action: String, browser: String?) async -> String {
         let args = "{\"action\":\"\(action)\"}"
         guard let compileCmd = scriptService.compileCommand(name: "Selenium") else {
             return "Error: Selenium script not found"
         }
-        let compileResult = await executeLocal(command: compileCmd)
+        let compileResult = await executeViaUserAgent(command: compileCmd)
         if compileResult.status != 0 {
             return "Compile failed: \(compileResult.output)"
         }
@@ -110,13 +110,13 @@ extension AgentViewModel {
 
     // MARK: - Selenium WebDriver Tools (via AgentScript)
 
-    /// Helper for Selenium operations via AgentScript
+    /// Helper for Selenium operations via AgentScript (compile via User LaunchAgent)
     func runSeleniumNative(action: String, args: String) async -> String {
         let fullArgs = args.isEmpty ? "{\"action\":\"\(action)\"}" : args
         guard let compileCmd = scriptService.compileCommand(name: "Selenium") else {
             return "Error: Selenium script not found"
         }
-        let compileResult = await executeLocal(command: compileCmd)
+        let compileResult = await executeViaUserAgent(command: compileCmd)
         if compileResult.status != 0 {
             return "Compile failed: \(compileResult.output)"
         }

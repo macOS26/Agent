@@ -215,7 +215,9 @@
       "mcp__xcf-server__use_xcf",
       "Bash(cp:*)",
       "Bash(xxd /Users/toddbruss/Documents/GitHub/Agent/AgentXcode/Agent/Views/AgentViewModel/AgentViewModel+TaskExecution.swift)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(/tmp/missing_files.txt:*)",
+      "Read(//tmp/**)"
     ]
   }
 }

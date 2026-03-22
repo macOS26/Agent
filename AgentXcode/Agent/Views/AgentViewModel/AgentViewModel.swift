@@ -43,6 +43,18 @@ enum APIProvider: String, CaseIterable, Codable {
     }
 }
 
+enum PromptStyle: String, CaseIterable, Codable {
+    case full
+    case compact
+    
+    var displayName: String {
+        switch self {
+        case .full: "Full"
+        case .compact: "Compact"
+        }
+    }
+}
+
 @MainActor @Observable
 final class AgentViewModel {
     var taskInput = ""
@@ -52,6 +64,12 @@ final class AgentViewModel {
     var isRunning = false
     var isThinking = false
     var isListening = false
+
+    // Token tracking
+    var taskInputTokens: Int = 0
+    var taskOutputTokens: Int = 0
+    var sessionInputTokens: Int = 0
+    var sessionOutputTokens: Int = 0
     var userServiceActive = false
     var rootServiceActive = false
     var userWasActive = false

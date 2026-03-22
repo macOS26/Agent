@@ -141,7 +141,7 @@ extension AgentTools {
             description: "Execute JavaScript in the Selenium session. Useful for scrolling, DOM manipulation, or extracting data.",
             properties: [
                 "script": ["type": "string", "description": "JavaScript code to execute"],
-                "args": ["type": "array", "description": "Optional arguments for the script"],
+                "args": ["type": "array", "description": "Optional arguments for the script", "items": ["type": "string"] as [String: Any]] as [String: Any],
                 "port": ["type": "integer", "description": "WebDriver port (default 7055)"],
             ],
             required: ["script"]
