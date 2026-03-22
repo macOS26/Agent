@@ -51,7 +51,9 @@ struct SSEParser {
 /// Supports both direct JSON responses and true SSE streaming per MCP spec (2025-03-26).
 /// Uses URLSession.bytes(for:) for async line-by-line streaming instead of buffering.
 final class HTTPConnection: @unchecked Sendable, MCPConnection {
-    private let serverURL: URL
+    private let baseURL: URL
+    private let sseEndpoint: String?
+    private let httpEndpoint: String?
     private let customHeaders: [String: String]
     private let session: URLSession
     private struct State {
@@ -61,14 +63,38 @@ final class HTTPConnection: @unchecked Sendable, MCPConnection {
     }
     private let state = OSAllocatedUnfairLock(initialState: State())
 
-    init(url: URL, headers: [String: String]) {
-        self.serverURL = url
+    init(url: URL, headers: [String: String], sseEndpoint: String? = nil, httpEndpoint: String? = nil) {
+        self.baseURL = url
+        self.sseEndpoint = sseEndpoint
+        self.httpEndpoint = httpEndpoint
         self.customHeaders = headers
         let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 30
-        config.timeoutIntervalForResource = 300
+        config.timeoutIntervalForRequest = 180
+        config.timeoutIntervalForResource = 600
         self.session = URLSession(configuration: config)
     }
+
+    /// Build the request URL, appending endpoint path if configured
+    private func requestURL(for purpose: RequestPurpose) -> URL {
+        // If explicit endpoints are set, use them
+        switch purpose {
+        case .sse:
+            if let sseEndpoint, !sseEndpoint.isEmpty {
+                // sseEndpoint is like "/sse" or "/stream" - append to base URL
+                return baseURL.appendingPathComponent(sseEndpoint)
+            }
+        case .http:
+            if let httpEndpoint, !httpEndpoint.isEmpty {
+                return baseURL.appendingPathComponent(httpEndpoint)
+            }
+        case .delete:
+            // DELETE goes to base URL
+            break
+        }
+        return baseURL
+    }
+
+    private enum RequestPurpose { case sse, http, delete }
 
     var isAlive: Bool {
         state.withLock { $0.alive }
@@ -90,7 +116,10 @@ final class HTTPConnection: @unchecked Sendable, MCPConnection {
 
         let bodyData = try JSONSerialization.data(withJSONObject: body)
 
-        var request = URLRequest(url: serverURL)
+        // Use httpEndpoint if set, otherwise SSE endpoint, otherwise base URL
+        let requestURL = httpEndpoint != nil ? requestURL(for: .http) :
+                         (sseEndpoint != nil ? requestURL(for: .sse) : baseURL)
+        var request = URLRequest(url: requestURL)
         request.httpMethod = "POST"
         request.httpBody = bodyData
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -163,7 +192,9 @@ final class HTTPConnection: @unchecked Sendable, MCPConnection {
 
         let bodyData = try JSONSerialization.data(withJSONObject: body)
 
-        var request = URLRequest(url: serverURL)
+        // Use httpEndpoint for notifications if set, otherwise base URL
+        let requestURL = httpEndpoint != nil ? requestURL(for: .http) : baseURL
+        var request = URLRequest(url: requestURL)
         request.httpMethod = "POST"
         request.httpBody = bodyData
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -189,7 +220,7 @@ final class HTTPConnection: @unchecked Sendable, MCPConnection {
 
         // Send DELETE to close session per MCP spec
         if let sid {
-            var request = URLRequest(url: serverURL)
+            var request = URLRequest(url: baseURL)
             request.httpMethod = "DELETE"
             request.setValue(sid, forHTTPHeaderField: "Mcp-Session-Id")
             for (key, value) in customHeaders {

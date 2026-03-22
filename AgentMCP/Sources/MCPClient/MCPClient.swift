@@ -18,6 +18,9 @@ public actor MCPClient {
         // HTTP transport
         public let url: String?
         public let headers: [String: String]
+        // SSE/HTTP transport endpoint paths (for servers that use separate endpoints)
+        public let sseEndpoint: String?
+        public let httpEndpoint: String?
         // Common
         public let enabled: Bool
         public let autoStart: Bool
@@ -37,6 +40,7 @@ public actor MCPClient {
             self.id = id; self.name = name; self.command = command
             self.arguments = arguments; self.env = env
             self.url = nil; self.headers = [:]
+            self.sseEndpoint = nil; self.httpEndpoint = nil
             self.enabled = enabled; self.autoStart = autoStart
         }
 
@@ -44,12 +48,61 @@ public actor MCPClient {
         public init(
             id: UUID = UUID(), name: String, url: String,
             headers: [String: String] = [:],
+            sseEndpoint: String? = nil, httpEndpoint: String? = nil,
             enabled: Bool = true, autoStart: Bool = true
         ) {
             self.id = id; self.name = name; self.command = ""
             self.arguments = []; self.env = [:]
             self.url = url; self.headers = headers
+            self.sseEndpoint = sseEndpoint; self.httpEndpoint = httpEndpoint
             self.enabled = enabled; self.autoStart = autoStart
+        }
+
+        // MARK: - Codable (MCP-standard fields)
+
+        private enum CodingKeys: String, CodingKey {
+            case transport, command, args, env, url, headers
+            case sseEndpoint, httpEndpoint
+        }
+
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            let transport = try c.decodeIfPresent(String.self, forKey: .transport)
+
+            id = UUID()
+            name = ""
+
+            command = try c.decodeIfPresent(String.self, forKey: .command) ?? ""
+            arguments = try c.decodeIfPresent([String].self, forKey: .args) ?? []
+            env = try c.decodeIfPresent([String: String].self, forKey: .env) ?? [:]
+            url = try c.decodeIfPresent(String.self, forKey: .url)
+            headers = try c.decodeIfPresent([String: String].self, forKey: .headers) ?? [:]
+            sseEndpoint = try c.decodeIfPresent(String.self, forKey: .sseEndpoint)
+            httpEndpoint = try c.decodeIfPresent(String.self, forKey: .httpEndpoint)
+
+            // If transport is explicitly "http"/"https" with a url, clear command
+            if let transport, (transport == "http" || transport == "https"), url != nil {
+                _ = command // command stays empty for HTTP
+            }
+
+            enabled = true
+            autoStart = true
+        }
+
+        public func encode(to encoder: Encoder) throws {
+            var c = encoder.container(keyedBy: CodingKeys.self)
+            if let url, !url.isEmpty {
+                try c.encode("http", forKey: .transport)
+                try c.encode(url, forKey: .url)
+                if !headers.isEmpty { try c.encode(headers, forKey: .headers) }
+                if let sseEndpoint, !sseEndpoint.isEmpty { try c.encode(sseEndpoint, forKey: .sseEndpoint) }
+                if let httpEndpoint, !httpEndpoint.isEmpty { try c.encode(httpEndpoint, forKey: .httpEndpoint) }
+            } else {
+                try c.encode("stdio", forKey: .transport)
+                try c.encode(command, forKey: .command)
+                try c.encode(arguments, forKey: .args)
+                if !env.isEmpty { try c.encode(env, forKey: .env) }
+            }
         }
     }
 
@@ -144,7 +197,7 @@ public actor MCPClient {
         connections[config.id] = connection
         configs[config.id] = config
 
-        // Wrap initialization in a 30-second timeout
+        // Wrap initialization in a 90-second timeout
         do {
             try await withThrowingTaskGroup(of: Void.self) { group in
                 group.addTask {
@@ -176,8 +229,8 @@ public actor MCPClient {
                     )
                 }
                 group.addTask {
-                    try await Task.sleep(nanoseconds: 30_000_000_000)
-                    throw MCPClientError.connectionFailed("Initialization timed out after 30 seconds")
+                    try await Task.sleep(nanoseconds: 90_000_000_000)
+                    throw MCPClientError.connectionFailed("Initialization timed out after 90 seconds")
                 }
                 try await group.next()
                 group.cancelAll()
@@ -392,8 +445,10 @@ public actor MCPClient {
                 throw MCPClientError.connectionFailed("Plain HTTP only allowed for localhost. Use HTTPS for remote servers.")
             }
         }
-        print("[MCPClient] Creating HTTP connection to \(urlString)")
-        return HTTPConnection(url: url, headers: config.headers)
+        print("[MCPClient] Creating HTTP connection to \(urlString)" +
+              (config.sseEndpoint != nil ? " (sse: \(config.sseEndpoint!))" : "") +
+              (config.httpEndpoint != nil ? " (http: \(config.httpEndpoint!))" : ""))
+        return HTTPConnection(url: url, headers: config.headers, sseEndpoint: config.sseEndpoint, httpEndpoint: config.httpEndpoint)
     }
 
     private func discoverCapabilities(serverId: UUID, serverName: String, connection: any MCPConnection, hasTools: Bool, hasResources: Bool) async throws {

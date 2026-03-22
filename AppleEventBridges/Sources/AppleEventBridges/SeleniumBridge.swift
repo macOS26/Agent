@@ -388,7 +388,7 @@ public class SeleniumClient {
         return response["value"]
     }
     
-    public func executeAsyncScript(_ script: String, args: [Any] = [], timeout: TimeInterval = 30) async throws -> Any? {
+    public func executeAsyncScript(_ script: String, args: [Any] = [], timeout: TimeInterval = 90) async throws -> Any? {
         guard let sessionId = session?.sessionId else {
             throw SeleniumError.invalidSession
         }
@@ -599,7 +599,7 @@ public class SeleniumClient {
     
     // MARK: - Waits
     
-    public func waitForElement(by strategy: LocatorStrategy, value: String, timeout: TimeInterval = 10) async throws -> WebElement {
+    public func waitForElement(by strategy: LocatorStrategy, value: String, timeout: TimeInterval = 90) async throws -> WebElement {
         let startTime = Date()
         
         while Date().timeIntervalSince(startTime) < timeout {
@@ -617,7 +617,7 @@ public class SeleniumClient {
         throw SeleniumError.timeout("Element not found: \(strategy.rawValue): \(value)")
     }
     
-    public func waitForElementClickable(by strategy: LocatorStrategy, value: String, timeout: TimeInterval = 10) async throws -> WebElement {
+    public func waitForElementClickable(by strategy: LocatorStrategy, value: String, timeout: TimeInterval = 90) async throws -> WebElement {
         let startTime = Date()
         
         while Date().timeIntervalSince(startTime) < timeout {
@@ -637,7 +637,7 @@ public class SeleniumClient {
         throw SeleniumError.timeout("Element not clickable: \(strategy.rawValue): \(value)")
     }
     
-    public func waitForElementPresent(by strategy: LocatorStrategy, value: String, timeout: TimeInterval = 10) async throws -> WebElement {
+    public func waitForElementPresent(by strategy: LocatorStrategy, value: String, timeout: TimeInterval = 90) async throws -> WebElement {
         let startTime = Date()
         
         while Date().timeIntervalSince(startTime) < timeout {

@@ -50,10 +50,15 @@ struct MCPServerConfig: Codable, Identifiable, Hashable {
         self.autoStart = autoStart
     }
 
+    // SSE/HTTP transport endpoint paths (for servers that use separate endpoints)
+    var sseEndpoint: String?
+    var httpEndpoint: String?
+
     // Only encode/decode MCP-standard fields in JSON
     // Only MCP-standard fields in JSON; name is the dictionary key, not a field
     private enum CodingKeys: String, CodingKey {
         case transport, command, args, env, url, headers
+        case sseEndpoint, httpEndpoint
     }
 
     init(from decoder: Decoder) throws {
@@ -64,6 +69,8 @@ struct MCPServerConfig: Codable, Identifiable, Hashable {
         environment = try c.decodeIfPresent([String: String].self, forKey: .env) ?? [:]
         url = try c.decodeIfPresent(String.self, forKey: .url)
         headers = try c.decodeIfPresent([String: String].self, forKey: .headers) ?? [:]
+        sseEndpoint = try c.decodeIfPresent(String.self, forKey: .sseEndpoint)
+        httpEndpoint = try c.decodeIfPresent(String.self, forKey: .httpEndpoint)
         // If transport is explicitly "http"/"https" but url is missing, clear command
         if let transport, (transport == "http" || transport == "https"), url != nil {
             command = ""
@@ -81,6 +88,12 @@ struct MCPServerConfig: Codable, Identifiable, Hashable {
             try c.encode(url, forKey: .url)
             if !headers.isEmpty {
                 try c.encode(headers, forKey: .headers)
+            }
+            if let sseEndpoint, !sseEndpoint.isEmpty {
+                try c.encode(sseEndpoint, forKey: .sseEndpoint)
+            }
+            if let httpEndpoint, !httpEndpoint.isEmpty {
+                try c.encode(httpEndpoint, forKey: .httpEndpoint)
             }
         } else {
             try c.encode("stdio", forKey: .transport)

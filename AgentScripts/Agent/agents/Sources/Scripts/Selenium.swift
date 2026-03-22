@@ -339,7 +339,7 @@ func performAction(action: String, params: [String: Any], outputPath: String, sc
             throw SeleniumError.invalidSelector("script required for executeAsync action")
         }
         let args = params["args"] as? [Any] ?? []
-        let timeout = params["timeout"] as? Double ?? 30.0
+        let timeout = params["timeout"] as? Double ?? 90.0
         let port = params["port"] as? Int ?? 7055
         let client = getOrCreateClient(port: port)
         let result = try await client.executeAsyncScript(script, args: args, timeout: timeout)
@@ -387,7 +387,7 @@ func performAction(action: String, params: [String: Any], outputPath: String, sc
             throw SeleniumError.invalidSelector("strategy and value required for waitFor action")
         }
         let locator = parseLocator(strategy)
-        let timeout = params["timeout"] as? Double ?? 10.0
+        let timeout = params["timeout"] as? Double ?? 90.0
         let port = params["port"] as? Int ?? 7055
         let client = getOrCreateClient(port: port)
         let element = try await client.waitForElement(by: locator, value: value, timeout: timeout)
@@ -400,7 +400,7 @@ func performAction(action: String, params: [String: Any], outputPath: String, sc
             throw SeleniumError.invalidSelector("strategy and value required for waitForClickable action")
         }
         let locator = parseLocator(strategy)
-        let timeout = params["timeout"] as? Double ?? 10.0
+        let timeout = params["timeout"] as? Double ?? 90.0
         let port = params["port"] as? Int ?? 7055
         let client = getOrCreateClient(port: port)
         let element = try await client.waitForElementClickable(by: locator, value: value, timeout: timeout)

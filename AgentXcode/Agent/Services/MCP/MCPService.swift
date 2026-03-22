@@ -77,6 +77,8 @@ final class MCPService: @unchecked Sendable {
                 name: config.name,
                 url: config.url ?? "",
                 headers: config.headers,
+                sseEndpoint: config.sseEndpoint,
+                httpEndpoint: config.httpEndpoint,
                 enabled: config.enabled,
                 autoStart: config.autoStart
             )

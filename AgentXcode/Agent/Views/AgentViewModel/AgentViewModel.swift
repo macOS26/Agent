@@ -1501,7 +1501,7 @@ final class AgentViewModel {
         request.httpMethod = "GET"
         request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
-        request.timeoutInterval = 10
+        request.timeoutInterval = 90
 
         let (data, response) = try await URLSession.shared.data(for: request)
 
@@ -1604,7 +1604,7 @@ final class AgentViewModel {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.timeoutInterval = 10
+        request.timeoutInterval = 90
 
         let (data, response) = try await URLSession.shared.data(for: request)
 
@@ -1656,7 +1656,7 @@ final class AgentViewModel {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.timeoutInterval = 10
+        request.timeoutInterval = 90
 
         let (data, response) = try await URLSession.shared.data(for: request)
 
@@ -1704,7 +1704,7 @@ final class AgentViewModel {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.timeoutInterval = 10
+        request.timeoutInterval = 90
 
         let (data, response) = try await URLSession.shared.data(for: request)
 
@@ -1735,7 +1735,7 @@ final class AgentViewModel {
         if !apiKey.isEmpty {
             tagsRequest.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         }
-        tagsRequest.timeoutInterval = 15
+        tagsRequest.timeoutInterval = 90
 
         let (data, response) = try await URLSession.shared.data(for: tagsRequest)
 
@@ -1779,7 +1779,7 @@ final class AgentViewModel {
                 request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
             }
             request.httpBody = body
-            request.timeoutInterval = 10
+            request.timeoutInterval = 90
 
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let http = response as? HTTPURLResponse, http.statusCode == 200,
