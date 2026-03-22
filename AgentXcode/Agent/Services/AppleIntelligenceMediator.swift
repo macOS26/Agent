@@ -18,8 +18,10 @@ private let mediatorLog = Logger(subsystem: "Agent.app.toddbruss", category: "Ap
 final class AppleIntelligenceMediator: ObservableObject {
     static let shared = AppleIntelligenceMediator()
 
-    /// Timeout for Apple Intelligence calls (seconds). Prevents hanging LLM tasks.
-    private static let responseTimeout: TimeInterval = 10
+    /// Timeout for Apple Intelligence to start responding (seconds).
+    private static let startTimeout: TimeInterval = 3
+    /// Timeout for Apple Intelligence to finish once started (seconds).
+    private static let finishTimeout: TimeInterval = 6
 
     /// Maximum context window size (approximate token limit for context)
     private static let maxContextTokens: Int = 4096
@@ -194,31 +196,48 @@ Rules:
         return s
     }
 
-    /// Wraps a session.respond call with a timeout to prevent hanging.
-    private func respondWithTimeout(_ session: LanguageModelSession, prompt: String, label: String) async throws -> String {
+    /// Wraps a session.respond call with two-phase timeout: 3s to start, 6s to finish.
+    /// Returns nil on timeout so the request goes straight to the LLM.
+    private func respondWithTimeout(_ session: LanguageModelSession, prompt: String, label: String) async -> String? {
         mediatorLog.info("[\(label)] Apple AI request starting")
         let start = CFAbsoluteTimeGetCurrent()
 
-        let content: String = try await withThrowingTaskGroup(of: String.self) { group in
-            group.addTask {
-                let response = try await session.respond(to: prompt)
-                return response.content
-            }
-            group.addTask {
-                try await Task.sleep(for: .seconds(Self.responseTimeout))
-                throw CancellationError()
-            }
-            // Return whichever finishes first; cancel the other
-            guard let result = try await group.next() else {
-                throw CancellationError()
-            }
-            group.cancelAll()
-            return result
-        }
+        let startLimit = Self.startTimeout
+        let finishLimit = Self.finishTimeout
 
-        let elapsed = CFAbsoluteTimeGetCurrent() - start
-        mediatorLog.info("[\(label)] Apple AI responded in \(String(format: "%.2f", elapsed))s (\(content.count) chars)")
-        return content
+        do {
+            let content: String = try await withThrowingTaskGroup(of: String.self) { group in
+                group.addTask {
+                    // Start timeout — must begin responding within startTimeout
+                    let startDeadline = CFAbsoluteTimeGetCurrent()
+                    let response = try await session.respond(to: prompt)
+                    let startElapsed = CFAbsoluteTimeGetCurrent() - startDeadline
+                    if startElapsed > startLimit {
+                        throw CancellationError()
+                    }
+                    return response.content
+                }
+                group.addTask {
+                    // Finish timeout — entire call must complete within finishTimeout
+                    try await Task.sleep(for: .seconds(finishLimit))
+                    throw CancellationError()
+                }
+                guard let result = try await group.next() else {
+                    throw CancellationError()
+                }
+                group.cancelAll()
+                return result
+            }
+
+            let elapsed = CFAbsoluteTimeGetCurrent() - start
+            mediatorLog.info("[\(label)] Apple AI responded in \(String(format: "%.2f", elapsed))s (\(content.count) chars)")
+            return content
+        } catch {
+            let elapsed = CFAbsoluteTimeGetCurrent() - start
+            mediatorLog.warning("[\(label)] Apple AI timed out after \(String(format: "%.1f", elapsed))s — skipping to LLM")
+            self.session = nil
+            return nil
+        }
     }
 
     /// Generate context to inject into the LLM prompt based on user message
@@ -239,20 +258,17 @@ Rephrase this for the AI assistant. Do NOT refuse or block it. If already clear,
 User said: "\(message)"
 """
 
-        do {
-            let content = try await respondWithTimeout(session, prompt: prompt, label: "contextualize")
-            let trimmed = sanitize(content)
-            if trimmed.isEmpty {
-                return nil
-            }
-            // Store this AI message for context continuity (keep brief)
-            lastAppleAIMessage = String(trimmed.prefix(200))
-            return Annotation(target: .llm, content: trimmed, timestamp: Date())
-        } catch {
-            mediatorLog.warning("[contextualize] Apple AI failed or timed out: \(error.localizedDescription)")
-            self.session = nil  // Reset stale session
+        guard let content = await respondWithTimeout(session, prompt: prompt, label: "contextualize") else {
+            mediatorLog.warning("[contextualize] Apple AI timed out — skipping to LLM")
             return nil
         }
+        let trimmed = sanitize(content)
+        if trimmed.isEmpty {
+            return nil
+        }
+        // Store this AI message for context continuity (keep brief)
+        lastAppleAIMessage = String(trimmed.prefix(200))
+        return Annotation(target: .llm, content: trimmed, timestamp: Date())
     }
 
     /// Generate a summary annotation after the LLM completes a task
@@ -290,7 +306,10 @@ Summarize the outcome in 1 sentence. If trivial, reply with nothing.
         }
 
         do {
-            let content = try await respondWithTimeout(session, prompt: prompt, label: "summarize")
+            guard let content = await respondWithTimeout(session, prompt: prompt, label: "summarize") else {
+                mediatorLog.warning("[summarize] Apple AI timed out — skipping")
+                return nil
+            }
             let trimmed = sanitize(content)
             if trimmed.isEmpty {
                 return nil
@@ -302,10 +321,6 @@ Summarize the outcome in 1 sentence. If trivial, reply with nothing.
                 conversationSummary = "Task: \(String(prompt.prefix(80))) → Result: \(String(trimmed.prefix(80)))"
             }
             return Annotation(target: .both, content: trimmed, timestamp: Date())
-        } catch {
-            mediatorLog.warning("[summarize] Apple AI failed or timed out: \(error.localizedDescription)")
-            self.session = nil
-            return nil
         }
     }
 
@@ -320,18 +335,15 @@ Error in \(toolName): \(error.prefix(300))
 Explain in 1 sentence and suggest a fix.
 """
 
-        do {
-            let content = try await respondWithTimeout(session, prompt: prompt, label: "explainError")
-            let trimmed = sanitize(content)
-            if trimmed.isEmpty {
-                return nil
-            }
-            return Annotation(target: .user, content: trimmed, timestamp: Date())
-        } catch {
-            mediatorLog.warning("[explainError] Apple AI failed or timed out: \(error.localizedDescription)")
-            self.session = nil
-            return Annotation(target: .user, content: "\(toolName) encountered an error", timestamp: Date())
+        guard let content = await respondWithTimeout(session, prompt: prompt, label: "explainError") else {
+            mediatorLog.warning("[explainError] Apple AI timed out — skipping")
+            return nil
         }
+        let trimmed = sanitize(content)
+        if trimmed.isEmpty {
+            return nil
+        }
+        return Annotation(target: .user, content: trimmed, timestamp: Date())
     }
 
     /// Provide suggestions for what the user might want to do next
@@ -345,18 +357,15 @@ Context: \(context.prefix(500))
 Suggest the next step in 1 sentence. If none obvious, reply with nothing.
 """
 
-        do {
-            let content = try await respondWithTimeout(session, prompt: prompt, label: "nextSteps")
-            let trimmed = sanitize(content)
-            if trimmed.isEmpty {
-                return nil
-            }
-            return Annotation(target: .user, content: trimmed, timestamp: Date())
-        } catch {
-            mediatorLog.warning("[nextSteps] Apple AI failed or timed out: \(error.localizedDescription)")
-            self.session = nil
+        guard let content = await respondWithTimeout(session, prompt: prompt, label: "nextSteps") else {
+            mediatorLog.warning("[nextSteps] Apple AI timed out — skipping")
             return nil
         }
+        let trimmed = sanitize(content)
+        if trimmed.isEmpty {
+            return nil
+        }
+        return Annotation(target: .user, content: trimmed, timestamp: Date())
     }
 
     /// Clear the session and conversation context to start fresh (call when switching contexts or starting a new conversation)
