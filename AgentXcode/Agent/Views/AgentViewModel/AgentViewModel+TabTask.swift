@@ -149,6 +149,8 @@ extension AgentViewModel {
         var iterations = 0
         let maxIter = maxIterations
         var consecutiveNoTool = 0
+        var timeoutRetryCount = 0
+        let maxTimeoutRetries = 2
 
         // Apple Intelligence mediator for contextual annotations (same as main task)
         let mediator = AppleIntelligenceMediator.shared
@@ -276,8 +278,56 @@ extension AgentViewModel {
 
             } catch {
                 if !Task.isCancelled {
-                    tabTaskLog.error("[\(tab.displayTitle)] LLM error at iteration \(iterations): \(error.localizedDescription)")
-                    tab.appendLog("Error: \(error.localizedDescription)")
+                    let errMsg = error.localizedDescription
+                    
+                    // Detect timeout errors
+                    let isNetworkTimeout = errMsg.lowercased().contains("timeout") || errMsg.lowercased().contains("timed out")
+                    
+                    tabTaskLog.error("[\(tab.displayTitle)] LLM error at iteration \(iterations): \(errMsg) (isTimeout: \(isNetworkTimeout))")
+                    
+                    // Determine error source for better logging
+                    var errorSource = "Unknown"
+                    if let claude = claude {
+                        errorSource = "Claude API"
+                    } else if let openAICompatible = openAICompatible {
+                        errorSource = "\(provider.displayName) API"
+                    } else if let ollama = ollama {
+                        errorSource = "Ollama API"
+                    } else if let foundationModelService = foundationModelService {
+                        errorSource = "Apple Intelligence"
+                    }
+                    
+                    // Auto-retry on 429 rate limit after 10 seconds
+                    if errMsg.contains("429") || errMsg.lowercased().contains("rate limit") || errMsg.lowercased().contains("concurrent request") {
+                        tab.appendLog("Rate limited — retrying in 10 seconds...")
+                        try? await Task.sleep(for: .seconds(10))
+                        if Task.isCancelled { break }
+                        continue
+                    }
+                    
+                    // Handle timeout errors with retry logic
+                    if isNetworkTimeout {
+                        // Check if we've already retried this timeout
+                        if timeoutRetryCount < maxTimeoutRetries {
+                            timeoutRetryCount += 1
+                            let retryMessage = "\(errorSource) timeout detected (attempt \(timeoutRetryCount)/\(maxTimeoutRetries)) — retrying in 10 seconds..."
+                            tab.appendLog(retryMessage)
+                            
+                            // Log to task log for debugging
+                            tabTaskLog.info("[\(tab.displayTitle)] \(errorSource) timeout, retry \(timeoutRetryCount)/\(maxTimeoutRetries)")
+                            
+                            try? await Task.sleep(for: .seconds(10))
+                            if Task.isCancelled { break }
+                            continue
+                        } else {
+                            // Max retries reached
+                            let timeoutMessage = "\(errorSource) timeout after \(maxTimeoutRetries) retries. Please check your network connection or try a different LLM provider."
+                            tab.appendLog(timeoutMessage)
+                        }
+                    } else {
+                        // Non-timeout error
+                        tab.appendLog("\(errorSource) Error: \(errMsg)")
+                    }
                 }
                 break
             }

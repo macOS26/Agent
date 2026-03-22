@@ -33,6 +33,13 @@ extension AgentTools {
         // Task
         static let taskComplete = "task_complete"
         
+        // Conversation Tools
+        static let writeText = "write_text"
+        static let transformText = "transform_text"
+        static let sendMessage = "send_message"
+        static let aboutSelf = "about_self"
+        static let fixText = "fix_text"
+        
         // Accessibility
         static let axListWindows = "ax_list_windows"
         static let axInspectElement = "ax_inspect_element"

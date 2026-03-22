@@ -105,6 +105,12 @@ enum AgentTools {
         static let seleniumWait = "selenium_wait"
         // Ollama-only
         static let webSearch = "web_search"
+        // Conversation Tools
+        static let writeText = "write_text"
+        static let transformText = "transform_text"
+        static let sendMessage = "send_message"
+        static let aboutSelf = "about_self"
+        static let fixText = "fix_text"
     }
 
     // MARK: - System Prompt (full version for Claude/Ollama)
@@ -189,6 +195,13 @@ enum AgentTools {
         \(n.webOpen), \(n.webFind), \(n.webClick), \(n.webType), \(n.webExecuteJs), \(n.webGetUrl), \(n.webGetTitle)
         Selenium: \(n.seleniumStart), \(n.seleniumStop), \(n.seleniumNavigate), \(n.seleniumFind), \(n.seleniumClick), \(n.seleniumType), \(n.seleniumExecute), \(n.seleniumScreenshot), \(n.seleniumWait)
 
+        === CONVERSATION TOOLS ===
+        \(n.writeText): Generate prose about a subject. No emojis in output.
+        \(n.transformText): Convert text to grocery list, todo list, outline, summary, etc. No emojis.
+        \(n.sendMessage): Send content via iMessage, email, SMS, or clipboard. No emojis.
+        \(n.aboutSelf): Describe Agent's capabilities, tools, and usage. No emojis.
+        \(n.fixText): Fix spelling and grammar without emojis.
+
         TOOL DISCOVERY: \(n.listNativeTools), \(n.listMcpTools)
         MCP TOOLS: mcp_* in your tool list. Never call a server's list/tools — your list IS the truth.
         IMAGE PATHS: Print file paths — UI renders clickable links.
@@ -208,9 +221,10 @@ enum AgentTools {
 
     /// Returns the tools available for a given provider.
     /// Web search via Tavily is now available for all providers as a backup search option.
+    /// Conversation tools for natural language tasks are also included.
     static func tools(for provider: APIProvider) -> [ToolDef] {
-        // All providers get web_search as a backup search option
-        return commonTools + webSearchTools
+        // All providers get web_search and conversation tools
+        return commonTools + webSearchTools + conversationTools
     }
 //TOOLS:
 //\(enabledAppleAIToolLines())
@@ -239,7 +253,7 @@ enum AgentTools {
     /// Brief descriptions + examples of each enabled Apple AI tool.
     @MainActor private static func enabledAppleAIToolDescriptions() -> String {
         let prefs = ToolPreferencesService.shared
-        return commonTools
+        return (commonTools + conversationTools)
             .filter { prefs.isEnabled(.foundationModel, $0.name) }
             .compactMap { tool -> String? in
                 guard let example = toolExamples[tool.name] else { return nil }
@@ -309,6 +323,12 @@ enum AgentTools {
         Name.deleteJavascript:     #"delete_javascript {"name": "HelloJXA"}"#,
         Name.listNativeTools:      "list_native_tools",
         Name.listMcpTools:         "list_mcp_tools",
+        // Conversation Tools
+        Name.writeText:            #"write_text {"subject": "machine learning", "style": "informative", "length": "medium"}"#,
+        Name.transformText:        #"transform_text {"text": "buy milk, eggs, bread", "transform": "grocery_list"}"#,
+        Name.sendMessage:          #"send_message {"content": "Hello!", "recipient": "me", "channel": "imessage"}"#,
+        Name.aboutSelf:            "about_self",
+        Name.fixText:              #"fix_text {"text": "this has spellng erors", "fixes": "all"}"#,
     ]
 
     @MainActor private static func enabledAppleAIToolLines() -> String {
@@ -1142,23 +1162,23 @@ enum AgentTools {
     /// Create native FoundationModels.Tool objects for on-device Apple Intelligence.
     /// Each tool returns GeneratedContent as arguments, which the model populates with parameters.
     @MainActor static func nativeTools() -> [any Tool] {
-        commonTools.map { toolDef in
+        (commonTools + conversationTools).map { toolDef in
             NativeAgentTool(toolDef: toolDef)
         }
     }
 
     // MARK: - Plain-Text Format (for Foundation Models / text-based providers)
 
-    /// All tool names derived from commonTools. Use instead of hardcoded lists.
+    /// All tool names derived from commonTools + conversationTools. Use instead of hardcoded lists.
     nonisolated static var toolNames: [String] {
-        commonTools.map { $0.name }
+        (commonTools + conversationTools).map { $0.name }
     }
 
     /// Compact tool reference for inclusion in plain-text model prompts.
     /// Format: toolName {"param": type, "optParam"?: type} — short description
     nonisolated static var textFormat: String {
         var lines: [String] = ["TOOLS — call as: toolName {\"param\": value, ...}"]
-        for tool in commonTools {
+        for tool in (commonTools + conversationTools) {
             let reqParams = tool.required
             let allKeys = tool.properties.keys.sorted { a, b in
                 let aReq = reqParams.contains(a)
@@ -1236,7 +1256,7 @@ enum AgentTools {
     /// All common tools + MCP tools in Claude/Anthropic format.
     @MainActor static var claudeFormat: [[String: Any]] {
         let prefs = ToolPreferencesService.shared
-        var tools = commonTools
+        var tools = (commonTools + conversationTools)
             .filter { prefs.isEnabled(.claude, $0.name) }
             .map { tool in
                 claudeTool(name: tool.name, description: tool.description,
@@ -1293,12 +1313,68 @@ enum AgentTools {
         ),
     ]
 
+    /// Conversation tool definitions for writing, text transformation, self-description, and corrections.
+    nonisolated(unsafe) static let conversationTools: [ToolDef] = [
+        ToolDef(
+            name: Name.writeText,
+            description: "Write text about a given subject. Creates well-structured prose on any topic without emojis. Use for generating content, articles, descriptions, explanations, or creative writing.",
+            properties: [
+                "subject": ["type": "string", "description": "The subject or topic to write about"],
+                "style": ["type": "string", "description": "Writing style: 'informative', 'creative', 'technical', 'casual', or 'formal' (default: 'informative')"],
+                "length": ["type": "string", "description": "Desired length: 'short' (~100 words), 'medium' (~300 words), 'long' (~600 words), or specify exact word count as number"],
+                "context": ["type": "string", "description": "Optional additional context or requirements for the writing"],
+            ],
+            required: ["subject"]
+        ),
+        ToolDef(
+            name: Name.transformText,
+            description: "Transform text into different formats. Convert prose to lists, outlines, summaries, or restructured content. No emojis in output. Use for creating grocery lists, todo lists, bullet points, or reformatting text.",
+            properties: [
+                "text": ["type": "string", "description": "The text to transform"],
+                "transform": ["type": "string", "description": "Transformation type: 'grocery_list', 'todo_list', 'outline', 'summary', 'bullet_points', 'numbered_list', 'table', or 'qa'"],
+                "options": ["type": "string", "description": "Optional additional options for the transformation"],
+            ],
+            required: ["text", "transform"]
+        ),
+        ToolDef(
+            name: Name.sendMessage,
+            description: "Send a message to the user via iMessage, email, or other channels. Formats and delivers text content to specified recipients. No emojis in message content.",
+            properties: [
+                "content": ["type": "string", "description": "The message content to send"],
+                "recipient": ["type": "string", "description": "Recipient: 'me' (self), phone number, email address, or contact name"],
+                "channel": ["type": "string", "description": "Delivery channel: 'imessage' (default), 'email', 'sms', or 'clipboard'"],
+                "subject": ["type": "string", "description": "Subject line for email messages"],
+            ],
+            required: ["content", "recipient"]
+        ),
+        ToolDef(
+            name: Name.aboutSelf,
+            description: "Describe Agent's capabilities, features, and how to use it. Returns information about available tools, current configuration, and example usage patterns. No emojis.",
+            properties: [
+                "topic": ["type": "string", "description": "Optional specific topic: 'tools', 'features', 'scripting', 'automation', 'coding', or 'all' (default: 'all')"],
+                "detail": ["type": "string", "description": "Level of detail: 'brief', 'standard', or 'detailed' (default: 'standard')"],
+            ],
+            required: []
+        ),
+        ToolDef(
+            name: Name.fixText,
+            description: "Fix spelling and grammar errors in text without adding emojis. Corrects typos, punctuation, capitalization, and grammar while preserving the original meaning and tone.",
+            properties: [
+                "text": ["type": "string", "description": "The text to fix"],
+                "fixes": ["type": "string", "description": "Types of fixes: 'all' (default), 'spelling', 'grammar', 'punctuation', or 'capitalization'"],
+                "preserve_style": ["type": "boolean", "description": "Keep original writing style and tone (default: true)"],
+            ],
+            required: ["text"]
+        ),
+    ]
+
     /// Provider-aware Ollama/OpenAI format — filters tools by per-provider preferences.
     /// Web search via Tavily is now available for all providers.
+    /// Conversation tools for natural language tasks are also included.
     @MainActor static func ollamaTools(for provider: APIProvider) -> [[String: Any]] {
         let prefs = ToolPreferencesService.shared
-        // All providers get web_search as a backup search option
-        var tools = (commonTools + webSearchTools)
+        // All providers get web_search and conversation tools
+        var tools = (commonTools + webSearchTools + conversationTools)
             .filter { prefs.isEnabled(provider, $0.name) }
             .map { tool in
                 ollamaTool(name: tool.name, description: tool.description,

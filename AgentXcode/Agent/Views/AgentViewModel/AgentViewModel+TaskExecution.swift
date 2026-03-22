@@ -3,6 +3,7 @@
 import MCPClient
 import MultiLineDiff
 import os.log
+import Cocoa
 
 private let taskLog = Logger(subsystem: "Agent.app.toddbruss", category: "TaskExecution")
 
@@ -534,6 +535,648 @@ extension AgentViewModel {
             return await runSeleniumNative(action: "waitFor", args: args)
         }
 
+        // MARK: - Conversation Tools (Phase 1)
+        
+        // write_text
+        if name == "write_text" {
+            guard let subject = input["subject"] as? String, !subject.isEmpty else {
+                return "Error: subject is required for write_text"
+            }
+            
+            let style = input["style"] as? String ?? "informative"
+            let lengthStr = input["length"] as? String ?? "medium"
+            let context = input["context"] as? String ?? ""
+            
+            // Parse length
+            let targetWords: Int
+            if let exactWords = Int(lengthStr) {
+                targetWords = exactWords
+            } else {
+                switch lengthStr.lowercased() {
+                case "short": targetWords = 100
+                case "medium": targetWords = 300
+                case "long": targetWords = 600
+                default: targetWords = 300
+                }
+            }
+            
+            // Build guidance for text generation
+            let guidance = """
+            Generate \(style) text about "\(subject)" in approximately \(targetWords) words.
+            
+            Style: \(style)
+            \(context.isEmpty ? "" : "Context: \(context)")
+            
+            Requirements:
+            - No emojis - plain text only
+            - Well-structured paragraphs
+            - Clear and engaging writing
+            - Accurate and informative content
+            
+            Begin your response directly with the text content.
+            """
+            
+            return guidance
+        }
+        
+        // transform_text
+        if name == "transform_text" {
+            guard let text = input["text"] as? String, !text.isEmpty else {
+                return "Error: text is required for transform_text"
+            }
+            
+            guard let transform = input["transform"] as? String, !transform.isEmpty else {
+                return "Error: transform type is required for transform_text"
+            }
+            
+            let options = input["options"] as? String ?? ""
+            
+            // Validate transform type
+            let validTransforms = ["grocery_list", "todo_list", "outline", "summary", "bullet_points", "numbered_list", "table", "qa"]
+            guard validTransforms.contains(transform.lowercased()) else {
+                return "Error: invalid transform type. Valid types: \(validTransforms.joined(separator: ", "))"
+            }
+            
+            let guidance: String
+            
+            switch transform.lowercased() {
+            case "grocery_list":
+                guidance = """
+                Transform the following text into a grocery list format.
+                
+                Original text:
+                \(text)
+                \(options.isEmpty ? "" : "Options: \(options)")
+                
+                Requirements:
+                - Extract all items that could be grocery/shopping items
+                - Format as a clean grocery list organized by category (produce, dairy, meat, pantry, etc.)
+                - One item per line
+                - No emojis - plain text only
+                - Include quantities if mentioned
+                
+                Output the grocery list now:
+                """
+                
+            case "todo_list":
+                guidance = """
+                Transform the following text into a todo/checklist format.
+                
+                Original text:
+                \(text)
+                \(options.isEmpty ? "" : "Options: \(options)")
+                
+                Requirements:
+                - Extract all actionable tasks
+                - Format as a numbered or bulleted todo list
+                - Each item should start with a verb (Buy, Call, Fix, etc.)
+                - Group related tasks if possible
+                - No emojis - plain text only
+                
+                Output the todo list now:
+                """
+                
+            case "outline":
+                guidance = """
+                Transform the following text into a structured outline.
+                
+                Original text:
+                \(text)
+                \(options.isEmpty ? "" : "Options: \(options)")
+                
+                Requirements:
+                - Create hierarchical outline with main topics and subtopics
+                - Use Roman numerals (I, II, III) for main sections
+                - Use letters (A, B, C) for subsections
+                - Use numbers (1, 2, 3) for details
+                - No emojis - plain text only
+                
+                Output the outline now:
+                """
+                
+            case "summary":
+                guidance = """
+                Summarize the following text concisely.
+                
+                Original text:
+                \(text)
+                \(options.isEmpty ? "" : "Options: \(options)")
+                
+                Requirements:
+                - Capture key points in brief
+                - Keep summary to about 20% of original length
+                - Maintain essential information
+                - No emojis - plain text only
+                
+                Output the summary now:
+                """
+                
+            case "bullet_points":
+                guidance = """
+                Transform the following text into bullet points.
+                
+                Original text:
+                \(text)
+                \(options.isEmpty ? "" : "Options: \(options)")
+                
+                Requirements:
+                - Extract key points as individual bullets
+                - Use hyphens (-) for bullet points
+                - Keep each point concise
+                - No emojis - plain text only
+                
+                Output the bullet points now:
+                """
+                
+            case "numbered_list":
+                guidance = """
+                Transform the following text into a numbered list.
+                
+                Original text:
+                \(text)
+                \(options.isEmpty ? "" : "Options: \(options)")
+                
+                Requirements:
+                - Extract items as a numbered sequence
+                - Use 1., 2., 3. format
+                - Maintain logical order
+                - No emojis - plain text only
+                
+                Output the numbered list now:
+                """
+                
+            case "table":
+                guidance = """
+                Transform the following text into a table format.
+                
+                Original text:
+                \(text)
+                \(options.isEmpty ? "" : "Options: \(options)")
+                
+                Requirements:
+                - Organize information into columns
+                - Use pipe (|) separators for table format
+                - Include header row
+                - No emojis - plain text only
+                
+                Output the table now:
+                """
+                
+            case "qa":
+                guidance = """
+                Transform the following text into Q&A format.
+                
+                Original text:
+                \(text)
+                \(options.isEmpty ? "" : "Options: \(options)")
+                
+                Requirements:
+                - Generate relevant questions from the content
+                - Provide clear answers
+                - Format as Q: question, A: answer pairs
+                - No emojis - plain text only
+                
+                Output the Q&A now:
+                """
+                
+            default:
+                guidance = "Transform this text: \(text)"
+            }
+            
+            return guidance
+        }
+        
+        // send_message
+        if name == "send_message" {
+            guard let content = input["content"] as? String, !content.isEmpty else {
+                return "Error: content is required for send_message"
+            }
+            
+            guard let recipient = input["recipient"] as? String, !recipient.isEmpty else {
+                return "Error: recipient is required for send_message"
+            }
+            
+            let channel = input["channel"] as? String ?? "imessage"
+            let subject = input["subject"] as? String ?? ""
+            
+            // Ensure no emojis in content (simple emoji removal)
+            let cleanContent = content.unicodeScalars.filter { !isEmoji($0) }.map(String.init).joined()
+            
+            // Handle different channels
+            switch channel.lowercased() {
+            case "clipboard":
+                // Copy to clipboard
+                await MainActor.run {
+                    let pasteboard = NSPasteboard.general
+                    pasteboard.clearContents()
+                    pasteboard.setString(cleanContent, forType: .string)
+                }
+                return "Message copied to clipboard:\n\(cleanContent)"
+                
+            case "imessage":
+                // Use AppleScript to send iMessage (simplified version)
+                let escapedRecipient = recipient.replacingOccurrences(of: "\"", with: "\\\"")
+                let escapedContent = cleanContent.replacingOccurrences(of: "\"", with: "\\\"")
+                
+                let script = """
+                tell application "Messages"
+                    send "\(escapedContent)" to buddy "\(escapedRecipient)"
+                end tell
+                """
+                
+                let result = await MainActor.run { () -> String in
+                    var err: NSDictionary?
+                    guard let applescript = NSAppleScript(source: script) else {
+                        return "Error: Failed to create AppleScript"
+                    }
+                    let _ = applescript.executeAndReturnError(&err)
+                    if let e = err {
+                        return "AppleScript error: \(e)"
+                    }
+                    return "iMessage sent to \(recipient)"
+                }
+                return result
+                
+            case "email":
+                // Open mailto URL
+                let escapedSubject = subject.addingPercentEncoding(withAllowedCharacters: CharacterSet.urlQueryAllowed) ?? ""
+                let escapedBody = cleanContent.addingPercentEncoding(withAllowedCharacters: CharacterSet.urlQueryAllowed) ?? ""
+                let mailtoURL: String
+                
+                if recipient.lowercased() == "me" {
+                    mailtoURL = "mailto:?subject=\(escapedSubject)&body=\(escapedBody)"
+                } else {
+                    let escapedRecipient = recipient.addingPercentEncoding(withAllowedCharacters: CharacterSet.urlQueryAllowed) ?? recipient
+                    mailtoURL = "mailto:\(escapedRecipient)?subject=\(escapedSubject)&body=\(escapedBody)"
+                }
+                
+                await MainActor.run {
+                    if let url = URL(string: mailtoURL) {
+                        NSWorkspace.shared.open(url)
+                    }
+                }
+                return "Email draft opened for \(recipient)"
+                
+            case "sms":
+                // Open SMS URL scheme
+                let escapedBody = cleanContent.addingPercentEncoding(withAllowedCharacters: CharacterSet.urlQueryAllowed) ?? ""
+                let smsURL = "sms:\(recipient)?body=\(escapedBody)"
+                
+                await MainActor.run {
+                    if let url = URL(string: smsURL) {
+                        NSWorkspace.shared.open(url)
+                    }
+                }
+                return "SMS draft opened for \(recipient)"
+                
+            default:
+                return "Error: Unsupported channel '\(channel)'. Use: imessage, email, sms, or clipboard"
+            }
+        }
+        
+        // about_self
+        if name == "about_self" {
+            let topic = input["topic"] as? String ?? "all"
+            let detail = input["detail"] as? String ?? "standard"
+            
+            let detailPrefix = detail == "brief" ? "Brief" : detail == "detailed" ? "Detailed" : ""
+            
+            let aboutText: String
+            
+            switch topic.lowercased() {
+            case "tools":
+                aboutText = """
+                \(detailPrefix) Agent! Tools Overview
+                
+                Agent! provides powerful automation tools for macOS:
+                
+                FILE & CODING TOOLS:
+                - read_file, write_file, edit_file: Read, create, and modify files
+                - create_diff, apply_diff: Compare and patch text with visual diffs
+                - list_files, search_files: Find files by pattern or content
+                - git_status, git_diff, git_log, git_commit: Git version control
+                
+                AUTOMATION TOOLS:
+                - run_applescript, run_osascript: Execute AppleScript with full TCC permissions
+                - execute_javascript: JavaScript for Automation (JXA)
+                - apple_event_query: Query scriptable apps via Apple Events
+                - run_agent_script: Compile and run Swift automation scripts
+                
+                ACCESSIBILITY TOOLS:
+                - ax_click, ax_type_text, ax_press_key: Simulate user input
+                - ax_find_element, ax_wait_for_element: Find UI elements
+                - ax_screenshot: Capture screen regions or windows
+                
+                XCODE TOOLS:
+                - xcode_build, xcode_run: Build and run Xcode projects
+                - xcode_list_projects, xcode_select_project: Manage open projects
+                
+                WEB AUTOMATION:
+                - web_open, web_find, web_click, web_type: Browser automation
+                - selenium_start, selenium_navigate: Selenium WebDriver support
+                
+                CONVERSATION TOOLS:
+                - write_text: Generate prose about any subject
+                - transform_text: Convert text to lists, outlines, summaries
+                - send_message: Send content via iMessage, email, SMS
+                - fix_text: Correct spelling and grammar
+                - about_self: Learn about Agent's capabilities
+                
+                Use list_native_tools to see all available tools.
+                """
+                
+            case "features":
+                aboutText = """
+                \(detailPrefix) Agent! Features
+                
+                CORE FEATURES:
+                - Multi-provider LLM support (Claude, OpenAI, Ollama, Apple Intelligence)
+                - Streaming output with real-time display
+                - Task history with AI-powered summarization
+                - Chat history management with persistence
+                - Screenshot and image attachment support
+                
+                AUTOMATION FEATURES:
+                - Full TCC permissions (Accessibility, Automation, Screen Recording)
+                - ScriptingBridge integration for app control
+                - MCP (Model Context Protocol) server support
+                - Reusable AgentScripts for complex automation
+                
+                DEVELOPER FEATURES:
+                - Xcode project building and running
+                - Git integration for version control
+                - Code editing with diff visualization
+                - Swift script compilation and execution
+                
+                UI FEATURES:
+                - Native macOS design with split-pane interface
+                - Conversation history with task tracking
+                - Tab-based workflow for multiple tasks
+                - Keyboard shortcuts for efficiency
+                
+                PRIVACY:
+                - All automation runs locally on your Mac
+                - API keys stored securely in Keychain
+                - No data collection or telemetry
+                """
+                
+            case "scripting":
+                aboutText = """
+                \(detailPrefix) Agent! Scripting Guide
+                
+                SWIFT AGENTSCRIPTS:
+                Agent! can compile and run Swift scripts with full TCC permissions.
+                Scripts are stored in ~/Documents/AgentScript/agents/
+                
+                Script template:
+                ```swift
+                import Foundation
+                
+                @_cdecl("script_main")
+                public func scriptMain() -> Int32 {
+                    // Your automation code here
+                    print("Hello from AgentScript!")
+                    return 0
+                }
+                ```
+                
+                Rules:
+                - Use @_cdecl("script_main") and return Int32
+                - No exit() calls or top-level code
+                - Access arguments via AGENT_SCRIPT_ARGS environment variable
+                - Or use JSON files: ~/Documents/AgentScript/json/{Name}_input.json
+                
+                APPLESCRIPT:
+                Save reusable scripts with save_apple_script
+                Run saved scripts with run_apple_script
+                Or execute directly with run_applescript
+                
+                JXA (JAVASCRIPT FOR AUTOMATION):
+                Execute JavaScript with execute_javascript
+                Save reusable scripts with save_javascript
+                
+                SCRIPTINGBRIDGE:
+                Use lookup_sdef to read app dictionaries
+                Create Swift bridges with GenerateBridge script
+                Query apps with apple_event_query
+                """
+                
+            case "automation":
+                aboutText = """
+                \(detailPrefix) Agent! Automation Capabilities
+                
+                APP CONTROL:
+                Agent! can control macOS apps using:
+                - AppleScript (run_applescript, run_osascript)
+                - JavaScript for Automation (execute_javascript)
+                - ScriptingBridge (via AgentScripts)
+                - Apple Events (apple_event_query)
+                - Accessibility API (ax_* tools)
+                
+                ACCESSIBILITY AUTOMATION:
+                Full UI automation via Accessibility API:
+                - Find elements by role, title, or value
+                - Click, type, scroll, and drag
+                - Wait for elements to appear
+                - Highlight elements for verification
+                - Take screenshots
+                
+                WEB AUTOMATION:
+                - Safari/Chrome/Firefox control via AppleScript
+                - Selenium WebDriver support
+                - Element finding by CSS, XPath, or accessibility
+                - Form filling and navigation
+                
+                SCHEDULED TASKS:
+                Create LaunchAgents/LaunchDaemons for recurring automation
+                Use cron or launchd for scheduling
+                
+                SECURITY:
+                All automation inherits Agent!'s TCC permissions
+                No additional permission prompts needed
+                """
+                
+            case "coding":
+                aboutText = """
+                \(detailPrefix) Agent! Coding Assistance
+                
+                CODE OPERATIONS:
+                - Read any text file with line numbers
+                - Write new files or edit existing ones
+                - Search files by content or pattern
+                - Apply diffs for precise changes
+                
+                GIT WORKFLOW:
+                - View status, diffs, and history
+                - Stage and commit changes
+                - Create and switch branches
+                - Apply patches
+                
+                XCODE INTEGRATION:
+                - Build projects with xcode_build
+                - Run apps with xcode_run
+                - List and select open projects
+                - View build errors with context
+                
+                PROJECT STRUCTURE:
+                - Navigate complex codebases
+                - Understand file relationships
+                - Refactor with confidence
+                
+                BEST PRACTICES:
+                Agent! prefers native tools over shell commands
+                Edit files directly instead of using sed/awk
+                Use git tools instead of git CLI when possible
+                Build Xcode projects with xcode_build, not xcodebuild
+                """
+                
+            default: // "all"
+                aboutText = """
+                \(detailPrefix) About Agent!
+                
+                Agent! is a native macOS automation assistant that helps you automate tasks, write code, control apps, and manage your Mac.
+                
+                WHAT I CAN DO:
+                - Control apps using AppleScript, JavaScript, or Accessibility
+                - Read, write, and edit files in any project
+                - Build and run Xcode projects
+                - Automate web browsers (Safari, Chrome, Firefox)
+                - Execute shell commands with user or root privileges
+                - Manage git repositories and commits
+                - Generate, transform, and fix text
+                - Send messages via iMessage, email, or SMS
+                
+                HOW TO USE ME:
+                Simply describe what you want to accomplish in natural language.
+                I will choose the appropriate tools and execute them.
+                
+                EXAMPLES:
+                - "Read the main.swift file and explain it"
+                - "Build the Xcode project and fix any errors"
+                - "Write a paragraph about machine learning"
+                - "Turn this text into a grocery list"
+                - "Fix spelling and grammar in this paragraph, no emojis"
+                - "Send this summary to me via iMessage"
+                - "Automate Safari to fill out this form"
+                
+                CURRENT CONTEXT:
+                - Working directory: \(projectFolder)
+                - User: \(NSFullUserName())
+                - System: macOS \(ProcessInfo.processInfo.operatingSystemVersionString)
+                
+                Type naturally and I will help you get things done.
+                """
+            }
+            
+            return aboutText
+        }
+        
+        // fix_text
+        if name == "fix_text" {
+            guard let text = input["text"] as? String, !text.isEmpty else {
+                return "Error: text is required for fix_text"
+            }
+            
+            let fixes = input["fixes"] as? String ?? "all"
+            let preserveStyle = input["preserve_style"] as? Bool ?? true
+            
+            // Validate fixes type
+            let validFixes = ["all", "spelling", "grammar", "punctuation", "capitalization"]
+            guard validFixes.contains(fixes.lowercased()) else {
+                return "Error: invalid fixes type. Valid types: \(validFixes.joined(separator: ", "))"
+            }
+            
+            let guidance: String
+            
+            switch fixes.lowercased() {
+            case "spelling":
+                guidance = """
+                Fix spelling errors in the following text.
+                
+                Original text:
+                \(text)
+                
+                Requirements:
+                - Correct all spelling mistakes
+                - Preserve original meaning and style: \(preserveStyle ? "yes" : "no")
+                - Do NOT add any emojis
+                - Do NOT change word choices unless misspelled
+                - Return only the corrected text
+                
+                Corrected text:
+                """
+                
+            case "grammar":
+                guidance = """
+                Fix grammar errors in the following text.
+                
+                Original text:
+                \(text)
+                
+                Requirements:
+                - Correct grammar, verb tense, and sentence structure
+                - Preserve original meaning and style: \(preserveStyle ? "yes" : "no")
+                - Do NOT add any emojis
+                - Do NOT change wording unless grammatically incorrect
+                - Return only the corrected text
+                
+                Corrected text:
+                """
+                
+            case "punctuation":
+                guidance = """
+                Fix punctuation in the following text.
+                
+                Original text:
+                \(text)
+                
+                Requirements:
+                - Correct all punctuation errors
+                - Fix spacing around punctuation
+                - Preserve original meaning and style: \(preserveStyle ? "yes" : "no")
+                - Do NOT add any emojis
+                - Return only the corrected text
+                
+                Corrected text:
+                """
+                
+            case "capitalization":
+                guidance = """
+                Fix capitalization in the following text.
+                
+                Original text:
+                \(text)
+                
+                Requirements:
+                - Correct capitalization (sentences start with capitals, proper nouns, etc.)
+                - Preserve original meaning and style: \(preserveStyle ? "yes" : "no")
+                - Do NOT add any emojis
+                - Return only the corrected text
+                
+                Corrected text:
+                """
+                
+            default: // "all"
+                guidance = """
+                Fix all spelling and grammar errors in the following text.
+                
+                Original text:
+                \(text)
+                
+                Requirements:
+                - Correct spelling, grammar, punctuation, and capitalization
+                - Preserve original meaning and style: \(preserveStyle ? "yes" : "no")
+                - Do NOT add any emojis
+                - Keep the same tone and voice
+                - Return only the corrected text
+                
+                Corrected text:
+                """
+            }
+            
+            return guidance
+        }
+
         // Fallback
         return "Tool \(name) not implemented for Apple AI"
     }
@@ -769,6 +1412,8 @@ extension AgentViewModel {
         var commandsRun: [String] = []
         var completionSummary = ""
         var consecutiveNoTool = 0
+        var timeoutRetryCount = 0
+        let maxTimeoutRetries = 2
         
         // Apple Intelligence mediator for contextual annotations
         let mediator = AppleIntelligenceMediator.shared
@@ -2396,8 +3041,24 @@ extension AgentViewModel {
             } catch {
                 if !Task.isCancelled {
                     let errMsg = error.localizedDescription
-                    taskLog.error("[main] LLM error at iteration \(iterations): \(errMsg)")
-
+                    
+                    // Detect timeout errors
+                    let isNetworkTimeout = errMsg.lowercased().contains("timeout") || errMsg.lowercased().contains("timed out")
+                    
+                    taskLog.error("[main] LLM error at iteration \(iterations): \(errMsg) (isTimeout: \(isNetworkTimeout))")
+                    
+                    // Determine error source for better logging
+                    var errorSource = "Unknown"
+                    if claude != nil {
+                        errorSource = "Claude API"
+                    } else if openAICompatible != nil {
+                        errorSource = "\(provider.displayName) API"
+                    } else if ollama != nil {
+                        errorSource = "Ollama API"
+                    } else if foundationModelService != nil {
+                        errorSource = "Apple Intelligence"
+                    }
+                    
                     // Auto-retry on 429 rate limit after 10 seconds
                     if errMsg.contains("429") || errMsg.lowercased().contains("rate limit") || errMsg.lowercased().contains("concurrent request") {
                         appendLog("Rate limited — retrying in 10 seconds...")
@@ -2409,8 +3070,39 @@ extension AgentViewModel {
                         if Task.isCancelled { break }
                         continue
                     }
-
-                    appendLog("Error: \(errMsg)")
+                    
+                    // Handle timeout errors with retry logic
+                    if isNetworkTimeout {
+                        // Check if we've already retried this timeout
+                        if timeoutRetryCount < maxTimeoutRetries {
+                            timeoutRetryCount += 1
+                            let retryMessage = "\(errorSource) timeout detected (attempt \(timeoutRetryCount)/\(maxTimeoutRetries)) — retrying in 10 seconds..."
+                            appendLog(retryMessage)
+                            flushLog()
+                            if agentReplyHandle != nil {
+                                sendProgressUpdate(retryMessage)
+                            }
+                            
+                            // Log to task log for debugging
+                            taskLog.info("[main] \(errorSource) timeout, retry \(timeoutRetryCount)/\(maxTimeoutRetries)")
+                            
+                            try? await Task.sleep(for: .seconds(10))
+                            if Task.isCancelled { break }
+                            continue
+                        } else {
+                            // Max retries reached
+                            let timeoutMessage = "\(errorSource) timeout after \(maxTimeoutRetries) retries. Please check your network connection or try a different LLM provider."
+                            appendLog(timeoutMessage)
+                            flushLog()
+                            if agentReplyHandle != nil {
+                                sendProgressUpdate(timeoutMessage)
+                            }
+                        }
+                    } else {
+                        // Non-timeout error
+                        appendLog("\(errorSource) Error: \(errMsg)")
+                    }
+                    
                     // Apple Intelligence error explanation
                     if mediator.isEnabled && mediator.showAnnotationsToUser {
                         taskLog.info("[main] Apple AI mediator: explaining error...")
@@ -2617,6 +3309,25 @@ extension AgentViewModel {
             return output.trimmingCharacters(in: .whitespacesAndNewlines)
         } catch {
             return "Error: \(error.localizedDescription)"
+        }
+    }
+    
+    /// Helper function to check if a Unicode scalar is an emoji
+    private func isEmoji(_ scalar: Unicode.Scalar) -> Bool {
+        switch scalar.value {
+        case 0x1F600...0x1F64F, // Emoticons
+             0x1F300...0x1F5FF, // Misc Symbols and Pictographs
+             0x1F680...0x1F6FF, // Transport and Map Symbols
+             0x1F1E6...0x1F1FF, // Regional indicator symbols
+             0x2600...0x26FF,   // Misc symbols
+             0x2700...0x27BF,   // Dingbats
+             0xFE00...0xFE0F,   // Variation Selectors
+             0x1F900...0x1F9FF, // Supplemental Symbols and Pictographs
+             0x1FA00...0x1FA6F, // Chess Symbols
+             0x1FA70...0x1FAFF: // Symbols and Pictographs Extended-A
+            return true
+        default:
+            return false
         }
     }
 }

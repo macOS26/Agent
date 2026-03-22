@@ -113,6 +113,99 @@ let automationFinishTimeout: TimeInterval = 20
 /// Maximum delay between automation retries (seconds).
 let automationMaxDelay: TimeInterval = 5
 
+// MARK: - String Extensions
+
+extension String {
+    func truncate(to length: Int, trailing: String = "...") -> String {
+        if count > length {
+            return prefix(length) + trailing
+        }
+        return self
+    }
+}
+
+// MARK: - Error History
+
+struct ErrorRecord: Codable, Identifiable {
+    let id: UUID
+    let timestamp: Date
+    let message: String
+    let errorType: String
+    let context: String
+    let stackTrace: String
+    
+    init(timestamp: Date = Date(), message: String, errorType: String, context: String = "", stackTrace: String = "") {
+        self.id = UUID()
+        self.timestamp = timestamp
+        self.message = message
+        self.errorType = errorType
+        self.context = context
+        self.stackTrace = stackTrace
+    }
+}
+
+@MainActor @Observable
+final class ErrorHistory {
+    static let shared = ErrorHistory()
+    
+    private(set) var records: [ErrorRecord] = []
+    
+    private var fileURL: URL {
+        guard let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("error_history.json") }
+        let dir = appSupport.appendingPathComponent("Agent", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir.appendingPathComponent("error_history.json")
+    }
+    
+    private init() {
+        load()
+    }
+    
+    func add(_ record: ErrorRecord) {
+        records.append(record)
+        save()
+    }
+    
+    func clear() {
+        records.removeAll()
+        save()
+    }
+    
+    func recentErrors(limit: Int = 50) -> [ErrorRecord] {
+        Array(records.suffix(limit))
+    }
+    
+    func errorsByType(_ type: String) -> [ErrorRecord] {
+        records.filter { $0.errorType == type }
+    }
+    
+    private func load() {
+        guard FileManager.default.fileExists(atPath: fileURL.path) else { return }
+        do {
+            let data = try Data(contentsOf: fileURL)
+            records = try JSONDecoder().decode([ErrorRecord].self, from: data)
+        } catch {
+            records = []
+        }
+    }
+    
+    private func save() {
+        // Capture data synchronously on main actor, then write async
+        let data: Data?
+        do {
+            data = try JSONEncoder().encode(records)
+        } catch {
+            data = nil
+        }
+        guard let data else { return }
+        
+        let fileURL = self.fileURL
+        Task.detached(priority: .background) {
+            try? data.write(to: fileURL, options: .atomic)
+        }
+    }
+}
+
 // MARK: - Task History
 
 struct TaskRecord: Codable, Identifiable {

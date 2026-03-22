@@ -91,10 +91,6 @@
 		FF10000000000000000008 /* AccessibilityServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000007 /* AccessibilityServiceTests.swift */; };
 		FF10000000000000000011 /* AgentViewModel+Speech.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000010 /* AgentViewModel+Speech.swift */; };
 		WEB1000000000000000001 /* WebAutomationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = WEB1000000000000000002 /* WebAutomationService.swift */; };
-		50662A12CF3B4510B16DC796 /* TaskExecution+ScriptTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE065207B5B248C4B1C2E8B6 /* TaskExecution+ScriptTools.swift */; };
-		AC66293F9C184577B172AAA1 /* TaskExecution+AutomationTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = 090C844EFA464005A8CD23AE /* TaskExecution+AutomationTools.swift */; };
-		5471C5A842B449CA843EBFB8 /* TaskExecution+WebTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21DBC6EEF68B4D55A5D849DE /* TaskExecution+WebTools.swift */; };
-		C066F0EA49A944B4B45ED827 /* TaskExecution+ProcessTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6345DA5B96CD487B90306221 /* TaskExecution+ProcessTools.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -179,7 +175,7 @@
 		AA10000000000000000021 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA10000000000000000022 /* Agent.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Agent.entitlements; sourceTree = "<group>"; };
 		AA10000000000000000023 /* Agent.app.toddbruss.helper.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Agent.app.toddbruss.helper.plist; sourceTree = "<group>"; };
-		AA10000000000000000024 /* Agent!.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Agent.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA10000000000000000024 /* Agent.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = Agent.app; path = "Agent!.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA10000000000000000025 /* UserService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserService.swift; sourceTree = "<group>"; };
 		AA10000000000000000026 /* UserProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProtocol.swift; sourceTree = "<group>"; };
 		AA10000000000000000027 /* Agent.app.toddbruss.user.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Agent.app.toddbruss.user.plist; sourceTree = "<group>"; };
@@ -255,10 +251,6 @@
 		FF10000000000000000007 /* AccessibilityServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityServiceTests.swift; sourceTree = "<group>"; };
 		FF10000000000000000010 /* AgentViewModel+Speech.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+Speech.swift"; sourceTree = "<group>"; };
 		WEB1000000000000000002 /* WebAutomationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebAutomationService.swift; sourceTree = "<group>"; };
-		CE065207B5B248C4B1C2E8B6 /* TaskExecution+ScriptTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskExecution+ScriptTools.swift"; sourceTree = "<group>"; };
-		090C844EFA464005A8CD23AE /* TaskExecution+AutomationTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskExecution+AutomationTools.swift"; sourceTree = "<group>"; };
-		21DBC6EEF68B4D55A5D849DE /* TaskExecution+WebTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskExecution+WebTools.swift"; sourceTree = "<group>"; };
-		6345DA5B96CD487B90306221 /* TaskExecution+ProcessTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskExecution+ProcessTools.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -334,7 +326,7 @@
 		AA10000000000000000042 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				AA10000000000000000024 /* Agent!.app */,
+				AA10000000000000000024 /* Agent.app */,
 				BB1000000000000000001C /* AgentHelper */,
 				CC1000000000000000001C /* AgentUser */,
 				DD10000000000000000004 /* AgentTests.xctest */,

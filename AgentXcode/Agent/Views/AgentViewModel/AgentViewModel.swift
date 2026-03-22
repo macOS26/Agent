@@ -915,13 +915,13 @@ final class AgentViewModel {
 
     /// Navigate prompt history. direction: -1 = older (up arrow), 1 = newer (down arrow)
     func navigatePromptHistory(direction: Int) {
-        guard !promptHistory.isEmpty else { return }
+        guard !currentTabPromptHistory.isEmpty else { return }
 
         if historyIndex == -1 {
             // Starting to browse — save current input
             savedInput = taskInput
             if direction == -1 {
-                historyIndex = promptHistory.count - 1
+                historyIndex = currentTabPromptHistory.count - 1
             } else {
                 return // already at the beginning, nothing newer
             }
@@ -936,14 +936,14 @@ final class AgentViewModel {
             return
         }
 
-        if historyIndex >= promptHistory.count {
+        if historyIndex >= currentTabPromptHistory.count {
             // Back to current input
             historyIndex = -1
             taskInput = savedInput
             return
         }
 
-        taskInput = promptHistory[historyIndex]
+        taskInput = currentTabPromptHistory[historyIndex]
     }
 
     func stop(silent: Bool = false) {

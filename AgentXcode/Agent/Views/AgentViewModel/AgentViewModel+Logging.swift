@@ -3,6 +3,61 @@ import AppKit
 // MARK: - Logging, Streaming & Media
 
 extension AgentViewModel {
+    
+    // MARK: - Error History
+    
+    /// Log an error to both the log and error history
+    func appendError(_ error: Error, context: String = "") {
+        let timestamp = Self.timestampFormatter.string(from: Date())
+        let errorMessage: String
+        if let agentError = error as? AgentError {
+            errorMessage = agentError.errorDescription ?? "Unknown error"
+        } else {
+            errorMessage = error.localizedDescription
+        }
+        
+        let fullMessage = context.isEmpty ? errorMessage : "\(context): \(errorMessage)"
+        let formattedMessage = "[\(timestamp)] ERROR: \(fullMessage)"
+        
+        // Store in SwiftData
+        ChatHistoryStore.shared.appendMessage(formattedMessage)
+        
+        // Also store in error history
+        let errorRecord = ErrorRecord(
+            timestamp: Date(),
+            message: fullMessage,
+            errorType: String(describing: type(of: error)),
+            context: context,
+            stackTrace: Thread.callStackSymbols.joined(separator: "\n")
+        )
+        ErrorHistory.shared.add(errorRecord)
+        
+        // Log to buffer
+        if !logBuffer.isEmpty && !logBuffer.hasSuffix("\n") {
+            logBuffer += "\n"
+        }
+        logBuffer += formattedMessage + "\n"
+        scheduleLogFlush()
+    }
+    
+    /// Log a tool error with specific tool context
+    func appendToolError(tool: String, error: Error, input: [String: Any]? = nil) {
+        var context = "Tool '\(tool)' failed"
+        if let input = input, !input.isEmpty {
+            let inputStr = input.map { "\($0.key)=\($0.value)" }.joined(separator: ", ")
+            context += " with input: \(inputStr)"
+        }
+        appendError(error, context: context)
+    }
+    
+    /// Log a task error (when a whole task fails)
+    func appendTaskError(task: String, error: Error, commandsRun: [String] = []) {
+        var context = "Task '\(task.truncate(to: 50))' failed"
+        if !commandsRun.isEmpty {
+            context += ", commands run: \(commandsRun.prefix(3).joined(separator: "; "))"
+        }
+        appendError(error, context: context)
+    }
 
     // MARK: - Screenshot
 

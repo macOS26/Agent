@@ -80,6 +80,10 @@ struct ActivityLogView: NSViewRepresentable {
             coord.lastLength = 0
             coord.lastRenderedText = ""
             coord.clearCache()
+            // Force scroll to bottom when switching tabs
+            DispatchQueue.main.async {
+                textView.scrollToEndOfDocument(nil)
+            }
         }
 
         if textChanged || searchCleared || tabSwitched {
