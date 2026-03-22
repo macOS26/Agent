@@ -14,8 +14,6 @@ struct AgentOptionsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 16)
             .padding(.bottom, 4)
             
             Divider()
@@ -130,7 +128,7 @@ struct AgentOptionsView: View {
                 }
             }
         }
-        .padding(20)
+        .padding(16)
         .padding(.bottom, 15)
         .frame(width: 360)
     }

@@ -24,7 +24,7 @@ struct AppleIntelligencePopover: View {
                 // LoRA Sections
                 LoRASettingsView()
             }
-            .padding(20)
+            .padding(16)
             .padding(.bottom, 15)
         }
         .frame(width: 380)
