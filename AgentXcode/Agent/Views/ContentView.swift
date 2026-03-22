@@ -226,7 +226,9 @@ struct ContentView: View {
                         taskIn: viewModel.taskInputTokens,
                         taskOut: viewModel.taskOutputTokens,
                         sessionIn: viewModel.sessionInputTokens,
-                        sessionOut: viewModel.sessionOutputTokens
+                        sessionOut: viewModel.sessionOutputTokens,
+                        providerName: viewModel.selectedProvider.displayName,
+                        modelName: viewModel.selectedModel
                     )
                 }
                 .padding(.horizontal, 8)
@@ -247,7 +249,9 @@ struct ContentView: View {
                         taskIn: viewModel.taskInputTokens,
                         taskOut: viewModel.taskOutputTokens,
                         sessionIn: viewModel.sessionInputTokens,
-                        sessionOut: viewModel.sessionOutputTokens
+                        sessionOut: viewModel.sessionOutputTokens,
+                        providerName: viewModel.selectedProvider.displayName,
+                        modelName: viewModel.selectedModel
                     )
                 }
                 .padding(.horizontal, 8)
