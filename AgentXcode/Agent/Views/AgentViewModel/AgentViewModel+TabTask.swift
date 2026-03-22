@@ -148,7 +148,7 @@ extension AgentViewModel {
 
         // Auto-classify task mode for tool subsetting
         let taskMode = TaskMode.classify(prompt)
-        var activeGroups: Set<String>? = taskMode == .general ? nil : taskMode.groups
+        let activeGroups: Set<String>? = taskMode == .general ? nil : taskMode.groups
 
         var iterations = 0
         let maxIter = maxIterations
