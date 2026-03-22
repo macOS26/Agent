@@ -6,7 +6,7 @@
 
 ## Completed Work:
 - ✅ Phase 1: TaskExecution extensions created and added to project
-  - TaskExecution+ShellTools.swift (205 lines) - executeViaUserAgent, executeLocal, executeLocalStreaming
+  - TaskExecution+ShellTools.swift (205 lines) - executeViaUserAgent, executeTCC, executeTCCStreaming
   - TaskExecution+FileTools.swift (272 lines) - file operation handlers, CodingService helper  
   - TaskExecution+GitTools.swift (77 lines) - git tool handlers
   - TaskExecution+ScriptTools.swift (294 lines) - script management handlers

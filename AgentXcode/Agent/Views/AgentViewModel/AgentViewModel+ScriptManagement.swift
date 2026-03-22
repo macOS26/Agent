@@ -19,7 +19,7 @@ extension AgentViewModel {
             return scripts.isEmpty ? "No scripts found" : scripts.map { "\($0.name) (\($0.size) bytes)" }.joined(separator: "\n")
         }
         
-        // run_agent_script
+        // run_agent_script - compile via User LaunchAgent, run in Agent process
         if name == "run_agent_script" {
             let scriptName = input["name"] as? String ?? ""
             guard let cmd = scriptService.compileCommand(name: scriptName) else {
@@ -29,6 +29,7 @@ extension AgentViewModel {
             if let args = input["arguments"] as? String {
                 fullCmd = "AGENT_SCRIPT_ARGS='\(args)' \(cmd)"
             }
+            // Compile via User LaunchAgent (no TCC required)
             let result = await executeViaUserAgent(command: fullCmd)
             return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
         }
@@ -127,7 +128,7 @@ extension AgentViewModel {
             let script = input["script"] as? String ?? input["command"] as? String ?? ""
             let escaped = script.replacingOccurrences(of: "'", with: "'\\''")
             let command = "osascript -e '\(escaped)'"
-            let result = await executeLocalStreaming(command: command) { _ in }
+            let result = await executeTCCStreaming(command: command) { _ in }
             if result.status == 0 {
                 let _ = scriptService.saveAppleScript(name: Self.autoScriptName(from: script), source: script)
             }
@@ -139,7 +140,7 @@ extension AgentViewModel {
             let script = input["source"] as? String ?? input["script"] as? String ?? ""
             let escaped = script.replacingOccurrences(of: "'", with: "'\\''")
             let command = "osascript -l JavaScript -e '\(escaped)'"
-            let result = await executeLocalStreaming(command: command) { _ in }
+            let result = await executeTCCStreaming(command: command) { _ in }
             if result.status == 0 {
                 let _ = scriptService.saveJavaScript(name: Self.autoScriptName(from: script), source: script)
             }

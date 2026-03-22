@@ -72,7 +72,7 @@ extension AgentViewModel {
         appendLog("Running \(name)... (see tab)")
         flushLog()
 
-        // Step 1: Compile the script dylib via UserService
+        // Step 1: Compile the script dylib via User LaunchAgent (no TCC required)
         tab.appendLog("🦾 Compiling: \(name)")
         tab.flush()
 
@@ -256,7 +256,7 @@ extension AgentViewModel {
         tab.appendLog("🟨 \(name)")
         tab.flush()
 
-        let result = await executeLocalStreaming(command: command) { [weak tab] chunk in
+        let result = await executeTCCStreaming(command: command) { [weak tab] chunk in
             Task { @MainActor in tab?.appendOutput(chunk) }
         }
 

@@ -337,8 +337,8 @@ extension AgentViewModel {
                                 if healthCheckResult != 0 {
                                     tab.appendLog("⚠️ Ollama server not responding. Attempting to restart...")
                                     
-                                    // Try to restart Ollama
-                                    let restartResult = await executeViaUserAgent(command: "pkill -f 'ollama serve' && sleep 2 && open /Applications/Ollama.app")
+                                    // Restart Ollama via UserService XPC
+                                    let restartResult = await userService.execute(command: "pkill -f 'ollama serve' && sleep 2 && open /Applications/Ollama.app")
                                     tab.appendLog("🔄 Restart command executed")
                                     
                                     // Wait longer for Ollama startup
@@ -369,8 +369,8 @@ extension AgentViewModel {
                             if (errorSource == "Ollama API" || errorSource == "Local Ollama") && timeoutRetryCount == maxTimeoutRetries {
                                 tab.appendLog("🔄 Max retries reached. Attempting final Ollama restart...")
                                 
-                                // Run Ollama restart script
-                                let restartResult = await executeViaUserAgent(command: "pkill -f 'ollama serve' && sleep 3 && open /Applications/Ollama.app && sleep 10")
+                                // Restart Ollama via UserService XPC
+                                let restartResult = await userService.execute(command: "pkill -f 'ollama serve' && sleep 3 && open /Applications/Ollama.app && sleep 10")
                                 tab.appendLog("Ollama restart attempted. Please check Ollama application status.")
                             }
                             
@@ -680,7 +680,7 @@ extension AgentViewModel {
             tab.appendLog("🍎 \(script)")
             tab.flush()
 
-            let result = await executeLocalStreaming(command: command) { [weak tab] chunk in
+            let result = await Self.executeTCCStreaming(command: command) { [weak tab] chunk in
                 Task { @MainActor in tab?.appendOutput(chunk) }
             }
 
@@ -722,10 +722,13 @@ extension AgentViewModel {
 
             let result: (status: Int32, output: String)
             if isPrivileged {
+                // Root commands → LaunchDaemon via XPC
                 result = await helperService.execute(command: command)
-            } else if Self.needsTCCTab(command) {
-                result = await executeLocal(command: command)
+            } else if Self.needsTCCPermissions(command) {
+                // TCC commands → Agent process (inherits TCC permissions)
+                result = await Self.executeTCC(command: command)
             } else {
+                // Non-TCC, non-root commands → User LaunchAgent via XPC
                 result = await executeForTab(command: command)
             }
 

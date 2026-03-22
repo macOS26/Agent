@@ -25,11 +25,23 @@ extension AgentViewModel {
             return "Error: too many tool calls. Call task_complete now."
         }
         
-        // Shell commands
+        // Shell commands - route based on TCC requirements
         if name == "execute_agent_command" || name == "execute_daemon_command" {
             let cmd = input["command"] as? String ?? ""
-            let result = await executeViaUserAgent(command:
-                Self.prependWorkingDirectory(cmd, projectFolder: pf))
+            let command = Self.prependWorkingDirectory(cmd, projectFolder: pf)
+            let isPrivileged = (name == "execute_daemon_command") && rootEnabled
+            
+            let result: (status: Int32, output: String)
+            if isPrivileged {
+                // Root commands → LaunchDaemon via XPC
+                result = await helperService.execute(command: command)
+            } else if Self.needsTCCPermissions(command) {
+                // TCC commands → Agent process (inherits TCC permissions)
+                result = await executeTCC(command: command)
+            } else {
+                // Non-TCC, non-root commands → User LaunchAgent via XPC
+                result = await executeViaUserAgent(command: command)
+            }
             return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
         }
         
@@ -126,119 +138,5 @@ extension AgentViewModel {
         
         // Fallback
         return "Tool \(name) not implemented for Apple AI"
-    }
-    
-    // MARK: - Local Execution (osascript)
-    
-    /// Runs a command directly in the Agent app process (not via XPC).
-    /// Used for osascript so it inherits the app's Automation permissions.
-    nonisolated func executeLocal(command: String) async -> (status: Int32, output: String) {
-        await withCheckedContinuation { continuation in
-            DispatchQueue.global().async {
-                let process = Process()
-                process.executableURL = URL(fileURLWithPath: "/bin/bash")
-                process.arguments = ["-c", command]
-                
-                var env = ProcessInfo.processInfo.environment
-                env["HOME"] = FileManager.default.homeDirectoryForCurrentUser.path
-                process.environment = env
-                
-                let stdoutPipe = Pipe()
-                let stderrPipe = Pipe()
-                process.standardOutput = stdoutPipe
-                process.standardError = stderrPipe
-                
-                do {
-                    try process.run()
-                } catch {
-                    continuation.resume(returning: (-1, "Failed to launch: \(error.localizedDescription)"))
-                    return
-                }
-                
-                // Read pipes then wait — osascript output is small, no deadlock risk
-                let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
-                let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-                process.waitUntilExit()
-                
-                var output = String(data: stdoutData, encoding: .utf8) ?? ""
-                let errStr = String(data: stderrData, encoding: .utf8) ?? ""
-                if !errStr.isEmpty {
-                    if !output.isEmpty { output += "\n" }
-                    output += errStr
-                }
-                
-                continuation.resume(returning: (process.terminationStatus, output))
-            }
-        }
-    }
-    
-    /// Run a command in the Agent app process with streaming output.
-    /// Inherits Agent's TCC permissions (Automation, Accessibility, ScreenRecording).
-    nonisolated func executeLocalStreaming(command: String, onOutput: @escaping @Sendable (String) -> Void) async -> (status: Int32, output: String) {
-        await withCheckedContinuation { continuation in
-            DispatchQueue.global().async {
-                let process = Process()
-                process.executableURL = URL(fileURLWithPath: "/bin/bash")
-                process.arguments = ["-c", command]
-                
-                var env = ProcessInfo.processInfo.environment
-                env["HOME"] = FileManager.default.homeDirectoryForCurrentUser.path
-                process.environment = env
-                
-                let stdoutPipe = Pipe()
-                let stderrPipe = Pipe()
-                process.standardOutput = stdoutPipe
-                process.standardError = stderrPipe
-                
-                var output = ""
-                let queue = DispatchQueue(label: "com.agent.localstream")
-                
-                stdoutPipe.fileHandleForReading.readabilityHandler = { handle in
-                    let data = handle.availableData
-                    guard !data.isEmpty else { return }
-                    if let chunk = String(data: data, encoding: .utf8) {
-                        queue.async {
-                            output += chunk
-                            onOutput(chunk)
-                        }
-                    }
-                }
-                
-                stderrPipe.fileHandleForReading.readabilityHandler = { handle in
-                    let data = handle.availableData
-                    guard !data.isEmpty else { return }
-                    if let chunk = String(data: data, encoding: .utf8) {
-                        queue.async {
-                            output += chunk
-                            onOutput(chunk)
-                        }
-                    }
-                }
-                
-                do {
-                    try process.run()
-                } catch {
-                    continuation.resume(returning: (-1, "Failed to launch: \(error.localizedDescription)"))
-                    return
-                }
-                
-                process.waitUntilExit()
-                stdoutPipe.fileHandleForReading.readabilityHandler = nil
-                stderrPipe.fileHandleForReading.readabilityHandler = nil
-                
-                // Wait a moment for final chunks
-                queue.asyncAfter(deadline: .now() + 0.05) {
-                    continuation.resume(returning: (process.terminationStatus, output))
-                }
-            }
-        }
-    }
-    
-    nonisolated static func isOsascriptCommand(_ command: String) -> Bool {
-        command.contains("osascript") && !command.contains("AGENT_SCRIPT_ARGS")
-    }
-    
-    nonisolated static func needsTCCTab(_ command: String) -> Bool {
-        command.contains("osascript") || command.contains("tccutil") || command.contains("sqlite3") || command.contains("/Library/Application\\ Support/com.apple.TCC")
     }
 }

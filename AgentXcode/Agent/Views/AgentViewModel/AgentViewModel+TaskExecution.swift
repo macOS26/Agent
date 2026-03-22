@@ -27,14 +27,6 @@ extension AgentViewModel {
             return "Error: too many tool calls. Call task_complete now."
         }
 
-        // Shell commands
-        if name == "execute_agent_command" || name == "execute_daemon_command" {
-            let cmd = input["command"] as? String ?? ""
-            let result = await executeViaUserAgent(command:
-                Self.prependWorkingDirectory(cmd, projectFolder: pf))
-            return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
-        }
-
         // AppleScript (NSAppleScript in-process with TCC)
         if name == "run_applescript" {
             let source = (input["source"] as? String ?? "")
@@ -56,7 +48,7 @@ extension AgentViewModel {
             let script = input["script"] as? String ?? input["command"] as? String ?? ""
             let escaped = script.replacingOccurrences(of: "'", with: "'\\''")
             let command = "osascript -e '\(escaped)'"
-            let result = await executeLocalStreaming(command: command) { _ in }
+            let result = await executeTCCStreaming(command: command) { _ in }
             if result.status == 0 {
                 let _ = scriptService.saveAppleScript(name: Self.autoScriptName(from: script), source: script)
             }
@@ -68,7 +60,7 @@ extension AgentViewModel {
             let script = input["source"] as? String ?? input["script"] as? String ?? ""
             let escaped = script.replacingOccurrences(of: "'", with: "'\\''")
             let command = "osascript -l JavaScript -e '\(escaped)'"
-            let result = await executeLocalStreaming(command: command) { _ in }
+            let result = await executeTCCStreaming(command: command) { _ in }
             if result.status == 0 {
                 let _ = scriptService.saveJavaScript(name: Self.autoScriptName(from: script), source: script)
             }
@@ -89,7 +81,7 @@ extension AgentViewModel {
             if let args = input["arguments"] as? String {
                 fullCmd = "AGENT_SCRIPT_ARGS='\(args)' \(cmd)"
             }
-            let result = await executeViaUserAgent(command: fullCmd)
+            let result = await executeTCC(command: fullCmd)
             return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
         }
         if name == "read_agent_script" {
@@ -145,7 +137,7 @@ extension AgentViewModel {
                 return "Error: JXA script '\(scriptName)' not found. Use list_javascript first."
             }
             let escaped = source.replacingOccurrences(of: "'", with: "'\\''")
-            let result = await executeLocalStreaming(command: "osascript -l JavaScript -e '\(escaped)'") { _ in }
+            let result = await executeTCCStreaming(command: "osascript -l JavaScript -e '\(escaped)'") { _ in }
             return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
         }
 
@@ -269,11 +261,12 @@ extension AgentViewModel {
             case "git_diff_patch": cmd += "git diff"
             default: cmd += "git \(name.replacingOccurrences(of: "git_", with: ""))"
             }
+            // Git tools use User LaunchAgent (no TCC required)
             let result = await executeViaUserAgent(command: cmd)
             return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
         }
 
-        // List/search files (via shell)
+        // List/search files (via User LaunchAgent - no TCC required)
         if name == "list_files" {
             let pat = input["pattern"] as? String ?? "*"
             let dir = input["path"] as? String ?? pf
@@ -432,7 +425,7 @@ extension AgentViewModel {
             guard let compileCmd = scriptService.compileCommand(name: "Selenium") else {
                 return "Error: Selenium script not found"
             }
-            let compileResult = await executeLocal(command: compileCmd)
+            let compileResult = await userService.execute(command: compileCmd)
             if compileResult.status != 0 {
                 return "Compile failed: \(compileResult.output)"
             }
@@ -448,7 +441,7 @@ extension AgentViewModel {
             guard let compileCmd = scriptService.compileCommand(name: "Selenium") else {
                 return "Error: Selenium script not found"
             }
-            let compileResult = await executeLocal(command: compileCmd)
+            let compileResult = await userService.execute(command: compileCmd)
             if compileResult.status != 0 {
                 return "Compile failed: \(compileResult.output)"
             }
@@ -1181,107 +1174,6 @@ extension AgentViewModel {
         return "Tool \(name) not implemented for Apple AI"
     }
 
-    // MARK: - Local Execution (osascript)
-
-    /// Runs a command directly in the Agent app process (not via XPC).
-    /// Used for osascript so it inherits the app's Automation permissions.
-    nonisolated func executeLocal(command: String) async -> (status: Int32, output: String) {
-        await withCheckedContinuation { continuation in
-            DispatchQueue.global().async {
-                let process = Process()
-                process.executableURL = URL(fileURLWithPath: "/bin/bash")
-                process.arguments = ["-c", command]
-
-                var env = ProcessInfo.processInfo.environment
-                env["HOME"] = FileManager.default.homeDirectoryForCurrentUser.path
-                process.environment = env
-
-                let stdoutPipe = Pipe()
-                let stderrPipe = Pipe()
-                process.standardOutput = stdoutPipe
-                process.standardError = stderrPipe
-
-                do {
-                    try process.run()
-                } catch {
-                    continuation.resume(returning: (-1, "Failed to launch: \(error.localizedDescription)"))
-                    return
-                }
-
-                // Read pipes then wait — osascript output is small, no deadlock risk
-                let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
-                let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-                process.waitUntilExit()
-
-                var output = String(data: stdoutData, encoding: .utf8) ?? ""
-                let errStr = String(data: stderrData, encoding: .utf8) ?? ""
-                if !errStr.isEmpty {
-                    if !output.isEmpty { output += "\n" }
-                    output += errStr
-                }
-
-                continuation.resume(returning: (process.terminationStatus, output))
-            }
-        }
-    }
-
-    /// Run a command in the Agent app process with streaming output.
-    /// Inherits Agent's TCC permissions (Automation, Accessibility, ScreenRecording).
-    nonisolated func executeLocalStreaming(command: String, onOutput: @escaping @Sendable (String) -> Void) async -> (status: Int32, output: String) {
-        await withCheckedContinuation { continuation in
-            DispatchQueue.global().async {
-                let process = Process()
-                process.executableURL = URL(fileURLWithPath: "/bin/bash")
-                process.arguments = ["-c", command]
-
-                var env = ProcessInfo.processInfo.environment
-                env["HOME"] = FileManager.default.homeDirectoryForCurrentUser.path
-                process.environment = env
-
-                let pipe = Pipe()
-                process.standardOutput = pipe
-                process.standardError = pipe
-
-                do {
-                    try process.run()
-                } catch {
-                    let msg = "Failed to launch: \(error.localizedDescription)"
-                    onOutput(msg)
-                    continuation.resume(returning: (-1, msg))
-                    return
-                }
-
-                // Stream output chunks as they arrive
-                var collected = ""
-                let handle = pipe.fileHandleForReading
-                while true {
-                    let data = handle.availableData
-                    if data.isEmpty { break }
-                    if let chunk = String(data: data, encoding: .utf8) {
-                        collected += chunk
-                        onOutput(chunk)
-                    }
-                }
-                process.waitUntilExit()
-
-                continuation.resume(returning: (process.terminationStatus, collected))
-            }
-        }
-    }
-
-    /// Returns true if the command contains osascript and should run locally.
-    nonisolated static func isOsascriptCommand(_ command: String) -> Bool {
-        command.contains("osascript") || command.contains("/usr/bin/osascript")
-    }
-
-    /// Returns true if the command needs TCC permissions and should open in a tab.
-    nonisolated static func needsTCCTab(_ command: String) -> Bool {
-        let lower = command.lowercased()
-        return lower.contains("osascript") || lower.contains("screencapture")
-            || lower.contains("applescript") || lower.contains("accessibility")
-            || lower.contains("tccutil") || lower.contains("automator")
-    }
-
     // MARK: - Task Execution Loop
 
     func executeTask(_ prompt: String) async {
@@ -1731,7 +1623,7 @@ extension AgentViewModel {
                             }
                         }
 
-                        // MARK: Process-based tools (routed through UserService XPC)
+                        // MARK: Process-based tools (routed through User LaunchAgent via XPC)
 
                         if name == "list_files" {
                             let pattern = input["pattern"] as? String ?? "*"
@@ -1770,7 +1662,7 @@ extension AgentViewModel {
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
-                        // MARK: Git tools (routed through UserService XPC)
+                        // MARK: Git tools (routed through User LaunchAgent via XPC)
 
                         if name == "git_status" {
                             let path = input["path"] as? String
@@ -1927,6 +1819,7 @@ extension AgentViewModel {
                             let result: (status: Int32, output: String)
                             resetStreamCounters()
                             if isPrivileged {
+                                // Root commands → LaunchDaemon via XPC
                                 rootServiceActive = true
                                 rootWasActive = true
                                 helperService.onOutput = { [weak self] chunk in
@@ -1935,14 +1828,11 @@ extension AgentViewModel {
                                 result = await helperService.execute(command: command)
                                 helperService.onOutput = nil
                                 rootServiceActive = false
-                            } else if Self.needsTCCTab(command) {
-                                // Run TCC commands directly in the Agent app process
-                                // so they inherit the app's Automation permissions
-                                userServiceActive = true
-                                userWasActive = true
-                                result = await executeLocal(command: command)
-                                userServiceActive = false
+                            } else if Self.needsTCCPermissions(command) {
+                                // TCC commands run in Agent process to inherit TCC permissions
+                                result = await executeTCC(command: command)
                             } else {
+                                // Non-TCC, non-root commands → User LaunchAgent via XPC
                                 result = await executeViaUserAgent(command: command)
                             }
                             flushLog()
@@ -2086,7 +1976,7 @@ extension AgentViewModel {
                             appendLog("Running \(scriptName)... (see tab)")
                             flushLog()
 
-                            // Step 1: Compile the script dylib via UserService
+                            // Step 1: Compile the script dylib via User LaunchAgent (no TCC required)
                             tab.appendLog("🦾 Compiling: \(scriptName)")
                             tab.flush()
 
@@ -2177,7 +2067,7 @@ extension AgentViewModel {
                             tab.appendLog("🍏 \(script)")
                             tab.flush()
 
-                            let result = await executeLocalStreaming(command: command) { [weak tab] chunk in
+                            let result = await executeTCCStreaming(command: command) { [weak tab] chunk in
                                 Task { @MainActor in tab?.appendOutput(chunk) }
                             }
 
@@ -2227,7 +2117,7 @@ extension AgentViewModel {
                             tab.appendLog("🟨 \(script.prefix(80))...")
                             tab.flush()
 
-                            let result = await executeLocalStreaming(command: command) { [weak tab] chunk in
+                            let result = await executeTCCStreaming(command: command) { [weak tab] chunk in
                                 Task { @MainActor in tab?.appendOutput(chunk) }
                             }
 
@@ -2436,7 +2326,7 @@ extension AgentViewModel {
                             tab.appendLog("🟨 \(scriptName)")
                             tab.flush()
 
-                            let result = await executeLocalStreaming(command: command) { [weak tab] chunk in
+                            let result = await executeTCCStreaming(command: command) { [weak tab] chunk in
                                 Task { @MainActor in tab?.appendOutput(chunk) }
                             }
 
@@ -3085,8 +2975,8 @@ extension AgentViewModel {
                                     appendLog("⚠️ Ollama server not responding. Attempting to restart...")
                                     flushLog()
                                     
-                                    // Try to restart Ollama
-                                    let restartResult = await executeViaUserAgent(command: "pkill -f 'ollama serve' && sleep 2 && open /Applications/Ollama.app")
+                                    // Restart Ollama via UserService XPC
+                                    let restartResult = await userService.execute(command: "pkill -f 'ollama serve' && sleep 2 && open /Applications/Ollama.app")
                                     appendLog("🔄 Restart command executed")
                                     flushLog()
                                     
@@ -3128,8 +3018,8 @@ extension AgentViewModel {
                                 appendLog("🔄 Max retries reached. Attempting final Ollama restart...")
                                 flushLog()
                                 
-                                // Run Ollama restart script
-                                let restartResult = await executeViaUserAgent(command: "pkill -f 'ollama serve' && sleep 3 && open /Applications/Ollama.app && sleep 10")
+                                // Restart Ollama via UserService XPC
+                                let restartResult = await userService.execute(command: "pkill -f 'ollama serve' && sleep 3 && open /Applications/Ollama.app && sleep 10")
                                 appendLog("Ollama restart attempted. Please check Ollama application status.")
                                 flushLog()
                             }

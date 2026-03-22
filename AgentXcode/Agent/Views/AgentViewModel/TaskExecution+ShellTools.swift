@@ -27,9 +27,9 @@ extension AgentViewModel {
         return result
     }
 
-    /// Runs a command directly in the Agent app process (not via XPC).
-    /// Used for osascript so it inherits the app's Automation permissions.
-    nonisolated func executeLocal(command: String) async -> (status: Int32, output: String) {
+    /// Runs a command in the Agent app process to inherit TCC permissions
+    /// (Automation, Accessibility, ScreenRecording).
+    nonisolated static func executeTCC(command: String) async -> (status: Int32, output: String) {
         await withCheckedContinuation { continuation in
             DispatchQueue.global().async {
                 let process = Process()
@@ -70,8 +70,8 @@ extension AgentViewModel {
     }
 
     /// Run a command in the Agent app process with streaming output.
-    /// Inherits Agent's TCC permissions (Automation, Accessibility, ScreenRecording).
-    nonisolated func executeLocalStreaming(command: String, onOutput: @escaping @Sendable (String) -> Void) async -> (status: Int32, output: String) {
+    /// Inherits TCC permissions (Automation, Accessibility, ScreenRecording).
+    nonisolated static func executeTCCStreaming(command: String, onOutput: @escaping @Sendable (String) -> Void) async -> (status: Int32, output: String) {
         await withCheckedContinuation { continuation in
             DispatchQueue.global().async {
                 let process = Process()
@@ -113,17 +113,26 @@ extension AgentViewModel {
         }
     }
 
-    /// Returns true if the command contains osascript and should run locally.
+    /// Returns true if the command contains osascript and needs TCC.
     nonisolated static func isOsascriptCommand(_ command: String) -> Bool {
         command.contains("osascript") || command.contains("/usr/bin/osascript")
     }
 
-    /// Returns true if the command needs TCC permissions and should open in a tab.
-    nonisolated static func needsTCCTab(_ command: String) -> Bool {
+    /// Returns true if the command needs TCC permissions (run in Agent process).
+    /// TCC commands: automation, agentscript, applescript, osascript, appleevent, accessibility
+    nonisolated static func needsTCCPermissions(_ command: String) -> Bool {
         let lower = command.lowercased()
-        return lower.contains("osascript") || lower.contains("screencapture")
-            || lower.contains("applescript") || lower.contains("accessibility")
-            || lower.contains("tccutil") || lower.contains("automator")
+        // TCC-requiring commands must run in Agent process to inherit permissions
+        return lower.contains("osascript")
+            || lower.contains("applescript")
+            || lower.contains("screencapture")
+            || lower.contains("accessibility")
+            || lower.contains("automation")
+            || lower.contains("agentscript")
+            || lower.contains("appleevent")
+            || lower.contains("tccutil")
+            || lower.contains("automator")
+            || lower.contains("/Library/Application Support/com.apple.TCC")
     }
 
     /// Prepend working directory to relative paths in commands
