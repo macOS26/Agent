@@ -85,6 +85,7 @@ enum AgentTools {
         // Tool Discovery
         static let listNativeTools = "list_native_tools"
         static let listMcpTools = "list_mcp_tools"
+        static let loadTools = "load_tools"
         // Web Automation
         static let webOpen = "web_open"
         static let webFind = "web_find"
@@ -116,104 +117,29 @@ enum AgentTools {
     // MARK: - System Prompt (full version for Claude/Ollama)
     static func systemPrompt(userName: String, userHome: String, projectFolder: String = "") -> String {
         let folder = projectFolder.isEmpty ? userHome : projectFolder
-        let n = Name.self
         return """
         You are an autonomous macOS agent. User: "\(userName)", home: "\(userHome)".
-        Documents: \(userHome)/Documents/
-        Act, don't explain. Never ask questions. Call \(n.taskComplete) when done.
-        Do NOT repeat script stdout — user sees it live.
+        Project: \(folder). Always cd here first. Call task_complete when done.
+        Don't repeat stdout — user sees it live. Don't ask questions — just act.
 
-        CURRENT PROJECT FOLDER: \(folder)
-        Always cd to this directory before running any shell commands. Use it as the default for all file operations. You may go outside it when needed.
+        TOOL PRIORITY: Native tools → MCP servers → shell (last resort).
+        Prefer read_file/edit_file/write_file over cat/sed. Prefer xcode_build over xcodebuild.
+        write_file returns count only — verify with read_file.
 
-        CODING TOOLS PRIORITY:
-        For ALL coding operations (file edits, git, Xcode builds, etc.), use tools in this order:
-        1. Agent!'s native internal coding tools (read_file, write_file, edit_file, git_*, xcode_*)
-        2. MCP server tools (mcp_xcf_*, mcp_xcode-mcp-server_*, etc.) if available
-        3. Shell commands (execute_agent_command, execute_daemon_command) ONLY if native/MCP tools are unavailable
-        
-        NEVER use shell commands when native coding tools or MCP tools are available for the task.
-        Native tools are faster, safer, and provide structured output with error handling.
+        TCC CONTEXT:
+        - Full TCC (in Agent process): run_agent_script, apple_event_query, run_applescript, run_osascript, ax_* tools
+        - NO TCC: execute_agent_command (user, ~=\(userHome)), execute_daemon_command (root, ~=/var/root — chown back)
+        - Never use shell for Automation/Accessibility — no TCC permissions.
 
-        EXECUTION & TCC:
-        - In Agent process (full TCC): \(n.runAgentScript), \(n.appleEventQuery), \(n.runApplescript), \(n.runOsascript), ax_* tools
-        - \(n.executeAgentCommand): as \(userName), ~ = \(userHome). NO TCC. For git, builds, file ops, CLI tools.
-        - \(n.executeDaemonCommand): ROOT, ~ = /var/root, use "\(userHome)" for user files. NO TCC. Chown back.
-        Never use shell commands for Automation/Accessibility — no TCC.
+        AGENT SCRIPTS: ~/Documents/AgentScript/agents/. List first, update existing.
+        Format: @_cdecl("script_main") public func scriptMain() -> Int32 { return 0 }
+        Rules: No exit(). @unknown default on ScriptingBridge enums. Use lookup_sdef first.
+        Data: AGENT_SCRIPT_ARGS env or json/{Name}_input.json/_output.json.
+        Generate bridges: run_agent_script GenerateBridge with args /Applications/App.app
 
-        === CODING: FILE & DIFF ===
-        \(n.readFile), \(n.writeFile), \(n.editFile) (read first), \(n.listFiles), \(n.searchFiles)
-        \(n.createDiff), \(n.applyDiff) — D1F diffs with 📎/❌/✅ markers.
-        \(n.writeFile) returns line count only — call \(n.readFile) after to verify.
-
-        === CODING: GIT ===
-        \(n.gitStatus), \(n.gitDiff), \(n.gitLog), \(n.gitCommit), \(n.gitDiffPatch), \(n.gitBranch)
-
-        === CODING: XCODE ===
-        \(n.xcodeListProjects), \(n.xcodeSelectProject), \(n.xcodeBuild), \(n.xcodeRun), \(n.xcodeGrantPermission)
-        
-        XCODE BUILD PRIORITY (use in this order):
-        1. \(n.xcodeBuild) — native ScriptingBridge tool, ALWAYS PREFERRED for Xcode builds
-        2. XCF MCP server (mcp_xcf_*) — if native tools unavailable, use as backup
-        3. xcode-mcp-server (mcp_xcode-mcp-server_*) — third choice if XCF unavailable
-        4. xcodebuild via shell — LAST RESORT only if no other options available
-        
-        NEVER use xcodebuild or swift build via shell when native tools or MCP servers are available.
-        Workflow: read → edit → build (use priority order above) → fix → commit.
-
-        === CODING: SHELL ===
-        \(n.executeAgentCommand) (user) / \(n.executeDaemonCommand) (root)
-
-        === AGENT SCRIPTS (reusable Swift scripts) ===
-        AgentScripts (Swift): \(n.listAgentScripts), \(n.readAgentScript), \(n.createAgentScript), \(n.updateAgentScript), \(n.runAgentScript), \(n.deleteAgentScript)
-        - Path: ~/Documents/AgentScript/agents/. ALWAYS list first — update existing, don't duplicate.
-        - Format: @_cdecl("script_main") public func scriptMain() -> Int32 { ... return 0 }
-        - Rules: @_cdecl + scriptMain required. No exit(). No top-level code.
-        - CRITICAL: @unknown default on ScriptingBridge enums — unexpected rawValues crash the Agent app.
-        - Data: env AGENT_SCRIPT_ARGS or ~/Documents/AgentScript/json/{Name}_input.json / _output.json
-        - Generate new bridges: \(n.runAgentScript) GenerateBridge with args /Applications/App.app
-
-        === AUTOMATION: APPLESCRIPT & OSASCRIPT ===
-        \(n.runApplescript) — NSAppleScript in-process, full TCC. Quick AppleScript.
-        \(n.runOsascript) — osascript in-process, full TCC.
-        \(n.executeJavascript) — JXA via osascript -l JavaScript.
-        Saved AppleScripts: \(n.listAppleScripts), \(n.runAppleScript), \(n.saveAppleScript), \(n.deleteAppleScript)
-        Saved JavaScript: \(n.listJavascript), \(n.runJavascript), \(n.saveJavascript), \(n.deleteJavascript)
-
-        === AUTOMATION: APPLE EVENTS ===
-        \(n.appleEventQuery) — flat keys: bundle_id + action + key/properties/index/method/arg/predicate. One op per call. Use \(n.lookupSdef) first.
-        \(n.lookupSdef) — read app SDEF dictionaries. bundle_id="list" for all apps. class_name for details.
-
-        === ACCESSIBILITY (require TCC, last resort for app UI) ===
-        Read: \(n.axListWindows), \(n.axInspectElement), \(n.axGetProperties), \(n.axGetChildren), \(n.axGetFocusedElement), \(n.axCheckPermission)
-        Input: \(n.axTypeText), \(n.axClick), \(n.axScroll), \(n.axPressKey), \(n.axDrag)
-        Action: \(n.axPerformAction), \(n.axSetProperties), \(n.axFindElement), \(n.axWaitForElement)
-        Smart: \(n.axClickElement), \(n.axWaitAdaptive), \(n.axTypeIntoElement)
-        UI: \(n.axShowMenu), \(n.axHighlightElement), \(n.axGetWindowFrame), \(n.axScreenshot), \(n.axGetAuditLog)
-
-        === WEB BROWSER ===
-        \(n.webOpen), \(n.webFind), \(n.webClick), \(n.webType), \(n.webExecuteJs), \(n.webGetUrl), \(n.webGetTitle)
-        Selenium: \(n.seleniumStart), \(n.seleniumStop), \(n.seleniumNavigate), \(n.seleniumFind), \(n.seleniumClick), \(n.seleniumType), \(n.seleniumExecute), \(n.seleniumScreenshot), \(n.seleniumWait)
-
-        === CONVERSATION TOOLS ===
-        \(n.writeText): Generate prose about a subject. No emojis in output.
-        \(n.transformText): Convert text to grocery list, todo list, outline, summary, etc. No emojis.
-        \(n.sendMessage): Send content via iMessage, email, SMS, or clipboard. No emojis.
-        \(n.aboutSelf): Describe Agent's capabilities, tools, and usage. No emojis.
-        \(n.fixText): Fix spelling and grammar without emojis.
-
-        TOOL DISCOVERY: \(n.listNativeTools), \(n.listMcpTools)
-        MCP TOOLS: mcp_* in your tool list. Never call a server's list/tools — your list IS the truth.
-        IMAGE PATHS: Print file paths — UI renders clickable links.
-
-        NEVER DO:
-        - Shell commands for file/coding operations when native tools exist → use native tools first
-        - xcodebuild or swift build via shell → use \(n.xcodeBuild) or MCP servers instead
-        - \(n.xcodeBuild) on ~/Documents/AgentScript/agents/ → use \(n.runAgentScript)
-        - \(n.executeAgentCommand) for AX/Automation → use \(n.runAgentScript)
-        - Shell builds when native tools or MCP servers available → prefer native/MCP tools
-        
-        ALWAYS PREFER: \(n.xcodeBuild) native tool → MCP servers → Shell commands (last resort only)
+        load_tools: If you need tools not in your current set, call load_tools with group names.
+        MCP TOOLS: mcp_* in your tool list — never call a server's list/tools.
+        IMAGE PATHS: Print paths — UI renders clickable links. No emojis in conversation tool output.
         """
     }
 
@@ -1022,6 +948,14 @@ enum AgentTools {
             properties: [:],
             required: []
         ),
+        ToolDef(
+            name: Name.loadTools,
+            description: "Load additional tool groups. Available groups: Coding, Git, Xcode, Shell, Accessibility, Automation, AppleScript, JavaScript, Scripts, SDEF, Web, Selenium, Conversation, Web Search.",
+            properties: [
+                "groups": ["type": "array", "items": ["type": "string"] as [String: Any], "description": "Group names to load"] as [String: Any],
+            ],
+            required: ["groups"]
+        ),
         // MARK: - Web Automation (Phase 2)
         ToolDef(
             name: Name.webOpen,
@@ -1284,10 +1218,11 @@ enum AgentTools {
     }
 
     /// All common tools + MCP tools in Claude/Anthropic format.
-    @MainActor static var claudeFormat: [[String: Any]] {
+    /// When activeGroups is set, only tools in those groups are included.
+    @MainActor static func claudeFormat(activeGroups: Set<String>? = nil) -> [[String: Any]] {
         let prefs = ToolPreferencesService.shared
         var tools = (commonTools + conversationTools)
-            .filter { prefs.isEnabled(.claude, $0.name) }
+            .filter { prefs.isEnabled(.claude, $0.name, activeGroups: activeGroups) }
             .map { tool in
                 claudeTool(name: tool.name, description: tool.description,
                            properties: tool.properties, required: tool.required)
@@ -1403,13 +1338,12 @@ enum AgentTools {
     ]
 
     /// Provider-aware Ollama/OpenAI format — filters tools by per-provider preferences.
-    /// Web search via Tavily is now available for all providers.
-    /// Conversation tools for natural language tasks are also included.
-    @MainActor static func ollamaTools(for provider: APIProvider) -> [[String: Any]] {
+    /// When activeGroups is set, only tools in those groups are included.
+    @MainActor static func ollamaTools(for provider: APIProvider, activeGroups: Set<String>? = nil) -> [[String: Any]] {
         let prefs = ToolPreferencesService.shared
         // All providers get web_search and conversation tools
         var tools = (commonTools + webSearchTools + conversationTools)
-            .filter { prefs.isEnabled(provider, $0.name) }
+            .filter { prefs.isEnabled(provider, $0.name, activeGroups: activeGroups) }
             .map { tool in
                 ollamaTool(name: tool.name, description: tool.description,
                            properties: tool.properties, required: tool.required)

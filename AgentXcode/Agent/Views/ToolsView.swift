@@ -5,20 +5,20 @@ struct ToolsView: View {
     @Bindable var prefs = ToolPreferencesService.shared
     @State private var collapsedGroups: Set<String> = []
     
-    // Group definitions matching ToolPreferencesService
+    // Group definitions matching ToolPreferencesService — use exact name sets to avoid overlap
     static let groups: [String: (filter: (AgentTools.ToolDef) -> Bool, icon: String)] = [
-        "Coding": ({ ($0.name.hasPrefix("read_") || $0.name.hasPrefix("write_") || $0.name.hasPrefix("edit_") || $0.name.hasPrefix("list_") || $0.name.hasPrefix("search_")) && !$0.name.contains("agent_") && $0.name != "list_mcp_tools" && $0.name != "list_native_tools" }, "doc.text"),
+        "Coding": ({ ["read_file", "write_file", "edit_file", "create_diff", "apply_diff", "list_files", "search_files"].contains($0.name) }, "doc.text"),
         "Git": ({ $0.name.hasPrefix("git_") }, "branch"),
-        "Automation": ({ $0.name.hasPrefix("apple_event_") || $0.name.hasPrefix("run_") || $0.name == "execute_javascript" }, "gearshape.2"),
-        "Shell": ({ $0.name.hasPrefix("execute_") && !$0.name.hasPrefix("execute_javascript") }, "terminal"),
+        "Automation": ({ ["apple_event_query", "run_applescript", "run_osascript", "execute_javascript"].contains($0.name) }, "gearshape.2"),
+        "Shell": ({ ["execute_agent_command", "execute_daemon_command"].contains($0.name) }, "terminal"),
         "Accessibility": ({ $0.name.hasPrefix("ax_") }, "accessibility"),
         "Scripts": ({ $0.name.contains("agent_script") }, "scroll"),
         "SDEF": ({ $0.name == "lookup_sdef" }, "book"),
         "Xcode": ({ $0.name.hasPrefix("xcode_") }, "xcode"),
-        "AppleScript": ({ $0.name.hasPrefix("list_apple_") || $0.name.hasPrefix("run_apple_") || $0.name.hasPrefix("save_apple_") || $0.name.hasPrefix("delete_apple_") }, "applescript"),
-        "JavaScript": ({ $0.name.hasPrefix("list_javascript") || $0.name.hasPrefix("run_javascript") || $0.name.hasPrefix("save_javascript") || $0.name.hasPrefix("delete_javascript") }, "curlybraces"),
-        "Core": ({ $0.name == "task_complete" || $0.name == "list_native_tools" || $0.name == "list_mcp_tools" }, "checkmark.circle"),
-        "Web": ({ $0.name.hasPrefix("web_") && !$0.name.hasPrefix("web_search") }, "globe"),
+        "AppleScript": ({ ["list_apple_scripts", "run_apple_script", "save_apple_script", "delete_apple_script"].contains($0.name) }, "applescript"),
+        "JavaScript": ({ ["list_javascript", "run_javascript", "save_javascript", "delete_javascript"].contains($0.name) }, "curlybraces"),
+        "Core": ({ ["task_complete", "list_native_tools", "list_mcp_tools", "load_tools"].contains($0.name) }, "checkmark.circle"),
+        "Web": ({ $0.name.hasPrefix("web_") && $0.name != "web_search" }, "globe"),
         "Selenium": ({ $0.name.hasPrefix("selenium_") }, "network"),
         "Web Search": ({ $0.name == "web_search" }, "magnifyingglass"),
         "Conversation": ({ ["write_text", "transform_text", "send_message", "about_self", "fix_text"].contains($0.name) }, "bubble.left.and.bubble.right")

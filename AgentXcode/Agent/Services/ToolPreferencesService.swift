@@ -1,5 +1,62 @@
 import Foundation
 
+// MARK: - Task Mode (auto tool subsetting)
+
+/// Determines which tool groups are sent to the LLM based on task type.
+/// Reduces token usage by only sending relevant tools.
+enum TaskMode: String, CaseIterable {
+    case coding       // file editing, git, builds
+    case automation   // AppleScript, accessibility, app control
+    case web          // browser automation, selenium
+    case conversation // writing, messages, text transforms
+    case general      // all tools (fallback)
+
+    /// Tool groups included for this mode. Core + Shell always included.
+    var groups: Set<String> {
+        let base: Set<String> = ["Core", "Shell"]
+        switch self {
+        case .coding:       return base.union(["Coding", "Git", "Xcode", "Scripts", "SDEF"])
+        case .automation:   return base.union(["Automation", "AppleScript", "JavaScript", "Accessibility", "Scripts", "SDEF"])
+        case .web:          return base.union(["Web", "Selenium", "Web Search"])
+        case .conversation: return base.union(["Conversation"])
+        case .general:      return Set(["Core", "Coding", "Git", "Shell", "Xcode", "Scripts",
+                                          "Automation", "AppleScript", "JavaScript", "Accessibility",
+                                          "Web", "Selenium", "Web Search", "Conversation"])
+        }
+    }
+
+    /// Classify a user prompt into a task mode via keyword matching.
+    static func classify(_ prompt: String) -> TaskMode {
+        let p = prompt.lowercased()
+
+        let codingKeywords = ["build", "compile", "edit file", "edit_file", "read_file", "write_file",
+                              "git ", "commit", "xcode", "swift", "code", "fix bug", "refactor",
+                              "implement", "xcodeproj", "pbxproj", "merge", "branch", "diff",
+                              "source", "function", "class ", "struct ", "enum ", "import "]
+        let automationKeywords = ["applescript", "automate", "accessibility", "click", "type into",
+                                  "apple event", "music", "finder", "safari tab", "sdef",
+                                  "ax_", "osascript", "scripting bridge", "app control"]
+        let webKeywords = ["selenium", "browser", "web page", "scrape", "navigate to",
+                           "url ", "web form", "website", "webdriver", "web_"]
+        let conversationKeywords = ["write about", "summarize", "translate", "fix grammar",
+                                    "send message", "tell me about", "explain", "describe",
+                                    "write text", "transform text", "fix text"]
+
+        let codingScore = codingKeywords.filter { p.contains($0) }.count
+        let automationScore = automationKeywords.filter { p.contains($0) }.count
+        let webScore = webKeywords.filter { p.contains($0) }.count
+        let conversationScore = conversationKeywords.filter { p.contains($0) }.count
+
+        let maxScore = max(codingScore, automationScore, webScore, conversationScore)
+        guard maxScore > 0 else { return .general }
+
+        if codingScore == maxScore { return .coding }
+        if automationScore == maxScore { return .automation }
+        if webScore == maxScore { return .web }
+        return .conversation
+    }
+}
+
 /// Manages which internal tools are enabled per LLM provider.
 /// Claude/Ollama: all tools on by default.
 /// Apple AI: only core tools on by default (context window is too small for 40+).
@@ -38,7 +95,7 @@ final class ToolPreferencesService {
         "Xcode": Set(["xcode_build", "xcode_run", "xcode_list_projects", "xcode_select_project", "xcode_grant_permission"]),
         "AppleScript": Set(["list_apple_scripts", "run_apple_script", "save_apple_script", "delete_apple_script"]),
         "JavaScript": Set(["list_javascript", "run_javascript", "save_javascript", "delete_javascript"]),
-        "Core": Set(["task_complete", "list_native_tools", "list_mcp_tools"]),
+        "Core": Set(["task_complete", "list_native_tools", "list_mcp_tools", "load_tools"]),
         "Web": Set(["web_open", "web_find", "web_click", "web_type", "web_execute_js", "web_get_url", "web_get_title"]),
         "Selenium": Set(["selenium_start", "selenium_stop", "selenium_navigate", "selenium_find", "selenium_click",
                          "selenium_type", "selenium_execute", "selenium_screenshot", "selenium_wait"]),
@@ -123,6 +180,19 @@ final class ToolPreferencesService {
     /// Get all group names sorted alphabetically
     static var allGroupNames: [String] {
         toolGroups.keys.sorted()
+    }
+
+    /// Check if a tool is enabled considering active task groups, global group toggles, and per-provider settings.
+    func isEnabled(_ provider: APIProvider, _ toolName: String, activeGroups: Set<String>?) -> Bool {
+        // If activeGroups is set, check if tool belongs to any active group
+        if let activeGroups {
+            let toolInActiveGroup = Self.toolGroups.contains { group, tools in
+                activeGroups.contains(group) && tools.contains(toolName)
+            }
+            // load_tools is always available
+            if !toolInActiveGroup && toolName != "load_tools" { return false }
+        }
+        return isEnabled(provider, toolName)
     }
 
     func toggle(_ provider: APIProvider, _ toolName: String) {

@@ -33,8 +33,8 @@ final class ClaudeService {
         return prompt
     }
 
-    var tools: [[String: Any]] {
-        var t = AgentTools.claudeFormat
+    func tools(activeGroups: Set<String>? = nil) -> [[String: Any]] {
+        var t = AgentTools.claudeFormat(activeGroups: activeGroups)
         t.append([
             "type": "web_search_20250305",
             "name": "web_search"
@@ -62,14 +62,14 @@ final class ClaudeService {
         return result
     }
 
-    func send(messages: [[String: Any]]) async throws -> (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int) {
+    func send(messages: [[String: Any]], activeGroups: Set<String>? = nil) async throws -> (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int) {
         guard !apiKey.isEmpty else { throw AgentError.noAPIKey }
 
         let body: [String: Any] = [
             "model": model,
             "max_tokens": 2048,
             "system": systemPrompt,
-            "tools": tools,
+            "tools": tools(activeGroups: activeGroups),
             "messages": withFolderPrefix(messages)
         ]
 
@@ -123,6 +123,7 @@ final class ClaudeService {
 
     func sendStreaming(
         messages: [[String: Any]],
+        activeGroups: Set<String>? = nil,
         onTextDelta: @escaping @Sendable (String) -> Void
     ) async throws -> (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int) {
         guard !apiKey.isEmpty else { throw AgentError.noAPIKey }
@@ -131,7 +132,7 @@ final class ClaudeService {
             "model": model,
             "max_tokens": 2048,
             "system": systemPrompt,
-            "tools": tools,
+            "tools": tools(activeGroups: activeGroups),
             "messages": withFolderPrefix(messages),
             "stream": true
         ]

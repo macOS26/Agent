@@ -1194,8 +1194,14 @@ extension AgentViewModel {
         trimToRecentTasks()
         taskInputTokens = 0
         taskOutputTokens = 0
+        // Auto-classify task mode and set active tool groups
+        let taskMode = TaskMode.classify(prompt)
+        var activeGroups: Set<String>? = taskMode == .general ? nil : taskMode.groups
         appendLog("--- New Task ---")
         appendLog("User: \(prompt)")
+        if taskMode != .general {
+            appendLog("Mode: \(taskMode.rawValue) (\(activeGroups?.count ?? 0) groups)")
+        }
 
         // Use ChatHistoryStore for LLM context (summaries for older tasks, full messages for recent)
         let historyContext = ChatHistoryStore.shared.buildLLMContext()
@@ -1347,7 +1353,7 @@ extension AgentViewModel {
                 let streamStart = CFAbsoluteTimeGetCurrent()
                 flushLog()
                 if let claude {
-                    response = try await claude.sendStreaming(messages: messages) { [weak self] delta in
+                    response = try await claude.sendStreaming(messages: messages, activeGroups: activeGroups) { [weak self] delta in
                         Task { @MainActor in
                             self?.isThinking = false
                             self?.appendStreamDelta(delta)
@@ -1915,6 +1921,23 @@ extension AgentViewModel {
                                 let output = enabled.map { "mcp_\($0.serverName)_\($0.name)" }.joined(separator: "\n")
                                 appendLog("🔧 MCP tools: \(enabled.count) enabled")
                                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                            }
+                        }
+
+                        // Load additional tool groups mid-task
+                        if name == "load_tools" {
+                            if let groups = input["groups"] as? [String] {
+                                let validGroups = Set(groups).intersection(Set(ToolPreferencesService.toolGroups.keys))
+                                if activeGroups != nil {
+                                    activeGroups = activeGroups!.union(validGroups)
+                                } else {
+                                    activeGroups = validGroups
+                                }
+                                let output = "Loaded groups: \(validGroups.sorted().joined(separator: ", ")). \(activeGroups?.count ?? 0) groups now active."
+                                appendLog("🔧 \(output)")
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                            } else {
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Error: groups array required"])
                             }
                         }
 
