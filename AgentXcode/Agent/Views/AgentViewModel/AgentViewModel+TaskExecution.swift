@@ -1170,6 +1170,12 @@ extension AgentViewModel {
             return guidance
         }
 
+        // plan_mode
+        if name == "plan_mode" {
+            let action: String = input["action"] as? String ?? "read"
+            return Self.handlePlanMode(action: action, input: input, projectFolder: pf)
+        }
+
         // Fallback
         return "Tool \(name) not implemented for Apple AI"
     }
@@ -2488,6 +2494,14 @@ extension AgentViewModel {
                             let number = input["number"] as? Int ?? 0
                             appendLog("Selecting project #\(number)")
                             let output = await Self.offMain { XcodeService.shared.selectProject(number: number) }
+                            appendLog(output)
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        // Plan mode
+                        if name == "plan_mode" {
+                            let action: String = input["action"] as? String ?? "read"
+                            let output: String = Self.handlePlanMode(action: action, input: input, projectFolder: projectFolder)
                             appendLog(output)
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }

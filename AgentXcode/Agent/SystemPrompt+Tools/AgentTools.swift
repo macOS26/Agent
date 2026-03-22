@@ -113,6 +113,7 @@ enum AgentTools {
         static let sendMessage = "send_message"
         static let aboutSelf = "about_self"
         static let fixText = "fix_text"
+        static let planMode = "plan_mode"
     }
 
     // MARK: - System Prompt (full version for Claude/Ollama)
@@ -1346,6 +1347,18 @@ enum AgentTools {
                 "preserve_style": ["type": "boolean", "description": "Keep original writing style and tone (default: true)"],
             ],
             required: ["text"]
+        ),
+        ToolDef(
+            name: Name.planMode,
+            description: "Create or update a step-by-step plan. Writes a planning_mode_.md file to track progress. Use 'create' to start a plan, 'update' to change a step's status, 'read' to check progress.",
+            properties: [
+                "action": ["type": "string", "description": "Action: 'create', 'update', or 'read'"],
+                "title": ["type": "string", "description": "Plan title (required for 'create')"],
+                "steps": ["type": "string", "description": "Newline-separated list of steps (required for 'create')"],
+                "step": ["type": "integer", "description": "Step number to update (required for 'update')"],
+                "status": ["type": "string", "description": "New status for 'update': 'in_progress', 'completed', or 'failed'"],
+            ],
+            required: ["action"]
         ),
     ]
 

@@ -287,4 +287,116 @@ extension AgentViewModel {
         }
         return 0
     }
+
+    // MARK: - Plan Mode
+
+    private static let planFileName: String = "planning_mode_.md"
+
+    /// Resolve the plan file path inside the project folder (or home).
+    private static func planFilePath(_ projectFolder: String) -> String {
+        let base: String = projectFolder.isEmpty ? NSHomeDirectory() : resolvedWorkingDirectory(projectFolder)
+        return (base as NSString).appendingPathComponent(planFileName)
+    }
+
+    /// Handle plan_mode tool calls: create, update, or read a markdown plan file.
+    static func handlePlanMode(action: String, input: [String: Any], projectFolder: String) -> String {
+        let path: String = planFilePath(projectFolder)
+        let fm: FileManager = FileManager.default
+
+        switch action.lowercased() {
+        case "create":
+            guard let title = input["title"] as? String, !title.isEmpty else {
+                return "Error: title is required for plan_mode create"
+            }
+            guard let stepsRaw = input["steps"] as? String, !stepsRaw.isEmpty else {
+                return "Error: steps is required for plan_mode create"
+            }
+            let steps: [String] = stepsRaw.components(separatedBy: "\n").filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+            var md: String = "# \(title)\n\n"
+            for (i, step) in steps.enumerated() {
+                let num: Int = i + 1
+                md += "- [ ] \(num). \(step)\n"
+            }
+            md += "\n---\n*Status: \(steps.count) steps pending*\n"
+            do {
+                try md.write(toFile: path, atomically: true, encoding: .utf8)
+                return "Plan created: \(title) (\(steps.count) steps)\nFile: \(path)"
+            } catch {
+                return "Error writing plan: \(error.localizedDescription)"
+            }
+
+        case "update":
+            guard let stepNum = input["step"] as? Int, stepNum > 0 else {
+                return "Error: step number is required for plan_mode update"
+            }
+            guard let status = input["status"] as? String else {
+                return "Error: status is required for plan_mode update (in_progress, completed, failed)"
+            }
+            guard fm.fileExists(atPath: path),
+                  let data = fm.contents(atPath: path),
+                  let content = String(data: data, encoding: .utf8) else {
+                return "Error: no plan file found. Use plan_mode create first."
+            }
+
+            let marker: String
+            switch status.lowercased() {
+            case "in_progress": marker = "- [⏳]"
+            case "completed": marker = "- [x]"
+            case "failed": marker = "- [❌]"
+            default: return "Error: invalid status. Use in_progress, completed, or failed."
+            }
+
+            var lines: [String] = content.components(separatedBy: "\n")
+            let target: String = "\(stepNum)."
+            var found: Bool = false
+            for i in 0..<lines.count {
+                let trimmed: String = lines[i].trimmingCharacters(in: .whitespaces)
+                if trimmed.contains(target) && (trimmed.hasPrefix("- [") || trimmed.hasPrefix("- [x]") || trimmed.hasPrefix("- [⏳]") || trimmed.hasPrefix("- [❌]")) {
+                    // Replace the checkbox portion
+                    if let bracketEnd = lines[i].range(of: "] ") {
+                        let rest: String = String(lines[i][bracketEnd.upperBound...])
+                        let indent: String = String(lines[i].prefix(while: { $0 == " " || $0 == "\t" }))
+                        lines[i] = "\(indent)\(marker) \(rest)"
+                        found = true
+                        break
+                    }
+                }
+            }
+
+            guard found else {
+                return "Error: step \(stepNum) not found in plan."
+            }
+
+            // Update status summary
+            let completed: Int = lines.filter { $0.contains("- [x]") }.count
+            let inProgress: Int = lines.filter { $0.contains("- [⏳]") }.count
+            let failed: Int = lines.filter { $0.contains("- [❌]") }.count
+            let total: Int = lines.filter { $0.trimmingCharacters(in: .whitespaces).hasPrefix("- [") }.count
+            let pending: Int = total - completed - inProgress - failed
+
+            // Replace or append status line
+            if let statusIdx = lines.firstIndex(where: { $0.hasPrefix("*Status:") }) {
+                lines[statusIdx] = "*Status: \(completed) done, \(inProgress) in progress, \(failed) failed, \(pending) pending*"
+            }
+
+            let updated: String = lines.joined(separator: "\n")
+            do {
+                try updated.write(toFile: path, atomically: true, encoding: .utf8)
+                return "Step \(stepNum) → \(status)"
+            } catch {
+                return "Error writing plan: \(error.localizedDescription)"
+            }
+
+        case "read":
+            guard fm.fileExists(atPath: path),
+                  let data = fm.contents(atPath: path),
+                  let content = String(data: data, encoding: .utf8) else {
+                return "No plan file found. Use plan_mode create to start a plan."
+            }
+            return content
+
+        default:
+            return "Error: invalid action '\(action)'. Use create, update, or read."
+        }
+    }
 }
