@@ -101,6 +101,8 @@ final class AgentViewModel {
 
     /// Gear icon color reflecting overall service health
     var servicesGearColor: Color {
+        let servicesGroupOff = !ToolPreferencesService.shared.isGroupEnabled("Services")
+        if servicesGroupOff { return .yellow }
         if !userEnabled && !rootEnabled { return .gray }
         if !userEnabled || !rootEnabled { return .yellow }
         if userPingOK && daemonPingOK { return .green }

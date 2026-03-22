@@ -31,31 +31,36 @@ struct ContentView: View {
             // Header
             HStack {
                 // Service status indicators (left side)
+                let servicesOn = ToolPreferencesService.shared.isGroupEnabled("Services")
                 HStack(spacing: 4) {
                     StatusDot(
                         isActive: viewModel.userServiceActive,
                         wasActive: viewModel.userWasActive,
                         isBusy: viewModel.isRunning,
-                        enabled: viewModel.userEnabled
+                        enabled: viewModel.userEnabled && servicesOn
                     )
                     Text("Agent")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                .help("User Agent: \(viewModel.userServiceActive ? "Running" : (viewModel.userEnabled ? "Stopped" : "Disabled"))")
+                .help(servicesOn
+                    ? "User Agent: \(viewModel.userServiceActive ? "Running" : (viewModel.userEnabled ? "Stopped" : "Disabled"))"
+                    : "User Agent: Services tools disabled")
 
                 HStack(spacing: 4) {
                     StatusDot(
                         isActive: viewModel.rootServiceActive,
                         wasActive: viewModel.rootWasActive,
                         isBusy: viewModel.isRunning,
-                        enabled: viewModel.rootEnabled
+                        enabled: viewModel.rootEnabled && servicesOn
                     )
                     Text("Daemon")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                .help("Daemon: \(viewModel.rootServiceActive ? "Running" : (viewModel.rootEnabled ? "Stopped" : "Disabled"))")
+                .help(servicesOn
+                    ? "Daemon: \(viewModel.rootServiceActive ? "Running" : (viewModel.rootEnabled ? "Stopped" : "Disabled"))"
+                    : "Daemon: Services tools disabled")
 
                 // Unified status spinner — main tab or active script tab
                 if let selId = viewModel.selectedTabId,
