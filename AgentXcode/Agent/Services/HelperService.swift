@@ -280,10 +280,33 @@ final class HelperService {
                 return
             }
 
-            // No arbitrary timeout — commands run as long as they need.
-            // Protection: early bailout if daemon not running (checked in execute()),
-            // XPC error handler if connection drops, user cancel button.
+            // Start timeout — tool must begin executing within toolStartTimeout seconds.
+            var started = false
+            let startedLock = NSLock()
+            let startTimer = DispatchWorkItem {
+                startedLock.lock()
+                let didStart = started
+                startedLock.unlock()
+                if !didStart {
+                    connection.invalidate()
+                    safeResume((-1, "Tool failed to start within \(Int(toolStartTimeout))s"))
+                }
+            }
+            DispatchQueue.global().asyncAfter(deadline: .now() + toolStartTimeout, execute: startTimer)
+
+            // Finish timeout — tool must complete within toolFinishTimeout seconds.
+            let finishTimer = DispatchWorkItem {
+                connection.invalidate()
+                safeResume((-1, "Tool timed out after \(Int(toolFinishTimeout))s"))
+            }
+            DispatchQueue.global().asyncAfter(deadline: .now() + toolFinishTimeout, execute: finishTimer)
+
             proxy.execute(script: script, instanceID: self.instanceID) { status, output in
+                startedLock.lock()
+                started = true
+                startedLock.unlock()
+                startTimer.cancel()
+                finishTimer.cancel()
                 connection.invalidate()
                 safeResume((status, output))
             }

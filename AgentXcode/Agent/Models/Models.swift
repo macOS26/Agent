@@ -98,6 +98,12 @@ enum AgentError: Error, LocalizedError {
 /// Unified timeout for all LLM API requests (Claude, OpenAI-compatible, Ollama).
 let llmAPITimeout: TimeInterval = 90
 
+/// Timeout for an internal tool call to start executing (seconds).
+let toolStartTimeout: TimeInterval = 15
+
+/// Timeout for an internal tool call to finish once started (seconds).
+let toolFinishTimeout: TimeInterval = 3600
+
 // MARK: - Task History
 
 struct TaskRecord: Codable, Identifiable {
