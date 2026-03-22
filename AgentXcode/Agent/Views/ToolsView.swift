@@ -56,7 +56,14 @@ struct ToolsView: View {
                                     provider: selectedProvider,
                                     prefs: prefs,
                                     isCollapsed: collapsedGroups.contains(groupName),
-                                    toggleCollapse: { toggleGroup(groupName) }
+                                    toggleCollapse: { toggleGroup(groupName) },
+                                    onGroupToggled: { enabled in
+                                        if !enabled {
+                                            _ = withAnimation(.easeInOut(duration: 0.15)) {
+                                                collapsedGroups.insert(groupName)
+                                            }
+                                        }
+                                    }
                                 )
                             }
                         }
@@ -114,6 +121,7 @@ struct GroupRowView: View {
     let prefs: ToolPreferencesService
     let isCollapsed: Bool
     let toggleCollapse: () -> Void
+    let onGroupToggled: (Bool) -> Void
 
     var body: some View {
         let groupEnabled = prefs.isGroupEnabled(groupName)
@@ -122,29 +130,32 @@ struct GroupRowView: View {
             // Group header with collapse toggle and group toggle
             HStack(spacing: 6) {
                 // Collapse arrow
-                Image(systemName: isCollapsed ? "chevron.right" : "chevron.down")
+                Image(systemName: (isCollapsed || !groupEnabled) ? "chevron.right" : "chevron.down")
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundColor(groupEnabled ? .secondary : .red.opacity(0.5))
 
                 // Group icon and name
                 Image(systemName: icon)
                     .font(.caption)
-                    .foregroundStyle(groupEnabled ? .primary : .tertiary)
+                    .foregroundColor(groupEnabled ? .primary : .red.opacity(0.6))
                 Text(groupName)
                     .font(.caption).bold()
-                    .foregroundStyle(groupEnabled ? .secondary : .tertiary)
+                    .foregroundColor(groupEnabled ? .secondary : .red.opacity(0.6))
 
                 // Tool count
                 Text("\(groupTools.count)")
                     .font(.caption2)
-                    .foregroundStyle(.tertiary)
+                    .foregroundColor(groupEnabled ? .gray : .red.opacity(0.4))
 
                 Spacer()
 
                 // Group toggle switch
                 Toggle("", isOn: Binding(
                     get: { groupEnabled },
-                    set: { _ in prefs.toggleGroup(groupName) }
+                    set: { newValue in
+                        prefs.toggleGroup(groupName)
+                        onGroupToggled(newValue)
+                    }
                 ))
                 .toggleStyle(.switch)
                 .controlSize(.mini)
@@ -153,15 +164,14 @@ struct GroupRowView: View {
             .padding(.leading, 4)
             .padding(.top, 8)
             .contentShape(Rectangle())
-            .onTapGesture { toggleCollapse() }
+            .onTapGesture { if groupEnabled { toggleCollapse() } }
 
-            // Tool buttons (collapsible)
-            if !isCollapsed {
+            // Tool buttons — auto-collapse when group is disabled
+            if !isCollapsed && groupEnabled {
                 FlowLayout(spacing: 4) {
                     ForEach(groupTools, id: \.name) { tool in
-                        let enabled = groupEnabled && prefs.isEnabled(provider, tool.name)
+                        let enabled = prefs.isEnabled(provider, tool.name)
                         Button {
-                            guard groupEnabled else { return }
                             prefs.toggle(provider, tool.name)
                         } label: {
                             Text(tool.name)
@@ -174,13 +184,9 @@ struct GroupRowView: View {
                                 .overlay(Capsule().stroke(enabled ? Color.accentColor.opacity(0.5) : Color.clear, lineWidth: 0.5))
                         }
                         .buttonStyle(.plain)
-                        .disabled(!groupEnabled)
-                        .help(groupEnabled
-                            ? (tool.description.components(separatedBy: ". ").first ?? tool.description)
-                            : "Enable \(groupName) group first")
+                        .help(tool.description.components(separatedBy: ". ").first ?? tool.description)
                     }
                 }
-                .opacity(groupEnabled ? 1.0 : 0.4)
             }
         }
     }
