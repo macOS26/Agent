@@ -80,9 +80,10 @@ final class ToolPreferencesService {
         "Coding": Set(["read_file", "write_file", "edit_file", "create_diff", "apply_diff", "list_files", "search_files",
                        "git_status", "git_diff", "git_log", "git_commit", "git_diff_patch", "git_branch",
                        "xcode_build", "xcode_run", "xcode_list_projects", "xcode_select_project", "xcode_grant_permission"]),
-        "Automation": Set(["apple_event_query", "run_applescript", "run_osascript", "execute_javascript", "lookup_sdef",
+        "Automation": Set(["run_applescript", "run_osascript", "execute_javascript", "lookup_sdef",
                           "list_apple_scripts", "run_apple_script", "save_apple_script", "delete_apple_script",
                           "list_javascript", "run_javascript", "save_javascript", "delete_javascript"]),
+        "Experimental": Set(["apple_event_query"]),
         "Accessibility": Set(["ax_list_windows", "ax_get_properties", "ax_perform_action",
                               "ax_type_text", "ax_click", "ax_press_key", "ax_screenshot",
                               "ax_set_properties", "ax_find_element", "ax_get_children"]),
@@ -120,6 +121,7 @@ final class ToolPreferencesService {
         UserDefaults.standard.set(true, forKey: Self.groupSeededKey)
         disabledGroups.insert("Accessibility")
         disabledGroups.insert("Web")
+        disabledGroups.insert("Experimental")
     }
 
     /// On first launch, disable all Apple AI tools not in the core default set.
