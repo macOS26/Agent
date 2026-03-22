@@ -246,8 +246,11 @@ struct MCPServersView: View {
                 .buttonStyle(.bordered).controlSize(.mini)
 
                 Button(role: .destructive) {
-                    Task { await mcpService.disconnect(serverId: server.id) }
-                    registry.remove(at: server.id)
+                    let serverId = server.id
+                    Task {
+                        await mcpService.disconnect(serverId: serverId)
+                        registry.remove(at: serverId)
+                    }
                 } label: {
                     Image(systemName: "trash")
                 }

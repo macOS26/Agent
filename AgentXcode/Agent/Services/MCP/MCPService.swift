@@ -112,9 +112,20 @@ final class MCPService: @unchecked Sendable {
         await refreshState()
     }
 
-    /// Disconnect from an MCP server
+    /// Disconnect from an MCP server (with timeout to prevent beach ball)
     func disconnect(serverId: UUID) async {
-        await client.removeServer(serverId)
+        // Timeout the removeServer call to prevent hangs on unresponsive servers
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask {
+                await self.client.removeServer(serverId)
+            }
+            group.addTask {
+                try? await Task.sleep(for: .seconds(5))
+            }
+            // Whichever finishes first, cancel the other
+            await group.next()
+            group.cancelAll()
+        }
         connectedServerIds.remove(serverId)
         connectionErrors.removeValue(forKey: serverId)
 
