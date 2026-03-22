@@ -727,6 +727,10 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(scriptCaptureStderr, forKey: "agentScriptCaptureStderr") }
     }
 
+    var deletionLimit: Int = UserDefaults.standard.object(forKey: "agentDeletionLimit") as? Int ?? 10 {
+        didSet { UserDefaults.standard.set(deletionLimit, forKey: "agentDeletionLimit") }
+    }
+
     // LLM streaming state
     var streamBuffer = ""
     var streamFlushTask: Task<Void, Never>?

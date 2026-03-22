@@ -1833,6 +1833,13 @@ extension AgentViewModel {
                             let rawCommand = input["command"] as? String ?? ""
                             let command = Self.prependWorkingDirectory(
                                 rawCommand, projectFolder: projectFolder)
+                            // Watchdog: block catastrophic rm commands and enforce deletion limits
+                            let isPrivilegedCheck = (name == "execute_daemon_command") && rootEnabled
+                            if let watchdogErr = Self.watchdogCheck(rawCommand, isPrivileged: isPrivilegedCheck, deletionLimit: deletionLimit) {
+                                appendLog("🛡️ \(watchdogErr)")
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": watchdogErr])
+                                continue
+                            }
                             // Preflight: catch typos in /Users/ and ~/ paths before running
                             if let pathErr = Self.preflightCommand(command) {
                                 appendLog(pathErr)
