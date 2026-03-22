@@ -4,7 +4,7 @@
 ## 🧠 Agentic AI for the  Mac Desktop 
 Now with Apple Intelligence
 
-Agent! already have proven to be a Cursor and Claude Code killer in just two weekends.
+Agent! already have proven to be a Cursor and Claude Code killer in just two weekends. With Agent! you can form a coding plan. Apple Intelligence interprets the plan and passes it to the main LLM. In a few minutes the plan is ready. Agent! asks for plan approval and away you go. You even do this from your iPhone via messages with the "Agent! " prefix
 
 [![Swift 6.2](https://img.shields.io/badge/Swift-6.2-aqua.svg)](https://swift.org)
 [![Website](https://img.shields.io/badge/website-macos26.app-blue.svg)](https://macos26.app)
