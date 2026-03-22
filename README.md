@@ -4,6 +4,8 @@
 ## 🧠 Agentic AI for the  Mac Desktop 
 Now with Apple Intelligence
 
+Agent! already have proven to be a Cursor and Claude Code killer in just two weekends.
+
 [![Swift 6.2](https://img.shields.io/badge/Swift-6.2-aqua.svg)](https://swift.org)
 [![Website](https://img.shields.io/badge/website-macos26.app-blue.svg)](https://macos26.app)
 [![Version](https://img.shields.io/badge/version-1.0.16-red.svg)](https://github.com/macOS26/Agent)
