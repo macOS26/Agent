@@ -1373,7 +1373,7 @@ extension AgentViewModel {
                     }
                     textWasStreamed = true
                 } else if let openAICompatible {
-                    let r = try await openAICompatible.sendStreaming(messages: messages) { [weak self] delta in
+                    let r = try await openAICompatible.sendStreaming(messages: messages, activeGroups: activeGroups) { [weak self] delta in
                         Task { @MainActor in
                             self?.isThinking = false
                             self?.appendStreamDelta(delta)
@@ -1382,7 +1382,7 @@ extension AgentViewModel {
                     response = (r.content, r.stopReason, 0, 0)
                     textWasStreamed = true
                 } else if let ollama {
-                    let r = try await ollama.sendStreaming(messages: messages) { [weak self] delta in
+                    let r = try await ollama.sendStreaming(messages: messages, activeGroups: activeGroups) { [weak self] delta in
                         Task { @MainActor in
                             self?.isThinking = false
                             self?.appendStreamDelta(delta)

@@ -41,7 +41,7 @@ final class OpenAICompatibleService {
         return prompt
     }
 
-    var tools: [[String: Any]] { AgentTools.ollamaTools(for: provider) }
+    func tools(activeGroups: Set<String>? = nil) -> [[String: Any]] { AgentTools.ollamaTools(for: provider, activeGroups: activeGroups) }
 
     /// Prepend project folder to the last user message.
     private func withFolderPrefix(_ messages: [[String: Any]]) -> [[String: Any]] {
@@ -156,13 +156,13 @@ final class OpenAICompatibleService {
 
     // MARK: - Non-Streaming
 
-    func send(messages: [[String: Any]]) async throws -> (content: [[String: Any]], stopReason: String) {
+    func send(messages: [[String: Any]], activeGroups: Set<String>? = nil) async throws -> (content: [[String: Any]], stopReason: String) {
         let chatMessages = convertMessages(messages)
 
         let body: [String: Any] = [
             "model": model,
             "messages": chatMessages,
-            "tools": tools,
+            "tools": tools(activeGroups: activeGroups),
             "stream": false,
             "max_tokens": 2048
         ]
@@ -175,6 +175,7 @@ final class OpenAICompatibleService {
 
     func sendStreaming(
         messages: [[String: Any]],
+        activeGroups: Set<String>? = nil,
         onTextDelta: @escaping @Sendable (String) -> Void
     ) async throws -> (content: [[String: Any]], stopReason: String) {
         let chatMessages = convertMessages(messages)
@@ -182,7 +183,7 @@ final class OpenAICompatibleService {
         let body: [String: Any] = [
             "model": model,
             "messages": chatMessages,
-            "tools": tools,
+            "tools": tools(activeGroups: activeGroups),
             "stream": true,
             "max_tokens": 2048
         ]

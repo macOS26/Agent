@@ -146,6 +146,10 @@ extension AgentViewModel {
             messages.append(["role": "user", "content": prompt])
         }
 
+        // Auto-classify task mode for tool subsetting
+        let taskMode = TaskMode.classify(prompt)
+        var activeGroups: Set<String>? = taskMode == .general ? nil : taskMode.groups
+
         var iterations = 0
         let maxIter = maxIterations
         var consecutiveNoTool = 0
@@ -186,7 +190,7 @@ extension AgentViewModel {
                 let streamStart = CFAbsoluteTimeGetCurrent()
 
                 if let claude {
-                    response = try await claude.sendStreaming(messages: messages) { [weak tab] delta in
+                    response = try await claude.sendStreaming(messages: messages, activeGroups: activeGroups) { [weak tab] delta in
                         Task { @MainActor in
                             tab?.isLLMThinking = false
                             tab?.appendStreamDelta(delta)
@@ -195,7 +199,7 @@ extension AgentViewModel {
                     textWasStreamed = true
                     tab.flushStreamBuffer()
                 } else if let openAICompatible {
-                    let r = try await openAICompatible.sendStreaming(messages: messages) { [weak tab] delta in
+                    let r = try await openAICompatible.sendStreaming(messages: messages, activeGroups: activeGroups) { [weak tab] delta in
                         Task { @MainActor in
                             tab?.isLLMThinking = false
                             tab?.appendStreamDelta(delta)
@@ -205,7 +209,7 @@ extension AgentViewModel {
                     textWasStreamed = true
                     tab.flushStreamBuffer()
                 } else if let ollama {
-                    let r = try await ollama.sendStreaming(messages: messages) { [weak tab] delta in
+                    let r = try await ollama.sendStreaming(messages: messages, activeGroups: activeGroups) { [weak tab] delta in
                         Task { @MainActor in
                             tab?.isLLMThinking = false
                             tab?.appendStreamDelta(delta)

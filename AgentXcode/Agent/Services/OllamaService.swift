@@ -42,7 +42,7 @@ final class OllamaService {
         return prompt
     }
 
-    var tools: [[String: Any]] { AgentTools.ollamaTools(for: provider) }
+    func tools(activeGroups: Set<String>? = nil) -> [[String: Any]] { AgentTools.ollamaTools(for: provider, activeGroups: activeGroups) }
 
     /// Prepend project folder to the last user message so it's always visible in context.
     private func withFolderPrefix(_ messages: [[String: Any]]) -> [[String: Any]] {
@@ -66,7 +66,7 @@ final class OllamaService {
 
     /// Send messages via OpenAI-compatible chat completions API.
     /// Translates response into the same format as ClaudeService for the task loop.
-    func send(messages: [[String: Any]]) async throws -> (content: [[String: Any]], stopReason: String) {
+    func send(messages: [[String: Any]], activeGroups: Set<String>? = nil) async throws -> (content: [[String: Any]], stopReason: String) {
         // Convert Claude-format messages to OpenAI-format
         var chatMessages: [[String: Any]] = [
             ["role": "system", "content": systemPrompt]
@@ -151,7 +151,7 @@ final class OllamaService {
         let body: [String: Any] = [
             "model": model,
             "messages": chatMessages,
-            "tools": tools,
+            "tools": tools(activeGroups: activeGroups),
             "stream": false,
             "options": [
                 "num_predict": 2048,
@@ -172,6 +172,7 @@ final class OllamaService {
 
     func sendStreaming(
         messages: [[String: Any]],
+        activeGroups: Set<String>? = nil,
         onTextDelta: @escaping @Sendable (String) -> Void
     ) async throws -> (content: [[String: Any]], stopReason: String) {
         // Convert Claude-format messages to OpenAI-format (same as send())
@@ -254,7 +255,7 @@ final class OllamaService {
         let body: [String: Any] = [
             "model": model,
             "messages": chatMessages,
-            "tools": tools,
+            "tools": tools(activeGroups: activeGroups),
             "stream": true,
             "options": [
                 "num_predict": 2048,
