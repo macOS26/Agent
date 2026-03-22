@@ -7,7 +7,7 @@ struct ToolsView: View {
     
     // Group definitions matching ToolPreferencesService — use exact name sets to avoid overlap
     static let groups: [String: (filter: (AgentTools.ToolDef) -> Bool, icon: String)] = [
-        "Coding": ({ ["read_file", "write_file", "edit_file", "create_diff", "apply_diff", "list_files", "search_files"].contains($0.name) || $0.name.hasPrefix("git_") || $0.name.hasPrefix("xcode_") }, "doc.text"),
+        "Coding": ({ ["read_file", "write_file", "edit_file", "create_diff", "apply_diff", "list_files", "search_files"].contains($0.name) || $0.name.hasPrefix("git_") || ($0.name.hasPrefix("xcode_") && $0.name != "xcode_grant_permission") }, "doc.text"),
         "Automation": ({ ["run_applescript", "run_osascript", "execute_javascript"].contains($0.name) || ["list_apple_scripts", "run_apple_script", "save_apple_script", "delete_apple_script"].contains($0.name) || ["list_javascript", "run_javascript", "save_javascript", "delete_javascript"].contains($0.name) }, "gearshape.2"),
         "Experimental": ({ ["apple_event_query", "lookup_sdef", "xcode_grant_permission"].contains($0.name) }, "flask"),
         "Accessibility": ({ $0.name.hasPrefix("ax_") }, "accessibility"),
