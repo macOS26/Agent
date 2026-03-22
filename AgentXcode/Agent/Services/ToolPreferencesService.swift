@@ -15,13 +15,12 @@ enum TaskMode: String, CaseIterable {
     var groups: Set<String> {
         let base: Set<String> = ["Core", "Shell"]
         switch self {
-        case .coding:       return base.union(["Coding", "Scripts"])
-        case .automation:   return base.union(["Automation", "AppleScript", "JavaScript", "Accessibility", "Scripts"])
+        case .coding:       return base.union(["Coding"])
+        case .automation:   return base.union(["Automation", "Accessibility"])
         case .web:          return base.union(["Web", "Selenium", "Web Search"])
         case .conversation: return base.union(["Conversation"])
-        case .general:      return Set(["Core", "Coding", "Shell", "Scripts",
-                                          "Automation", "AppleScript", "JavaScript", "Accessibility",
-                                          "Web", "Selenium", "Web Search", "Conversation"])
+        case .general:      return ["Core", "Coding", "Shell", "Automation", "Accessibility",
+                                          "Web", "Selenium", "Web Search", "Conversation"]
         }
     }
 
@@ -82,7 +81,11 @@ final class ToolPreferencesService {
         "Coding": Set(["read_file", "write_file", "edit_file", "create_diff", "apply_diff", "list_files", "search_files",
                        "git_status", "git_diff", "git_log", "git_commit", "git_diff_patch", "git_branch",
                        "xcode_build", "xcode_run", "xcode_list_projects", "xcode_select_project", "xcode_grant_permission"]),
-        "Automation": Set(["apple_event_query", "run_applescript", "run_osascript", "execute_javascript", "lookup_sdef"]),
+        "Automation": Set(["apple_event_query", "run_applescript", "run_osascript", "execute_javascript", "lookup_sdef",
+                          "list_agent_scripts", "read_agent_script", "create_agent_script", "update_agent_script",
+                          "run_agent_script", "delete_agent_script",
+                          "list_apple_scripts", "run_apple_script", "save_apple_script", "delete_apple_script",
+                          "list_javascript", "run_javascript", "save_javascript", "delete_javascript"]),
         "Shell": Set(["execute_agent_command", "execute_daemon_command"]),
         "Accessibility": Set(["ax_list_windows", "ax_inspect_element", "ax_get_properties", "ax_perform_action",
                               "ax_check_permission", "ax_request_permission", "ax_type_text", "ax_click",
@@ -90,10 +93,6 @@ final class ToolPreferencesService {
                               "ax_set_properties", "ax_find_element", "ax_get_focused_element", "ax_get_children",
                               "ax_drag", "ax_wait_for_element", "ax_show_menu", "ax_click_element",
                               "ax_wait_adaptive", "ax_type_into_element", "ax_highlight_element", "ax_get_window_frame"]),
-        "Scripts": Set(["list_agent_scripts", "read_agent_script", "create_agent_script", "update_agent_script",
-                        "run_agent_script", "delete_agent_script"]),
-        "AppleScript": Set(["list_apple_scripts", "run_apple_script", "save_apple_script", "delete_apple_script"]),
-        "JavaScript": Set(["list_javascript", "run_javascript", "save_javascript", "delete_javascript"]),
         "Core": Set(["task_complete", "list_native_tools", "list_mcp_tools", "load_tools"]),
         "Web": Set(["web_open", "web_find", "web_click", "web_type", "web_execute_js", "web_get_url", "web_get_title"]),
         "Selenium": Set(["selenium_start", "selenium_stop", "selenium_navigate", "selenium_find", "selenium_click",

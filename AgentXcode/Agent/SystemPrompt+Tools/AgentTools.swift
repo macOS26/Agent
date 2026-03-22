@@ -950,7 +950,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.loadTools,
-            description: "Load additional tool groups. Available groups: Coding, Git, Xcode, Shell, Accessibility, Automation, AppleScript, JavaScript, Scripts, SDEF, Web, Selenium, Conversation, Web Search.",
+            description: "Load additional tool groups. Available: Coding, Shell, Automation, Accessibility, Web, Selenium, Web Search, Conversation.",
             properties: [
                 "groups": ["type": "array", "items": ["type": "string"] as [String: Any], "description": "Group names to load"] as [String: Any],
             ],
