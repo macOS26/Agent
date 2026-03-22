@@ -217,7 +217,8 @@
       "Bash(xxd /Users/toddbruss/Documents/GitHub/Agent/AgentXcode/Agent/Views/AgentViewModel/AgentViewModel+TaskExecution.swift)",
       "Bash(python3:*)",
       "Bash(/tmp/missing_files.txt:*)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(cd:*)"
     ]
   }
 }
