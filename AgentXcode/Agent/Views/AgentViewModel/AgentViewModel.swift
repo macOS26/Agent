@@ -80,22 +80,34 @@ final class AgentViewModel {
         didSet {
             UserDefaults.standard.set(userEnabled, forKey: "agentUserEnabled")
             if !userEnabled {
-                // Kill and unregister the user agent
                 userService.shutdownAgent()
                 userPingOK = false
                 appendLog("User Agent: shut down. To re-enable: click Connect, then click Register.")
             }
+            syncServicesGroup()
         }
     }
     var rootEnabled: Bool = UserDefaults.standard.object(forKey: "agentRootEnabled") as? Bool ?? true {
         didSet {
             UserDefaults.standard.set(rootEnabled, forKey: "agentRootEnabled")
             if !rootEnabled {
-                // Kill and unregister the daemon for security
                 helperService.shutdownDaemon()
                 daemonPingOK = false
                 appendLog("Launch Daemon: shut down. To re-enable: click Connect, then click Register.")
             }
+            syncServicesGroup()
+        }
+    }
+
+    /// Keep the Services tool group in sync with userEnabled/rootEnabled.
+    private func syncServicesGroup() {
+        let prefs = ToolPreferencesService.shared
+        let groupOn = prefs.isGroupEnabled("Services")
+        let bothOn = userEnabled && rootEnabled
+        if bothOn && !groupOn {
+            prefs.toggleGroup("Services")
+        } else if !bothOn && groupOn {
+            prefs.toggleGroup("Services")
         }
     }
 
