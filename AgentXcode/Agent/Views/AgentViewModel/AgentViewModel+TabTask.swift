@@ -57,7 +57,7 @@ extension AgentViewModel {
         tabTaskLog.info("[\(tab.displayTitle)] executeTabTask started: \(prompt.prefix(80))")
 
         tab.appendLog("--- Tab Task ---")
-        tab.appendLog("Prompt: \(prompt)")
+        tab.appendLog("User: \(prompt)")
         tab.flush()
 
         // Build tab context from the existing log (cap at 8K characters)
@@ -88,30 +88,33 @@ extension AgentViewModel {
         \(tabContext)
         """
 
+        // Use tab's project folder if set, otherwise fall back to main project folder
+        let projectFolder = tab.projectFolder.isEmpty ? self.projectFolder : tab.projectFolder
+
         let (provider, modelId) = resolvedLLMConfig(for: tab)
         tabTaskLog.info("[\(tab.displayTitle)] resolved LLM: \(provider.displayName) / \(modelId)")
         tab.appendLog("Model: \(provider.displayName) / \(modelId)")
         tab.flush()
 
         let claude: ClaudeService? = provider == .claude
-            ? ClaudeService(apiKey: apiKey, model: modelId, historyContext: tabHistoryContext) : nil
+            ? ClaudeService(apiKey: apiKey, model: modelId, historyContext: tabHistoryContext, projectFolder: projectFolder) : nil
         let openAICompatible: OpenAICompatibleService?
         switch provider {
         case .openAI:
-            openAICompatible = OpenAICompatibleService(apiKey: openAIAPIKey, model: modelId, baseURL: "https://api.openai.com/v1/chat/completions", historyContext: tabHistoryContext, provider: .openAI)
+            openAICompatible = OpenAICompatibleService(apiKey: openAIAPIKey, model: modelId, baseURL: "https://api.openai.com/v1/chat/completions", historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .openAI)
         case .deepSeek:
-            openAICompatible = OpenAICompatibleService(apiKey: deepSeekAPIKey, model: modelId, baseURL: "https://api.deepseek.com/chat/completions", historyContext: tabHistoryContext, provider: .deepSeek)
+            openAICompatible = OpenAICompatibleService(apiKey: deepSeekAPIKey, model: modelId, baseURL: "https://api.deepseek.com/chat/completions", historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .deepSeek)
         case .huggingFace:
-            openAICompatible = OpenAICompatibleService(apiKey: huggingFaceAPIKey, model: modelId, baseURL: "https://router.huggingface.co/v1/chat/completions", historyContext: tabHistoryContext, provider: .huggingFace)
+            openAICompatible = OpenAICompatibleService(apiKey: huggingFaceAPIKey, model: modelId, baseURL: "https://router.huggingface.co/v1/chat/completions", historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .huggingFace)
         default:
             openAICompatible = nil
         }
         let ollama: OllamaService?
         switch provider {
         case .ollama:
-            ollama = OllamaService(apiKey: ollamaAPIKey, model: modelId, endpoint: ollamaEndpoint, supportsVision: false, historyContext: tabHistoryContext, provider: .ollama)
+            ollama = OllamaService(apiKey: ollamaAPIKey, model: modelId, endpoint: ollamaEndpoint, supportsVision: false, historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .ollama)
         case .localOllama:
-            ollama = OllamaService(apiKey: "", model: modelId, endpoint: localOllamaEndpoint, supportsVision: false, historyContext: tabHistoryContext, provider: .localOllama)
+            ollama = OllamaService(apiKey: "", model: modelId, endpoint: localOllamaEndpoint, supportsVision: false, historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .localOllama)
         default:
             ollama = nil
         }
@@ -146,6 +149,29 @@ extension AgentViewModel {
         var iterations = 0
         let maxIter = maxIterations
         var consecutiveNoTool = 0
+
+        // Apple Intelligence mediator for contextual annotations (same as main task)
+        let mediator = AppleIntelligenceMediator.shared
+        var appleAIAnnotations: [AppleIntelligenceMediator.Annotation] = []
+
+        // Optional: Add Apple Intelligence context to user message
+        if mediator.isEnabled && mediator.injectContextToLLM {
+            tabTaskLog.info("[\(tab.displayTitle)] Apple AI mediator: contextualizing user message...")
+            if let contextAnnotation = await mediator.contextualizeUserMessage(prompt) {
+                appleAIAnnotations.append(contextAnnotation)
+                if mediator.trainingEnabled {
+                    TrainingDataStore.shared.captureAppleAIDecision(contextAnnotation.content)
+                }
+                // Inject rephrased context into LLM messages
+                let contextMessage: [String: Any] = [
+                    "role": "user",
+                    "content": contextAnnotation.formatted
+                ]
+                messages.insert(contextMessage, at: messages.count)
+                tab.appendLog(contextAnnotation.formatted)
+                tab.flush()
+            }
+        }
 
         while !Task.isCancelled && iterations < maxIter {
             iterations += 1
@@ -292,6 +318,20 @@ extension AgentViewModel {
             let summary = input["summary"] as? String ?? "Done"
             tab.appendLog("✅ Completed: \(summary)")
             tab.flush()
+            
+            // Apple Intelligence mediator summary (same as main task)
+            let mediator = AppleIntelligenceMediator.shared
+            if mediator.isEnabled && mediator.showAnnotationsToUser {
+                tabTaskLog.info("[\(tab.displayTitle)] Apple AI mediator: summarizing completion...")
+                if let summaryAnnotation = await mediator.summarizeCompletion(summary: summary, commandsRun: []) {
+                    if mediator.trainingEnabled {
+                        TrainingDataStore.shared.captureAppleAIDecision(summaryAnnotation.content)
+                    }
+                    tab.appendLog(summaryAnnotation.formatted)
+                    tab.flush()
+                }
+            }
+            
             // If this is the Messages tab, reply to the iMessage sender
             if tab.isMessagesTab, let handle = tab.replyHandle {
                 tab.replyHandle = nil

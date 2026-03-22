@@ -6,22 +6,28 @@ struct HistoryView: View {
     let onClear: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("\(tabName) History")
+                .font(.headline)
+            
+            Text("Browse and manage previous prompts.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            
+            Divider()
+            
             HStack {
-                Text("\(tabName) History")
-                    .font(.headline)
-                Spacer()
                 Text("\(prompts.count) prompts")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                Spacer()
                 Button("Clear All") { onClear() }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
                     .disabled(prompts.isEmpty)
             }
-            .padding()
-
-            Divider()
+            .padding(.horizontal)
+            .padding(.bottom, 8)
 
             if prompts.isEmpty {
                 Text("No prompts yet.")

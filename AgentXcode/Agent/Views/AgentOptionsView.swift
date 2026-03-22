@@ -5,9 +5,19 @@ struct AgentOptionsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("Options")
-                .font(.headline)
-                .padding(.bottom, 12)
+            // Header
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Options")
+                    .font(.headline)
+                
+                Text("Configure agent behavior and limits.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(16)
+            .padding(.bottom, 4)
+            
+            Divider()
 
             row {
                 Text("Iterations").font(.subheadline)

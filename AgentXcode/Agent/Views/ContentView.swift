@@ -186,42 +186,93 @@ struct ContentView: View {
 
             Divider()
 
-            // Project folder/file
-            HStack(spacing: 4) {
-                Button {
-                    let panel = NSOpenPanel()
-                    panel.canChooseFiles = true
-                    panel.canChooseDirectories = true
-                    panel.allowsMultipleSelection = false
-                    panel.message = "Select a project folder or file"
-                    if panel.runModal() == .OK, let url = panel.url {
-                        viewModel.projectFolder = url.path
+            // Project folder/file (main tab)
+            if viewModel.selectedTabId == nil {
+                HStack(spacing: 4) {
+                    Button {
+                        let panel = NSOpenPanel()
+                        panel.canChooseFiles = true
+                        panel.canChooseDirectories = true
+                        panel.allowsMultipleSelection = false
+                        panel.message = "Select a project folder or file"
+                        if panel.runModal() == .OK, let url = panel.url {
+                            viewModel.projectFolder = url.path
+                        }
+                    } label: {
+                        Image(systemName: "folder")
+                            .frame(width: 20, height: 16)
                     }
-                } label: {
-                    Image(systemName: "folder")
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.mini)
-                .help("Pick project folder or file")
+                    .buttonStyle(.bordered)
+                    .controlSize(.mini)
+                    .help("Pick project folder or file")
 
-                TextField("Project folder or file...", text: $viewModel.projectFolder)
+                    TextField("Project folder or file...", text: $viewModel.projectFolder)
+                        .textContentType(.none)
+                        .textFieldStyle(.roundedBorder)
+                        .controlSize(.mini)
+
+                    Button {
+                        viewModel.projectFolder = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                            .frame(width: 20, height: 16)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.mini)
+                    .help("Clear project folder")
+                    .disabled(viewModel.projectFolder.isEmpty)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+            }
+
+            // Per-tab project folder (when a tab is selected)
+            if let selectedId = viewModel.selectedTabId,
+               let tab = viewModel.scriptTabs.first(where: { $0.id == selectedId }) {
+                HStack(spacing: 4) {
+                    Button {
+                        let panel = NSOpenPanel()
+                        panel.canChooseFiles = true
+                        panel.canChooseDirectories = true
+                        panel.allowsMultipleSelection = false
+                        panel.message = "Select a project folder or file"
+                        if panel.runModal() == .OK, let url = panel.url {
+                            tab.projectFolder = url.path
+                            viewModel.persistScriptTabs()
+                        }
+                    } label: {
+                        Image(systemName: "folder")
+                            .frame(width: 20, height: 16)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.mini)
+                    .help("Pick project folder or file for this tab")
+
+                    TextField("Project folder or file...", text: Binding(
+                        get: { tab.projectFolder },
+                        set: { tab.projectFolder = $0; viewModel.persistScriptTabs() }
+                    ))
                     .textContentType(.none)
                     .textFieldStyle(.roundedBorder)
                     .controlSize(.mini)
 
-                Button {
-                    viewModel.projectFolder = ""
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.secondary)
+                    Button {
+                        tab.projectFolder = ""
+                        viewModel.persistScriptTabs()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                            .frame(width: 20, height: 16)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.mini)
+                    .help("Clear project folder")
+                    .disabled(tab.projectFolder.isEmpty)
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.mini)
-                .help("Clear project folder")
-                .disabled(viewModel.projectFolder.isEmpty)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
             }
-            .padding(.horizontal)
-            .padding(.vertical, 4)
 
             Divider()
 
@@ -804,9 +855,15 @@ struct ServicesPopover: View {
     @Bindable var viewModel: AgentViewModel
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 12) {
             Text("Services")
                 .font(.headline)
+            
+            Text("Background agents for shell commands and automation.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            
+            Divider()
             
             Grid(alignment: .leading, verticalSpacing: 10) {
                 GridRow {

@@ -580,6 +580,43 @@ The AI follows this priority order when automating Mac applications:
 | 4 | `run_agent_script` | ScriptingBridge Swift dylib for complex/persistent automation (full TCC) |
 | 5 | NSAppleScript inside `run_agent_script` | Fallback when ScriptingBridge has issues with an app |
 
+### Coding Tools Priority
+
+For ALL coding operations (file edits, git, Xcode builds), the AI uses tools in this order:
+
+| Priority | Tool Type | Examples |
+|-----------|-----------|----------|
+| 1 | **Native internal tools** | `read_file`, `write_file`, `edit_file`, `git_*`, `xcode_build` |
+| 2 | **MCP server tools** | `mcp_xcf_*`, `mcp_xcode-mcp-server_*` |
+| 3 | **Shell commands** | `execute_agent_command`, `execute_daemon_command` (last resort only) |
+
+**Why this matters:** Native tools are faster, safer, and provide structured output with error handling. Shell commands should only be used when no native/MCP alternative exists.
+
+### Xcode Build Priority
+
+For Xcode project builds, the AI follows this priority:
+
+| Priority | Tool | When to Use |
+|-----------|------|-------------|
+| 1 | `xcode_build` | Native ScriptingBridge tool — ALWAYS PREFERRED |
+| 2 | XCF MCP server (`mcp_xcf_*`) | Backup if native tools unavailable |
+| 3 | xcode-mcp-server (`mcp_xcode-mcp-server_*`) | Third choice if XCF unavailable |
+| 4 | `xcodebuild` via shell | LAST RESORT only if no other options |
+
+### System Prompt Version Management
+
+Agent! manages system prompts with automatic version tracking:
+
+| Header | Behavior |
+|--------|----------|
+| `// Agent! v{version}` | Default prompt — auto-updates when app version changes |
+| `// Agent! custom v{version}` | User-edited prompt — never auto-overwritten |
+| `// Agent! READ ONLY v{version}` | Locked prompt — never auto-overwritten, even on version changes |
+
+**To lock a prompt:** Add `READ ONLY` or `// READ ONLY` at the top of your custom prompt. This prevents automatic updates even when a new Agent! version is released.
+
+Prompts are stored in `~/Documents/AgentScript/system/` as `{provider}.txt` files.
+
 ---
 
 ## Available Tools

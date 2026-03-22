@@ -27,6 +27,8 @@ final class SystemPromptService {
     private static let versionPrefix = "// Agent! v"
     /// Custom header prefix for user-edited prompts (never auto-overwritten).
     private static let customPrefix = "// Agent! custom v"
+    /// READ ONLY header prefix for locked prompts (never auto-overwritten, even on version change).
+    private static let readOnlyPrefix = "// Agent! READ ONLY v"
 
     /// Current app version from the bundle.
     private static let appVersion: String = {
@@ -36,7 +38,7 @@ final class SystemPromptService {
     private init() {}
 
     /// Ensure the system/ directory exists and default prompts are written.
-    /// Replaces all prompts when the app version changes.
+    /// Replaces all prompts when the app version changes (unless READ ONLY or custom).
     func ensureDefaults() {
         let fm = FileManager.default
         try? fm.createDirectory(at: Self.systemDir, withIntermediateDirectories: true)
@@ -48,7 +50,10 @@ final class SystemPromptService {
                 needsWrite = true
             } else if let existing = try? String(contentsOf: url, encoding: .utf8),
                       let firstLine = existing.components(separatedBy: "\n").first {
-                if firstLine.hasPrefix(Self.customPrefix) {
+                if firstLine.hasPrefix(Self.readOnlyPrefix) {
+                    // READ ONLY prompt — never overwrite automatically
+                    needsWrite = false
+                } else if firstLine.hasPrefix(Self.customPrefix) {
                     // User-edited prompt — never overwrite automatically
                     needsWrite = false
                 } else if firstLine.hasPrefix(Self.versionPrefix) {
@@ -89,9 +94,9 @@ final class SystemPromptService {
             .replacingOccurrences(of: "{projectFolder}", with: folder)
     }
 
-    /// Remove the version/custom comment line from prompt content.
+    /// Remove the version/custom/readonly comment line from prompt content.
     private static func stripVersionLine(_ text: String) -> String {
-        if text.hasPrefix(customPrefix) || text.hasPrefix(versionPrefix) {
+        if text.hasPrefix(readOnlyPrefix) || text.hasPrefix(customPrefix) || text.hasPrefix(versionPrefix) {
             let lines = text.components(separatedBy: "\n")
             return lines.dropFirst().joined(separator: "\n")
         }
@@ -112,7 +117,11 @@ final class SystemPromptService {
         guard let fileName = Self.fileNames[provider] else { return }
         let url = Self.systemDir.appendingPathComponent(fileName)
         let stripped = Self.stripVersionLine(content)
-        let versioned = Self.customPrefix + Self.appVersion + "\n" + stripped
+        // Check if user added READ ONLY at the top
+        let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        let isReadOnly = trimmed.hasPrefix("READ ONLY") || trimmed.hasPrefix("// READ ONLY")
+        let header = isReadOnly ? Self.readOnlyPrefix : Self.customPrefix
+        let versioned = header + Self.appVersion + "\n" + stripped
         try? versioned.write(to: url, atomically: true, encoding: .utf8)
     }
 
@@ -122,6 +131,17 @@ final class SystemPromptService {
         let url = Self.systemDir.appendingPathComponent(fileName)
         let defaultPrompt = Self.versionPrefix + Self.appVersion + "\n" + Self.defaultPrompt(for: provider)
         try? defaultPrompt.write(to: url, atomically: true, encoding: .utf8)
+    }
+    
+    /// Check if a prompt is READ ONLY (user locked it to prevent auto-overwrite).
+    func isReadOnly(provider: APIProvider) -> Bool {
+        guard let fileName = Self.fileNames[provider] else { return false }
+        let url = Self.systemDir.appendingPathComponent(fileName)
+        guard let existing = try? String(contentsOf: url, encoding: .utf8),
+              let firstLine = existing.components(separatedBy: "\n").first else {
+            return false
+        }
+        return firstLine.hasPrefix(Self.readOnlyPrefix)
     }
 
     /// The built-in default prompt template for each provider.

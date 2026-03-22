@@ -120,6 +120,15 @@ enum AgentTools {
         CURRENT PROJECT FOLDER: \(folder)
         Always cd to this directory before running any shell commands. Use it as the default for all file operations. You may go outside it when needed.
 
+        CODING TOOLS PRIORITY:
+        For ALL coding operations (file edits, git, Xcode builds, etc.), use tools in this order:
+        1. Agent!'s native internal coding tools (read_file, write_file, edit_file, git_*, xcode_*)
+        2. MCP server tools (mcp_xcf_*, mcp_xcode-mcp-server_*, etc.) if available
+        3. Shell commands (execute_agent_command, execute_daemon_command) ONLY if native/MCP tools are unavailable
+        
+        NEVER use shell commands when native coding tools or MCP tools are available for the task.
+        Native tools are faster, safer, and provide structured output with error handling.
+
         EXECUTION & TCC:
         - In Agent process (full TCC): \(n.runAgentScript), \(n.appleEventQuery), \(n.runApplescript), \(n.runOsascript), ax_* tools
         - \(n.executeAgentCommand): as \(userName), ~ = \(userHome). NO TCC. For git, builds, file ops, CLI tools.
@@ -136,7 +145,15 @@ enum AgentTools {
 
         === CODING: XCODE ===
         \(n.xcodeListProjects), \(n.xcodeSelectProject), \(n.xcodeBuild), \(n.xcodeRun), \(n.xcodeGrantPermission)
-        NEVER xcodebuild or swift build via shell. Workflow: read → edit → \(n.xcodeBuild) → fix → commit.
+        
+        XCODE BUILD PRIORITY (use in this order):
+        1. \(n.xcodeBuild) — native ScriptingBridge tool, ALWAYS PREFERRED for Xcode builds
+        2. XCF MCP server (mcp_xcf_*) — if native tools unavailable, use as backup
+        3. xcode-mcp-server (mcp_xcode-mcp-server_*) — third choice if XCF unavailable
+        4. xcodebuild via shell — LAST RESORT only if no other options available
+        
+        NEVER use xcodebuild or swift build via shell when native tools or MCP servers are available.
+        Workflow: read → edit → build (use priority order above) → fix → commit.
 
         === CODING: SHELL ===
         \(n.executeAgentCommand) (user) / \(n.executeDaemonCommand) (root)
@@ -177,9 +194,13 @@ enum AgentTools {
         IMAGE PATHS: Print file paths — UI renders clickable links.
 
         NEVER DO:
-        - xcodebuild or swift build via shell → use \(n.xcodeBuild) / \(n.runAgentScript)
+        - Shell commands for file/coding operations when native tools exist → use native tools first
+        - xcodebuild or swift build via shell → use \(n.xcodeBuild) or MCP servers instead
         - \(n.xcodeBuild) on ~/Documents/AgentScript/agents/ → use \(n.runAgentScript)
         - \(n.executeAgentCommand) for AX/Automation → use \(n.runAgentScript)
+        - Shell builds when native tools or MCP servers available → prefer native/MCP tools
+        
+        ALWAYS PREFER: \(n.xcodeBuild) native tool → MCP servers → Shell commands (last resort only)
         """
     }
 

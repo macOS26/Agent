@@ -12,11 +12,18 @@ struct MCPServersView: View {
     @State private var addError: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 12) {
             // Header
+            Text("MCP Servers")
+                .font(.headline)
+            
+            Text("Connect external tools via Model Context Protocol.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            
+            Divider()
+            
             HStack {
-                Text("MCP Servers")
-                    .font(.headline)
                 Spacer()
                 Button {
                     Task { await mcpService.refreshState() }
@@ -267,6 +274,8 @@ struct MCPServerEditView: View {
     // HTTP fields
     @State private var urlText: String
     @State private var headersText: String
+    @State private var sseEndpointText: String
+    @State private var httpEndpointText: String
     // Common
     @State private var enabled: Bool
     @State private var autoStart: Bool
@@ -274,6 +283,7 @@ struct MCPServerEditView: View {
     @State private var jsonError: String?
     @State private var updatingFromJSON = false
     @State private var updatingFromFields = false
+    @State private var currentUnsupportedFieldsJSON: String? = nil
 
     private func syncFieldsToJSON() {
         guard !updatingFromJSON else { return }
@@ -295,33 +305,59 @@ struct MCPServerEditView: View {
         _environmentText = State(initialValue: server?.environment.map { "\($0.key)=\($0.value)" }.joined(separator: "\n") ?? "")
         _urlText = State(initialValue: server?.url ?? "")
         _headersText = State(initialValue: server?.headers.map { "\($0.key): \($0.value)" }.joined(separator: "\n") ?? "")
+        _sseEndpointText = State(initialValue: server?.sseEndpoint ?? "")
+        _httpEndpointText = State(initialValue: server?.httpEndpoint ?? "")
         _enabled = State(initialValue: server?.enabled ?? true)
         _autoStart = State(initialValue: server?.autoStart ?? true)
+        _currentUnsupportedFieldsJSON = State(initialValue: server?.unsupportedFieldsJSON)
         let initial = Self.buildConfig(from: server)
         _jsonText = State(initialValue: initial.toJSON())
         _jsonError = State(initialValue: nil)
     }
 
-    private static func buildConfig(from server: MCPServerConfig?) -> MCPServerConfig {
-        if server?.isHTTP == true {
-            return MCPServerConfig(
+    private static func buildConfig(
+        from server: MCPServerConfig?,
+        nameOverride: String? = nil,
+        useHTTPOverride: Bool? = nil,
+        commandOverride: String? = nil,
+        argsOverride: [String]? = nil,
+        envOverride: [String: String]? = nil,
+        urlOverride: String? = nil,
+        headersOverride: [String: String]? = nil,
+        sseOverride: String? = nil,
+        httpOverride: String? = nil,
+        enabledOverride: Bool? = nil,
+        autoStartOverride: Bool? = nil,
+        unsupportedJSON: String? = nil
+    ) -> MCPServerConfig {
+        let useHTTP = useHTTPOverride ?? (server?.isHTTP ?? false)
+        let name = nameOverride ?? server?.name ?? ""
+        
+        if useHTTP {
+            var config = MCPServerConfig(
                 id: server?.id ?? UUID(),
-                name: server?.name ?? "",
-                url: server?.url ?? "",
-                headers: server?.headers ?? [:],
-                enabled: server?.enabled ?? true,
-                autoStart: server?.autoStart ?? true
+                name: name,
+                url: urlOverride ?? server?.url ?? "",
+                headers: headersOverride ?? server?.headers ?? [:],
+                enabled: enabledOverride ?? server?.enabled ?? true,
+                autoStart: autoStartOverride ?? server?.autoStart ?? true
             )
+            config.sseEndpoint = sseOverride ?? server?.sseEndpoint
+            config.httpEndpoint = httpOverride ?? server?.httpEndpoint
+            config.unsupportedFieldsJSON = unsupportedJSON ?? server?.unsupportedFieldsJSON
+            return config
         } else {
-            return MCPServerConfig(
+            var config = MCPServerConfig(
                 id: server?.id ?? UUID(),
-                name: server?.name ?? "",
-                command: server?.command ?? "",
-                arguments: server?.arguments ?? [],
-                environment: server?.environment ?? [:],
-                enabled: server?.enabled ?? true,
-                autoStart: server?.autoStart ?? true
+                name: name,
+                command: commandOverride ?? server?.command ?? "",
+                arguments: argsOverride ?? server?.arguments ?? [],
+                environment: envOverride ?? server?.environment ?? [:],
+                enabled: enabledOverride ?? server?.enabled ?? true,
+                autoStart: autoStartOverride ?? server?.autoStart ?? true
             )
+            config.unsupportedFieldsJSON = unsupportedJSON ?? server?.unsupportedFieldsJSON
+            return config
         }
     }
 
@@ -355,6 +391,14 @@ struct MCPServerEditView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("URL").font(.caption).foregroundStyle(.secondary)
                         TextField("https://example.com/mcp", text: $urlText).textFieldStyle(.roundedBorder)
+                    }
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("SSE Endpoint (optional)").font(.caption).foregroundStyle(.secondary)
+                        TextField("/sse", text: $sseEndpointText).textFieldStyle(.roundedBorder)
+                    }
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("HTTP Endpoint (optional)").font(.caption).foregroundStyle(.secondary)
+                        TextField("/message", text: $httpEndpointText).textFieldStyle(.roundedBorder)
                     }
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Headers (Name: Value, one per line)").font(.caption).foregroundStyle(.secondary)
@@ -396,6 +440,8 @@ struct MCPServerEditView: View {
                 .onChange(of: argumentsText) { syncFieldsToJSON() }
                 .onChange(of: environmentText) { syncFieldsToJSON() }
                 .onChange(of: urlText) { syncFieldsToJSON() }
+                .onChange(of: sseEndpointText) { syncFieldsToJSON() }
+                .onChange(of: httpEndpointText) { syncFieldsToJSON() }
                 .onChange(of: headersText) { syncFieldsToJSON() }
                 .onChange(of: enabled) { syncFieldsToJSON() }
                 .onChange(of: autoStart) { syncFieldsToJSON() }
@@ -428,7 +474,7 @@ struct MCPServerEditView: View {
                 Button("Save") {
                     let config: MCPServerConfig
                     if useHTTP {
-                        config = MCPServerConfig(
+                        var httpConfig = MCPServerConfig(
                             id: server?.id ?? UUID(),
                             name: name,
                             url: urlText,
@@ -436,8 +482,12 @@ struct MCPServerEditView: View {
                             enabled: enabled,
                             autoStart: autoStart
                         )
+                        httpConfig.sseEndpoint = sseEndpointText.isEmpty ? nil : sseEndpointText
+                        httpConfig.httpEndpoint = httpEndpointText.isEmpty ? nil : httpEndpointText
+                        httpConfig.unsupportedFieldsJSON = currentUnsupportedFieldsJSON
+                        config = httpConfig
                     } else {
-                        config = MCPServerConfig(
+                        var stdioConfig = MCPServerConfig(
                             id: server?.id ?? UUID(),
                             name: name,
                             command: command,
@@ -446,6 +496,8 @@ struct MCPServerEditView: View {
                             enabled: enabled,
                             autoStart: autoStart
                         )
+                        stdioConfig.unsupportedFieldsJSON = currentUnsupportedFieldsJSON
+                        config = stdioConfig
                     }
                     onSave(config)
                     dismiss()
@@ -460,16 +512,20 @@ struct MCPServerEditView: View {
 
     private var previewJSON: String {
         if useHTTP {
-            return MCPServerConfig(
+            var httpConfig = MCPServerConfig(
                 id: server?.id ?? UUID(),
                 name: name,
                 url: urlText,
                 headers: parseHeaders(headersText),
                 enabled: enabled,
                 autoStart: autoStart
-            ).toJSON()
+            )
+            httpConfig.sseEndpoint = sseEndpointText.isEmpty ? nil : sseEndpointText
+            httpConfig.httpEndpoint = httpEndpointText.isEmpty ? nil : httpEndpointText
+            httpConfig.unsupportedFieldsJSON = currentUnsupportedFieldsJSON
+            return httpConfig.toJSON()
         } else {
-            return MCPServerConfig(
+            var stdioConfig = MCPServerConfig(
                 id: server?.id ?? UUID(),
                 name: name,
                 command: command,
@@ -477,12 +533,29 @@ struct MCPServerEditView: View {
                 environment: parseEnvironment(environmentText),
                 enabled: enabled,
                 autoStart: autoStart
-            ).toJSON()
+            )
+            stdioConfig.unsupportedFieldsJSON = currentUnsupportedFieldsJSON
+            return stdioConfig.toJSON()
+        }
+    }
+    
+    /// Debug helper: dump all fields from a JSON dict
+    private func debugDump(_ dict: [String: Any], prefix: String = "") {
+        for (key, value) in dict {
+            if let nested = value as? [String: Any] {
+                print("\(prefix)\(key):")
+                debugDump(nested, prefix: "  \(prefix)")
+            } else if let nested = value as? [Any] {
+                print("\(prefix)\(key): [\(nested.count) items]")
+            } else {
+                print("\(prefix)\(key): \(value)")
+            }
         }
     }
 
     /// Parse edited JSON back into the form fields.
     /// Accepts standard MCP format: {"mcpServers":{"name":{...}}} or {"name":{...}} or bare {command, args, ...}
+    /// Preserves unsupported fields for export round-tripping
     private func applyJSON(_ json: String) {
         guard let data = json.data(using: .utf8),
               let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
@@ -494,25 +567,34 @@ struct MCPServerEditView: View {
         var serverName: String?
         var innerDict: [String: Any]?
 
-        if let mcpServers = obj["mcpServers"] as? [String: Any],
-           let firstName = mcpServers.keys.first,
-           let firstVal = mcpServers[firstName] as? [String: Any] {
-            // { "mcpServers": { "name": { ... } } }
-            serverName = firstName
-            innerDict = firstVal
+        if let mcpServers = obj["mcpServers"] as? [String: Any] {
+            // { "mcpServers": { "name": { ... } } } - standard format
+            // Find the first server entry (there could be multiple, but edit view handles one at a time)
+            for (key, value) in mcpServers {
+                if let serverDict = value as? [String: Any] {
+                    serverName = key
+                    innerDict = serverDict
+                    break // Take first server
+                }
+            }
         } else if obj["command"] != nil || obj["url"] != nil || obj["transport"] != nil {
             // Bare config: { "command": "...", "args": [...] }
             innerDict = obj
-        } else if let firstName = obj.keys.first,
-                  let firstVal = obj[firstName] as? [String: Any] {
-            // { "name": { "command": "...", ... } }
-            serverName = firstName
-            innerDict = firstVal
+        } else {
+            // { "name": { "command": "...", ... } } - single server format
+            // Filter out non-server keys like "globalShortcut"
+            let knownNonServerKeys = Set(["globalShortcut"])
+            for (key, value) in obj {
+                if !knownNonServerKeys.contains(key), let serverDict = value as? [String: Any] {
+                    serverName = key
+                    innerDict = serverDict
+                    break // Take first server
+                }
+            }
         }
 
         guard let dict = innerDict,
-              let dictData = try? JSONSerialization.data(withJSONObject: dict),
-              var config = try? JSONDecoder().decode(MCPServerConfig.self, from: dictData) else {
+              var config = MCPServerConfig(from: dict) else {
             jsonError = "Invalid MCP server config"
             return
         }
@@ -530,6 +612,8 @@ struct MCPServerEditView: View {
             useHTTP = true
             urlText = config.url ?? ""
             headersText = config.headers.map { "\($0.key): \($0.value)" }.joined(separator: "\n")
+            sseEndpointText = config.sseEndpoint ?? ""
+            httpEndpointText = config.httpEndpoint ?? ""
         } else {
             useHTTP = false
             command = config.command
@@ -538,6 +622,10 @@ struct MCPServerEditView: View {
         }
         enabled = config.enabled
         autoStart = config.autoStart
+        
+        // Store unsupported fields for round-tripping
+        currentUnsupportedFieldsJSON = config.unsupportedFieldsJSON
+        
         updatingFromJSON = false
     }
 

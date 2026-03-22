@@ -460,6 +460,8 @@ final class AgentViewModel {
            let parent = scriptTabs.first(where: { $0.id == selId && $0.isMainTab }) {
             tab.parentTabId = parent.id
         }
+        // Inherit project folder from current context
+        tab.projectFolder = self.projectFolder
         scriptTabs.append(tab)
         selectedTabId = tab.id
         persistScriptTabs()
@@ -470,6 +472,8 @@ final class AgentViewModel {
     @discardableResult
     func createMainTab(config: LLMConfig) -> ScriptTab {
         let tab = ScriptTab(llmConfig: config)
+        // Inherit project folder from main tab
+        tab.projectFolder = self.projectFolder
         scriptTabs.append(tab)
         selectedTabId = tab.id
         persistScriptTabs()
@@ -627,7 +631,7 @@ final class AgentViewModel {
             return (id: tab.id, scriptName: tab.scriptName, activityLog: tab.activityLog,
                     exitCode: tab.exitCode, llmConfigJSON: configJSON,
                     parentTabIdString: tab.parentTabId?.uuidString,
-                    isMessagesTab: tab.isMessagesTab)
+                    isMessagesTab: tab.isMessagesTab, projectFolder: tab.projectFolder)
         }
         ChatHistoryStore.shared.saveScriptTabs(tabData)
     }

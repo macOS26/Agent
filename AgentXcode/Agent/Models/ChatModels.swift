@@ -53,9 +53,11 @@ final class ScriptTabRecord {
     var llmConfigJSON: String?       // JSON-encoded LLMConfig for main tabs
     var parentTabIdString: String?   // UUID string of parent main tab
     var isMessagesTab: Bool          // Dedicated Messages tab flag
+    var projectFolder: String        // Per-tab project folder
 
     init(tabId: UUID, scriptName: String, activityLog: String, exitCode: Int = -999,
-         llmConfigJSON: String? = nil, parentTabIdString: String? = nil, isMessagesTab: Bool = false) {
+         llmConfigJSON: String? = nil, parentTabIdString: String? = nil, isMessagesTab: Bool = false,
+         projectFolder: String = "") {
         self.tabId = tabId
         self.scriptName = scriptName
         self.activityLog = activityLog
@@ -63,6 +65,7 @@ final class ScriptTabRecord {
         self.llmConfigJSON = llmConfigJSON
         self.parentTabIdString = parentTabIdString
         self.isMessagesTab = isMessagesTab
+        self.projectFolder = projectFolder
     }
 }
 
@@ -294,7 +297,7 @@ final class ChatHistoryStore {
     // MARK: - Script Tab Persistence
 
     /// Save script tab data to SwiftData. Replaces any existing records.
-    func saveScriptTabs(_ tabs: [(id: UUID, scriptName: String, activityLog: String, exitCode: Int32?, llmConfigJSON: String?, parentTabIdString: String?, isMessagesTab: Bool)]) {
+    func saveScriptTabs(_ tabs: [(id: UUID, scriptName: String, activityLog: String, exitCode: Int32?, llmConfigJSON: String?, parentTabIdString: String?, isMessagesTab: Bool, projectFolder: String)]) {
         guard let context else { return }
         // Delete old records
         try? context.delete(model: ScriptTabRecord.self)
@@ -307,7 +310,8 @@ final class ChatHistoryStore {
                 exitCode: tab.exitCode.map { Int($0) } ?? -999,
                 llmConfigJSON: tab.llmConfigJSON,
                 parentTabIdString: tab.parentTabIdString,
-                isMessagesTab: tab.isMessagesTab
+                isMessagesTab: tab.isMessagesTab,
+                projectFolder: tab.projectFolder
             )
             context.insert(record)
         }

@@ -9,7 +9,12 @@ struct ToolsView: View {
             // Header
             VStack(alignment: .leading, spacing: 10) {
                 Text("Tools")
-                    .font(.title3).bold()
+                    .font(.headline)
+                
+                Text("Toggle tool availability per LLM provider.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                
                 Picker("Provider", selection: $selectedProvider) {
                     ForEach(APIProvider.selectableProviders, id: \.self) { p in
                         Text(p.displayName).tag(p)
@@ -18,6 +23,7 @@ struct ToolsView: View {
                 .pickerStyle(.menu)
             }
             .padding()
+            .padding(.bottom, 4)
 
             Divider()
 

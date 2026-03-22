@@ -4,22 +4,30 @@ struct SettingsView: View {
     @Bindable var viewModel: AgentViewModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 12) {
             // Provider toggle
             VStack(alignment: .leading, spacing: 6) {
                 Text("LLM Provider")
                     .font(.headline)
+                
+                Text("Configure your AI provider and API keys.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                
                 Picker("AI", selection: $viewModel.selectedProvider) {
                     ForEach(APIProvider.selectableProviders, id: \.self) { provider in
                         Text(provider.displayName).tag(provider)
                     }
                 }
                 .labelsHidden()
+                
                 Text("Ollama Pro is preferred")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
+            Divider()
+            
             if viewModel.selectedProvider == .claude {
                 // Claude settings
                 VStack(alignment: .leading, spacing: 10) {

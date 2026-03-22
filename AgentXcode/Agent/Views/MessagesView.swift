@@ -5,28 +5,34 @@ struct MessagesView: View {
     @State private var renderKey = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 12) {
             // Header
+            Text("Messages Monitor")
+                .font(.headline)
+            
+            Text("Monitor iMessage for \"Agent!\" commands.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            
             HStack {
-                Text("Messages Monitor")
-                    .font(.headline)
+                Picker("Active", selection: $viewModel.messageFilter) {
+                    ForEach(AgentViewModel.MessageFilter.allCases, id: \.self) { filter in
+                        Text(filter.rawValue).tag(filter)
+                    }
+                }
+                .pickerStyle(.segmented)
+                
                 Spacer()
+                
                 Button(action: {
                     viewModel.messagesMonitorEnabled.toggle()
                 }) {
-                    Image(systemName: "message")
-                        .font(.system(size: 20))
+                    Image(systemName: viewModel.messagesMonitorEnabled ? "message.fill" : "message")
                         .foregroundStyle(viewModel.messagesMonitorEnabled ? .blue : .secondary)
                 }
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(.bordered)
+                .controlSize(.small)
             }
-
-            Picker("Active", selection: $viewModel.messageFilter) {
-                ForEach(AgentViewModel.MessageFilter.allCases, id: \.self) { filter in
-                    Text(filter.rawValue).tag(filter)
-                }
-            }
-            .pickerStyle(.segmented)
 
             Divider()
 

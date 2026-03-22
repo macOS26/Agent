@@ -52,6 +52,11 @@ final class ScriptTab: Identifiable {
     var runningLLMTask: Task<Void, Never>?
     var llmMessages: [[String: Any]] = []
 
+    // MARK: - Per-Tab Project Folder
+
+    /// Each tab can have its own project folder
+    var projectFolder: String = ""
+
     // MARK: - Per-Tab Prompt History
 
     var promptHistory: [String] = []
@@ -84,6 +89,7 @@ final class ScriptTab: Identifiable {
         self.exitCode = record.exitCode == -999 ? nil : Int32(record.exitCode)
         self.isRunning = false
         self.isMessagesTab = record.isMessagesTab
+        self.projectFolder = record.projectFolder
         // Restore LLM config if present
         if let json = record.llmConfigJSON, let data = json.data(using: .utf8) {
             self.llmConfig = try? JSONDecoder().decode(LLMConfig.self, from: data)
