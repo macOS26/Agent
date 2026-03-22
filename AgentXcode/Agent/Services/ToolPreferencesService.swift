@@ -17,10 +17,9 @@ enum TaskMode: String, CaseIterable {
         switch self {
         case .coding:       return base.union(["Coding"])
         case .automation:   return base.union(["Automation", "Accessibility"])
-        case .web:          return base.union(["Web", "Selenium", "Web Search"])
-        case .conversation: return base.union(["Conversation"])
-        case .general:      return ["Core", "Coding", "Shell", "Automation", "Accessibility",
-                                          "Web", "Selenium", "Web Search", "Conversation"]
+        case .web:          return base.union(["Web"])
+        case .conversation: return base
+        case .general:      return ["Core", "Coding", "Shell", "Automation", "Accessibility", "Web"]
         }
     }
 
@@ -93,12 +92,11 @@ final class ToolPreferencesService {
                               "ax_set_properties", "ax_find_element", "ax_get_focused_element", "ax_get_children",
                               "ax_drag", "ax_wait_for_element", "ax_show_menu", "ax_click_element",
                               "ax_wait_adaptive", "ax_type_into_element", "ax_highlight_element", "ax_get_window_frame"]),
-        "Core": Set(["task_complete", "list_native_tools", "list_mcp_tools", "load_tools"]),
-        "Web": Set(["web_open", "web_find", "web_click", "web_type", "web_execute_js", "web_get_url", "web_get_title"]),
-        "Selenium": Set(["selenium_start", "selenium_stop", "selenium_navigate", "selenium_find", "selenium_click",
-                         "selenium_type", "selenium_execute", "selenium_screenshot", "selenium_wait"]),
-        "Web Search": Set(["web_search"]),
-        "Conversation": Set(["write_text", "transform_text", "send_message", "about_self", "fix_text"])
+        "Core": Set(["task_complete", "list_native_tools", "list_mcp_tools", "load_tools", "web_search",
+                    "write_text", "transform_text", "send_message", "about_self", "fix_text"]),
+        "Web": Set(["web_open", "web_find", "web_click", "web_type", "web_execute_js", "web_get_url", "web_get_title",
+                   "selenium_start", "selenium_stop", "selenium_navigate", "selenium_find", "selenium_click",
+                   "selenium_type", "selenium_execute", "selenium_screenshot", "selenium_wait"]),
     ]
 
     /// Tools enabled by default for Apple Intelligence (small context window).

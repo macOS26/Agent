@@ -11,14 +11,11 @@ struct ToolsView: View {
         "Automation": ({ ["apple_event_query", "run_applescript", "run_osascript", "execute_javascript", "lookup_sdef"].contains($0.name) || $0.name.contains("agent_script") || ["list_apple_scripts", "run_apple_script", "save_apple_script", "delete_apple_script"].contains($0.name) || ["list_javascript", "run_javascript", "save_javascript", "delete_javascript"].contains($0.name) }, "gearshape.2"),
         "Shell": ({ ["execute_agent_command", "execute_daemon_command"].contains($0.name) }, "terminal"),
         "Accessibility": ({ $0.name.hasPrefix("ax_") }, "accessibility"),
-        "Core": ({ ["task_complete", "list_native_tools", "list_mcp_tools", "load_tools"].contains($0.name) }, "checkmark.circle"),
-        "Web": ({ $0.name.hasPrefix("web_") && $0.name != "web_search" }, "globe"),
-        "Selenium": ({ $0.name.hasPrefix("selenium_") }, "network"),
-        "Web Search": ({ $0.name == "web_search" }, "magnifyingglass"),
-        "Conversation": ({ ["write_text", "transform_text", "send_message", "about_self", "fix_text"].contains($0.name) }, "bubble.left.and.bubble.right")
+        "Core": ({ ["task_complete", "list_native_tools", "list_mcp_tools", "load_tools", "web_search", "write_text", "transform_text", "send_message", "about_self", "fix_text"].contains($0.name) }, "checkmark.circle"),
+        "Web": ({ ($0.name.hasPrefix("web_") && $0.name != "web_search") || $0.name.hasPrefix("selenium_") }, "globe"),
     ]
     
-    static let groupOrder: [String] = ["Core", "Coding", "Shell", "Automation", "Accessibility", "Web", "Selenium", "Web Search", "Conversation"]
+    static let groupOrder: [String] = ["Core", "Coding", "Shell", "Automation", "Accessibility", "Web"]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
