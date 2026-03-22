@@ -8,8 +8,8 @@ struct ToolsView: View {
     // Group definitions matching ToolPreferencesService — use exact name sets to avoid overlap
     static let groups: [String: (filter: (AgentTools.ToolDef) -> Bool, icon: String)] = [
         "Coding": ({ ["read_file", "write_file", "edit_file", "create_diff", "apply_diff", "list_files", "search_files"].contains($0.name) || $0.name.hasPrefix("git_") || $0.name.hasPrefix("xcode_") }, "doc.text"),
-        "Automation": ({ ["run_applescript", "run_osascript", "execute_javascript", "lookup_sdef"].contains($0.name) || ["list_apple_scripts", "run_apple_script", "save_apple_script", "delete_apple_script"].contains($0.name) || ["list_javascript", "run_javascript", "save_javascript", "delete_javascript"].contains($0.name) }, "gearshape.2"),
-        "Experimental": ({ $0.name == "apple_event_query" }, "flask"),
+        "Automation": ({ ["run_applescript", "run_osascript", "execute_javascript"].contains($0.name) || ["list_apple_scripts", "run_apple_script", "save_apple_script", "delete_apple_script"].contains($0.name) || ["list_javascript", "run_javascript", "save_javascript", "delete_javascript"].contains($0.name) }, "gearshape.2"),
+        "Experimental": ({ ["apple_event_query", "lookup_sdef"].contains($0.name) }, "flask"),
         "Accessibility": ({ $0.name.hasPrefix("ax_") }, "accessibility"),
         "Core": ({ ["task_complete", "list_tools", "list_mcp_tools", "load_groups", "unload_groups", "web_search", "write_text", "transform_text", "send_message", "about_self", "fix_text", "execute_agent_command", "execute_daemon_command"].contains($0.name) || $0.name.contains("agent_script") }, "checkmark.circle"),
         "Web": ({ ($0.name.hasPrefix("web_") && $0.name != "web_search") || $0.name.hasPrefix("selenium_") }, "globe"),
