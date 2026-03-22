@@ -104,7 +104,7 @@ final class ToolPreferencesService {
         AgentTools.Name.runApplescript, AgentTools.Name.runOsascript
     ]
 
-    private static let groupSeededKey = "agent.groupsSeeded.v1"
+    private static let groupSeededKey = "agent.groupsSeeded.v2"
 
     private init() {
         let arr = UserDefaults.standard.stringArray(forKey: Self.udKey) ?? []
