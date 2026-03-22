@@ -327,19 +327,19 @@ struct ContentView: View {
             // Current task banner
             if let prompt = activeTaskPrompt, !prompt.isEmpty {
                 HStack(spacing: 6) {
-                    Image(systemName: "text.bubble")
+                    Image(systemName: "play.fill")
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.white)
                     Text(prompt)
                         .font(.caption)
                         .lineLimit(1)
                         .truncationMode(.tail)
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(.white)
                     Spacer()
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 5)
-                .background(Color(nsColor: .textBackgroundColor).opacity(0.5))
+                .background(Color.green.opacity(0.7))
             }
 
             // Activity Log — switches between main and script tab
