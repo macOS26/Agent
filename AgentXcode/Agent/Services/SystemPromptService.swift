@@ -38,7 +38,7 @@ final class SystemPromptService {
     private init() {}
 
     /// Ensure the system/ directory exists and default prompts are written.
-    /// Replaces all prompts when the app version changes (unless READ ONLY or custom).
+    /// Replaces all prompts when the app version changes (unless READ ONLY).
     func ensureDefaults() {
         let fm = FileManager.default
         try? fm.createDirectory(at: Self.systemDir, withIntermediateDirectories: true)
@@ -54,8 +54,9 @@ final class SystemPromptService {
                     // READ ONLY prompt — never overwrite automatically
                     needsWrite = false
                 } else if firstLine.hasPrefix(Self.customPrefix) {
-                    // User-edited prompt — never overwrite automatically
-                    needsWrite = false
+                    // User-edited prompt — update on version change (preserves custom edits)
+                    let fileVersion = String(firstLine.dropFirst(Self.customPrefix.count))
+                    needsWrite = fileVersion != Self.appVersion
                 } else if firstLine.hasPrefix(Self.versionPrefix) {
                     // Default prompt — replace if version changed
                     let fileVersion = String(firstLine.dropFirst(Self.versionPrefix.count))

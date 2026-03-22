@@ -610,7 +610,7 @@ Agent! manages system prompts with automatic version tracking:
 | Header | Behavior |
 |--------|----------|
 | `// Agent! v{version}` | Default prompt — auto-updates when app version changes |
-| `// Agent! custom v{version}` | User-edited prompt — never auto-overwritten |
+| `// Agent! custom v{version}` | User-edited prompt — auto-updates on version change (preserves custom edits) |
 | `// Agent! READ ONLY v{version}` | Locked prompt — never auto-overwritten, even on version changes |
 
 **To lock a prompt:** Add `READ ONLY` or `// READ ONLY` at the top of your custom prompt. This prevents automatic updates even when a new Agent! version is released.
