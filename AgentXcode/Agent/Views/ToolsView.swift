@@ -5,8 +5,6 @@ struct ToolsView: View {
     var viewModel: AgentViewModel?
     @Bindable var prefs = ToolPreferencesService.shared
     @State private var collapsedGroups: Set<String> = []
-    @State private var showServiceWarning = false
-    @State private var pendingServiceState = true
     
     // Group definitions matching ToolPreferencesService — use exact name sets to avoid overlap
     static let groups: [String: (filter: (AgentTools.ToolDef) -> Bool, icon: String)] = [
@@ -15,11 +13,12 @@ struct ToolsView: View {
         "Experimental": ({ ["apple_event_query", "lookup_sdef", "xcode_grant_permission", "list_javascript", "run_javascript", "save_javascript", "delete_javascript"].contains($0.name) }, "flask"),
         "Accessibility": ({ $0.name.hasPrefix("ax_") }, "accessibility"),
         "Core": ({ ["task_complete", "list_tools", "list_mcp_tools", "load_groups", "unload_groups", "web_search", "write_text", "transform_text", "send_message", "about_self", "fix_text", "plan_mode"].contains($0.name) || $0.name.contains("agent_script") }, "checkmark.circle"),
-        "Services": ({ ["execute_agent_command", "execute_daemon_command"].contains($0.name) }, "gearshape.2"),
+        "User Agent": ({ $0.name == "execute_agent_command" }, "person"),
+        "Launch Daemon": ({ $0.name == "execute_daemon_command" }, "lock.shield"),
         "Web": ({ ($0.name.hasPrefix("web_") && $0.name != "web_search") || $0.name.hasPrefix("selenium_") }, "globe"),
     ]
     
-    static let groupOrder: [String] = ["Core", "Services", "Coding", "Automation", "Accessibility", "Web", "Experimental"]
+    static let groupOrder: [String] = ["Core", "User Agent", "Launch Daemon", "Coding", "Automation", "Accessibility", "Web", "Experimental"]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -68,18 +67,16 @@ struct ToolsView: View {
                                                 collapsedGroups.insert(groupName)
                                             }
                                         }
-                                        // Sync Services group toggle with launch agent/daemon
-                                        if groupName == "Services", let vm = viewModel {
-                                            if !enabled {
-                                                pendingServiceState = false
-                                                showServiceWarning = true
-                                            } else {
-                                                vm.userEnabled = true
-                                                vm.rootEnabled = true
+                                        // Sync service group toggles with launch agent/daemon
+                                        if let vm = viewModel {
+                                            if groupName == "User Agent" {
+                                                vm.userEnabled = enabled
+                                            } else if groupName == "Launch Daemon" {
+                                                vm.rootEnabled = enabled
                                             }
                                         }
                                     },
-                                    onToolToggled: groupName == "Services" ? { toolName, enabled in
+                                    onToolToggled: (groupName == "User Agent" || groupName == "Launch Daemon") ? { toolName, enabled in
                                         guard let vm = viewModel else { return }
                                         if toolName == "execute_agent_command" {
                                             vm.userEnabled = enabled
@@ -121,18 +118,6 @@ struct ToolsView: View {
             .padding(.bottom, 15)
         }
         .frame(width: 460)
-        .alert("Disable Services?", isPresented: $showServiceWarning) {
-            Button("Disable Both", role: .destructive) {
-                viewModel?.userEnabled = false
-                viewModel?.rootEnabled = false
-            }
-            Button("Cancel", role: .cancel) {
-                // Re-enable the group since user cancelled
-                prefs.toggleGroup("Services")
-            }
-        } message: {
-            Text("This will shut down both the User Agent and Daemon. The User Agent provides core functionality for safe user-space operations (file access, git, scripts). Are you sure?")
-        }
     }
     
     private func toggleGroup(_ groupName: String) {
@@ -161,7 +146,8 @@ struct GroupRowView: View {
 
     var body: some View {
         let groupEnabled = prefs.isGroupEnabled(groupName)
-        let offColor: Color = groupName == "Services" ? .yellow : .red
+        let isServiceGroup: Bool = groupName == "User Agent" || groupName == "Launch Daemon"
+        let offColor: Color = isServiceGroup ? .yellow : .red
 
         VStack(alignment: .leading, spacing: 4) {
             // Group header with collapse toggle and group toggle
@@ -174,7 +160,7 @@ struct GroupRowView: View {
                 // Group icon and name
                 Image(systemName: icon)
                     .font(.caption)
-                    .foregroundColor(groupEnabled ? (groupName == "Services" ? .green : .primary) : offColor.opacity(0.6))
+                    .foregroundColor(groupEnabled ? (isServiceGroup ? .green : .primary) : offColor.opacity(0.6))
                 Text(groupName)
                     .font(.caption).bold()
                     .foregroundColor(groupEnabled ? .secondary : offColor.opacity(0.6))

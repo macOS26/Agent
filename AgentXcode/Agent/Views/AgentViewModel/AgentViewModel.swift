@@ -99,31 +99,19 @@ final class AgentViewModel {
         }
     }
 
-    /// Keep the Services tool group and individual tools in sync with userEnabled/rootEnabled.
+    /// Keep service tool groups in sync with userEnabled/rootEnabled.
     private func syncServicesGroup() {
         let prefs = ToolPreferencesService.shared
-        let groupOn = prefs.isGroupEnabled("Services")
-        let bothOn = userEnabled && rootEnabled
-        if bothOn && !groupOn {
-            prefs.toggleGroup("Services")
-        } else if !bothOn && groupOn {
-            prefs.toggleGroup("Services")
-        }
-        // Sync individual tool enabled state with service toggles
-        let agentToolOn = prefs.isEnabled(selectedProvider, "execute_agent_command")
-        if userEnabled != agentToolOn {
-            prefs.toggle(selectedProvider, "execute_agent_command")
-        }
-        let daemonToolOn = prefs.isEnabled(selectedProvider, "execute_daemon_command")
-        if rootEnabled != daemonToolOn {
-            prefs.toggle(selectedProvider, "execute_daemon_command")
-        }
+        // Sync User Agent group
+        let agentGroupOn = prefs.isGroupEnabled("User Agent")
+        if userEnabled != agentGroupOn { prefs.toggleGroup("User Agent") }
+        // Sync Launch Daemon group
+        let daemonGroupOn = prefs.isGroupEnabled("Launch Daemon")
+        if rootEnabled != daemonGroupOn { prefs.toggleGroup("Launch Daemon") }
     }
 
     /// Gear icon color reflecting overall service health
     var servicesGearColor: Color {
-        let servicesGroupOff = !ToolPreferencesService.shared.isGroupEnabled("Services")
-        if servicesGroupOff { return .yellow }
         if !userEnabled && !rootEnabled { return .gray }
         if userEnabled && rootEnabled { return .green }
         return .yellow
