@@ -456,12 +456,13 @@ enum AgentTools {
             ],
             required: ["number"]
         ),
+        /* xcode_grant_permission — one-time setup, not needed during tasks
         ToolDef(
             name: Name.xcodeGrantPermission,
-            description: "Grant macOS Automation permission so the agent can control Xcode via ScriptingBridge. Run this once before using xcode_build or xcode_run.",
+            description: "Grant macOS Automation permission so the agent can control Xcode via ScriptingBridge.",
             properties: [:],
             required: []
-        ),
+        ), */
         // --- Coding: Shell ---
         ToolDef(
             name: Name.executeAgentCommand,
@@ -511,6 +512,7 @@ enum AgentTools {
             ],
             required: ["name", "content"]
         ),
+        /* update_agent_script — create_agent_script can overwrite existing scripts
         ToolDef(
             name: Name.updateAgentScript,
             description: "Update an existing Swift automation script.",
@@ -519,7 +521,7 @@ enum AgentTools {
                 "content": ["type": "string", "description": "New Swift source code"],
             ],
             required: ["name", "content"]
-        ),
+        ), */
         ToolDef(
             name: Name.runAgentScript,
             description: "PRIORITY 1 for app automation. Compile and run a Swift dylib with full TCC. Use existing scripts first (list_agent_scripts), create new ones with ScriptingBridge protocols. Use lookup_sdef and read_agent_script to check app dictionaries and bridge Swift files. NSAppleScript fallback if ScriptingBridge has issues. Output streams live — do NOT repeat stdout.",
@@ -546,14 +548,15 @@ enum AgentTools {
             ],
             required: ["source"]
         ),
+        /* run_osascript — redundant with run_applescript (both run inline AppleScript with TCC)
         ToolDef(
             name: Name.runOsascript,
-            description: "Run AppleScript source code via osascript in-process with full TCC. Use for app automation via AppleScript. Prefer run_applescript or run_agent_script when available.",
+            description: "Run AppleScript source code via osascript in-process with full TCC.",
             properties: [
                 "script": ["type": "string", "description": "AppleScript source code to execute"],
             ],
             required: ["script"]
-        ),
+        ), */
         ToolDef(
             name: Name.executeJavascript,
             description: "Run JavaScript for Automation (JXA) code via osascript. Use for app automation with JavaScript syntax. Example: var app = Application('Finder'); app.selection()",
