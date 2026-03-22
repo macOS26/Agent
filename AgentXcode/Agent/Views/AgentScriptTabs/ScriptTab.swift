@@ -52,6 +52,7 @@ final class ScriptTab: Identifiable {
     var runningLLMTask: Task<Void, Never>?
     var llmMessages: [[String: Any]] = []
     var taskQueue: [String] = []
+    var currentTaskPrompt: String = ""
 
     // MARK: - Per-Tab Project Folder
 

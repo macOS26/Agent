@@ -44,6 +44,7 @@ extension AgentViewModel {
 
     /// Start executing a task on a tab (not queued).
     private func startTabTask(tab: ScriptTab, prompt: String) {
+        tab.currentTaskPrompt = prompt
         tab.runningLLMTask = Task {
             await executeTabTask(tab: tab, prompt: prompt)
             // When done, run next queued task
@@ -62,6 +63,7 @@ extension AgentViewModel {
         tab.runningLLMTask = nil
         tab.isLLMRunning = false
         tab.isLLMThinking = false
+        tab.currentTaskPrompt = ""
         if queueCount > 0 {
             tab.appendLog("Cancelled by user. \(queueCount) queued task(s) cleared.")
         } else {

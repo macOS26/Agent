@@ -436,6 +436,7 @@ final class AgentViewModel {
     var isCancelled = false
     private var runningTask: Task<Void, Never>?
     var mainTaskQueue: [String] = []
+    var currentTaskPrompt: String = ""
     @ObservationIgnored private var terminationObserver: Any?
 
     // MARK: - Messages Monitor
@@ -959,6 +960,7 @@ final class AgentViewModel {
 
     /// Start executing a task on the main tab (not queued).
     private func startMainTask(_ task: String) {
+        currentTaskPrompt = task
         ChatHistoryStore.shared.startNewTask(prompt: task)
 
         runningTask = Task {
@@ -1029,6 +1031,7 @@ final class AgentViewModel {
         ChatHistoryStore.shared.endCurrentTask(cancelled: !silent)
         isRunning = false
         isThinking = false
+        currentTaskPrompt = ""
         userServiceActive = false
         rootServiceActive = false
         userWasActive = false

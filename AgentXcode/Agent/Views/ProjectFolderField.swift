@@ -14,7 +14,7 @@ struct ProjectFolderField: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 4) {
+            HStack(spacing: 8) {
                 Button {
                     let panel = NSOpenPanel()
                     panel.canChooseFiles = true

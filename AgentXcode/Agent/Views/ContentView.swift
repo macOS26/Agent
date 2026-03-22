@@ -324,6 +324,24 @@ struct ContentView: View {
                 Divider()
             }
 
+            // Current task banner
+            if let prompt = activeTaskPrompt, !prompt.isEmpty {
+                HStack(spacing: 6) {
+                    Image(systemName: "text.bubble")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text(prompt)
+                        .font(.caption)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .foregroundStyle(.primary)
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 5)
+                .background(Color(nsColor: .textBackgroundColor).opacity(0.5))
+            }
+
             // Activity Log — switches between main and script tab
             if let selectedId = viewModel.selectedTabId,
                let tab = viewModel.scriptTabs.first(where: { $0.id == selectedId }) {
@@ -744,6 +762,15 @@ struct ContentView: View {
     static func tabColor(for tabId: UUID, in tabs: [ScriptTab]) -> Color {
         guard let idx = tabs.firstIndex(where: { $0.id == tabId }) else { return .orange }
         return tabColors[idx % tabColors.count]
+    }
+
+    /// The prompt of the currently running task (main or selected tab).
+    private var activeTaskPrompt: String? {
+        if let selId = viewModel.selectedTabId,
+           let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+            return tab.isLLMRunning ? tab.currentTaskPrompt : nil
+        }
+        return viewModel.isRunning ? viewModel.currentTaskPrompt : nil
     }
 
     /// Color for the currently selected tab.
