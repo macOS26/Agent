@@ -70,7 +70,7 @@ struct HistoryView: View {
                     }
                     .padding(.horizontal)
                 }
-                .frame(maxHeight: 600)
+                .frame(maxHeight: 450)
             }
 
             Divider()
