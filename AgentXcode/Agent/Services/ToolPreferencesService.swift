@@ -81,8 +81,6 @@ final class ToolPreferencesService {
                        "git_status", "git_diff", "git_log", "git_commit", "git_diff_patch", "git_branch",
                        "xcode_build", "xcode_run", "xcode_list_projects", "xcode_select_project", "xcode_grant_permission"]),
         "Automation": Set(["apple_event_query", "run_applescript", "run_osascript", "execute_javascript", "lookup_sdef",
-                          "list_agent_scripts", "read_agent_script", "create_agent_script", "update_agent_script",
-                          "run_agent_script", "delete_agent_script",
                           "list_apple_scripts", "run_apple_script", "save_apple_script", "delete_apple_script",
                           "list_javascript", "run_javascript", "save_javascript", "delete_javascript"]),
         "Accessibility": Set(["ax_list_windows", "ax_get_properties", "ax_perform_action",
@@ -90,7 +88,9 @@ final class ToolPreferencesService {
                               "ax_set_properties", "ax_find_element", "ax_get_children"]),
         "Core": Set(["task_complete", "list_tools", "list_mcp_tools", "load_groups", "unload_groups", "web_search",
                     "write_text", "transform_text", "send_message", "about_self", "fix_text",
-                    "execute_agent_command", "execute_daemon_command"]),
+                    "execute_agent_command", "execute_daemon_command",
+                    "list_agent_scripts", "read_agent_script", "create_agent_script", "update_agent_script",
+                    "run_agent_script", "delete_agent_script"]),
         "Web": Set(["web_open", "web_find", "web_click", "web_type", "web_execute_js", "web_get_url", "web_get_title",
                    "selenium_start", "selenium_stop", "selenium_navigate", "selenium_find", "selenium_click",
                    "selenium_type", "selenium_execute", "selenium_screenshot", "selenium_wait"]),
@@ -103,12 +103,23 @@ final class ToolPreferencesService {
         AgentTools.Name.runApplescript, AgentTools.Name.runOsascript
     ]
 
+    private static let groupSeededKey = "agent.groupsSeeded.v1"
+
     private init() {
         let arr = UserDefaults.standard.stringArray(forKey: Self.udKey) ?? []
         disabledTools = Set(arr)
         let groupArr = UserDefaults.standard.stringArray(forKey: Self.udGroupsKey) ?? []
         disabledGroups = Set(groupArr)
+        seedDefaultDisabledGroups()
         seedAppleAIDefaults()
+    }
+
+    /// On first launch, disable Accessibility and Web groups by default.
+    private func seedDefaultDisabledGroups() {
+        guard !UserDefaults.standard.bool(forKey: Self.groupSeededKey) else { return }
+        UserDefaults.standard.set(true, forKey: Self.groupSeededKey)
+        disabledGroups.insert("Accessibility")
+        disabledGroups.insert("Web")
     }
 
     /// On first launch, disable all Apple AI tools not in the core default set.
