@@ -49,20 +49,20 @@ struct HistoryView: View {
 
             Divider()
 
-            // Content
-            if currentItems.isEmpty {
-                VStack(spacing: 12) {
-                    Image(systemName: emptyIcon)
-                        .font(.system(size: 32))
-                        .foregroundStyle(.secondary)
-                    Text("No \(selectedTaskType.rawValue.lowercased()) yet.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 40)
-            } else {
-                ScrollView {
+            // Content — fixed height so all tabs are the same size
+            ScrollView {
+                if currentItems.isEmpty {
+                    VStack(spacing: 12) {
+                        Image(systemName: emptyIcon)
+                            .font(.system(size: 32))
+                            .foregroundStyle(.secondary)
+                        Text("No \(selectedTaskType.rawValue.lowercased()) yet.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 40)
+                } else {
                     LazyVStack(alignment: .leading, spacing: 0) {
                         ForEach(Array(currentItems.reversed().enumerated()), id: \.offset) { _, item in
                             historyRow(item)
@@ -70,8 +70,8 @@ struct HistoryView: View {
                     }
                     .padding(.horizontal)
                 }
-                .frame(maxHeight: 450)
             }
+            .frame(height: 560)
 
             Divider()
 
