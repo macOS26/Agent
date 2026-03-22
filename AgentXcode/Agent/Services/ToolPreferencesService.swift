@@ -79,11 +79,11 @@ final class ToolPreferencesService {
     static let toolGroups: [String: Set<String>] = [
         "Coding": Set(["read_file", "write_file", "edit_file", "create_diff", "apply_diff", "list_files", "search_files",
                        "git_status", "git_diff", "git_log", "git_commit", "git_diff_patch", "git_branch",
-                       "xcode_build", "xcode_run", "xcode_list_projects", "xcode_select_project", "xcode_grant_permission"]),
+                       "xcode_build", "xcode_run", "xcode_list_projects", "xcode_select_project"]),
         "Automation": Set(["run_applescript", "run_osascript", "execute_javascript",
                           "list_apple_scripts", "run_apple_script", "save_apple_script", "delete_apple_script",
                           "list_javascript", "run_javascript", "save_javascript", "delete_javascript"]),
-        "Experimental": Set(["apple_event_query", "lookup_sdef"]),
+        "Experimental": Set(["apple_event_query", "lookup_sdef", "xcode_grant_permission"]),
         "Accessibility": Set(["ax_list_windows", "ax_get_properties", "ax_perform_action",
                               "ax_type_text", "ax_click", "ax_press_key", "ax_screenshot",
                               "ax_set_properties", "ax_find_element", "ax_get_children"]),
