@@ -569,7 +569,11 @@ struct ContentView: View {
             }
         }
         .frame(minWidth: 600, minHeight: 500)
-        .onAppear { isTaskFieldFocused = true }
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                isTaskFieldFocused = true
+            }
+        }
         .overlay {
             DependencyOverlay(status: dependencyStatus, isVisible: $showDependencyOverlay)
         }
