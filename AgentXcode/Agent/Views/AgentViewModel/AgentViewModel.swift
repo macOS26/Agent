@@ -1069,7 +1069,8 @@ final class AgentViewModel {
         end tell
         """
         Task {
-            let result = await userService.execute(command: "osascript -e '\(script.replacingOccurrences(of: "'", with: "'\\''"))'")
+            let result = await Self.executeTCC(command: "osascript -e '\(script.replacingOccurrences(of: "'", with: "'\\''"))'")
+
             if result.status == 0 {
                 appendLog("Agent! ack sent to \(handle)")
             } else {
@@ -1109,7 +1110,8 @@ final class AgentViewModel {
         end tell
         """
         Task {
-            let result = await userService.execute(command: "osascript -e '\(script.replacingOccurrences(of: "'", with: "'\\''"))'")
+            let result = await Self.executeTCC(command: "osascript -e '\(script.replacingOccurrences(of: "'", with: "'\\''"))'")
+
             if result.status == 0 {
                 appendLog("Agent! reply sent to \(handle)")
             } else {
@@ -1203,7 +1205,8 @@ final class AgentViewModel {
         end tell
         """
         Task {
-            let result = await userService.execute(command: "osascript -e '\(script.replacingOccurrences(of: "'", with: "'\\''"))'")
+            let result = await Self.executeTCC(command: "osascript -e '\(script.replacingOccurrences(of: "'", with: "'\\''"))'")
+
             if result.status == 0 {
                 appendLog("Progress update sent: \(message)")
             } else {
@@ -1409,7 +1412,8 @@ final class AgentViewModel {
         end tell
         """
         Task {
-            let result = await userService.execute(command: "osascript -e '\(script.replacingOccurrences(of: "'", with: "'\\''"))'")
+            let result = await Self.executeTCC(command: "osascript -e '\(script.replacingOccurrences(of: "'", with: "'\\''"))'")
+
             let msgTab = scriptTabs.first(where: { $0.isMessagesTab })
             if result.status == 0 {
                 msgTab?.appendLog("Reply sent to \(handle)")
@@ -1433,7 +1437,8 @@ final class AgentViewModel {
         end tell
         """
         Task {
-            let result = await userService.execute(command: "osascript -e '\(script.replacingOccurrences(of: "'", with: "'\\''"))'")
+            let result = await Self.executeTCC(command: "osascript -e '\(script.replacingOccurrences(of: "'", with: "'\\''"))'")
+
             let msgTab = scriptTabs.first(where: { $0.isMessagesTab })
             if result.status == 0 {
                 msgTab?.appendLog("Ack sent to \(handle)")

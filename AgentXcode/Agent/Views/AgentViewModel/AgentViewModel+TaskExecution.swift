@@ -81,7 +81,7 @@ extension AgentViewModel {
             if let args = input["arguments"] as? String {
                 fullCmd = "AGENT_SCRIPT_ARGS='\(args)' \(cmd)"
             }
-            let result = await Self.executeTCC(command: fullCmd)
+            let result = await userService.execute(command: fullCmd)
             return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
         }
         if name == "read_agent_script" {
@@ -1192,6 +1192,8 @@ extension AgentViewModel {
             logBuffer += "\n"
         }
         trimToRecentTasks()
+        taskInputTokens = 0
+        taskOutputTokens = 0
         appendLog("--- New Task ---")
         appendLog("User: \(prompt)")
 
@@ -1340,7 +1342,7 @@ extension AgentViewModel {
                     taskLog.info("[main]   [\(idx)] \(role): \(preview)")
                 }
 
-                let response: (content: [[String: Any]], stopReason: String)
+                let response: (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int)
                 var textWasStreamed = false
                 let streamStart = CFAbsoluteTimeGetCurrent()
                 flushLog()
@@ -1353,34 +1355,42 @@ extension AgentViewModel {
                     }
                     textWasStreamed = true
                 } else if let openAICompatible {
-                    response = try await openAICompatible.sendStreaming(messages: messages) { [weak self] delta in
+                    let r = try await openAICompatible.sendStreaming(messages: messages) { [weak self] delta in
                         Task { @MainActor in
                             self?.isThinking = false
                             self?.appendStreamDelta(delta)
                         }
                     }
+                    response = (r.content, r.stopReason, 0, 0)
                     textWasStreamed = true
                 } else if let ollama {
-                    response = try await ollama.sendStreaming(messages: messages) { [weak self] delta in
+                    let r = try await ollama.sendStreaming(messages: messages) { [weak self] delta in
                         Task { @MainActor in
                             self?.isThinking = false
                             self?.appendStreamDelta(delta)
                         }
                     }
+                    response = (r.content, r.stopReason, 0, 0)
                     textWasStreamed = true
                 } else if let foundationModelService {
-                    response = try await foundationModelService.sendStreaming(messages: messages) { [weak self] delta in
+                    let r = try await foundationModelService.sendStreaming(messages: messages) { [weak self] delta in
                         Task { @MainActor in
                             self?.isThinking = false
                             self?.appendStreamDelta(delta)
                         }
                     }
+                    response = (r.content, r.stopReason, 0, 0)
                     textWasStreamed = true
                 } else {
                     throw AgentError.noAPIKey
                 }
+                // Track token usage
+                taskInputTokens += response.inputTokens
+                taskOutputTokens += response.outputTokens
+                sessionInputTokens += response.inputTokens
+                sessionOutputTokens += response.outputTokens
                 let streamElapsed = CFAbsoluteTimeGetCurrent() - streamStart
-                taskLog.info("[main] stream completed in \(String(format: "%.2f", streamElapsed))s, stopReason=\(response.stopReason)")
+                taskLog.info("[main] stream completed in \(String(format: "%.2f", streamElapsed))s, stopReason=\(response.stopReason), tokens: \(response.inputTokens)in/\(response.outputTokens)out")
                 flushStreamBuffer()
                 isThinking = false
                 guard !Task.isCancelled else { break }
@@ -2892,7 +2902,9 @@ extension AgentViewModel {
                 messages.append(["role": "assistant", "content": assistantContent])
 
                 if hasToolUse && !toolResults.isEmpty {
-                    messages.append(["role": "user", "content": toolResults])
+                    // Truncate large tool results to save tokens
+                    let truncatedResults = Self.truncateToolResults(toolResults)
+                    messages.append(["role": "user", "content": truncatedResults])
                     consecutiveNoTool = 0
                 } else if hasToolUse && toolResults.isEmpty {
                     // Server-side tools only (web search) — no client results needed
@@ -3090,6 +3102,27 @@ extension AgentViewModel {
         rootServiceActive = false
         userWasActive = false
         rootWasActive = false
+    }
+
+    // MARK: - Tool Result Truncation
+
+    /// Truncate tool results that exceed a character limit to save tokens.
+    /// Keeps the first and last portions so the LLM sees the start and end of output.
+    private static let maxToolResultChars = 8_000
+
+    static func truncateToolResults(_ results: [[String: Any]]) -> [[String: Any]] {
+        results.map { result in
+            guard var content = result["content"] as? String,
+                  content.count > maxToolResultChars else { return result }
+            let keepChars = maxToolResultChars / 2
+            let head = String(content.prefix(keepChars))
+            let tail = String(content.suffix(keepChars))
+            let trimmed = content.count - maxToolResultChars
+            content = head + "\n\n... (\(trimmed) chars truncated) ...\n\n" + tail
+            var updated = result
+            updated["content"] = content
+            return updated
+        }
     }
 
     // MARK: - Web Search (Ollama API + Tavily Backup)
