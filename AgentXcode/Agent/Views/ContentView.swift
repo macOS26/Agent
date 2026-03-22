@@ -324,7 +324,7 @@ struct ContentView: View {
                 Divider()
             }
 
-            // Current task banner
+            // Current task banner with cancel button
             if let prompt = activeTaskPrompt, !prompt.isEmpty {
                 HStack(spacing: 6) {
                     Image(systemName: "play.fill")
@@ -336,6 +336,20 @@ struct ContentView: View {
                         .truncationMode(.tail)
                         .foregroundStyle(.white)
                     Spacer()
+                    Button {
+                        if let selId = viewModel.selectedTabId,
+                           let tab = viewModel.scriptTabs.first(where: { $0.id == selId }),
+                           tab.isLLMRunning {
+                            viewModel.stopTabTask(tab: tab)
+                        } else {
+                            viewModel.stop()
+                        }
+                    } label: {
+                        Label("Cancel", systemImage: "xmark.circle.fill")
+                            .font(.caption)
+                            .foregroundStyle(.white)
+                    }
+                    .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 5)
@@ -358,30 +372,17 @@ struct ContentView: View {
                             }
                         }
                     )
-                    let tabColor = Self.tabColor(for: tab.id, in: viewModel.scriptTabs)
-                    VStack(spacing: 4) {
-                        if tab.isRunning {
-                            Button { viewModel.cancelScriptTab(id: tab.id) } label: {
-                                Label("Cancel Script", systemImage: "xmark.circle.fill")
-                                    .font(.caption)
-                                    .foregroundStyle(tabColor)
-                            }
-                            .buttonStyle(.bordered)
-                            .controlSize(.mini)
+                    if tab.isRunning {
+                        let tabColor = Self.tabColor(for: tab.id, in: viewModel.scriptTabs)
+                        Button { viewModel.cancelScriptTab(id: tab.id) } label: {
+                            Label("Cancel Script", systemImage: "xmark.circle.fill")
+                                .font(.caption)
+                                .foregroundStyle(tabColor)
                         }
-                        if tab.isLLMRunning {
-                            let vm = viewModel
-                            let t = tab
-                            Button { vm.stopTabTask(tab: t) } label: {
-                                Label("Cancel LLM", systemImage: "xmark.circle.fill")
-                                    .font(.caption)
-                                    .foregroundStyle(tabColor)
-                            }
-                            .buttonStyle(.bordered)
-                            .controlSize(.mini)
-                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.mini)
+                        .padding(12)
                     }
-                    .padding(12)
                 }
             } else {
                 ZStack(alignment: .topTrailing) {
@@ -396,16 +397,7 @@ struct ContentView: View {
                             }
                         }
                     )
-                    if viewModel.isRunning {
-                        Button { viewModel.stop() } label: {
-                            Label("Cancel LLM", systemImage: "xmark.circle.fill")
-                                .font(.caption)
-                                .foregroundStyle(.red)
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.mini)
-                        .padding(12)
-                    }
+                    // Cancel button moved to green task banner
                 }
             }
 
