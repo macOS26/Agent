@@ -1234,7 +1234,7 @@ enum AgentTools {
     /// When activeGroups is set, only tools in those groups are included.
     @MainActor static func claudeFormat(activeGroups: Set<String>? = nil) -> [[String: Any]] {
         let prefs = ToolPreferencesService.shared
-        var tools = (commonTools + conversationTools)
+        var tools = (commonTools + webSearchTools + conversationTools)
             .filter { prefs.isEnabled(.claude, $0.name, activeGroups: activeGroups) }
             .map { tool in
                 claudeTool(name: tool.name, description: tool.description,
