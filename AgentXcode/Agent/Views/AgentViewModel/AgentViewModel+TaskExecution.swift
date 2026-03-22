@@ -281,7 +281,7 @@ extension AgentViewModel {
         }
 
         // Tool discovery
-        if name == "list_native_tools" {
+        if name == "list_tools" {
             let prefs = ToolPreferencesService.shared
             return AgentTools.tools(for: selectedProvider)
                 .filter { prefs.isEnabled(selectedProvider, $0.name) }
@@ -875,7 +875,7 @@ extension AgentViewModel {
                 - fix_text: Correct spelling and grammar
                 - about_self: Learn about Agent's capabilities
                 
-                Use list_native_tools to see all available tools.
+                Use list_tools to see all available tools.
                 """
                 
             case "features":
@@ -1917,7 +1917,7 @@ extension AgentViewModel {
                         }
 
                         // Tool discovery
-                        if name == "list_native_tools" {
+                        if name == "list_tools" {
                             let prefs = ToolPreferencesService.shared
                             let enabled = AgentTools.tools(for: selectedProvider)
                                 .filter { prefs.isEnabled(selectedProvider, $0.name) }

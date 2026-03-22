@@ -88,7 +88,7 @@ final class ToolPreferencesService {
         "Accessibility": Set(["ax_list_windows", "ax_get_properties", "ax_perform_action",
                               "ax_type_text", "ax_click", "ax_press_key", "ax_screenshot",
                               "ax_set_properties", "ax_find_element", "ax_get_children"]),
-        "Core": Set(["task_complete", "list_native_tools", "list_mcp_tools", "load_tools", "web_search",
+        "Core": Set(["task_complete", "list_tools", "list_mcp_tools", "load_tools", "web_search",
                     "write_text", "transform_text", "send_message", "about_self", "fix_text",
                     "execute_agent_command", "execute_daemon_command"]),
         "Web": Set(["web_open", "web_find", "web_click", "web_type", "web_execute_js", "web_get_url", "web_get_title",

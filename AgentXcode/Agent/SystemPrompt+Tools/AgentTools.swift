@@ -83,7 +83,7 @@ enum AgentTools {
         static let saveJavascript = "save_javascript"
         static let deleteJavascript = "delete_javascript"
         // Tool Discovery
-        static let listNativeTools = "list_native_tools"
+        static let listNativeTools = "list_tools"
         static let listMcpTools = "list_mcp_tools"
         static let loadTools = "load_tools"
         // Web Automation
@@ -272,7 +272,7 @@ enum AgentTools {
         Name.runJavascript:        #"run_javascript {"name": "HelloJXA"}"#,
         Name.saveJavascript:       #"save_javascript {"name": "HelloJXA", "source": "var app = Application.currentApplication(); app.includeStandardAdditions = true; app.displayDialog('Hello')"}"#,
         Name.deleteJavascript:     #"delete_javascript {"name": "HelloJXA"}"#,
-        Name.listNativeTools:      "list_native_tools",
+        Name.listNativeTools:      "list_tools",
         Name.listMcpTools:         "list_mcp_tools",
         // Conversation Tools
         Name.writeText:            #"write_text {"subject": "machine learning", "style": "informative", "length": "medium"}"#,
