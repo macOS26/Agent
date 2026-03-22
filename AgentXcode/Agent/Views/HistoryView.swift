@@ -36,10 +36,12 @@ struct HistoryView: View {
             Text("\(tabName) History")
                 .font(.headline)
             
-            Picker("View", selection: $selectedTaskType) {
+            Picker(selection: $selectedTaskType) {
                 ForEach(TaskViewType.allCases, id: \.self) { type in
                     Text(type.rawValue).tag(type)
                 }
+            } label: {
+                EmptyView()
             }
             .pickerStyle(.segmented)
             .padding(.horizontal)

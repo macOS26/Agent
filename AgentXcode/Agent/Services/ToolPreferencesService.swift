@@ -15,11 +15,11 @@ enum TaskMode: String, CaseIterable {
     var groups: Set<String> {
         let base: Set<String> = ["Core", "Shell"]
         switch self {
-        case .coding:       return base.union(["Coding", "Git", "Xcode", "Scripts", "SDEF"])
-        case .automation:   return base.union(["Automation", "AppleScript", "JavaScript", "Accessibility", "Scripts", "SDEF"])
+        case .coding:       return base.union(["Coding", "Scripts"])
+        case .automation:   return base.union(["Automation", "AppleScript", "JavaScript", "Accessibility", "Scripts"])
         case .web:          return base.union(["Web", "Selenium", "Web Search"])
         case .conversation: return base.union(["Conversation"])
-        case .general:      return Set(["Core", "Coding", "Git", "Shell", "Xcode", "Scripts",
+        case .general:      return Set(["Core", "Coding", "Shell", "Scripts",
                                           "Automation", "AppleScript", "JavaScript", "Accessibility",
                                           "Web", "Selenium", "Web Search", "Conversation"])
         }
@@ -79,9 +79,10 @@ final class ToolPreferencesService {
 
     /// Tool group definitions - maps group name to tool name prefixes
     static let toolGroups: [String: Set<String>] = [
-        "Coding": Set(["read_file", "write_file", "edit_file", "create_diff", "apply_diff", "list_files", "search_files"]),
-        "Git": Set(["git_status", "git_diff", "git_log", "git_commit", "git_diff_patch", "git_branch"]),
-        "Automation": Set(["apple_event_query", "run_applescript", "run_osascript", "execute_javascript"]),
+        "Coding": Set(["read_file", "write_file", "edit_file", "create_diff", "apply_diff", "list_files", "search_files",
+                       "git_status", "git_diff", "git_log", "git_commit", "git_diff_patch", "git_branch",
+                       "xcode_build", "xcode_run", "xcode_list_projects", "xcode_select_project", "xcode_grant_permission"]),
+        "Automation": Set(["apple_event_query", "run_applescript", "run_osascript", "execute_javascript", "lookup_sdef"]),
         "Shell": Set(["execute_agent_command", "execute_daemon_command"]),
         "Accessibility": Set(["ax_list_windows", "ax_inspect_element", "ax_get_properties", "ax_perform_action",
                               "ax_check_permission", "ax_request_permission", "ax_type_text", "ax_click",
@@ -91,8 +92,6 @@ final class ToolPreferencesService {
                               "ax_wait_adaptive", "ax_type_into_element", "ax_highlight_element", "ax_get_window_frame"]),
         "Scripts": Set(["list_agent_scripts", "read_agent_script", "create_agent_script", "update_agent_script",
                         "run_agent_script", "delete_agent_script"]),
-        "SDEF": Set(["lookup_sdef"]),
-        "Xcode": Set(["xcode_build", "xcode_run", "xcode_list_projects", "xcode_select_project", "xcode_grant_permission"]),
         "AppleScript": Set(["list_apple_scripts", "run_apple_script", "save_apple_script", "delete_apple_script"]),
         "JavaScript": Set(["list_javascript", "run_javascript", "save_javascript", "delete_javascript"]),
         "Core": Set(["task_complete", "list_native_tools", "list_mcp_tools", "load_tools"]),
