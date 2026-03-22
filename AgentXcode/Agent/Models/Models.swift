@@ -102,7 +102,7 @@ let llmAPITimeout: TimeInterval = 90
 let toolStartTimeout: TimeInterval = 15
 
 /// Timeout for an internal tool call to finish once started (seconds).
-let toolFinishTimeout: TimeInterval = 3600
+let toolFinishTimeout: TimeInterval = 43200
 
 /// Timeout for automation calls (Accessibility, Selenium, AppleScript, JavaScript) to start (seconds).
 let automationStartTimeout: TimeInterval = 5

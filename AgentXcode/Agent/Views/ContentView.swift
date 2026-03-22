@@ -256,8 +256,10 @@ struct ContentView: View {
                     Button { showSearch = false; searchText = "" } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(.secondary)
+                            .frame(width: 20, height: 16)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.bordered)
+                    .controlSize(.mini)
                 }
                 .padding(.horizontal)
                 .padding(.vertical, 6)

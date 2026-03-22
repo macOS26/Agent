@@ -29,14 +29,13 @@ enum APIProvider: String, CaseIterable, Codable {
         case .huggingFace: "Hugging Face"
         case .ollama: "Ollama"
         case .localOllama: "Local Ollama"
-        case .foundationModel: "Apple Intelligence (LoRA Training)"
+        case .foundationModel: "Apple Intelligence"
         }
     }
     
     /// Providers selectable in the UI for task execution
-    /// Note: foundationModel (Apple Intelligence) is NOT included - it's for LoRA training only, not direct task execution
     static var selectableProviders: [APIProvider] {
-        [.claude, .openAI, .deepSeek, .huggingFace, .ollama, .localOllama]
+        [.claude, .openAI, .deepSeek, .huggingFace, .ollama, .localOllama, .foundationModel]
     }
 }
 

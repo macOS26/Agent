@@ -117,9 +117,12 @@ struct NewMainTabSheet: View {
             ollamaModelPicker(models: viewModel.localOllamaModels, fetch: { viewModel.fetchLocalOllamaModels() })
 
         case .foundationModel:
-            // foundationModel is never selectable - this case should never be reached
-            // It's used internally for LoRA training only
-            EmptyView()
+            // Apple Intelligence - just show a label since there's only one "model"
+            HStack {
+                Text("Apple Intelligence")
+                    .foregroundStyle(.secondary)
+                Spacer()
+            }
         }
     }
 
@@ -187,6 +190,8 @@ struct NewMainTabSheet: View {
     // MARK: - Helpers
 
     private var canCreate: Bool {
+        // Apple Intelligence always has a valid model
+        if provider == .foundationModel { return true }
         return !selectedModelId.isEmpty
     }
 
@@ -205,7 +210,7 @@ struct NewMainTabSheet: View {
         case .huggingFace: return viewModel.huggingFaceModel
         case .ollama: return viewModel.ollamaModel
         case .localOllama: return viewModel.localOllamaModel
-        case .foundationModel: return "apple-intelligence"
+        case .foundationModel: return "Apple Intelligence"
         }
     }
 

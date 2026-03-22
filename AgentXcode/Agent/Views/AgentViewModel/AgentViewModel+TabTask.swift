@@ -115,6 +115,9 @@ extension AgentViewModel {
         default:
             ollama = nil
         }
+        
+        let foundationModelService: FoundationModelService? = provider == .foundationModel
+            ? FoundationModelService(historyContext: tabHistoryContext, projectFolder: projectFolder) : nil
 
         // Build on existing conversation or start fresh
         var messages: [[String: Any]] = tab.llmMessages
@@ -174,6 +177,15 @@ extension AgentViewModel {
                     tab.flushStreamBuffer()
                 } else if let ollama {
                     response = try await ollama.sendStreaming(messages: messages) { [weak tab] delta in
+                        Task { @MainActor in
+                            tab?.isLLMThinking = false
+                            tab?.appendStreamDelta(delta)
+                        }
+                    }
+                    textWasStreamed = true
+                    tab.flushStreamBuffer()
+                } else if let foundationModelService {
+                    response = try await foundationModelService.sendStreaming(messages: messages) { [weak tab] delta in
                         Task { @MainActor in
                             tab?.isLLMThinking = false
                             tab?.appendStreamDelta(delta)
