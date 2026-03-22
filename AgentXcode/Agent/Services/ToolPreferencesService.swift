@@ -13,13 +13,13 @@ enum TaskMode: String, CaseIterable {
 
     /// Tool groups included for this mode. Core + Shell always included.
     var groups: Set<String> {
-        let base: Set<String> = ["Core", "Shell"]
+        let base: Set<String> = ["Core"]
         switch self {
         case .coding:       return base.union(["Coding"])
         case .automation:   return base.union(["Automation", "Accessibility"])
         case .web:          return base.union(["Web"])
         case .conversation: return base
-        case .general:      return ["Core", "Coding", "Shell", "Automation", "Accessibility", "Web"]
+        case .general:      return ["Core", "Coding", "Automation", "Accessibility", "Web"]
         }
     }
 
@@ -85,7 +85,6 @@ final class ToolPreferencesService {
                           "run_agent_script", "delete_agent_script",
                           "list_apple_scripts", "run_apple_script", "save_apple_script", "delete_apple_script",
                           "list_javascript", "run_javascript", "save_javascript", "delete_javascript"]),
-        "Shell": Set(["execute_agent_command", "execute_daemon_command"]),
         "Accessibility": Set(["ax_list_windows", "ax_inspect_element", "ax_get_properties", "ax_perform_action",
                               "ax_check_permission", "ax_request_permission", "ax_type_text", "ax_click",
                               "ax_scroll", "ax_press_key", "ax_screenshot", "ax_get_audit_log",
@@ -93,7 +92,8 @@ final class ToolPreferencesService {
                               "ax_drag", "ax_wait_for_element", "ax_show_menu", "ax_click_element",
                               "ax_wait_adaptive", "ax_type_into_element", "ax_highlight_element", "ax_get_window_frame"]),
         "Core": Set(["task_complete", "list_native_tools", "list_mcp_tools", "load_tools", "web_search",
-                    "write_text", "transform_text", "send_message", "about_self", "fix_text"]),
+                    "write_text", "transform_text", "send_message", "about_self", "fix_text",
+                    "execute_agent_command", "execute_daemon_command"]),
         "Web": Set(["web_open", "web_find", "web_click", "web_type", "web_execute_js", "web_get_url", "web_get_title",
                    "selenium_start", "selenium_stop", "selenium_navigate", "selenium_find", "selenium_click",
                    "selenium_type", "selenium_execute", "selenium_screenshot", "selenium_wait"]),
