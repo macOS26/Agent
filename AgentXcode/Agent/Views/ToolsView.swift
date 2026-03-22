@@ -2,8 +2,11 @@ import SwiftUI
 
 struct ToolsView: View {
     @Binding var selectedProvider: APIProvider
+    var viewModel: AgentViewModel?
     @Bindable var prefs = ToolPreferencesService.shared
     @State private var collapsedGroups: Set<String> = []
+    @State private var showServiceWarning = false
+    @State private var pendingServiceState = true
     
     // Group definitions matching ToolPreferencesService — use exact name sets to avoid overlap
     static let groups: [String: (filter: (AgentTools.ToolDef) -> Bool, icon: String)] = [
@@ -12,7 +15,7 @@ struct ToolsView: View {
         "Experimental": ({ ["apple_event_query", "lookup_sdef", "xcode_grant_permission", "list_javascript", "run_javascript", "save_javascript", "delete_javascript"].contains($0.name) }, "flask"),
         "Accessibility": ({ $0.name.hasPrefix("ax_") }, "accessibility"),
         "Core": ({ ["task_complete", "list_tools", "list_mcp_tools", "load_groups", "unload_groups", "web_search", "write_text", "transform_text", "send_message", "about_self", "fix_text", "plan_mode"].contains($0.name) || $0.name.contains("agent_script") }, "checkmark.circle"),
-        "Services": ({ ["execute_agent_command", "execute_daemon_command"].contains($0.name) }, "server.rack"),
+        "Services": ({ ["execute_agent_command", "execute_daemon_command"].contains($0.name) }, "gearshape.2"),
         "Web": ({ ($0.name.hasPrefix("web_") && $0.name != "web_search") || $0.name.hasPrefix("selenium_") }, "globe"),
     ]
     
@@ -65,6 +68,18 @@ struct ToolsView: View {
                                                 collapsedGroups.insert(groupName)
                                             }
                                         }
+                                        // Sync Services group toggle with launch agent/daemon
+                                        if groupName == "Services", let vm = viewModel {
+                                            if !enabled {
+                                                // Turning off — warn and disable both
+                                                pendingServiceState = false
+                                                showServiceWarning = true
+                                            } else {
+                                                // Turning on — re-enable both
+                                                vm.userEnabled = true
+                                                vm.rootEnabled = true
+                                            }
+                                        }
                                     }
                                 )
                             }
@@ -100,6 +115,18 @@ struct ToolsView: View {
             .padding(.bottom, 15)
         }
         .frame(width: 460)
+        .alert("Disable Services?", isPresented: $showServiceWarning) {
+            Button("Disable Both", role: .destructive) {
+                viewModel?.userEnabled = false
+                viewModel?.rootEnabled = false
+            }
+            Button("Cancel", role: .cancel) {
+                // Re-enable the group since user cancelled
+                prefs.toggleGroup("Services")
+            }
+        } message: {
+            Text("This will shut down both the User Agent and Daemon. The User Agent provides core functionality for safe user-space operations (file access, git, scripts). Are you sure?")
+        }
     }
     
     private func toggleGroup(_ groupName: String) {

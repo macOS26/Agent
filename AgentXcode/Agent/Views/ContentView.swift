@@ -154,7 +154,7 @@ struct ContentView: View {
                 .buttonStyle(.bordered)
                 .controlSize(.mini)
                 .popover(isPresented: $showTools) {
-                    ToolsView(selectedProvider: $viewModel.selectedProvider)
+                    ToolsView(selectedProvider: $viewModel.selectedProvider, viewModel: viewModel)
                 }
 
                 Button { showSettings.toggle() } label: {
