@@ -57,6 +57,25 @@ struct ContentView: View {
                 }
                 .help("Daemon: \(viewModel.rootServiceActive ? "Running" : (viewModel.rootEnabled ? "Stopped" : "Disabled"))")
 
+                // Thinking/Running indicator
+                if viewModel.isThinking {
+                    HStack(spacing: 4) {
+                        ProgressView()
+                            .controlSize(.mini)
+                        Text("Thinking...")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                } else if viewModel.isRunning {
+                    HStack(spacing: 4) {
+                        ProgressView()
+                            .controlSize(.mini)
+                        Text(viewModel.rootServiceActive ? "Root..." : viewModel.userServiceActive ? "Executing..." : "Running...")
+                            .font(.caption)
+                            .foregroundStyle(viewModel.rootServiceActive ? .orange : .secondary)
+                    }
+                }
+
                 Spacer()
 
                 // Services popover button — gear color reflects overall system health
@@ -475,24 +494,6 @@ struct ContentView: View {
                     .buttonStyle(.bordered)
                     .controlSize(.regular)
                     .help(viewModel.isListening ? "Stop dictation" : "Start dictation")
-
-                    if viewModel.isThinking {
-                        HStack(spacing: 4) {
-                            ProgressView()
-                                .controlSize(.mini)
-                            Text("Thinking...")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    } else if viewModel.isRunning {
-                        HStack(spacing: 4) {
-                            ProgressView()
-                                .controlSize(.mini)
-                            Text(viewModel.rootServiceActive ? "Root..." : viewModel.userServiceActive ? "Executing..." : "Running...")
-                                .font(.caption)
-                                .foregroundStyle(viewModel.rootServiceActive ? .orange : .secondary)
-                        }
-                    }
 
                     TextField("Enter task...", text: $viewModel.taskInput, axis: .vertical)
                         .textFieldStyle(.roundedBorder)
