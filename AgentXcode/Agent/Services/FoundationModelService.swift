@@ -23,6 +23,9 @@ final class FoundationModelService {
 
     private(set) var session: LanguageModelSession?
 
+    /// Timeout for Apple Intelligence calls (seconds). Short timeout to skip quickly if unavailable.
+    private static let responseTimeout: TimeInterval = 5
+
     /// Call to force a new session (e.g. after prompt changes).
     func resetSession() { session = nil }
 
@@ -144,12 +147,33 @@ final class FoundationModelService {
         guard !prompt.isEmpty else {
             return ([["type": "text", "text": "(empty prompt)"]], "end_turn")
         }
+        
+        // Use timeout wrapper to prevent hanging
         do {
-            let response = try await s.respond(to: prompt)
-            return parseResponse(response.content, session: s)
+            let content: String = try await withThrowingTaskGroup(of: String.self) { group in
+                group.addTask {
+                    let response = try await s.respond(to: prompt)
+                    return response.content
+                }
+                group.addTask {
+                    try await Task.sleep(for: .seconds(Self.responseTimeout))
+                    throw CancellationError()
+                }
+                guard let result = try await group.next() else {
+                    throw CancellationError()
+                }
+                group.cancelAll()
+                return result
+            }
+            return parseResponse(content, session: s)
         } catch {
             self.session = nil
             let msg = error.localizedDescription.lowercased()
+            // Timeout — skip Apple Intelligence
+            if error is CancellationError {
+                print("🔧 [Apple AI] Timed out after \(Self.responseTimeout)s — skipping")
+                return ([["type": "text", "text": "Apple Intelligence timed out. Please try again."]], "end_turn")
+            }
             if msg.contains("unsafe") || msg.contains("guardrail") || msg.contains("policy") || msg.contains("safety") {
                 let notice = "Apple Intelligence blocked this request due to its built-in safety filters. Try using Claude or Ollama for script execution tasks."
                 return ([["type": "text", "text": notice]], "end_turn")
@@ -170,14 +194,36 @@ final class FoundationModelService {
             return ([["type": "text", "text": "(empty prompt)"]], "end_turn")
         }
         var fullText = ""
+
+        // Use timeout wrapper to prevent hanging
         do {
-            for try await snapshot in s.streamResponse(to: prompt) {
-                fullText = snapshot.content
+            fullText = try await withThrowingTaskGroup(of: String.self) { group in
+                group.addTask {
+                    var latest = ""
+                    for try await snapshot in s.streamResponse(to: prompt) {
+                        latest = snapshot.content
+                    }
+                    return latest
+                }
+                group.addTask {
+                    try await Task.sleep(for: .seconds(Self.responseTimeout))
+                    throw CancellationError()
+                }
+                guard let result = try await group.next() else {
+                    throw CancellationError()
+                }
+                group.cancelAll()
+                return result
             }
         } catch {
             self.session = nil
-            // Check for safety/guardrail violation — surface a friendly message instead of an error
             let msg = error.localizedDescription.lowercased()
+            // Timeout — skip Apple Intelligence
+            if error is CancellationError {
+                print("🔧 [Apple AI] Timed out after \(Self.responseTimeout)s — skipping")
+                onTextDelta("Apple Intelligence timed out. Please try again.")
+                return ([["type": "text", "text": "Apple Intelligence timed out. Please try again."]], "end_turn")
+            }
             if msg.contains("unsafe") || msg.contains("guardrail") || msg.contains("policy") || msg.contains("safety") {
                 let notice = "Apple Intelligence blocked this request due to its built-in safety filters. Try using Claude or Ollama for script execution tasks."
                 onTextDelta(notice)
@@ -185,6 +231,7 @@ final class FoundationModelService {
             }
             throw error
         }
+        
         // Parse first. If it's a tool call, emit any text written before it.
         let result = parseResponse(fullText, session: s)
         if result.stopReason == "tool_use" {

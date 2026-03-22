@@ -282,7 +282,7 @@ final class OllamaService {
             request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         }
         request.httpBody = bodyData
-        request.timeoutInterval = 300
+        request.timeoutInterval = llmAPITimeout
 
         let (data, response) = try await URLSession.shared.data(for: request)
 
@@ -418,7 +418,7 @@ final class OllamaService {
             request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         }
         request.httpBody = bodyData
-        request.timeoutInterval = 300
+        request.timeoutInterval = llmAPITimeout
 
         let (bytes, response) = try await URLSession.shared.bytes(for: request)
 

@@ -2395,12 +2395,26 @@ extension AgentViewModel {
 
             } catch {
                 if !Task.isCancelled {
-                    taskLog.error("[main] LLM error at iteration \(iterations): \(error.localizedDescription)")
-                    appendLog("Error: \(error.localizedDescription)")
+                    let errMsg = error.localizedDescription
+                    taskLog.error("[main] LLM error at iteration \(iterations): \(errMsg)")
+
+                    // Auto-retry on 429 rate limit after 10 seconds
+                    if errMsg.contains("429") || errMsg.lowercased().contains("rate limit") || errMsg.lowercased().contains("concurrent request") {
+                        appendLog("Rate limited — retrying in 10 seconds...")
+                        flushLog()
+                        if agentReplyHandle != nil {
+                            sendProgressUpdate("Rate limited — retrying in 10 seconds...")
+                        }
+                        try? await Task.sleep(for: .seconds(10))
+                        if Task.isCancelled { break }
+                        continue
+                    }
+
+                    appendLog("Error: \(errMsg)")
                     // Apple Intelligence error explanation
                     if mediator.isEnabled && mediator.showAnnotationsToUser {
                         taskLog.info("[main] Apple AI mediator: explaining error...")
-                        if let errorAnnotation = await mediator.explainError(toolName: "LLM request", error: error.localizedDescription) {
+                        if let errorAnnotation = await mediator.explainError(toolName: "LLM request", error: errMsg) {
                             appendLog(errorAnnotation.formatted)
                             flushLog()
                             if agentReplyHandle != nil {
@@ -2493,7 +2507,7 @@ extension AgentViewModel {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.timeoutInterval = 30
+        request.timeoutInterval = 90
         
         let body: [String: Any] = [
             "query": query,
@@ -2563,7 +2577,7 @@ extension AgentViewModel {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.timeoutInterval = 30
+        request.timeoutInterval = 90
 
         let body: [String: Any] = [
             "query": query,

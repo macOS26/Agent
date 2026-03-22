@@ -95,6 +95,9 @@ enum AgentError: Error, LocalizedError {
     }
 }
 
+/// Unified timeout for all LLM API requests (Claude, OpenAI-compatible, Ollama).
+let llmAPITimeout: TimeInterval = 90
+
 // MARK: - Task History
 
 struct TaskRecord: Codable, Identifiable {
@@ -246,7 +249,7 @@ final class TaskHistory {
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
         request.setValue("application/json", forHTTPHeaderField: "content-type")
         request.httpBody = bodyData
-        request.timeoutInterval = 60
+        request.timeoutInterval = 90
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, http.statusCode == 200,
