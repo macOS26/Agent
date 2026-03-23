@@ -285,6 +285,7 @@ struct ContentView: View {
                         .foregroundStyle(.secondary)
                     TextField("Find in log...", text: $searchText)
                         .textFieldStyle(.roundedBorder)
+                        .controlSize(.small)
                         .focused($isSearchFieldFocused)
                         .onSubmit { nextMatch() }
                     if !searchText.isEmpty {
@@ -294,27 +295,24 @@ struct ContentView: View {
                             .frame(minWidth: 60)
                         Button { previousMatch() } label: {
                             Image(systemName: "chevron.up")
-                                .frame(width: 20, height: 16)
                         }
                         .buttonStyle(.bordered)
-                        .controlSize(.mini)
+                        .controlSize(.small)
                         .disabled(totalMatches == 0)
                         Button { nextMatch() } label: {
                             Image(systemName: "chevron.down")
-                                .frame(width: 20, height: 16)
                         }
                         .buttonStyle(.bordered)
-                        .controlSize(.mini)
+                        .controlSize(.small)
                         .disabled(totalMatches == 0)
                     }
                     Spacer()
                     Button { showSearch = false; searchText = "" } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(.secondary)
-                            .frame(width: 20, height: 16)
                     }
                     .buttonStyle(.bordered)
-                    .controlSize(.mini)
+                    .controlSize(.small)
                 }
                 .padding(.horizontal)
                 .padding(.vertical, 6)
