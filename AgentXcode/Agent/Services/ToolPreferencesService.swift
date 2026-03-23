@@ -82,8 +82,8 @@ final class ToolPreferencesService {
         "Experimental": Set(["apple_event_query"]),
         // accessibility is in Automation
         "Core": Set(["task_complete", "list_tools", "list_mcp_tools", "load_groups", "unload_groups", "web_search",
-                    "write_text", "transform_text", "send_message", "about_self", "fix_text"]),
-        "Workflow": Set(["agent_script", "plan_mode", "git"]),
+                    "write_text", "transform_text", "about_self", "fix_text"]),
+        "Workflow": Set(["agent_script", "plan_mode", "git", "send_message"]),
         "User Agent": Set(["execute_agent_command"]),
         "Launch Daemon": Set(["execute_daemon_command"]),
         "Web": Set(["web", "selenium"]),
