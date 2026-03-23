@@ -153,7 +153,7 @@ enum AgentTools {
         ACTION TOOLS (require "action" parameter):
         file_manager: read, write, edit, list, search, read_dir | git: status, diff, log, commit, diff_patch, branch
         xcode: build, run, list_projects, select_project | agent_script: list, read, create, update, run, delete, combine
-        plan_mode: create, update, read, list, delete | applescript_tool: execute, lookup_sdef, list, run, save, delete
+        plan_mode: create, update, read, list, delete, extract_section | applescript_tool: execute, lookup_sdef, list, run, save, delete
         javascript_tool: execute, list, run, save, delete | accessibility: list_windows, get_properties, perform_action, type_text, click, press_key, screenshot, set_properties, find_element, get_children
         web: open, find, click, type, execute_js, get_url, get_title | selenium: start, stop, navigate, find, click, type, execute, screenshot, wait
 
@@ -357,11 +357,10 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.splitFile,
-            description: "Split a large Swift file. Modes: 'declarations' (default) splits by top-level types/extensions/funcs. 'handlers' extracts if name==\"tool\" blocks into grouped files by prefix. Use for refactoring large files.",
+            description: "Split a large Swift file. Backs up original as .backup then removes it. Modes: 'declarations' (default) splits by top-level types/extensions. 'handlers' extracts if-name blocks into grouped files.",
             properties: [
                 "file_path": ["type": "string", "description": "Absolute path to the Swift file to split"],
                 "mode": ["type": "string", "description": "Split mode: 'declarations' (default) or 'handlers' (extract if-name blocks)"],
-                "delete_original": ["type": "boolean", "description": "Delete the original file after splitting (default false)"],
             ],
             required: ["file_path"]
         ),
@@ -807,14 +806,18 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.planMode,
-            description: "Manage step-by-step plans. IMPORTANT: After creating a plan, you MUST execute every step — do NOT just create and complete. Update each step (in_progress → completed/failed) as you work. Plan is named after the current tab automatically. Actions: create, update, read, list, delete.",
+            description: "Manage plans and extract code sections. Actions: create, update, read, list, delete, extract_section. For extract_section: removes lines from source file into a new file and adds to Xcode project — use as a plan step, then build to verify. Execute every plan step — don't just create and complete.",
             properties: [
-                "action": ["type": "string", "description": "Action: 'create', 'update', 'read', 'list', or 'delete'"],
-                "plan_id": ["type": "string", "description": "Plan name (auto-set from tab name, override only if needed)"],
-                "title": ["type": "string", "description": "Plan title (required for 'create')"],
-                "steps": ["type": "string", "description": "Newline-separated list of steps (required for 'create')"],
-                "step": ["type": "integer", "description": "Step number to update (required for 'update')"],
-                "status": ["type": "string", "description": "New status for 'update': 'in_progress', 'completed', or 'failed'"],
+                "action": ["type": "string", "description": "Action: create, update, read, list, delete, or extract_section"],
+                "plan_id": ["type": "string", "description": "Plan name (auto-set from tab name)"],
+                "title": ["type": "string", "description": "For create: plan title"],
+                "steps": ["type": "string", "description": "For create: newline-separated steps"],
+                "step": ["type": "integer", "description": "For update: step number"],
+                "status": ["type": "string", "description": "For update: in_progress, completed, or failed"],
+                "file_path": ["type": "string", "description": "For extract_section: source file path"],
+                "start_line": ["type": "integer", "description": "For extract_section: first line to extract (1-based)"],
+                "end_line": ["type": "integer", "description": "For extract_section: last line to extract (1-based)"],
+                "new_file": ["type": "string", "description": "For extract_section: destination filename (e.g. MyClass+Feature.swift)"],
             ],
             required: ["action"]
         ),

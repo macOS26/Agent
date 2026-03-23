@@ -213,7 +213,7 @@ enum CodingService {
     /// Split a Swift file into separate files.
     /// Modes: "declarations" (default) splits by top-level types/extensions.
     ///        "handlers" extracts `if name == "..."` tool handler blocks into separate functions.
-    static func splitFile(path: String, deleteOriginal: Bool = false, mode: String = "declarations") -> String {
+    static func splitFile(path: String, mode: String = "declarations") -> String {
         let expanded = (path as NSString).expandingTildeInPath
         guard let data = FileManager.default.contents(atPath: expanded),
               let source = String(data: data, encoding: .utf8) else {
@@ -221,7 +221,7 @@ enum CodingService {
         }
 
         if mode == "handlers" {
-            return splitToolHandlers(source: source, path: expanded, deleteOriginal: deleteOriginal)
+            return splitToolHandlers(source: source, path: expanded)
         }
 
         let lines = source.components(separatedBy: "\n")
@@ -417,12 +417,15 @@ enum CodingService {
             }
         }
 
-        if deleteOriginal {
-            try? fm.removeItem(atPath: expanded)
-            createdFiles.append("Deleted original: \((expanded as NSString).lastPathComponent)")
-        }
+        // Backup original, then delete it
+        let backupPath = expanded + ".backup"
+        try? fm.removeItem(atPath: backupPath) // remove old backup if exists
+        try? fm.copyItem(atPath: expanded, toPath: backupPath)
+        try? fm.removeItem(atPath: expanded)
+        createdFiles.append("Backup: \((expanded as NSString).lastPathComponent).backup")
+        createdFiles.append("Removed original: \((expanded as NSString).lastPathComponent)")
 
-        return "Split \(baseName).swift into \(createdFiles.count) files:\n" + createdFiles.joined(separator: "\n")
+        return "Split \(baseName).swift into \(createdFiles.count - 2) files:\n" + createdFiles.joined(separator: "\n")
     }
 
     /// Extract a clean declaration name from a line like "extension AgentViewModel {"
@@ -581,7 +584,7 @@ enum CodingService {
     /// Extract `if name == "tool_name" { ... }` blocks from a large function
     /// into separate `handle_toolName()` functions, and replace the original
     /// if-blocks with calls to the new functions.
-    private static func splitToolHandlers(source: String, path: String, deleteOriginal: Bool) -> String {
+    private static func splitToolHandlers(source: String, path: String) -> String {
         let lines = source.components(separatedBy: "\n")
         let baseName = (path as NSString).lastPathComponent.replacingOccurrences(of: ".swift", with: "")
         let dir = (path as NSString).deletingLastPathComponent
@@ -730,10 +733,13 @@ enum CodingService {
             createdFiles.append("Error writing \(trimmedName): \(error.localizedDescription)")
         }
 
-        if deleteOriginal {
-            try? fm.removeItem(atPath: path)
-            createdFiles.append("Deleted original: \((path as NSString).lastPathComponent)")
-        }
+        // Backup original, then delete it
+        let backupPath = path + ".backup"
+        try? fm.removeItem(atPath: backupPath)
+        try? fm.copyItem(atPath: path, toPath: backupPath)
+        try? fm.removeItem(atPath: path)
+        createdFiles.append("Backup: \((path as NSString).lastPathComponent).backup")
+        createdFiles.append("Removed original: \((path as NSString).lastPathComponent)")
 
         return "Split \(handlers.count) tool handlers into \(groups.count) files:\n" + createdFiles.joined(separator: "\n")
     }

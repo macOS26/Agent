@@ -616,8 +616,97 @@ extension AgentViewModel {
                 return "Error deleting plan: \(error.localizedDescription)"
             }
 
+        case "extract_section":
+            // Extract lines from a file into a new file, remove from original, add to Xcode project.
+            // Params: file_path (source), start_line, end_line, new_file (destination name)
+            guard let filePath = input["file_path"] as? String, !filePath.isEmpty else {
+                return "Error: file_path is required"
+            }
+            guard let startLine = input["start_line"] as? Int, startLine > 0 else {
+                return "Error: start_line is required (1-based)"
+            }
+            guard let endLine = input["end_line"] as? Int, endLine >= startLine else {
+                return "Error: end_line is required and must be >= start_line"
+            }
+            guard let newFileName = input["new_file"] as? String, !newFileName.isEmpty else {
+                return "Error: new_file name is required (e.g. MyClass+Feature.swift)"
+            }
+
+            let expanded = (filePath as NSString).expandingTildeInPath
+            guard let data = fm.contents(atPath: expanded),
+                  let source = String(data: data, encoding: .utf8) else {
+                return "Error: cannot read \(filePath)"
+            }
+
+            let lines = source.components(separatedBy: "\n")
+            guard endLine <= lines.count else {
+                return "Error: end_line \(endLine) exceeds file length (\(lines.count) lines)"
+            }
+
+            // Collect all imports (trimmed, deduped)
+            var imports = [String]()
+            var seenImports = Set<String>()
+            for line in lines {
+                let t = line.trimmingCharacters(in: .whitespaces)
+                if t.hasPrefix("import ") || t.hasPrefix("@preconcurrency import ") {
+                    if seenImports.insert(t).inserted { imports.append(t) }
+                }
+            }
+
+            // Find the extension/class wrapper at brace depth 0
+            var extensionLine = ""
+            for line in lines {
+                let t = line.trimmingCharacters(in: .whitespaces)
+                if t.hasPrefix("extension ") || t.hasPrefix("public extension ") || t.hasPrefix("class ") || t.hasPrefix("public class ") {
+                    extensionLine = t
+                    break
+                }
+            }
+
+            // Extract the section (0-based internally, user gives 1-based)
+            let extractedLines = Array(lines[(startLine - 1)..<endLine])
+
+            // Build new file content
+            var newContent = imports.joined(separator: "\n") + "\n\n"
+            if !extensionLine.isEmpty {
+                newContent += (extensionLine.hasSuffix("{") ? extensionLine : extensionLine + " {") + "\n\n"
+            }
+            // Fix private → internal
+            for line in extractedLines {
+                let t = line.trimmingCharacters(in: .whitespaces)
+                var fixed = line
+                if t.hasPrefix("private func ") { fixed = line.replacingOccurrences(of: "private func ", with: "func ") }
+                if t.hasPrefix("private static func ") { fixed = line.replacingOccurrences(of: "private static func ", with: "static func ") }
+                if t.hasPrefix("private var ") { fixed = line.replacingOccurrences(of: "private var ", with: "var ") }
+                if t.hasPrefix("private let ") { fixed = line.replacingOccurrences(of: "private let ", with: "let ") }
+                newContent += fixed + "\n"
+            }
+            if !extensionLine.isEmpty {
+                newContent += "}\n"
+            }
+
+            // Write new file
+            let sourceDir = (expanded as NSString).deletingLastPathComponent
+            let newFilePath = (sourceDir as NSString).appendingPathComponent(newFileName)
+            do {
+                try newContent.write(toFile: newFilePath, atomically: true, encoding: .utf8)
+            } catch {
+                return "Error writing \(newFileName): \(error.localizedDescription)"
+            }
+
+            // Remove extracted lines from original
+            var remaining = lines
+            remaining.removeSubrange((startLine - 1)..<endLine)
+            do {
+                try remaining.joined(separator: "\n").write(toFile: expanded, atomically: true, encoding: .utf8)
+            } catch {
+                return "Error updating original: \(error.localizedDescription)"
+            }
+
+            return "Extracted lines \(startLine)-\(endLine) (\(extractedLines.count) lines) → \(newFileName)\nOriginal: \(lines.count) → \(remaining.count) lines\nIMPORTANT: Use xcode (action: add_file, file_path: \(newFilePath)) to add to project, then xcode (action: build) to verify."
+
         default:
-            return "Error: invalid action '\(action)'. Use create, update, read, list, or delete."
+            return "Error: invalid action '\(action)'. Use create, update, read, list, delete, or extract_section."
         }
     }
 
