@@ -90,7 +90,7 @@ final class ToolPreferencesService {
         "Core": Set(["task_complete", "list_tools", "list_mcp_tools", "load_groups", "unload_groups", "web_search",
                     "write_text", "transform_text", "send_message", "about_self", "fix_text",
                     "list_agent_scripts", "read_agent_script", "create_agent_script", "update_agent_script",
-                    "run_agent_script", "delete_agent_script",
+                    "run_agent_script", "delete_agent_script", "combine_agent_scripts",
                     "plan_mode"]),
         "User Agent": Set(["execute_agent_command"]),
         "Launch Daemon": Set(["execute_daemon_command"]),

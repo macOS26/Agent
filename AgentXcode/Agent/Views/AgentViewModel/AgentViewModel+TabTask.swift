@@ -850,6 +850,53 @@ extension AgentViewModel {
             )
         }
 
+        // combine_agent_scripts
+        if name == "combine_agent_scripts" {
+            let sourceA = input["source_a"] as? String ?? ""
+            let sourceB = input["source_b"] as? String ?? ""
+            let target = input["target"] as? String ?? ""
+            tab.appendLog("Combining: \(sourceA) + \(sourceB) → \(target)")
+
+            guard let contentA = scriptService.readScript(name: sourceA) else {
+                let err = "Error: script '\(sourceA)' not found."
+                tab.appendLog(err)
+                return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": err], isComplete: false)
+            }
+            guard let contentB = scriptService.readScript(name: sourceB) else {
+                let err = "Error: script '\(sourceB)' not found."
+                tab.appendLog(err)
+                return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": err], isComplete: false)
+            }
+
+            let linesA = contentA.components(separatedBy: "\n")
+            let linesB = contentB.components(separatedBy: "\n")
+            var imports = [String](); var seenImports = Set<String>()
+            var bodyA = [String](); var bodyB = [String]()
+            for line in linesA {
+                let t = line.trimmingCharacters(in: .whitespaces)
+                if t.hasPrefix("import ") { if seenImports.insert(t).inserted { imports.append(line) } } else { bodyA.append(line) }
+            }
+            for line in linesB {
+                let t = line.trimmingCharacters(in: .whitespaces)
+                if t.hasPrefix("import ") { if seenImports.insert(t).inserted { imports.append(line) } } else { bodyB.append(line) }
+            }
+            let merged = imports.joined(separator: "\n")
+                + "\n\n// MARK: - From \(sourceA)\n\n"
+                + bodyA.drop(while: { $0.trimmingCharacters(in: .whitespaces).isEmpty }).joined(separator: "\n")
+                + "\n\n// MARK: - From \(sourceB)\n\n"
+                + bodyB.drop(while: { $0.trimmingCharacters(in: .whitespaces).isEmpty }).joined(separator: "\n")
+
+            let output: String
+            if scriptService.readScript(name: target) != nil {
+                output = scriptService.updateScript(name: target, content: merged)
+            } else {
+                output = scriptService.createScript(name: target, content: merged)
+            }
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
+        }
+
         // run_agent_script
         if name == "run_agent_script" {
             let scriptName = input["name"] as? String ?? ""
