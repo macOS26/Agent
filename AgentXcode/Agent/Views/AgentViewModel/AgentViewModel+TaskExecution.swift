@@ -303,12 +303,6 @@ extension AgentViewModel {
             let result = await executeViaUserAgent(command: "ls -la '\(dir)' 2>/dev/null")
             return result.output.isEmpty ? "Directory not found or empty" : result.output
         }
-        if name == "split_file" {
-            let filePath = input["file_path"] as? String ?? ""
-            let mode = input["mode"] as? String ?? "declarations"
-            return await Self.offMain { CodingService.splitFile(path: filePath, mode: mode) }
-        }
-
         // Tool discovery
         if name == "list_tools" {
             let prefs = ToolPreferencesService.shared
@@ -1697,16 +1691,6 @@ extension AgentViewModel {
                             guard !Task.isCancelled else { break }
                             let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                                 ? "Directory not found or empty" : result.output
-                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
-                        }
-
-                        if name == "split_file" {
-                            let filePath = input["file_path"] as? String ?? ""
-                            let mode = input["mode"] as? String ?? "declarations"
-                            appendLog("✂️ Splitting (\(mode)): \(filePath)")
-                            let output = await Self.offMain { CodingService.splitFile(path: filePath, mode: mode) }
-                            appendLog(output)
-                            commandsRun.append("split_file: \(filePath)")
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 

@@ -1,11 +1,9 @@
-# Split AgentViewModel+TaskExecution+AgentViewModel.swift into smaller extensions
+# Swift File Refactoring Test
 
-- [✅] 1. Extract Task Execution Loop (lines 1207-3088) into AgentViewModel+TaskExecutionLoop.swift
-- [✅] 2. Extract Native Tool Handler (lines 9-360) into AgentViewModel+NativeToolHandler.swift
-- [✅] 3. Extract Conversation Tools (lines 556-1205) into AgentViewModel+ConversationTools.swift
-- [✅] 4. Extract Web Automation + Selenium (lines 361-555) into AgentViewModel+WebAutomation.swift
-- [✅] 5. Extract Utility functions (truncation, pruning, web search, emoji) into AgentViewModel+Utilities.swift
-- [✅] 6. Verify build succeeds
+- [ ] 1. 1. Find a Swift file with ~1000 lines
+- [ ] 2. 2. Read the file contents
+- [ ] 3. 3. Use edit_file to remove a logical section for extraction
+- [ ] 4. 4. Write the removed data to a new Swift file
 
 ---
-*Status: 6 done, 0 in progress, 0 failed, 0 pending*
+*Status: 4 steps pending*
