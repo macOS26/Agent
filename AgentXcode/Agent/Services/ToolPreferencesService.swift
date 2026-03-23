@@ -15,11 +15,11 @@ enum TaskMode: String, CaseIterable {
     var groups: Set<String> {
         let base: Set<String> = ["Core", "Workflow"]
         switch self {
-        case .coding:       return base.union(["Coding"])
+        case .coding:       return base.union(["Coding", "Xcode"])
         case .automation:   return base.union(["Automation", "Accessibility"])
         case .web:          return base.union(["Web"])
         case .conversation: return base
-        case .general:      return ["Core", "Workflow", "Coding", "Automation", "Accessibility", "Web"]
+        case .general:      return ["Core", "Workflow", "Coding", "Xcode", "Automation", "Accessibility", "Web"]
         }
     }
 
@@ -78,8 +78,8 @@ final class ToolPreferencesService {
     /// Tool group definitions - maps group name to tool name prefixes
     static let toolGroups: [String: Set<String>] = [
         "Coding": Set(["read_file", "write_file", "edit_file", "create_diff", "apply_diff", "list_files", "search_files",
-                       "git",
-                       "xcode_build", "xcode_run", "xcode_list_projects", "xcode_select_project"]),
+                       "git"]),
+        "Xcode": Set(["xcode_build", "xcode_run", "xcode_list_projects", "xcode_select_project"]),
         "Automation": Set(["run_applescript", "run_osascript", "execute_javascript",
                           "apple_script_tool"]),
         "Experimental": Set(["apple_event_query", "lookup_sdef", "xcode_grant_permission",

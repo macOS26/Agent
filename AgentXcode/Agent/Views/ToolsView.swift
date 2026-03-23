@@ -8,7 +8,8 @@ struct ToolsView: View {
     
     // Group definitions matching ToolPreferencesService — use exact name sets to avoid overlap
     static let groups: [String: (filter: (AgentTools.ToolDef) -> Bool, icon: String)] = [
-        "Coding": ({ ["read_file", "write_file", "edit_file", "create_diff", "apply_diff", "list_files", "search_files", "git"].contains($0.name) || ($0.name.hasPrefix("xcode_") && $0.name != "xcode_grant_permission") }, "doc.text"),
+        "Coding": ({ ["read_file", "write_file", "edit_file", "create_diff", "apply_diff", "list_files", "search_files", "git"].contains($0.name) }, "doc.text"),
+        "Xcode": ({ ($0.name.hasPrefix("xcode_") && $0.name != "xcode_grant_permission") }, "hammer"),
         "Automation": ({ ["run_applescript", "run_osascript", "execute_javascript", "apple_script_tool"].contains($0.name) }, "gearshape.2"),
         "Experimental": ({ ["apple_event_query", "lookup_sdef", "xcode_grant_permission", "javascript_tool"].contains($0.name) }, "flask"),
         "Accessibility": ({ $0.name.hasPrefix("ax_") }, "accessibility"),
@@ -19,7 +20,7 @@ struct ToolsView: View {
         "Web": ({ ($0.name.hasPrefix("web_") && $0.name != "web_search") || $0.name.hasPrefix("selenium_") }, "globe"),
     ]
     
-    static let groupOrder: [String] = ["Core", "Workflow", "Coding", "Automation", "User Agent", "Launch Daemon", "Accessibility", "Web", "Experimental"]
+    static let groupOrder: [String] = ["Core", "Workflow", "Coding", "Xcode", "Automation", "User Agent", "Launch Daemon", "Accessibility", "Web", "Experimental"]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
