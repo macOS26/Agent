@@ -157,12 +157,14 @@ enum AgentTools {
         javascript_tool: execute, list, run, save, delete | accessibility: list_windows, get_properties, perform_action, type_text, click, press_key, screenshot, set_properties, find_element, get_children
         web: open, find, click, type, execute_js, get_url, get_title | selenium: start, stop, navigate, find, click, type, execute, screenshot, wait
 
-        PRIORITY: direct tools → action tools → MCP (mcp_*) → execute_agent_command (last resort).
-        SHELL: Use execute_agent_command for rm, mv, cp, shell commands. NEVER use applescript_tool "do shell script" for shell commands.
+        CRITICAL RULES:
+        - SHELL COMMANDS (rm, mv, cp, ls, find, grep, etc.): ALWAYS use execute_agent_command. NEVER create .sh scripts. NEVER use applescript_tool "do shell script". NEVER use write_file to create shell scripts.
+        - BUILD: Use xcode (action: build). Never xcodebuild via shell.
+        - applescript_tool is ONLY for AppleScript automation of apps (tell application...). NOT for shell commands.
+        - For tasks with 3+ steps, create a plan_mode plan first. Execute every step. Don't mark done without writing files.
+
         TCC (in-process): agent_script (run), applescript_tool (execute), accessibility. NO TCC: execute_agent_command, execute_daemon_command.
         AGENT SCRIPTS: ~/Documents/AgentScript/agents/. 100% Swift. @_cdecl("script_main") public func scriptMain() -> Int32 { return 0 }
-        BUILD: Use xcode (action: build) to compile. Use xcode (action: run) to test. Never use xcodebuild or swift build via shell. Use xcode (action: list_projects) to find the correct project first.
-        PLANS: For tasks with 3+ steps, create a plan_mode plan first. Execute every step with tools. Mark in_progress → completed. Don't mark done without writing files.
         """
     }
 
