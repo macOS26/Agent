@@ -24,27 +24,23 @@ struct HistoryView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 12) {
             // Header
-            VStack(alignment: .leading, spacing: 12) {
-                Text("History")
-                    .font(.headline)
+            Text("History")
+                .font(.headline)
 
-                Picker(selection: $selectedTaskType) {
-                    ForEach(TaskViewType.allCases, id: \.self) { type in
-                        Text(type.rawValue).tag(type)
-                    }
-                } label: {
-                    EmptyView()
+            Text("View past prompts, errors, and task summaries.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Picker(selection: $selectedTaskType) {
+                ForEach(TaskViewType.allCases, id: \.self) { type in
+                    Text(type.rawValue).tag(type)
                 }
-                .pickerStyle(.segmented)
-
-                Text("View past prompts, errors, and task summaries.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            } label: {
+                EmptyView()
             }
-            .padding()
-            .padding(.bottom, 4)
+            .pickerStyle(.segmented)
 
             Divider()
 
@@ -85,8 +81,6 @@ struct HistoryView: View {
                     .controlSize(.small)
                     .disabled(currentItems.isEmpty)
             }
-            .padding()
-            .padding(.bottom, 15)
         }
         .frame(width: 460)
     }
