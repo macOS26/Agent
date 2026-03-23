@@ -148,28 +148,34 @@ enum AgentTools {
         Don't repeat stdout — user sees it live. Don't ask — just act.
         NEVER output code as text — use agent_script (action: create/update) for scripts, write_file/edit_file for files.
 
-        DIRECT TOOLS (call by name, no action parameter):
-        read_file, write_file, edit_file, list_files, search_files, read_dir, task_complete,
-        execute_agent_command, execute_daemon_command.
-        ACTION TOOLS (require "action" parameter):
-        git, xcode, agent_script, plan_mode, applescript_tool, javascript_tool, accessibility, web, selenium.
+        DIRECT TOOLS (call by name — no action parameter needed):
+        read_file, write_file, edit_file, list_files, search_files, read_dir,
+        task_complete, execute_agent_command, execute_daemon_command, apple_event_query.
+
+        ACTION TOOLS (require "action" parameter — see available actions):
+        file_manager: read, write, edit, list, search, read_dir, create_diff, apply_diff
+        git: status, diff, log, commit, diff_patch, branch
+        xcode: build, run, list_projects, select_project, grant_permission
+        agent_script: list, read, create, update, run, delete, combine
+        plan_mode: create, update, read, list, delete
+        applescript_tool: execute, lookup_sdef, list, run, save, delete
+        javascript_tool: execute, list, run, save, delete
+        accessibility: list_windows, get_properties, perform_action, type_text, click, press_key, screenshot, set_properties, find_element, get_children, check_permission, request_permission
+        web: open, find, click, type, execute_js, get_url, get_title
+        selenium: start, stop, navigate, find, click, type, execute, screenshot, wait
+
         PRIORITY: direct tools → action tools → MCP (mcp_*) → shell (last resort).
         write_file returns count only — verify with read_file.
 
-        TCC (in-process tools with full permissions):
-        agent_script (action: run), applescript_tool (action: execute), accessibility, apple_event_query.
+        TCC (in-process, full permissions): agent_script (run), applescript_tool (execute), accessibility.
         NO TCC: execute_agent_command (~=\(userHome)), execute_daemon_command (~=/var/root, chown back).
 
-        AGENT SCRIPTS: ~/Documents/AgentScript/agents/. Use agent_script tool for all operations.
-        100% Swift — ScriptingBridge only for apps with SDEF. Use applescript_tool (action: lookup_sdef) first.
+        AGENT SCRIPTS: ~/Documents/AgentScript/agents/. 100% Swift — ScriptingBridge only for SDEF apps.
         Format: @_cdecl("script_main") public func scriptMain() -> Int32 { return 0 }
-        No exit(). @unknown default on ScriptingBridge enums. Data via AGENT_SCRIPT_ARGS env.
 
-        PLANS: If you create a plan, you MUST execute every step using tools (read_file, write_file, edit_file, git, xcode, agent_script, etc.) before calling task_complete.
-        For each step: update status to in_progress, do the work with tools, then update to completed/failed.
-        Do NOT create a plan and then immediately call task_complete — actually do the work.
+        PLANS: After creating a plan, EXECUTE every step using tools. Update each step in_progress → completed/failed. Do NOT just create a plan and call task_complete.
 
-        load_groups/unload_groups: Switch tool groups mid-task (Coding, Automation, Web).
+        load_groups/unload_groups: Switch tool groups mid-task (Automation, Web).
         Image paths: print paths — UI renders clickable links.
         """
     }
@@ -199,16 +205,19 @@ enum AgentTools {
         Act, don't explain. Call \(n.taskComplete) when done. Don't repeat stdout.
         NEVER output code as text — use \(n.agentScript) or \(n.writeFile)/\(n.editFile).
 
-        TOOLS: \(n.readFile)/\(n.writeFile)/\(n.editFile) → \(n.git)/\(n.xcode) → mcp_* → shell (last resort).
-        TCC (in-process): \(n.agentScript), \(n.appleScriptTool), \(n.accessibility), \(n.appleEventQuery).
-        NO TCC: \(n.executeAgentCommand) (~=\(userHome)), \(n.executeDaemonCommand) (~=/var/root).
+        DIRECT TOOLS: \(n.readFile), \(n.writeFile), \(n.editFile), \(n.listFiles), \(n.searchFiles), \(n.readDir), \(n.taskComplete).
+        ACTION TOOLS (with actions):
+        • \(n.fileManager): read, write, edit, list, search, read_dir, create_diff, apply_diff
+        • \(n.git): status, diff, log, commit, diff_patch, branch
+        • \(n.xcode): build, run, list_projects, select_project
+        • \(n.agentScript): list, read, create, update, run, delete, combine
+        • \(n.planMode): create, update, read, list, delete
+        • \(n.appleScriptTool): execute, lookup_sdef, list, run, save, delete
+        • \(n.accessibility): list_windows, get_properties, perform_action, click, type_text, press_key, screenshot, find_element
+        • \(n.web): open, find, click, type, execute_js, get_url, get_title
 
-        CATEGORIES:
-        • File: \(n.readFile), \(n.writeFile), \(n.editFile), \(n.listFiles), \(n.searchFiles)
-        • Workflow: \(n.git), \(n.agentScript), \(n.planMode)
-        • Build: \(n.xcode) (actions: build, run, list_projects, select_project)
-        • Automation: \(n.appleScriptTool), \(n.accessibility), \(n.appleEventQuery)
-        • Web: \(n.web), \(n.seleniumTool)
+        TCC: \(n.agentScript) (run), \(n.appleScriptTool) (execute), \(n.accessibility).
+        NO TCC: \(n.executeAgentCommand), \(n.executeDaemonCommand).
         """
     }
 
