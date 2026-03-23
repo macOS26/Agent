@@ -294,12 +294,14 @@ struct ContentView: View {
                             .frame(minWidth: 60)
                         Button { previousMatch() } label: {
                             Image(systemName: "chevron.up")
+                                .frame(width: 20, height: 16)
                         }
                         .buttonStyle(.bordered)
                         .controlSize(.mini)
                         .disabled(totalMatches == 0)
                         Button { nextMatch() } label: {
                             Image(systemName: "chevron.down")
+                                .frame(width: 20, height: 16)
                         }
                         .buttonStyle(.bordered)
                         .controlSize(.mini)

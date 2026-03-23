@@ -357,37 +357,44 @@ struct ActivityLogView: NSViewRepresentable {
         func applySearchHighlighting(textView: NSTextView, searchText: String, currentMatch: Int, onMatchCount: ((Int) -> Void)?) {
             guard let storage = textView.textStorage else { return }
 
-            // Remove only previous search highlight backgrounds (preserve code block backgrounds)
             let highlightColor = NSColor.systemYellow.withAlphaComponent(0.3)
             let currentColor = NSColor.systemOrange.withAlphaComponent(0.5)
+
+            // Batch all attribute changes in a single editing pass
+            storage.beginEditing()
+
+            // Remove previous highlights
             for range in lastSearchRanges {
                 if range.location + range.length <= storage.length {
-                    let existingColor = storage.attribute(.backgroundColor, at: range.location, effectiveRange: nil) as? NSColor
-                    // Only remove if it's a search highlight color (yellow/orange), not code block background
-                    if let color = existingColor, (color == highlightColor || color == currentColor) {
-                        storage.removeAttribute(.backgroundColor, range: range)
-                    }
+                    storage.removeAttribute(.backgroundColor, range: range)
                 }
             }
             lastSearchRanges.removeAll()
 
             guard !searchText.isEmpty else {
+                storage.endEditing()
                 onMatchCount?(0)
                 return
             }
 
+            // Search only the visible portion + buffer for large texts to avoid beach ball
             let text = storage.string
-            var matchRanges: [NSRange] = []
+            let textLength = (text as NSString).length
             let searchLower = searchText.lowercased()
+
+            // For very large texts, limit search to last 60K chars (matches render cap)
+            let maxSearchChars = 60_000
+            let searchStart = textLength > maxSearchChars ? textLength - maxSearchChars : 0
             let textLower = text.lowercased() as NSString
 
-            var searchRange = NSRange(location: 0, length: textLower.length)
-            while searchRange.location < textLower.length {
+            var matchRanges: [NSRange] = []
+            var searchRange = NSRange(location: searchStart, length: textLength - searchStart)
+            while searchRange.location < textLength {
                 let found = textLower.range(of: searchLower, options: [], range: searchRange)
                 guard found.location != NSNotFound else { break }
                 matchRanges.append(found)
                 searchRange.location = found.location + found.length
-                searchRange.length = textLower.length - searchRange.location
+                searchRange.length = textLength - searchRange.location
             }
 
             onMatchCount?(matchRanges.count)
@@ -397,6 +404,8 @@ struct ActivityLogView: NSViewRepresentable {
                 let color = (i == currentMatch) ? currentColor : highlightColor
                 storage.addAttribute(.backgroundColor, value: color, range: range)
             }
+
+            storage.endEditing()
 
             // Scroll to current match
             if !matchRanges.isEmpty, currentMatch < matchRanges.count {
