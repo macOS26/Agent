@@ -8,8 +8,7 @@ struct ToolsView: View {
     
     // Group definitions matching ToolPreferencesService — use exact name sets to avoid overlap
     static let groups: [String: (filter: (AgentTools.ToolDef) -> Bool, icon: String)] = [
-        "Coding": ({ ["read_file", "write_file", "edit_file", "create_diff", "apply_diff", "list_files", "search_files"].contains($0.name) }, "doc.text"),
-        "Xcode": ({ $0.name == "xcode" }, "hammer"),
+        "Coding": ({ ["read_file", "write_file", "edit_file", "create_diff", "apply_diff", "list_files", "search_files", "xcode"].contains($0.name) }, "doc.text"),
         "Automation": ({ ["run_applescript", "run_osascript", "execute_javascript", "apple_script_tool"].contains($0.name) }, "gearshape.2"),
         "Experimental": ({ ["apple_event_query", "lookup_sdef", "javascript_tool"].contains($0.name) }, "flask"),
         "Accessibility": ({ $0.name == "accessibility" }, "accessibility"),
@@ -20,7 +19,7 @@ struct ToolsView: View {
         "Web": ({ $0.name == "web" || $0.name == "selenium" }, "globe"),
     ]
     
-    static let groupOrder: [String] = ["Core", "Workflow", "Coding", "Xcode", "Automation", "User Agent", "Launch Daemon", "Accessibility", "Web", "Experimental"]
+    static let groupOrder: [String] = ["Core", "Workflow", "Coding", "Automation", "User Agent", "Launch Daemon", "Accessibility", "Web", "Experimental"]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -64,8 +63,10 @@ struct ToolsView: View {
                                     isCollapsed: collapsedGroups.contains(groupName),
                                     toggleCollapse: { toggleGroup(groupName) },
                                     onGroupToggled: { enabled in
-                                        if !enabled {
-                                            _ = withAnimation(.easeInOut(duration: 0.15)) {
+                                        withAnimation(.easeInOut(duration: 0.15)) {
+                                            if enabled {
+                                                collapsedGroups.remove(groupName)
+                                            } else {
                                                 collapsedGroups.insert(groupName)
                                             }
                                         }
