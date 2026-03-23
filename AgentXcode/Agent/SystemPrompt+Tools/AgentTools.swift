@@ -561,7 +561,7 @@ enum AgentTools {
         // --- Accessibility (consolidated) ---
         ToolDef(
             name: Name.accessibility,
-            description: "macOS Accessibility API. Actions: list_windows, get_properties, perform_action, type_text, click, press_key, screenshot, set_properties, find_element, get_children. Use same role/title/value across calls to target same element.",
+            description: "macOS Accessibility API. Actions: list_windows, get_properties, perform_action, type_text, click, press_key, screenshot, set_properties, find_element, get_children, check_permission, request_permission. Use same role/title/value across calls to target same element.",
             properties: [
                 "action": ["type": "string", "description": "Action: list_windows, get_properties, perform_action, type_text, click, press_key, screenshot, set_properties, find_element, get_children"],
                 "role": ["type": "string", "description": "AX role (e.g. AXButton, AXTextField)"],

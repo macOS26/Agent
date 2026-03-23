@@ -62,17 +62,19 @@ extension AgentViewModel {
                 mapped["action"] = axAction
             }
             switch action {
-            case "list_windows":    return ("ax_list_windows", mapped)
-            case "get_properties":  return ("ax_get_properties", mapped)
-            case "perform_action":  return ("ax_perform_action", mapped)
-            case "type_text":       return ("ax_type_text", mapped)
-            case "click":           return ("ax_click", mapped)
-            case "press_key":       return ("ax_press_key", mapped)
-            case "screenshot":      return ("ax_screenshot", mapped)
-            case "set_properties":  return ("ax_set_properties", mapped)
-            case "find_element":    return ("ax_find_element", mapped)
-            case "get_children":    return ("ax_get_children", mapped)
-            default:                return ("ax_list_windows", mapped)
+            case "list_windows":      return ("ax_list_windows", mapped)
+            case "get_properties":    return ("ax_get_properties", mapped)
+            case "perform_action":    return ("ax_perform_action", mapped)
+            case "type_text":         return ("ax_type_text", mapped)
+            case "click":             return ("ax_click", mapped)
+            case "press_key":         return ("ax_press_key", mapped)
+            case "screenshot":        return ("ax_screenshot", mapped)
+            case "set_properties":    return ("ax_set_properties", mapped)
+            case "find_element":      return ("ax_find_element", mapped)
+            case "get_children":      return ("ax_get_children", mapped)
+            case "check_permission":  return ("ax_check_permission", mapped)
+            case "request_permission": return ("ax_request_permission", mapped)
+            default:                  return ("ax_list_windows", mapped)
             }
 
         default:
