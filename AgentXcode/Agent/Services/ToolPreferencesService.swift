@@ -16,10 +16,10 @@ enum TaskMode: String, CaseIterable {
         let base: Set<String> = ["Core", "Workflow"]
         switch self {
         case .coding:       return base.union(["Coding"])
-        case .automation:   return base.union(["Automation", "Accessibility"])
+        case .automation:   return base.union(["Automation"])
         case .web:          return base.union(["Web"])
         case .conversation: return base
-        case .general:      return ["Core", "Workflow", "Coding", "Automation", "Accessibility", "Web"]
+        case .general:      return ["Core", "Workflow", "Coding", "Automation", "Web"]
         }
     }
 
@@ -78,10 +78,9 @@ final class ToolPreferencesService {
     /// Tool group definitions - maps group name to tool name prefixes
     static let toolGroups: [String: Set<String>] = [
         "Coding": Set(["read_file", "write_file", "edit_file", "create_diff", "apply_diff", "list_files", "search_files", "xcode"]),
-        "Automation": Set(["apple_script_tool"]),
-        "Experimental": Set(["apple_event_query", "lookup_sdef",
-                            "javascript_tool"]),
-        "Accessibility": Set(["accessibility"]),
+        "Automation": Set(["apple_script_tool", "accessibility", "javascript_tool"]),
+        "Experimental": Set(["apple_event_query"]),
+        // accessibility is in Automation
         "Core": Set(["task_complete", "list_tools", "list_mcp_tools", "load_groups", "unload_groups", "web_search",
                     "write_text", "transform_text", "send_message", "about_self", "fix_text"]),
         "Workflow": Set(["agent_script", "plan_mode", "git"]),

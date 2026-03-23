@@ -39,12 +39,13 @@ extension AgentViewModel {
 
         case "apple_script_tool":
             switch action {
-            case "execute": return ("run_applescript", newInput)
-            case "list":    return ("list_apple_scripts", newInput)
-            case "run":     return ("run_apple_script", newInput)
-            case "save":    return ("save_apple_script", newInput)
-            case "delete":  return ("delete_apple_script", newInput)
-            default:        return ("list_apple_scripts", newInput)
+            case "execute":     return ("run_applescript", newInput)
+            case "lookup_sdef": return ("lookup_sdef", newInput)
+            case "list":        return ("list_apple_scripts", newInput)
+            case "run":         return ("run_apple_script", newInput)
+            case "save":        return ("save_apple_script", newInput)
+            case "delete":      return ("delete_apple_script", newInput)
+            default:            return ("list_apple_scripts", newInput)
             }
 
         case "javascript_tool":

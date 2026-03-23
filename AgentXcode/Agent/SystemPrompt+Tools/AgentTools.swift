@@ -214,7 +214,7 @@ enum AgentTools {
         • Git: \(n.git) (actions: status, diff, log, commit, diff_patch, branch)
         • Xcode: \(n.xcode) (actions: build, run, list_projects, select_project)
         • Workflow: \(n.agentScript), \(n.planMode)
-        • Automation: \(n.appleScriptTool) (actions: execute, list, run, save, delete), \(n.appleEventQuery), \(n.lookupSdef)
+        • Automation: \(n.appleScriptTool) (actions: execute, lookup_sdef, list, run, save, delete), \(n.appleEventQuery)
         • Accessibility: \(n.accessibility) (actions: list_windows, find_element, click, type_text, etc.)
         • Web: \(n.web), \(n.seleniumTool)
 
@@ -483,24 +483,16 @@ enum AgentTools {
             ],
             required: ["bundle_id", "action"]
         ),
-        // --- Automation: SDEF Lookup ---
-        ToolDef(
-            name: Name.lookupSdef,
-            description: "Read an app's SDEF scripting dictionary. ALWAYS use this to read SDEFs — never use shell commands to find .sdef files. Returns commands, classes, properties, elements, and enums. Use before writing osascript, NSAppleScript, apple_event_query, or ScriptingBridge code.",
-            properties: [
-                "bundle_id": ["type": "string", "description": "App bundle identifier (e.g. com.apple.Music). Use 'list' to see all available SDEFs."],
-                "class_name": ["type": "string", "description": "Optional: get details for a specific class (e.g. 'track', 'application')"],
-            ],
-            required: ["bundle_id"]
-        ),
         // --- AppleScript (consolidated) ---
         ToolDef(
             name: Name.appleScriptTool,
-            description: "AppleScript tool with full TCC. Actions: execute (run inline source code via NSAppleScript), list (saved scripts), run (saved by name), save, delete. Use lookup_sdef first for correct terminology.",
+            description: "AppleScript tool with full TCC. Actions: execute (run inline source via NSAppleScript), lookup_sdef (read app's scripting dictionary — use before writing AppleScript), list (saved scripts), run (saved by name), save, delete.",
             properties: [
-                "action": ["type": "string", "description": "Action: execute, list, run, save, or delete"],
+                "action": ["type": "string", "description": "Action: execute, lookup_sdef, list, run, save, or delete"],
                 "name": ["type": "string", "description": "Script name (for run/save/delete)"],
                 "source": ["type": "string", "description": "AppleScript source code (for execute/save)"],
+                "bundle_id": ["type": "string", "description": "For lookup_sdef: app bundle ID (e.g. com.apple.Music). Use 'list' to see all SDEFs."],
+                "class_name": ["type": "string", "description": "For lookup_sdef: specific class to inspect (e.g. 'track')"],
             ],
             required: ["action"]
         ),
