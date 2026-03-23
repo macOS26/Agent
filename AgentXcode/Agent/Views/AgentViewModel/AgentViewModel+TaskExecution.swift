@@ -294,6 +294,11 @@ extension AgentViewModel {
             let result = await executeViaUserAgent(command: "grep -rn '\(pat)' '\(dir)' 2>/dev/null | head -50")
             return result.output.isEmpty ? "No matches" : result.output
         }
+        if name == "read_dir" {
+            let dir = input["path"] as? String ?? pf
+            let result = await executeViaUserAgent(command: "ls -la '\(dir)' 2>/dev/null")
+            return result.output.isEmpty ? "Directory not found or empty" : result.output
+        }
 
         // Tool discovery
         if name == "list_tools" {
@@ -1657,6 +1662,22 @@ extension AgentViewModel {
                             guard !Task.isCancelled else { break }
                             let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                                 ? "No matches for '\(pattern)'" : result.output
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        if name == "read_dir" {
+                            let path = input["path"] as? String ?? projectFolder
+                            if let pathErr = Self.checkPath(path) {
+                                appendLog(pathErr)
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": pathErr])
+                                continue
+                            }
+                            appendLog("📂 $ ls -la \(path)")
+                            flushLog()
+                            let result = await executeViaUserAgent(command: "ls -la '\(path)' 2>/dev/null")
+                            guard !Task.isCancelled else { break }
+                            let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                                ? "Directory not found or empty" : result.output
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 

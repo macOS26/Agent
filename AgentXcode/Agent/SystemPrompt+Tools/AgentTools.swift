@@ -7,6 +7,8 @@ enum AgentTools {
 
     // MARK: - Tool Name Constants (single source of truth)
     enum Name {
+        // File Tools
+        static let readDir = "read_dir"
         // File (consolidated CRUDL)
         static let file = "file"
         // Legacy file names (handlers still work)
@@ -225,6 +227,7 @@ enum AgentTools {
         Name.applyDiff:            #"apply_diff {"file_path": "/path/file.txt", "diff": "📎 line1\n❌ old\n✅ new\n📎 line3"}"#,
         Name.listFiles:            #"list_files {"pattern": "*.swift", "path": "/Users/toddbruss/Documents"}"#,
         Name.searchFiles:          #"search_files {"pattern": "TODO", "path": "/Users/toddbruss/Documents"}"#,
+        Name.readDir:              #"read_dir {"path": "/Users/toddbruss/Documents"}"#,
         Name.taskComplete:         #"task_complete {"summary": "Done"}"#,
         Name.gitStatus:            #"git_status {"path": "/Users/toddbruss/Documents/GitHub/MyRepo"}"#,
         Name.gitCommit:            #"git_commit {"path": "/Users/toddbruss/Documents/GitHub/MyRepo", "message": "fix: update"}"#,
@@ -365,6 +368,14 @@ enum AgentTools {
                 "include": ["type": "string", "description": "File glob filter (e.g. \"*.swift\", \"*.py\")"],
             ],
             required: ["pattern"]
+        ),
+        ToolDef(
+            name: Name.readDir,
+            description: "List directory contents. Use instead of `ls`. Returns files and subdirectories with sizes.",
+            properties: [
+                "path": ["type": "string", "description": "Absolute path to directory to list"],
+            ],
+            required: ["path"]
         ),
         // --- Git (consolidated) ---
         ToolDef(
