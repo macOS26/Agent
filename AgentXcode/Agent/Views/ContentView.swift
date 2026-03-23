@@ -364,7 +364,7 @@ struct ContentView: View {
                     // Apple AI prompt row (toggled by tapping brain icon)
                     if showAppleAIBanner, let aiPrompt = activeAppleAIPrompt {
                         HStack(spacing: 6) {
-                            Image(systemName: "brain")
+                            Text("\u{F8FF}")
                                 .font(.caption2)
                                 .foregroundStyle(.white.opacity(0.8))
                             Text(aiPrompt)
