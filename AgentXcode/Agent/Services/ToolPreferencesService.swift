@@ -81,7 +81,7 @@ final class ToolPreferencesService {
         "Automation": Set(["applescript_tool", "accessibility", "javascript_tool"]),
         "Experimental": Set(["apple_event_query"]),
         // accessibility is in Automation
-        "Core": Set(["task_complete", "list_tools", "list_mcp_tools", "load_groups", "unload_groups", "web_search",
+        "Core": Set(["task_complete", "list_tools", "load_groups", "unload_groups", "web_search",
                     "write_text", "transform_text", "about_self", "fix_text"]),
         "Workflow": Set(["agent_script", "plan_mode", "git", "send_message"]),
         "User Agent": Set(["execute_agent_command"]),

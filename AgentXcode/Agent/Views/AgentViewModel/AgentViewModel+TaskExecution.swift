@@ -298,16 +298,17 @@ extension AgentViewModel {
         // Tool discovery
         if name == "list_tools" {
             let prefs = ToolPreferencesService.shared
-            return AgentTools.tools(for: selectedProvider)
+            let builtIn = AgentTools.tools(for: selectedProvider)
                 .filter { prefs.isEnabled(selectedProvider, $0.name) }
                 .sorted { $0.name < $1.name }
                 .map { $0.name }
-                .joined(separator: "\n")
-        }
-        if name == "list_mcp_tools" {
             let mcp = MCPService.shared
-            let enabled = mcp.discoveredTools.filter { mcp.isToolEnabled(serverName: $0.serverName, toolName: $0.name) }
-            return enabled.isEmpty ? "No MCP tools enabled" : enabled.map { "mcp_\($0.serverName)_\($0.name)" }.joined(separator: "\n")
+            let mcpTools = mcp.discoveredTools
+                .filter { mcp.isToolEnabled(serverName: $0.serverName, toolName: $0.name) }
+                .sorted { $0.name < $1.name }
+                .map { "mcp_\($0.serverName)_\($0.name)" }
+            let all = builtIn + (mcpTools.isEmpty ? [] : ["--- MCP Tools ---"] + mcpTools)
+            return all.joined(separator: "\n")
         }
 
         // Apple Event query — flat keys wrapped into single operation
@@ -1766,28 +1767,19 @@ extension AgentViewModel {
                         // Tool discovery
                         if name == "list_tools" {
                             let prefs = ToolPreferencesService.shared
-                            let enabled = AgentTools.tools(for: selectedProvider)
+                            let builtIn = AgentTools.tools(for: selectedProvider)
                                 .filter { prefs.isEnabled(selectedProvider, $0.name) }
                                 .sorted(by: { $0.name < $1.name })
-                            let output = enabled.map { $0.name }.joined(separator: "\n")
-                            appendLog("🔧 Native tools: \(enabled.count) enabled")
-                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
-                        }
-
-                        if name == "list_mcp_tools" {
+                                .map { $0.name }
                             let mcpService = MCPService.shared
-                            let enabled = mcpService.discoveredTools
+                            let mcpTools = mcpService.discoveredTools
                                 .filter { mcpService.isToolEnabled(serverName: $0.serverName, toolName: $0.name) }
                                 .sorted(by: { $0.name < $1.name })
-                            if enabled.isEmpty {
-                                let output = "No MCP tools enabled."
-                                appendLog("🔧 MCP tools: 0")
-                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
-                            } else {
-                                let output = enabled.map { "mcp_\($0.serverName)_\($0.name)" }.joined(separator: "\n")
-                                appendLog("🔧 MCP tools: \(enabled.count) enabled")
-                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
-                            }
+                                .map { "mcp_\($0.serverName)_\($0.name)" }
+                            let all = builtIn + (mcpTools.isEmpty ? [] : ["--- MCP Tools ---"] + mcpTools)
+                            let output = all.joined(separator: "\n")
+                            appendLog("🔧 Tools: \(builtIn.count) built-in, \(mcpTools.count) MCP")
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
                         // Load additional tool groups mid-task

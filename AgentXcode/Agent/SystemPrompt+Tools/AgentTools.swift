@@ -300,7 +300,6 @@ enum AgentTools {
         Name.saveJavascript:       #"save_javascript {"name": "HelloJXA", "source": "var app = Application.currentApplication(); app.includeStandardAdditions = true; app.displayDialog('Hello')"}"#,
         Name.deleteJavascript:     #"delete_javascript {"name": "HelloJXA"}"#,
         Name.listNativeTools:      "list_tools",
-        Name.listMcpTools:         "list_mcp_tools",
         // Conversation Tools
         Name.writeText:            #"write_text {"subject": "machine learning", "style": "informative", "length": "medium"}"#,
         Name.transformText:        #"transform_text {"text": "buy milk, eggs, bread", "transform": "grocery_list"}"#,
@@ -538,13 +537,7 @@ enum AgentTools {
         // --- Tool Discovery ---
         ToolDef(
             name: Name.listNativeTools,
-            description: "List all enabled native tools.",
-            properties: [:],
-            required: []
-        ),
-        ToolDef(
-            name: Name.listMcpTools,
-            description: "List all enabled MCP (Model Context Protocol) tools.",
+            description: "List all enabled tools (built-in and MCP).",
             properties: [:],
             required: []
         ),
