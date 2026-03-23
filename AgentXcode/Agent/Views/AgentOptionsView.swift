@@ -81,26 +81,6 @@ struct AgentOptionsView: View {
                 }
             }
 
-            row {
-                Text("Watchdog").font(.subheadline)
-                Spacer()
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("Max files rm can delete").font(.caption).foregroundStyle(.secondary)
-                    Stepper(viewModel.deletionLimit == 0 ? "None" : "\(viewModel.deletionLimit) files",
-                        onIncrement: {
-                            let opts = AgentViewModel.deletionLimitOptions
-                            if let i = opts.firstIndex(of: viewModel.deletionLimit), i > 0 {
-                                viewModel.deletionLimit = opts[i - 1]
-                            }
-                        },
-                        onDecrement: {
-                            let opts = AgentViewModel.deletionLimitOptions
-                            if let i = opts.firstIndex(of: viewModel.deletionLimit), i + 1 < opts.count {
-                                viewModel.deletionLimit = opts[i + 1]
-                            }
-                        })
-                }
-            }
 
             row {
                 Text("AgentScript").font(.subheadline)
