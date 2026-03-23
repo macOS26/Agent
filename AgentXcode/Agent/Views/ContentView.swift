@@ -298,12 +298,14 @@ struct ContentView: View {
                             .frame(minWidth: 50)
                         Button { previousMatch() } label: {
                             Image(systemName: "chevron.up")
+                                .frame(height: 14)
                         }
                         .buttonStyle(.bordered)
                         .controlSize(.small)
                         .disabled(totalMatches == 0)
                         Button { nextMatch() } label: {
                             Image(systemName: "chevron.down")
+                                .frame(height: 14)
                         }
                         .buttonStyle(.bordered)
                         .controlSize(.small)
@@ -312,6 +314,7 @@ struct ContentView: View {
                     Button { showSearch = false; searchText = "" } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(.secondary)
+                            .frame(height: 14)
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
