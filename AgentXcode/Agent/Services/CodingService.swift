@@ -210,14 +210,18 @@ enum CodingService {
 
     // MARK: - Split File
 
-    /// Split a Swift file into separate files by top-level declarations.
-    /// Each extension, class, struct, enum, or top-level func becomes its own file.
-    /// Returns a summary of created files.
-    static func splitFile(path: String, deleteOriginal: Bool = false) -> String {
+    /// Split a Swift file into separate files.
+    /// Modes: "declarations" (default) splits by top-level types/extensions.
+    ///        "handlers" extracts `if name == "..."` tool handler blocks into separate functions.
+    static func splitFile(path: String, deleteOriginal: Bool = false, mode: String = "declarations") -> String {
         let expanded = (path as NSString).expandingTildeInPath
         guard let data = FileManager.default.contents(atPath: expanded),
               let source = String(data: data, encoding: .utf8) else {
             return "Error: cannot read \(path)"
+        }
+
+        if mode == "handlers" {
+            return splitToolHandlers(source: source, path: expanded, deleteOriginal: deleteOriginal)
         }
 
         let lines = source.components(separatedBy: "\n")
@@ -498,5 +502,160 @@ enum CodingService {
             if !name.isEmpty { return name }
         }
         return "Member"
+    }
+
+    // MARK: - Split Tool Handlers
+
+    /// Extract `if name == "tool_name" { ... }` blocks from a large function
+    /// into separate `handle_toolName()` functions, and replace the original
+    /// if-blocks with calls to the new functions.
+    private static func splitToolHandlers(source: String, path: String, deleteOriginal: Bool) -> String {
+        let lines = source.components(separatedBy: "\n")
+        let baseName = (path as NSString).lastPathComponent.replacingOccurrences(of: ".swift", with: "")
+        let dir = (path as NSString).deletingLastPathComponent
+
+        // Find all `if name == "..."` blocks with their brace-matched bodies
+        struct HandlerBlock {
+            let toolName: String
+            let startLine: Int    // 0-based
+            let endLine: Int      // 0-based, inclusive
+            let lines: [String]
+        }
+
+        var handlers: [HandlerBlock] = []
+        let pattern = #"if\s+name\s*==\s*\"([^\"]+)\""#
+        guard let regex = try? NSRegularExpression(pattern: pattern) else {
+            return "Error: could not compile regex"
+        }
+
+        var i = 0
+        while i < lines.count {
+            let line = lines[i]
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            let nsLine = trimmed as NSString
+            let matches = regex.matches(in: trimmed, range: NSRange(location: 0, length: nsLine.length))
+
+            if let match = matches.first, match.numberOfRanges >= 2 {
+                let toolName = nsLine.substring(with: match.range(at: 1))
+
+                // Check this line has an opening brace
+                if trimmed.contains("{") {
+                    let startLine = i
+                    var braceCount = line.filter({ $0 == "{" }).count - line.filter({ $0 == "}" }).count
+                    var endLine = i
+
+                    // Find matching closing brace
+                    var j = i + 1
+                    while j < lines.count && braceCount > 0 {
+                        braceCount += lines[j].filter({ $0 == "{" }).count
+                        braceCount -= lines[j].filter({ $0 == "}" }).count
+                        endLine = j
+                        j += 1
+                    }
+
+                    let blockLines = Array(lines[startLine...endLine])
+                    // Only extract blocks with 3+ lines (skip trivial ones)
+                    if blockLines.count >= 3 {
+                        handlers.append(HandlerBlock(
+                            toolName: toolName,
+                            startLine: startLine,
+                            endLine: endLine,
+                            lines: blockLines
+                        ))
+                    }
+                    i = endLine + 1
+                    continue
+                }
+            }
+            i += 1
+        }
+
+        guard !handlers.isEmpty else {
+            return "No tool handler blocks found (looking for `if name == \"...\"` patterns)"
+        }
+
+        // Collect imports
+        let imports = lines.filter { $0.trimmingCharacters(in: .whitespaces).hasPrefix("import ") }
+        let importBlock = imports.joined(separator: "\n")
+
+        // Find the extension wrapper
+        var extensionLine = ""
+        for line in lines {
+            let t = line.trimmingCharacters(in: .whitespaces)
+            if t.hasPrefix("extension ") || t.hasPrefix("public extension ") || t.hasPrefix("private extension ") {
+                extensionLine = t
+                break
+            }
+        }
+
+        let fm = FileManager.default
+        var createdFiles: [String] = []
+
+        // Group handlers by common prefix for reasonable file sizes
+        // e.g. all "ax_*" handlers in one file, all "git_*" in another
+        var groups: [String: [HandlerBlock]] = [:]
+        for handler in handlers {
+            let prefix: String
+            if handler.toolName.contains("_") {
+                prefix = String(handler.toolName.prefix(while: { $0 != "_" }))
+            } else {
+                prefix = handler.toolName
+            }
+            groups[prefix, default: []].append(handler)
+        }
+
+        // Write each group to a file
+        for (prefix, groupHandlers) in groups.sorted(by: { $0.key < $1.key }) {
+            let fileName = "\(baseName)+\(prefix)Handlers.swift"
+            let filePath = (dir as NSString).appendingPathComponent(fileName)
+
+            var content = importBlock + "\n\n"
+            if !extensionLine.isEmpty {
+                content += (extensionLine.hasSuffix("{") ? extensionLine : extensionLine + " {") + "\n\n"
+            }
+
+            for handler in groupHandlers {
+                // Write the handler block as-is (preserving the if name == pattern)
+                content += handler.lines.joined(separator: "\n") + "\n\n"
+            }
+
+            if !extensionLine.isEmpty {
+                content += "}\n"
+            }
+
+            do {
+                try content.write(toFile: filePath, atomically: true, encoding: .utf8)
+                let toolNames = groupHandlers.map { $0.toolName }.joined(separator: ", ")
+                let totalLines = groupHandlers.reduce(0) { $0 + $1.lines.count }
+                createdFiles.append("\(fileName) (\(totalLines) lines: \(toolNames))")
+            } catch {
+                createdFiles.append("Error writing \(fileName): \(error.localizedDescription)")
+            }
+        }
+
+        // Build the trimmed original with handler blocks removed
+        var remainingLines = lines
+        // Remove in reverse order to preserve indices
+        for handler in handlers.sorted(by: { $0.startLine > $1.startLine }) {
+            remainingLines.removeSubrange(handler.startLine...handler.endLine)
+        }
+
+        // Write the trimmed original
+        let trimmedName = "\(baseName)+Core.swift"
+        let trimmedPath = (dir as NSString).appendingPathComponent(trimmedName)
+        let trimmedContent = remainingLines.joined(separator: "\n")
+        do {
+            try trimmedContent.write(toFile: trimmedPath, atomically: true, encoding: .utf8)
+            createdFiles.append("\(trimmedName) (\(remainingLines.count) lines: core loop without handlers)")
+        } catch {
+            createdFiles.append("Error writing \(trimmedName): \(error.localizedDescription)")
+        }
+
+        if deleteOriginal {
+            try? fm.removeItem(atPath: path)
+            createdFiles.append("Deleted original: \((path as NSString).lastPathComponent)")
+        }
+
+        return "Split \(handlers.count) tool handlers into \(groups.count) files:\n" + createdFiles.joined(separator: "\n")
     }
 }

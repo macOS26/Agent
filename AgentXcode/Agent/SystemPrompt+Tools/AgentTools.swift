@@ -385,9 +385,10 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.splitFile,
-            description: "Split a large Swift file into separate files by top-level declarations (extensions, classes, structs, enums). Each declaration becomes its own file with imports preserved. Use for refactoring large files. Set delete_original to remove the original after splitting.",
+            description: "Split a large Swift file. Modes: 'declarations' (default) splits by top-level types/extensions/funcs. 'handlers' extracts if name==\"tool\" blocks into grouped files by prefix. Use for refactoring large files.",
             properties: [
                 "file_path": ["type": "string", "description": "Absolute path to the Swift file to split"],
+                "mode": ["type": "string", "description": "Split mode: 'declarations' (default) or 'handlers' (extract if-name blocks)"],
                 "delete_original": ["type": "boolean", "description": "Delete the original file after splitting (default false)"],
             ],
             required: ["file_path"]
