@@ -546,7 +546,14 @@ final class AgentViewModel {
     /// Create a new main tab with its own LLM provider/model.
     @discardableResult
     func createMainTab(config: LLMConfig) -> ScriptTab {
-        let tab = ScriptTab(llmConfig: config)
+        // Number duplicate model names: glm-5, glm-5 2, glm-5 3, etc.
+        var numberedConfig = config
+        let baseName = config.displayName
+        let existingCount = scriptTabs.filter { $0.scriptName.hasPrefix(baseName) && $0.isMainTab }.count
+        if existingCount > 0 {
+            numberedConfig.displayName = "\(baseName) \(existingCount + 1)"
+        }
+        let tab = ScriptTab(llmConfig: numberedConfig)
         // Inherit project folder from main tab
         tab.projectFolder = self.projectFolder
         scriptTabs.append(tab)

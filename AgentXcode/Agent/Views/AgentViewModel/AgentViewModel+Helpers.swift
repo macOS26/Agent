@@ -417,17 +417,13 @@ extension AgentViewModel {
         return (planDir(projectFolder) as NSString).appendingPathComponent("plan_\(planId).md")
     }
 
-    /// Sanitize a tab name + ID into a safe unique filename slug.
-    static func sanitizeTabName(_ name: String, tabId: String = "") -> String {
+    /// Sanitize a tab name into a safe filename slug.
+    static func sanitizeTabName(_ name: String) -> String {
         let slug = name.lowercased()
             .components(separatedBy: CharacterSet.alphanumerics.inverted)
             .filter { !$0.isEmpty }
             .joined(separator: "_")
-        let base = slug.isEmpty ? "main" : slug
-        if base == "main" || tabId.isEmpty { return base }
-        // Append short hash of tab ID for uniqueness
-        let suffix = String(format: "%04x", abs(tabId.hashValue) & 0xFFFF)
-        return "\(base)_\(suffix)"
+        return slug.isEmpty ? "main" : slug
     }
 
     /// Find the most recent plan file in the plans directory.
@@ -452,7 +448,7 @@ extension AgentViewModel {
 
     /// Handle plan_mode tool calls: create, update, read, list, or delete.
     /// tabName is used as the plan ID — "main" for the main tab, or the tab's display title.
-    static func handlePlanMode(action: String, input: [String: Any], projectFolder: String, tabName: String = "main", tabId: String = "") -> String {
+    static func handlePlanMode(action: String, input: [String: Any], projectFolder: String, tabName: String = "main") -> String {
         let fm = FileManager.default
         let dir = planDir(projectFolder)
 
@@ -464,7 +460,7 @@ extension AgentViewModel {
             guard let stepsRaw = input["steps"] as? String, !stepsRaw.isEmpty else {
                 return "Error: steps is required for plan_mode create"
             }
-            let planId = input["plan_id"] as? String ?? sanitizeTabName(tabName, tabId: tabId)
+            let planId = input["plan_id"] as? String ?? sanitizeTabName(tabName)
             let steps = stepsRaw.components(separatedBy: "\n").filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
             var md = "# \(title)\n\n"
             for (i, step) in steps.enumerated() {

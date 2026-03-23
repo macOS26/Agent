@@ -35,8 +35,8 @@ final class ScriptTab: Identifiable {
     var isMessagesTab: Bool = false
     /// The iMessage handle to reply to when a Messages tab task completes
     var replyHandle: String?
-    /// Display name: LLM model name for main tabs, script name for script tabs
-    var displayTitle: String { isMessagesTab ? "Messages" : llmConfig?.displayName ?? scriptName }
+    /// Display name: scriptName (set at creation, numbered for duplicate LLM tabs)
+    var displayTitle: String { isMessagesTab ? "Messages" : scriptName }
 
     // Log buffering (mirrors AgentViewModel pattern)
     var logBuffer = ""
