@@ -307,4 +307,130 @@ final class XcodeService: @unchecked Sendable {
         }
         return true
     }
+
+    // MARK: - Project File Management (pbxproj editing)
+
+    /// Generate a unique 24-char hex ID not present in the pbxproj content.
+    private nonisolated func generateUniqueID(existing: String) -> String {
+        var id: String
+        repeat {
+            id = String(format: "%08X%08X%08X",
+                        UInt32.random(in: 0...UInt32.max),
+                        UInt32.random(in: 0...UInt32.max),
+                        UInt32.random(in: 0...UInt32.max))
+        } while existing.contains(id)
+        return id
+    }
+
+    /// Add a source file to the Xcode project's pbxproj.
+    nonisolated func addFileToProject(filePath: String) -> String {
+        guard let projectPath = autoSelectProject() else {
+            return "Error: No open Xcode project found"
+        }
+        let pbxprojPath = (projectPath as NSString).appendingPathComponent("project.pbxproj")
+        guard var content = try? String(contentsOfFile: pbxprojPath, encoding: .utf8) else {
+            return "Error: Cannot read project file"
+        }
+
+        let fileName = (filePath as NSString).lastPathComponent
+
+        // Check if already in project
+        if content.contains("path = \"\(fileName)\"") {
+            return "'\(fileName)' is already in the project"
+        }
+
+        let fileRefID = generateUniqueID(existing: content)
+        let buildFileID = generateUniqueID(existing: content + fileRefID)
+
+        let fileType = fileName.hasSuffix(".swift") ? "sourcecode.swift" : "text"
+
+        // 1. Add PBXFileReference before end marker
+        let fileRef = "\t\t\(fileRefID) /* \(fileName) */ = {isa = PBXFileReference; lastKnownFileType = \(fileType); path = \"\(fileName)\"; sourceTree = \"<group>\"; };\n"
+        guard let refEnd = content.range(of: "/* End PBXFileReference section */") else {
+            return "Error: Cannot find PBXFileReference section"
+        }
+        content.insert(contentsOf: fileRef, at: refEnd.lowerBound)
+
+        // 2. Add PBXBuildFile for compilable sources
+        if fileName.hasSuffix(".swift") || fileName.hasSuffix(".m") || fileName.hasSuffix(".c") {
+            let buildFile = "\t\t\(buildFileID) /* \(fileName) in Sources */ = {isa = PBXBuildFile; fileRef = \(fileRefID) /* \(fileName) */; };\n"
+            if let bfEnd = content.range(of: "/* End PBXBuildFile section */") {
+                content.insert(contentsOf: buildFile, at: bfEnd.lowerBound)
+            }
+
+            // 3. Add to PBXSourcesBuildPhase files list
+            if let sourcesStart = content.range(of: "/* Begin PBXSourcesBuildPhase section */") {
+                let after = content[sourcesStart.upperBound...]
+                if let filesStart = after.range(of: "files = ("),
+                   let filesEnd = after.range(of: ");", range: filesStart.upperBound..<after.endIndex) {
+                    let entry = "\t\t\t\t\(buildFileID) /* \(fileName) in Sources */,\n"
+                    content.insert(contentsOf: entry, at: filesEnd.lowerBound)
+                }
+            }
+        }
+
+        // 4. Add to matching PBXGroup
+        let dirName = ((filePath as NSString).deletingLastPathComponent as NSString).lastPathComponent
+        let groupPattern = "/* \(dirName) */ = {\n\t\t\tisa = PBXGroup;\n\t\t\tchildren = ("
+        let groupEntry = "\t\t\t\t\(fileRefID) /* \(fileName) */,\n"
+        if let groupRange = content.range(of: groupPattern) {
+            let searchStart = groupRange.upperBound
+            if let closeRange = content.range(of: ");", range: searchStart..<content.endIndex) {
+                content.insert(contentsOf: groupEntry, at: closeRange.lowerBound)
+            }
+        }
+
+        do {
+            try content.write(toFile: pbxprojPath, atomically: true, encoding: .utf8)
+            return "Added '\(fileName)' to project"
+        } catch {
+            return "Error writing project file: \(error.localizedDescription)"
+        }
+    }
+
+    /// Remove a source file from the Xcode project's pbxproj.
+    nonisolated func removeFileFromProject(filePath: String) -> String {
+        guard let projectPath = autoSelectProject() else {
+            return "Error: No open Xcode project found"
+        }
+        let pbxprojPath = (projectPath as NSString).appendingPathComponent("project.pbxproj")
+        guard var content = try? String(contentsOfFile: pbxprojPath, encoding: .utf8) else {
+            return "Error: Cannot read project file"
+        }
+
+        let fileName = (filePath as NSString).lastPathComponent
+        let escaped = NSRegularExpression.escapedPattern(for: fileName)
+
+        // Find file reference ID
+        let pattern = "([A-F0-9]{24}) /\\* \(escaped) \\*/ = \\{isa = PBXFileReference"
+        guard let regex = try? NSRegularExpression(pattern: pattern),
+              let match = regex.firstMatch(in: content, range: NSRange(content.startIndex..., in: content)),
+              match.numberOfRanges >= 2 else {
+            return "Error: '\(fileName)' not found in project"
+        }
+        let fileRefID = (content as NSString).substring(with: match.range(at: 1))
+
+        // Remove all lines containing this file ref ID
+        let lines = content.components(separatedBy: "\n")
+        var filtered = lines.filter { !$0.contains(fileRefID) }
+
+        // Also remove any build file referencing this file
+        let buildPattern = "([A-F0-9]{24}) /\\* \(escaped) in Sources \\*/"
+        let remaining = filtered.joined(separator: "\n")
+        if let buildRegex = try? NSRegularExpression(pattern: buildPattern),
+           let buildMatch = buildRegex.firstMatch(in: remaining, range: NSRange(remaining.startIndex..., in: remaining)),
+           buildMatch.numberOfRanges >= 2 {
+            let buildID = (remaining as NSString).substring(with: buildMatch.range(at: 1))
+            filtered = filtered.filter { !$0.contains(buildID) }
+        }
+
+        content = filtered.joined(separator: "\n")
+
+        do {
+            try content.write(toFile: pbxprojPath, atomically: true, encoding: .utf8)
+            return "Removed '\(fileName)' from project"
+        } catch {
+            return "Error writing project file: \(error.localizedDescription)"
+        }
+    }
 }

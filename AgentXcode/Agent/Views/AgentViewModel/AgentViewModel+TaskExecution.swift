@@ -2398,6 +2398,22 @@ extension AgentViewModel {
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
+                        if name == "xcode_add_file" {
+                            let fp = input["file_path"] as? String ?? ""
+                            appendLog("📎 Adding to project: \(fp)")
+                            let output = await Self.offMain { XcodeService.shared.addFileToProject(filePath: fp) }
+                            appendLog(output)
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        if name == "xcode_remove_file" {
+                            let fp = input["file_path"] as? String ?? ""
+                            appendLog("🗑️ Removing from project: \(fp)")
+                            let output = await Self.offMain { XcodeService.shared.removeFileFromProject(filePath: fp) }
+                            appendLog(output)
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
                         // Plan mode
                         if name == "plan_mode" {
                             let action: String = input["action"] as? String ?? "read"

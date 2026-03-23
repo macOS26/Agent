@@ -8,11 +8,12 @@ final class AccessibilityService: @unchecked Sendable {
     static let shared = AccessibilityService()
     
     // MARK: - Security
-
+    
     /// Cached permission — once granted, skip repeated AXIsProcessTrusted() calls.
     /// Rebuilds in Xcode change the binary signature, causing macOS TCC to revoke trust.
     /// Caching prevents the LLM from re-triggering the dialog on every tool call within a session.
     private nonisolated(unsafe) static var _permissionGranted = false
+    private nonisolated(unsafe) static var _promptShown = false
 
     /// Check if the app has Accessibility permissions (cached once granted)
     static func hasAccessibilityPermission() -> Bool {
@@ -24,7 +25,6 @@ final class AccessibilityService: @unchecked Sendable {
 
     /// Request Accessibility permissions — opens System Settings directly.
     /// Only shows the system dialog once per session to avoid repeated prompts.
-    private nonisolated(unsafe) static var _promptShown = false
     static func requestAccessibilityPermission() -> Bool {
         if AXIsProcessTrusted() {
             _permissionGranted = true
@@ -47,7 +47,7 @@ final class AccessibilityService: @unchecked Sendable {
     
     /// Check whether an ID is restricted. Reads UserDefaults directly (thread-safe).
     /// Only IDs in the known enabled list can be restricted. Unknown IDs are allowed.
-    private static func isRestricted(_ id: String) -> Bool {
+    static func isRestricted(_ id: String) -> Bool {
         // IDs not in the known enabled list are always allowed
         guard AccessibilityEnabledIDs.allAxIds.contains(id) else {
             return false

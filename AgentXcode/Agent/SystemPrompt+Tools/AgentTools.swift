@@ -150,7 +150,7 @@ enum AgentTools {
         DIRECT TOOLS (no action parameter): read_file, write_file, edit_file, list_files, search_files, read_dir, task_complete, execute_agent_command, execute_daemon_command, apple_event_query.
         ACTION TOOLS (require "action" parameter):
         file_manager: read, write, edit, list, search, read_dir | git: status, diff, log, commit, diff_patch, branch
-        xcode: build, run, list_projects, select_project | agent_script: list, read, create, update, run, delete, combine
+        xcode: build, run, list_projects, select_project, add_file, remove_file | agent_script: list, read, create, update, run, delete, combine
         plan_mode: create, update, read, list, delete | applescript_tool: execute, lookup_sdef, list, run, save, delete
         javascript_tool: execute, list, run, save, delete | accessibility: list_windows, get_properties, perform_action, type_text, click, press_key, screenshot, set_properties, find_element, get_children
         web: open, find, click, type, execute_js, get_url, get_title | selenium: start, stop, navigate, find, click, type, execute, screenshot, wait
@@ -393,10 +393,11 @@ enum AgentTools {
         // --- Xcode (consolidated) ---
         ToolDef(
             name: Name.xcode,
-            description: "Xcode operations via ScriptingBridge. Actions: build (compile project), run (build+launch), list_projects (show open projects), select_project (choose by number), grant_permission (one-time TCC setup).",
+            description: "Xcode operations. Actions: build (auto-detects project), run, list_projects, select_project, add_file (add to pbxproj), remove_file (remove from pbxproj), grant_permission.",
             properties: [
-                "action": ["type": "string", "description": "Action: build, run, list_projects, select_project, or grant_permission"],
-                "project_path": ["type": "string", "description": "For build/run: path to .xcodeproj or .xcworkspace"],
+                "action": ["type": "string", "description": "Action: build, run, list_projects, select_project, add_file, remove_file, or grant_permission"],
+                "project_path": ["type": "string", "description": "For build/run: path (auto-detected if empty)"],
+                "file_path": ["type": "string", "description": "For add_file/remove_file: absolute path to source file"],
                 "number": ["type": "integer", "description": "For select_project: project number (1-based)"],
             ],
             required: ["action"]

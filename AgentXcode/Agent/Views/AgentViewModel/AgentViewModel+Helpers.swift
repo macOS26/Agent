@@ -76,7 +76,9 @@ extension AgentViewModel {
             case "list_projects":    return ("xcode_list_projects", newInput)
             case "select_project":   return ("xcode_select_project", newInput)
             case "grant_permission": return ("xcode_grant_permission", newInput)
-            default:                 return ("xcode_build", newInput)
+            case "add_file":        return ("xcode_add_file", newInput)
+            case "remove_file":     return ("xcode_remove_file", newInput)
+            default:                return ("xcode_build", newInput)
             }
 
         case "web":
