@@ -138,6 +138,8 @@ enum AgentTools {
         AGENT SCRIPTS: ~/Documents/AgentScript/agents/. List first, update existing.
         Scripts can be 100% Swift — no ScriptingBridge required. Use for any task: data processing, file ops, networking, etc.
         ScriptingBridge is only needed when automating apps that expose an AppleScript dictionary (SDEF).
+        To merge two scripts: use combine_agent_scripts tool (NOT text output).
+        To create/update scripts: use create_agent_script or update_agent_script tools (NOT text output).
         Format: @_cdecl("script_main") public func scriptMain() -> Int32 { return 0 }
         Rules: No exit(). @unknown default on ScriptingBridge enums. Use lookup_sdef first for app automation.
         Data: AGENT_SCRIPT_ARGS env or json/{Name}_input.json/_output.json.
