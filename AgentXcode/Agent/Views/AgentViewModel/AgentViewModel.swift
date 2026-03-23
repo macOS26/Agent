@@ -992,6 +992,7 @@ final class AgentViewModel {
 
     /// Start executing a task on the main tab (not queued).
     private func startMainTask(_ task: String) {
+        isCancelled = false
         currentTaskPrompt = task
         ChatHistoryStore.shared.startNewTask(prompt: task)
 
