@@ -153,7 +153,7 @@ enum AgentTools {
         execute_agent_command, execute_daemon_command, apple_event_query.
 
         ACTION TOOLS (require "action" parameter — see available actions):
-        file_manager: read, write, edit, list, search, read_dir, create_diff, apply_diff
+        file_manager: read, write, edit, list, search, read_dir
         git: status, diff, log, commit, diff_patch, branch
         xcode: build, run, list_projects, select_project, grant_permission
         agent_script: list, read, create, update, run, delete, combine
@@ -173,7 +173,7 @@ enum AgentTools {
         AGENT SCRIPTS: ~/Documents/AgentScript/agents/. 100% Swift — ScriptingBridge only for SDEF apps.
         Format: @_cdecl("script_main") public func scriptMain() -> Int32 { return 0 }
 
-        EDITING FILES: Use edit_file for small changes, create_diff+apply_diff for complex multi-line edits, write_file for new files.
+        EDITING FILES: Use edit_file for changes to existing files, write_file for new files.
         PLANS: After creating a plan, EXECUTE every step using file/edit/write tools. Mark in_progress before working, completed after verified. Do NOT mark completed without actually writing files.
 
         load_groups/unload_groups: Switch tool groups mid-task (Automation, Web).
@@ -208,7 +208,7 @@ enum AgentTools {
 
         DIRECT TOOLS: \(n.readFile), \(n.writeFile), \(n.editFile), \(n.listFiles), \(n.searchFiles), \(n.readDir), \(n.taskComplete).
         ACTION TOOLS (with actions):
-        • \(n.fileManager): read, write, edit, list, search, read_dir, create_diff, apply_diff
+        • \(n.fileManager): read, write, edit, list, search, read_dir
         • \(n.git): status, diff, log, commit, diff_patch, branch
         • \(n.xcode): build, run, list_projects, select_project
         • \(n.agentScript): list, read, create, update, run, delete, combine
@@ -384,7 +384,7 @@ enum AgentTools {
         // --- File Manager (consolidated — maps to direct file tools) ---
         ToolDef(
             name: Name.fileManager,
-            description: "File operations. Actions: read (file contents), write (create/overwrite), edit (find+replace), list (find by glob), search (grep by regex), read_dir (ls directory), create_diff, apply_diff.",
+            description: "File operations. Actions: read (file contents), write (create/overwrite), edit (find+replace), list (find by glob), search (grep by regex), read_dir (ls directory).",
             properties: [
                 "action": ["type": "string", "description": "Action: read, write, edit, list, search, read_dir, create_diff, or apply_diff"],
                 "file_path": ["type": "string", "description": "File path (for read/write/edit/apply_diff)"],
@@ -397,9 +397,6 @@ enum AgentTools {
                 "limit": ["type": "integer", "description": "For read: max lines (default 2000)"],
                 "pattern": ["type": "string", "description": "For list: glob. For search: regex"],
                 "include": ["type": "string", "description": "For search: file filter (e.g. *.swift)"],
-                "source": ["type": "string", "description": "For create_diff: original text"],
-                "destination": ["type": "string", "description": "For create_diff: modified text"],
-                "diff": ["type": "string", "description": "For apply_diff: D1F diff text"],
             ],
             required: ["action"]
         ),

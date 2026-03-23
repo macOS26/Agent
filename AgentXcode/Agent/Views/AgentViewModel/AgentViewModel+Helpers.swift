@@ -60,15 +60,13 @@ extension AgentViewModel {
 
         case "file_manager":
             switch action {
-            case "read":        return ("read_file", newInput)
-            case "write":       return ("write_file", newInput)
-            case "edit":        return ("edit_file", newInput)
-            case "list":        return ("list_files", newInput)
-            case "search":      return ("search_files", newInput)
-            case "read_dir":    return ("read_dir", newInput)
-            case "create_diff": return ("create_diff", newInput)
-            case "apply_diff":  return ("apply_diff", newInput)
-            default:            return ("read_file", newInput)
+            case "read":     return ("read_file", newInput)
+            case "write":    return ("write_file", newInput)
+            case "edit":     return ("edit_file", newInput)
+            case "list":     return ("list_files", newInput)
+            case "search":   return ("search_files", newInput)
+            case "read_dir": return ("read_dir", newInput)
+            default:         return ("read_file", newInput)
             }
 
         case "xcode":
@@ -555,7 +553,7 @@ extension AgentViewModel {
                 try lines.joined(separator: "\n").write(toFile: path, atomically: true, encoding: .utf8)
                 var result = "[\(planId)] Step \(stepNum) → \(status)"
                 if status.lowercased() == "completed" {
-                    result += "\nREMINDER: Did you actually use write_file/edit_file/create_diff/apply_diff to make changes? If not, revert this step to in_progress and do the work."
+                    result += "\nREMINDER: Did you actually use write_file/edit_file to make changes? If not, revert this step to in_progress and do the work."
                 }
                 return result
             } catch {
