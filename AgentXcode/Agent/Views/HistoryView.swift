@@ -9,8 +9,6 @@ struct HistoryView: View {
     var onRerun: ((String) -> Void)? = nil
 
     @State private var selectedTaskType: TaskViewType = .prompts
-    @State private var expandedItems: Set<String> = []
-
     enum TaskViewType: String, CaseIterable {
         case prompts = "Prompts"
         case errors = "Error History"
@@ -96,14 +94,12 @@ struct HistoryView: View {
 
     @ViewBuilder
     private func historyRow(_ item: String) -> some View {
-        let isExpanded = expandedItems.contains(item)
         VStack(alignment: .leading, spacing: 0) {
             Divider()
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(item)
                         .font(.system(.caption))
-                        .lineLimit(isExpanded ? nil : (selectedTaskType == .prompts ? 2 : 4))
                         .textSelection(.enabled)
 
                     if selectedTaskType == .errors {
@@ -131,34 +127,16 @@ struct HistoryView: View {
 
                 Spacer()
 
-                VStack(spacing: 4) {
-                    if selectedTaskType != .prompts {
-                        Button {
-                            if isExpanded {
-                                expandedItems.remove(item)
-                            } else {
-                                expandedItems.insert(item)
-                            }
-                        } label: {
-                            Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        }
-                        .buttonStyle(.plain)
-                        .help(isExpanded ? "Collapse" : "Expand full text")
+                if selectedTaskType == .prompts, let onRerun {
+                    Button {
+                        onRerun(item)
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.caption)
+                            .foregroundStyle(.blue)
                     }
-
-                    if selectedTaskType == .prompts, let onRerun {
-                        Button {
-                            onRerun(item)
-                        } label: {
-                            Image(systemName: "arrow.clockwise")
-                                .font(.caption)
-                                .foregroundStyle(.blue)
-                        }
-                        .buttonStyle(.plain)
-                        .help("Rerun this prompt")
-                    }
+                    .buttonStyle(.plain)
+                    .help("Rerun this prompt")
                 }
             }
             .padding(.vertical, 8)
