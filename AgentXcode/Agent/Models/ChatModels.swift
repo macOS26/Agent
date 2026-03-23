@@ -158,7 +158,7 @@ final class ChatHistoryStore {
     
     /// Append a message to the current task
     func appendMessage(_ content: String, timestamp: Date = Date()) {
-        guard let task = currentTask else { return }
+        guard let task = currentTask, task.modelContext != nil else { return }
         let message = ChatMessage(timestamp: timestamp, content: content, task: task, ordinal: nextOrdinal)
         nextOrdinal += 1
         context?.insert(message)
@@ -166,17 +166,24 @@ final class ChatHistoryStore {
 
     /// Append streaming content (LLM output)
     func appendStreamingContent(_ content: String) {
-        guard let task = currentTask else { return }
+        guard let task = currentTask, task.modelContext != nil else { return }
         let message = ChatMessage(timestamp: Date(), content: content, task: task, isStreaming: true, ordinal: nextOrdinal)
         nextOrdinal += 1
         context?.insert(message)
     }
     
-    /// Save pending changes
+    /// Save pending changes — guarded against stale/deleted managed objects
     func save() {
         guard let context else { return }
+        // Check if current task is still valid before saving
+        if let task = currentTask, task.modelContext == nil {
+            currentTask = nil
+            return
+        }
         do {
-            try context.save()
+            if context.hasChanges {
+                try context.save()
+            }
         } catch {
             context.rollback()
         }
