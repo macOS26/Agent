@@ -97,6 +97,7 @@
 		FF10000000000000000011 /* AgentViewModel+Speech.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000010 /* AgentViewModel+Speech.swift */; };
 		WEB1000000000000000001 /* WebAutomationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = WEB1000000000000000002 /* WebAutomationService.swift */; };
 		1B1CD89FDA3F61AFB2E23066 /* AccessibilityService+Security.swift in Sources */ = {isa = PBXBuildFile; fileRef = C62E80DD07559CF2F825948A /* AccessibilityService+Security.swift */; };
+		AD0E84FCAA3A3D6AF61ECD16 /* AgentViewModel+TaskExecution+SavedScripts.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4709078FC05AA3587261B14 /* AgentViewModel+TaskExecution+SavedScripts.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -263,6 +264,7 @@
 		FF10000000000000000010 /* AgentViewModel+Speech.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+Speech.swift"; sourceTree = "<group>"; };
 		WEB1000000000000000002 /* WebAutomationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebAutomationService.swift; sourceTree = "<group>"; };
 		C62E80DD07559CF2F825948A /* AccessibilityService+Security.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AccessibilityService+Security.swift"; sourceTree = "<group>"; };
+		B4709078FC05AA3587261B14 /* AgentViewModel+TaskExecution+SavedScripts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TaskExecution+SavedScripts.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -492,7 +494,8 @@
 				AA100000000000000000C9 /* TaskExecution+FileTools.swift */,
 				BB10000000000000000005 /* AgentViewModel+Helpers.swift */,
 				FF10000000000000000010 /* AgentViewModel+Speech.swift */,
-			);
+							B4709078FC05AA3587261B14 /* AgentViewModel+TaskExecution+SavedScripts.swift */,
+);
 			path = AgentViewModel;
 			sourceTree = "<group>";
 		};
@@ -796,6 +799,7 @@
 				AA100000000000000000C6 /* TaskExecution+GitTools.swift in Sources */,
 				AA100000000000000000C8 /* TaskExecution+FileTools.swift in Sources */,
 							1B1CD89FDA3F61AFB2E23066 /* AccessibilityService+Security.swift in Sources */,
+				AD0E84FCAA3A3D6AF61ECD16 /* AgentViewModel+TaskExecution+SavedScripts.swift in Sources */,
 );
 			runOnlyForDeploymentPostprocessing = 0;
 		};
