@@ -173,7 +173,8 @@ enum AgentTools {
         AGENT SCRIPTS: ~/Documents/AgentScript/agents/. 100% Swift — ScriptingBridge only for SDEF apps.
         Format: @_cdecl("script_main") public func scriptMain() -> Int32 { return 0 }
 
-        PLANS: After creating a plan, EXECUTE every step using tools. Update each step in_progress → completed/failed. Do NOT just create a plan and call task_complete.
+        EDITING FILES: Use edit_file for small changes, create_diff+apply_diff for complex multi-line edits, write_file for new files.
+        PLANS: After creating a plan, EXECUTE every step using file/edit/write tools. Mark in_progress before working, completed after verified. Do NOT mark completed without actually writing files.
 
         load_groups/unload_groups: Switch tool groups mid-task (Automation, Web).
         Image paths: print paths — UI renders clickable links.

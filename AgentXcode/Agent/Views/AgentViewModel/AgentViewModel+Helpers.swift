@@ -553,7 +553,11 @@ extension AgentViewModel {
 
             do {
                 try lines.joined(separator: "\n").write(toFile: path, atomically: true, encoding: .utf8)
-                return "[\(planId)] Step \(stepNum) → \(status)"
+                var result = "[\(planId)] Step \(stepNum) → \(status)"
+                if status.lowercased() == "completed" {
+                    result += "\nREMINDER: Did you actually use write_file/edit_file/create_diff/apply_diff to make changes? If not, revert this step to in_progress and do the work."
+                }
+                return result
             } catch {
                 return "Error writing plan: \(error.localizedDescription)"
             }
