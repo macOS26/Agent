@@ -514,7 +514,7 @@ extension AgentViewModel {
             let marker: String
             switch status.lowercased() {
             case "in_progress": marker = "- [⏳]"
-            case "completed": marker = "- [x]"
+            case "completed": marker = "- [✅]"
             case "failed": marker = "- [❌]"
             default: return "Error: invalid status. Use in_progress, completed, or failed."
             }
@@ -539,7 +539,7 @@ extension AgentViewModel {
                 return "Error: step \(stepNum) not found in plan '\(planId)'."
             }
 
-            let completed = lines.filter { $0.contains("- [x]") }.count
+            let completed = lines.filter { $0.contains("- [✅]") }.count
             let inProgress = lines.filter { $0.contains("- [⏳]") }.count
             let failed = lines.filter { $0.contains("- [❌]") }.count
             let total = lines.filter { $0.trimmingCharacters(in: .whitespaces).hasPrefix("- [") }.count
