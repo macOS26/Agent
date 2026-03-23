@@ -425,9 +425,7 @@ final class AgentViewModel {
             let formatter = DateFormatter()
             formatter.dateFormat = "HH:mm:ss"
             let time = formatter.string(from: record.date)
-            let prompt = record.prompt.truncate(to: 80)
-            let summary = record.summary.truncate(to: 100)
-            return "[\(time)] \(prompt) → \(summary)"
+            return "[\(time)] \(record.prompt) → \(record.summary)"
         }
     }
 
