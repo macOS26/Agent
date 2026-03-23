@@ -175,7 +175,6 @@ extension AgentViewModel {
 
         var iterations = 0
         let maxIter = maxIterations
-        var consecutiveNoTool = 0
         var timeoutRetryCount = 0
         let maxTimeoutRetries = 2
 
@@ -301,7 +300,6 @@ extension AgentViewModel {
                     let truncatedResults = Self.truncateToolResults(toolResults)
                     messages.append(["role": "user", "content": truncatedResults])
                     tab.llmMessages = messages
-                    consecutiveNoTool = 0
                 } else if !hasToolUse {
                     // No tool use this iteration — just nudge and continue
                     messages.append(["role": "user", "content": "Continue. Use tools to perform actions. Call task_complete when finished."])
