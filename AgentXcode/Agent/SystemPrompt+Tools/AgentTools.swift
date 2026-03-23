@@ -804,10 +804,10 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.planMode,
-            description: "Manage step-by-step plans. IMPORTANT: After creating a plan, you MUST execute every step — do NOT just create and complete. Update each step (in_progress → completed/failed) as you work. Actions: create, update, read, list, delete.",
+            description: "Manage step-by-step plans. IMPORTANT: After creating a plan, you MUST execute every step — do NOT just create and complete. Update each step (in_progress → completed/failed) as you work. Plan is named after the current tab automatically. Actions: create, update, read, list, delete.",
             properties: [
                 "action": ["type": "string", "description": "Action: 'create', 'update', 'read', 'list', or 'delete'"],
-                "plan_id": ["type": "string", "description": "Plan identifier (returned by 'create', required for 'update'/'read'/'delete'. Omit for 'read' to read the most recent plan.)"],
+                "plan_id": ["type": "string", "description": "Plan name (auto-set from tab name, override only if needed)"],
                 "title": ["type": "string", "description": "Plan title (required for 'create')"],
                 "steps": ["type": "string", "description": "Newline-separated list of steps (required for 'create')"],
                 "step": ["type": "integer", "description": "Step number to update (required for 'update')"],

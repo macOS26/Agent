@@ -1194,7 +1194,7 @@ extension AgentViewModel {
         // plan_mode
         if name == "plan_mode" {
             let action: String = input["action"] as? String ?? "read"
-            return Self.handlePlanMode(action: action, input: input, projectFolder: pf)
+            return Self.handlePlanMode(action: action, input: input, projectFolder: pf, tabName: "main")
         }
 
         // Fallback
@@ -2388,7 +2388,7 @@ extension AgentViewModel {
                         // Plan mode
                         if name == "plan_mode" {
                             let action: String = input["action"] as? String ?? "read"
-                            let output: String = Self.handlePlanMode(action: action, input: input, projectFolder: projectFolder)
+                            let output: String = Self.handlePlanMode(action: action, input: input, projectFolder: projectFolder, tabName: "main")
                             appendLog(output)
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
