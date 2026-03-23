@@ -127,28 +127,22 @@ final class ChatHistoryStore {
         return task.id
     }
     
-    /// End current task with optional summary
+    /// End current task with optional summary — crash-safe against stale SwiftData objects
     func endCurrentTask(summary: String? = nil, cancelled: Bool = false) {
-        guard let task = currentTask, let context else {
-            currentTask = nil
-            return
-        }
-        // Validate the task is still live in this context before touching it.
-        // A destroyed store (clearAll) or deleted object causes _PF_FulfillDeferredFault
-        // inside performBlockAndWait — an ObjC exception no @catch can intercept.
-        guard task.modelContext != nil, !task.isDeleted else {
-            currentTask = nil
-            return
-        }
+        defer { currentTask = nil }
+        guard let task = currentTask, let context else { return }
+        guard task.modelContext != nil, !task.isDeleted else { return }
+        // Skip if context has deleted objects — setting properties on related objects
+        // can trigger _PFFaultHandlerLookupRow crashes via inverse relationship maintenance
+        guard context.deletedModelsArray.isEmpty else { return }
         task.endTime = Date()
         task.summary = summary
         task.isCancelled = cancelled
         do {
-            try context.save()
+            if context.hasChanges { try context.save() }
         } catch {
             context.rollback()
         }
-        currentTask = nil
     }
     
     /// Get the current active task
