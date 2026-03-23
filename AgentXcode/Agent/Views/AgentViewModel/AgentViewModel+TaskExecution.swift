@@ -2862,7 +2862,12 @@ extension AgentViewModel {
 
                 if hasToolUse && !toolResults.isEmpty {
                     // Truncate large tool results to save tokens
-                    let truncatedResults = Self.truncateToolResults(toolResults)
+                    var truncatedResults = Self.truncateToolResults(toolResults)
+                    // Inject plan reminder if there's an active plan with pending steps
+                    let planStatus = Self.handlePlanMode(action: "read", input: [:], projectFolder: projectFolder, tabName: "main")
+                    if planStatus.contains("- [ ]") || planStatus.contains("- [⏳]") {
+                        truncatedResults.append(["type": "tool_result", "tool_use_id": "plan_reminder", "content": "PLAN REMINDER: You have pending plan steps. Use plan_mode (action: update) to mark steps in_progress/completed as you work. Don't forget!"])
+                    }
                     messages.append(["role": "user", "content": truncatedResults])
                     consecutiveNoTool = 0
                 } else if hasToolUse && toolResults.isEmpty {
