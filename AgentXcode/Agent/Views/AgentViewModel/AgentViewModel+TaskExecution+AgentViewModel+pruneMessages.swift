@@ -1,8 +1,4 @@
-import MCPClient
-import MultiLineDiff
-import os.log
-import Cocoa
-                import Foundation
+import Foundation
 
 extension AgentViewModel {
     // MARK: - Message Pruning
@@ -43,6 +39,4 @@ extension AgentViewModel {
         messages.append(["role": "assistant", "content": "Understood, continuing."])
         messages.append(contentsOf: recentMessages)
     }
-
-    /// Strip base64 image data from older messages to save tokens.
 }

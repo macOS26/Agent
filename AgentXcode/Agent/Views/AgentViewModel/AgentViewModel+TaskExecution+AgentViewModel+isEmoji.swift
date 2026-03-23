@@ -1,8 +1,4 @@
-import MCPClient
-import MultiLineDiff
-import os.log
-import Cocoa
-                import Foundation
+import Foundation
 
 extension AgentViewModel {
     // MARK: - Web Search (forwarding to WebSearch extension)

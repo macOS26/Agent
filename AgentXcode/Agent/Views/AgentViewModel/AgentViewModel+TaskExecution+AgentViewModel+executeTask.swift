@@ -1,7 +1,3 @@
-import MCPClient
-import MultiLineDiff
-import os.log
-import Cocoa
 import Foundation
 
 extension AgentViewModel {
@@ -497,8 +493,9 @@ extension AgentViewModel {
                         if name == "split_file" {
                             let filePath = input["file_path"] as? String ?? ""
                             let deleteOriginal = input["delete_original"] as? Bool ?? false
-                            appendLog("✂️ Splitting: \(filePath)")
-                            let output = await Self.offMain { CodingService.splitFile(path: filePath, deleteOriginal: deleteOriginal) }
+                            let mode = input["mode"] as? String ?? "declarations"
+                            appendLog("✂️ Splitting (\(mode)): \(filePath)")
+                            let output = await Self.offMain { CodingService.splitFile(path: filePath, deleteOriginal: deleteOriginal, mode: mode) }
                             appendLog(output)
                             commandsRun.append("split_file: \(filePath)")
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])

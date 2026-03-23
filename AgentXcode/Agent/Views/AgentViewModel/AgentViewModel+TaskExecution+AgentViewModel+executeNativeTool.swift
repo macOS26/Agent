@@ -1,8 +1,4 @@
-import MCPClient
-import MultiLineDiff
-import os.log
-import Cocoa
-                import Foundation
+import Foundation
 
 extension AgentViewModel {
     // MARK: - Native Tool Handler (Apple AI)
@@ -299,7 +295,8 @@ extension AgentViewModel {
         if name == "split_file" {
             let filePath = input["file_path"] as? String ?? ""
             let deleteOriginal = input["delete_original"] as? Bool ?? false
-            return await Self.offMain { CodingService.splitFile(path: filePath, deleteOriginal: deleteOriginal) }
+            let mode = input["mode"] as? String ?? "declarations"
+            return await Self.offMain { CodingService.splitFile(path: filePath, deleteOriginal: deleteOriginal, mode: mode) }
         }
 
         // Tool discovery

@@ -1,8 +1,4 @@
-import MCPClient
-import MultiLineDiff
-import os.log
-import Cocoa
-                import Foundation
+import Foundation
 
 extension AgentViewModel {
     // MARK: - Tool Result Truncation
@@ -20,9 +16,4 @@ extension AgentViewModel {
             return updated
         }
     }
-
-
-    /// Prune old messages to reduce token usage on long tasks.
-    /// Keeps the first user message and the most recent messages.
-    /// Middle messages are summarized into a compact text block.
 }
