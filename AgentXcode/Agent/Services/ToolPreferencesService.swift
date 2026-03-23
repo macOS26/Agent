@@ -13,13 +13,13 @@ enum TaskMode: String, CaseIterable {
 
     /// Tool groups included for this mode. Core + Shell always included.
     var groups: Set<String> {
-        let base: Set<String> = ["Core", "Workflow"]
+        let base: Set<String> = ["Core", "Workflow", "Coding", "File Manager"]
         switch self {
-        case .coding:       return base.union(["Coding", "File Manager"])
+        case .coding:       return base
         case .automation:   return base.union(["Automation"])
         case .web:          return base.union(["Web"])
         case .conversation: return base
-        case .general:      return ["Core", "Workflow", "Coding", "File Manager", "Automation", "Web"]
+        case .general:      return base.union(["Automation", "Web"])
         }
     }
 
