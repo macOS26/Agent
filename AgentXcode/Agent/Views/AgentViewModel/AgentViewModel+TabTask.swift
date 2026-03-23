@@ -1911,7 +1911,8 @@ extension AgentViewModel {
         // Plan mode — use tab name as plan ID
         if name == "plan_mode" {
             let action = input["action"] as? String ?? "read"
-            let output = Self.handlePlanMode(action: action, input: input, projectFolder: tab.projectFolder.isEmpty ? projectFolder : tab.projectFolder, tabName: tab.displayTitle)
+            let tabId = tab.id.uuidString
+            let output = Self.handlePlanMode(action: action, input: input, projectFolder: tab.projectFolder.isEmpty ? projectFolder : tab.projectFolder, tabName: tab.displayTitle, tabId: tabId)
             tab.appendLog(output)
             tab.flush()
             return TabToolResult(
