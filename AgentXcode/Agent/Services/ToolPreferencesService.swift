@@ -77,8 +77,8 @@ final class ToolPreferencesService {
 
     /// Tool group definitions - maps group name to tool name prefixes
     static let toolGroups: [String: Set<String>] = [
-        "Coding": Set(["read_file", "write_file", "edit_file", "create_diff", "apply_diff", "xcode"]),
-        "File Manager": Set(["list_files", "search_files", "read_dir"]),
+        "Coding": Set(["xcode"]),
+        "File Manager": Set(["read_file", "write_file", "edit_file", "create_diff", "apply_diff", "list_files", "search_files", "read_dir", "file_manager"]),
         "Automation": Set(["applescript_tool", "accessibility", "javascript_tool"]),
         "Experimental": Set(["apple_event_query"]),
         // accessibility is in Automation

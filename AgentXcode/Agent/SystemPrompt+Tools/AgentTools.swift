@@ -19,6 +19,8 @@ enum AgentTools {
         static let applyDiff = "apply_diff"
         static let listFiles = "list_files"
         static let searchFiles = "search_files"
+        // File Manager (consolidated CRUDL)
+        static let fileManager = "file_manager"
         // Git (consolidated CRUDL)
         static let git = "git"
         // Legacy git names (handlers still work)
@@ -385,6 +387,28 @@ enum AgentTools {
                 "path": ["type": "string", "description": "Absolute path to directory to list"],
             ],
             required: ["path"]
+        ),
+        // --- File Manager (consolidated — maps to direct file tools) ---
+        ToolDef(
+            name: Name.fileManager,
+            description: "File operations. Actions: read (file contents), write (create/overwrite), edit (find+replace), list (find by glob), search (grep by regex), read_dir (ls directory), create_diff, apply_diff.",
+            properties: [
+                "action": ["type": "string", "description": "Action: read, write, edit, list, search, read_dir, create_diff, or apply_diff"],
+                "file_path": ["type": "string", "description": "File path (for read/write/edit/apply_diff)"],
+                "path": ["type": "string", "description": "Directory path (for list/search/read_dir)"],
+                "content": ["type": "string", "description": "For write: file content"],
+                "old_string": ["type": "string", "description": "For edit: text to find"],
+                "new_string": ["type": "string", "description": "For edit: replacement text"],
+                "replace_all": ["type": "boolean", "description": "For edit: replace all (default false)"],
+                "offset": ["type": "integer", "description": "For read: start line (default 1)"],
+                "limit": ["type": "integer", "description": "For read: max lines (default 2000)"],
+                "pattern": ["type": "string", "description": "For list: glob. For search: regex"],
+                "include": ["type": "string", "description": "For search: file filter (e.g. *.swift)"],
+                "source": ["type": "string", "description": "For create_diff: original text"],
+                "destination": ["type": "string", "description": "For create_diff: modified text"],
+                "diff": ["type": "string", "description": "For apply_diff: D1F diff text"],
+            ],
+            required: ["action"]
         ),
         // --- Git (consolidated) ---
         ToolDef(
