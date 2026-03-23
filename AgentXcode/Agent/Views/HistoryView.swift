@@ -9,6 +9,7 @@ struct HistoryView: View {
     var onRerun: ((String) -> Void)? = nil
 
     @State private var selectedTaskType: TaskViewType = .prompts
+    @State private var expandedItems: Set<String> = []
 
     enum TaskViewType: String, CaseIterable {
         case prompts = "Prompts"
@@ -28,7 +29,7 @@ struct HistoryView: View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
             VStack(alignment: .leading, spacing: 12) {
-                Text("\(tabName) History")
+                Text("History")
                     .font(.headline)
 
                 Text("View past prompts, errors, and task summaries.")
@@ -44,7 +45,6 @@ struct HistoryView: View {
                 }
                 .pickerStyle(.segmented)
             }
-            .padding()
             .padding(.bottom, 4)
 
             Divider()
@@ -96,13 +96,14 @@ struct HistoryView: View {
 
     @ViewBuilder
     private func historyRow(_ item: String) -> some View {
+        let isExpanded = expandedItems.contains(item)
         VStack(alignment: .leading, spacing: 0) {
             Divider()
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(item)
                         .font(.system(.caption))
-                        .lineLimit(selectedTaskType == .prompts ? 2 : 4)
+                        .lineLimit(isExpanded ? nil : (selectedTaskType == .prompts ? 2 : 4))
                         .textSelection(.enabled)
 
                     if selectedTaskType == .errors {
@@ -130,16 +131,32 @@ struct HistoryView: View {
 
                 Spacer()
 
-                if selectedTaskType == .prompts, let onRerun {
+                VStack(spacing: 4) {
                     Button {
-                        onRerun(item)
+                        if isExpanded {
+                            expandedItems.remove(item)
+                        } else {
+                            expandedItems.insert(item)
+                        }
                     } label: {
-                        Image(systemName: "arrow.clockwise")
-                            .font(.caption)
-                            .foregroundStyle(.blue)
+                        Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
                     }
                     .buttonStyle(.plain)
-                    .help("Rerun this prompt")
+                    .help(isExpanded ? "Collapse" : "Expand full text")
+
+                    if selectedTaskType == .prompts, let onRerun {
+                        Button {
+                            onRerun(item)
+                        } label: {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.caption)
+                                .foregroundStyle(.blue)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Rerun this prompt")
+                    }
                 }
             }
             .padding(.vertical, 8)
