@@ -228,8 +228,40 @@ enum CodingService {
         let baseName = (expanded as NSString).lastPathComponent.replacingOccurrences(of: ".swift", with: "")
         let dir = (expanded as NSString).deletingLastPathComponent
 
-        // Collect import lines and top-level comments before first declaration
+        // Collect ALL imports from entire file (not just top)
         var imports = [String]()
+        var seenImports = Set<String>()
+        // Collect file-level variables/constants (Logger, etc.) at brace depth 0
+        var fileLevelVars = [String]()
+        for line in lines {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            if trimmed.hasPrefix("import ") || trimmed.hasPrefix("@preconcurrency import ") {
+                if seenImports.insert(trimmed).inserted { imports.append(trimmed) }
+            }
+        }
+        // Scan for file-level let/var at brace depth 0
+        var scanDepth = 0
+        for line in lines {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            if scanDepth == 0 && !trimmed.hasPrefix("import ") && !trimmed.hasPrefix("@preconcurrency") {
+                if trimmed.hasPrefix("private let ") || trimmed.hasPrefix("private var ") ||
+                   trimmed.hasPrefix("fileprivate let ") || trimmed.hasPrefix("fileprivate var ") ||
+                   trimmed.hasPrefix("let ") || trimmed.hasPrefix("var ") ||
+                   trimmed.hasPrefix("nonisolated(unsafe)") {
+                    // File-level variable — needs to be in every split file
+                    // Change private to internal for cross-file access
+                    let fixed = line.replacingOccurrences(of: "private let ", with: "let ")
+                        .replacingOccurrences(of: "private var ", with: "var ")
+                        .replacingOccurrences(of: "fileprivate let ", with: "let ")
+                        .replacingOccurrences(of: "fileprivate var ", with: "var ")
+                    fileLevelVars.append(fixed)
+                }
+            }
+            scanDepth += line.filter({ $0 == "{" }).count
+            scanDepth -= line.filter({ $0 == "}" }).count
+            scanDepth = max(0, scanDepth)
+        }
+
         var headerComments = [String]()
         var declarations: [(name: String, startLine: Int, lines: [String])] = []
         var currentDecl: (name: String, startLine: Int, lines: [String])?
@@ -239,11 +271,20 @@ enum CodingService {
         for (i, line) in lines.enumerated() {
             let trimmed = line.trimmingCharacters(in: .whitespaces)
 
-            // Collect imports
-            if trimmed.hasPrefix("import ") {
-                imports.append(line)
+            // Skip imports (already collected)
+            if trimmed.hasPrefix("import ") || trimmed.hasPrefix("@preconcurrency import ") {
                 inHeader = false
                 continue
+            }
+
+            // Skip file-level vars (already collected)
+            if braceDepth == 0 && (trimmed.hasPrefix("private let ") || trimmed.hasPrefix("private var ") ||
+               trimmed.hasPrefix("fileprivate let ") || trimmed.hasPrefix("fileprivate var ") ||
+               trimmed.hasPrefix("nonisolated(unsafe)")) {
+                if !trimmed.hasPrefix("extension ") && !trimmed.hasPrefix("class ") &&
+                   !trimmed.hasPrefix("struct ") && !trimmed.hasPrefix("enum ") {
+                    continue
+                }
             }
 
             // Collect header comments before any declaration
@@ -312,6 +353,7 @@ enum CodingService {
 
         let fm = FileManager.default
         let importBlock = imports.joined(separator: "\n")
+        let fileLevelBlock = fileLevelVars.isEmpty ? "" : fileLevelVars.joined(separator: "\n") + "\n\n"
         var createdFiles: [String] = []
         var usedNames = Set<String>()
 
@@ -332,8 +374,20 @@ enum CodingService {
             let fileName = "\(baseName)+\(suffix).swift"
             let filePath = (dir as NSString).appendingPathComponent(fileName)
 
-            var content = importBlock + "\n\n"
-            content += decl.lines.joined(separator: "\n")
+            // Fix private → internal for cross-file access
+            let fixedLines = decl.lines.map { line -> String in
+                let t = line.trimmingCharacters(in: .whitespaces)
+                if t.hasPrefix("private func ") { return line.replacingOccurrences(of: "private func ", with: "func ") }
+                if t.hasPrefix("private static func ") { return line.replacingOccurrences(of: "private static func ", with: "static func ") }
+                if t.hasPrefix("private var ") { return line.replacingOccurrences(of: "private var ", with: "var ") }
+                if t.hasPrefix("private let ") { return line.replacingOccurrences(of: "private let ", with: "let ") }
+                if t.hasPrefix("private enum ") { return line.replacingOccurrences(of: "private enum ", with: "enum ") }
+                if t.hasPrefix("private struct ") { return line.replacingOccurrences(of: "private struct ", with: "struct ") }
+                return line
+            }
+
+            var content = importBlock + "\n\n" + fileLevelBlock
+            content += fixedLines.joined(separator: "\n")
             content += "\n"
 
             do {
@@ -574,9 +628,16 @@ enum CodingService {
             return "No tool handler blocks found (looking for `if name == \"...\"` patterns)"
         }
 
-        // Collect imports
-        let imports = lines.filter { $0.trimmingCharacters(in: .whitespaces).hasPrefix("import ") }
-        let importBlock = imports.joined(separator: "\n")
+        // Collect imports (trimmed, deduplicated)
+        var seenHandlerImports = Set<String>()
+        var handlerImports = [String]()
+        for line in lines {
+            let t = line.trimmingCharacters(in: .whitespaces)
+            if t.hasPrefix("import ") || t.hasPrefix("@preconcurrency import ") {
+                if seenHandlerImports.insert(t).inserted { handlerImports.append(t) }
+            }
+        }
+        let importBlock = handlerImports.joined(separator: "\n")
 
         // Find the extension wrapper
         var extensionLine = ""
