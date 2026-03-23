@@ -55,6 +55,54 @@ extension AgentViewModel {
             default:       return ("list_javascript", newInput)
             }
 
+        case "file":
+            switch action {
+            case "read":       return ("read_file", newInput)
+            case "write":      return ("write_file", newInput)
+            case "edit":       return ("edit_file", newInput)
+            case "create_diff": return ("create_diff", newInput)
+            case "apply_diff": return ("apply_diff", newInput)
+            case "list":       return ("list_files", newInput)
+            case "search":     return ("search_files", newInput)
+            default:           return ("read_file", newInput)
+            }
+
+        case "xcode":
+            switch action {
+            case "build":            return ("xcode_build", newInput)
+            case "run":              return ("xcode_run", newInput)
+            case "list_projects":    return ("xcode_list_projects", newInput)
+            case "select_project":   return ("xcode_select_project", newInput)
+            case "grant_permission": return ("xcode_grant_permission", newInput)
+            default:                 return ("xcode_build", newInput)
+            }
+
+        case "web":
+            switch action {
+            case "open":       return ("web_open", newInput)
+            case "find":       return ("web_find", newInput)
+            case "click":      return ("web_click", newInput)
+            case "type":       return ("web_type", newInput)
+            case "execute_js": return ("web_execute_js", newInput)
+            case "get_url":    return ("web_get_url", newInput)
+            case "get_title":  return ("web_get_title", newInput)
+            default:           return ("web_open", newInput)
+            }
+
+        case "selenium":
+            switch action {
+            case "start":      return ("selenium_start", newInput)
+            case "stop":       return ("selenium_stop", newInput)
+            case "navigate":   return ("selenium_navigate", newInput)
+            case "find":       return ("selenium_find", newInput)
+            case "click":      return ("selenium_click", newInput)
+            case "type":       return ("selenium_type", newInput)
+            case "execute":    return ("selenium_execute", newInput)
+            case "screenshot": return ("selenium_screenshot", newInput)
+            case "wait":       return ("selenium_wait", newInput)
+            default:           return ("selenium_start", newInput)
+            }
+
         case "accessibility":
             // Remap "action" for perform_action to avoid collision with the dispatch "action"
             var mapped = newInput

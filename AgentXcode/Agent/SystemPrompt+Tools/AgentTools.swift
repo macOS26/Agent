@@ -7,7 +7,9 @@ enum AgentTools {
 
     // MARK: - Tool Name Constants (single source of truth)
     enum Name {
-        // File Tools
+        // File (consolidated CRUDL)
+        static let file = "file"
+        // Legacy file names (handlers still work)
         static let readFile = "read_file"
         static let writeFile = "write_file"
         static let editFile = "edit_file"
@@ -73,7 +75,9 @@ enum AgentTools {
         static let combineAgentScripts = "combine_agent_scripts"
         // SDEF
         static let lookupSdef = "lookup_sdef"
-        // Xcode
+        // Xcode (consolidated CRUDL)
+        static let xcode = "xcode"
+        // Legacy xcode names (handlers still work)
         static let xcodeBuild = "xcode_build"
         static let xcodeRun = "xcode_run"
         static let xcodeListProjects = "xcode_list_projects"
@@ -98,7 +102,9 @@ enum AgentTools {
         static let listMcpTools = "list_mcp_tools"
         static let loadGroups = "load_groups"
         static let unloadGroups = "unload_groups"
-        // Web Automation
+        // Web (consolidated CRUDL)
+        static let web = "web"
+        // Legacy web names (handlers still work)
         static let webOpen = "web_open"
         static let webFind = "web_find"
         static let webClick = "web_click"
@@ -106,7 +112,9 @@ enum AgentTools {
         static let webExecuteJs = "web_execute_js"
         static let webGetUrl = "web_get_url"
         static let webGetTitle = "web_get_title"
-        // Selenium
+        // Selenium (consolidated CRUDL)
+        static let seleniumTool = "selenium"
+        // Legacy selenium names (handlers still work)
         static let seleniumStart = "selenium_start"
         static let seleniumStop = "selenium_stop"
         static let seleniumNavigate = "selenium_navigate"
@@ -134,14 +142,14 @@ enum AgentTools {
         You are an autonomous macOS agent. User: "\(userName)", home: "\(userHome)".
         Project: \(folder). Always cd here first. Call task_complete when done.
         Don't repeat stdout — user sees it live. Don't ask questions — just act.
-        NEVER output code as text — always use tools: agent_script (action: create/update) for scripts, write_file/edit_file for other files.
+        NEVER output code as text — always use tools: agent_script (action: create/update) for scripts, file (action: write/edit) for other files.
 
-        TOOL PRIORITY: Native tools → MCP servers → shell (last resort).
-        Prefer read_file/edit_file/write_file over cat/sed. Prefer xcode_build over xcodebuild.
-        write_file returns count only — verify with read_file.
+        TOOL PRIORITY: Native tools (file, git, xcode) → MCP servers → shell (last resort).
+        Prefer file tool over cat/sed/find/grep. Prefer xcode tool over xcodebuild shell.
+        file action write returns count only — verify with file action read.
 
         TCC CONTEXT:
-        - Full TCC (in Agent process): agent_script (action: run), apple_event_query, run_applescript, run_osascript, ax_* tools
+        - Full TCC (in Agent process): agent_script (action: run), apple_event_query, run_applescript, run_osascript, accessibility tool
         - NO TCC: execute_agent_command (user, ~=\(userHome)), execute_daemon_command (root, ~=/var/root — chown back)
         - Never use shell for Automation/Accessibility — no TCC permissions.
 
@@ -187,36 +195,35 @@ enum AgentTools {
         CORE RULES:
         - Act, don't explain. Never ask questions. Call \(n.taskComplete) when done.
         - Don't repeat script stdout — user sees it live.
-        - NEVER output code as text — use \(n.agentScript) (action: create/update) for scripts, \(n.writeFile)/\(n.editFile) for files.
+        - NEVER output code as text — use \(n.agentScript) (action: create/update) for scripts, \(n.file) (action: write/edit) for files.
         - Current folder: \(folder) (default for operations)
-        
+
         TOOL PRIORITY:
-        1. Native tools (\(n.readFile), \(n.writeFile), \(n.editFile), git_*, xcode_*)
+        1. Native tools (\(n.file), \(n.git), \(n.xcode))
         2. MCP tools (mcp_*)
         3. Shell (\(n.executeAgentCommand), \(n.executeDaemonCommand)) ONLY if native/MCP unavailable
-        
+
         TCC PERMISSIONS:
-        - Full TCC in Agent: \(n.runAgentScript), \(n.appleEventQuery), \(n.runApplescript), \(n.runOsascript), ax_*
+        - Full TCC in Agent: \(n.agentScript) (action: run), \(n.appleEventQuery), \(n.runApplescript), \(n.runOsascript), \(n.accessibility)
         - User shell: \(n.executeAgentCommand) (as \(userName), ~=\(userHome)) — NO TCC
         - Root shell: \(n.executeDaemonCommand) — NO TCC
         Never use shell commands for Automation/Accessibility — no TCC.
-        
+
         KEY TOOL CATEGORIES:
-        • File/Diff: \(n.readFile), \(n.writeFile), \(n.editFile), \(n.listFiles), \(n.searchFiles), \(n.createDiff), \(n.applyDiff)
+        • File: \(n.file) (actions: read, write, edit, create_diff, apply_diff, list, search)
         • Git: \(n.git) (actions: status, diff, log, commit, diff_patch, branch)
-        • Xcode: \(n.xcodeBuild) (PREFERRED) → MCP → xcodebuild shell (LAST RESORT)
-        • Agent Scripts (100% Swift, ScriptingBridge only for app automation): \(n.agentScript) (actions: list, read, create, update, run, delete, combine)
+        • Xcode: \(n.xcode) (actions: build, run, list_projects, select_project)
+        • Workflow: \(n.agentScript), \(n.planMode)
         • Automation: \(n.runApplescript), \(n.runOsascript), \(n.executeJavascript), \(n.appleEventQuery), \(n.lookupSdef)
-        • Accessibility: ax_* tools (last resort for UI)
-        • Web: web_*, selenium_*
-        
+        • Accessibility: \(n.accessibility) (actions: list_windows, find_element, click, type_text, etc.)
+        • Web: \(n.web), \(n.seleniumTool)
+
         CRITICAL DON'Ts:
         - Never use shell for file/coding when native tools exist
-        - Never use xcodebuild/swift build via shell when \(n.xcodeBuild) or MCP available
-        - Never use \(n.executeAgentCommand) for AX/Automation (use \(n.runAgentScript))
-        - Never build AgentScripts with \(n.xcodeBuild) (use \(n.runAgentScript))
-        
-        ALWAYS: \(n.xcodeBuild) → MCP → Shell (last resort)
+        - Never use xcodebuild/swift build via shell when \(n.xcode) or MCP available
+        - Never use \(n.executeAgentCommand) for AX/Automation (use \(n.agentScript) action: run)
+
+        ALWAYS: \(n.xcode) → MCP → Shell (last resort)
         """
     }
 
@@ -320,73 +327,27 @@ enum AgentTools {
     }
 
     nonisolated(unsafe) private static let commonTools: [ToolDef] = [
-        // --- Coding Tools ---
+        // --- File (consolidated) ---
         ToolDef(
-            name: Name.readFile,
-            description: "Read file contents with line numbers. Use instead of `cat`. Returns numbered lines for easy reference in edit_file.",
+            name: Name.file,
+            description: "File operations. Actions: read (with line numbers), write (create/overwrite), edit (find+replace text), create_diff (compare texts), apply_diff (patch file), list (find by glob), search (grep by regex). Use instead of cat/sed/find/grep.",
             properties: [
-                "file_path": ["type": "string", "description": "Absolute path to the file to read"],
-                "offset": ["type": "integer", "description": "1-based line number to start from (default 1)"],
-                "limit": ["type": "integer", "description": "Max lines to return (default 2000)"],
+                "action": ["type": "string", "description": "Action: read, write, edit, create_diff, apply_diff, list, or search"],
+                "file_path": ["type": "string", "description": "Absolute file path (for read/write/edit/apply_diff)"],
+                "content": ["type": "string", "description": "For write: full file content"],
+                "old_string": ["type": "string", "description": "For edit: exact text to find"],
+                "new_string": ["type": "string", "description": "For edit: replacement text"],
+                "replace_all": ["type": "boolean", "description": "For edit: replace all occurrences (default false)"],
+                "offset": ["type": "integer", "description": "For read: 1-based start line (default 1)"],
+                "limit": ["type": "integer", "description": "For read: max lines (default 2000)"],
+                "source": ["type": "string", "description": "For create_diff: original text"],
+                "destination": ["type": "string", "description": "For create_diff: modified text"],
+                "diff": ["type": "string", "description": "For apply_diff: D1F ASCII diff text"],
+                "pattern": ["type": "string", "description": "For list: glob pattern. For search: regex pattern"],
+                "path": ["type": "string", "description": "For list/search: directory to search in"],
+                "include": ["type": "string", "description": "For search: file glob filter (e.g. *.swift)"],
             ],
-            required: ["file_path"]
-        ),
-        ToolDef(
-            name: Name.writeFile,
-            description: "Create or overwrite a file. Creates parent dirs automatically. Returns line count only — call read_file after to verify content.",
-            properties: [
-                "file_path": ["type": "string", "description": "Absolute path to the file to write"],
-                "content": ["type": "string", "description": "The full file content to write"],
-            ],
-            required: ["file_path", "content"]
-        ),
-        ToolDef(
-            name: Name.editFile,
-            description: "Replace exact text in a file. Use instead of sed/awk. You MUST read_file first. The old_string must be unique unless replace_all is true.",
-            properties: [
-                "file_path": ["type": "string", "description": "Absolute path to the file to edit"],
-                "old_string": ["type": "string", "description": "The exact text to find and replace"],
-                "new_string": ["type": "string", "description": "The replacement text"],
-                "replace_all": ["type": "boolean", "description": "Replace all occurrences (default false)"],
-            ],
-            required: ["file_path", "old_string", "new_string"]
-        ),
-        ToolDef(
-            name: Name.createDiff,
-            description: "Compare two text strings and return a pretty D1F diff showing retained, deleted, and inserted lines with emoji markers.",
-            properties: [
-                "source": ["type": "string", "description": "The original text"],
-                "destination": ["type": "string", "description": "The modified text"],
-            ],
-            required: ["source", "destination"]
-        ),
-        ToolDef(
-            name: Name.applyDiff,
-            description: "Apply a D1F ASCII diff (📎 retain, ❌ delete, ✅ insert) to a file. The diff must use emoji line prefixes. Returns the patched file content.",
-            properties: [
-                "file_path": ["type": "string", "description": "Absolute path to the file to patch"],
-                "diff": ["type": "string", "description": "D1F ASCII diff text with 📎/❌/✅ line prefixes"],
-            ],
-            required: ["file_path", "diff"]
-        ),
-        ToolDef(
-            name: Name.listFiles,
-            description: "Find files matching a glob pattern. Use instead of `find`. Excludes hidden files and .build directories.",
-            properties: [
-                "pattern": ["type": "string", "description": "Glob pattern (e.g. \"*.swift\", \"Package.swift\")"],
-                "path": ["type": "string", "description": "Directory to search in (default: user home). Always provide a project path for best results."],
-            ],
-            required: ["pattern"]
-        ),
-        ToolDef(
-            name: Name.searchFiles,
-            description: "Search file contents by regex pattern. Use instead of `grep`. Returns matching lines with file paths and line numbers.",
-            properties: [
-                "pattern": ["type": "string", "description": "Regex pattern to search for"],
-                "path": ["type": "string", "description": "Directory to search in (default: user home). Always provide a project path for best results."],
-                "include": ["type": "string", "description": "File glob filter (e.g. \"*.swift\", \"*.py\")"],
-            ],
-            required: ["pattern"]
+            required: ["action"]
         ),
         // --- Git (consolidated) ---
         ToolDef(
@@ -406,42 +367,16 @@ enum AgentTools {
             ],
             required: ["action"]
         ),
-        // --- Coding: Xcode ---
+        // --- Xcode (consolidated) ---
         ToolDef(
-            name: Name.xcodeBuild,
-            description: "Build an Xcode project or workspace via ScriptingBridge. Blocks until build completes. Returns errors/warnings in file:line:col format with code snippets for context.",
+            name: Name.xcode,
+            description: "Xcode operations via ScriptingBridge. Actions: build (compile project), run (build+launch), list_projects (show open projects), select_project (choose by number), grant_permission (one-time TCC setup).",
             properties: [
-                "project_path": ["type": "string", "description": "Path to .xcodeproj or .xcworkspace"],
+                "action": ["type": "string", "description": "Action: build, run, list_projects, select_project, or grant_permission"],
+                "project_path": ["type": "string", "description": "For build/run: path to .xcodeproj or .xcworkspace"],
+                "number": ["type": "integer", "description": "For select_project: project number (1-based)"],
             ],
-            required: ["project_path"]
-        ),
-        ToolDef(
-            name: Name.xcodeRun,
-            description: "Build then run an Xcode project via ScriptingBridge. Builds first — only runs if clean. Returns errors if build fails.",
-            properties: [
-                "project_path": ["type": "string", "description": "Path to .xcodeproj or .xcworkspace"],
-            ],
-            required: ["project_path"]
-        ),
-        ToolDef(
-            name: Name.xcodeListProjects,
-            description: "List all open Xcode projects and workspaces with numbered indices. Use the number with xcode_select_project to choose one.",
-            properties: [:],
-            required: []
-        ),
-        ToolDef(
-            name: Name.xcodeSelectProject,
-            description: "Select an open Xcode project by its number from xcode_list_projects. Returns the project path for use with xcode_build/xcode_run.",
-            properties: [
-                "number": ["type": "integer", "description": "Project number from the list (1-based)"],
-            ],
-            required: ["number"]
-        ),
-        ToolDef(
-            name: Name.xcodeGrantPermission,
-            description: "Grant macOS Automation permission so the agent can control Xcode via ScriptingBridge. Run this once before using xcode_build or xcode_run.",
-            properties: [:],
-            required: []
+            required: ["action"]
         ),
         // --- Coding: Shell ---
         ToolDef(
@@ -615,163 +550,42 @@ enum AgentTools {
             ],
             required: ["groups"]
         ),
-        // MARK: - Web Automation (Phase 2)
+        // --- Web (consolidated) ---
         ToolDef(
-            name: Name.webOpen,
-            description: "Open a URL in the specified browser. Uses AppleScript for Safari/Firefox, falls back to NSWorkspace for others. Fastest way to open URLs in web automation.",
+            name: Name.web,
+            description: "Web automation. Actions: open (URL in browser), find (element by selector), click (element), type (text into element), execute_js (run JavaScript), get_url, get_title. Auto-selects best strategy: AX → JS → Selenium.",
             properties: [
-                "url": ["type": "string", "description": "URL to open"],
-                "browser": ["type": "string", "description": "Browser type: 'safari' (default), 'chrome', 'firefox', 'edge'"],
-            ],
-            required: ["url"]
-        ),
-        ToolDef(
-            name: Name.webFind,
-            description: "Find an element on a web page using the best available strategy. Auto-selects: Accessibility (Safari AX) → JavaScript (Safari/Firefox) → Selenium. Supports CSS selectors, XPath, and accessibility attributes. Returns element properties with source strategy.",
-            properties: [
-                "selector": ["type": "string", "description": "Element selector: CSS (#id, .class), XPath (//div), or accessibility (AXButton, [title='Submit'])"],
-                "strategy": ["type": "string", "description": "Strategy: 'auto' (default), 'accessibility', 'javascript', 'selenium'"],
-                "timeout": ["type": "number", "description": "Maximum wait time in seconds (default 10.0)"],
-                "fuzzyThreshold": ["type": "number", "description": "Minimum match score 0-1 for fuzzy matching (default 0.6)"],
-                "appBundleId": ["type": "string", "description": "Optional browser bundle ID (auto-detected if not specified)"],
-            ],
-            required: ["selector"]
-        ),
-        ToolDef(
-            name: Name.webClick,
-            description: "Click a web element by selector. Auto-selects best strategy: AX click, JavaScript click, or Selenium click. Use after web_find to verify element exists.",
-            properties: [
-                "selector": ["type": "string", "description": "Element selector to click"],
-                "strategy": ["type": "string", "description": "Strategy: 'auto' (default), 'accessibility', 'javascript', 'selenium'"],
+                "action": ["type": "string", "description": "Action: open, find, click, type, execute_js, get_url, or get_title"],
+                "url": ["type": "string", "description": "For open: URL to open"],
+                "browser": ["type": "string", "description": "Browser: safari (default), chrome, firefox, edge"],
+                "selector": ["type": "string", "description": "For find/click/type: CSS/XPath/AX selector"],
+                "text": ["type": "string", "description": "For type: text to enter"],
+                "script": ["type": "string", "description": "For execute_js: JavaScript code"],
+                "strategy": ["type": "string", "description": "Strategy: auto (default), accessibility, javascript, selenium"],
+                "timeout": ["type": "number", "description": "For find: max wait seconds (default 10)"],
                 "appBundleId": ["type": "string", "description": "Optional browser bundle ID"],
+                "verify": ["type": "boolean", "description": "For type: verify text entered (default true)"],
             ],
-            required: ["selector"]
+            required: ["action"]
         ),
+        // --- Selenium (consolidated) ---
         ToolDef(
-            name: Name.webType,
-            description: "Type text into a web element by selector. Auto-selects best strategy: AXValue set (fastest), JavaScript value set, or Selenium sendKeys. Verifies text was entered.",
+            name: Name.seleniumTool,
+            description: "Selenium WebDriver. Actions: start (new session), stop (end session), navigate (go to URL), find (element), click (element), type (text), execute (JS), screenshot, wait (for element).",
             properties: [
-                "selector": ["type": "string", "description": "Element selector for input field"],
-                "text": ["type": "string", "description": "Text to type"],
-                "strategy": ["type": "string", "description": "Strategy: 'auto' (default), 'accessibility', 'javascript', 'selenium'"],
-                "verify": ["type": "boolean", "description": "Verify text was entered (default true)"],
-                "appBundleId": ["type": "string", "description": "Optional browser bundle ID"],
-            ],
-            required: ["selector", "text"]
-        ),
-        ToolDef(
-            name: Name.webExecuteJs,
-            description: "Execute JavaScript in the active browser. Works in Safari and Firefox via AppleScript, Chrome via Selenium. Returns the result of the script execution.",
-            properties: [
-                "script": ["type": "string", "description": "JavaScript code to execute"],
-                "browser": ["type": "string", "description": "Browser bundle ID (auto-detected if not specified)"],
-            ],
-            required: ["script"]
-        ),
-        ToolDef(
-            name: Name.webGetUrl,
-            description: "Get the current URL from the active browser. Works via AppleScript for Safari/Firefox/Chrome or via Selenium session.",
-            properties: [
-                "browser": ["type": "string", "description": "Optional browser bundle ID"],
-            ],
-            required: []
-        ),
-        ToolDef(
-            name: Name.webGetTitle,
-            description: "Get the page title from the active browser.",
-            properties: [
-                "browser": ["type": "string", "description": "Optional browser bundle ID"],
-            ],
-            required: []
-        ),
-        // MARK: - Selenium WebDriver Tools
-        ToolDef(
-            name: Name.seleniumStart,
-            description: "Start a Selenium WebDriver session. SafariDriver is built into macOS. For Chrome/Firefox, install chromedriver/geckodriver. Returns session ID for subsequent calls.",
-            properties: [
-                "browser": ["type": "string", "description": "Browser: 'safari' (default), 'chrome', 'firefox'"],
+                "action": ["type": "string", "description": "Action: start, stop, navigate, find, click, type, execute, screenshot, or wait"],
+                "browser": ["type": "string", "description": "For start: safari (default), chrome, firefox"],
                 "port": ["type": "integer", "description": "WebDriver port (default 7055)"],
-                "capabilities": ["type": "object", "description": "Optional WebDriver capabilities"],
+                "url": ["type": "string", "description": "For navigate: URL"],
+                "strategy": ["type": "string", "description": "For find/click/type/wait: css, xpath, id, name"],
+                "value": ["type": "string", "description": "For find/click/type/wait: selector value"],
+                "text": ["type": "string", "description": "For type: text to enter"],
+                "script": ["type": "string", "description": "For execute: JavaScript code"],
+                "filename": ["type": "string", "description": "For screenshot: filename"],
+                "timeout": ["type": "number", "description": "For wait: max seconds (default 10)"],
+                "capabilities": ["type": "object", "description": "For start: WebDriver capabilities"],
             ],
-            required: []
-        ),
-        ToolDef(
-            name: Name.seleniumStop,
-            description: "End the Selenium WebDriver session.",
-            properties: [
-                "port": ["type": "integer", "description": "WebDriver port (default 7055)"],
-            ],
-            required: []
-        ),
-        ToolDef(
-            name: Name.seleniumNavigate,
-            description: "Navigate to a URL via Selenium WebDriver. More reliable than AppleScript for complex pages.",
-            properties: [
-                "url": ["type": "string", "description": "URL to navigate to"],
-                "port": ["type": "integer", "description": "WebDriver port (default 7055)"],
-            ],
-            required: ["url"]
-        ),
-        ToolDef(
-            name: Name.seleniumFind,
-            description: "Find element via Selenium WebDriver with CSS or XPath selector. Returns element ID for subsequent operations.",
-            properties: [
-                "strategy": ["type": "string", "description": "Locator strategy: 'css', 'xpath', 'id', 'name', 'linktext', 'tagname', 'classname'"],
-                "value": ["type": "string", "description": "Selector value"],
-                "port": ["type": "integer", "description": "WebDriver port (default 7055)"],
-            ],
-            required: ["strategy", "value"]
-        ),
-        ToolDef(
-            name: Name.seleniumClick,
-            description: "Click an element via Selenium WebDriver. More reliable for dynamically loaded content.",
-            properties: [
-                "strategy": ["type": "string", "description": "Locator strategy: 'css', 'xpath', 'id', 'name'"],
-                "value": ["type": "string", "description": "Selector value"],
-                "port": ["type": "integer", "description": "WebDriver port (default 7055)"],
-            ],
-            required: ["strategy", "value"]
-        ),
-        ToolDef(
-            name: Name.seleniumType,
-            description: "Type text into an element via Selenium WebDriver. Simulates actual keyboard input.",
-            properties: [
-                "strategy": ["type": "string", "description": "Locator strategy: 'css', 'xpath', 'id', 'name'"],
-                "value": ["type": "string", "description": "Selector value"],
-                "text": ["type": "string", "description": "Text to type"],
-                "port": ["type": "integer", "description": "WebDriver port (default 7055)"],
-            ],
-            required: ["strategy", "value", "text"]
-        ),
-        ToolDef(
-            name: Name.seleniumExecute,
-            description: "Execute JavaScript in the Selenium session. Useful for scrolling, DOM manipulation, or extracting data.",
-            properties: [
-                "script": ["type": "string", "description": "JavaScript code to execute"],
-                "args": ["type": "array", "description": "Optional arguments for the script", "items": ["type": "string"] as [String: Any]] as [String: Any],
-                "port": ["type": "integer", "description": "WebDriver port (default 7055)"],
-            ],
-            required: ["script"]
-        ),
-        ToolDef(
-            name: Name.seleniumScreenshot,
-            description: "Take a screenshot via Selenium WebDriver. Saves to ~/Documents/Agent/screenshots/.",
-            properties: [
-                "filename": ["type": "string", "description": "Screenshot filename (default: auto-generated)"],
-                "port": ["type": "integer", "description": "WebDriver port (default 7055)"],
-            ],
-            required: []
-        ),
-        ToolDef(
-            name: Name.seleniumWait,
-            description: "Wait for an element to appear via Selenium WebDriver. Uses explicit wait with timeout.",
-            properties: [
-                "strategy": ["type": "string", "description": "Locator strategy: 'css', 'xpath', 'id', 'name'"],
-                "value": ["type": "string", "description": "Selector value"],
-                "timeout": ["type": "number", "description": "Maximum wait time in seconds (default 10.0)"],
-                "port": ["type": "integer", "description": "WebDriver port (default 7055)"],
-            ],
-            required: ["strategy", "value"]
+            required: ["action"]
         ),
     ]
 
