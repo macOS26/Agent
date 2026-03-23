@@ -296,15 +296,18 @@ enum CodingService {
 
             // Detect top-level declaration start (brace depth == 0)
             if braceDepth == 0 {
-                let isDecl = trimmed.hasPrefix("extension ") || trimmed.hasPrefix("class ") ||
-                             trimmed.hasPrefix("struct ") || trimmed.hasPrefix("enum ") ||
-                             trimmed.hasPrefix("@") || trimmed.hasPrefix("public extension ") ||
-                             trimmed.hasPrefix("public class ") || trimmed.hasPrefix("public struct ") ||
-                             trimmed.hasPrefix("public enum ") || trimmed.hasPrefix("final class ") ||
-                             trimmed.hasPrefix("private extension ") || trimmed.hasPrefix("internal extension ") ||
-                             trimmed.hasPrefix("// MARK:")
+                // Actual type/extension declaration keywords
+                let declKeywords = ["extension ", "class ", "struct ", "enum ", "protocol ", "actor ",
+                                    "public extension ", "public class ", "public struct ", "public enum ",
+                                    "final class ", "private extension ", "internal extension "]
+                let isTypeDecl = declKeywords.contains(where: { trimmed.hasPrefix($0) })
 
-                if isDecl && !trimmed.hasPrefix("// MARK:") {
+                // @ attributes (like @MainActor, @Observable) are NOT standalone declarations
+                // They attach to the next type declaration, so accumulate them
+                let isAttribute = trimmed.hasPrefix("@") && !isTypeDecl
+                let isMark = trimmed.hasPrefix("// MARK:")
+
+                if isTypeDecl {
                     // Save previous declaration
                     if let decl = currentDecl {
                         declarations.append(decl)
@@ -312,7 +315,14 @@ enum CodingService {
                     // Extract declaration name
                     let declName = extractDeclName(trimmed)
                     currentDecl = (name: declName, startLine: i + 1, lines: [line])
-                } else if isDecl && trimmed.hasPrefix("// MARK:") {
+                } else if isAttribute {
+                    // @ attribute — attach to current or start new pending block
+                    if currentDecl != nil {
+                        currentDecl?.lines.append(line)
+                    } else {
+                        currentDecl = (name: "Pending", startLine: i + 1, lines: [line])
+                    }
+                } else if isMark {
                     // MARK comments attach to the next declaration
                     if currentDecl != nil {
                         currentDecl?.lines.append(line)
@@ -361,6 +371,14 @@ enum CodingService {
             var suffix = sanitizeDeclName(decl.name)
             if index == 0 && decl.name == "Header" {
                 continue // Skip standalone header comments
+            }
+            if decl.name == "Pending" {
+                continue // Skip orphaned @ attributes with no body
+            }
+            // Skip tiny declarations (less than 10 non-empty lines)
+            let nonEmptyLines = decl.lines.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }.count
+            if nonEmptyLines < 10 {
+                continue
             }
             // Deduplicate filenames
             let originalSuffix = suffix
