@@ -386,7 +386,7 @@ struct ContentView: View {
                 ZStack(alignment: .topTrailing) {
                     ActivityLogView(
                         text: tab.activityLog,
-                        tabID: tab.id,
+                        tabID: selectedId,
                         searchText: searchText,
                         currentMatchIndex: currentMatchIndex,
                         onMatchCount: { count in

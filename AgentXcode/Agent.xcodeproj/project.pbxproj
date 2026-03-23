@@ -55,6 +55,7 @@
 		AA100000000000000000BF /* LoRASettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000BE /* LoRASettingsView.swift */; };
 		AA100000000000000000C1 /* NewMainTabSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000C0 /* NewMainTabSheet.swift */; };
 		AA100000000000000000C2 /* TaskExecution+ShellTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000C3 /* TaskExecution+ShellTools.swift */; };
+		AA100000000000000000C4 /* TaskExecution+MCPTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000C5 /* TaskExecution+MCPTools.swift */; };
 		AA10000000000000000101 /* ProjectFolderField.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000100 /* ProjectFolderField.swift */; };
 		AA10000000000000000103 /* RecentFoldersService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000102 /* RecentFoldersService.swift */; };
 		AA10000000000000000104 /* TokenBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000105 /* TokenBadge.swift */; };
@@ -219,6 +220,7 @@
 		AA100000000000000000BE /* LoRASettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoRASettingsView.swift; sourceTree = "<group>"; };
 		AA100000000000000000C0 /* NewMainTabSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewMainTabSheet.swift; sourceTree = "<group>"; };
 		AA100000000000000000C3 /* TaskExecution+ShellTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskExecution+ShellTools.swift"; sourceTree = "<group>"; };
+		AA100000000000000000C5 /* TaskExecution+MCPTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskExecution+MCPTools.swift"; sourceTree = "<group>"; };
 		AA10000000000000000100 /* ProjectFolderField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectFolderField.swift; sourceTree = "<group>"; };
 		AA10000000000000000102 /* RecentFoldersService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentFoldersService.swift; sourceTree = "<group>"; };
 		AA10000000000000000105 /* TokenBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenBadge.swift; sourceTree = "<group>"; };
@@ -478,6 +480,7 @@
 				AA1000000000000000004A /* AgentViewModel+TaskExecution.swift */,
 				AA100000000000000000A0 /* AgentViewModel+TabTask.swift */,
 				AA100000000000000000C3 /* TaskExecution+ShellTools.swift */,
+				AA100000000000000000C5 /* TaskExecution+MCPTools.swift */,
 				BB10000000000000000005 /* AgentViewModel+Helpers.swift */,
 				FF10000000000000000010 /* AgentViewModel+Speech.swift */,
 			);
@@ -780,6 +783,7 @@
 				AA10000000000000000079 /* ScriptTab.swift in Sources */,
 				AA1000000000000000007B /* TabBarView.swift in Sources */,
 				AA100000000000000000C2 /* TaskExecution+ShellTools.swift in Sources */,
+				AA100000000000000000C4 /* TaskExecution+MCPTools.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -65,16 +65,16 @@ struct ActivityLogView: NSViewRepresentable {
         let len = (text as NSString).length
         let searchChanged = searchText != coord.lastSearch || currentMatchIndex != coord.lastMatchIndex
 
-        // Skip if nothing changed
-        guard len != coord.lastLength || coord.showingPlaceholder || searchChanged else { return }
+        // Detect tab switch first — must not be skipped
+        let tabSwitched = tabID != coord.lastTabID
+
+        // Skip if nothing changed (but always process tab switches)
+        guard len != coord.lastLength || coord.showingPlaceholder || searchChanged || tabSwitched else { return }
 
         let textChanged = len != coord.lastLength || coord.showingPlaceholder
         let textGrew = len > coord.lastLength
         let searchCleared = searchText.isEmpty && !coord.lastSearch.isEmpty
         coord.showingPlaceholder = false
-
-        // Detect tab switch — reset and full rebuild
-        let tabSwitched = tabID != coord.lastTabID
         if tabSwitched {
             coord.lastTabID = tabID
             coord.lastLength = 0

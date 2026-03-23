@@ -1494,71 +1494,15 @@ extension AgentViewModel {
                         }
 
                         // MARK: MCP tool calls (mcp_ServerName_toolName)
-
-                        if name.hasPrefix("mcp_") {
-                            let parts = name.dropFirst(4).split(separator: "_", maxSplits: 1)
-                            let serverName = String(parts.first ?? "")
-                            let toolName = String(parts.last ?? "")
-
-                            // Snapshot disabled state once to avoid TOCTOU races
-                            let disabledSnapshot = MCPService.shared.disabledTools
-                            let toolKey = MCPService.toolKey(serverName: serverName, toolName: toolName)
-
-                            // Block disabled tools
-                            guard !disabledSnapshot.contains(toolKey) else {
-                                let msg = "Tool '\(toolName)' is disabled"
-                                appendLog("🖥️ MCP[\(serverName)]: \(msg)")
-                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": msg])
-                                continue
-                            }
-
-                            appendLog("🖥️ MCP[\(serverName)]: \(toolName)")
-                            flushLog()
-
-                            var mcpOutput = ""
-
-                            // Validate total argument size (1 MB cap)
-                            let argData = try? JSONSerialization.data(withJSONObject: input)
-                            if let argData, argData.count > 1_024 * 1_024 {
-                                mcpOutput = "MCP error: arguments exceed 1 MB limit"
-                                appendLog(mcpOutput)
-                                flushLog()
-                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": mcpOutput])
-                                consecutiveNoTool = 0
-                                continue
-                            }
-
-                            if let mcpTool = MCPService.shared.discoveredTools.first(where: {
-                                $0.serverName == serverName && $0.name == toolName
-                            }) {
-                                do {
-                                    let args = input.mapValues { value -> JSONValue in
-                                        Self.toJSONValue(value)
-                                    }
-                                    let result = try await MCPService.shared.callTool(
-                                        serverId: mcpTool.serverId,
-                                        name: toolName,
-                                        arguments: args
-                                    )
-                                    mcpOutput = result.content.compactMap { block -> String? in
-                                        if case .text(let t) = block { return t }
-                                        return nil
-                                    }.joined(separator: "\n")
-                                } catch {
-                                    mcpOutput = "MCP error: \(error.localizedDescription)"
-                                }
-                            } else {
-                                mcpOutput = "MCP tool not found: \(serverName)/\(toolName)"
-                            }
-
-                            appendLog(mcpOutput)
-                            flushLog()
-                            toolResults.append([
-                                "type": "tool_result",
-                                "tool_use_id": toolId,
-                                "content": mcpOutput,
-                            ])
-                            consecutiveNoTool = 0
+                        if await handleMCPTool(
+                            name: name,
+                            input: input,
+                            toolId: toolId,
+                            appendLog: { @MainActor [weak self] msg in self?.appendLog(msg) },
+                            flushLog: { @MainActor [weak self] in self?.flushLog() },
+                            consecutiveNoTool: &consecutiveNoTool,
+                            toolResults: &toolResults
+                        ) {
                             continue
                         }
 
