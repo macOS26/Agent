@@ -303,12 +303,7 @@ extension AgentViewModel {
                     tab.llmMessages = messages
                     consecutiveNoTool = 0
                 } else if !hasToolUse {
-                    consecutiveNoTool += 1
-                    // Give models up to 3 nudges to use tools before giving up
-                    if consecutiveNoTool >= 3 {
-                        tab.appendLog("(model not using tools — stopping)")
-                        break
-                    }
+                    // No tool use this iteration — just nudge and continue
                     messages.append(["role": "user", "content": "Continue. Use tools to perform actions. Call task_complete when finished."])
                     tab.llmMessages = messages
                 }

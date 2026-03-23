@@ -2806,13 +2806,8 @@ extension AgentViewModel {
                     consecutiveNoTool = 0
                     messages.append(["role": "user", "content": "Continue with the task. Call task_complete when finished."])
                 } else if !hasToolUse {
-                    consecutiveNoTool += 1
-                    // Give models up to 3 nudges to use tools before giving up
-                    if consecutiveNoTool >= 3 {
-                        appendLog("(model not using tools — stopping)")
-                        break
-                    }
-                    messages.append(["role": "user", "content": "Continue. You must use execute_agent_command or execute_daemon_command tools to perform actions. Call task_complete when finished."])
+                    // No tool use this iteration — just nudge and continue
+                    messages.append(["role": "user", "content": "Continue. Use tools to perform actions. Call task_complete when finished."])
                 }
 
             } catch {
