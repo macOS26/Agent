@@ -158,6 +158,10 @@ enum AgentTools {
         Format: @_cdecl("script_main") public func scriptMain() -> Int32 { return 0 }
         No exit(). @unknown default on ScriptingBridge enums. Data via AGENT_SCRIPT_ARGS env.
 
+        PLANS: If you create a plan with plan_mode, you MUST execute every step before calling task_complete.
+        Update each step's status (in_progress → completed/failed) as you work through them.
+        Do NOT create a plan and then immediately call task_complete.
+
         load_groups/unload_groups: Switch tool groups mid-task (Coding, Automation, Web).
         Image paths: print paths — UI renders clickable links.
         """
@@ -800,7 +804,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.planMode,
-            description: "Manage step-by-step plans. Supports multiple concurrent plans via plan_id. Use 'create' to start, 'update' to change step status, 'read' to check progress, 'list' to see all plans, 'delete' to remove a plan.",
+            description: "Manage step-by-step plans. IMPORTANT: After creating a plan, you MUST execute every step — do NOT just create and complete. Update each step (in_progress → completed/failed) as you work. Actions: create, update, read, list, delete.",
             properties: [
                 "action": ["type": "string", "description": "Action: 'create', 'update', 'read', 'list', or 'delete'"],
                 "plan_id": ["type": "string", "description": "Plan identifier (returned by 'create', required for 'update'/'read'/'delete'. Omit for 'read' to read the most recent plan.)"],
