@@ -61,16 +61,23 @@ final class XcodeService: @unchecked Sendable {
     /// Build a project via ScriptingBridge. Blocks until build completes.
     /// Returns errors/warnings in file:line:col [Error] message format with code snippets.
     nonisolated func buildProject(projectPath: String) -> String {
-        guard isValidProjectPath(projectPath) else {
-            return "Error: Invalid project path. Must be a valid .xcodeproj or .xcworkspace path."
+        // Auto-detect project if no path given or path is invalid
+        let resolvedPath: String
+        if projectPath.isEmpty || !isValidProjectPath(projectPath) {
+            resolvedPath = autoSelectProject() ?? projectPath
+        } else {
+            resolvedPath = projectPath
+        }
+        guard isValidProjectPath(resolvedPath) else {
+            return "Error: Invalid project path '\(resolvedPath)'. Use xcode (action: list_projects) to find the correct project. Must be .xcodeproj or .xcworkspace."
         }
 
         guard let xcode: XcodeApplication = SBApplication(bundleIdentifier: Self.xcodeBundleID) else {
             return "Error: Failed to connect to Xcode"
         }
 
-        guard let workspace = xcode.open?(projectPath as Any) as? XcodeWorkspaceDocument else {
-            return "Error: Could not open workspace at \(projectPath)"
+        guard let workspace = xcode.open?(resolvedPath as Any) as? XcodeWorkspaceDocument else {
+            return "Error: Could not open workspace at \(resolvedPath)"
         }
 
         guard let buildResult = workspace.build?() else {
@@ -109,8 +116,9 @@ final class XcodeService: @unchecked Sendable {
 
     /// Run a project via ScriptingBridge. Builds first — only runs if build is clean.
     nonisolated func runProject(projectPath: String) -> String {
+        let resolvedPath = projectPath.isEmpty || !isValidProjectPath(projectPath) ? (autoSelectProject() ?? projectPath) : projectPath
         // Build first to check for errors (matching xcf's pattern)
-        let buildOutput = buildProject(projectPath: projectPath)
+        let buildOutput = buildProject(projectPath: resolvedPath)
         guard buildOutput == "Build succeeded" else {
             return buildOutput
         }
@@ -119,15 +127,15 @@ final class XcodeService: @unchecked Sendable {
             return "Error: Failed to connect to Xcode"
         }
 
-        guard let workspace = xcode.open?(projectPath as Any) as? XcodeWorkspaceDocument else {
-            return "Error: Could not open workspace at \(projectPath)"
+        guard let workspace = xcode.open?(resolvedPath as Any) as? XcodeWorkspaceDocument else {
+            return "Error: Could not open workspace at \(resolvedPath)"
         }
 
         workspace.stop?()
         Thread.sleep(forTimeInterval: 1)
         _ = workspace.runWithCommandLineArguments?(nil, withEnvironmentVariables: nil)
 
-        return "Run started for \(projectPath)"
+        return "Run started for \(resolvedPath)"
     }
 
     // MARK: - List Projects
@@ -196,6 +204,28 @@ final class XcodeService: @unchecked Sendable {
         }
 
         return selected
+    }
+
+    /// Auto-select the first open .xcodeproj project (not .xcworkspace wrappers).
+    private nonisolated func autoSelectProject() -> String? {
+        guard let xcode: XcodeApplication = SBApplication(bundleIdentifier: Self.xcodeBundleID) else { return nil }
+        guard let documents = xcode.documents?() else { return nil }
+
+        var projects: [String] = []
+        for case let document as XcodeDocument in documents {
+            guard let name = document.name, let path = document.path else { continue }
+            if name.hasSuffix(".xcodeproj") {
+                projects.append(path)
+            }
+        }
+        // Prefer .xcodeproj over .xcworkspace
+        if let first = projects.first { return first }
+        // Fallback to any workspace
+        for case let document as XcodeDocument in documents {
+            guard let name = document.name, let path = document.path else { continue }
+            if name.hasSuffix(".xcworkspace") { return path }
+        }
+        return nil
     }
 
     // MARK: - Schemes
