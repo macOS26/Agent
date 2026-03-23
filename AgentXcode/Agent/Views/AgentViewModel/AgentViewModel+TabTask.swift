@@ -302,7 +302,7 @@ extension AgentViewModel {
                     tab.llmMessages = messages
                 } else if !hasToolUse {
                     // No tool use this iteration — just nudge and continue
-                    messages.append(["role": "user", "content": "Continue. Use tools to perform actions. Call task_complete when finished."])
+                    messages.append(["role": "user", "content": "Continue. You MUST use tools — do not output code as text. Use update_agent_script or create_agent_script to write scripts, read_file/write_file/edit_file for other files. Call task_complete when finished."])
                     tab.llmMessages = messages
                 }
 
