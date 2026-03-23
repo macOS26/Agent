@@ -149,8 +149,8 @@ enum AgentTools {
         NEVER output code as text — use agent_script (action: create/update) for scripts, write_file/edit_file for files.
 
         DIRECT TOOLS (call by name — no action parameter needed):
-        read_file, write_file, edit_file, list_files, search_files, read_dir,
-        task_complete, execute_agent_command, execute_daemon_command, apple_event_query.
+        read_file, write_file, edit_file, list_files, search_files, read_dir, task_complete,
+        execute_agent_command, execute_daemon_command, apple_event_query.
 
         ACTION TOOLS (require "action" parameter — see available actions):
         file_manager: read, write, edit, list, search, read_dir, create_diff, apply_diff
@@ -353,24 +353,7 @@ enum AgentTools {
             ],
             required: ["file_path", "old_string", "new_string"]
         ),
-        ToolDef(
-            name: Name.createDiff,
-            description: "Compare two text strings and return a pretty D1F diff showing retained, deleted, and inserted lines with emoji markers.",
-            properties: [
-                "source": ["type": "string", "description": "The original text"],
-                "destination": ["type": "string", "description": "The modified text"],
-            ],
-            required: ["source", "destination"]
-        ),
-        ToolDef(
-            name: Name.applyDiff,
-            description: "Apply a D1F ASCII diff to a file. The diff must use emoji line prefixes. Returns the patched file content.",
-            properties: [
-                "file_path": ["type": "string", "description": "Absolute path to the file to patch"],
-                "diff": ["type": "string", "description": "D1F ASCII diff text with emoji line prefixes"],
-            ],
-            required: ["file_path", "diff"]
-        ),
+        // create_diff and apply_diff available via file_manager actions
         ToolDef(
             name: Name.listFiles,
             description: "Find files matching a glob pattern. Use instead of `find`. Excludes hidden files and .build directories.",
