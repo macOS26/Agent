@@ -41,9 +41,13 @@ final class SystemPromptService {
     /// READ ONLY header prefix for locked prompts (never auto-overwritten, even on version change).
     private static let readOnlyPrefix = "// Agent! READ ONLY v"
 
-    /// Current app version from the bundle.
+    /// Bump this when system prompt content changes to force re-sync of saved prompts.
+    private static let promptRevision = "2"
+
+    /// Combined version: app version + prompt revision. Change in either triggers re-sync.
     private static let appVersion: String = {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
+        let bundleVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
+        return "\(bundleVersion).\(promptRevision)"
     }()
 
     private init() {}
