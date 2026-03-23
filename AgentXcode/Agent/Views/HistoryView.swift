@@ -11,8 +11,8 @@ struct HistoryView: View {
     @State private var selectedTaskType: TaskViewType = .prompts
     enum TaskViewType: String, CaseIterable {
         case prompts = "Prompts"
-        case errors = "Error History"
         case summaries = "Task Summaries"
+        case errors = "Error History"
     }
 
     private var currentItems: [String] {
