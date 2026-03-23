@@ -329,13 +329,13 @@ struct ContentView: View {
             if let prompt = activeTaskPrompt, !prompt.isEmpty {
                 VStack(spacing: 0) {
                     HStack(spacing: 6) {
-                        Button { showAppleAIBanner.toggle() } label: {
-                            Image(systemName: activeAppleAIPrompt != nil ? "brain.fill" : "play.fill")
+                        Button { if activeAppleAIPrompt != nil { showAppleAIBanner.toggle() } } label: {
+                            Image(systemName: "play.fill")
                                 .font(.caption2)
                                 .foregroundStyle(.white)
                         }
                         .buttonStyle(.plain)
-                        .help(activeAppleAIPrompt != nil ? "Toggle Apple AI prompt" : "Running")
+                        .help("Running")
                         Text(prompt)
                             .font(.caption)
                             .lineLimit(1)
