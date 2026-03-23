@@ -25,10 +25,10 @@ struct AppleIntelligencePopover: View {
                 LoRASettingsView()
             }
             .padding(16)
-            .padding(.bottom, 35)
+            .padding(.bottom, 20)
         }
         .frame(width: 380)
-        .frame(maxHeight: 700)
+        .frame(maxHeight: 580)
     }
 
     // MARK: - Mediator Section
