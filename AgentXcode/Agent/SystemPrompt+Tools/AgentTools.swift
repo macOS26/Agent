@@ -64,6 +64,7 @@ enum AgentTools {
         static let updateAgentScript = "update_agent_script"
         static let runAgentScript = "run_agent_script"
         static let deleteAgentScript = "delete_agent_script"
+        static let combineAgentScripts = "combine_agent_scripts"
         // SDEF
         static let lookupSdef = "lookup_sdef"
         // Xcode
@@ -123,6 +124,7 @@ enum AgentTools {
         You are an autonomous macOS agent. User: "\(userName)", home: "\(userHome)".
         Project: \(folder). Always cd here first. Call task_complete when done.
         Don't repeat stdout — user sees it live. Don't ask questions — just act.
+        NEVER output code as text — always use tools: create_agent_script/update_agent_script for scripts, write_file/edit_file for other files.
 
         TOOL PRIORITY: Native tools → MCP servers → shell (last resort).
         Prefer read_file/edit_file/write_file over cat/sed. Prefer xcode_build over xcodebuild.
@@ -173,6 +175,7 @@ enum AgentTools {
         CORE RULES:
         - Act, don't explain. Never ask questions. Call \(n.taskComplete) when done.
         - Don't repeat script stdout — user sees it live.
+        - NEVER output code as text — use \(n.createAgentScript)/\(n.updateAgentScript) for scripts, \(n.writeFile)/\(n.editFile) for files.
         - Current folder: \(folder) (default for operations)
         
         TOOL PRIORITY:
@@ -190,7 +193,7 @@ enum AgentTools {
         • File/Diff: \(n.readFile), \(n.writeFile), \(n.editFile), \(n.listFiles), \(n.searchFiles), \(n.createDiff), \(n.applyDiff)
         • Git: \(n.gitStatus), \(n.gitDiff), \(n.gitLog), \(n.gitCommit), \(n.gitDiffPatch), \(n.gitBranch)
         • Xcode: \(n.xcodeBuild) (PREFERRED) → MCP → xcodebuild shell (LAST RESORT)
-        • Agent Scripts (100% Swift, ScriptingBridge only for app automation): \(n.listAgentScripts), \(n.readAgentScript), \(n.createAgentScript), \(n.updateAgentScript), \(n.runAgentScript), \(n.deleteAgentScript)
+        • Agent Scripts (100% Swift, ScriptingBridge only for app automation): \(n.listAgentScripts), \(n.readAgentScript), \(n.createAgentScript), \(n.updateAgentScript), \(n.runAgentScript), \(n.deleteAgentScript), \(n.combineAgentScripts)
         • Automation: \(n.runApplescript), \(n.runOsascript), \(n.executeJavascript), \(n.appleEventQuery), \(n.lookupSdef)
         • Accessibility: ax_* tools (last resort for UI)
         • Web: web_*, selenium_*
@@ -241,6 +244,7 @@ enum AgentTools {
         Name.createAgentScript:    #"create_agent_script {"name": "MyScript", "content": "..."}"#,
         Name.updateAgentScript:    #"update_agent_script {"name": "MyScript", "content": "..."}"#,
         Name.deleteAgentScript:    #"delete_agent_script {"name": "MyScript"}"#,
+        Name.combineAgentScripts:  #"combine_agent_scripts {"source_a": "ScriptA", "source_b": "ScriptB", "target": "Combined"}"#,
         Name.lookupSdef:           #"lookup_sdef {"bundle_id": "com.apple.Music"}"#,
         Name.xcodeBuild:           #"xcode_build {"project_path": "/path/to/MyApp.xcodeproj"}"#,
         Name.xcodeListProjects:    "xcode_list_projects",
@@ -540,6 +544,16 @@ enum AgentTools {
                 "name": ["type": "string", "description": "Script filename"],
             ],
             required: ["name"]
+        ),
+        ToolDef(
+            name: Name.combineAgentScripts,
+            description: "Combine two Swift scripts into one. Reads both, deduplicates imports, merges the code, and writes the result to the target script.",
+            properties: [
+                "source_a": ["type": "string", "description": "First script name (with or without .swift)"],
+                "source_b": ["type": "string", "description": "Second script name (with or without .swift)"],
+                "target": ["type": "string", "description": "Output script name (with or without .swift). Can be one of the sources or a new name."],
+            ],
+            required: ["source_a", "source_b", "target"]
         ),
         // --- Automation: AppleScript & osascript ---
         ToolDef(
