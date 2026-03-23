@@ -446,6 +446,20 @@ final class AgentViewModel {
         }
     }
 
+    /// Clear history by type: "Prompts", "Error History", or "Task Summaries".
+    func clearHistory(type: String) {
+        switch type {
+        case "Prompts":
+            clearCurrentTabPromptHistory()
+        case "Error History":
+            ErrorHistory.shared.clear()
+        case "Task Summaries":
+            history.clearAll()
+        default:
+            break
+        }
+    }
+
     let helperService = HelperService()
     let userService = UserService()
     let scriptService = ScriptService()

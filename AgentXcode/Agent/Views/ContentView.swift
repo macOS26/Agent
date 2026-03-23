@@ -200,7 +200,7 @@ struct ContentView: View {
                         errorHistory: viewModel.errorHistory,
                         taskSummaries: viewModel.taskSummaries,
                         tabName: viewModel.currentTabName,
-                        onClear: { viewModel.clearCurrentTabPromptHistory() },
+                        onClear: { type in viewModel.clearHistory(type: type) },
                         onRerun: { prompt in
                             // Set the prompt in the current tab's input field and run it
                             if let selectedId = viewModel.selectedTabId,

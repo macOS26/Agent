@@ -5,7 +5,7 @@ struct HistoryView: View {
     let errorHistory: [String]
     let taskSummaries: [String]
     let tabName: String
-    let onClear: () -> Void
+    let onClear: (String) -> Void
     var onRerun: ((String) -> Void)? = nil
 
     @State private var selectedTaskType: TaskViewType = .prompts
@@ -81,7 +81,7 @@ struct HistoryView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
-                Button("Clear All") { onClear() }
+                Button("Clear All") { onClear(selectedTaskType.rawValue) }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
                     .disabled(currentItems.isEmpty)
