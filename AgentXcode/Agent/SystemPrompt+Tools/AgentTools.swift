@@ -142,11 +142,11 @@ enum AgentTools {
         You are an autonomous macOS agent. User: "\(userName)", home: "\(userHome)".
         Project: \(folder). Always cd here first. Call task_complete when done.
         Don't repeat stdout — user sees it live. Don't ask questions — just act.
-        NEVER output code as text — always use tools: agent_script (action: create/update) for scripts, file (action: write/edit) for other files.
+        NEVER output code as text — always use tools: agent_script (action: create/update) for scripts, write_file/edit_file for other files.
 
-        TOOL PRIORITY: Native tools (file, git, xcode) → MCP servers → shell (last resort).
-        Prefer file tool over cat/sed/find/grep. Prefer xcode tool over xcodebuild shell.
-        file action write returns count only — verify with file action read.
+        TOOL PRIORITY: Native tools (read_file, write_file, edit_file, git, xcode) → MCP servers → shell (last resort).
+        Prefer read_file/edit_file/write_file over cat/sed. Prefer xcode tool over xcodebuild shell.
+        write_file returns count only — verify with read_file.
 
         TCC CONTEXT:
         - Full TCC (in Agent process): agent_script (action: run), apple_event_query, run_applescript, run_osascript, accessibility tool
@@ -195,11 +195,11 @@ enum AgentTools {
         CORE RULES:
         - Act, don't explain. Never ask questions. Call \(n.taskComplete) when done.
         - Don't repeat script stdout — user sees it live.
-        - NEVER output code as text — use \(n.agentScript) (action: create/update) for scripts, \(n.file) (action: write/edit) for files.
+        - NEVER output code as text — use \(n.agentScript) (action: create/update) for scripts, \(n.writeFile)/\(n.editFile) for files.
         - Current folder: \(folder) (default for operations)
 
         TOOL PRIORITY:
-        1. Native tools (\(n.file), \(n.git), \(n.xcode))
+        1. Native tools (\(n.readFile), \(n.writeFile), \(n.editFile), \(n.git), \(n.xcode))
         2. MCP tools (mcp_*)
         3. Shell (\(n.executeAgentCommand), \(n.executeDaemonCommand)) ONLY if native/MCP unavailable
 
@@ -210,7 +210,7 @@ enum AgentTools {
         Never use shell commands for Automation/Accessibility — no TCC.
 
         KEY TOOL CATEGORIES:
-        • File: \(n.file) (actions: read, write, edit, create_diff, apply_diff, list, search)
+        • File: \(n.readFile), \(n.writeFile), \(n.editFile), \(n.listFiles), \(n.searchFiles), \(n.createDiff), \(n.applyDiff)
         • Git: \(n.git) (actions: status, diff, log, commit, diff_patch, branch)
         • Xcode: \(n.xcode) (actions: build, run, list_projects, select_project)
         • Workflow: \(n.agentScript), \(n.planMode)
@@ -327,27 +327,73 @@ enum AgentTools {
     }
 
     nonisolated(unsafe) private static let commonTools: [ToolDef] = [
-        // --- File (consolidated) ---
+        // --- Coding Tools ---
         ToolDef(
-            name: Name.file,
-            description: "File operations. Actions: read (with line numbers), write (create/overwrite), edit (find+replace text), create_diff (compare texts), apply_diff (patch file), list (find by glob), search (grep by regex). Use instead of cat/sed/find/grep.",
+            name: Name.readFile,
+            description: "Read file contents with line numbers. Use instead of `cat`. Returns numbered lines for easy reference in edit_file.",
             properties: [
-                "action": ["type": "string", "description": "Action: read, write, edit, create_diff, apply_diff, list, or search"],
-                "file_path": ["type": "string", "description": "Absolute file path (for read/write/edit/apply_diff)"],
-                "content": ["type": "string", "description": "For write: full file content"],
-                "old_string": ["type": "string", "description": "For edit: exact text to find"],
-                "new_string": ["type": "string", "description": "For edit: replacement text"],
-                "replace_all": ["type": "boolean", "description": "For edit: replace all occurrences (default false)"],
-                "offset": ["type": "integer", "description": "For read: 1-based start line (default 1)"],
-                "limit": ["type": "integer", "description": "For read: max lines (default 2000)"],
-                "source": ["type": "string", "description": "For create_diff: original text"],
-                "destination": ["type": "string", "description": "For create_diff: modified text"],
-                "diff": ["type": "string", "description": "For apply_diff: D1F ASCII diff text"],
-                "pattern": ["type": "string", "description": "For list: glob pattern. For search: regex pattern"],
-                "path": ["type": "string", "description": "For list/search: directory to search in"],
-                "include": ["type": "string", "description": "For search: file glob filter (e.g. *.swift)"],
+                "file_path": ["type": "string", "description": "Absolute path to the file to read"],
+                "offset": ["type": "integer", "description": "1-based line number to start from (default 1)"],
+                "limit": ["type": "integer", "description": "Max lines to return (default 2000)"],
             ],
-            required: ["action"]
+            required: ["file_path"]
+        ),
+        ToolDef(
+            name: Name.writeFile,
+            description: "Create or overwrite a file. Creates parent dirs automatically. Returns line count only — call read_file after to verify content.",
+            properties: [
+                "file_path": ["type": "string", "description": "Absolute path to the file to write"],
+                "content": ["type": "string", "description": "The full file content to write"],
+            ],
+            required: ["file_path", "content"]
+        ),
+        ToolDef(
+            name: Name.editFile,
+            description: "Replace exact text in a file. Use instead of sed/awk. You MUST read_file first. The old_string must be unique unless replace_all is true.",
+            properties: [
+                "file_path": ["type": "string", "description": "Absolute path to the file to edit"],
+                "old_string": ["type": "string", "description": "The exact text to find and replace"],
+                "new_string": ["type": "string", "description": "The replacement text"],
+                "replace_all": ["type": "boolean", "description": "Replace all occurrences (default false)"],
+            ],
+            required: ["file_path", "old_string", "new_string"]
+        ),
+        ToolDef(
+            name: Name.createDiff,
+            description: "Compare two text strings and return a pretty D1F diff showing retained, deleted, and inserted lines with emoji markers.",
+            properties: [
+                "source": ["type": "string", "description": "The original text"],
+                "destination": ["type": "string", "description": "The modified text"],
+            ],
+            required: ["source", "destination"]
+        ),
+        ToolDef(
+            name: Name.applyDiff,
+            description: "Apply a D1F ASCII diff to a file. The diff must use emoji line prefixes. Returns the patched file content.",
+            properties: [
+                "file_path": ["type": "string", "description": "Absolute path to the file to patch"],
+                "diff": ["type": "string", "description": "D1F ASCII diff text with emoji line prefixes"],
+            ],
+            required: ["file_path", "diff"]
+        ),
+        ToolDef(
+            name: Name.listFiles,
+            description: "Find files matching a glob pattern. Use instead of `find`. Excludes hidden files and .build directories.",
+            properties: [
+                "pattern": ["type": "string", "description": "Glob pattern (e.g. \"*.swift\", \"Package.swift\")"],
+                "path": ["type": "string", "description": "Directory to search in (default: user home). Always provide a project path for best results."],
+            ],
+            required: ["pattern"]
+        ),
+        ToolDef(
+            name: Name.searchFiles,
+            description: "Search file contents by regex pattern. Use instead of `grep`. Returns matching lines with file paths and line numbers.",
+            properties: [
+                "pattern": ["type": "string", "description": "Regex pattern to search for"],
+                "path": ["type": "string", "description": "Directory to search in (default: user home). Always provide a project path for best results."],
+                "include": ["type": "string", "description": "File glob filter (e.g. \"*.swift\", \"*.py\")"],
+            ],
+            required: ["pattern"]
         ),
         // --- Git (consolidated) ---
         ToolDef(

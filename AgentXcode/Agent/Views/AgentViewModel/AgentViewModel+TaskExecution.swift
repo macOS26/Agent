@@ -2858,7 +2858,7 @@ extension AgentViewModel {
                     messages.append(["role": "user", "content": "Continue with the task. Call task_complete when finished."])
                 } else if !hasToolUse {
                     // No tool use this iteration — just nudge and continue
-                    messages.append(["role": "user", "content": "Continue. You MUST use tools — do not output code as text. Use agent_script (action: create/update) to write scripts, read_file/write_file/edit_file for other files. Call task_complete when finished."])
+                    messages.append(["role": "user", "content": "Continue. You MUST use tools — do not output code as text. Use agent_script (action: create/update) for scripts, write_file/edit_file for files. Call task_complete when finished."])
                 }
 
             } catch {

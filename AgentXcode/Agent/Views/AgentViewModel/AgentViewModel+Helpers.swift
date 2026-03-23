@@ -55,18 +55,6 @@ extension AgentViewModel {
             default:       return ("list_javascript", newInput)
             }
 
-        case "file":
-            switch action {
-            case "read":       return ("read_file", newInput)
-            case "write":      return ("write_file", newInput)
-            case "edit":       return ("edit_file", newInput)
-            case "create_diff": return ("create_diff", newInput)
-            case "apply_diff": return ("apply_diff", newInput)
-            case "list":       return ("list_files", newInput)
-            case "search":     return ("search_files", newInput)
-            default:           return ("read_file", newInput)
-            }
-
         case "xcode":
             switch action {
             case "build":            return ("xcode_build", newInput)
