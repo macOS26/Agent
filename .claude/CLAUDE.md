@@ -34,21 +34,38 @@ A macOS SwiftUI app that uses SMAppService + a privileged Launch Daemon to give 
 - HelperProgressProtocol: `progressUpdate(_:)` for streaming output
 - Uses `.privileged` option for NSXPCConnection
 
-### Claude API Integration
-- Uses Anthropic Messages API (v2023-06-01) with SSE streaming
-- Tools: `execute_daemon_command` (root shell), `execute_agent_command` (user shell), `task_complete`, `apple_event_query`, `run_agent_script`, etc.
-- Up to 50 iterations per task
-- LLM text streams token-by-token to activity log in real time
-- System prompt warns that ~ = /var/root in daemon context; uses actual user home path
-- Supports vision: screenshots encoded as base64 PNG in content blocks
-- Task history injected into system prompt for memory across tasks
+### LLM Integration
+- Multi-provider: Claude, Ollama, OpenAI-compatible, Apple Intelligence (Foundation Models)
+- SSE streaming for Claude; native tool calling for all providers
+- Consolidated CRUDL tools reduce tool count for small models:
+  - `git` (actions: status, diff, log, commit, diff_patch, branch)
+  - `xcode` (actions: build, run, list_projects, select_project, grant_permission)
+  - `agent_script` (actions: list, read, create, update, run, delete, combine)
+  - `applescript_tool` (actions: execute, lookup_sdef, list, run, save, delete)
+  - `javascript_tool` (actions: execute, list, run, save, delete)
+  - `accessibility` (actions: list_windows, get_properties, perform_action, click, type_text, etc.)
+  - `web` / `selenium` (consolidated web automation)
+  - `plan_mode` (actions: create, update, read, list, delete — multi-plan support)
+- File tools remain individual: `read_file`, `write_file`, `edit_file`, `list_files`, `search_files`, `create_diff`, `apply_diff`
+- `expandConsolidatedTool()` dispatcher maps consolidated names to legacy handlers
+- System prompts stored at ~/Documents/AgentScript/system/ with version-based re-sync
+- Prompt revision number in SystemPromptService forces re-sync on prompt changes
 
-### Scripting Priority (in system prompt)
+### Tool Groups
+- **Core**: task_complete, list_tools, load_groups, unload_groups, web_search, conversation tools
+- **Workflow**: git, agent_script, plan_mode, send_message
+- **Coding**: read_file, write_file, edit_file, create_diff, apply_diff, list_files, search_files, xcode
+- **Automation**: applescript_tool, accessibility, javascript_tool
+- **Web**: web, selenium
+- **Experimental**: apple_event_query
+- **User Agent / Launch Daemon**: execute_agent_command / execute_daemon_command
+- Groups loaded per task mode; Workflow always included alongside Core
+
+### Scripting Priority
 1. **apple_event_query** — zero compilation, instant ObjC dispatch for small queries
-2. **run_agent_script** — native Swift AgentScriptingBridge dylibs for persistent automation
-3. **NSAppleScript in scripts** — fallback if AgentScriptingBridge has issues with an app
-4. **osascript via Agent app** — last resort for one-off AppleScript; runs directly in the Agent app process (not via XPC) to inherit Automation permissions
-- Prefer `execute_agent_command` for all tasks; only escalate to root when truly needed
+2. **agent_script (action: run)** — native Swift dylibs with full TCC, 100% Swift (ScriptingBridge only for apps with SDEF)
+3. **applescript_tool (action: execute)** — NSAppleScript in-process with TCC
+- Prefer `execute_agent_command` for shell tasks; only escalate to root when truly needed
 - Chown/chmod files back to user after root operations
 
 ### Important Patterns
