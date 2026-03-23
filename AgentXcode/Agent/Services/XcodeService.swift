@@ -61,13 +61,8 @@ final class XcodeService: @unchecked Sendable {
     /// Build a project via ScriptingBridge. Blocks until build completes.
     /// Returns errors/warnings in file:line:col [Error] message format with code snippets.
     nonisolated func buildProject(projectPath: String) -> String {
-        // Auto-detect project if no path given or path is invalid
-        let resolvedPath: String
-        if projectPath.isEmpty || !isValidProjectPath(projectPath) {
-            resolvedPath = autoSelectProject() ?? projectPath
-        } else {
-            resolvedPath = projectPath
-        }
+        // Always auto-detect from open Xcode projects — ignore model's guessed path
+        let resolvedPath = autoSelectProject() ?? projectPath
         guard isValidProjectPath(resolvedPath) else {
             return "Error: Invalid project path '\(resolvedPath)'. Use xcode (action: list_projects) to find the correct project. Must be .xcodeproj or .xcworkspace."
         }
@@ -116,7 +111,7 @@ final class XcodeService: @unchecked Sendable {
 
     /// Run a project via ScriptingBridge. Builds first — only runs if build is clean.
     nonisolated func runProject(projectPath: String) -> String {
-        let resolvedPath = projectPath.isEmpty || !isValidProjectPath(projectPath) ? (autoSelectProject() ?? projectPath) : projectPath
+        let resolvedPath = autoSelectProject() ?? projectPath
         // Build first to check for errors (matching xcf's pattern)
         let buildOutput = buildProject(projectPath: resolvedPath)
         guard buildOutput == "Build succeeded" else {
@@ -305,6 +300,11 @@ final class XcodeService: @unchecked Sendable {
         guard !trimmed.contains("..") else { return false }
         guard !trimmed.contains(";") && !trimmed.contains("|") && !trimmed.contains("&") else { return false }
         guard trimmed.count < 1024 else { return false }
+        // Verify the project actually has a pbxproj (not just an empty wrapper)
+        if trimmed.hasSuffix(".xcodeproj") {
+            let pbxproj = (trimmed as NSString).appendingPathComponent("project.pbxproj")
+            guard FileManager.default.fileExists(atPath: pbxproj) else { return false }
+        }
         return true
     }
 }
