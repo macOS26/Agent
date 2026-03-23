@@ -132,19 +132,21 @@ struct HistoryView: View {
                 Spacer()
 
                 VStack(spacing: 4) {
-                    Button {
-                        if isExpanded {
-                            expandedItems.remove(item)
-                        } else {
-                            expandedItems.insert(item)
+                    if selectedTaskType != .prompts {
+                        Button {
+                            if isExpanded {
+                                expandedItems.remove(item)
+                            } else {
+                                expandedItems.insert(item)
+                            }
+                        } label: {
+                            Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
                         }
-                    } label: {
-                        Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+                        .buttonStyle(.plain)
+                        .help(isExpanded ? "Collapse" : "Expand full text")
                     }
-                    .buttonStyle(.plain)
-                    .help(isExpanded ? "Collapse" : "Expand full text")
 
                     if selectedTaskType == .prompts, let onRerun {
                         Button {
