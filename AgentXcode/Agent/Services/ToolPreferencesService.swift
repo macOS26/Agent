@@ -13,13 +13,13 @@ enum TaskMode: String, CaseIterable {
 
     /// Tool groups included for this mode. Core + Shell always included.
     var groups: Set<String> {
-        let base: Set<String> = ["Core"]
+        let base: Set<String> = ["Core", "Workflow"]
         switch self {
         case .coding:       return base.union(["Coding"])
         case .automation:   return base.union(["Automation", "Accessibility"])
         case .web:          return base.union(["Web"])
         case .conversation: return base
-        case .general:      return ["Core", "Coding", "Automation", "Accessibility", "Web"]
+        case .general:      return ["Core", "Workflow", "Coding", "Automation", "Accessibility", "Web"]
         }
     }
 
@@ -89,9 +89,9 @@ final class ToolPreferencesService {
                               "ax_set_properties", "ax_find_element", "ax_get_children"]),
         "Core": Set(["task_complete", "list_tools", "list_mcp_tools", "load_groups", "unload_groups", "web_search",
                     "write_text", "transform_text", "send_message", "about_self", "fix_text",
-                    "list_agent_scripts", "read_agent_script", "create_agent_script", "update_agent_script",
-                    "run_agent_script", "delete_agent_script", "combine_agent_scripts",
                     "plan_mode"]),
+        "Workflow": Set(["list_agent_scripts", "read_agent_script", "create_agent_script", "update_agent_script",
+                        "run_agent_script", "delete_agent_script", "combine_agent_scripts"]),
         "User Agent": Set(["execute_agent_command"]),
         "Launch Daemon": Set(["execute_daemon_command"]),
         "Web": Set(["web_open", "web_find", "web_click", "web_type", "web_execute_js", "web_get_url", "web_get_title",
