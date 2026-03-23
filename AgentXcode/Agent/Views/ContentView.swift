@@ -280,9 +280,12 @@ struct ContentView: View {
 
             // Search bar
             if showSearch {
-                HStack(spacing: 6) {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundStyle(.secondary)
+                HStack(spacing: 8) {
+                    Button { isSearchFieldFocused = true } label: {
+                        Image(systemName: "magnifyingglass")
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
                     TextField("Find in log...", text: $searchText)
                         .textFieldStyle(.roundedBorder)
                         .controlSize(.small)
@@ -292,7 +295,7 @@ struct ContentView: View {
                         Text(totalMatches > 0 ? "\(currentMatchIndex + 1)/\(totalMatches)" : "0 results")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                            .frame(minWidth: 60)
+                            .frame(minWidth: 50)
                         Button { previousMatch() } label: {
                             Image(systemName: "chevron.up")
                         }
@@ -306,7 +309,6 @@ struct ContentView: View {
                         .controlSize(.small)
                         .disabled(totalMatches == 0)
                     }
-                    Spacer()
                     Button { showSearch = false; searchText = "" } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(.secondary)
