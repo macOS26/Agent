@@ -25,7 +25,7 @@ struct AppleIntelligencePopover: View {
                 LoRASettingsView()
             }
             .padding(16)
-            .padding(.bottom, 15)
+            .padding(.bottom, 35)
         }
         .frame(width: 380)
         .frame(maxHeight: 700)
