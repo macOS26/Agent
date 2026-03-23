@@ -130,12 +130,25 @@ final class ScriptTab: Identifiable {
         }
     }
 
+    /// Max chars to keep in activityLog to prevent UI beach ball.
+    /// ActivityLogView renders at most 30K, so 60K gives scrollback headroom.
+    private static let maxLogChars = 60_000
+
     func flush() {
         logFlushTask?.cancel()
         logFlushTask = nil
         if !logBuffer.isEmpty {
             activityLog += logBuffer
             logBuffer = ""
+            // Trim old content to keep UI responsive during heavy streaming
+            if activityLog.count > Self.maxLogChars {
+                let dropCount = activityLog.count - Self.maxLogChars
+                let idx = activityLog.index(activityLog.startIndex, offsetBy: dropCount)
+                // Find next newline so we don't cut mid-line
+                if let newlineIdx = activityLog[idx...].firstIndex(of: "\n") {
+                    activityLog = "...(earlier output trimmed)...\n" + String(activityLog[activityLog.index(after: newlineIdx)...])
+                }
+            }
         }
     }
 
