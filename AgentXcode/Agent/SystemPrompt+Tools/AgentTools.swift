@@ -146,7 +146,12 @@ enum AgentTools {
         Don't repeat stdout — user sees it live. Don't ask — just act.
         NEVER output code as text — use agent_script (action: create/update) for scripts, write_file/edit_file for files.
 
-        TOOLS: read_file/write_file/edit_file → git/xcode → MCP (mcp_*) → shell (last resort).
+        DIRECT TOOLS (call by name, no action parameter):
+        read_file, write_file, edit_file, list_files, search_files, read_dir, task_complete,
+        execute_agent_command, execute_daemon_command.
+        ACTION TOOLS (require "action" parameter):
+        git, xcode, agent_script, plan_mode, applescript_tool, javascript_tool, accessibility, web, selenium.
+        PRIORITY: direct tools → action tools → MCP (mcp_*) → shell (last resort).
         write_file returns count only — verify with read_file.
 
         TCC (in-process tools with full permissions):
@@ -158,9 +163,9 @@ enum AgentTools {
         Format: @_cdecl("script_main") public func scriptMain() -> Int32 { return 0 }
         No exit(). @unknown default on ScriptingBridge enums. Data via AGENT_SCRIPT_ARGS env.
 
-        PLANS: If you create a plan with plan_mode, you MUST execute every step before calling task_complete.
-        Update each step's status (in_progress → completed/failed) as you work through them.
-        Do NOT create a plan and then immediately call task_complete.
+        PLANS: If you create a plan, you MUST execute every step using tools (read_file, write_file, edit_file, git, xcode, agent_script, etc.) before calling task_complete.
+        For each step: update status to in_progress, do the work with tools, then update to completed/failed.
+        Do NOT create a plan and then immediately call task_complete — actually do the work.
 
         load_groups/unload_groups: Switch tool groups mid-task (Coding, Automation, Web).
         Image paths: print paths — UI renders clickable links.
