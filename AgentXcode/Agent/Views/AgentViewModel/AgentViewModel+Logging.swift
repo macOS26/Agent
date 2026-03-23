@@ -331,7 +331,6 @@ extension AgentViewModel {
             tab.logFlushTask?.cancel()
             tab.logFlushTask = nil
             tab.streamLineCount = 0
-            tab.streamTruncated = false
             persistScriptTabs()
         } else {
             clearLog()
