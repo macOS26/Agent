@@ -325,7 +325,7 @@ enum AgentTools {
         // --- Coding Tools ---
         ToolDef(
             name: Name.readFile,
-            description: "Read file contents with line numbers. Use instead of `cat`. Returns numbered lines for easy reference in edit_file.",
+            description: "Read file contents with line numbers. Large files (200+ lines) are auto-truncated — use offset and limit to read specific sections. Use instead of `cat`.",
             properties: [
                 "file_path": ["type": "string", "description": "Absolute path to the file to read"],
                 "offset": ["type": "integer", "description": "1-based line number to start from (default 1)"],

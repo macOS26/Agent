@@ -161,6 +161,10 @@ extension AgentViewModel {
             let path = input["file_path"] as? String ?? ""
             guard let data = FileManager.default.contents(atPath: path),
                   let content = String(data: data, encoding: .utf8) else { return "Error: cannot read \(path)" }
+            let lines = content.components(separatedBy: "\n")
+            if lines.count > 100 && input["offset"] == nil && input["limit"] == nil {
+                return lines.prefix(100).joined(separator: "\n") + "\n\n--- FILE HAS \(lines.count) LINES (showing first 100) ---\nUse read_file with offset and limit for specific sections."
+            }
             return content
         }
         if name == "write_file" {
@@ -1540,7 +1544,17 @@ extension AgentViewModel {
                             let output = await Self.offMain { CodingService.readFile(path: filePath, offset: offset, limit: limit) }
                             let lang = Self.langFromPath(filePath)
                             appendLog(Self.codeFence(Self.preview(output, lines: readFilePreviewLines), language: lang))
-                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                            // For large files without offset/limit, return a truncated preview
+                            // and tell the model to use offset/limit for specific sections
+                            let lineCount = output.components(separatedBy: "\n").count
+                            let maxLines = 200
+                            if lineCount > maxLines && offset == nil && limit == nil {
+                                let preview = output.components(separatedBy: "\n").prefix(maxLines).joined(separator: "\n")
+                                let toolOutput = preview + "\n\n--- FILE HAS \(lineCount) LINES (showing first \(maxLines)) ---\nUse read_file with offset and limit to read specific sections. Example: offset: 200, limit: 100"
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": toolOutput])
+                            } else {
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                            }
                         }
 
                         if name == "write_file" {

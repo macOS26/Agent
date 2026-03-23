@@ -485,8 +485,18 @@ extension AgentViewModel {
             let lang = Self.langFromPath(filePath)
             tab.appendLog(Self.codeFence(Self.preview(output, lines: readFilePreviewLines), language: lang))
             tab.flush()
+            // For large files without offset/limit, truncate and guide model to use pagination
+            let lineCount = output.components(separatedBy: "\n").count
+            let maxLines = 200
+            let toolOutput: String
+            if lineCount > maxLines && offset == nil && limit == nil {
+                let preview = output.components(separatedBy: "\n").prefix(maxLines).joined(separator: "\n")
+                toolOutput = preview + "\n\n--- FILE HAS \(lineCount) LINES (showing first \(maxLines)) ---\nUse read_file with offset and limit to read specific sections. Example: offset: 200, limit: 100"
+            } else {
+                toolOutput = output
+            }
             return TabToolResult(
-                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": toolOutput],
                 isComplete: false
             )
         }
