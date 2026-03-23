@@ -12,7 +12,7 @@ struct ToolsView: View {
         "Xcode": ({ ($0.name.hasPrefix("xcode_") && $0.name != "xcode_grant_permission") }, "hammer"),
         "Automation": ({ ["run_applescript", "run_osascript", "execute_javascript", "apple_script_tool"].contains($0.name) }, "gearshape.2"),
         "Experimental": ({ ["apple_event_query", "lookup_sdef", "xcode_grant_permission", "javascript_tool"].contains($0.name) }, "flask"),
-        "Accessibility": ({ $0.name.hasPrefix("ax_") }, "accessibility"),
+        "Accessibility": ({ $0.name == "accessibility" }, "accessibility"),
         "Core": ({ ["task_complete", "list_tools", "list_mcp_tools", "load_groups", "unload_groups", "web_search", "write_text", "transform_text", "send_message", "about_self", "fix_text"].contains($0.name) }, "checkmark.circle"),
         "Workflow": ({ $0.name == "agent_script" || $0.name == "plan_mode" }, "flowchart"),
         "User Agent": ({ $0.name == "execute_agent_command" }, "person"),

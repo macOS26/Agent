@@ -34,7 +34,9 @@ enum AgentTools {
         static let executeDaemonCommand = "execute_daemon_command"
         // Task
         static let taskComplete = "task_complete"
-        // Accessibility
+        // Accessibility (consolidated)
+        static let accessibility = "accessibility"
+        // Legacy ax names (handlers still work)
         static let axListWindows = "ax_list_windows"
         static let axInspectElement = "ax_inspect_element"
         static let axGetProperties = "ax_get_properties"
@@ -556,291 +558,34 @@ enum AgentTools {
             ],
             required: ["action"]
         ),
-        // --- Accessibility Tools ---
+        // --- Accessibility (consolidated) ---
         ToolDef(
-            name: Name.axListWindows,
-            description: "List all visible windows from all applications with their positions and sizes. Returns JSON array with window ID, owner PID, owner name, window name, and bounds.",
+            name: Name.accessibility,
+            description: "macOS Accessibility API. Actions: list_windows, get_properties, perform_action, type_text, click, press_key, screenshot, set_properties, find_element, get_children. Use same role/title/value across calls to target same element.",
             properties: [
-                "limit": ["type": "integer", "description": "Maximum number of windows to return (default 50)"],
-            ],
-            required: []
-        ),
-        /* ax_inspect_element — use ax_get_properties instead (more flexible)
-        ToolDef(
-            name: Name.axInspectElement,
-            description: "Inspect accessibility element at a screen coordinate. Returns the accessibility hierarchy for the element at position (x, y).",
-            properties: [
+                "action": ["type": "string", "description": "Action: list_windows, get_properties, perform_action, type_text, click, press_key, screenshot, set_properties, find_element, get_children"],
+                "role": ["type": "string", "description": "AX role (e.g. AXButton, AXTextField)"],
+                "title": ["type": "string", "description": "Title/name to match (partial)"],
+                "value": ["type": "string", "description": "Value to match (partial)"],
+                "appBundleId": ["type": "string", "description": "App bundle ID to search within"],
                 "x": ["type": "number", "description": "Screen X coordinate"],
                 "y": ["type": "number", "description": "Screen Y coordinate"],
-                "depth": ["type": "integer", "description": "How deep to traverse the hierarchy (default 3)"],
-            ],
-            required: ["x", "y"]
-        ), */
-        ToolDef(
-            name: Name.axGetProperties,
-            description: "Get all properties of an accessibility element. Can find by role/title/value or by screen position. CRITICAL: If you just used ax_wait_for_element or ax_find_element, pass the SAME role/title/value parameters to this function.",
-            properties: [
-                "role": ["type": "string", "description": "Accessibility role to find (e.g., 'AXButton', 'AXTextField')"],
-                "title": ["type": "string", "description": "Title or name to match (partial match)"],
-                "value": ["type": "string", "description": "Value to match (partial match) - useful for text fields with specific content"],
-                "appBundleId": ["type": "string", "description": "Optional bundle ID to search within a specific app"],
-                "x": ["type": "number", "description": "Screen X coordinate for position-based lookup"],
-                "y": ["type": "number", "description": "Screen Y coordinate for position-based lookup"],
-            ],
-            required: []
-        ),
-        ToolDef(
-            name: Name.axPerformAction,
-            description: "Perform an accessibility action on an element. SECURITY: Protected roles (AXSecureTextField, AXPasswordField) can be disabled in Accessibility Settings. CRITICAL: If you just used ax_wait_for_element or ax_find_element, pass the SAME role/title/value parameters to this function - the element locator must match exactly.",
-            properties: [
-                "role": ["type": "string", "description": "Accessibility role to find (e.g., 'AXButton', 'AXTextField')"],
-                "title": ["type": "string", "description": "Title to match (partial match)"],
-                "value": ["type": "string", "description": "Value to match (partial match) - useful for text fields with specific content"],
-                "appBundleId": ["type": "string", "description": "Bundle ID of the target app"],
-                "x": ["type": "number", "description": "Screen X coordinate for position-based lookup"],
-                "y": ["type": "number", "description": "Screen Y coordinate for position-based lookup"],
-                "action": ["type": "string", "description": "Accessibility action to perform (e.g., 'AXPress', 'AXConfirm')"],
+                "text": ["type": "string", "description": "For type_text: text to type"],
+                "button": ["type": "string", "description": "For click: left/right/middle (default left)"],
+                "clicks": ["type": "integer", "description": "For click: 1 or 2 (default 1)"],
+                "keyCode": ["type": "integer", "description": "For press_key: macOS virtual key code"],
+                "modifiers": ["type": "array", "description": "For press_key: command/option/control/shift", "items": ["type": "string"]],
+                "width": ["type": "number", "description": "For screenshot: region width"],
+                "height": ["type": "number", "description": "For screenshot: region height"],
+                "windowId": ["type": "integer", "description": "For screenshot/list_windows: window ID"],
+                "limit": ["type": "integer", "description": "For list_windows: max windows (default 50)"],
+                "ax_action": ["type": "string", "description": "For perform_action: AX action (e.g. AXPress, AXConfirm)"],
+                "properties": ["type": "object", "description": "For set_properties: key-value pairs to set"],
+                "timeout": ["type": "number", "description": "For find_element: max seconds to wait (default 5)"],
+                "depth": ["type": "integer", "description": "For get_children: traversal depth (default 3)"],
             ],
             required: ["action"]
         ),
-        /* ax_check_permission / ax_request_permission — one-time setup, not needed for automation
-        ToolDef(
-            name: Name.axCheckPermission,
-            description: "Check if Accessibility permission is granted to Agent.",
-            properties: [:],
-            required: []
-        ),
-        ToolDef(
-            name: Name.axRequestPermission,
-            description: "Request Accessibility permission. Shows the macOS system prompt for the user to approve.",
-            properties: [:],
-            required: []
-        ), */
-        // --- Accessibility Input Simulation (Phase 2) ---
-        ToolDef(
-            name: Name.axTypeText,
-            description: "Simulate typing text at the current cursor position or at specific coordinates. Uses CGEvent keyboard simulation.",
-            properties: [
-                "text": ["type": "string", "description": "Text to type"],
-                "x": ["type": "number", "description": "Optional X coordinate to click first before typing"],
-                "y": ["type": "number", "description": "Optional Y coordinate to click first before typing"],
-            ],
-            required: ["text"]
-        ),
-        ToolDef(
-            name: Name.axClick,
-            description: "Simulate a mouse click at screen coordinates.",
-            properties: [
-                "x": ["type": "number", "description": "Screen X coordinate (required)"],
-                "y": ["type": "number", "description": "Screen Y coordinate (required)"],
-                "button": ["type": "string", "description": "Mouse button: 'left' (default), 'right', or 'middle'"],
-                "clicks": ["type": "integer", "description": "Number of clicks: 1 (default) or 2 for double-click"],
-            ],
-            required: ["x", "y"]
-        ),
-        /* ax_scroll — can use ax_press_key with arrow keys instead
-        ToolDef(
-            name: Name.axScroll,
-            description: "Simulate scroll wheel at screen coordinates.",
-            properties: [
-                "x": ["type": "number", "description": "Screen X coordinate"],
-                "y": ["type": "number", "description": "Screen Y coordinate"],
-                "deltaX": ["type": "integer", "description": "Horizontal scroll amount (positive = right, negative = left)"],
-                "deltaY": ["type": "integer", "description": "Vertical scroll amount (positive = down, negative = up)"],
-            ],
-            required: ["x", "y"]
-        ), */
-        ToolDef(
-            name: Name.axPressKey,
-            description: "Simulate pressing a key with optional modifiers (Cmd, Option, Control, Shift).",
-            properties: [
-                "keyCode": ["type": "integer", "description": "macOS virtual key code (e.g., 36=Return, 48=Tab, 51=Delete, 53=Escape, 123-126=Arrow keys)"],
-                "modifiers": ["type": "array", "description": "Array of modifier keys: 'command', 'option', 'control', 'shift'", "items": ["type": "string"]],
-            ],
-            required: ["keyCode"]
-        ),
-        // --- Accessibility Screenshots (Phase 4) ---
-        ToolDef(
-            name: Name.axScreenshot,
-            description: "Capture a screenshot of a screen region or specific window. Requires Screen Recording permission. Returns the path to the saved PNG file.",
-            properties: [
-                "x": ["type": "number", "description": "X coordinate of region (optional, required for region capture)"],
-                "y": ["type": "number", "description": "Y coordinate of region (optional, required for region capture)"],
-                "width": ["type": "number", "description": "Width of region (optional, required for region capture)"],
-                "height": ["type": "number", "description": "Height of region (optional, required for region capture)"],
-                "windowId": ["type": "integer", "description": "Window ID to capture (optional, from ax_list_windows)"],
-            ],
-            required: []
-        ),
-        /* ax_get_audit_log — debugging only, not needed for automation
-        ToolDef(
-            name: Name.axGetAuditLog,
-            description: "Get recent accessibility audit log entries. Shows recent accessibility operations performed by the agent.",
-            properties: [
-                "limit": ["type": "integer", "description": "Maximum number of entries to return (default 50)"],
-            ],
-            required: []
-        ), */
-        // --- Accessibility Set Properties (Phase 6) ---
-        ToolDef(
-            name: Name.axSetProperties,
-            description: "Set accessibility property values on an element. CRITICAL for setting text fields, selections, slider values, etc. Can find element by role/title/value, by position, or within a specific app. CRITICAL: If you just used ax_wait_for_element or ax_find_element, pass the SAME role/title/value parameters to this function.",
-            properties: [
-                "role": ["type": "string", "description": "Accessibility role to find (e.g., 'AXTextField', 'AXSlider')"],
-                "title": ["type": "string", "description": "Title or name to match (partial match)"],
-                "value": ["type": "string", "description": "Value to match (partial match) - useful for text fields with specific content"],
-                "appBundleId": ["type": "string", "description": "Optional bundle ID to search within a specific app"],
-                "x": ["type": "number", "description": "Screen X coordinate for position-based lookup"],
-                "y": ["type": "number", "description": "Screen Y coordinate for position-based lookup"],
-                "properties": ["type": "object", "description": "Properties to set as key-value pairs. Common: 'AXValue' for text, 'AXSelected' for selection, 'AXValue' (with position dict) for sliders"],
-            ],
-            required: ["properties"]
-        ),
-        // --- Accessibility Find Element (Phase 6) ---
-        ToolDef(
-            name: Name.axFindElement,
-            description: "Find an accessibility element by role, title, or value with optional timeout. Returns element properties when found. Useful for waiting for UI elements to appear.",
-            properties: [
-                "role": ["type": "string", "description": "Accessibility role to find (e.g., 'AXButton', 'AXTextField')"],
-                "title": ["type": "string", "description": "Title or name to match (partial match)"],
-                "value": ["type": "string", "description": "Value to match (partial match in element's AXValue)"],
-                "appBundleId": ["type": "string", "description": "Optional bundle ID to search within a specific app"],
-                "timeout": ["type": "number", "description": "Maximum seconds to wait for element (default 5.0)"],
-            ],
-            required: []
-        ),
-        /* ax_get_focused_element — niche, ax_get_properties covers this
-        ToolDef(
-            name: Name.axGetFocusedElement,
-            description: "Get the currently focused accessibility element. Can optionally filter by app. Returns element properties.",
-            properties: [
-                "appBundleId": ["type": "string", "description": "Optional bundle ID to get focused element within a specific app"],
-            ],
-            required: []
-        ), */
-        // --- Accessibility Get Children (Phase 6) ---
-        ToolDef(
-            name: Name.axGetChildren,
-            description: "Get all children of an accessibility element. Useful for exploring UI hierarchy. CRITICAL: If you just used ax_wait_for_element or ax_find_element, pass the SAME role/title/value parameters to this function.",
-            properties: [
-                "role": ["type": "string", "description": "Accessibility role to find parent element"],
-                "title": ["type": "string", "description": "Title to match for parent element (partial match)"],
-                "value": ["type": "string", "description": "Value to match (partial match) - useful for text fields with specific content"],
-                "appBundleId": ["type": "string", "description": "Optional bundle ID to search within a specific app"],
-                "x": ["type": "number", "description": "Screen X coordinate for position-based parent lookup"],
-                "y": ["type": "number", "description": "Screen Y coordinate for position-based parent lookup"],
-                "depth": ["type": "integer", "description": "How deep to traverse children (default 3)"],
-            ],
-            required: []
-        ),
-        /* ax_drag — very niche, rarely needed for automation
-        ToolDef(
-            name: Name.axDrag,
-            description: "Perform a drag operation from one point to another. Simulates mouse down, drag, and mouse up.",
-            properties: [
-                "fromX": ["type": "number", "description": "Starting X coordinate"],
-                "fromY": ["type": "number", "description": "Starting Y coordinate"],
-                "toX": ["type": "number", "description": "Ending X coordinate"],
-                "toY": ["type": "number", "description": "Ending Y coordinate"],
-                "button": ["type": "string", "description": "Mouse button: 'left' (default), 'right', or 'middle'"],
-            ],
-            required: ["fromX", "fromY", "toX", "toY"]
-        ), */
-        /* ax_wait_for_element — ax_find_element already has timeout polling
-        ToolDef(
-            name: Name.axWaitForElement,
-            description: "Wait for an accessibility element to appear, polling periodically until found or timeout. Returns element properties when found. CRITICAL: When calling ax_perform_action or ax_set_properties after this, use the SAME role/title/value parameters to locate the element.",
-            properties: [
-                "role": ["type": "string", "description": "Accessibility role to find (e.g., 'AXButton', 'AXTextField')"],
-                "title": ["type": "string", "description": "Title or name to match (partial match)"],
-                "value": ["type": "string", "description": "Value to match (partial match) - useful for text fields"],
-                "appBundleId": ["type": "string", "description": "Optional bundle ID to search within a specific app"],
-                "timeout": ["type": "number", "description": "Maximum seconds to wait (default 10.0)"],
-                "pollInterval": ["type": "number", "description": "Seconds between polls (default 0.5)"],
-            ],
-            required: []
-        ), */
-        /* ax_show_menu — can use ax_click with right button or ax_perform_action AXShowMenu
-        ToolDef(
-            name: Name.axShowMenu,
-            description: "Show context menu for an element. Uses AXShowMenu action if available, otherwise simulates right-click at element center. Protected roles can be disabled in Accessibility Settings. CRITICAL: If you just used ax_wait_for_element or ax_find_element, pass the SAME role/title/value parameters to this function.",
-            properties: [
-                "role": ["type": "string", "description": "Accessibility role to find element"],
-                "title": ["type": "string", "description": "Title to match for element (partial match)"],
-                "value": ["type": "string", "description": "Value to match (partial match) - useful for text fields with specific content"],
-                "appBundleId": ["type": "string", "description": "Optional bundle ID to search within a specific app"],
-                "x": ["type": "number", "description": "Screen X coordinate for position-based lookup"],
-                "y": ["type": "number", "description": "Screen Y coordinate for position-based lookup"],
-            ],
-            required: []
-        ), */
-        /* ax_click_element — ax_find_element + ax_click covers this
-        ToolDef(
-            name: Name.axClickElement,
-            description: "Click an element by finding it semantically (role/title) and clicking its center.",
-            properties: [
-                "role": ["type": "string", "description": "Accessibility role to find"],
-                "title": ["type": "string", "description": "Title or name to match"],
-                "value": ["type": "string", "description": "Value to match"],
-                "appBundleId": ["type": "string", "description": "App bundle ID"],
-                "timeout": ["type": "number", "description": "Max seconds to wait (default 5.0)"],
-                "verify": ["type": "boolean", "description": "Capture screenshot for verification (default false)"],
-            ],
-            required: []
-        ), */
-        /* ax_wait_adaptive — ax_find_element with timeout covers this
-        ToolDef(
-            name: Name.axWaitAdaptive,
-            description: "Wait for an element with exponential backoff polling.",
-            properties: [
-                "role": ["type": "string", "description": "Accessibility role to find"],
-                "title": ["type": "string", "description": "Title or name to match"],
-                "value": ["type": "string", "description": "Value to match"],
-                "appBundleId": ["type": "string", "description": "App bundle ID"],
-                "timeout": ["type": "number", "description": "Max seconds to wait (default 10.0)"],
-                "initialDelay": ["type": "number", "description": "Initial polling delay (default 0.1)"],
-                "maxDelay": ["type": "number", "description": "Max polling delay (default 1.0)"],
-            ],
-            required: []
-        ), */
-        /* ax_type_into_element — ax_find_element + ax_type_text covers this
-        ToolDef(
-            name: Name.axTypeIntoElement,
-            description: "Type text into an element found by role/title.",
-            properties: [
-                "role": ["type": "string", "description": "Accessibility role of target element"],
-                "title": ["type": "string", "description": "Title to match"],
-                "text": ["type": "string", "description": "Text to type"],
-                "appBundleId": ["type": "string", "description": "App bundle ID"],
-                "verify": ["type": "boolean", "description": "Verify text was entered (default true)"],
-            ],
-            required: ["text"]
-        ), */
-        /* ax_highlight_element — debugging/visual only, not needed for automation
-        ToolDef(
-            name: Name.axHighlightElement,
-            description: "Temporarily highlight an element on screen with a colored overlay.",
-            properties: [
-                "role": ["type": "string", "description": "Accessibility role to find"],
-                "title": ["type": "string", "description": "Title or name to match"],
-                "value": ["type": "string", "description": "Value to match"],
-                "appBundleId": ["type": "string", "description": "App bundle ID"],
-                "x": ["type": "number", "description": "Screen X coordinate"],
-                "y": ["type": "number", "description": "Screen Y coordinate"],
-                "duration": ["type": "number", "description": "Highlight duration in seconds (default 2.0)"],
-                "color": ["type": "string", "description": "Color: red, green, blue, yellow, purple (default green)"],
-            ],
-            required: []
-        ), */
-        /* ax_get_window_frame — ax_list_windows already returns bounds
-        ToolDef(
-            name: Name.axGetWindowFrame,
-            description: "Get the exact position and frame of a window by its ID.",
-            properties: [
-                "windowId": ["type": "integer", "description": "Window ID from ax_list_windows"],
-            ],
-            required: ["windowId"]
-        ), */
         // --- Tool Discovery ---
         ToolDef(
             name: Name.listNativeTools,
