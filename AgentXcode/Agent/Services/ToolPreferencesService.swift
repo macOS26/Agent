@@ -77,8 +77,7 @@ final class ToolPreferencesService {
 
     /// Tool group definitions - maps group name to tool name prefixes
     static let toolGroups: [String: Set<String>] = [
-        "Coding": Set(["read_file", "write_file", "edit_file", "create_diff", "apply_diff", "list_files", "search_files",
-                       "git"]),
+        "Coding": Set(["read_file", "write_file", "edit_file", "create_diff", "apply_diff", "list_files", "search_files"]),
         "Xcode": Set(["xcode_build", "xcode_run", "xcode_list_projects", "xcode_select_project"]),
         "Automation": Set(["run_applescript", "run_osascript", "execute_javascript",
                           "apple_script_tool"]),
@@ -87,7 +86,7 @@ final class ToolPreferencesService {
         "Accessibility": Set(["accessibility"]),
         "Core": Set(["task_complete", "list_tools", "list_mcp_tools", "load_groups", "unload_groups", "web_search",
                     "write_text", "transform_text", "send_message", "about_self", "fix_text"]),
-        "Workflow": Set(["agent_script", "plan_mode"]),
+        "Workflow": Set(["agent_script", "plan_mode", "git"]),
         "User Agent": Set(["execute_agent_command"]),
         "Launch Daemon": Set(["execute_daemon_command"]),
         "Web": Set(["web_open", "web_find", "web_click", "web_type", "web_execute_js", "web_get_url", "web_get_title",
