@@ -15,7 +15,9 @@ enum AgentTools {
         static let applyDiff = "apply_diff"
         static let listFiles = "list_files"
         static let searchFiles = "search_files"
-        // Git Tools
+        // Git (consolidated CRUDL)
+        static let git = "git"
+        // Legacy git names (handlers still work)
         static let gitStatus = "git_status"
         static let gitDiff = "git_diff"
         static let gitLog = "git_log"
@@ -57,7 +59,9 @@ enum AgentTools {
         static let axTypeIntoElement = "ax_type_into_element"
         static let axHighlightElement = "ax_highlight_element"
         static let axGetWindowFrame = "ax_get_window_frame"
-        // Agent Script Management
+        // Agent Script (consolidated CRUDL)
+        static let agentScript = "agent_script"
+        // Legacy agent script names (handlers still work)
         static let listAgentScripts = "list_agent_scripts"
         static let readAgentScript = "read_agent_script"
         static let createAgentScript = "create_agent_script"
@@ -73,12 +77,16 @@ enum AgentTools {
         static let xcodeListProjects = "xcode_list_projects"
         static let xcodeSelectProject = "xcode_select_project"
         static let xcodeGrantPermission = "xcode_grant_permission"
-        // AppleScript Management
+        // AppleScript (consolidated CRUDL)
+        static let appleScriptTool = "apple_script_tool"
+        // Legacy AppleScript names (handlers still work)
         static let listAppleScripts = "list_apple_scripts"
         static let runAppleScript = "run_apple_script"
         static let saveAppleScript = "save_apple_script"
         static let deleteAppleScript = "delete_apple_script"
-        // JavaScript Management
+        // JavaScript (consolidated CRUDL)
+        static let javascriptTool = "javascript_tool"
+        // Legacy JavaScript names (handlers still work)
         static let listJavascript = "list_javascript"
         static let runJavascript = "run_javascript"
         static let saveJavascript = "save_javascript"
@@ -124,22 +132,22 @@ enum AgentTools {
         You are an autonomous macOS agent. User: "\(userName)", home: "\(userHome)".
         Project: \(folder). Always cd here first. Call task_complete when done.
         Don't repeat stdout — user sees it live. Don't ask questions — just act.
-        NEVER output code as text — always use tools: create_agent_script/update_agent_script for scripts, write_file/edit_file for other files.
+        NEVER output code as text — always use tools: agent_script (action: create/update) for scripts, write_file/edit_file for other files.
 
         TOOL PRIORITY: Native tools → MCP servers → shell (last resort).
         Prefer read_file/edit_file/write_file over cat/sed. Prefer xcode_build over xcodebuild.
         write_file returns count only — verify with read_file.
 
         TCC CONTEXT:
-        - Full TCC (in Agent process): run_agent_script, apple_event_query, run_applescript, run_osascript, ax_* tools
+        - Full TCC (in Agent process): agent_script (action: run), apple_event_query, run_applescript, run_osascript, ax_* tools
         - NO TCC: execute_agent_command (user, ~=\(userHome)), execute_daemon_command (root, ~=/var/root — chown back)
         - Never use shell for Automation/Accessibility — no TCC permissions.
 
         AGENT SCRIPTS: ~/Documents/AgentScript/agents/. List first, update existing.
         Scripts can be 100% Swift — no ScriptingBridge required. Use for any task: data processing, file ops, networking, etc.
         ScriptingBridge is only needed when automating apps that expose an AppleScript dictionary (SDEF).
-        To merge two scripts: use combine_agent_scripts tool (NOT text output).
-        To create/update scripts: use create_agent_script or update_agent_script tools (NOT text output).
+        To merge scripts: use agent_script tool with action 'combine' (NOT text output).
+        To create/update scripts: use agent_script tool with action 'create' or 'update' (NOT text output).
         Format: @_cdecl("script_main") public func scriptMain() -> Int32 { return 0 }
         Rules: No exit(). @unknown default on ScriptingBridge enums. Use lookup_sdef first for app automation.
         Data: AGENT_SCRIPT_ARGS env or json/{Name}_input.json/_output.json.
@@ -177,7 +185,7 @@ enum AgentTools {
         CORE RULES:
         - Act, don't explain. Never ask questions. Call \(n.taskComplete) when done.
         - Don't repeat script stdout — user sees it live.
-        - NEVER output code as text — use \(n.createAgentScript)/\(n.updateAgentScript) for scripts, \(n.writeFile)/\(n.editFile) for files.
+        - NEVER output code as text — use \(n.agentScript) (action: create/update) for scripts, \(n.writeFile)/\(n.editFile) for files.
         - Current folder: \(folder) (default for operations)
         
         TOOL PRIORITY:
@@ -193,9 +201,9 @@ enum AgentTools {
         
         KEY TOOL CATEGORIES:
         • File/Diff: \(n.readFile), \(n.writeFile), \(n.editFile), \(n.listFiles), \(n.searchFiles), \(n.createDiff), \(n.applyDiff)
-        • Git: \(n.gitStatus), \(n.gitDiff), \(n.gitLog), \(n.gitCommit), \(n.gitDiffPatch), \(n.gitBranch)
+        • Git: \(n.git) (actions: status, diff, log, commit, diff_patch, branch)
         • Xcode: \(n.xcodeBuild) (PREFERRED) → MCP → xcodebuild shell (LAST RESORT)
-        • Agent Scripts (100% Swift, ScriptingBridge only for app automation): \(n.listAgentScripts), \(n.readAgentScript), \(n.createAgentScript), \(n.updateAgentScript), \(n.runAgentScript), \(n.deleteAgentScript), \(n.combineAgentScripts)
+        • Agent Scripts (100% Swift, ScriptingBridge only for app automation): \(n.agentScript) (actions: list, read, create, update, run, delete, combine)
         • Automation: \(n.runApplescript), \(n.runOsascript), \(n.executeJavascript), \(n.appleEventQuery), \(n.lookupSdef)
         • Accessibility: ax_* tools (last resort for UI)
         • Web: web_*, selenium_*
@@ -378,62 +386,23 @@ enum AgentTools {
             ],
             required: ["pattern"]
         ),
-        // --- Git Tools ---
+        // --- Git (consolidated) ---
         ToolDef(
-            name: Name.gitStatus,
-            description: "Show current branch, staged/unstaged changes, and untracked files.",
+            name: Name.git,
+            description: "Git operations. Actions: status (branch/changes), diff (show changes), log (commit history), commit (stage+commit), diff_patch (apply patch), branch (create branch).",
             properties: [
-                "path": ["type": "string", "description": "Repository path (REQUIRED for git operations — provide the project directory)"],
+                "action": ["type": "string", "description": "Action: status, diff, log, commit, diff_patch, or branch"],
+                "path": ["type": "string", "description": "Repository path (REQUIRED)"],
+                "staged": ["type": "boolean", "description": "For diff: staged changes only"],
+                "target": ["type": "string", "description": "For diff: branch/commit to diff against"],
+                "count": ["type": "integer", "description": "For log: number of commits (default 20)"],
+                "message": ["type": "string", "description": "For commit: commit message"],
+                "files": ["type": "array", "items": ["type": "string"] as [String: Any], "description": "For commit: specific files to stage"] as [String: Any],
+                "patch": ["type": "string", "description": "For diff_patch: unified diff content"],
+                "name": ["type": "string", "description": "For branch: branch name"],
+                "checkout": ["type": "boolean", "description": "For branch: switch to new branch (default true)"],
             ],
-            required: []
-        ),
-        ToolDef(
-            name: Name.gitDiff,
-            description: "Show file changes as a unified diff. Can show staged changes, unstaged changes, or diff against a branch/commit.",
-            properties: [
-                "path": ["type": "string", "description": "Repository path (REQUIRED for git operations — provide the project directory)"],
-                "staged": ["type": "boolean", "description": "Show staged changes only (default false)"],
-                "target": ["type": "string", "description": "Branch, commit, or ref to diff against (e.g. \"main\", \"HEAD~3\")"],
-            ],
-            required: []
-        ),
-        ToolDef(
-            name: Name.gitLog,
-            description: "Show recent commit history as one-line summaries.",
-            properties: [
-                "path": ["type": "string", "description": "Repository path (REQUIRED for git operations — provide the project directory)"],
-                "count": ["type": "integer", "description": "Number of commits to show (default 20, max 100)"],
-            ],
-            required: []
-        ),
-        ToolDef(
-            name: Name.gitCommit,
-            description: "Stage files and create a commit. If no files specified, stages all changes.",
-            properties: [
-                "path": ["type": "string", "description": "Repository path (REQUIRED for git operations — provide the project directory)"],
-                "message": ["type": "string", "description": "Commit message"],
-                "files": ["type": "array", "items": ["type": "string"] as [String: Any], "description": "Specific files to stage (default: all changes)"] as [String: Any],
-            ],
-            required: ["message"]
-        ),
-        ToolDef(
-            name: Name.gitDiffPatch,
-            description: "Apply a unified diff patch to files in the repository. Use for complex multi-line edits that are easier to express as a patch.",
-            properties: [
-                "path": ["type": "string", "description": "Repository path (REQUIRED for git operations — provide the project directory)"],
-                "patch": ["type": "string", "description": "Unified diff patch content"],
-            ],
-            required: ["patch"]
-        ),
-        ToolDef(
-            name: Name.gitBranch,
-            description: "Create a new git branch, optionally switching to it.",
-            properties: [
-                "path": ["type": "string", "description": "Repository path (REQUIRED for git operations — provide the project directory)"],
-                "name": ["type": "string", "description": "Branch name to create"],
-                "checkout": ["type": "boolean", "description": "Switch to the new branch (default true)"],
-            ],
-            required: ["name"]
+            required: ["action"]
         ),
         // --- Coding: Xcode ---
         ToolDef(
@@ -498,64 +467,20 @@ enum AgentTools {
             required: ["summary"]
         ),
         // --- Agent Scripts (reusable Swift scripts) ---
+        // --- Agent Scripts (consolidated) ---
         ToolDef(
-            name: Name.listAgentScripts,
-            description: "List all Swift automation scripts in ~/Documents/AgentScript/agents/. Scripts can be 100% Swift — ScriptingBridge is only needed for automating apps with AppleScript dictionaries.",
-            properties: [:],
-            required: []
-        ),
-        ToolDef(
-            name: Name.readAgentScript,
-            description: "Read the source code of a Swift automation script.",
+            name: Name.agentScript,
+            description: "Swift automation scripts. 100% Swift — ScriptingBridge only for apps with AppleScript dictionaries. Actions: list, read, create, update, run (compile+execute with TCC), delete, combine (merge two scripts).",
             properties: [
-                "name": ["type": "string", "description": "Script name (with or without .swift)"],
+                "action": ["type": "string", "description": "Action: list, read, create, update, run, delete, or combine"],
+                "name": ["type": "string", "description": "Script name (for read/create/update/run/delete)"],
+                "content": ["type": "string", "description": "Swift source code (for create/update)"],
+                "arguments": ["type": "string", "description": "For run: string passed via AGENT_SCRIPT_ARGS env var"],
+                "source_a": ["type": "string", "description": "For combine: first script name"],
+                "source_b": ["type": "string", "description": "For combine: second script name"],
+                "target": ["type": "string", "description": "For combine: output script name"],
             ],
-            required: ["name"]
-        ),
-        ToolDef(
-            name: Name.createAgentScript,
-            description: "Create a new Swift script in ~/Documents/AgentScript/agents/. Scripts can be 100% Swift for any task. ScriptingBridge is only needed when automating apps with AppleScript dictionaries.",
-            properties: [
-                "name": ["type": "string", "description": "Script filename (with or without .swift)"],
-                "content": ["type": "string", "description": "Swift source code"],
-            ],
-            required: ["name", "content"]
-        ),
-        ToolDef(
-            name: Name.updateAgentScript,
-            description: "Update an existing Swift script. Scripts can be 100% Swift — ScriptingBridge only needed for app automation.",
-            properties: [
-                "name": ["type": "string", "description": "Script filename"],
-                "content": ["type": "string", "description": "New Swift source code"],
-            ],
-            required: ["name", "content"]
-        ),
-        ToolDef(
-            name: Name.runAgentScript,
-            description: "Compile and run a Swift dylib with full TCC. Scripts can be 100% Swift for any task — ScriptingBridge is only needed when automating apps with AppleScript dictionaries. Use existing scripts first (list_agent_scripts). For app automation: use lookup_sdef to check dictionaries, create ScriptingBridge protocols. NSAppleScript fallback if ScriptingBridge has issues. Output streams live — do NOT repeat stdout.",
-            properties: [
-                "name": ["type": "string", "description": "Script filename (without .swift)"],
-                "arguments": ["type": "string", "description": "Simple string passed via AGENT_SCRIPT_ARGS env var. For complex data, use JSON files instead."],
-            ],
-            required: ["name"]
-        ),
-        ToolDef(
-            name: Name.deleteAgentScript,
-            description: "Delete a Swift automation script.",
-            properties: [
-                "name": ["type": "string", "description": "Script filename"],
-            ],
-            required: ["name"]
-        ),
-        ToolDef(
-            name: Name.combineAgentScripts,
-            description: "Combine two Swift scripts into one. Reads both, deduplicates imports, merges the code, and writes the result to the target script.",
-            properties: [
-                "source_a": ["type": "string", "description": "First script name (with or without .swift)"],
-                "source_b": ["type": "string", "description": "Second script name (with or without .swift)"],
-                "target": ["type": "string", "description": "Output script name (with or without .swift). Can be one of the sources or a new name."],
-            ],
-            required: ["source_a", "source_b", "target"]
+            required: ["action"]
         ),
         // --- Automation: AppleScript & osascript ---
         ToolDef(
@@ -609,69 +534,27 @@ enum AgentTools {
             ],
             required: ["bundle_id"]
         ),
-        // --- Saved AppleScripts ---
+        // --- Saved AppleScripts (consolidated) ---
         ToolDef(
-            name: Name.listAppleScripts,
-            description: "List all saved AppleScript files in ~/Documents/AgentScript/applescript/.",
-            properties: [:],
-            required: []
-        ),
-        ToolDef(
-            name: Name.runAppleScript,
-            description: "Run a saved AppleScript by name. List first with list_apple_scripts.",
+            name: Name.appleScriptTool,
+            description: "Manage saved AppleScript files. Actions: list, run (by name), save (create/update), delete.",
             properties: [
-                "name": ["type": "string", "description": "Name of the saved AppleScript (without .applescript extension)"],
+                "action": ["type": "string", "description": "Action: list, run, save, or delete"],
+                "name": ["type": "string", "description": "Script name (for run/save/delete)"],
+                "source": ["type": "string", "description": "AppleScript source code (for save)"],
             ],
-            required: ["name"]
+            required: ["action"]
         ),
+        // --- Saved JavaScript/JXA (consolidated) ---
         ToolDef(
-            name: Name.saveAppleScript,
-            description: "Save an AppleScript to ~/Documents/AgentScript/applescript/ for reuse.",
+            name: Name.javascriptTool,
+            description: "Manage saved JavaScript/JXA files. Actions: list, run (by name), save (create/update), delete.",
             properties: [
-                "name": ["type": "string", "description": "Name for the script (without .applescript extension)"],
-                "source": ["type": "string", "description": "AppleScript source code"],
+                "action": ["type": "string", "description": "Action: list, run, save, or delete"],
+                "name": ["type": "string", "description": "Script name (for run/save/delete)"],
+                "source": ["type": "string", "description": "JXA source code (for save)"],
             ],
-            required: ["name", "source"]
-        ),
-        ToolDef(
-            name: Name.deleteAppleScript,
-            description: "Delete a saved AppleScript file.",
-            properties: [
-                "name": ["type": "string", "description": "Name of the saved AppleScript to delete"],
-            ],
-            required: ["name"]
-        ),
-        // --- Saved JavaScript/JXA ---
-        ToolDef(
-            name: Name.listJavascript,
-            description: "List all saved JavaScript (JXA) files in ~/Documents/AgentScript/javascript/.",
-            properties: [:],
-            required: []
-        ),
-        ToolDef(
-            name: Name.runJavascript,
-            description: "Run a saved JavaScript (JXA) script by name. List first with list_javascript.",
-            properties: [
-                "name": ["type": "string", "description": "Name of the saved script (without .js extension)"],
-            ],
-            required: ["name"]
-        ),
-        ToolDef(
-            name: Name.saveJavascript,
-            description: "Save a JXA script to ~/Documents/AgentScript/javascript/ for reuse.",
-            properties: [
-                "name": ["type": "string", "description": "Name for the script (without .js extension)"],
-                "source": ["type": "string", "description": "JavaScript for Automation source code"],
-            ],
-            required: ["name", "source"]
-        ),
-        ToolDef(
-            name: Name.deleteJavascript,
-            description: "Delete a saved JavaScript (JXA) file.",
-            properties: [
-                "name": ["type": "string", "description": "Name of the saved script to delete"],
-            ],
-            required: ["name"]
+            required: ["action"]
         ),
         // --- Accessibility Tools ---
         ToolDef(

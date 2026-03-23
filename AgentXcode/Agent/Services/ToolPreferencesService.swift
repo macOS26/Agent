@@ -78,20 +78,19 @@ final class ToolPreferencesService {
     /// Tool group definitions - maps group name to tool name prefixes
     static let toolGroups: [String: Set<String>] = [
         "Coding": Set(["read_file", "write_file", "edit_file", "create_diff", "apply_diff", "list_files", "search_files",
-                       "git_status", "git_diff", "git_log", "git_commit", "git_diff_patch", "git_branch",
+                       "git",
                        "xcode_build", "xcode_run", "xcode_list_projects", "xcode_select_project"]),
         "Automation": Set(["run_applescript", "run_osascript", "execute_javascript",
-                          "list_apple_scripts", "run_apple_script", "save_apple_script", "delete_apple_script"]),
+                          "apple_script_tool"]),
         "Experimental": Set(["apple_event_query", "lookup_sdef", "xcode_grant_permission",
-                            "list_javascript", "run_javascript", "save_javascript", "delete_javascript"]),
+                            "javascript_tool"]),
         "Accessibility": Set(["ax_list_windows", "ax_get_properties", "ax_perform_action",
                               "ax_type_text", "ax_click", "ax_press_key", "ax_screenshot",
                               "ax_set_properties", "ax_find_element", "ax_get_children"]),
         "Core": Set(["task_complete", "list_tools", "list_mcp_tools", "load_groups", "unload_groups", "web_search",
                     "write_text", "transform_text", "send_message", "about_self", "fix_text",
                     "plan_mode"]),
-        "Workflow": Set(["list_agent_scripts", "read_agent_script", "create_agent_script", "update_agent_script",
-                        "run_agent_script", "delete_agent_script", "combine_agent_scripts"]),
+        "Workflow": Set(["agent_script"]),
         "User Agent": Set(["execute_agent_command"]),
         "Launch Daemon": Set(["execute_daemon_command"]),
         "Web": Set(["web_open", "web_find", "web_click", "web_type", "web_execute_js", "web_get_url", "web_get_title",
@@ -101,7 +100,7 @@ final class ToolPreferencesService {
 
     /// Tools enabled by default for Apple Intelligence (small context window).
     static let appleAIDefaults: Set<String> = [
-        AgentTools.Name.taskComplete, AgentTools.Name.listAgentScripts, AgentTools.Name.runAgentScript,
+        AgentTools.Name.taskComplete, AgentTools.Name.agentScript,
         AgentTools.Name.listNativeTools, AgentTools.Name.appleEventQuery,
         AgentTools.Name.runApplescript, AgentTools.Name.runOsascript
     ]

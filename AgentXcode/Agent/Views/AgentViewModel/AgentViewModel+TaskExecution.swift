@@ -15,7 +15,9 @@ extension AgentViewModel {
 
     /// Executes a tool call from Apple AI's Foundation Models native tool system.
     /// Routes to the same execution logic as TaskExecution tool handlers.
-    func executeNativeTool(_ name: String, input: sending [String: Any]) async -> String {
+    func executeNativeTool(_ rawName: String, input rawInput: sending [String: Any]) async -> String {
+        // Expand consolidated CRUDL tools into legacy tool names
+        let (name, input) = Self.expandConsolidatedTool(name: rawName, input: rawInput)
         let pf = projectFolder
         NativeToolContext.toolCallCount += 1
         appendLog("🔧 \(name)")
@@ -1465,8 +1467,11 @@ extension AgentViewModel {
                     } else if type == "tool_use" {
                         hasToolUse = true
                         guard let toolId = block["id"] as? String,
-                              let name = block["name"] as? String,
-                              let input = block["input"] as? [String: Any] else { continue }
+                              var name = block["name"] as? String,
+                              var input = block["input"] as? [String: Any] else { continue }
+
+                        // Expand consolidated CRUDL tools into legacy tool names
+                        (name, input) = Self.expandConsolidatedTool(name: name, input: input)
 
                         if name == "task_complete" {
                             let summary = input["summary"] as? String ?? "Done"
@@ -2853,7 +2858,7 @@ extension AgentViewModel {
                     messages.append(["role": "user", "content": "Continue with the task. Call task_complete when finished."])
                 } else if !hasToolUse {
                     // No tool use this iteration — just nudge and continue
-                    messages.append(["role": "user", "content": "Continue. You MUST use tools — do not output code as text. Use update_agent_script or create_agent_script to write scripts, read_file/write_file/edit_file for other files. Call task_complete when finished."])
+                    messages.append(["role": "user", "content": "Continue. You MUST use tools — do not output code as text. Use agent_script (action: create/update) to write scripts, read_file/write_file/edit_file for other files. Call task_complete when finished."])
                 }
 
             } catch {

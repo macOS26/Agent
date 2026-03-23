@@ -8,12 +8,12 @@ struct ToolsView: View {
     
     // Group definitions matching ToolPreferencesService — use exact name sets to avoid overlap
     static let groups: [String: (filter: (AgentTools.ToolDef) -> Bool, icon: String)] = [
-        "Coding": ({ ["read_file", "write_file", "edit_file", "create_diff", "apply_diff", "list_files", "search_files"].contains($0.name) || $0.name.hasPrefix("git_") || ($0.name.hasPrefix("xcode_") && $0.name != "xcode_grant_permission") }, "doc.text"),
-        "Automation": ({ ["run_applescript", "run_osascript", "execute_javascript"].contains($0.name) || ["list_apple_scripts", "run_apple_script", "save_apple_script", "delete_apple_script"].contains($0.name) }, "gearshape.2"),
-        "Experimental": ({ ["apple_event_query", "lookup_sdef", "xcode_grant_permission", "list_javascript", "run_javascript", "save_javascript", "delete_javascript"].contains($0.name) }, "flask"),
+        "Coding": ({ ["read_file", "write_file", "edit_file", "create_diff", "apply_diff", "list_files", "search_files", "git"].contains($0.name) || ($0.name.hasPrefix("xcode_") && $0.name != "xcode_grant_permission") }, "doc.text"),
+        "Automation": ({ ["run_applescript", "run_osascript", "execute_javascript", "apple_script_tool"].contains($0.name) }, "gearshape.2"),
+        "Experimental": ({ ["apple_event_query", "lookup_sdef", "xcode_grant_permission", "javascript_tool"].contains($0.name) }, "flask"),
         "Accessibility": ({ $0.name.hasPrefix("ax_") }, "accessibility"),
         "Core": ({ ["task_complete", "list_tools", "list_mcp_tools", "load_groups", "unload_groups", "web_search", "write_text", "transform_text", "send_message", "about_self", "fix_text", "plan_mode"].contains($0.name) }, "checkmark.circle"),
-        "Workflow": ({ $0.name.contains("agent_script") }, "flowchart"),
+        "Workflow": ({ $0.name == "agent_script" }, "flowchart"),
         "User Agent": ({ $0.name == "execute_agent_command" }, "person"),
         "Launch Daemon": ({ $0.name == "execute_daemon_command" }, "lock.shield"),
         "Web": ({ ($0.name.hasPrefix("web_") && $0.name != "web_search") || $0.name.hasPrefix("selenium_") }, "globe"),

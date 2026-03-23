@@ -274,8 +274,11 @@ extension AgentViewModel {
                     } else if type == "tool_use" {
                         hasToolUse = true
                         guard let toolId = block["id"] as? String,
-                              let name = block["name"] as? String,
-                              let input = block["input"] as? [String: Any] else { continue }
+                              let rawName = block["name"] as? String,
+                              let rawInput = block["input"] as? [String: Any] else { continue }
+
+                        // Expand consolidated CRUDL tools into legacy tool names
+                        let (name, input) = Self.expandConsolidatedTool(name: rawName, input: rawInput)
 
                         let result = await handleTabToolCall(
                             tab: tab, name: name, input: input, toolId: toolId
@@ -301,7 +304,7 @@ extension AgentViewModel {
                     tab.llmMessages = messages
                 } else if !hasToolUse {
                     // No tool use this iteration — just nudge and continue
-                    messages.append(["role": "user", "content": "Continue. You MUST use tools — do not output code as text. Use update_agent_script or create_agent_script to write scripts, read_file/write_file/edit_file for other files. Call task_complete when finished."])
+                    messages.append(["role": "user", "content": "Continue. You MUST use tools — do not output code as text. Use agent_script (action: create/update) to write scripts, read_file/write_file/edit_file for other files. Call task_complete when finished."])
                     tab.llmMessages = messages
                 }
 

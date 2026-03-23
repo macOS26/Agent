@@ -4,7 +4,62 @@ import MCPClient
 // MARK: - Helper Functions
 
 extension AgentViewModel {
-    
+
+    // MARK: - Consolidated Tool Expansion
+
+    /// Expands consolidated CRUDL tool names (git, agent_script, apple_script_tool, javascript_tool)
+    /// into legacy tool names so existing handlers work unchanged.
+    static func expandConsolidatedTool(name: String, input: [String: Any]) -> (String, [String: Any]) {
+        let action = input["action"] as? String ?? ""
+        let newInput = input
+
+        switch name {
+        case "git":
+            switch action {
+            case "status":     return ("git_status", newInput)
+            case "diff":       return ("git_diff", newInput)
+            case "log":        return ("git_log", newInput)
+            case "commit":     return ("git_commit", newInput)
+            case "diff_patch": return ("git_diff_patch", newInput)
+            case "branch":     return ("git_branch", newInput)
+            default:           return ("git_status", newInput)
+            }
+
+        case "agent_script":
+            switch action {
+            case "list":    return ("list_agent_scripts", newInput)
+            case "read":    return ("read_agent_script", newInput)
+            case "create":  return ("create_agent_script", newInput)
+            case "update":  return ("update_agent_script", newInput)
+            case "run":     return ("run_agent_script", newInput)
+            case "delete":  return ("delete_agent_script", newInput)
+            case "combine": return ("combine_agent_scripts", newInput)
+            default:        return ("list_agent_scripts", newInput)
+            }
+
+        case "apple_script_tool":
+            switch action {
+            case "list":   return ("list_apple_scripts", newInput)
+            case "run":    return ("run_apple_script", newInput)
+            case "save":   return ("save_apple_script", newInput)
+            case "delete": return ("delete_apple_script", newInput)
+            default:       return ("list_apple_scripts", newInput)
+            }
+
+        case "javascript_tool":
+            switch action {
+            case "list":   return ("list_javascript", newInput)
+            case "run":    return ("run_javascript", newInput)
+            case "save":   return ("save_javascript", newInput)
+            case "delete": return ("delete_javascript", newInput)
+            default:       return ("list_javascript", newInput)
+            }
+
+        default:
+            return (name, input)
+        }
+    }
+
     /// Convert Any to JSONValue, handling arrays and nested objects recursively.
     static func toJSONValue(_ value: Any) -> JSONValue {
         if let s = value as? String { return .string(s) }
