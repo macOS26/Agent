@@ -207,4 +207,166 @@ enum CodingService {
             return "cd \(dir) && git branch \(shellEscape(name))"
         }
     }
+
+    // MARK: - Split File
+
+    /// Split a Swift file into separate files by top-level declarations.
+    /// Each extension, class, struct, enum, or top-level func becomes its own file.
+    /// Returns a summary of created files.
+    static func splitFile(path: String, deleteOriginal: Bool = false) -> String {
+        let expanded = (path as NSString).expandingTildeInPath
+        guard let data = FileManager.default.contents(atPath: expanded),
+              let source = String(data: data, encoding: .utf8) else {
+            return "Error: cannot read \(path)"
+        }
+
+        let lines = source.components(separatedBy: "\n")
+        let baseName = (expanded as NSString).lastPathComponent.replacingOccurrences(of: ".swift", with: "")
+        let dir = (expanded as NSString).deletingLastPathComponent
+
+        // Collect import lines and top-level comments before first declaration
+        var imports = [String]()
+        var headerComments = [String]()
+        var declarations: [(name: String, startLine: Int, lines: [String])] = []
+        var currentDecl: (name: String, startLine: Int, lines: [String])?
+        var braceDepth = 0
+        var inHeader = true
+
+        for (i, line) in lines.enumerated() {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+
+            // Collect imports
+            if trimmed.hasPrefix("import ") {
+                imports.append(line)
+                inHeader = false
+                continue
+            }
+
+            // Collect header comments before any declaration
+            if inHeader && (trimmed.hasPrefix("//") || trimmed.hasPrefix("/*") || trimmed.hasPrefix("*") || trimmed.isEmpty) {
+                headerComments.append(line)
+                continue
+            }
+            inHeader = false
+
+            // Detect top-level declaration start (brace depth == 0)
+            if braceDepth == 0 {
+                let isDecl = trimmed.hasPrefix("extension ") || trimmed.hasPrefix("class ") ||
+                             trimmed.hasPrefix("struct ") || trimmed.hasPrefix("enum ") ||
+                             trimmed.hasPrefix("@") || trimmed.hasPrefix("public extension ") ||
+                             trimmed.hasPrefix("public class ") || trimmed.hasPrefix("public struct ") ||
+                             trimmed.hasPrefix("public enum ") || trimmed.hasPrefix("final class ") ||
+                             trimmed.hasPrefix("private extension ") || trimmed.hasPrefix("internal extension ") ||
+                             trimmed.hasPrefix("// MARK:")
+
+                if isDecl && !trimmed.hasPrefix("// MARK:") {
+                    // Save previous declaration
+                    if let decl = currentDecl {
+                        declarations.append(decl)
+                    }
+                    // Extract declaration name
+                    let declName = extractDeclName(trimmed)
+                    currentDecl = (name: declName, startLine: i + 1, lines: [line])
+                } else if isDecl && trimmed.hasPrefix("// MARK:") {
+                    // MARK comments attach to the next declaration
+                    if currentDecl != nil {
+                        currentDecl?.lines.append(line)
+                    } else {
+                        currentDecl = (name: "Header", startLine: i + 1, lines: [line])
+                    }
+                } else if currentDecl != nil {
+                    currentDecl?.lines.append(line)
+                }
+            } else {
+                currentDecl?.lines.append(line)
+            }
+
+            // Track brace depth
+            braceDepth += line.filter({ $0 == "{" }).count
+            braceDepth -= line.filter({ $0 == "}" }).count
+            braceDepth = max(0, braceDepth)
+        }
+
+        // Save last declaration
+        if let decl = currentDecl {
+            declarations.append(decl)
+        }
+
+        guard !declarations.isEmpty else {
+            return "No top-level declarations found in \(path)"
+        }
+
+        // If only one declaration, nothing to split
+        if declarations.count == 1 {
+            return "File has only 1 top-level declaration — nothing to split."
+        }
+
+        let fm = FileManager.default
+        let importBlock = imports.joined(separator: "\n")
+        var createdFiles: [String] = []
+
+        for (index, decl) in declarations.enumerated() {
+            let suffix = sanitizeDeclName(decl.name)
+            let fileName: String
+            if index == 0 && decl.name == "Header" {
+                continue // Skip standalone header comments
+            }
+            fileName = "\(baseName)+\(suffix).swift"
+            let filePath = (dir as NSString).appendingPathComponent(fileName)
+
+            var content = importBlock + "\n\n"
+            content += decl.lines.joined(separator: "\n")
+            content += "\n"
+
+            do {
+                try content.write(toFile: filePath, atomically: true, encoding: .utf8)
+                let lineCount = decl.lines.count
+                createdFiles.append("\(fileName) (\(lineCount) lines, starting at line \(decl.startLine))")
+            } catch {
+                createdFiles.append("Error writing \(fileName): \(error.localizedDescription)")
+            }
+        }
+
+        if deleteOriginal {
+            try? fm.removeItem(atPath: expanded)
+            createdFiles.append("Deleted original: \((expanded as NSString).lastPathComponent)")
+        }
+
+        return "Split \(baseName).swift into \(createdFiles.count) files:\n" + createdFiles.joined(separator: "\n")
+    }
+
+    /// Extract a clean declaration name from a line like "extension AgentViewModel {"
+    private static func extractDeclName(_ line: String) -> String {
+        let tokens = line.components(separatedBy: .whitespaces).filter { !$0.isEmpty }
+        // Skip modifiers: public, private, internal, final, @MainActor, etc.
+        let skipPrefixes = ["public", "private", "internal", "final", "open", "@MainActor", "@Observable", "@objc", "@available", "@preconcurrency"]
+        var nameIndex = 0
+        for (i, token) in tokens.enumerated() {
+            if skipPrefixes.contains(where: { token.hasPrefix($0) }) {
+                continue
+            }
+            // The keyword (extension, class, struct, enum)
+            if ["extension", "class", "struct", "enum", "protocol", "actor"].contains(token) {
+                nameIndex = i + 1
+                break
+            }
+            nameIndex = i
+            break
+        }
+        if nameIndex < tokens.count {
+            return tokens[nameIndex]
+                .replacingOccurrences(of: "{", with: "")
+                .replacingOccurrences(of: ":", with: "")
+                .trimmingCharacters(in: .whitespaces)
+        }
+        return "Part\(line.hashValue & 0xFFFF)"
+    }
+
+    /// Sanitize a declaration name for use as a filename suffix
+    private static func sanitizeDeclName(_ name: String) -> String {
+        let clean = name.components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { !$0.isEmpty }
+            .joined()
+        return clean.isEmpty ? "Part" : clean
+    }
 }

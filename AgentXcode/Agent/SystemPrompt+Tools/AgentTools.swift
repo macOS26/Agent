@@ -19,6 +19,8 @@ enum AgentTools {
         static let applyDiff = "apply_diff"
         static let listFiles = "list_files"
         static let searchFiles = "search_files"
+        // Split File
+        static let splitFile = "split_file"
         // File Manager (consolidated CRUDL)
         static let fileManager = "file_manager"
         // Git (consolidated CRUDL)
@@ -380,6 +382,15 @@ enum AgentTools {
                 "path": ["type": "string", "description": "Absolute path to directory to list"],
             ],
             required: ["path"]
+        ),
+        ToolDef(
+            name: Name.splitFile,
+            description: "Split a large Swift file into separate files by top-level declarations (extensions, classes, structs, enums). Each declaration becomes its own file with imports preserved. Use for refactoring large files. Set delete_original to remove the original after splitting.",
+            properties: [
+                "file_path": ["type": "string", "description": "Absolute path to the Swift file to split"],
+                "delete_original": ["type": "boolean", "description": "Delete the original file after splitting (default false)"],
+            ],
+            required: ["file_path"]
         ),
         // --- File Manager (consolidated — maps to direct file tools) ---
         ToolDef(
