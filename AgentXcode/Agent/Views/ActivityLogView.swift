@@ -105,11 +105,18 @@ struct ActivityLogView: NSViewRepresentable {
 
                 if hasTableLines || prevHasTableLines {
                     // Full rebuild for proper NSTextTable rendering
+                    let maxChars = 30_000
+                    let renderText: String
+                    if len > maxChars {
+                        renderText = "...(log truncated for display)\n" + String((text as NSString).substring(from: len - maxChars))
+                    } else {
+                        renderText = text
+                    }
                     let savedOrigin = scrollView.contentView.bounds.origin
                     let wasAtBottom = coord.isNearBottom(textView)
 
                     textView.textStorage?.beginEditing()
-                    let attributed = coord.buildAttributedString(from: text)
+                    let attributed = coord.buildAttributedString(from: renderText)
                     textView.textStorage?.setAttributedString(attributed)
                     textView.textStorage?.endEditing()
                     coord.lastLength = len
@@ -130,11 +137,19 @@ struct ActivityLogView: NSViewRepresentable {
                 }
             } else {
                 // Full rebuild needed (search change, placeholder transition, or text deletion)
+                // Cap text to last 30K chars to prevent beach ball on huge logs
+                let maxChars = 30_000
+                let renderText: String
+                if len > maxChars {
+                    renderText = "...(log truncated for display)\n" + String((text as NSString).substring(from: len - maxChars))
+                } else {
+                    renderText = text
+                }
                 let savedOrigin = scrollView.contentView.bounds.origin
                 let wasAtBottom = coord.isNearBottom(textView)
 
                 textView.textStorage?.beginEditing()
-                let attributed = coord.buildAttributedString(from: text)
+                let attributed = coord.buildAttributedString(from: renderText)
                 textView.textStorage?.setAttributedString(attributed)
                 textView.textStorage?.endEditing()
                 coord.lastLength = len

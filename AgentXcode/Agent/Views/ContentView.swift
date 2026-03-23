@@ -330,12 +330,12 @@ struct ContentView: View {
                 VStack(spacing: 0) {
                     HStack(spacing: 6) {
                         Button { if activeAppleAIPrompt != nil { showAppleAIBanner.toggle() } } label: {
-                            Image(systemName: "play.fill")
+                            Image(systemName: "person.fill")
                                 .font(.caption2)
                                 .foregroundStyle(.white)
                         }
                         .buttonStyle(.plain)
-                        .help("Running")
+                        .help("User prompt")
                         Text(prompt)
                             .font(.caption)
                             .lineLimit(1)
@@ -369,7 +369,7 @@ struct ContentView: View {
                                 .foregroundStyle(.white.opacity(0.8))
                             Text(aiPrompt)
                                 .font(.caption)
-                                .lineLimit(2)
+                                .lineLimit(4)
                                 .foregroundStyle(.white.opacity(0.9))
                             Spacer()
                         }

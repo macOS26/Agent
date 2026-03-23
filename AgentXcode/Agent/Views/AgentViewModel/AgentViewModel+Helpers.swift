@@ -171,7 +171,7 @@ extension AgentViewModel {
 
     // MARK: - Command Watchdog
 
-    static let deletionLimitOptions: [Int] = [0, 5, 10, 15, 20, 25]
+    static let deletionLimitOptions: [Int] = [25, 20, 15, 10, 5, 0]
 
     /// Checks a shell command for catastrophic or excessive file deletion.
     static func watchdogCheck(_ command: String, isPrivileged: Bool, deletionLimit: Int) -> String? {

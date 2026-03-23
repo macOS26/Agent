@@ -89,14 +89,14 @@ struct AgentOptionsView: View {
                     Stepper(viewModel.deletionLimit == 0 ? "None" : "\(viewModel.deletionLimit) files",
                         onIncrement: {
                             let opts = AgentViewModel.deletionLimitOptions
-                            if let i = opts.firstIndex(of: viewModel.deletionLimit), i + 1 < opts.count {
-                                viewModel.deletionLimit = opts[i + 1]
+                            if let i = opts.firstIndex(of: viewModel.deletionLimit), i > 0 {
+                                viewModel.deletionLimit = opts[i - 1]
                             }
                         },
                         onDecrement: {
                             let opts = AgentViewModel.deletionLimitOptions
-                            if let i = opts.firstIndex(of: viewModel.deletionLimit), i > 0 {
-                                viewModel.deletionLimit = opts[i - 1]
+                            if let i = opts.firstIndex(of: viewModel.deletionLimit), i + 1 < opts.count {
+                                viewModel.deletionLimit = opts[i + 1]
                             }
                         })
                 }
