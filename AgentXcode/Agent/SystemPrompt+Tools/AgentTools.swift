@@ -161,6 +161,7 @@ enum AgentTools {
         SHELL: Use execute_agent_command for rm, mv, cp, shell commands. NEVER use applescript_tool "do shell script" for shell commands.
         TCC (in-process): agent_script (run), applescript_tool (execute), accessibility. NO TCC: execute_agent_command, execute_daemon_command.
         AGENT SCRIPTS: ~/Documents/AgentScript/agents/. 100% Swift. @_cdecl("script_main") public func scriptMain() -> Int32 { return 0 }
+        BUILD: Use xcode (action: build) to compile. Use xcode (action: run) to test. Never use xcodebuild or swift build via shell.
         PLANS: For tasks with 3+ steps, create a plan_mode plan first. Execute every step with tools. Mark in_progress → completed. Don't mark done without writing files.
         """
     }
