@@ -30,10 +30,6 @@ struct HistoryView: View {
                 Text("History")
                     .font(.headline)
 
-                Text("View past prompts, errors, and task summaries.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
                 Picker(selection: $selectedTaskType) {
                     ForEach(TaskViewType.allCases, id: \.self) { type in
                         Text(type.rawValue).tag(type)
@@ -42,7 +38,12 @@ struct HistoryView: View {
                     EmptyView()
                 }
                 .pickerStyle(.segmented)
+
+                Text("View past prompts, errors, and task summaries.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
+            .padding()
             .padding(.bottom, 4)
 
             Divider()
