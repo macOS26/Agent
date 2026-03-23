@@ -296,22 +296,36 @@ enum CodingService {
             return "No top-level declarations found in \(path)"
         }
 
-        // If only one declaration, nothing to split
+        // If only one declaration (e.g. a single extension), split its children instead
         if declarations.count == 1 {
-            return "File has only 1 top-level declaration — nothing to split."
+            let decl = declarations[0]
+            let children = splitExtensionChildren(lines: decl.lines, extensionHeader: decl.name)
+            if children.count <= 1 {
+                return "File has only 1 top-level declaration with no splittable children."
+            }
+            declarations = children
         }
 
         let fm = FileManager.default
         let importBlock = imports.joined(separator: "\n")
         var createdFiles: [String] = []
+        var usedNames = Set<String>()
 
         for (index, decl) in declarations.enumerated() {
-            let suffix = sanitizeDeclName(decl.name)
-            let fileName: String
+            var suffix = sanitizeDeclName(decl.name)
             if index == 0 && decl.name == "Header" {
                 continue // Skip standalone header comments
             }
-            fileName = "\(baseName)+\(suffix).swift"
+            // Deduplicate filenames
+            let originalSuffix = suffix
+            var counter = 2
+            while usedNames.contains(suffix) {
+                suffix = "\(originalSuffix)\(counter)"
+                counter += 1
+            }
+            usedNames.insert(suffix)
+
+            let fileName = "\(baseName)+\(suffix).swift"
             let filePath = (dir as NSString).appendingPathComponent(fileName)
 
             var content = importBlock + "\n\n"
@@ -321,7 +335,7 @@ enum CodingService {
             do {
                 try content.write(toFile: filePath, atomically: true, encoding: .utf8)
                 let lineCount = decl.lines.count
-                createdFiles.append("\(fileName) (\(lineCount) lines, starting at line \(decl.startLine))")
+                createdFiles.append("\(fileName) (\(lineCount) lines)")
             } catch {
                 createdFiles.append("Error writing \(fileName): \(error.localizedDescription)")
             }
@@ -368,5 +382,121 @@ enum CodingService {
             .filter { !$0.isEmpty }
             .joined()
         return clean.isEmpty ? "Part" : clean
+    }
+
+    /// Split the children of an extension/class into separate declarations.
+    /// Each child func/enum/struct/class/var block at brace depth 1 becomes its own
+    /// extension file with the parent wrapper preserved.
+    private static func splitExtensionChildren(lines: [String], extensionHeader: String) -> [(name: String, startLine: Int, lines: [String])] {
+        // Find the extension opening line and its closing brace
+        guard let firstLine = lines.first else { return [] }
+
+        // Extract the extension declaration line (e.g. "extension AgentViewModel {")
+        var extensionLine = firstLine
+        // If the first line doesn't contain "{", find it
+        if !extensionLine.contains("{") {
+            for line in lines {
+                if line.contains("{") {
+                    extensionLine = line
+                    break
+                }
+            }
+        }
+
+        // Parse children at brace depth 1
+        var children: [(name: String, startLine: Int, lines: [String])] = []
+        var currentChild: (name: String, startLine: Int, lines: [String])?
+        var braceDepth = 0
+        var pendingComments: [String] = []
+
+        let memberKeywords = ["func ", "var ", "let ", "enum ", "struct ", "class ", "actor ",
+                              "protocol ", "typealias ", "static func ", "static var ", "static let ",
+                              "private func ", "private var ", "private let ",
+                              "private static func ", "private static var ",
+                              "internal func ", "public func ", "nonisolated func ",
+                              "@MainActor func ", "@MainActor static func ",
+                              "@discardableResult"]
+
+        for (i, line) in lines.enumerated() {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+
+            // Track braces
+            let openBraces = line.filter({ $0 == "{" }).count
+            let closeBraces = line.filter({ $0 == "}" }).count
+
+            // At depth 1 (inside the extension), detect member declarations
+            if braceDepth == 1 {
+                let isMember = memberKeywords.contains(where: { trimmed.hasPrefix($0) })
+                let isMark = trimmed.hasPrefix("// MARK:")
+                let isComment = trimmed.hasPrefix("//") || trimmed.hasPrefix("///") || trimmed.hasPrefix("/*")
+
+                if isMark || (isComment && currentChild == nil) {
+                    pendingComments.append(line)
+                } else if isMember {
+                    // Save previous child
+                    if let child = currentChild {
+                        children.append(child)
+                    }
+                    // Extract member name
+                    let memberName = extractMemberName(trimmed)
+                    var childLines = pendingComments
+                    childLines.append(line)
+                    currentChild = (name: memberName, startLine: i + 1, lines: childLines)
+                    pendingComments = []
+                } else if currentChild != nil {
+                    currentChild?.lines.append(line)
+                } else if !trimmed.isEmpty && trimmed != "{" && trimmed != "}" {
+                    // Stray line at depth 1 — attach to pending or ignore
+                    pendingComments.append(line)
+                }
+            } else if braceDepth > 1 {
+                // Inside a member body
+                currentChild?.lines.append(line)
+            }
+
+            braceDepth += openBraces
+            braceDepth -= closeBraces
+            braceDepth = max(0, braceDepth)
+        }
+
+        // Save last child
+        if let child = currentChild {
+            children.append(child)
+        }
+
+        guard children.count > 1 else { return children }
+
+        // Wrap each child in the extension declaration
+        let extOpen = extensionLine.trimmingCharacters(in: .whitespacesAndNewlines)
+        return children.map { child in
+            var wrapped = [String]()
+            wrapped.append(extOpen.hasSuffix("{") ? extOpen : extOpen + " {")
+            wrapped.append(contentsOf: child.lines)
+            wrapped.append("}")
+            return (name: child.name, startLine: child.startLine, lines: wrapped)
+        }
+    }
+
+    /// Extract a member name from a line like "func executeTask(_ prompt: String) async {"
+    private static func extractMemberName(_ line: String) -> String {
+        let tokens = line.components(separatedBy: .whitespaces).filter { !$0.isEmpty }
+        let skipWords: Set<String> = ["func", "var", "let", "enum", "struct", "class", "actor",
+                                       "protocol", "typealias", "static", "private", "internal",
+                                       "public", "open", "final", "nonisolated", "override",
+                                       "@MainActor", "@discardableResult", "@objc", "@available",
+                                       "@preconcurrency", "lazy"]
+        for token in tokens {
+            if skipWords.contains(token) || token.hasPrefix("@") { continue }
+            // Clean the name
+            let name = token
+                .replacingOccurrences(of: "(", with: "")
+                .replacingOccurrences(of: ")", with: "")
+                .replacingOccurrences(of: "{", with: "")
+                .replacingOccurrences(of: ":", with: "")
+                .replacingOccurrences(of: "_", with: "")
+                .trimmingCharacters(in: .whitespaces)
+            if !name.isEmpty { return name }
+        }
+        return "Member"
     }
 }
