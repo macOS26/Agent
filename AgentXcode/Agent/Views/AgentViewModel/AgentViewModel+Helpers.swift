@@ -7,7 +7,7 @@ extension AgentViewModel {
 
     // MARK: - Consolidated Tool Expansion
 
-    /// Expands consolidated CRUDL tool names (git, agent_script, apple_script_tool, javascript_tool)
+    /// Expands consolidated CRUDL tool names (git, agent_script, applescript_tool, javascript_tool)
     /// into legacy tool names so existing handlers work unchanged.
     static func expandConsolidatedTool(name: String, input: [String: Any]) -> (String, [String: Any]) {
         let action = input["action"] as? String ?? ""
@@ -37,7 +37,7 @@ extension AgentViewModel {
             default:        return ("list_agent_scripts", newInput)
             }
 
-        case "apple_script_tool":
+        case "applescript_tool":
             switch action {
             case "execute":     return ("run_applescript", newInput)
             case "lookup_sdef": return ("lookup_sdef", newInput)

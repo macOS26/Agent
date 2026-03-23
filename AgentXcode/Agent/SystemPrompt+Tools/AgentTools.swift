@@ -84,7 +84,7 @@ enum AgentTools {
         static let xcodeSelectProject = "xcode_select_project"
         static let xcodeGrantPermission = "xcode_grant_permission"
         // AppleScript (consolidated CRUDL)
-        static let appleScriptTool = "apple_script_tool"
+        static let appleScriptTool = "applescript_tool"
         // Legacy AppleScript names (handlers still work)
         static let listAppleScripts = "list_apple_scripts"
         static let runAppleScript = "run_apple_script"
@@ -149,7 +149,7 @@ enum AgentTools {
         write_file returns count only — verify with read_file.
 
         TCC CONTEXT:
-        - Full TCC (in Agent process): agent_script (action: run), apple_event_query, apple_script_tool (action: execute), accessibility tool
+        - Full TCC (in Agent process): agent_script (action: run), apple_event_query, applescript_tool (action: execute), accessibility tool
         - NO TCC: execute_agent_command (user, ~=\(userHome)), execute_daemon_command (root, ~=/var/root — chown back)
         - Never use shell for Automation/Accessibility — no TCC permissions.
 
@@ -465,7 +465,7 @@ enum AgentTools {
             ],
             required: ["action"]
         ),
-        // --- Inline AppleScript/JXA execution now via apple_script_tool/javascript_tool execute action ---
+        // --- Inline AppleScript/JXA execution now via applescript_tool/javascript_tool execute action ---
         // --- Automation: Apple Events ---
         ToolDef(
             name: Name.appleEventQuery,
