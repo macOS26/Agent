@@ -149,7 +149,7 @@ enum AgentTools {
         write_file returns count only — verify with read_file.
 
         TCC CONTEXT:
-        - Full TCC (in Agent process): agent_script (action: run), apple_event_query, run_applescript, run_osascript, accessibility tool
+        - Full TCC (in Agent process): agent_script (action: run), apple_event_query, apple_script_tool (action: execute), accessibility tool
         - NO TCC: execute_agent_command (user, ~=\(userHome)), execute_daemon_command (root, ~=/var/root — chown back)
         - Never use shell for Automation/Accessibility — no TCC permissions.
 
@@ -204,7 +204,7 @@ enum AgentTools {
         3. Shell (\(n.executeAgentCommand), \(n.executeDaemonCommand)) ONLY if native/MCP unavailable
 
         TCC PERMISSIONS:
-        - Full TCC in Agent: \(n.agentScript) (action: run), \(n.appleEventQuery), \(n.runApplescript), \(n.runOsascript), \(n.accessibility)
+        - Full TCC in Agent: \(n.agentScript) (action: run), \(n.appleEventQuery), \(n.appleScriptTool) (action: execute), \(n.accessibility)
         - User shell: \(n.executeAgentCommand) (as \(userName), ~=\(userHome)) — NO TCC
         - Root shell: \(n.executeDaemonCommand) — NO TCC
         Never use shell commands for Automation/Accessibility — no TCC.
@@ -214,7 +214,7 @@ enum AgentTools {
         • Git: \(n.git) (actions: status, diff, log, commit, diff_patch, branch)
         • Xcode: \(n.xcode) (actions: build, run, list_projects, select_project)
         • Workflow: \(n.agentScript), \(n.planMode)
-        • Automation: \(n.runApplescript), \(n.runOsascript), \(n.executeJavascript), \(n.appleEventQuery), \(n.lookupSdef)
+        • Automation: \(n.appleScriptTool) (actions: execute, list, run, save, delete), \(n.appleEventQuery), \(n.lookupSdef)
         • Accessibility: \(n.accessibility) (actions: list_windows, find_element, click, type_text, etc.)
         • Web: \(n.web), \(n.seleniumTool)
 
@@ -465,31 +465,7 @@ enum AgentTools {
             ],
             required: ["action"]
         ),
-        // --- Automation: AppleScript & osascript ---
-        ToolDef(
-            name: Name.runApplescript,
-            description: "Execute AppleScript code in-process via NSAppleScript with full TCC. Use lookup_sdef first to get correct terminology. For quick automation that doesn't need a compiled AgentScript.",
-            properties: [
-                "source": ["type": "string", "description": "AppleScript source code to execute"],
-            ],
-            required: ["source"]
-        ),
-        ToolDef(
-            name: Name.runOsascript,
-            description: "Run AppleScript source code via osascript in-process with full TCC. Use for app automation via AppleScript. Prefer run_applescript or run_agent_script when available.",
-            properties: [
-                "script": ["type": "string", "description": "AppleScript source code to execute"],
-            ],
-            required: ["script"]
-        ),
-        ToolDef(
-            name: Name.executeJavascript,
-            description: "Run JavaScript for Automation (JXA) code via osascript. Use for app automation with JavaScript syntax. Example: var app = Application('Finder'); app.selection()",
-            properties: [
-                "source": ["type": "string", "description": "JXA source code to execute"],
-            ],
-            required: ["source"]
-        ),
+        // --- Inline AppleScript/JXA execution now via apple_script_tool/javascript_tool execute action ---
         // --- Automation: Apple Events ---
         ToolDef(
             name: Name.appleEventQuery,
@@ -517,25 +493,25 @@ enum AgentTools {
             ],
             required: ["bundle_id"]
         ),
-        // --- Saved AppleScripts (consolidated) ---
+        // --- AppleScript (consolidated) ---
         ToolDef(
             name: Name.appleScriptTool,
-            description: "Manage saved AppleScript files. Actions: list, run (by name), save (create/update), delete.",
+            description: "AppleScript tool with full TCC. Actions: execute (run inline source code via NSAppleScript), list (saved scripts), run (saved by name), save, delete. Use lookup_sdef first for correct terminology.",
             properties: [
-                "action": ["type": "string", "description": "Action: list, run, save, or delete"],
+                "action": ["type": "string", "description": "Action: execute, list, run, save, or delete"],
                 "name": ["type": "string", "description": "Script name (for run/save/delete)"],
-                "source": ["type": "string", "description": "AppleScript source code (for save)"],
+                "source": ["type": "string", "description": "AppleScript source code (for execute/save)"],
             ],
             required: ["action"]
         ),
-        // --- Saved JavaScript/JXA (consolidated) ---
+        // --- JavaScript/JXA (consolidated) ---
         ToolDef(
             name: Name.javascriptTool,
-            description: "Manage saved JavaScript/JXA files. Actions: list, run (by name), save (create/update), delete.",
+            description: "JavaScript for Automation (JXA) tool. Actions: execute (run inline JXA source), list (saved scripts), run (saved by name), save, delete.",
             properties: [
-                "action": ["type": "string", "description": "Action: list, run, save, or delete"],
+                "action": ["type": "string", "description": "Action: execute, list, run, save, or delete"],
                 "name": ["type": "string", "description": "Script name (for run/save/delete)"],
-                "source": ["type": "string", "description": "JXA source code (for save)"],
+                "source": ["type": "string", "description": "JXA source code (for execute/save)"],
             ],
             required: ["action"]
         ),
