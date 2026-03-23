@@ -345,9 +345,12 @@ struct ContentView: View {
                         Spacer()
                         Button {
                             if let selId = viewModel.selectedTabId,
-                               let tab = viewModel.scriptTabs.first(where: { $0.id == selId }),
-                               tab.isLLMRunning {
-                                viewModel.stopTabTask(tab: tab)
+                               let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+                                if tab.isLLMRunning {
+                                    viewModel.stopTabTask(tab: tab)
+                                } else if tab.isRunning {
+                                    viewModel.cancelScriptTab(id: tab.id)
+                                }
                             } else {
                                 viewModel.stop()
                             }
@@ -399,17 +402,7 @@ struct ContentView: View {
                             }
                         }
                     )
-                    if tab.isRunning {
-                        let tabColor = Self.tabColor(for: tab.id, in: viewModel.scriptTabs)
-                        Button { viewModel.cancelScriptTab(id: tab.id) } label: {
-                            Label("Cancel Script", systemImage: "xmark.circle.fill")
-                                .font(.caption)
-                                .foregroundStyle(tabColor)
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.mini)
-                        .padding(12)
-                    }
+                    // Cancel handled by green banner above
                 }
             } else {
                 ZStack(alignment: .topTrailing) {
@@ -791,7 +784,9 @@ struct ContentView: View {
     private var activeTaskPrompt: String? {
         if let selId = viewModel.selectedTabId,
            let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
-            return tab.isLLMRunning ? tab.currentTaskPrompt : nil
+            if tab.isLLMRunning { return tab.currentTaskPrompt }
+            if tab.isRunning { return "Running: \(tab.scriptName)" }
+            return nil
         }
         return viewModel.isRunning ? viewModel.currentTaskPrompt : nil
     }
