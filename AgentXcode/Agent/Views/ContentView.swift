@@ -329,9 +329,10 @@ struct ContentView: View {
             if let prompt = activeTaskPrompt, !prompt.isEmpty {
                 VStack(spacing: 0) {
                     HStack(spacing: 6) {
-                        Button { if activeAppleAIPrompt != nil { showAppleAIBanner.toggle() } } label: {
+                        Button { if activeAppleAIPrompt != nil { withAnimation(.easeInOut(duration: 0.2)) { showAppleAIBanner.toggle() } } } label: {
                             Image(systemName: "person.fill")
                                 .font(.caption2)
+                                .frame(width: 14)
                                 .foregroundStyle(.white)
                         }
                         .buttonStyle(.plain)
@@ -361,11 +362,12 @@ struct ContentView: View {
                     .padding(.vertical, 5)
                     .background(Color.green.opacity(0.7))
 
-                    // Apple AI prompt row (toggled by tapping brain icon)
+                    // Apple AI prompt row (toggled by tapping person icon)
                     if showAppleAIBanner, let aiPrompt = activeAppleAIPrompt {
                         HStack(spacing: 6) {
                             Text("\u{F8FF}")
                                 .font(.caption2)
+                                .frame(width: 14)
                                 .foregroundStyle(.white.opacity(0.8))
                             Text(aiPrompt)
                                 .font(.caption)
@@ -376,6 +378,7 @@ struct ContentView: View {
                         .padding(.horizontal, 12)
                         .padding(.vertical, 4)
                         .background(Color.blue.opacity(0.6))
+                        .transition(.move(edge: .top).combined(with: .opacity))
                     }
                 }
             }

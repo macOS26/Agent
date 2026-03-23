@@ -99,23 +99,7 @@ extension AgentViewModel {
             let target = input["target"] as? String ?? ""
             guard let contentA = scriptService.readScript(name: sourceA) else { return "Error: script '\(sourceA)' not found." }
             guard let contentB = scriptService.readScript(name: sourceB) else { return "Error: script '\(sourceB)' not found." }
-            let linesA = contentA.components(separatedBy: "\n")
-            let linesB = contentB.components(separatedBy: "\n")
-            var imports = [String](); var seenImports = Set<String>()
-            var bodyA = [String](); var bodyB = [String]()
-            for line in linesA {
-                let t = line.trimmingCharacters(in: .whitespaces)
-                if t.hasPrefix("import ") { if seenImports.insert(t).inserted { imports.append(line) } } else { bodyA.append(line) }
-            }
-            for line in linesB {
-                let t = line.trimmingCharacters(in: .whitespaces)
-                if t.hasPrefix("import ") { if seenImports.insert(t).inserted { imports.append(line) } } else { bodyB.append(line) }
-            }
-            let merged = imports.joined(separator: "\n")
-                + "\n\n// MARK: - From \(sourceA)\n\n"
-                + bodyA.drop(while: { $0.trimmingCharacters(in: .whitespaces).isEmpty }).joined(separator: "\n")
-                + "\n\n// MARK: - From \(sourceB)\n\n"
-                + bodyB.drop(while: { $0.trimmingCharacters(in: .whitespaces).isEmpty }).joined(separator: "\n")
+            let merged = Self.combineScriptSources(contentA: contentA, contentB: contentB, sourceA: sourceA, sourceB: sourceB)
             if scriptService.readScript(name: target) != nil {
                 return scriptService.updateScript(name: target, content: merged)
             } else {
@@ -1851,7 +1835,7 @@ extension AgentViewModel {
                             let scriptName = input["name"] as? String ?? ""
                             let output = scriptService.readScript(name: scriptName) ?? "Error: script '\(scriptName)' not found."
                             appendLog("📖 Read: \(scriptName)")
-                            appendLog(Self.codeFence(Self.preview(output, lines: readFilePreviewLines), language: "swift"))
+                            appendLog(Self.codeFence(output, language: "swift"))
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
@@ -1897,40 +1881,7 @@ extension AgentViewModel {
                                 continue
                             }
 
-                            // Deduplicate imports and merge
-                            let linesA = contentA.components(separatedBy: "\n")
-                            let linesB = contentB.components(separatedBy: "\n")
-                            var imports = [String]()
-                            var seenImports = Set<String>()
-                            var bodyA = [String]()
-                            var bodyB = [String]()
-
-                            for line in linesA {
-                                let trimmed = line.trimmingCharacters(in: .whitespaces)
-                                if trimmed.hasPrefix("import ") {
-                                    if seenImports.insert(trimmed).inserted { imports.append(line) }
-                                } else {
-                                    bodyA.append(line)
-                                }
-                            }
-                            for line in linesB {
-                                let trimmed = line.trimmingCharacters(in: .whitespaces)
-                                if trimmed.hasPrefix("import ") {
-                                    if seenImports.insert(trimmed).inserted { imports.append(line) }
-                                } else {
-                                    bodyB.append(line)
-                                }
-                            }
-
-                            // Trim leading/trailing blank lines from bodies
-                            let trimmedBodyA = bodyA.drop(while: { $0.trimmingCharacters(in: .whitespaces).isEmpty })
-                            let trimmedBodyB = bodyB.drop(while: { $0.trimmingCharacters(in: .whitespaces).isEmpty })
-
-                            let merged = imports.joined(separator: "\n")
-                                + "\n\n// MARK: - From \(sourceA)\n\n"
-                                + trimmedBodyA.joined(separator: "\n")
-                                + "\n\n// MARK: - From \(sourceB)\n\n"
-                                + trimmedBodyB.joined(separator: "\n")
+                            let merged = Self.combineScriptSources(contentA: contentA, contentB: contentB, sourceA: sourceA, sourceB: sourceB)
 
                             // Write to target
                             let existing = scriptService.readScript(name: target)

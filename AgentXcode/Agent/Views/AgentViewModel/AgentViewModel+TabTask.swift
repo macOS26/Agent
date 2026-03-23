@@ -804,7 +804,7 @@ extension AgentViewModel {
             let scriptName = input["name"] as? String ?? ""
             let output = scriptService.readScript(name: scriptName) ?? "Error: script '\(scriptName)' not found."
             tab.appendLog("📖 Read: \(scriptName)")
-            tab.appendLog(Self.codeFence(Self.preview(output, lines: readFilePreviewLines), language: "swift"))
+            tab.appendLog(Self.codeFence(output, language: "swift"))
             tab.flush()
             return TabToolResult(
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
@@ -868,23 +868,7 @@ extension AgentViewModel {
                 return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": err], isComplete: false)
             }
 
-            let linesA = contentA.components(separatedBy: "\n")
-            let linesB = contentB.components(separatedBy: "\n")
-            var imports = [String](); var seenImports = Set<String>()
-            var bodyA = [String](); var bodyB = [String]()
-            for line in linesA {
-                let t = line.trimmingCharacters(in: .whitespaces)
-                if t.hasPrefix("import ") { if seenImports.insert(t).inserted { imports.append(line) } } else { bodyA.append(line) }
-            }
-            for line in linesB {
-                let t = line.trimmingCharacters(in: .whitespaces)
-                if t.hasPrefix("import ") { if seenImports.insert(t).inserted { imports.append(line) } } else { bodyB.append(line) }
-            }
-            let merged = imports.joined(separator: "\n")
-                + "\n\n// MARK: - From \(sourceA)\n\n"
-                + bodyA.drop(while: { $0.trimmingCharacters(in: .whitespaces).isEmpty }).joined(separator: "\n")
-                + "\n\n// MARK: - From \(sourceB)\n\n"
-                + bodyB.drop(while: { $0.trimmingCharacters(in: .whitespaces).isEmpty }).joined(separator: "\n")
+            let merged = Self.combineScriptSources(contentA: contentA, contentB: contentB, sourceA: sourceA, sourceB: sourceB)
 
             let output: String
             if scriptService.readScript(name: target) != nil {

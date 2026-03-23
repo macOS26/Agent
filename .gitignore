@@ -5,3 +5,4 @@ agents/build/
 AgentMCP/build/
 AgentXcode/build/
 **/build/
+Agent!.app

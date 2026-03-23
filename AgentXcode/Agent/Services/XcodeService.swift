@@ -77,8 +77,12 @@ final class XcodeService: @unchecked Sendable {
             return "Error: Failed to start build"
         }
 
-        // Poll for completion
+        // Poll for completion with 10-minute timeout
+        let deadline = Date().addingTimeInterval(600)
         while !(buildResult.completed ?? false) {
+            if Date() > deadline {
+                return "Error: Build timed out after 10 minutes"
+            }
             Thread.sleep(forTimeInterval: 0.5)
         }
 

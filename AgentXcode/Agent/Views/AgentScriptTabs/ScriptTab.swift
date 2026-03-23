@@ -42,7 +42,6 @@ final class ScriptTab: Identifiable {
     var logBuffer = ""
     var logFlushTask: Task<Void, Never>?
     var streamLineCount = 0
-    var streamTruncated = false
 
     // MARK: - LLM Conversation State
 
@@ -108,14 +107,6 @@ final class ScriptTab: Identifiable {
         guard !text.isEmpty else { return }
         let newlines = text.reduce(0) { $0 + ($1 == "\n" ? 1 : 0) }
         streamLineCount += max(newlines, 1)
-        if streamLineCount > 1000 {
-            if !streamTruncated {
-                streamTruncated = true
-                logBuffer += "...(output truncated at 1000 lines)...\n"
-                scheduleFlush()
-            }
-            return
-        }
         logBuffer += text
         if !text.hasSuffix("\n") { logBuffer += "\n" }
         scheduleFlush()
@@ -181,7 +172,6 @@ final class ScriptTab: Identifiable {
 
     func resetLLMStreamCounters() {
         streamLineCount = 0
-        streamTruncated = false
     }
 
     // MARK: - Prompt History Navigation

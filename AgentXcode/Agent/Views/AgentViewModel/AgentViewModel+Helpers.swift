@@ -399,4 +399,58 @@ extension AgentViewModel {
             return "Error: invalid action '\(action)'. Use create, update, or read."
         }
     }
+
+    // MARK: - Combine Agent Scripts
+
+    /// Merge two Swift script sources: deduplicate imports, handle duplicate scriptMain
+    /// by keeping A's entry point and renaming B's body into a helper function.
+    static func combineScriptSources(contentA: String, contentB: String, sourceA: String, sourceB: String) -> String {
+        let linesA = contentA.components(separatedBy: "\n")
+        let linesB = contentB.components(separatedBy: "\n")
+
+        var imports = [String]()
+        var seenImports = Set<String>()
+        var bodyA = [String]()
+        var bodyB = [String]()
+
+        for line in linesA {
+            let t = line.trimmingCharacters(in: .whitespaces)
+            if t.hasPrefix("import ") {
+                if seenImports.insert(t).inserted { imports.append(line) }
+            } else {
+                bodyA.append(line)
+            }
+        }
+        for line in linesB {
+            let t = line.trimmingCharacters(in: .whitespaces)
+            if t.hasPrefix("import ") {
+                if seenImports.insert(t).inserted { imports.append(line) }
+            } else {
+                bodyB.append(line)
+            }
+        }
+
+        // Trim leading blank lines
+        let trimmedA = Array(bodyA.drop(while: { $0.trimmingCharacters(in: .whitespaces).isEmpty }))
+        var trimmedB = Array(bodyB.drop(while: { $0.trimmingCharacters(in: .whitespaces).isEmpty }))
+
+        // Detect duplicate scriptMain in B — remove @_cdecl and rename to helper
+        let hasMainA = trimmedA.contains(where: { $0.contains("func scriptMain") || $0.contains("func script_main") })
+        let hasMainB = trimmedB.contains(where: { $0.contains("func scriptMain") || $0.contains("func script_main") })
+
+        if hasMainA && hasMainB {
+            // Remove @_cdecl line and rename scriptMain in B
+            trimmedB = trimmedB.filter { !$0.contains("@_cdecl(\"script_main\")") }
+            trimmedB = trimmedB.map { line in
+                line.replacingOccurrences(of: "public func scriptMain()", with: "public func scriptMain_\(sourceB)()")
+                    .replacingOccurrences(of: "public func script_main()", with: "public func scriptMain_\(sourceB)()")
+            }
+        }
+
+        return imports.joined(separator: "\n")
+            + "\n\n// MARK: - From \(sourceA)\n\n"
+            + trimmedA.joined(separator: "\n")
+            + "\n\n// MARK: - From \(sourceB)\n\n"
+            + trimmedB.joined(separator: "\n")
+    }
 }

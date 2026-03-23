@@ -180,7 +180,7 @@
 		AA10000000000000000021 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA10000000000000000022 /* Agent.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Agent.entitlements; sourceTree = "<group>"; };
 		AA10000000000000000023 /* Agent.app.toddbruss.helper.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Agent.app.toddbruss.helper.plist; sourceTree = "<group>"; };
-		AA10000000000000000024 /* Agent.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = Agent.app; path = "Agent!.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA10000000000000000024 /* Agent!.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Agent!.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA10000000000000000025 /* UserService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserService.swift; sourceTree = "<group>"; };
 		AA10000000000000000026 /* UserProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProtocol.swift; sourceTree = "<group>"; };
 		AA10000000000000000027 /* Agent.app.toddbruss.user.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Agent.app.toddbruss.user.plist; sourceTree = "<group>"; };
@@ -336,7 +336,7 @@
 		AA10000000000000000042 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				AA10000000000000000024 /* Agent.app */,
+				AA10000000000000000024 /* Agent!.app */,
 				BB1000000000000000001C /* AgentHelper */,
 				CC1000000000000000001C /* AgentUser */,
 				DD10000000000000000004 /* AgentTests.xctest */,
@@ -600,7 +600,7 @@
 				D1F0000000000000000002 /* MultiLineDiff */,
 			);
 			productName = Agent;
-			productReference = AA10000000000000000024 /* Agent.app */;
+			productReference = AA10000000000000000024 /* Agent!.app */;
 			productType = "com.apple.product-type.application";
 		};
 		BB10000000000000000060 /* AgentHelper */ = {
@@ -981,7 +981,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 469UCUB275;
 				ENABLE_APP_SANDBOX = NO;
@@ -1011,7 +1011,7 @@
 				INFOPLIST_KEY_NSCameraUsageDescription = "Agent! needs camera access for scripts that capture photos.";
 				INFOPLIST_KEY_NSContactsUsageDescription = "Agent! needs contacts access for scripts that query your address book.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Agent! needs biometric authentication for scripts that use Touch ID or Face ID.";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2024, 2025, 2026 Agent! for macOS26 AgenticAI for  Mac Desktop by Todd Bruss MacOS26.app";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Agent! needs local network access for scripts that discover devices on your network.";
 				INFOPLIST_KEY_NSLocationUsageDescription = "Agent! needs location access for scripts that use GPS data.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Agent! needs location access for scripts that use GPS data.";
@@ -1023,7 +1023,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.17;
+				MARKETING_VERSION = 1.0.18;
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1049,7 +1049,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 469UCUB275;
 				ENABLE_APP_SANDBOX = NO;
@@ -1079,7 +1079,7 @@
 				INFOPLIST_KEY_NSCameraUsageDescription = "Agent! needs camera access for scripts that capture photos.";
 				INFOPLIST_KEY_NSContactsUsageDescription = "Agent! needs contacts access for scripts that query your address book.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Agent! needs biometric authentication for scripts that use Touch ID or Face ID.";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2024, 2025, 2026 Agent! for macOS26 AgenticAI for  Mac Desktop by Todd Bruss MacOS26.app";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Agent! needs local network access for scripts that discover devices on your network.";
 				INFOPLIST_KEY_NSLocationUsageDescription = "Agent! needs location access for scripts that use GPS data.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Agent! needs location access for scripts that use GPS data.";
@@ -1091,7 +1091,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.17;
+				MARKETING_VERSION = 1.0.18;
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
