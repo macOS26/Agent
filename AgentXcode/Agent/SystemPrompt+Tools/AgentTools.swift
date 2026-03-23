@@ -1368,9 +1368,10 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.planMode,
-            description: "Create or update a step-by-step plan. Writes a planning_mode_.md file to track progress. Use 'create' to start a plan, 'update' to change a step's status, 'read' to check progress.",
+            description: "Manage step-by-step plans. Supports multiple concurrent plans via plan_id. Use 'create' to start, 'update' to change step status, 'read' to check progress, 'list' to see all plans, 'delete' to remove a plan.",
             properties: [
-                "action": ["type": "string", "description": "Action: 'create', 'update', or 'read'"],
+                "action": ["type": "string", "description": "Action: 'create', 'update', 'read', 'list', or 'delete'"],
+                "plan_id": ["type": "string", "description": "Plan identifier (returned by 'create', required for 'update'/'read'/'delete'. Omit for 'read' to read the most recent plan.)"],
                 "title": ["type": "string", "description": "Plan title (required for 'create')"],
                 "steps": ["type": "string", "description": "Newline-separated list of steps (required for 'create')"],
                 "step": ["type": "integer", "description": "Step number to update (required for 'update')"],

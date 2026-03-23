@@ -290,18 +290,52 @@ extension AgentViewModel {
 
     // MARK: - Plan Mode
 
-    private static let planFileName: String = "planning_mode_.md"
-
-    /// Resolve the plan file path inside the project folder (or home).
-    private static func planFilePath(_ projectFolder: String) -> String {
-        let base: String = projectFolder.isEmpty ? NSHomeDirectory() : resolvedWorkingDirectory(projectFolder)
-        return (base as NSString).appendingPathComponent(planFileName)
+    /// Directory for all plan files.
+    private static func planDir(_ projectFolder: String) -> String {
+        let base = projectFolder.isEmpty ? NSHomeDirectory() : resolvedWorkingDirectory(projectFolder)
+        return (base as NSString).appendingPathComponent("plans")
     }
 
-    /// Handle plan_mode tool calls: create, update, or read a markdown plan file.
+    /// Resolve the plan file path for a given plan_id.
+    private static func planFilePath(_ planId: String, projectFolder: String) -> String {
+        return (planDir(projectFolder) as NSString).appendingPathComponent("plan_\(planId).md")
+    }
+
+    /// Generate a short unique plan ID from the title.
+    private static func generatePlanId(title: String) -> String {
+        let slug = title.lowercased()
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { !$0.isEmpty }
+            .prefix(3)
+            .joined(separator: "_")
+        let suffix = String(format: "%04x", Int.random(in: 0...0xFFFF))
+        return slug.isEmpty ? suffix : "\(slug)_\(suffix)"
+    }
+
+    /// Find the most recent plan file in the plans directory.
+    private static func mostRecentPlan(_ projectFolder: String) -> (id: String, path: String)? {
+        let dir = planDir(projectFolder)
+        let fm = FileManager.default
+        guard let files = try? fm.contentsOfDirectory(atPath: dir) else { return nil }
+        let plans = files.filter { $0.hasPrefix("plan_") && $0.hasSuffix(".md") }
+        guard !plans.isEmpty else { return nil }
+        // Sort by modification date, most recent first
+        let sorted = plans.sorted { a, b in
+            let pathA = (dir as NSString).appendingPathComponent(a)
+            let pathB = (dir as NSString).appendingPathComponent(b)
+            let dateA = (try? fm.attributesOfItem(atPath: pathA)[.modificationDate] as? Date) ?? .distantPast
+            let dateB = (try? fm.attributesOfItem(atPath: pathB)[.modificationDate] as? Date) ?? .distantPast
+            return dateA > dateB
+        }
+        let filename = sorted[0]
+        let id = String(filename.dropFirst(5).dropLast(3)) // strip "plan_" and ".md"
+        return (id, (dir as NSString).appendingPathComponent(filename))
+    }
+
+    /// Handle plan_mode tool calls: create, update, read, list, or delete.
     static func handlePlanMode(action: String, input: [String: Any], projectFolder: String) -> String {
-        let path: String = planFilePath(projectFolder)
-        let fm: FileManager = FileManager.default
+        let fm = FileManager.default
+        let dir = planDir(projectFolder)
 
         switch action.lowercased() {
         case "create":
@@ -311,16 +345,18 @@ extension AgentViewModel {
             guard let stepsRaw = input["steps"] as? String, !stepsRaw.isEmpty else {
                 return "Error: steps is required for plan_mode create"
             }
-            let steps: [String] = stepsRaw.components(separatedBy: "\n").filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
-            var md: String = "# \(title)\n\n"
+            let planId = generatePlanId(title: title)
+            let steps = stepsRaw.components(separatedBy: "\n").filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+            var md = "# \(title)\n\n"
             for (i, step) in steps.enumerated() {
-                let num: Int = i + 1
-                md += "- [ ] \(num). \(step)\n"
+                md += "- [ ] \(i + 1). \(step)\n"
             }
             md += "\n---\n*Status: \(steps.count) steps pending*\n"
             do {
+                try fm.createDirectory(atPath: dir, withIntermediateDirectories: true)
+                let path = planFilePath(planId, projectFolder: projectFolder)
                 try md.write(toFile: path, atomically: true, encoding: .utf8)
-                return "Plan created: \(title) (\(steps.count) steps)\nFile: \(path)"
+                return "Plan created: \(title) (\(steps.count) steps)\nplan_id: \(planId)\nFile: \(path)"
             } catch {
                 return "Error writing plan: \(error.localizedDescription)"
             }
@@ -332,10 +368,21 @@ extension AgentViewModel {
             guard let status = input["status"] as? String else {
                 return "Error: status is required for plan_mode update (in_progress, completed, failed)"
             }
+            let planId: String
+            let path: String
+            if let id = input["plan_id"] as? String, !id.isEmpty {
+                planId = id
+                path = planFilePath(id, projectFolder: projectFolder)
+            } else if let recent = mostRecentPlan(projectFolder) {
+                planId = recent.id
+                path = recent.path
+            } else {
+                return "Error: no plan found. Use plan_mode create first."
+            }
             guard fm.fileExists(atPath: path),
                   let data = fm.contents(atPath: path),
                   let content = String(data: data, encoding: .utf8) else {
-                return "Error: no plan file found. Use plan_mode create first."
+                return "Error: plan '\(planId)' not found."
             }
 
             let marker: String
@@ -346,16 +393,15 @@ extension AgentViewModel {
             default: return "Error: invalid status. Use in_progress, completed, or failed."
             }
 
-            var lines: [String] = content.components(separatedBy: "\n")
-            let target: String = "\(stepNum)."
-            var found: Bool = false
+            var lines = content.components(separatedBy: "\n")
+            let target = "\(stepNum)."
+            var found = false
             for i in 0..<lines.count {
-                let trimmed: String = lines[i].trimmingCharacters(in: .whitespaces)
+                let trimmed = lines[i].trimmingCharacters(in: .whitespaces)
                 if trimmed.contains(target) && (trimmed.hasPrefix("- [") || trimmed.hasPrefix("- [x]") || trimmed.hasPrefix("- [⏳]") || trimmed.hasPrefix("- [❌]")) {
-                    // Replace the checkbox portion
                     if let bracketEnd = lines[i].range(of: "] ") {
-                        let rest: String = String(lines[i][bracketEnd.upperBound...])
-                        let indent: String = String(lines[i].prefix(while: { $0 == " " || $0 == "\t" }))
+                        let rest = String(lines[i][bracketEnd.upperBound...])
+                        let indent = String(lines[i].prefix(while: { $0 == " " || $0 == "\t" }))
                         lines[i] = "\(indent)\(marker) \(rest)"
                         found = true
                         break
@@ -364,39 +410,84 @@ extension AgentViewModel {
             }
 
             guard found else {
-                return "Error: step \(stepNum) not found in plan."
+                return "Error: step \(stepNum) not found in plan '\(planId)'."
             }
 
-            // Update status summary
-            let completed: Int = lines.filter { $0.contains("- [x]") }.count
-            let inProgress: Int = lines.filter { $0.contains("- [⏳]") }.count
-            let failed: Int = lines.filter { $0.contains("- [❌]") }.count
-            let total: Int = lines.filter { $0.trimmingCharacters(in: .whitespaces).hasPrefix("- [") }.count
-            let pending: Int = total - completed - inProgress - failed
+            let completed = lines.filter { $0.contains("- [x]") }.count
+            let inProgress = lines.filter { $0.contains("- [⏳]") }.count
+            let failed = lines.filter { $0.contains("- [❌]") }.count
+            let total = lines.filter { $0.trimmingCharacters(in: .whitespaces).hasPrefix("- [") }.count
+            let pending = total - completed - inProgress - failed
 
-            // Replace or append status line
             if let statusIdx = lines.firstIndex(where: { $0.hasPrefix("*Status:") }) {
                 lines[statusIdx] = "*Status: \(completed) done, \(inProgress) in progress, \(failed) failed, \(pending) pending*"
             }
 
-            let updated: String = lines.joined(separator: "\n")
             do {
-                try updated.write(toFile: path, atomically: true, encoding: .utf8)
-                return "Step \(stepNum) → \(status)"
+                try lines.joined(separator: "\n").write(toFile: path, atomically: true, encoding: .utf8)
+                return "[\(planId)] Step \(stepNum) → \(status)"
             } catch {
                 return "Error writing plan: \(error.localizedDescription)"
             }
 
         case "read":
+            let path: String
+            let planId: String
+            if let id = input["plan_id"] as? String, !id.isEmpty {
+                planId = id
+                path = planFilePath(id, projectFolder: projectFolder)
+            } else if let recent = mostRecentPlan(projectFolder) {
+                planId = recent.id
+                path = recent.path
+            } else {
+                return "No plans found. Use plan_mode create to start a plan."
+            }
             guard fm.fileExists(atPath: path),
                   let data = fm.contents(atPath: path),
                   let content = String(data: data, encoding: .utf8) else {
-                return "No plan file found. Use plan_mode create to start a plan."
+                return "Error: plan '\(planId)' not found."
             }
-            return content
+            return "plan_id: \(planId)\n\(content)"
+
+        case "list":
+            guard let files = try? fm.contentsOfDirectory(atPath: dir) else {
+                return "No plans directory found."
+            }
+            let plans = files.filter { $0.hasPrefix("plan_") && $0.hasSuffix(".md") }.sorted()
+            if plans.isEmpty { return "No plans found." }
+            return plans.map { filename in
+                let id = String(filename.dropFirst(5).dropLast(3))
+                let path = (dir as NSString).appendingPathComponent(filename)
+                // Read first line for title
+                let title: String
+                if let data = fm.contents(atPath: path),
+                   let content = String(data: data, encoding: .utf8),
+                   let firstLine = content.components(separatedBy: "\n").first,
+                   firstLine.hasPrefix("# ") {
+                    title = String(firstLine.dropFirst(2))
+                } else {
+                    title = id
+                }
+                return "\(id): \(title)"
+            }.joined(separator: "\n")
+
+        case "delete":
+            guard let id = input["plan_id"] as? String, !id.isEmpty else {
+                return "Error: plan_id is required for plan_mode delete"
+            }
+            let path = planFilePath(id, projectFolder: projectFolder)
+            guard fm.fileExists(atPath: path) else {
+                return "Error: plan '\(id)' not found."
+            }
+            do {
+                try fm.removeItem(atPath: path)
+                return "Deleted plan: \(id)"
+            } catch {
+                return "Error deleting plan: \(error.localizedDescription)"
+            }
 
         default:
-            return "Error: invalid action '\(action)'. Use create, update, or read."
+            return "Error: invalid action '\(action)'. Use create, update, read, list, or delete."
         }
     }
 
