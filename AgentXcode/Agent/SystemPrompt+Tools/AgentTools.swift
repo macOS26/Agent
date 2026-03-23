@@ -134,8 +134,10 @@ enum AgentTools {
         - Never use shell for Automation/Accessibility — no TCC permissions.
 
         AGENT SCRIPTS: ~/Documents/AgentScript/agents/. List first, update existing.
+        Scripts can be 100% Swift — no ScriptingBridge required. Use for any task: data processing, file ops, networking, etc.
+        ScriptingBridge is only needed when automating apps that expose an AppleScript dictionary (SDEF).
         Format: @_cdecl("script_main") public func scriptMain() -> Int32 { return 0 }
-        Rules: No exit(). @unknown default on ScriptingBridge enums. Use lookup_sdef first.
+        Rules: No exit(). @unknown default on ScriptingBridge enums. Use lookup_sdef first for app automation.
         Data: AGENT_SCRIPT_ARGS env or json/{Name}_input.json/_output.json.
         Generate bridges: run_agent_script GenerateBridge with args /Applications/App.app
 
@@ -188,7 +190,7 @@ enum AgentTools {
         • File/Diff: \(n.readFile), \(n.writeFile), \(n.editFile), \(n.listFiles), \(n.searchFiles), \(n.createDiff), \(n.applyDiff)
         • Git: \(n.gitStatus), \(n.gitDiff), \(n.gitLog), \(n.gitCommit), \(n.gitDiffPatch), \(n.gitBranch)
         • Xcode: \(n.xcodeBuild) (PREFERRED) → MCP → xcodebuild shell (LAST RESORT)
-        • Agent Scripts: \(n.listAgentScripts), \(n.readAgentScript), \(n.createAgentScript), \(n.updateAgentScript), \(n.runAgentScript), \(n.deleteAgentScript)
+        • Agent Scripts (100% Swift, ScriptingBridge only for app automation): \(n.listAgentScripts), \(n.readAgentScript), \(n.createAgentScript), \(n.updateAgentScript), \(n.runAgentScript), \(n.deleteAgentScript)
         • Automation: \(n.runApplescript), \(n.runOsascript), \(n.executeJavascript), \(n.appleEventQuery), \(n.lookupSdef)
         • Accessibility: ax_* tools (last resort for UI)
         • Web: web_*, selenium_*
@@ -492,7 +494,7 @@ enum AgentTools {
         // --- Agent Scripts (reusable Swift scripts) ---
         ToolDef(
             name: Name.listAgentScripts,
-            description: "List all Swift automation scripts in ~/Documents/AgentScript/agents/",
+            description: "List all Swift automation scripts in ~/Documents/AgentScript/agents/. Scripts can be 100% Swift — ScriptingBridge is only needed for automating apps with AppleScript dictionaries.",
             properties: [:],
             required: []
         ),
@@ -506,7 +508,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.createAgentScript,
-            description: "Create a new Swift automation script in ~/Documents/AgentScript/agents/",
+            description: "Create a new Swift script in ~/Documents/AgentScript/agents/. Scripts can be 100% Swift for any task. ScriptingBridge is only needed when automating apps with AppleScript dictionaries.",
             properties: [
                 "name": ["type": "string", "description": "Script filename (with or without .swift)"],
                 "content": ["type": "string", "description": "Swift source code"],
@@ -515,7 +517,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.updateAgentScript,
-            description: "Update an existing Swift automation script.",
+            description: "Update an existing Swift script. Scripts can be 100% Swift — ScriptingBridge only needed for app automation.",
             properties: [
                 "name": ["type": "string", "description": "Script filename"],
                 "content": ["type": "string", "description": "New Swift source code"],
@@ -524,7 +526,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.runAgentScript,
-            description: "PRIORITY 1 for app automation. Compile and run a Swift dylib with full TCC. Use existing scripts first (list_agent_scripts), create new ones with ScriptingBridge protocols. Use lookup_sdef and read_agent_script to check app dictionaries and bridge Swift files. NSAppleScript fallback if ScriptingBridge has issues. Output streams live — do NOT repeat stdout.",
+            description: "Compile and run a Swift dylib with full TCC. Scripts can be 100% Swift for any task — ScriptingBridge is only needed when automating apps with AppleScript dictionaries. Use existing scripts first (list_agent_scripts). For app automation: use lookup_sdef to check dictionaries, create ScriptingBridge protocols. NSAppleScript fallback if ScriptingBridge has issues. Output streams live — do NOT repeat stdout.",
             properties: [
                 "name": ["type": "string", "description": "Script filename (without .swift)"],
                 "arguments": ["type": "string", "description": "Simple string passed via AGENT_SCRIPT_ARGS env var. For complex data, use JSON files instead."],
