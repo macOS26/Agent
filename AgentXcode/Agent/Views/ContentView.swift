@@ -45,45 +45,13 @@ struct ContentView: View {
 
             Divider()
 
-            // Project folder/file (main tab)
-            if viewModel.selectedTabId == nil {
-                HStack(spacing: 4) {
-                    ProjectFolderField(projectFolder: $viewModel.projectFolder)
-                    TokenBadge(
-                        taskIn: viewModel.taskInputTokens,
-                        taskOut: viewModel.taskOutputTokens,
-                        sessionIn: viewModel.sessionInputTokens,
-                        sessionOut: viewModel.sessionOutputTokens,
-                        providerName: viewModel.selectedProvider.displayName,
-                        modelName: viewModel.selectedModel
-                    )
+            // Project folder section (main tab or selected script tab)
+            ProjectFolderSectionView(
+                viewModel: viewModel,
+                selectedTab: viewModel.selectedTabId.flatMap { id in
+                    viewModel.scriptTabs.first(where: { $0.id == id })
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-            }
-
-            // Per-tab project folder (when a tab is selected)
-            if let selectedId = viewModel.selectedTabId,
-               let tab = viewModel.scriptTabs.first(where: { $0.id == selectedId }) {
-                HStack(spacing: 4) {
-                    ProjectFolderField(
-                        projectFolder: Binding(
-                            get: { tab.projectFolder },
-                            set: { tab.projectFolder = $0; viewModel.persistScriptTabs() }
-                        )
-                    )
-                    TokenBadge(
-                        taskIn: viewModel.taskInputTokens,
-                        taskOut: viewModel.taskOutputTokens,
-                        sessionIn: viewModel.sessionInputTokens,
-                        sessionOut: viewModel.sessionOutputTokens,
-                        providerName: viewModel.selectedProvider.displayName,
-                        modelName: viewModel.selectedModel
-                    )
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-            }
+            )
 
             Divider()
 

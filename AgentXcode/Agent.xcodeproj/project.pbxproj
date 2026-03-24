@@ -129,6 +129,7 @@
 		5AA4A8B9EB5423A782B9D469 /* ScreenshotPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21810D90659A7DAD10CFA17A /* ScreenshotPreviewView.swift */; };
 		144AC666CD8BD1964F726B31 /* ServicesPopover.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AF4AB55766B9B0D5CA69DFD /* ServicesPopover.swift */; };
 		4992CD23A14EED92AB5B902A /* KeyboardShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = F03E40CE4E05384C443BA8A9 /* KeyboardShortcuts.swift */; };
+		9813192DF858B26C6D4135F3 /* ProjectFolderSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF0C04DFB19BC4AA0E4F96EF /* ProjectFolderSectionView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -327,6 +328,7 @@
 		21810D90659A7DAD10CFA17A /* ScreenshotPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ScreenshotPreviewView.swift"; sourceTree = "<group>"; };
 		7AF4AB55766B9B0D5CA69DFD /* ServicesPopover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ServicesPopover.swift"; sourceTree = "<group>"; };
 		F03E40CE4E05384C443BA8A9 /* KeyboardShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "KeyboardShortcuts.swift"; sourceTree = "<group>"; };
+		DF0C04DFB19BC4AA0E4F96EF /* ProjectFolderSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProjectFolderSectionView.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -539,6 +541,7 @@
 				21810D90659A7DAD10CFA17A /* ScreenshotPreviewView.swift */,
 				7AF4AB55766B9B0D5CA69DFD /* ServicesPopover.swift */,
 				F03E40CE4E05384C443BA8A9 /* KeyboardShortcuts.swift */,
+				DF0C04DFB19BC4AA0E4F96EF /* ProjectFolderSectionView.swift */,
 );
 			path = Views;
 			sourceTree = "<group>";
@@ -924,6 +927,7 @@
 				5AA4A8B9EB5423A782B9D469 /* ScreenshotPreviewView.swift in Sources */,
 				144AC666CD8BD1964F726B31 /* ServicesPopover.swift in Sources */,
 				4992CD23A14EED92AB5B902A /* KeyboardShortcuts.swift in Sources */,
+				9813192DF858B26C6D4135F3 /* ProjectFolderSectionView.swift in Sources */,
 );
 			runOnlyForDeploymentPostprocessing = 0;
 		};

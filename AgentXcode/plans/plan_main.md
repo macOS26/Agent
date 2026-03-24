@@ -1,11 +1,9 @@
-# Extract Views from ContentView
+# Extract ContentView into logical views
 
-- [⏳] 1. Extract KeyboardShortcuts extension to separate file
-- [ ] 2. Extract ProjectFolderSection view
-- [ ] 3. Extract TaskBannerSection view
-- [ ] 4. Extract ActivityLogSection view
-- [ ] 5. Build and verify after each extraction
-- [ ] 6. Commit changes
+- [⏳] 1. Extract ProjectFolderSectionView from ContentView
+- [ ] 2. Extract ActivityLogSectionView from ContentView
+- [ ] 3. Build and verify compilation
+- [ ] 4. Commit changes to git
 
 ---
-*Status: 0 done, 1 in progress, 0 failed, 5 pending*
+*Status: 0 done, 1 in progress, 0 failed, 3 pending*
