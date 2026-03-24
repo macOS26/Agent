@@ -201,19 +201,7 @@ enum AgentTools {
         """
     }
 
-    /// Brief descriptions + examples of each enabled Apple AI tool.
-    @MainActor private static func enabledAppleAIToolDescriptions() -> String {
-        let prefs = ToolPreferencesService.shared
-        return (commonTools + conversationTools)
-            .filter { prefs.isEnabled(.foundationModel, $0.name) }
-            .compactMap { tool -> String? in
-                guard let example = toolExamples[tool.name] else { return nil }
-                return example
-            }
-            .joined(separator: "\n")
-    }
-
-    /// Concrete examples for each tool shown in the Apple AI compact prompt.
+    /// Concrete examples for each tool.
     private static let toolExamples: [String: String] = [
         Name.executeAgentCommand:  #"execute_agent_command {"command": "ls -la"}"#,
         Name.executeDaemonCommand: #"execute_daemon_command {"command": "whoami"}"#,
