@@ -489,7 +489,7 @@ final class ScriptService {
         let dylibFile = dylibPath(name: scriptName)
         // Re-sign dylib with the app's identity so macOS attributes AppleScript
         // permission prompts to "Agent!" instead of "Xcode"
-        return "cd '\(agentsPath)' && touch Package.swift && swift build --product '\(scriptName)' 2>&1 && codesign --force --sign - --identifier Agent.app.toddbruss '\(dylibFile)' 2>&1"
+        return "cd '\(agentsPath)' && touch Package.swift && swift build --product '\(scriptName)' 2>&1 && codesign --force --sign - --identifier \(AppConstants.bundleID) '\(dylibFile)' 2>&1"
     }
 
     /// Path to the compiled dylib for a script

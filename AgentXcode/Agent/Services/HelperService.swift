@@ -7,7 +7,7 @@ import ServiceManagement
 /// the plist exists BEFORE calling SMAppService methods.
 enum SafeSMAppServiceDaemon {
     /// The plist filename for daemon
-    static let daemonPlistName = "Agent.app.toddbruss.helper.plist"
+    static let daemonPlistName = AppConstants.helperPlist
 
     /// Path to the plist inside the app bundle (where SMAppService reads from)
     static var bundlePlistURL: URL? {
@@ -133,7 +133,7 @@ final class OutputHandler: NSObject, HelperProgressProtocol, @unchecked Sendable
 
 @MainActor @Observable
 final class HelperService {
-    nonisolated static let helperID = "Agent.app.toddbruss.helper"
+    nonisolated static let helperID = AppConstants.helperID
     nonisolated let instanceID = UUID().uuidString
 
     var onOutput: (@MainActor @Sendable (String) -> Void)?

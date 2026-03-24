@@ -160,6 +160,7 @@ enum AgentTools {
         - BUILD: Use xcode (action: build). Never xcodebuild via shell.
         - applescript_tool is ONLY for AppleScript automation of apps (tell application...). NOT for shell commands.
         - For tasks with 3+ steps, create a plan_mode plan first. Execute every step. Don't mark done without writing files.
+        - FILE SIZE: NEVER generate a file over 1500 lines of code. Keep files under 1000 lines; 500 lines or less per file is preferred. Split large files into smaller focused modules.
 
         TCC (in-process): agent_script (run), applescript_tool (execute), accessibility. NO TCC: execute_agent_command, execute_daemon_command.
         AGENT SCRIPTS: ~/Documents/AgentScript/agents/. 100% Swift. @_cdecl("script_main") public func scriptMain() -> Int32 { return 0 }
@@ -191,6 +192,7 @@ enum AgentTools {
         TOOLS: \(n.readFile), \(n.writeFile), \(n.editFile), \(n.listFiles), \(n.searchFiles), \(n.readDir), \(n.executeAgentCommand).
         ACTION: \(n.git) (status/diff/log/commit), \(n.xcode) (build/run), \(n.agentScript) (list/read/create/update/run), \(n.planMode) (create/update/read), \(n.appleScriptTool) (execute/lookup_sdef), \(n.accessibility) (list_windows/click/type_text/find_element).
         Shell: \(n.executeAgentCommand) for rm/mv/cp. Never use applescript_tool for shell commands.
+        Files: NEVER over 1500 lines. Under 1000 preferred; 500 or less ideal. Split large files.
         """
     }
 

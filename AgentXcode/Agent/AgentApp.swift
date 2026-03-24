@@ -1,9 +1,14 @@
 import SwiftUI
 import SwiftData
 
-/// App bundle identifier — used for Logger subsystem, XPC, etc.
+/// App identifiers — single source of truth for bundle ID, XPC services, plists, etc.
 enum AppConstants {
-    static let subsystem = "Agent.app.toddbruss"
+    static let bundleID = "Agent.app.toddbruss"
+    static let subsystem = bundleID
+    static let helperID = "\(bundleID).helper"
+    static let userID = "\(bundleID).user"
+    static let helperPlist = "\(bundleID).helper.plist"
+    static let userPlist = "\(bundleID).user.plist"
 }
 
 extension Notification.Name {

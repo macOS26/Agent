@@ -7,7 +7,7 @@ import ServiceManagement
 /// the plist exists BEFORE calling SMAppService methods.
 enum SafeSMAppService {
     /// The plist filename for user agent
-    static let userAgentPlistName = "Agent.app.toddbruss.user.plist"
+    static let userAgentPlistName = AppConstants.userPlist
 
     /// Path to the plist inside the app bundle (where SMAppService reads from)
     static var bundlePlistURL: URL? {
@@ -132,7 +132,7 @@ final class UserOutputHandler: NSObject, UserProgressProtocol, @unchecked Sendab
 
 @MainActor @Observable
 final class UserService {
-    nonisolated static let userID = "Agent.app.toddbruss.user"
+    nonisolated static let userID = AppConstants.userID
     nonisolated let instanceID = UUID().uuidString
 
     var onOutput: (@MainActor @Sendable (String) -> Void)?
