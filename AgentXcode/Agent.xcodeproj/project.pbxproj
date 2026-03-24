@@ -116,9 +116,6 @@
 		7AB0005863FDEB26A427D572 /* FoundationModelToolDefinitions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0031B8FF027D032D62F8DCFC /* FoundationModelToolDefinitions.swift */; };
 		1D4719DCD45082F4898C6A35 /* FoundationModelHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 348B39D2C50843DCCFD23620 /* FoundationModelHelpers.swift */; };
 		F123A9EA71C5383EFFFF1A8A /* ActivityLogView+Rendering.swift in Sources */ = {isa = PBXBuildFile; fileRef = C428D9A5859B0E1BB0D2FB6B /* ActivityLogView+Rendering.swift */; };
-		5F382EB905DEB6A80A6BE7EE /* CodeBlockSyntax+Terminal.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00B3F1FE027D878FA0CD426 /* CodeBlockSyntax+Terminal.swift */; };
-		EF36545C0DDFB57F98641ACC /* CodeBlockSyntax+Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 796A6667ACD88945C2FA33F8 /* CodeBlockSyntax+Theme.swift */; };
-		0C070D81A7D906CFD9210773 /* CodeBlockSyntax+ActivityLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC82983852783B911FD60B55 /* CodeBlockSyntax+ActivityLog.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -304,9 +301,6 @@
 		0031B8FF027D032D62F8DCFC /* FoundationModelToolDefinitions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FoundationModelToolDefinitions.swift"; sourceTree = "<group>"; };
 		348B39D2C50843DCCFD23620 /* FoundationModelHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FoundationModelHelpers.swift"; sourceTree = "<group>"; };
 		C428D9A5859B0E1BB0D2FB6B /* ActivityLogView+Rendering.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ActivityLogView+Rendering.swift"; sourceTree = "<group>"; };
-		C00B3F1FE027D878FA0CD426 /* CodeBlockSyntax+Terminal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CodeBlockSyntax+Terminal.swift"; sourceTree = "<group>"; };
-		796A6667ACD88945C2FA33F8 /* CodeBlockSyntax+Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CodeBlockSyntax+Theme.swift"; sourceTree = "<group>"; };
-		CC82983852783B911FD60B55 /* CodeBlockSyntax+ActivityLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CodeBlockSyntax+ActivityLog.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -590,9 +584,6 @@
 			isa = PBXGroup;
 			children = (
 				AA10000000000000000055 /* CodeBlockSyntax.swift */,
-				C00B3F1FE027D878FA0CD426 /* CodeBlockSyntax+Terminal.swift */,
-				796A6667ACD88945C2FA33F8 /* CodeBlockSyntax+Theme.swift */,
-				CC82983852783B911FD60B55 /* CodeBlockSyntax+ActivityLog.swift */,
 );
 			path = ColorSyntax;
 			sourceTree = "<group>";
@@ -881,9 +872,6 @@
 				7AB0005863FDEB26A427D572 /* FoundationModelToolDefinitions.swift in Sources */,
 				1D4719DCD45082F4898C6A35 /* FoundationModelHelpers.swift in Sources */,
 				F123A9EA71C5383EFFFF1A8A /* ActivityLogView+Rendering.swift in Sources */,
-				5F382EB905DEB6A80A6BE7EE /* CodeBlockSyntax+Terminal.swift in Sources */,
-				EF36545C0DDFB57F98641ACC /* CodeBlockSyntax+Theme.swift in Sources */,
-				0C070D81A7D906CFD9210773 /* CodeBlockSyntax+ActivityLog.swift in Sources */,
 );
 			runOnlyForDeploymentPostprocessing = 0;
 		};
