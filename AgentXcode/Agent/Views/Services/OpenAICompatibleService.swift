@@ -159,15 +159,48 @@ final class OpenAICompatibleService {
         return chatMessages
     }
 
+    /// Convert OpenAI-format messages to LM Studio Native "input" format.
+    /// Each item needs "type": "text" (or "image") plus "role" and "text".
+    private func convertToNativeInput(_ openAIMessages: [[String: Any]]) -> [[String: Any]] {
+        return openAIMessages.compactMap { msg -> [String: Any]? in
+            let role = msg["role"] as? String ?? "user"
+            // Skip tool messages — native API doesn't support them
+            if role == "tool" { return nil }
+            if let text = msg["content"] as? String {
+                return ["type": "text", "role": role, "text": text]
+            } else if let parts = msg["content"] as? [[String: Any]] {
+                // Multi-part content — extract text
+                let combined = parts.compactMap { $0["text"] as? String }.joined(separator: "\n")
+                if !combined.isEmpty {
+                    return ["type": "text", "role": role, "text": combined]
+                }
+            }
+            // Assistant messages with tool_calls but no content
+            if role == "assistant" {
+                return ["type": "text", "role": role, "text": "(tool call)"]
+            }
+            return nil
+        }
+    }
+
+    /// Build the messages payload for the request body, converting format if needed.
+    private func buildMessagesPayload(_ messages: [[String: Any]]) -> Any {
+        let chatMessages = convertMessages(messages)
+        if messagesKey == "input" {
+            return convertToNativeInput(chatMessages)
+        }
+        return chatMessages
+    }
+
     // MARK: - Non-Streaming
 
     func send(messages: [[String: Any]], activeGroups: Set<String>? = nil) async throws -> (content: [[String: Any]], stopReason: String) {
-        let chatMessages = convertMessages(messages)
+        let payload = buildMessagesPayload(messages)
 
         var body: [String: Any] = [
             "model": model,
             "temperature": temperature,
-            messagesKey: chatMessages,
+            messagesKey: payload,
             "stream": false,
             "max_tokens": 2048
         ]
@@ -185,12 +218,12 @@ final class OpenAICompatibleService {
         activeGroups: Set<String>? = nil,
         onTextDelta: @escaping @Sendable (String) -> Void
     ) async throws -> (content: [[String: Any]], stopReason: String) {
-        let chatMessages = convertMessages(messages)
+        let payload = buildMessagesPayload(messages)
 
         var body: [String: Any] = [
             "model": model,
             "temperature": temperature,
-            messagesKey: chatMessages,
+            messagesKey: payload,
             "stream": true,
             "max_tokens": 2048
         ]
