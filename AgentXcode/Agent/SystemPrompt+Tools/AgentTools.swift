@@ -162,11 +162,12 @@ enum AgentTools {
         - For tasks with 3+ steps, create a plan_mode plan first. Execute every step. Don't mark done without writing files.
 
         SPLITTING FILES — follow this exact sequence for EACH new file:
-        1. write_file to create the new file with imports + extracted code
-        2. xcode (action: add_file) to add it to the project
-        3. edit_file to remove the extracted code from the original file
-        4. xcode (action: build) to verify it compiles
-        5. Mark plan step completed ONLY if build succeeds
+        1. read_file the source file you will extract from
+        2. write_file to create the new file with imports + extracted code
+        3. xcode (action: add_file) to add it to the project
+        4. edit_file to remove the extracted code from the original file (old_string must match the file EXACTLY — copy from the read_file output, never from memory)
+        5. xcode (action: build) to verify it compiles
+        6. Mark plan step completed ONLY if build succeeds
         Do ONE file at a time. Build between EVERY file. Never batch multiple files before building.
 
         TCC (in-process): agent_script (run), applescript_tool (execute), accessibility. NO TCC: execute_agent_command, execute_daemon_command.
