@@ -64,7 +64,7 @@ enum LMStudioProtocol: String, CaseIterable, Codable {
         switch self {
         case .openAI: "http://localhost:1234/v1/chat/completions"
         case .anthropic: "http://localhost:1234/v1/messages"
-        case .lmStudio: "http://localhost:1234/v1/chat/completions"
+        case .lmStudio: "http://localhost:1234/api/v1/chat"
         }
     }
 }
