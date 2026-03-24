@@ -156,11 +156,18 @@ enum AgentTools {
         web: open, find, click, type, execute_js, get_url, get_title | selenium: start, stop, navigate, find, click, type, execute, screenshot, wait
 
         CRITICAL RULES:
-        - SHELL COMMANDS (rm, mv, cp, ls, find, grep, etc.): ALWAYS use execute_agent_command. NEVER create .sh scripts. NEVER use applescript_tool "do shell script". NEVER use write_file to create shell scripts.
+        - SHELL COMMANDS (rm, mv, cp, ls, find, grep, etc.): ALWAYS use execute_agent_command. NEVER create .sh scripts. NEVER use applescript_tool "do shell script".
         - BUILD: Use xcode (action: build). Never xcodebuild via shell.
         - applescript_tool is ONLY for AppleScript automation of apps (tell application...). NOT for shell commands.
         - For tasks with 3+ steps, create a plan_mode plan first. Execute every step. Don't mark done without writing files.
-        - FILE SIZE: NEVER generate a file over 1500 lines of code. Keep files under 1000 lines; 500 lines or less per file is preferred. Split large files into smaller focused modules.
+
+        SPLITTING FILES — follow this exact sequence for EACH new file:
+        1. write_file to create the new file with imports + extracted code
+        2. xcode (action: add_file) to add it to the project
+        3. edit_file to remove the extracted code from the original file
+        4. xcode (action: build) to verify it compiles
+        5. Mark plan step completed ONLY if build succeeds
+        Do ONE file at a time. Build between EVERY file. Never batch multiple files before building.
 
         TCC (in-process): agent_script (run), applescript_tool (execute), accessibility. NO TCC: execute_agent_command, execute_daemon_command.
         AGENT SCRIPTS: ~/Documents/AgentScript/agents/. 100% Swift. @_cdecl("script_main") public func scriptMain() -> Int32 { return 0 }
