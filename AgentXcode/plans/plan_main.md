@@ -1,13 +1,10 @@
-# Split CodeBlockSyntax.swift (1211 lines)
+# Extract LangDef and defs from CodeBlockSyntax.swift
 
-- [⏳] 1. 1. Extract Activity Log highlighting (lines 882-1126) to CodeBlockSyntax+ActivityLog.swift
-- [ ] 2. 2. Build project to verify
-- [ ] 3. 3. Extract Git Output highlighting (lines 623-690) to CodeBlockSyntax+Git.swift
-- [ ] 4. 4. Build project to verify
-- [ ] 5. 5. Extract Diff Block highlighting (lines 691-770) to CodeBlockSyntax+Diff.swift
-- [ ] 6. 6. Build project to verify
-- [ ] 7. 7. Extract Hex Dump highlighting (lines 771-881) to CodeBlockSyntax+HexDump.swift
-- [ ] 8. 8. Build project to verify
+- [ ] 1. Read full CodeBlockSyntax.swift to find LangDef struct location
+- [ ] 2. Create CodeBlockLangDefs.swift with LangDef struct and defs dictionary
+- [ ] 3. Add new file to Xcode project
+- [ ] 4. Remove LangDef struct and defs from CodeBlockSyntax.swift
+- [ ] 5. Build to verify compilation
 
 ---
-*Status: 0 done, 1 in progress, 0 failed, 7 pending*
+*Status: 5 steps pending*

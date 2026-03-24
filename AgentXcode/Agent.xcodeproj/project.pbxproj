@@ -118,6 +118,7 @@
 		F123A9EA71C5383EFFFF1A8A /* ActivityLogView+Rendering.swift in Sources */ = {isa = PBXBuildFile; fileRef = C428D9A5859B0E1BB0D2FB6B /* ActivityLogView+Rendering.swift */; };
 		5F382EB905DEB6A80A6BE7EE /* CodeBlockSyntax+Terminal.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00B3F1FE027D878FA0CD426 /* CodeBlockSyntax+Terminal.swift */; };
 		EF36545C0DDFB57F98641ACC /* CodeBlockSyntax+Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 796A6667ACD88945C2FA33F8 /* CodeBlockSyntax+Theme.swift */; };
+		0C070D81A7D906CFD9210773 /* CodeBlockSyntax+ActivityLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC82983852783B911FD60B55 /* CodeBlockSyntax+ActivityLog.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -305,6 +306,7 @@
 		C428D9A5859B0E1BB0D2FB6B /* ActivityLogView+Rendering.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ActivityLogView+Rendering.swift"; sourceTree = "<group>"; };
 		C00B3F1FE027D878FA0CD426 /* CodeBlockSyntax+Terminal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CodeBlockSyntax+Terminal.swift"; sourceTree = "<group>"; };
 		796A6667ACD88945C2FA33F8 /* CodeBlockSyntax+Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CodeBlockSyntax+Theme.swift"; sourceTree = "<group>"; };
+		CC82983852783B911FD60B55 /* CodeBlockSyntax+ActivityLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CodeBlockSyntax+ActivityLog.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -590,6 +592,7 @@
 				AA10000000000000000055 /* CodeBlockSyntax.swift */,
 				C00B3F1FE027D878FA0CD426 /* CodeBlockSyntax+Terminal.swift */,
 				796A6667ACD88945C2FA33F8 /* CodeBlockSyntax+Theme.swift */,
+				CC82983852783B911FD60B55 /* CodeBlockSyntax+ActivityLog.swift */,
 );
 			path = ColorSyntax;
 			sourceTree = "<group>";
@@ -880,6 +883,7 @@
 				F123A9EA71C5383EFFFF1A8A /* ActivityLogView+Rendering.swift in Sources */,
 				5F382EB905DEB6A80A6BE7EE /* CodeBlockSyntax+Terminal.swift in Sources */,
 				EF36545C0DDFB57F98641ACC /* CodeBlockSyntax+Theme.swift in Sources */,
+				0C070D81A7D906CFD9210773 /* CodeBlockSyntax+ActivityLog.swift in Sources */,
 );
 			runOnlyForDeploymentPostprocessing = 0;
 		};

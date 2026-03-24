@@ -4,7 +4,7 @@ import AppKit
 
 // MARK: - Language Definition
 
-private struct LangDef {
+struct LangDef {
     let keywords: Set<String>
     let declKeywords: Set<String>
     let types: Set<String>
@@ -877,54 +877,6 @@ private struct LangDef {
         }
 
         return result
-    }
-
-    // MARK: - Activity Log Line Highlighting
-
-    private static let actTimestampRx: NSRegularExpression? = try? NSRegularExpression(
-        pattern: #"\[\d{2}:\d{2}:\d{2}\]"#)
-    private static let actSectionRx: NSRegularExpression? = try? NSRegularExpression(
-        pattern: #"---\s+.+?\s+---"#)
-    private static let actLabelRx: NSRegularExpression? = try? NSRegularExpression(
-        pattern: #"\b(?:Task|Model|Status|Error|Warning|Result|Info|Read|exit code):"#)
-    private static let actShellRx: NSRegularExpression? = try? NSRegularExpression(
-        pattern: #"\$\s+\S+"#)
-    private static let actPipeCmdRx: NSRegularExpression? = try? NSRegularExpression(
-        pattern: #"(?:&&|\|)\s+(\w+)"#)
-    private static let actGrepFileRx: NSRegularExpression? = try? NSRegularExpression(
-        pattern: #"^([^\s:]+):(\d+):"#, options: .anchorsMatchLines)
-    private static let actAbsPathRx: NSRegularExpression? = try? NSRegularExpression(
-        pattern: #"(?:^|\s)(\.?/?(?:[\w.@+\-]+/)+[\w.@+\-]+/?)"#, options: .anchorsMatchLines)
-    private static let actFlagRx: NSRegularExpression? = try? NSRegularExpression(
-        pattern: #"(?<=\s)-{1,2}[\w][\w\-]*"#)
-
-    /// Check if a line is activity log output (timestamps, grep results, or ls output)
-    static func looksLikeActivityLogLine(_ line: String) -> Bool {
-        let t = line.trimmingCharacters(in: .whitespaces)
-        if t.range(of: #"^\[\d{2}:\d{2}:\d{2}\]"#, options: .regularExpression) != nil { return true }
-        if t.range(of: #"^\S+\.\w+:\d+:"#, options: .regularExpression) != nil { return true }
-        if looksLikeHexDump(t) { return true }
-        if looksLikeTerminalLine(t) { return true }
-        if looksLikeGitOutput(t) { return true }
-        if looksLikeD1FLine(t) { return true }
-        // Compiler/SPM warnings and errors
-        if t.hasPrefix("warning:") || t.hasPrefix("error:") || t.hasPrefix("note:") { return true }
-        // Bare file paths (e.g. /Users/... or ~/Documents/...)
-        if t.hasPrefix("/") || t.hasPrefix("~/") { return true }
-        return false
-    }
-
-    /// Check if a line is D1F diff output (📎/❌/✅/📍/📊 prefixed)
-    private static func looksLikeD1FLine(_ t: String) -> Bool {
-        t.hasPrefix("📎 ") || t.hasPrefix("❌ ") || t.hasPrefix("✅ ") ||
-        t.hasPrefix("📍 ") || t.hasPrefix("📊 ") || t.hasPrefix("❓ ")
-    }
-
-    /// Check if a single line looks like ls -la output (permissions string)
-    private static func looksLikeTerminalLine(_ t: String) -> Bool {
-        guard t.count > 10, let first = t.first, "d-lbcps".contains(first) else { return false }
-        let perm = t.prefix(10)
-        return perm.allSatisfy({ "drwx-lbcpsTt@+. ".contains($0) })
     }
 
     /// Highlight a single activity log line. Returns nil if the line is not activity-log output.
