@@ -163,9 +163,9 @@ enum AgentTools {
 
         EDITING FILES — edit_file has 3 actions:
         - edit: replace exact text (old_string → new_string). Best for small, single-location changes.
-        - apply: apply a diff to a file. Best for multiple changes across a file in one call. read_file first, then construct a diff where each line starts with = (keep), - (remove), or + (add) immediately followed by content. Include enough = context lines around changes for accurate placement.
-        - create: compare two strings and return a visual diff. Use to preview changes.
-        Use edit for 1-2 small changes. Use apply for 3+ changes or large refactors across a file.
+        - create: generate a diff from source and destination strings. Returns a diff you can pass to apply.
+        - apply: apply a diff to a file. read_file first, then provide a diff where each line starts with = (keep), - (remove), or + (add) immediately followed by content. Include enough = context lines for accurate placement.
+        Use edit for 1-2 small changes. Use create + apply for 3+ changes or large refactors across a file.
 
         SPLITTING FILES — follow this exact sequence for EACH new file:
         1. read_file the source file you will extract from
