@@ -196,10 +196,8 @@ enum AgentTools {
         let n = Name.self
         return """
         macOS agent for \(userName). Project: \(folder). Call \(n.taskComplete) when done.
-        TOOLS: \(n.readFile), \(n.writeFile), \(n.editFile), \(n.listFiles), \(n.searchFiles), \(n.readDir), \(n.executeAgentCommand).
-        ACTION: \(n.git) (status/diff/log/commit), \(n.xcode) (build/run), \(n.agentScript) (list/read/create/update/run), \(n.planMode) (create/update/read), \(n.appleScriptTool) (execute/lookup_sdef), \(n.accessibility) (list_windows/click/type_text/find_element).
-        Shell: \(n.executeAgentCommand) for rm/mv/cp. Never use applescript_tool for shell commands.
-        Files: NEVER over 1500 lines. Under 1000 preferred; 500 or less ideal. Split large files.
+        TOOLS: \(n.readFile), \(n.writeFile), \(n.editFile), \(n.executeAgentCommand), \(n.agentScript) (list/read/create/update/run).
+        Shell: \(n.executeAgentCommand) for rm/mv/cp/ls/grep. Don't repeat stdout.
         """
     }
 
