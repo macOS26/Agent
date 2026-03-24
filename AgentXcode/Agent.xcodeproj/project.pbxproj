@@ -102,6 +102,15 @@
 		8375A8F4BB60859635722350 /* TaskExecution+WebTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F1A988F00C4E7050FED023 /* TaskExecution+WebTools.swift */; };
 		02706156F0F8E91DF8FB4E70 /* TaskExecution+Selenium.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D8FE3C1065B23B9424ED23C /* TaskExecution+Selenium.swift */; };
 		78EBD1F124AB2D7D38E70E8E /* AgentViewModel+TaskExecution+AboutSelf.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878ED6B87793FE4A12844669 /* AgentViewModel+TaskExecution+AboutSelf.swift */; };
+		22439788DCAA5510D58ABEEC /* AgentViewModel+TabHandlers+Core.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D96CB6C2479E8BCCBF6B487 /* AgentViewModel+TabHandlers+Core.swift */; };
+		16AC65E0831D60B1FBA8C98E /* AgentViewModel+TabHandlers+FileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AEB37986AC0DAFF0627F9C3 /* AgentViewModel+TabHandlers+FileManager.swift */; };
+		8D9538B356CEFC7645A2A97E /* AgentViewModel+TabHandlers+Git.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF914BA393B97296A51A534F /* AgentViewModel+TabHandlers+Git.swift */; };
+		5276D54C0C7BAB0F9F5DE24A /* AgentViewModel+TabHandlers+AgentScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CDC0CB629A59A0594ED17DA /* AgentViewModel+TabHandlers+AgentScript.swift */; };
+		8B340428F90511F1772B985A /* AgentViewModel+TabHandlers+Shell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF8C3DA5A80E9774D8FE8E51 /* AgentViewModel+TabHandlers+Shell.swift */; };
+		34558227A73FD129C9AF86AA /* AgentViewModel+TabHandlers+Automation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 224DF4E08C4D8857DC2B563B /* AgentViewModel+TabHandlers+Automation.swift */; };
+		031BAABE48A31A26277EA3C6 /* AgentViewModel+TabHandlers+Accessibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7452B670C7ABBF7A1884569F /* AgentViewModel+TabHandlers+Accessibility.swift */; };
+		DE0C6B19A80C218E670D6C69 /* AgentViewModel+TabHandlers+Web.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05EEC654A3A0762D24BE1901 /* AgentViewModel+TabHandlers+Web.swift */; };
+		088F38C5D0E90D019E33A0D9 /* AgentViewModel+TabHandlers+Selenium.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DBCE8EADB1BBD7A0E94AD0B /* AgentViewModel+TabHandlers+Selenium.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -273,6 +282,15 @@
 		87F1A988F00C4E7050FED023 /* TaskExecution+WebTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskExecution+WebTools.swift"; sourceTree = "<group>"; };
 		5D8FE3C1065B23B9424ED23C /* TaskExecution+Selenium.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskExecution+Selenium.swift"; sourceTree = "<group>"; };
 		878ED6B87793FE4A12844669 /* AgentViewModel+TaskExecution+AboutSelf.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TaskExecution+AboutSelf.swift"; sourceTree = "<group>"; };
+		1D96CB6C2479E8BCCBF6B487 /* AgentViewModel+TabHandlers+Core.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Core.swift"; sourceTree = "<group>"; };
+		0AEB37986AC0DAFF0627F9C3 /* AgentViewModel+TabHandlers+FileManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+FileManager.swift"; sourceTree = "<group>"; };
+		EF914BA393B97296A51A534F /* AgentViewModel+TabHandlers+Git.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Git.swift"; sourceTree = "<group>"; };
+		6CDC0CB629A59A0594ED17DA /* AgentViewModel+TabHandlers+AgentScript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+AgentScript.swift"; sourceTree = "<group>"; };
+		CF8C3DA5A80E9774D8FE8E51 /* AgentViewModel+TabHandlers+Shell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Shell.swift"; sourceTree = "<group>"; };
+		224DF4E08C4D8857DC2B563B /* AgentViewModel+TabHandlers+Automation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Automation.swift"; sourceTree = "<group>"; };
+		7452B670C7ABBF7A1884569F /* AgentViewModel+TabHandlers+Accessibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Accessibility.swift"; sourceTree = "<group>"; };
+		05EEC654A3A0762D24BE1901 /* AgentViewModel+TabHandlers+Web.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Web.swift"; sourceTree = "<group>"; };
+		0DBCE8EADB1BBD7A0E94AD0B /* AgentViewModel+TabHandlers+Selenium.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Selenium.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -497,6 +515,15 @@
 				AA1000000000000000004A /* AgentViewModel+TaskExecution.swift */,
 				AA100000000000000000A0 /* AgentViewModel+TabTask.swift */,
 				CC10000000000000000002 /* AgentViewModel+TabToolHandlers.swift */,
+				1D96CB6C2479E8BCCBF6B487 /* AgentViewModel+TabHandlers+Core.swift */,
+				0AEB37986AC0DAFF0627F9C3 /* AgentViewModel+TabHandlers+FileManager.swift */,
+				EF914BA393B97296A51A534F /* AgentViewModel+TabHandlers+Git.swift */,
+				6CDC0CB629A59A0594ED17DA /* AgentViewModel+TabHandlers+AgentScript.swift */,
+				CF8C3DA5A80E9774D8FE8E51 /* AgentViewModel+TabHandlers+Shell.swift */,
+				224DF4E08C4D8857DC2B563B /* AgentViewModel+TabHandlers+Automation.swift */,
+				7452B670C7ABBF7A1884569F /* AgentViewModel+TabHandlers+Accessibility.swift */,
+				05EEC654A3A0762D24BE1901 /* AgentViewModel+TabHandlers+Web.swift */,
+				0DBCE8EADB1BBD7A0E94AD0B /* AgentViewModel+TabHandlers+Selenium.swift */,
 				AA100000000000000000C3 /* TaskExecution+ShellTools.swift */,
 				AA100000000000000000C5 /* TaskExecution+MCPTools.swift */,
 				AA100000000000000000C7 /* TaskExecution+GitTools.swift */,
@@ -786,6 +813,15 @@
 				AA10000000000000000049 /* AgentViewModel+Logging.swift in Sources */,
 				AA1000000000000000004B /* AgentViewModel+TaskExecution.swift in Sources */,
 				CC10000000000000000001 /* AgentViewModel+TabToolHandlers.swift in Sources */,
+				22439788DCAA5510D58ABEEC /* AgentViewModel+TabHandlers+Core.swift in Sources */,
+				16AC65E0831D60B1FBA8C98E /* AgentViewModel+TabHandlers+FileManager.swift in Sources */,
+				8D9538B356CEFC7645A2A97E /* AgentViewModel+TabHandlers+Git.swift in Sources */,
+				5276D54C0C7BAB0F9F5DE24A /* AgentViewModel+TabHandlers+AgentScript.swift in Sources */,
+				8B340428F90511F1772B985A /* AgentViewModel+TabHandlers+Shell.swift in Sources */,
+				34558227A73FD129C9AF86AA /* AgentViewModel+TabHandlers+Automation.swift in Sources */,
+				031BAABE48A31A26277EA3C6 /* AgentViewModel+TabHandlers+Accessibility.swift in Sources */,
+				DE0C6B19A80C218E670D6C69 /* AgentViewModel+TabHandlers+Web.swift in Sources */,
+				088F38C5D0E90D019E33A0D9 /* AgentViewModel+TabHandlers+Selenium.swift in Sources */,
 				AA1000000000000000007F /* AgentViewModel+TabTask.swift in Sources */,
 				BB10000000000000000015 /* AgentViewModel+Helpers.swift in Sources */,
 				FF10000000000000000011 /* AgentViewModel+Speech.swift in Sources */,
