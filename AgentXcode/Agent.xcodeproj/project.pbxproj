@@ -123,6 +123,8 @@
 		A34E0C76DC7DABD4CCA06D4B /* CodeBlockSyntax+Diff.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30A0E288397BF42CA9B7FFB /* CodeBlockSyntax+Diff.swift */; };
 		209FA1D0E1B571ED04CF5EDC /* AgentViewModel+MessageTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBA563ADA970F23E8E161254 /* AgentViewModel+MessageTypes.swift */; };
 		238B40E2A7DFCFB745101269 /* HeaderSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEA10A5913CDA508518F6EDA /* HeaderSectionView.swift */; };
+		E6A8395D5098ED44E0118609 /* InputSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C14A00A8D2269268767BD2D /* InputSectionView.swift */; };
+		9A9C3DD66695959EE70C20DD /* SearchBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70B4573B1D1FB583C85DC43C /* SearchBarView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -315,6 +317,8 @@
 		D30A0E288397BF42CA9B7FFB /* CodeBlockSyntax+Diff.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CodeBlockSyntax+Diff.swift"; sourceTree = "<group>"; };
 		CBA563ADA970F23E8E161254 /* AgentViewModel+MessageTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+MessageTypes.swift"; sourceTree = "<group>"; };
 		FEA10A5913CDA508518F6EDA /* HeaderSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HeaderSectionView.swift"; sourceTree = "<group>"; };
+		1C14A00A8D2269268767BD2D /* InputSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "InputSectionView.swift"; sourceTree = "<group>"; };
+		70B4573B1D1FB583C85DC43C /* SearchBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SearchBarView.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -521,6 +525,8 @@
 				EADF39D02F69018800CD01E5 /* AgentScriptTabs */,
 				C428D9A5859B0E1BB0D2FB6B /* ActivityLogView+Rendering.swift */,
 							FEA10A5913CDA508518F6EDA /* HeaderSectionView.swift */,
+				1C14A00A8D2269268767BD2D /* InputSectionView.swift */,
+				70B4573B1D1FB583C85DC43C /* SearchBarView.swift */,
 );
 			path = Views;
 			sourceTree = "<group>";
@@ -900,6 +906,8 @@
 				A34E0C76DC7DABD4CCA06D4B /* CodeBlockSyntax+Diff.swift in Sources */,
 				209FA1D0E1B571ED04CF5EDC /* AgentViewModel+MessageTypes.swift in Sources */,
 				238B40E2A7DFCFB745101269 /* HeaderSectionView.swift in Sources */,
+				E6A8395D5098ED44E0118609 /* InputSectionView.swift in Sources */,
+				9A9C3DD66695959EE70C20DD /* SearchBarView.swift in Sources */,
 );
 			runOnlyForDeploymentPostprocessing = 0;
 		};

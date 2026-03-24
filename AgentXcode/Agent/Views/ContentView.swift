@@ -89,48 +89,15 @@ struct ContentView: View {
 
             // Search bar
             if showSearch {
-                HStack(spacing: 8) {
-                    Button { isSearchFieldFocused = true } label: {
-                        Image(systemName: "magnifyingglass")
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                    TextField("Find in log...", text: $searchText)
-                        .textFieldStyle(.roundedBorder)
-                        .controlSize(.small)
-                        .focused($isSearchFieldFocused)
-                        .onSubmit { nextMatch() }
-                    if !searchText.isEmpty {
-                        Text(totalMatches > 0 ? "\(currentMatchIndex + 1)/\(totalMatches)" : "0 results")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .frame(minWidth: 50)
-                        Button { previousMatch() } label: {
-                            Image(systemName: "chevron.up")
-                                .frame(height: 14)
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
-                        .disabled(totalMatches == 0)
-                        Button { nextMatch() } label: {
-                            Image(systemName: "chevron.down")
-                                .frame(height: 14)
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
-                        .disabled(totalMatches == 0)
-                    }
-                    Button { showSearch = false; searchText = "" } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.secondary)
-                            .frame(height: 14)
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                }
-                .padding(.horizontal)
-                .padding(.vertical, 6)
-                Divider()
+                SearchBarView(
+                    searchText: $searchText,
+                    totalMatches: totalMatches,
+                    currentMatchIndex: currentMatchIndex,
+                    previousMatch: previousMatch,
+                    nextMatch: nextMatch,
+                    onClose: { showSearch = false; searchText = "" }
+                )
+                .focused($isSearchFieldFocused)
             }
 
             // Tab bar (only when script tabs exist)
@@ -276,118 +243,13 @@ struct ContentView: View {
             }
 
             // Input — switches between main and tab input
-            if let selectedId = viewModel.selectedTabId,
-               let tab = viewModel.scriptTabs.first(where: { $0.id == selectedId }) {
-                // Tab input
-                HStack {
-                    let vm = viewModel
-                    let t = tab
-                    let tabColor = Self.tabColor(for: tab.id, in: vm.scriptTabs)
-                    Button { vm.stopTabTask(tab: t) } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(tabColor)
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.regular)
-                    .help("Cancel tab LLM task")
-                    .opacity(tab.isLLMRunning ? 1 : 0)
-                    .disabled(!tab.isLLMRunning)
-
-                    Button { vm.captureScreenshot() } label: {
-                        Image(systemName: "camera")
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.regular)
-                    .help("Take a screenshot to attach")
-
-                    Button { vm.pasteImageFromClipboard() } label: {
-                        Image(systemName: "photo.on.rectangle.angled")
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.regular)
-                    .help("Paste image from clipboard")
-
-                    Button { vm.toggleDictation() } label: {
-                        Image(systemName: vm.isListening ? "mic.fill" : "mic")
-                            .foregroundStyle(vm.isListening ? Color.blue : .primary)
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.regular)
-                    .help(vm.isListening ? "Stop dictation" : "Start dictation")
-
-                    TextField(tab.isMainTab ? "Enter task..." : tab.isMessagesTab ? "Messages task..." : "Ask about \(tab.scriptName)...", text: Binding(
-                        get: { tab.taskInput },
-                        set: { tab.taskInput = $0 }
-                    ), axis: .vertical)
-                        .textFieldStyle(.roundedBorder)
-                        .lineLimit(1...8)
-                        .onSubmit {
-                            if !tab.taskInput.isEmpty {
-                                vm.runTabTask(tab: t)
-                            }
-                        }
-
-                    Button("Run") { vm.runTabTask(tab: t) }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.regular)
-                        .disabled(tab.taskInput.isEmpty || {
-                            let provider = tab.llmConfig?.provider ?? viewModel.selectedProvider
-                            return provider == .claude && viewModel.apiKey.isEmpty
-                        }())
+            InputSectionView(
+                viewModel: viewModel,
+                isTaskFieldFocused: $isTaskFieldFocused,
+                selectedTab: viewModel.selectedTabId.flatMap { id in
+                    viewModel.scriptTabs.first(where: { $0.id == id })
                 }
-                .padding()
-            } else {
-                // Main tab input
-                HStack {
-                    Button { viewModel.stop() } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.red)
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.regular)
-                    .help("Cancel running task")
-                    .opacity(viewModel.isRunning || viewModel.isThinking ? 1 : 0)
-                    .disabled(!viewModel.isRunning && !viewModel.isThinking)
-
-                    Button { viewModel.captureScreenshot() } label: {
-                        Image(systemName: "camera")
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.regular)
-                    .help("Take a screenshot to attach")
-
-                    Button { viewModel.pasteImageFromClipboard() } label: {
-                        Image(systemName: "photo.on.rectangle.angled")
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.regular)
-                    .help("Paste image from clipboard")
-
-                    Button { viewModel.toggleDictation() } label: {
-                        Image(systemName: viewModel.isListening ? "mic.fill" : "mic")
-                            .foregroundStyle(viewModel.isListening ? Color.blue : .primary)
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.regular)
-                    .help(viewModel.isListening ? "Stop dictation" : "Start dictation")
-
-                    TextField("Enter task...", text: $viewModel.taskInput, axis: .vertical)
-                        .textFieldStyle(.roundedBorder)
-                        .focused($isTaskFieldFocused)
-                        .lineLimit(1...8)
-                        .onSubmit {
-                            if !viewModel.taskInput.isEmpty {
-                                viewModel.run()
-                            }
-                        }
-
-                    Button("Run") { viewModel.run() }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.regular)
-                        .disabled(viewModel.taskInput.isEmpty || (viewModel.selectedProvider == .claude && viewModel.apiKey.isEmpty))
-                }
-                .padding()
-            }
+            )
         }
         .frame(minWidth: 600, minHeight: 500)
         .onAppear {
