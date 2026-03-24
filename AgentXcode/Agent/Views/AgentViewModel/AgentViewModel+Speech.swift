@@ -199,7 +199,7 @@ extension AgentViewModel {
 
     private func resetSilenceTimer() {
         hotwordSilenceTimer?.invalidate()
-        hotwordSilenceTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { [weak self] _ in
+        hotwordSilenceTimer = Timer.scheduledTimer(withTimeInterval: 2.5, repeats: false) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.submitHotwordCommand()
             }
