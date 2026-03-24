@@ -221,7 +221,9 @@
       "Bash(cd:*)",
       "Bash(while read:*)",
       "Bash(do sed:*)",
-      "Bash(xargs -I{} basename {})"
+      "Bash(xargs -I{} basename {})",
+      "Bash(find /Users/toddbruss/Documents/AgentScript -maxdepth 3 -type f \\\\\\(-name *[Dd]iff* -o -name *[Pp]atch* \\\\\\))",
+      "mcp__xcf-server__xcf"
     ]
   }
 }
