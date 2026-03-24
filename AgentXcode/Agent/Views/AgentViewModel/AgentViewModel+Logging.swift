@@ -313,6 +313,8 @@ extension AgentViewModel {
         logBuffer = ""
         logFlushTask?.cancel()
         logFlushTask = nil
+        logPersistTask?.cancel()
+        logPersistTask = nil
         activityLog = ""
         ChatHistoryStore.shared.clearAll()
         // Clear Apple AI conversation context when log is cleared
