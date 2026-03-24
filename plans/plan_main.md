@@ -1,11 +1,14 @@
-# Update README with Recent Changes and Tool Usage
+# Update README Tools Section
 
-- [ ] 1. 1. Summarize recent changes in the Agent project over the last three days by reviewing git logs, commits, and file modifications.
-- [ ] 2. 2. Identify all tools used in the project by searching for tool-related function calls and imports.
-- [ ] 3. 3. Update the README.md file with a detailed summary of recent changes and tool usage.
-- [ ] 4. 4. Verify the updated README.md for accuracy and completeness.
-- [ ] 5. 5. Build the project to ensure no issues were introduced.
-- [ ] 6. 6. Task complete.
+- [✅] 1. 1. Extract the current "Available Tools" section from the README.md file for reference.
+- [⏳] 2. 2. Review the current tool groups and tools in the app to identify new additions or changes.
+- [ ] 3. 3. Rewrite the "Available Tools" section in the README.md to reflect the new tool groups and tools.
+- [ ] 4. 4. Add a new subsection for "Tool Groups" and list all available groups with descriptions.
+- [ ] 5. 5. Update the list of individual tools with their descriptions and parameters.
+- [ ] 6. 6. Add a note about TCC permissions and when to use specific tools.
+- [ ] 7. 7. Verify the updated README.md for accuracy and clarity.
+- [ ] 8. 8. Build the project to ensure no issues were introduced.
+- [ ] 9. 9. Mark the task as complete.
 
 ---
-*Status: 6 steps pending*
+*Status: 1 done, 1 in progress, 0 failed, 7 pending*

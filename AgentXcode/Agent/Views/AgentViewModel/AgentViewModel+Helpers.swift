@@ -463,11 +463,7 @@ extension AgentViewModel {
 
             do {
                 try lines.joined(separator: "\n").write(toFile: path, atomically: true, encoding: .utf8)
-                var result = "[\(planId)] Step \(stepNum) → \(status)"
-                if status.lowercased() == "completed" {
-                    result += "\nREMINDER: Did you actually use write_file/edit_file to make changes? If not, revert this step to in_progress and do the work."
-                }
-                return result
+                return "[\(planId)] Step \(stepNum) → \(status)"
             } catch {
                 return "Error writing plan: \(error.localizedDescription)"
             }
