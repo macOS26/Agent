@@ -69,6 +69,7 @@ final class ScriptService {
         let scriptNames = scriptFiles
             .filter { $0.hasSuffix(".swift") }
             .map { $0.replacingOccurrences(of: ".swift", with: "") }
+            .filter { !$0.isEmpty }
             .sorted()
 
         let scriptList = scriptNames.map { "    \"\($0)\"," }.joined(separator: "\n")
@@ -403,8 +404,11 @@ final class ScriptService {
     func createScript(name: String, content: String) -> String {
         // Ensure package exists first (without lock - just creates directories)
         ensurePackage()
-        
+
         let scriptName = name.replacingOccurrences(of: ".swift", with: "")
+        guard !scriptName.isEmpty else {
+            return "Error: script name cannot be empty."
+        }
         let scriptFile = scriptsDir.appendingPathComponent("\(scriptName).swift")
         let fm = FileManager.default
 
