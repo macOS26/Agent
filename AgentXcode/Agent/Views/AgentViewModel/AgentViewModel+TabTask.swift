@@ -320,6 +320,10 @@ extension AgentViewModel {
                     tab.llmMessages = messages
                     consecutiveNoTool = 0
                 } else if !hasToolUse {
+                    // LM Studio Native/Anthropic local have no tool support — accept text response immediately
+                    if provider == .lmStudio && (lmStudioProtocol == .lmStudio || lmStudioProtocol == .anthropic) {
+                        break
+                    }
                     consecutiveNoTool += 1
                     if consecutiveNoTool >= 3 {
                         tab.appendLog("LLM not calling tools after \(consecutiveNoTool) attempts — stopping.")
