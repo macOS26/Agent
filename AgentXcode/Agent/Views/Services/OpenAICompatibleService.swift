@@ -372,13 +372,8 @@ final class OpenAICompatibleService {
 
             guard let delta = firstChoice["delta"] as? [String: Any] else { continue }
 
-            // Text content delta
-            if let content = delta["content"] as? String, !content.isEmpty {
-                fullText += content
-                onTextDelta(content)
-            }
-
-            // Tool call deltas (streamed incrementally)
+            // Tool call deltas (streamed incrementally) — process before text
+            // so we know if tool calls are present alongside text
             if let toolCalls = delta["tool_calls"] as? [[String: Any]] {
                 for tc in toolCalls {
                     let index = tc["index"] as? Int ?? 0
@@ -398,6 +393,20 @@ final class OpenAICompatibleService {
                             toolCallAccum[index]?.arguments += args
                         }
                     }
+                }
+            }
+
+            // Text content delta — filter special tokens and suppress when
+            // tool calls are being streamed (vLLM/Qwen leaks raw JSON as text)
+            if let content = delta["content"] as? String, !content.isEmpty {
+                // Strip special tokens inline
+                let cleaned = content
+                    .replacingOccurrences(of: "<|im_start|>", with: "")
+                    .replacingOccurrences(of: "<|im_end|>", with: "")
+                fullText += cleaned
+                // Only forward to UI if no native tool calls are being streamed
+                if toolCallAccum.isEmpty && !cleaned.isEmpty {
+                    onTextDelta(cleaned)
                 }
             }
         }
