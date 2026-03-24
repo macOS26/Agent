@@ -149,7 +149,7 @@ enum AgentTools {
 
         DIRECT TOOLS (no action parameter): read_file, write_file, edit_file, list_files, search_files, read_dir, task_complete, execute_agent_command, execute_daemon_command, apple_event_query.
         ACTION TOOLS (require "action" parameter):
-        file_manager: read, write, edit, list, search, read_dir | git: status, diff, log, commit, diff_patch, branch
+        file_manager: read, write, edit, list, search, read_dir, if_to_switch, extract_function | git: status, diff, log, commit, diff_patch, branch
         xcode: build, run, list_projects, select_project, add_file, remove_file | agent_script: list, read, create, update, run, delete, combine
         plan_mode: create, update, read, list, delete | applescript_tool: execute, lookup_sdef, list, run, save, delete
         javascript_tool: execute, list, run, save, delete | accessibility: list_windows, get_properties, perform_action, type_text, click, press_key, screenshot, set_properties, find_element, get_children
@@ -356,9 +356,9 @@ enum AgentTools {
         // --- File Manager (consolidated — maps to direct file tools) ---
         ToolDef(
             name: Name.fileManager,
-            description: "File operations. Actions: read (file contents), write (create/overwrite), edit (find+replace), list (find by glob), search (grep by regex), read_dir (ls directory).",
+            description: "File operations and refactoring. Actions: read, write, edit, list, search, read_dir, if_to_switch (convert if-chains to switch/case), extract_function (move function to new file).",
             properties: [
-                "action": ["type": "string", "description": "Action: read, write, edit, list, search, read_dir, create_diff, or apply_diff"],
+                "action": ["type": "string", "description": "Action: read, write, edit, list, search, read_dir, if_to_switch, or extract_function"],
                 "file_path": ["type": "string", "description": "File path (for read/write/edit/apply_diff)"],
                 "path": ["type": "string", "description": "Directory path (for list/search/read_dir)"],
                 "content": ["type": "string", "description": "For write: file content"],
@@ -369,6 +369,8 @@ enum AgentTools {
                 "limit": ["type": "integer", "description": "For read: max lines (default 2000)"],
                 "pattern": ["type": "string", "description": "For list: glob. For search: regex"],
                 "include": ["type": "string", "description": "For search: file filter (e.g. *.swift)"],
+                "function_name": ["type": "string", "description": "For extract_function: name of function to extract"],
+                "new_file": ["type": "string", "description": "For extract_function: destination filename"],
             ],
             required: ["action"]
         ),

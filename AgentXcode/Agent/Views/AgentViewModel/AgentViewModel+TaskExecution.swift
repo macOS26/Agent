@@ -263,6 +263,16 @@ extension AgentViewModel {
             let result = await executeViaUserAgent(command: "ls -la '\(dir)' 2>/dev/null")
             return result.output.isEmpty ? "Directory not found or empty" : result.output
         }
+        if name == "if_to_switch" {
+            let filePath = input["file_path"] as? String ?? ""
+            return await Self.offMain { CodingService.convertIfToSwitch(path: filePath) }
+        }
+        if name == "extract_function" {
+            let filePath = input["file_path"] as? String ?? ""
+            let funcName = input["function_name"] as? String ?? ""
+            let newFile = input["new_file"] as? String ?? ""
+            return await Self.offMain { CodingService.extractFunctionToFile(sourcePath: filePath, functionName: funcName, newFileName: newFile) }
+        }
         // Tool discovery
         if name == "list_tools" {
             let prefs = ToolPreferencesService.shared
@@ -1236,6 +1246,24 @@ extension AgentViewModel {
                             guard !Task.isCancelled else { break }
                             let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                                 ? "Directory not found or empty" : result.output
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        if name == "if_to_switch" {
+                            let filePath = input["file_path"] as? String ?? ""
+                            appendLog("🔄 Converting if-chains to switch: \(filePath)")
+                            let output = await Self.offMain { CodingService.convertIfToSwitch(path: filePath) }
+                            appendLog(output)
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        if name == "extract_function" {
+                            let filePath = input["file_path"] as? String ?? ""
+                            let funcName = input["function_name"] as? String ?? ""
+                            let newFile = input["new_file"] as? String ?? ""
+                            appendLog("✂️ Extracting '\(funcName)' → \(newFile)")
+                            let output = await Self.offMain { CodingService.extractFunctionToFile(sourcePath: filePath, functionName: funcName, newFileName: newFile) }
+                            appendLog(output)
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 

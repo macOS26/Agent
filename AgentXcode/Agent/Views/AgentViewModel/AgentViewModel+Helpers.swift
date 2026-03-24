@@ -60,13 +60,15 @@ extension AgentViewModel {
 
         case "file_manager":
             switch action {
-            case "read":     return ("read_file", newInput)
-            case "write":    return ("write_file", newInput)
-            case "edit":     return ("edit_file", newInput)
-            case "list":     return ("list_files", newInput)
-            case "search":   return ("search_files", newInput)
-            case "read_dir": return ("read_dir", newInput)
-            default:         return ("read_file", newInput)
+            case "read":             return ("read_file", newInput)
+            case "write":            return ("write_file", newInput)
+            case "edit":             return ("edit_file", newInput)
+            case "list":             return ("list_files", newInput)
+            case "search":           return ("search_files", newInput)
+            case "read_dir":         return ("read_dir", newInput)
+            case "if_to_switch":     return ("if_to_switch", newInput)
+            case "extract_function": return ("extract_function", newInput)
+            default:                 return ("read_file", newInput)
             }
 
         case "xcode":
