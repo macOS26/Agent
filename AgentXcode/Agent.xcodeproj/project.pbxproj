@@ -128,6 +128,7 @@
 		F035BAFA78E9DDFDF6DD5A1C /* TaskBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4128E21FF13BC4029D6548B /* TaskBannerView.swift */; };
 		5AA4A8B9EB5423A782B9D469 /* ScreenshotPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21810D90659A7DAD10CFA17A /* ScreenshotPreviewView.swift */; };
 		144AC666CD8BD1964F726B31 /* ServicesPopover.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AF4AB55766B9B0D5CA69DFD /* ServicesPopover.swift */; };
+		4992CD23A14EED92AB5B902A /* KeyboardShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = F03E40CE4E05384C443BA8A9 /* KeyboardShortcuts.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -325,6 +326,7 @@
 		B4128E21FF13BC4029D6548B /* TaskBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskBannerView.swift"; sourceTree = "<group>"; };
 		21810D90659A7DAD10CFA17A /* ScreenshotPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ScreenshotPreviewView.swift"; sourceTree = "<group>"; };
 		7AF4AB55766B9B0D5CA69DFD /* ServicesPopover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ServicesPopover.swift"; sourceTree = "<group>"; };
+		F03E40CE4E05384C443BA8A9 /* KeyboardShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "KeyboardShortcuts.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -536,6 +538,7 @@
 				B4128E21FF13BC4029D6548B /* TaskBannerView.swift */,
 				21810D90659A7DAD10CFA17A /* ScreenshotPreviewView.swift */,
 				7AF4AB55766B9B0D5CA69DFD /* ServicesPopover.swift */,
+				F03E40CE4E05384C443BA8A9 /* KeyboardShortcuts.swift */,
 );
 			path = Views;
 			sourceTree = "<group>";
@@ -920,6 +923,7 @@
 				F035BAFA78E9DDFDF6DD5A1C /* TaskBannerView.swift in Sources */,
 				5AA4A8B9EB5423A782B9D469 /* ScreenshotPreviewView.swift in Sources */,
 				144AC666CD8BD1964F726B31 /* ServicesPopover.swift in Sources */,
+				4992CD23A14EED92AB5B902A /* KeyboardShortcuts.swift in Sources */,
 );
 			runOnlyForDeploymentPostprocessing = 0;
 		};
