@@ -1,9 +1,12 @@
-# Split CodeBlockSyntax.swift Language Definitions
+# Refactor Large Files (1000+ lines)
 
-- [ ] 1. 1. Create CodeBlockSyntax+LanguageDefs.swift with the defs dictionary
-- [ ] 2. 2. Add the new file to the Xcode project
-- [ ] 3. 3. Remove the defs dictionary from CodeBlockSyntax.swift
-- [ ] 4. 4. Build to verify
+- [⏳] 1. Analyze AgentViewModel.swift (1926 lines) for splitting opportunities
+- [ ] 2. Analyze AgentViewModel+TaskExecution.swift (1907 lines) for splitting opportunities
+- [ ] 3. Analyze AccessibilityService.swift (1788 lines) for splitting opportunities
+- [ ] 4. Split AgentViewModel.swift into smaller files
+- [ ] 5. Split AgentViewModel+TaskExecution.swift into smaller files
+- [ ] 6. Split AccessibilityService.swift into smaller files
+- [ ] 7. Build and verify all changes
 
 ---
-*Status: 4 steps pending*
+*Status: 0 done, 1 in progress, 0 failed, 6 pending*

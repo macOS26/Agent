@@ -292,11 +292,11 @@ enum AgentTools {
         // --- Coding Tools ---
         ToolDef(
             name: Name.readFile,
-            description: "Read file contents with line numbers. Large files (200+ lines) are auto-truncated — use offset and limit to read specific sections. Use instead of `cat`.",
+            description: "Reads a file from the filesystem. By default reads up to 2000 lines from the beginning. When you already know which part of the file you need, only read that part using offset and limit.",
             properties: [
                 "file_path": ["type": "string", "description": "Absolute path to the file to read"],
-                "offset": ["type": "integer", "description": "1-based line number to start from (default 1)"],
-                "limit": ["type": "integer", "description": "Max lines to return (default 2000)"],
+                "offset": ["type": "integer", "description": "The line number to start reading from (1-based). Only provide if the file is too large to read at once."],
+                "limit": ["type": "integer", "description": "The number of lines to read (default 2000). Only provide if the file is too large to read at once."],
             ],
             required: ["file_path"]
         ),
