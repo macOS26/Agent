@@ -130,103 +130,96 @@ extension AgentViewModel {
             do { try content.write(to: url, atomically: true, encoding: .utf8); return "Wrote \(path)" }
             catch { return "Error: \(error.localizedDescription)" }
         }
-        // MARK: edit_file (actions: edit, create, apply)
-        if name == "edit_file" || name == "create_diff" || name == "apply_diff" {
-            let action: String
-            if let explicit = input["action"] as? String {
-                action = explicit
-            } else if name == "create_diff" || (input["source"] != nil && input["destination"] != nil) {
-                action = "create"
-            } else if name == "apply_diff" || input["diff"] != nil {
-                action = "apply"
+        // MARK: edit_file
+        if name == "edit_file" {
+            let path = input["file_path"] as? String ?? ""
+            let old = input["old_string"] as? String ?? ""
+            let new = input["new_string"] as? String ?? ""
+            let replaceAll = input["replace_all"] as? Bool ?? false
+
+            guard old != new else { return "Error: old_string and new_string are identical" }
+            guard let data = FileManager.default.contents(atPath: path),
+                  let content = String(data: data, encoding: .utf8) else { return "Error: cannot read \(path)" }
+
+            let occurrences = content.components(separatedBy: old).count - 1
+            if occurrences == 0 {
+                let trimmed = old.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmed.isEmpty && content.contains(trimmed) {
+                    return "Error: old_string not found (exact match). A similar string exists in \(path) — check whitespace/indentation."
+                }
+                return "Error: old_string not found in \(path)"
+            }
+            if !replaceAll && occurrences > 1 {
+                return "Error: old_string appears \(occurrences) times in \(path). Provide more context to make it unique, or set replace_all=true."
+            }
+
+            let updated: String
+            if replaceAll {
+                updated = content.replacingOccurrences(of: old, with: new)
             } else {
-                action = "edit"
+                guard let range = content.range(of: old) else { return "Error: old_string not found in \(path)" }
+                updated = content.replacingCharacters(in: range, with: new)
             }
 
-            if action == "edit" {
-                let path = input["file_path"] as? String ?? ""
-                let old = input["old_string"] as? String ?? ""
-                let new = input["new_string"] as? String ?? ""
-                let replaceAll = input["replace_all"] as? Bool ?? false
-
-                guard old != new else { return "Error: old_string and new_string are identical" }
-                guard let data = FileManager.default.contents(atPath: path),
-                      let content = String(data: data, encoding: .utf8) else { return "Error: cannot read \(path)" }
-
-                let occurrences = content.components(separatedBy: old).count - 1
-                if occurrences == 0 {
-                    let trimmed = old.trimmingCharacters(in: .whitespacesAndNewlines)
-                    if !trimmed.isEmpty && content.contains(trimmed) {
-                        return "Error: old_string not found (exact match). A similar string exists in \(path) — check whitespace/indentation."
-                    }
-                    return "Error: old_string not found in \(path)"
+            do {
+                try updated.write(to: URL(fileURLWithPath: path), atomically: true, encoding: .utf8)
+                let diff = MultiLineDiff.createDiff(source: old, destination: new, includeMetadata: true)
+                var d1f = MultiLineDiff.displayDiff(diff: diff, source: old, format: .ai)
+                if d1f.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    d1f = "❌" + old + "\n" + "✅" + new
                 }
-                if !replaceAll && occurrences > 1 {
-                    return "Error: old_string appears \(occurrences) times in \(path). Provide more context to make it unique, or set replace_all=true."
-                }
-
-                let updated: String
-                if replaceAll {
-                    updated = content.replacingOccurrences(of: old, with: new)
-                } else {
-                    guard let range = content.range(of: old) else { return "Error: old_string not found in \(path)" }
-                    updated = content.replacingCharacters(in: range, with: new)
-                }
-
-                do {
-                    try updated.write(to: URL(fileURLWithPath: path), atomically: true, encoding: .utf8)
-                    let diff = MultiLineDiff.createDiff(source: old, destination: new, includeMetadata: true)
-                    var d1f = MultiLineDiff.displayDiff(diff: diff, source: old, format: .ai)
-                    if d1f.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        d1f = "❌" + old + "\n" + "✅" + new
-                    }
-                    let label = replaceAll ? "\(occurrences) occurrences" : "1 occurrence"
-                    var result = "Replaced \(label) in \(path)\n\n\(d1f)"
-                    if let meta = diff.metadata {
-                        if let startLine = meta.sourceStartLine {
-                            result += "\n📍 Changes start at line \(startLine + 1)"
-                        }
-                        if let total = meta.sourceTotalLines {
-                            result += " (of \(total) lines)"
-                        }
-                    }
-                    return result
-                } catch {
-                    return "Error: \(error.localizedDescription)"
-                }
-            }
-
-            if action == "create" {
-                let source = input["source"] as? String ?? ""
-                let destination = input["destination"] as? String ?? ""
-                let diff = MultiLineDiff.createDiff(source: source, destination: destination, includeMetadata: true)
-                let d1f = MultiLineDiff.displayDiff(diff: diff, source: source, format: .ai)
-                var result = d1f
+                let label = replaceAll ? "\(occurrences) occurrences" : "1 occurrence"
+                var result = "Replaced \(label) in \(path)\n\n\(d1f)"
                 if let meta = diff.metadata {
-                    result += "\n\n" + MultiLineDiff.generateDiffSummary(source: source, destination: destination)
-                    if let startLine = meta.sourceStartLine {
-                        result += "\n📍 Changes start at line \(startLine + 1)"
-                    }
+                    if let startLine = meta.sourceStartLine { result += "\n📍 Changes start at line \(startLine + 1)" }
+                    if let total = meta.sourceTotalLines { result += " (of \(total) lines)" }
                 }
                 return result
+            } catch {
+                return "Error: \(error.localizedDescription)"
             }
+        }
 
-            if action == "apply" {
-                let path = input["file_path"] as? String ?? ""
-                let asciiDiff = input["diff"] as? String ?? ""
-                guard let data = FileManager.default.contents(atPath: path),
-                      let source = String(data: data, encoding: .utf8) else { return "Error: cannot read \(path)" }
-                do {
-                    let patched = try MultiLineDiff.applyASCIIDiff(to: source, asciiDiff: asciiDiff)
-                    try patched.write(to: URL(fileURLWithPath: path), atomically: true, encoding: .utf8)
-                    let verifyDiff = MultiLineDiff.createAndDisplayDiff(source: source, destination: patched, format: .ai)
-                    return "Applied diff to \(path)\n\n\(verifyDiff)"
-                } catch {
-                    return "Error applying diff: \(error.localizedDescription)"
+        // MARK: create_diff
+        if name == "create_diff" {
+            let source = input["source"] as? String ?? ""
+            let destination = input["destination"] as? String ?? ""
+            let diff = MultiLineDiff.createDiff(source: source, destination: destination, includeMetadata: true)
+            var asciiDiff = ""
+            var si = 0
+            for op in diff.operations {
+                switch op {
+                case .retain(let count):
+                    let end = source.index(source.startIndex, offsetBy: min(si + count, source.count))
+                    let text = String(source[source.index(source.startIndex, offsetBy: si)..<end])
+                    for line in text.components(separatedBy: "\n") { asciiDiff += "=\(line)\n" }
+                    si += count
+                case .delete(let count):
+                    let end = source.index(source.startIndex, offsetBy: min(si + count, source.count))
+                    let text = String(source[source.index(source.startIndex, offsetBy: si)..<end])
+                    for line in text.components(separatedBy: "\n") { asciiDiff += "-\(line)\n" }
+                    si += count
+                case .insert(let text):
+                    for line in text.components(separatedBy: "\n") { asciiDiff += "+\(line)\n" }
                 }
             }
+            return asciiDiff
+        }
 
-            return "Error: unknown edit_file action '\(action)'"
+        // MARK: apply_diff
+        if name == "apply_diff" {
+            let path = input["file_path"] as? String ?? ""
+            let asciiDiff = input["diff"] as? String ?? ""
+            guard let data = FileManager.default.contents(atPath: path),
+                  let source = String(data: data, encoding: .utf8) else { return "Error: cannot read \(path)" }
+            do {
+                let patched = try MultiLineDiff.applyASCIIDiff(to: source, asciiDiff: asciiDiff)
+                try patched.write(to: URL(fileURLWithPath: path), atomically: true, encoding: .utf8)
+                let verifyDiff = MultiLineDiff.createAndDisplayDiff(source: source, destination: patched, format: .ai)
+                return "Applied diff to \(path)\n\n\(verifyDiff)"
+            } catch {
+                return "Error applying diff: \(error.localizedDescription)"
+            }
         }
 
         // Git (via shell)

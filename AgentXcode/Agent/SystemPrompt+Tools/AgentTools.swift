@@ -147,9 +147,9 @@ enum AgentTools {
         Call task_complete when done. Don't repeat stdout. Don't ask — just act.
         NEVER output code as text — use write_file/edit_file for files, agent_script (action: create/update) for scripts.
 
-        DIRECT TOOLS (no action parameter): read_file, write_file, list_files, search_files, read_dir, task_complete, execute_agent_command, execute_daemon_command, apple_event_query.
+        DIRECT TOOLS (no action parameter): read_file, write_file, edit_file, create_diff, apply_diff, list_files, search_files, read_dir, task_complete, execute_agent_command, execute_daemon_command, apple_event_query.
         ACTION TOOLS (require "action" parameter):
-        edit_file: edit, create, apply | file_manager: read, write, edit, list, search, read_dir, if_to_switch, extract_function | git: status, diff, log, commit, diff_patch, branch
+        file_manager: read, write, edit, list, search, read_dir, if_to_switch, extract_function | git: status, diff, log, commit, diff_patch, branch
         xcode: build, run, list_projects, select_project, add_file, remove_file | agent_script: list, read, create, update, run, delete, combine
         plan_mode: create, update, read, list, delete | applescript_tool: execute, lookup_sdef, list, run, save, delete
         javascript_tool: execute, list, run, save, delete | accessibility: list_windows, get_properties, perform_action, type_text, click, press_key, screenshot, set_properties, find_element, get_children
@@ -161,11 +161,11 @@ enum AgentTools {
         - applescript_tool is ONLY for AppleScript automation of apps (tell application...). NOT for shell commands.
         - For tasks with 3+ steps, create a plan_mode plan first. Execute every step. Don't mark done without writing files.
 
-        EDITING FILES — edit_file has 3 actions:
-        - edit: replace exact text (old_string → new_string). Best for small, single-location changes.
-        - create: generate a diff from source and destination strings. Returns a diff you can pass to apply.
-        - apply: apply a diff to a file. read_file first, then provide a diff where each line starts with = (keep), - (remove), or + (add) immediately followed by content. Include enough = context lines for accurate placement.
-        Use edit for 1-2 small changes. Use create + apply for 3+ changes or large refactors across a file.
+        EDITING FILES — 3 tools:
+        - edit_file: replace exact text (old_string → new_string). Best for small, single-location changes.
+        - create_diff: generate a diff from source and destination strings. Returns =/-/+ format for apply_diff.
+        - apply_diff: apply a =/-/+ diff to a file. read_file first. Each line: = (keep), - (remove), + (add) with no space.
+        Use edit_file for 1-2 small changes. Use create_diff + apply_diff for 3+ changes or large refactors.
 
         SPLITTING FILES — follow this exact sequence for EACH new file:
         1. read_file the source file you will extract from
@@ -217,7 +217,9 @@ enum AgentTools {
         Name.executeJavascript:    #"execute_javascript {"source": "var app = Application.currentApplication(); app.includeStandardAdditions = true; app.displayDialog('Hello')"}"#,
         Name.readFile:             #"read_file {"file_path": "/Users/toddbruss/Documents/example.txt"}"#,
         Name.writeFile:            #"write_file {"file_path": "/Users/toddbruss/Documents/out.txt", "content": "hello"}"#,
-        Name.editFile:             #"edit_file {"action": "edit", "file_path": "/path/file.txt", "old_string": "old", "new_string": "new"} | edit_file {"action": "create", "source": "old text", "destination": "new text"} | edit_file {"action": "apply", "file_path": "/path/file.txt", "diff": "=line1\n-old\n+new\n=line3"}"#,
+        Name.editFile:             #"edit_file {"file_path": "/path/file.txt", "old_string": "old", "new_string": "new"}"#,
+        Name.createDiff:           #"create_diff {"source": "line1\nold line\nline3", "destination": "line1\nnew line\nline3"}"#,
+        Name.applyDiff:            #"apply_diff {"file_path": "/path/file.txt", "diff": "=line1\n-old line\n+new line\n=line3"}"#,
         Name.listFiles:            #"list_files {"pattern": "*.swift", "path": "/Users/toddbruss/Documents"}"#,
         Name.searchFiles:          #"search_files {"pattern": "TODO", "path": "/Users/toddbruss/Documents"}"#,
         Name.readDir:              #"read_dir {"path": "/Users/toddbruss/Documents"}"#,
@@ -316,18 +318,32 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.editFile,
-            description: "File editing and diffing. Actions: edit (replace text), create (compare strings), apply (apply diff). You MUST read_file first.",
+            description: "Replace exact text in a file. You MUST read_file first. The old_string must be unique unless replace_all is true.",
             properties: [
-                "action": ["type": "string", "description": "Action: edit, create, or apply"],
-                "file_path": ["type": "string", "description": "Absolute path (for edit and apply)"],
-                "old_string": ["type": "string", "description": "For edit: exact text to find"],
-                "new_string": ["type": "string", "description": "For edit: replacement text"],
-                "replace_all": ["type": "boolean", "description": "For edit: replace all occurrences (default false)"],
-                "source": ["type": "string", "description": "For create: original text"],
-                "destination": ["type": "string", "description": "For create: modified text"],
-                "diff": ["type": "string", "description": "For apply: each line starts with = (keep), - (remove), or + (add) immediately followed by content. Example: =func hello() {\\n-    print(\"old\")\\n+    print(\"new\")\\n=}"],
+                "file_path": ["type": "string", "description": "Absolute path to the file to edit"],
+                "old_string": ["type": "string", "description": "The exact text to find and replace"],
+                "new_string": ["type": "string", "description": "The replacement text"],
+                "replace_all": ["type": "boolean", "description": "Replace all occurrences (default false)"],
             ],
-            required: ["action"]
+            required: ["file_path", "old_string", "new_string"]
+        ),
+        ToolDef(
+            name: Name.createDiff,
+            description: "Generate a diff from source and destination strings. Returns a diff string with =/-/+ prefixes that can be passed to apply_diff.",
+            properties: [
+                "source": ["type": "string", "description": "The original text"],
+                "destination": ["type": "string", "description": "The modified text"],
+            ],
+            required: ["source", "destination"]
+        ),
+        ToolDef(
+            name: Name.applyDiff,
+            description: "Apply a diff to a file. You MUST read_file first. Each line starts with = (keep), - (remove), or + (add) immediately followed by content.",
+            properties: [
+                "file_path": ["type": "string", "description": "Absolute path to the file"],
+                "diff": ["type": "string", "description": "Diff with =/-/+ prefixes. Example: =func hello() {\\n-    print(\"old\")\\n+    print(\"new\")\\n=}"],
+            ],
+            required: ["file_path", "diff"]
         ),
         ToolDef(
             name: Name.listFiles,

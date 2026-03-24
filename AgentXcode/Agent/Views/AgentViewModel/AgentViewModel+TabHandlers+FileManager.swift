@@ -40,79 +40,70 @@ extension AgentViewModel {
                 isComplete: false
             )
 
-        case "edit_file", "create_diff", "apply_diff":
-            // Resolve action: from action param, legacy tool name, or infer from params
-            let action: String
-            if let explicit = input["action"] as? String {
-                action = explicit
-            } else if name == "create_diff" || (input["source"] != nil && input["destination"] != nil) {
-                action = "create"
-            } else if name == "apply_diff" || input["diff"] != nil {
-                action = "apply"
-            } else {
-                action = "edit"
+        case "edit_file":
+            let filePath = input["file_path"] as? String ?? ""
+            let oldString = input["old_string"] as? String ?? ""
+            let newString = input["new_string"] as? String ?? ""
+            let replaceAll = input["replace_all"] as? Bool ?? false
+            tab.appendLog("📝 Edit: \(filePath)")
+            let output = await Self.offMain { CodingService.editFile(path: filePath, oldString: oldString, newString: newString, replaceAll: replaceAll) }
+            let diff = MultiLineDiff.createDiff(source: oldString, destination: newString, includeMetadata: true)
+            var d1f = MultiLineDiff.displayDiff(diff: diff, source: oldString, format: .ai)
+            if d1f.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                d1f = "❌" + oldString + "\n" + "✅" + newString
             }
-
-            switch action {
-            case "edit":
-                let filePath = input["file_path"] as? String ?? ""
-                let oldString = input["old_string"] as? String ?? ""
-                let newString = input["new_string"] as? String ?? ""
-                let replaceAll = input["replace_all"] as? Bool ?? false
-                tab.appendLog("📝 Edit: \(filePath)")
-                let output = await Self.offMain { CodingService.editFile(path: filePath, oldString: oldString, newString: newString, replaceAll: replaceAll) }
-                let diff = MultiLineDiff.createDiff(source: oldString, destination: newString, includeMetadata: true)
-                var d1f = MultiLineDiff.displayDiff(diff: diff, source: oldString, format: .ai)
-                if d1f.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    d1f = "❌" + oldString + "\n" + "✅" + newString
+            var diffLog = d1f
+            if let meta = diff.metadata, let startLine = meta.sourceStartLine {
+                diffLog += "\n📍 Changes start at line \(startLine + 1)"
+                if let total = meta.sourceTotalLines {
+                    diffLog += " (of \(total) lines)"
                 }
-                var diffLog = d1f
-                if let meta = diff.metadata, let startLine = meta.sourceStartLine {
-                    diffLog += "\n📍 Changes start at line \(startLine + 1)"
-                    if let total = meta.sourceTotalLines {
-                        diffLog += " (of \(total) lines)"
+            }
+            tab.appendOutput(diffLog + "\n")
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+
+        case "create_diff":
+            let source = input["source"] as? String ?? ""
+            let destination = input["destination"] as? String ?? ""
+            let diff = MultiLineDiff.createDiff(source: source, destination: destination, includeMetadata: true)
+            // Display with emojis for activity log
+            let d1f = MultiLineDiff.displayDiff(diff: diff, source: source, format: .ai)
+            tab.appendOutput(d1f + "\n")
+            // Return ASCII =/-/+ format for LLM to use with apply_diff
+            var asciiDiff = ""
+            var si = 0
+            for op in diff.operations {
+                switch op {
+                case .retain(let count):
+                    let text = String(source[source.index(source.startIndex, offsetBy: si)..<source.index(source.startIndex, offsetBy: min(si + count, source.count))])
+                    for line in text.components(separatedBy: "\n") {
+                        asciiDiff += "=\(line)\n"
+                    }
+                    si += count
+                case .delete(let count):
+                    let text = String(source[source.index(source.startIndex, offsetBy: si)..<source.index(source.startIndex, offsetBy: min(si + count, source.count))])
+                    for line in text.components(separatedBy: "\n") {
+                        asciiDiff += "-\(line)\n"
+                    }
+                    si += count
+                case .insert(let text):
+                    for line in text.components(separatedBy: "\n") {
+                        asciiDiff += "+\(line)\n"
                     }
                 }
-                tab.appendOutput(diffLog + "\n")
-                tab.appendLog(output)
-                tab.flush()
-                return TabToolResult(
-                    toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
-                    isComplete: false
-                )
-
-            case "create":
-                let source = input["source"] as? String ?? ""
-                let destination = input["destination"] as? String ?? ""
-                let diff = MultiLineDiff.createDiff(source: source, destination: destination, includeMetadata: true)
-                let d1f = MultiLineDiff.displayDiff(diff: diff, source: source, format: .ai)
-                let summary = MultiLineDiff.generateDiffSummary(source: source, destination: destination)
-                var result = d1f + "\n\n" + summary
-                if let meta = diff.metadata, let startLine = meta.sourceStartLine {
-                    result += "\n📍 Changes start at line \(startLine + 1)"
-                }
-                tab.appendOutput(result + "\n")
-                tab.flush()
-                return TabToolResult(
-                    toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": result],
-                    isComplete: false
-                )
-
-            case "apply":
-                // fall through to apply_diff below
-                break
-
-            default:
-                let err = "Error: unknown edit_file action '\(action)'"
-                tab.appendLog(err)
-                tab.flush()
-                return TabToolResult(
-                    toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": err],
-                    isComplete: false
-                )
             }
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": asciiDiff],
+                isComplete: false
+            )
 
-            // apply action:
+        case "apply_diff":
             let filePath = input["file_path"] as? String ?? ""
             let asciiDiff = input["diff"] as? String ?? ""
             tab.appendLog("📝 Apply D1F diff: \(filePath)")
