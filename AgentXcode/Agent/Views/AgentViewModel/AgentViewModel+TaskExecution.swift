@@ -1734,6 +1734,12 @@ extension AgentViewModel {
                     consecutiveNoTool = 0
                     messages.append(["role": "user", "content": "Continue with the task. Call task_complete when finished."])
                 } else if !hasToolUse {
+                    consecutiveNoTool += 1
+                    if consecutiveNoTool >= 3 {
+                        appendLog("LLM not calling tools after \(consecutiveNoTool) attempts — stopping.")
+                        flushLog()
+                        break
+                    }
                     // No tool use this iteration — just nudge and continue
                     messages.append(["role": "user", "content": "Continue. You MUST use tools — do not output code as text. Use agent_script (action: create/update) for scripts, write_file/edit_file for files. Call task_complete when finished."])
                 }

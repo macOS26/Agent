@@ -39,10 +39,13 @@ final class ClaudeService {
 
     func tools(activeGroups: Set<String>? = nil) -> [[String: Any]] {
         var t = AgentTools.claudeFormat(activeGroups: activeGroups)
-        t.append([
-            "type": "web_search_20250305",
-            "name": "web_search"
-        ])
+        // Only add web_search for real Anthropic API — local endpoints can't handle it
+        if !isLocalEndpoint {
+            t.append([
+                "type": "web_search_20250305",
+                "name": "web_search"
+            ])
+        }
         return t
     }
 
