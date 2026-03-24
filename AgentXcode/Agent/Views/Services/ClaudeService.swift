@@ -27,6 +27,9 @@ final class ClaudeService {
     }
 
     var systemPrompt: String {
+        if isLocalEndpoint {
+            return AgentTools.compactSystemPrompt(userName: userName, userHome: userHome, projectFolder: projectFolder)
+        }
         var prompt = SystemPromptService.shared.prompt(for: .claude, userName: userName, userHome: userHome, projectFolder: projectFolder)
         if !projectFolder.isEmpty {
             prompt = "CURRENT PROJECT FOLDER: \(projectFolder)\nAlways cd to this directory before running any shell commands. Use it as the default for all file operations. You may go outside it when needed.\n\n" + prompt
@@ -38,7 +41,9 @@ final class ClaudeService {
     }
 
     func tools(activeGroups: Set<String>? = nil) -> [[String: Any]] {
-        var t = AgentTools.claudeFormat(activeGroups: activeGroups)
+        // Local endpoints (LM Studio etc.) get Core group only to fit small context windows
+        let groups = isLocalEndpoint ? Set(["Core"]) : activeGroups
+        var t = AgentTools.claudeFormat(activeGroups: groups)
         // Only add web_search for real Anthropic API — local endpoints can't handle it
         if !isLocalEndpoint {
             t.append([

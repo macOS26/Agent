@@ -191,6 +191,9 @@ final class OpenAICompatibleService {
 
     // MARK: - Non-Streaming
 
+    /// LM Studio Native (/api/v1/chat) doesn't support tools or max_tokens
+    private var isNativeFormat: Bool { messagesKey == "input" }
+
     func send(messages: [[String: Any]], activeGroups: Set<String>? = nil) async throws -> (content: [[String: Any]], stopReason: String) {
         let payload = buildMessagesPayload(messages)
 
@@ -198,11 +201,13 @@ final class OpenAICompatibleService {
             "model": model,
             "temperature": temperature,
             messagesKey: payload,
-            "stream": false,
-            "max_tokens": 2048
+            "stream": false
         ]
-        let toolDefs = tools(activeGroups: activeGroups)
-        if !toolDefs.isEmpty { body["tools"] = toolDefs }
+        if !isNativeFormat {
+            body["max_tokens"] = 2048
+            let toolDefs = tools(activeGroups: activeGroups)
+            if !toolDefs.isEmpty { body["tools"] = toolDefs }
+        }
 
         let bodyData = try JSONSerialization.data(withJSONObject: body)
         return try await Self.performRequest(bodyData: bodyData, apiKey: apiKey, url: baseURL)
@@ -221,11 +226,13 @@ final class OpenAICompatibleService {
             "model": model,
             "temperature": temperature,
             messagesKey: payload,
-            "stream": true,
-            "max_tokens": 2048
+            "stream": true
         ]
-        let toolDefs = tools(activeGroups: activeGroups)
-        if !toolDefs.isEmpty { body["tools"] = toolDefs }
+        if !isNativeFormat {
+            body["max_tokens"] = 2048
+            let toolDefs = tools(activeGroups: activeGroups)
+            if !toolDefs.isEmpty { body["tools"] = toolDefs }
+        }
 
         let bodyData = try JSONSerialization.data(withJSONObject: body)
         return try await Self.performStreamingRequest(
