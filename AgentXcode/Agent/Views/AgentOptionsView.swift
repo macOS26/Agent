@@ -12,6 +12,7 @@ struct AgentOptionsView: View {
         case .huggingFace: return $viewModel.huggingFaceTemperature
         case .localOllama: return $viewModel.localOllamaTemperature
         case .vLLM: return $viewModel.vLLMTemperature
+        case .lmStudio: return $viewModel.lmStudioTemperature
         case .foundationModel: return $viewModel.claudeTemperature // unused
         }
     }

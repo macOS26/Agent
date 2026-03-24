@@ -124,6 +124,14 @@ struct NewMainTabSheet: View {
                 fetch: { viewModel.fetchVLLMModels() }
             )
 
+        case .lmStudio:
+            modelPickerWithFetch(
+                models: viewModel.lmStudioModels,
+                fallbackBinding: $selectedModelId,
+                isFetching: viewModel.isFetchingLMStudioModels,
+                fetch: { viewModel.fetchLMStudioModels() }
+            )
+
         case .foundationModel:
             // Apple Intelligence - just show a label since there's only one "model"
             HStack {
@@ -219,6 +227,7 @@ struct NewMainTabSheet: View {
         case .ollama: return viewModel.ollamaModel
         case .localOllama: return viewModel.localOllamaModel
         case .vLLM: return viewModel.vLLMModel
+        case .lmStudio: return viewModel.lmStudioModel
         case .foundationModel: return "Apple Intelligence"
         }
     }
@@ -241,6 +250,8 @@ struct NewMainTabSheet: View {
             if viewModel.localOllamaModels.isEmpty { viewModel.fetchLocalOllamaModels() }
         case .vLLM:
             if viewModel.vLLMModels.isEmpty { viewModel.fetchVLLMModels() }
+        case .lmStudio:
+            if viewModel.lmStudioModels.isEmpty { viewModel.fetchLMStudioModels() }
         case .foundationModel:
             break  // No models to fetch for Apple Intelligence
         }

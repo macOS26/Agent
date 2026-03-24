@@ -230,6 +230,8 @@ struct SystemPromptsView: View {
                                            NSColor(red: 1.0,  green: 0.82, blue: 0.20, alpha: 1.0)),
         (.vLLM,            "vLLM",         Color(red: 0.30, green: 0.70, blue: 0.95),   // vLLM cyan
                                            NSColor(red: 0.30, green: 0.70, blue: 0.95, alpha: 1.0)),
+        (.lmStudio,        "LM Studio",    Color(red: 0.55, green: 0.85, blue: 0.45),   // LM Studio green
+                                           NSColor(red: 0.55, green: 0.85, blue: 0.45, alpha: 1.0)),
     ]
 
     private func tabColor(for provider: APIProvider) -> Color {

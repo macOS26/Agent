@@ -21,6 +21,7 @@ final class SystemPromptService {
         .ollama: "ollama.txt",
         .localOllama: "local_ollama.txt",
         .vLLM: "vllm.txt",
+        .lmStudio: "lm_studio.txt",
         .foundationModel: "foundation_model.txt",
     ]
 
@@ -33,6 +34,7 @@ final class SystemPromptService {
         .ollama: "ollama_compact.txt",
         .localOllama: "local_ollama_compact.txt",
         .vLLM: "vllm_compact.txt",
+        .lmStudio: "lm_studio_compact.txt",
         .foundationModel: "foundation_model_compact.txt",
     ]
 

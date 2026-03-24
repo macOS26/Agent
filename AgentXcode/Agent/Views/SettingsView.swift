@@ -229,6 +229,50 @@ struct SettingsView: View {
                         }
                     }
                 }
+            } else if viewModel.selectedProvider == .lmStudio {
+                // LM Studio settings
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("LM Studio")
+                        .font(.headline)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Endpoint").font(.caption).foregroundStyle(.secondary)
+                        TextField("http://localhost:1234/v1/chat/completions", text: $viewModel.lmStudioEndpoint)
+                            .textFieldStyle(.roundedBorder)
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Model").font(.caption).foregroundStyle(.secondary)
+                        HStack {
+                            if viewModel.lmStudioModels.isEmpty {
+                                TextField("Model name", text: $viewModel.lmStudioModel)
+                                    .textFieldStyle(.roundedBorder)
+                            } else {
+                                Picker("Model", selection: $viewModel.lmStudioModel) {
+                                    ForEach(viewModel.lmStudioModels) { model in
+                                        Text(model.name).tag(model.id)
+                                    }
+                                }
+                                .labelsHidden()
+                            }
+
+                            Button {
+                                viewModel.fetchLMStudioModels()
+                            } label: {
+                                if viewModel.isFetchingLMStudioModels {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(viewModel.isFetchingLMStudioModels)
+                            .help("Fetch available models")
+                        }
+                    }
+                }
             } else if viewModel.selectedProvider == .vLLM {
                 // vLLM settings
                 VStack(alignment: .leading, spacing: 10) {

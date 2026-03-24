@@ -20,6 +20,7 @@ enum APIProvider: String, CaseIterable, Codable {
     case ollama = "ollama"
     case localOllama = "localOllama"
     case vLLM = "vLLM"
+    case lmStudio = "lmStudio"
     case foundationModel = "foundationModel"  // runs in the
         // background, Used for LoRA training & mediator tasks,
         //not selectable in UI
@@ -33,6 +34,7 @@ enum APIProvider: String, CaseIterable, Codable {
         case .ollama: "Ollama"
         case .localOllama: "Local Ollama"
         case .vLLM: "vLLM"
+        case .lmStudio: "LM Studio"
         case .foundationModel: "Apple Intelligence"
         }
     }
@@ -41,7 +43,7 @@ enum APIProvider: String, CaseIterable, Codable {
     /// Note: foundationModel (Apple Intelligence) is NOT selectable - it's for LoRA training only.
     /// Apple Intelligence is an assistant to LLMs and users, not a direct LLM provider.
     static var selectableProviders: [APIProvider] {
-        [.claude, .openAI, .deepSeek, .huggingFace, .ollama, .localOllama, .vLLM]
+        [.claude, .openAI, .deepSeek, .huggingFace, .ollama, .localOllama, .vLLM, .lmStudio]
     }
 }
 
@@ -169,6 +171,9 @@ final class AgentViewModel {
             if selectedProvider == .vLLM && vLLMModels.isEmpty {
                 fetchVLLMModels()
             }
+            if selectedProvider == .lmStudio && lmStudioModels.isEmpty {
+                fetchLMStudioModels()
+            }
         }
     }
 
@@ -266,6 +271,18 @@ final class AgentViewModel {
     var vLLMModels: [OpenAIModelInfo] = []
     var isFetchingVLLMModels = false
 
+    // LM Studio settings
+    var lmStudioEndpoint: String = UserDefaults.standard.string(forKey: "lmStudioEndpoint") ?? "http://localhost:1234/v1/chat/completions" {
+        didSet { UserDefaults.standard.set(lmStudioEndpoint, forKey: "lmStudioEndpoint") }
+    }
+
+    var lmStudioModel: String = UserDefaults.standard.string(forKey: "lmStudioModel") ?? "" {
+        didSet { UserDefaults.standard.set(lmStudioModel, forKey: "lmStudioModel") }
+    }
+
+    var lmStudioModels: [OpenAIModelInfo] = []
+    var isFetchingLMStudioModels = false
+
     private static let defaultHuggingFaceModels: [OpenAIModelInfo] = [
         OpenAIModelInfo(id: "deepseek-ai/DeepSeek-V3-0324", name: "DeepSeek V3"),
         OpenAIModelInfo(id: "deepseek-ai/DeepSeek-R1", name: "DeepSeek R1"),
@@ -310,6 +327,9 @@ final class AgentViewModel {
     var vLLMTemperature: Double = UserDefaults.standard.object(forKey: "vLLMTemperature") as? Double ?? 0.2 {
         didSet { UserDefaults.standard.set(vLLMTemperature, forKey: "vLLMTemperature") }
     }
+    var lmStudioTemperature: Double = UserDefaults.standard.object(forKey: "lmStudioTemperature") as? Double ?? 0.2 {
+        didSet { UserDefaults.standard.set(lmStudioTemperature, forKey: "lmStudioTemperature") }
+    }
 
     /// Get temperature for the current provider.
     func temperatureForProvider(_ provider: APIProvider) -> Double {
@@ -321,6 +341,7 @@ final class AgentViewModel {
         case .huggingFace: return huggingFaceTemperature
         case .localOllama: return localOllamaTemperature
         case .vLLM: return vLLMTemperature
+        case .lmStudio: return lmStudioTemperature
         case .foundationModel: return 0.2
         }
     }
@@ -632,6 +653,7 @@ final class AgentViewModel {
         case .ollama: return ollamaModel
         case .localOllama: return localOllamaModel
         case .vLLM: return vLLMModel
+        case .lmStudio: return lmStudioModel
         case .foundationModel: return "Apple Intelligence"
         }
     }
@@ -656,6 +678,8 @@ final class AgentViewModel {
             return localOllamaModels.first(where: { $0.id == modelId })?.name ?? modelId
         case .vLLM:
             return vLLMModels.first(where: { $0.id == modelId })?.name ?? modelId
+        case .lmStudio:
+            return lmStudioModels.first(where: { $0.id == modelId })?.name ?? modelId
         case .foundationModel:
             return "Apple Intelligence"
         }
@@ -1943,6 +1967,26 @@ final class AgentViewModel {
             guard let id = model["id"] as? String else { return nil }
             return OpenAIModelInfo(id: id, name: id)
         }.sorted { $0.name < $1.name }
+    }
+
+    // MARK: - LM Studio Models
+
+    func fetchLMStudioModels() {
+        isFetchingLMStudioModels = true
+        let endpoint = lmStudioEndpoint
+        Task {
+            defer { isFetchingLMStudioModels = false }
+            do {
+                let models = try await Self.fetchVLLMModelsFromAPI(endpoint: endpoint, apiKey: "")
+                lmStudioModels = models
+                let ids = models.map(\.id)
+                if lmStudioModel.isEmpty || (!ids.isEmpty && !ids.contains(lmStudioModel)) {
+                    lmStudioModel = ids.first ?? ""
+                }
+            } catch {
+                appendLog("Failed to fetch LM Studio models: \(error.localizedDescription)")
+            }
+        }
     }
 
     private nonisolated static func fetchModels(endpoint: String, apiKey: String) async throws -> [OllamaModelInfo] {

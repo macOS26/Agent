@@ -61,6 +61,9 @@ extension AgentViewModel {
         case .vLLM:
             modelName = vLLMModel
             isVision = false
+        case .lmStudio:
+            modelName = lmStudioModel
+            isVision = false
         case .foundationModel:
             modelName = "Apple Intelligence"
             isVision = false
@@ -85,6 +88,8 @@ extension AgentViewModel {
             openAICompatible = OpenAICompatibleService(apiKey: huggingFaceAPIKey, model: huggingFaceModel, baseURL: "https://router.huggingface.co/v1/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .huggingFace)
         case .vLLM:
             openAICompatible = OpenAICompatibleService(apiKey: vLLMAPIKey, model: vLLMModel, baseURL: vLLMEndpoint, historyContext: historyContext, projectFolder: projectFolder, provider: .vLLM)
+        case .lmStudio:
+            openAICompatible = OpenAICompatibleService(apiKey: "", model: lmStudioModel, baseURL: lmStudioEndpoint, historyContext: historyContext, projectFolder: projectFolder, provider: .lmStudio)
         default:
             openAICompatible = nil
         }
