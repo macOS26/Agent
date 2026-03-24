@@ -2005,11 +2005,17 @@ final class AgentViewModel {
 
     func fetchLMStudioModels() {
         isFetchingLMStudioModels = true
-        let endpoint = lmStudioEndpoint
+        let proto = lmStudioProtocol
+        // Models endpoint is always /v1/models for OpenAI/Anthropic, /api/v1/models for native
+        let modelsEndpoint: String
+        switch proto {
+        case .lmStudio: modelsEndpoint = "http://localhost:1234/api/v1/models"
+        default: modelsEndpoint = "http://localhost:1234/v1/models"
+        }
         Task {
             defer { isFetchingLMStudioModels = false }
             do {
-                let models = try await Self.fetchVLLMModelsFromAPI(endpoint: endpoint, apiKey: "")
+                let models = try await Self.fetchLMStudioModelsFromAPI(modelsURL: modelsEndpoint)
                 lmStudioModels = models
                 let ids = models.map(\.id)
                 if lmStudioModel.isEmpty || (!ids.isEmpty && !ids.contains(lmStudioModel)) {
@@ -2019,6 +2025,27 @@ final class AgentViewModel {
                 appendLog("Failed to fetch LM Studio models: \(error.localizedDescription)")
             }
         }
+    }
+
+    private nonisolated static func fetchLMStudioModelsFromAPI(modelsURL: String) async throws -> [OpenAIModelInfo] {
+        guard let url = URL(string: modelsURL) else { throw AgentError.invalidURL }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.timeoutInterval = 90
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200,
+              let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let modelsData = json["data"] as? [[String: Any]] else {
+            return []
+        }
+
+        return modelsData.compactMap { model -> OpenAIModelInfo? in
+            guard let id = model["id"] as? String else { return nil }
+            return OpenAIModelInfo(id: id, name: id)
+        }.sorted { $0.name < $1.name }
     }
 
     private nonisolated static func fetchModels(endpoint: String, apiKey: String) async throws -> [OllamaModelInfo] {
