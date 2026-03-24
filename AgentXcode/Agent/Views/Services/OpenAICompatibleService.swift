@@ -266,7 +266,18 @@ final class OpenAICompatibleService {
                 ])
                 parsedToolFromText = true
             } else {
-                contentBlocks.append(["type": "text", "text": text])
+                // Strip vLLM/Qwen special tokens
+                var cleaned = text
+                    .replacingOccurrences(of: "<\\|im_(?:start|end)\\|>", with: "", options: .regularExpression)
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                // If native tool_calls also present, skip text that is raw JSON
+                let hasNativeTools = message["tool_calls"] != nil
+                if hasNativeTools && (cleaned.hasPrefix("{\"name\"") || cleaned.hasPrefix("[{\"name\"")) {
+                    cleaned = ""
+                }
+                if !cleaned.isEmpty {
+                    contentBlocks.append(["type": "text", "text": cleaned])
+                }
             }
         }
 
@@ -449,8 +460,22 @@ final class OpenAICompatibleService {
         }
 
         // Add text if no tool calls were found from it
+        // Strip vLLM/Qwen special tokens that leak through as text content
         if !parsedToolFromText && !fullText.isEmpty {
-            contentBlocks.insert(["type": "text", "text": fullText], at: 0)
+            var cleaned = fullText
+            // Remove <|im_start|>, <|im_end|>, and similar special tokens
+            cleaned = cleaned.replacingOccurrences(of: "<\\|im_(?:start|end)\\|>", with: "", options: .regularExpression)
+            // If native tool calls exist, discard text that is just raw JSON tool call output
+            if !toolCallAccum.isEmpty {
+                let trimmed = cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
+                // Skip text that looks like raw tool call JSON the model leaked
+                if trimmed.isEmpty || trimmed.hasPrefix("{\"name\"") || trimmed.hasPrefix("[{\"name\"") {
+                    cleaned = ""
+                }
+            }
+            if !cleaned.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                contentBlocks.insert(["type": "text", "text": cleaned], at: 0)
+            }
         }
 
         if contentBlocks.isEmpty {
