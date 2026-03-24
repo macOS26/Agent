@@ -347,6 +347,22 @@ extension AgentViewModel {
         scheduleStreamFlush()
     }
 
+    /// Collapse runs of 3+ newlines to 2 (one blank line max) to prevent huge gaps from chatty models.
+    static func collapseNewlines(_ text: String) -> String {
+        var result = ""
+        var newlineCount = 0
+        for ch in text {
+            if ch == "\n" {
+                newlineCount += 1
+                if newlineCount <= 2 { result.append(ch) }
+            } else {
+                newlineCount = 0
+                result.append(ch)
+            }
+        }
+        return result
+    }
+
     private func scheduleStreamFlush() {
         guard streamFlushTask == nil else { return }
         streamFlushTask = Task {
@@ -354,8 +370,9 @@ extension AgentViewModel {
             try? await Task.sleep(for: .milliseconds(150))
             self.streamFlushTask = nil
             if !self.streamBuffer.isEmpty {
-                ChatHistoryStore.shared.appendStreamingContent(self.streamBuffer)
-                self.activityLog += self.streamBuffer
+                let collapsed = Self.collapseNewlines(self.streamBuffer)
+                ChatHistoryStore.shared.appendStreamingContent(collapsed)
+                self.activityLog += collapsed
                 self.streamBuffer = ""
             }
         }
@@ -365,8 +382,9 @@ extension AgentViewModel {
         streamFlushTask?.cancel()
         streamFlushTask = nil
         if !streamBuffer.isEmpty {
-            ChatHistoryStore.shared.appendStreamingContent(streamBuffer)
-            activityLog += streamBuffer
+            let collapsed = Self.collapseNewlines(streamBuffer)
+            ChatHistoryStore.shared.appendStreamingContent(collapsed)
+            activityLog += collapsed
             streamBuffer = ""
         }
         if streamingTextStarted {

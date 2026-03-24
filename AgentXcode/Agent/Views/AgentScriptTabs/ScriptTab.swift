@@ -167,8 +167,8 @@ final class ScriptTab: Identifiable {
         llmStreamFlushTask?.cancel()
         llmStreamFlushTask = nil
         if !llmStreamBuffer.isEmpty {
-            // Write directly to logBuffer — don't use appendOutput which adds newlines per chunk
-            logBuffer += llmStreamBuffer
+            // Collapse excessive newlines from chatty models, then write to logBuffer
+            logBuffer += AgentViewModel.collapseNewlines(llmStreamBuffer)
             llmStreamBuffer = ""
             scheduleFlush()
         }
