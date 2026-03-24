@@ -164,20 +164,17 @@ final class OpenAICompatibleService {
     private func convertToNativeInput(_ openAIMessages: [[String: Any]]) -> [[String: Any]] {
         return openAIMessages.compactMap { msg -> [String: Any]? in
             let role = msg["role"] as? String ?? "user"
-            // Skip tool messages — native API doesn't support them
             if role == "tool" { return nil }
             if let text = msg["content"] as? String {
-                return ["type": "text", "role": role, "text": text]
+                return ["type": "text", "content": text]
             } else if let parts = msg["content"] as? [[String: Any]] {
-                // Multi-part content — extract text
                 let combined = parts.compactMap { $0["text"] as? String }.joined(separator: "\n")
                 if !combined.isEmpty {
-                    return ["type": "text", "role": role, "text": combined]
+                    return ["type": "text", "content": combined]
                 }
             }
-            // Assistant messages with tool_calls but no content
             if role == "assistant" {
-                return ["type": "text", "role": role, "text": "(tool call)"]
+                return ["type": "text", "content": "(tool call)"]
             }
             return nil
         }
