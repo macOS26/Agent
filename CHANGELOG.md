@@ -5,6 +5,42 @@ All notable changes to the Agent! project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.21] - 2025-03-24
+
+### Added
+
+- Apple AI integration with 6 essential tools for context efficiency
+- Plan mode for structured multi-step task execution
+- File splitting workflow with extract_function and if_to_switch refactoring tools
+- Xcode project management via xcode add_file/remove_file actions
+- Tab tool handlers organized into 9 logical group files
+- System prompt tabs colored by LLM company brand colors
+- Messages monitor for iMessage remote control
+
+### Changed
+
+- Streamlined Apple AI defaults to 6 most important tools
+- Removed task modes and Apple AI mediator tool call limit
+- Improved tool groups availability - all groups always available
+- Centralized all app references through AppConstants
+- Enhanced error handling with recovery suggestions
+
+### Fixed
+
+- Green banner and Apple AI prompt visibility when other tabs selected
+- EndCurrentTask crash when context has deleted objects
+- Tool groups classification and mode handling
+- Foundation model service initialization
+- CodeBlockSyntax parsing in system prompts
+- Plan step completion handling for Ollama API compatibility
+
+### Code Quality
+
+- Split TaskExecution into 3 logical files
+- Converted all tab handler if-name blocks to switch/case
+- Extracted TabTask tool handlers into dedicated file
+- Removed dead TaskMode enum and unused functions
+
 ## [1.0.16] - 2025-01-21
 
 ### Added
@@ -91,6 +127,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - AgentScript dynamic Swift Package compilation
 - XPC privilege separation (User Agent + Launch Daemon)
 
+[1.0.21]: https://github.com/macOS26/Agent/compare/v1.0.20...v1.0.21
 [1.0.16]: https://github.com/macOS26/Agent/compare/v1.0.15...v1.0.16
 [1.0.15]: https://github.com/macOS26/Agent/compare/v1.0.14...v1.0.15
 [1.0.14]: https://github.com/macOS26/Agent/releases/tag/v1.0.14
