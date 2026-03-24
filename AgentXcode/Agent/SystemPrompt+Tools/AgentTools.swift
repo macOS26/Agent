@@ -355,10 +355,10 @@ enum AgentTools {
         // --- File Manager (consolidated — maps to direct file tools) ---
         ToolDef(
             name: Name.fileManager,
-            description: "File operations and refactoring. Actions: read, write, edit, list, search, read_dir, if_to_switch (convert if-chains to switch/case), extract_function (move function to new file).",
+            description: "File operations and refactoring. Actions: read, write, edit, create (diff), apply (diff), list, search, read_dir, if_to_switch, extract_function.",
             properties: [
-                "action": ["type": "string", "description": "Action: read, write, edit, list, search, read_dir, if_to_switch, or extract_function"],
-                "file_path": ["type": "string", "description": "File path (for read/write/edit/apply_diff)"],
+                "action": ["type": "string", "description": "Action: read, write, edit, create, apply, list, search, read_dir, if_to_switch, or extract_function"],
+                "file_path": ["type": "string", "description": "File path (for read/write/edit/apply)"],
                 "path": ["type": "string", "description": "Directory path (for list/search/read_dir)"],
                 "content": ["type": "string", "description": "For write: file content"],
                 "old_string": ["type": "string", "description": "For edit: text to find"],
