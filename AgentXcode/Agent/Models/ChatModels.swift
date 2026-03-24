@@ -162,19 +162,27 @@ final class ChatHistoryStore {
         context?.insert(message)
     }
     
-    /// Save pending changes — guarded against stale/deleted managed objects
+    /// Save pending changes — guarded against stale/deleted managed objects.
+    /// Uses ObjCTry to catch CoreData NSExceptions (e.g. _PFFaultHandlerLookupRow
+    /// during inverse relationship maintenance) that Swift's do/catch cannot handle.
     func save() {
         guard let context else { return }
         // Check if current task is still valid before saving
-        if let task = currentTask, task.modelContext == nil {
+        if let task = currentTask, task.modelContext == nil || task.isDeleted {
             currentTask = nil
+            context.rollback()
             return
         }
-        do {
-            if context.hasChanges {
+        guard context.hasChanges else { return }
+        let ok = ObjCTry {
+            do {
                 try context.save()
+            } catch {
+                context.rollback()
             }
-        } catch {
+        }
+        if !ok {
+            // ObjC exception was thrown (stale fault, deleted row, etc.) — rollback
             context.rollback()
         }
     }

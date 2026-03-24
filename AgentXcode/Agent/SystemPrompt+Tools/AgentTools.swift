@@ -213,7 +213,7 @@ enum AgentTools {
         Name.writeFile:            #"write_file {"file_path": "/Users/toddbruss/Documents/out.txt", "content": "hello"}"#,
         Name.editFile:             #"edit_file {"file_path": "/path/file.txt", "old_string": "old", "new_string": "new"}"#,
         Name.createDiff:           #"create_diff {"source": "old text", "destination": "new text"}"#,
-        Name.applyDiff:            #"apply_diff {"file_path": "/path/file.txt", "diff": "📎 line1\n❌ old\n✅ new\n📎 line3"}"#,
+        Name.applyDiff:            #"apply_diff {"file_path": "/path/file.txt", "diff": "=line1\n-old\n+new\n=line3"}"#,
         Name.listFiles:            #"list_files {"pattern": "*.swift", "path": "/Users/toddbruss/Documents"}"#,
         Name.searchFiles:          #"search_files {"pattern": "TODO", "path": "/Users/toddbruss/Documents"}"#,
         Name.readDir:              #"read_dir {"path": "/Users/toddbruss/Documents"}"#,

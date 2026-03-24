@@ -507,29 +507,35 @@ import CryptoKit
         
         for (lineNumber, line) in lines.enumerated() {
             guard !line.isEmpty else { continue }
-            guard line.count >= 2 else { 
-                throw DiffParsingError.invalidFormat(line: lineNumber + 1, content: line)
+
+            let first = line.first!
+            let content = String(line.dropFirst(1))
+            let lineOp: String
+
+            switch first {
+            case "=": lineOp = "retain"
+            case "-": lineOp = "delete"
+            case "+": lineOp = "insert"
+            default:
+                throw DiffParsingError.invalidPrefix(line: lineNumber + 1, prefix: String(first))
             }
-            
-            let prefix = String(line.prefix(2)) // Get "📎 ", "❌ ", or "✅ "
-            let content = String(line.dropFirst(2)) // Remove prefix
-            
-            switch prefix {
-            case "\(DiffSymbols.retain) ":
+
+            switch lineOp {
+            case "retain":
                 // Flush deletes/inserts, then add to retain
                 if !deleteLines.isEmpty || !insertLines.isEmpty {
                     flushOperations()
                 }
                 retainLines.append(content)
-                
-            case "\(DiffSymbols.delete) ":
+
+            case "delete":
                 // Flush retains/inserts, then add to delete
                 if !retainLines.isEmpty || !insertLines.isEmpty {
                     flushOperations()
                 }
                 deleteLines.append(content)
-                
-            case "\(DiffSymbols.insert) ":
+
+            case "insert":
                 // Flush retains only (keep deletes for delete+insert pairs)
                 if !retainLines.isEmpty {
                     let text = retainLines.joined(separator: "\n") + "\n"
@@ -537,9 +543,9 @@ import CryptoKit
                     retainLines = []
                 }
                 insertLines.append(content)
-                
+
             default:
-                throw DiffParsingError.invalidPrefix(line: lineNumber + 1, prefix: prefix)
+                break
             }
         }
         
@@ -568,28 +574,22 @@ import CryptoKit
         // Re-parse the ASCII diff to capture the strings and find first insert
         let diffLines = asciiDiff.components(separatedBy: .newlines)
         for line in diffLines {
-            guard !line.isEmpty, line.count >= 2 else { continue }
-            
-            let prefix = String(line.prefix(2))
-            let content = String(line.dropFirst(2))
-            
-            switch prefix {
-            case "\(DiffSymbols.retain) ":
+            guard !line.isEmpty else { continue }
+
+            let first = line.first!
+            let content = String(line.dropFirst(1))
+
+            switch first {
+            case "=":
                 sourceLines.append(content)
                 modifiedLines.append(content)
                 currentLineNumber += 1
-            case "\(DiffSymbols.delete) ":
-                // First delete or insert marks where modifications start
-                if sourceStartLine == nil {
-                    sourceStartLine = currentLineNumber
-                }
+            case "-":
+                if sourceStartLine == nil { sourceStartLine = currentLineNumber }
                 sourceLines.append(content)
                 currentLineNumber += 1
-            case "\(DiffSymbols.insert) ":
-                // First delete or insert marks where modifications start
-                if sourceStartLine == nil {
-                    sourceStartLine = currentLineNumber
-                }
+            case "+":
+                if sourceStartLine == nil { sourceStartLine = currentLineNumber }
                 modifiedLines.append(content)
             default:
                 continue
@@ -838,19 +838,18 @@ import CryptoKit
         
         for line in diffLines {
             guard !line.isEmpty else { continue }
-            guard line.count >= 2 else { continue }
-            
-            let prefix = String(line.prefix(2))
-            let content = String(line.dropFirst(2))
-            
-            switch prefix {
-            case "\(DiffSymbols.retain) ":
+
+            let first = line.first!
+            let content = String(line.dropFirst(1))
+
+            switch first {
+            case "=":
                 retainLines.append(content)
                 patchLineCount += 1
-            case "\(DiffSymbols.delete) ":
+            case "-":
                 deleteCount += 1
                 patchLineCount += 1
-            case "\(DiffSymbols.insert) ":
+            case "+":
                 insertCount += 1
                 patchLineCount += 1
             default:

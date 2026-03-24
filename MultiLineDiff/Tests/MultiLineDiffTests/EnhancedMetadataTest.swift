@@ -11,19 +11,19 @@ struct EnhancedMetadataTest {
         
         // Create a test ASCII diff
         let asciiDiff = """
-        \(DiffSymbols.retain) class Calculator {
-        \(DiffSymbols.retain)     private var result: Double = 0
-        \(DiffSymbols.delete)     func add(_ value: Double) {
-        \(DiffSymbols.delete)         result += value
-        \(DiffSymbols.delete)     }
-        \(DiffSymbols.insert)     func add(_ value: Double) -> Double {
-        \(DiffSymbols.insert)         result += value
-        \(DiffSymbols.insert)         return result
-        \(DiffSymbols.insert)     }
-        \(DiffSymbols.retain)     func getResult() -> Double {
-        \(DiffSymbols.retain)         return result
-        \(DiffSymbols.retain)     }
-        \(DiffSymbols.retain) }
+        =class Calculator {
+        =    private var result: Double = 0
+        -    func add(_ value: Double) {
+        -        result += value
+        -    }
+        +    func add(_ value: Double) -> Double {
+        +        result += value
+        +        return result
+        +    }
+        =    func getResult() -> Double {
+        =        return result
+        =    }
+        =}
         """
         
         print("📄 ASCII Diff Input:")

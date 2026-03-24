@@ -414,6 +414,7 @@ extension AgentViewModel {
         guard logPersistTask == nil else { return }
         logPersistTask = Task {
             try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled else { return }
             logPersistTask = nil
             ChatHistoryStore.shared.save()
         }
