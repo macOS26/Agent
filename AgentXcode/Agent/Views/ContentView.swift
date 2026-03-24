@@ -787,22 +787,26 @@ struct ContentView: View {
 
     /// The prompt of the currently running task (main or selected tab).
     private var activeTaskPrompt: String? {
+        // Check selected tab first
         if let selId = viewModel.selectedTabId,
            let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
             if tab.isLLMRunning { return tab.currentTaskPrompt }
             if tab.isRunning { return "Running: \(tab.scriptName)" }
-            return nil
         }
-        return viewModel.isRunning ? viewModel.currentTaskPrompt : nil
+        // Always show main tab's prompt if it's running
+        if viewModel.isRunning { return viewModel.currentTaskPrompt }
+        return nil
     }
 
     /// The Apple AI annotation for the currently running task.
     private var activeAppleAIPrompt: String? {
+        // Check selected tab first
         if let selId = viewModel.selectedTabId,
            let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
             let p = tab.currentAppleAIPrompt
-            return p.isEmpty ? nil : p
+            if !p.isEmpty { return p }
         }
+        // Fall back to main tab
         let p = viewModel.currentAppleAIPrompt
         return p.isEmpty ? nil : p
     }
