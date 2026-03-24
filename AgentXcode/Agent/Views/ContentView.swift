@@ -166,40 +166,11 @@ struct ContentView: View {
 
             // Screenshot previews
             if !viewModel.attachedImages.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(Array(viewModel.attachedImages.enumerated()), id: \.offset) { index, image in
-                            ZStack(alignment: .topTrailing) {
-                                Image(nsImage: image)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(maxHeight: 70)
-                                    .clipShape(RoundedRectangle(cornerRadius: 6))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 6)
-                                            .stroke(.secondary.opacity(0.3))
-                                    )
-                                Button {
-                                    viewModel.removeAttachment(at: index)
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .font(.caption)
-                                        .foregroundStyle(.white, .red)
-                                }
-                                .buttonStyle(.plain)
-                                .offset(x: 4, y: -4)
-                            }
-                        }
-                        Text("\(viewModel.attachedImages.count) image(s)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Button("Clear All") { viewModel.removeAllAttachments() }
-                            .buttonStyle(.bordered)
-                            .controlSize(.mini)
-                    }
-                    .padding(.horizontal)
-                    .padding(.vertical, 6)
-                }
+                ScreenshotPreviewView(
+                    images: viewModel.attachedImages,
+                    onRemove: { index in viewModel.removeAttachment(at: index) },
+                    onRemoveAll: { viewModel.removeAllAttachments() }
+                )
             }
 
             // Input — switches between main and tab input
