@@ -4,8 +4,9 @@
 final class ClaudeService {
     let apiKey: String
     let model: String
+    let endpointURL: URL
 
-    private static let baseURL = URL(string: "https://api.anthropic.com/v1/messages") ?? URL(filePath: "/")
+    private static let defaultBaseURL = URL(string: "https://api.anthropic.com/v1/messages") ?? URL(filePath: "/")
     private static let apiVersion = "2023-06-01"
 
     let historyContext: String
@@ -13,9 +14,10 @@ final class ClaudeService {
     let userName: String
     let projectFolder: String
 
-    init(apiKey: String, model: String, historyContext: String = "", projectFolder: String = "") {
+    init(apiKey: String, model: String, historyContext: String = "", projectFolder: String = "", baseURL: String? = nil) {
         self.apiKey = apiKey
         self.model = model
+        self.endpointURL = baseURL.flatMap { URL(string: $0) } ?? Self.defaultBaseURL
         self.historyContext = historyContext
         self.userHome = FileManager.default.homeDirectoryForCurrentUser.path
         self.userName = NSUserName()
@@ -82,7 +84,7 @@ final class ClaudeService {
             bodyData: bodyData,
             apiKey: apiKey,
             apiVersion: Self.apiVersion,
-            url: Self.baseURL
+            url: endpointURL
         )
     }
 
@@ -145,7 +147,7 @@ final class ClaudeService {
             bodyData: bodyData,
             apiKey: apiKey,
             apiVersion: Self.apiVersion,
-            url: Self.baseURL,
+            url: endpointURL,
             onTextDelta: onTextDelta
         )
     }

@@ -236,8 +236,18 @@ struct SettingsView: View {
                         .font(.headline)
 
                     VStack(alignment: .leading, spacing: 4) {
+                        Text("API Protocol").font(.caption).foregroundStyle(.secondary)
+                        Picker("Protocol", selection: $viewModel.lmStudioProtocol) {
+                            ForEach(LMStudioProtocol.allCases, id: \.self) { proto in
+                                Text(proto.displayName).tag(proto)
+                            }
+                        }
+                        .labelsHidden()
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
                         Text("Endpoint").font(.caption).foregroundStyle(.secondary)
-                        TextField("http://localhost:1234/v1/chat/completions", text: $viewModel.lmStudioEndpoint)
+                        TextField(viewModel.lmStudioProtocol.defaultEndpoint, text: $viewModel.lmStudioEndpoint)
                             .textFieldStyle(.roundedBorder)
                     }
 

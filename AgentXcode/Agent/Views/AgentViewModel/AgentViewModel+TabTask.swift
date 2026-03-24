@@ -118,8 +118,14 @@ extension AgentViewModel {
         tab.appendLog("Model: \(provider.displayName) / \(modelId)")
         tab.flush()
 
-        let claude: ClaudeService? = provider == .claude
-            ? ClaudeService(apiKey: apiKey, model: modelId, historyContext: tabHistoryContext, projectFolder: projectFolder) : nil
+        let claude: ClaudeService?
+        if provider == .claude {
+            claude = ClaudeService(apiKey: apiKey, model: modelId, historyContext: tabHistoryContext, projectFolder: projectFolder)
+        } else if provider == .lmStudio && lmStudioProtocol == .anthropic {
+            claude = ClaudeService(apiKey: "", model: modelId, historyContext: tabHistoryContext, projectFolder: projectFolder, baseURL: lmStudioEndpoint)
+        } else {
+            claude = nil
+        }
         let openAICompatible: OpenAICompatibleService?
         switch provider {
         case .openAI:
@@ -130,7 +136,7 @@ extension AgentViewModel {
             openAICompatible = OpenAICompatibleService(apiKey: huggingFaceAPIKey, model: modelId, baseURL: "https://router.huggingface.co/v1/chat/completions", historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .huggingFace)
         case .vLLM:
             openAICompatible = OpenAICompatibleService(apiKey: vLLMAPIKey, model: modelId, baseURL: vLLMEndpoint, historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .vLLM)
-        case .lmStudio:
+        case .lmStudio where lmStudioProtocol != .anthropic:
             openAICompatible = OpenAICompatibleService(apiKey: "", model: modelId, baseURL: lmStudioEndpoint, historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .lmStudio)
         default:
             openAICompatible = nil

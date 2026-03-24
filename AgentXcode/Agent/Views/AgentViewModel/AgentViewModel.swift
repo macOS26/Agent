@@ -47,6 +47,28 @@ enum APIProvider: String, CaseIterable, Codable {
     }
 }
 
+enum LMStudioProtocol: String, CaseIterable, Codable {
+    case openAI = "openAI"
+    case anthropic = "anthropic"
+    case lmStudio = "lmStudio"
+
+    var displayName: String {
+        switch self {
+        case .openAI: "OpenAI Compatible"
+        case .anthropic: "Anthropic Compatible"
+        case .lmStudio: "LM Studio Native"
+        }
+    }
+
+    var defaultEndpoint: String {
+        switch self {
+        case .openAI: "http://localhost:1234/v1/chat/completions"
+        case .anthropic: "http://localhost:1234/v1/messages"
+        case .lmStudio: "http://localhost:1234/v1/chat/completions"
+        }
+    }
+}
+
 enum PromptStyle: String, CaseIterable, Codable {
     case full
     case compact
@@ -272,6 +294,16 @@ final class AgentViewModel {
     var isFetchingVLLMModels = false
 
     // LM Studio settings
+    var lmStudioProtocol: LMStudioProtocol = {
+        let raw = UserDefaults.standard.string(forKey: "lmStudioProtocol") ?? "openAI"
+        return LMStudioProtocol(rawValue: raw) ?? .openAI
+    }() {
+        didSet {
+            UserDefaults.standard.set(lmStudioProtocol.rawValue, forKey: "lmStudioProtocol")
+            lmStudioEndpoint = lmStudioProtocol.defaultEndpoint
+        }
+    }
+
     var lmStudioEndpoint: String = UserDefaults.standard.string(forKey: "lmStudioEndpoint") ?? "http://localhost:1234/v1/chat/completions" {
         didSet { UserDefaults.standard.set(lmStudioEndpoint, forKey: "lmStudioEndpoint") }
     }
