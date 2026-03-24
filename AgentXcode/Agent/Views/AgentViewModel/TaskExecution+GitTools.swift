@@ -1,7 +1,7 @@
 @preconcurrency import Foundation
 import os.log
 
-private let gitLog = Logger(subsystem: "Agent.app.toddbruss", category: "GitTools")
+private let gitLog = Logger(subsystem: AppConstants.subsystem, category: "GitTools")
 
 // MARK: - Git Tool Execution
 extension AgentViewModel {

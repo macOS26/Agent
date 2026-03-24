@@ -1,6 +1,11 @@
 import SwiftUI
 import SwiftData
 
+/// App bundle identifier — used for Logger subsystem, XPC, etc.
+enum AppConstants {
+    static let subsystem = "Agent.app.toddbruss"
+}
+
 extension Notification.Name {
     static let appWillQuit = Notification.Name("appWillQuit")
 }

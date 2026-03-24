@@ -1,7 +1,7 @@
 @preconcurrency import Foundation
 import os.log
 
-private let shellLog = Logger(subsystem: "Agent.app.toddbruss", category: "ShellTools")
+private let shellLog = Logger(subsystem: AppConstants.subsystem, category: "ShellTools")
 
 // MARK: - Shell Execution Tools
 extension AgentViewModel {

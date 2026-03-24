@@ -4,7 +4,7 @@ import MCPClient
 import MultiLineDiff
 import os.log
 
-private let tabTaskLog = Logger(subsystem: "Agent.app.toddbruss", category: "TabTask")
+private let tabTaskLog = Logger(subsystem: AppConstants.subsystem, category: "TabTask")
 
 // MARK: - Tab Task Execution
 

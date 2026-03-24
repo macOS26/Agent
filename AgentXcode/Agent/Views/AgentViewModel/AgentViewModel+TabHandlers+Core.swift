@@ -4,7 +4,7 @@ import MultiLineDiff
 import os.log
 import Cocoa
 
-private let coreHandlerLog = Logger(subsystem: "Agent.app.toddbruss", category: "TabCoreHandlers")
+private let coreHandlerLog = Logger(subsystem: AppConstants.subsystem, category: "TabCoreHandlers")
 
 extension AgentViewModel {
 

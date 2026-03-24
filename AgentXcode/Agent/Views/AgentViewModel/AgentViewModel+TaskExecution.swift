@@ -5,7 +5,7 @@ import MultiLineDiff
 import os.log
 import Cocoa
 
-private let taskLog = Logger(subsystem: "Agent.app.toddbruss", category: "TaskExecution")
+private let taskLog = Logger(subsystem: AppConstants.subsystem, category: "TaskExecution")
 
 // MARK: - Task Execution
 

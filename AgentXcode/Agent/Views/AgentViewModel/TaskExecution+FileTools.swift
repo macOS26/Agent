@@ -2,7 +2,7 @@
 import MultiLineDiff
 import os.log
 
-private let fileLog = Logger(subsystem: "Agent.app.toddbruss", category: "FileTools")
+private let fileLog = Logger(subsystem: AppConstants.subsystem, category: "FileTools")
 
 // MARK: - File I/O Tool Execution
 extension AgentViewModel {

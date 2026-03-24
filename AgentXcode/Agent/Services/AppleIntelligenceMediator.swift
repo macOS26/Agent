@@ -2,7 +2,7 @@ import Foundation
 import FoundationModels
 import os.log
 
-private let mediatorLog = Logger(subsystem: "Agent.app.toddbruss", category: "AppleIntelligenceMediator")
+private let mediatorLog = Logger(subsystem: AppConstants.subsystem, category: "AppleIntelligenceMediator")
 
 /// Apple Intelligence mediator that rephrases user requests to help the LLM understand them better.
 /// Acts as a middleman only — never refuses, blocks, or judges requests.

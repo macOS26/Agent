@@ -2,7 +2,7 @@
 import MCPClient
 import os.log
 
-private let mcpLog = Logger(subsystem: "Agent.app.toddbruss", category: "MCPTools")
+private let mcpLog = Logger(subsystem: AppConstants.subsystem, category: "MCPTools")
 
 // MARK: - MCP Tool Execution
 extension AgentViewModel {

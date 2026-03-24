@@ -218,7 +218,9 @@
       "Bash(python3:*)",
       "Bash(/tmp/missing_files.txt:*)",
       "Read(//tmp/**)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(while read:*)",
+      "Bash(do sed:*)"
     ]
   }
 }
