@@ -1,13 +1,11 @@
-# Split FoundationModelService.swift into modules
+# Split FoundationModelService.swift into smaller files
 
-- [✅] 1. Read FoundationModelService.swift to understand structure
-- [✅] 2. Identify logical groupings (protocol, implementation, helpers)
-- [✅] 3. Create FoundationModelProtocol.swift with protocol definitions
-- [✅] 4. Create FoundationModelTypes.swift with data types/models
-- [✅] 5. Create FoundationModelHelpers.swift with helper utilities
-- [⏳] 6. Update FoundationModelService.swift to be focused implementation
-- [ ] 7. Add new files to Xcode project
-- [ ] 8. Build and fix any issues
+- [✅] 1. 1. Create FoundationModelToolDefinitions.swift with @Generable argument structs
+- [⏳] 2. 2. Create FoundationModelNativeTools.swift with all Native*Tool implementations
+- [ ] 3. 3. Create FoundationModelHelpers.swift with shell helpers and String extensions
+- [ ] 4. 4. Update FoundationModelService.swift to keep only core service logic
+- [ ] 5. 5. Add new files to Xcode project
+- [ ] 6. 6. Build and verify
 
 ---
-*Status: 5 done, 1 in progress, 0 failed, 2 pending*
+*Status: 1 done, 1 in progress, 0 failed, 4 pending*

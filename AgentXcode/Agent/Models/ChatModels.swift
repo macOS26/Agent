@@ -127,22 +127,18 @@ final class ChatHistoryStore {
         return task.id
     }
     
-    /// End current task with optional summary — crash-safe against stale SwiftData objects
+    /// End current task with optional summary — crash-safe against stale SwiftData objects.
+    /// Does NOT call context.save() — SwiftData auto-saves, and calling save() here
+    /// triggers _PFFaultHandlerLookupRow crashes via inverse relationship maintenance
+    /// on stale/deleted objects (an ObjC NSException that Swift can't catch).
     func endCurrentTask(summary: String? = nil, cancelled: Bool = false) {
         defer { currentTask = nil }
-        guard let task = currentTask, let context else { return }
+        guard let task = currentTask else { return }
         guard task.modelContext != nil, !task.isDeleted else { return }
-        // Skip if context has deleted objects — setting properties on related objects
-        // can trigger _PFFaultHandlerLookupRow crashes via inverse relationship maintenance
-        guard context.deletedModelsArray.isEmpty else { return }
         task.endTime = Date()
         task.summary = summary
         task.isCancelled = cancelled
-        do {
-            if context.hasChanges { try context.save() }
-        } catch {
-            context.rollback()
-        }
+        // Don't save — SwiftData auto-saves. Explicit save crashes on stale objects.
     }
     
     /// Get the current active task
