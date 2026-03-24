@@ -39,6 +39,8 @@ extension AgentViewModel {
             appendLog("📝 Write: \(filePath)")
             let output = await Self.offMain { CodingService.writeFile(path: filePath, content: content) }
             appendLog(output)
+            let lang = Self.langFromPath(filePath)
+            appendLog(Self.codeFence(Self.preview(content, lines: readFilePreviewLines), language: lang))
             commandsRun.append("write_file: \(filePath)")
             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
             return true
