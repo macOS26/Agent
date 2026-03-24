@@ -27,6 +27,7 @@
 		AA10000000000000000047 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000046 /* KeychainService.swift */; };
 		AA10000000000000000049 /* AgentViewModel+Logging.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000048 /* AgentViewModel+Logging.swift */; };
 		AA1000000000000000004B /* AgentViewModel+TaskExecution.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000004A /* AgentViewModel+TaskExecution.swift */; };
+		CC10000000000000000001 /* AgentViewModel+TabToolHandlers.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC10000000000000000002 /* AgentViewModel+TabToolHandlers.swift */; };
 		AA1000000000000000004D /* AgentTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000004C /* AgentTools.swift */; };
 		AA1000000000000000004F /* CodingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000004E /* CodingService.swift */; };
 		AA10000000000000000056 /* CodeBlockSyntax.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000055 /* CodeBlockSyntax.swift */; };
@@ -199,6 +200,7 @@
 		AA10000000000000000046 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
 		AA10000000000000000048 /* AgentViewModel+Logging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+Logging.swift"; sourceTree = "<group>"; };
 		AA1000000000000000004A /* AgentViewModel+TaskExecution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TaskExecution.swift"; sourceTree = "<group>"; };
+		CC10000000000000000002 /* AgentViewModel+TabToolHandlers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabToolHandlers.swift"; sourceTree = "<group>"; };
 		AA1000000000000000004C /* AgentTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentTools.swift; sourceTree = "<group>"; };
 		AA1000000000000000004E /* CodingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodingService.swift; sourceTree = "<group>"; };
 		AA10000000000000000055 /* CodeBlockSyntax.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeBlockSyntax.swift; sourceTree = "<group>"; };
@@ -494,6 +496,7 @@
 				AA10000000000000000048 /* AgentViewModel+Logging.swift */,
 				AA1000000000000000004A /* AgentViewModel+TaskExecution.swift */,
 				AA100000000000000000A0 /* AgentViewModel+TabTask.swift */,
+				CC10000000000000000002 /* AgentViewModel+TabToolHandlers.swift */,
 				AA100000000000000000C3 /* TaskExecution+ShellTools.swift */,
 				AA100000000000000000C5 /* TaskExecution+MCPTools.swift */,
 				AA100000000000000000C7 /* TaskExecution+GitTools.swift */,
@@ -782,6 +785,7 @@
 				AA10000000000000000047 /* KeychainService.swift in Sources */,
 				AA10000000000000000049 /* AgentViewModel+Logging.swift in Sources */,
 				AA1000000000000000004B /* AgentViewModel+TaskExecution.swift in Sources */,
+				CC10000000000000000001 /* AgentViewModel+TabToolHandlers.swift in Sources */,
 				AA1000000000000000007F /* AgentViewModel+TabTask.swift in Sources */,
 				BB10000000000000000015 /* AgentViewModel+Helpers.swift in Sources */,
 				FF10000000000000000011 /* AgentViewModel+Speech.swift in Sources */,
