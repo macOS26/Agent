@@ -437,8 +437,11 @@ final class OpenAICompatibleService {
                 // Buffer text and flush on newlines to filter JSON tool calls
                 for ch in cleaned {
                     if ch == "\n" {
+                        let suppressed = isToolCallJSON(lineBuffer)
                         flushLineBuffer()
-                        onTextDelta("\n")
+                        if !suppressed {
+                            onTextDelta("\n")
+                        }
                     } else {
                         lineBuffer.append(ch)
                     }
