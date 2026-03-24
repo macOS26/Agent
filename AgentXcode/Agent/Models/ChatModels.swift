@@ -163,8 +163,10 @@ final class ChatHistoryStore {
     }
     
     /// Save pending changes — guarded against stale/deleted managed objects.
-    /// Uses ObjCTry to catch CoreData NSExceptions (e.g. _PFFaultHandlerLookupRow
-    /// during inverse relationship maintenance) that Swift's do/catch cannot handle.
+    /// Rolls back inserted objects whose relationships point to deleted/faulted
+    /// targets, preventing _PFFaultHandlerLookupRow crashes during inverse
+    /// relationship maintenance (an ObjC NSException that Swift can't catch and
+    /// that CoreData's internal performBlockAndWait rethrows past ObjCTry).
     func save() {
         guard let context else { return }
         // Check if current task is still valid before saving
@@ -174,15 +176,18 @@ final class ChatHistoryStore {
             return
         }
         guard context.hasChanges else { return }
-        let ok = ObjCTry {
-            do {
-                try context.save()
-            } catch {
-                context.rollback()
+        // Purge any inserted messages whose task relationship is stale/deleted
+        // to prevent _PFFaultHandlerLookupRow during inverse maintenance on save
+        for obj in context.insertedModelsArray {
+            if let msg = obj as? ChatMessage,
+               let task = msg.task,
+               task.modelContext == nil || task.isDeleted {
+                context.delete(msg)
             }
         }
-        if !ok {
-            // ObjC exception was thrown (stale fault, deleted row, etc.) — rollback
+        do {
+            try context.save()
+        } catch {
             context.rollback()
         }
     }
