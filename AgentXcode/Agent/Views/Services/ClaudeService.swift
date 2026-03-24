@@ -79,14 +79,18 @@ final class ClaudeService {
     func send(messages: [[String: Any]], activeGroups: Set<String>? = nil) async throws -> (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int) {
         guard isLocalEndpoint || !apiKey.isEmpty else { throw AgentError.noAPIKey }
 
-        let body: [String: Any] = [
+        var body: [String: Any] = [
             "model": model,
             "max_tokens": 2048,
             "temperature": temperature,
             "system": systemPrompt,
-            "tools": tools(activeGroups: activeGroups),
             "messages": withFolderPrefix(messages)
         ]
+        // Only include tools for real Anthropic API — local models often crash
+        // on tool definitions in their jinja templates (e.g. "UndefinedValue" errors)
+        if !isLocalEndpoint {
+            body["tools"] = tools(activeGroups: activeGroups)
+        }
 
         // Serialize on main actor, then offload network I/O + response parsing
         let bodyData = try JSONSerialization.data(withJSONObject: body)
@@ -143,14 +147,16 @@ final class ClaudeService {
     ) async throws -> (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int) {
         guard isLocalEndpoint || !apiKey.isEmpty else { throw AgentError.noAPIKey }
 
-        let body: [String: Any] = [
+        var body: [String: Any] = [
             "model": model,
             "max_tokens": 2048,
             "system": systemPrompt,
-            "tools": tools(activeGroups: activeGroups),
             "messages": withFolderPrefix(messages),
             "stream": true
         ]
+        if !isLocalEndpoint {
+            body["tools"] = tools(activeGroups: activeGroups)
+        }
 
         let bodyData = try JSONSerialization.data(withJSONObject: body)
         return try await Self.performStreamingRequest(
