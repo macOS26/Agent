@@ -866,6 +866,18 @@ final class AgentViewModel {
     var preDictationText: String = ""
     /// Tracks which tab was selected when dictation started, so speech goes to the correct input field
     var preDictationTabId: UUID?
+
+    // MARK: - Hotword ("Agent!") Listening
+    /// When true, mic stays open waiting for "Agent!" wake word
+    var isHotwordListening = false {
+        didSet { UserDefaults.standard.set(isHotwordListening, forKey: "isHotwordListening") }
+    }
+    /// True while capturing a command after the wake word was detected
+    var isHotwordCapturing = false
+    /// Timer that fires after 5 seconds of silence to auto-submit
+    var hotwordSilenceTimer: Timer?
+    /// Transcription length at last change — used to detect silence
+    var hotwordLastTranscriptionLength = 0
     
     // MARK: - Init
 

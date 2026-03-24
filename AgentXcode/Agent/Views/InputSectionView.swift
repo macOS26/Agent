@@ -42,6 +42,18 @@ struct InputSectionView: View {
                 .controlSize(.regular)
                 .help(viewModel.isListening ? "Stop dictation" : "Start dictation")
 
+                Button { viewModel.toggleHotwordListening() } label: {
+                    Image(systemName: viewModel.isHotwordListening ? "waveform.circle.fill" : "waveform.circle")
+                        .foregroundStyle(viewModel.isHotwordListening
+                            ? (viewModel.isHotwordCapturing ? Color.green : Color.orange)
+                            : .primary)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.regular)
+                .help(viewModel.isHotwordListening
+                    ? (viewModel.isHotwordCapturing ? "Capturing command..." : "Listening for \"Agent!\" — click to stop")
+                    : "Say \"Agent!\" to send a voice command")
+
                 TextField(tab.isMainTab ? "Enter task..." : tab.isMessagesTab ? "Messages task..." : "Ask about \(tab.scriptName)...", text: Binding(
                     get: { tab.taskInput },
                     set: { tab.taskInput = $0 }
@@ -97,6 +109,18 @@ struct InputSectionView: View {
                 .buttonStyle(.bordered)
                 .controlSize(.regular)
                 .help(viewModel.isListening ? "Stop dictation" : "Start dictation")
+
+                Button { viewModel.toggleHotwordListening() } label: {
+                    Image(systemName: viewModel.isHotwordListening ? "waveform.circle.fill" : "waveform.circle")
+                        .foregroundStyle(viewModel.isHotwordListening
+                            ? (viewModel.isHotwordCapturing ? Color.green : Color.orange)
+                            : .primary)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.regular)
+                .help(viewModel.isHotwordListening
+                    ? (viewModel.isHotwordCapturing ? "Capturing command..." : "Listening for \"Agent!\" — click to stop")
+                    : "Say \"Agent!\" to send a voice command")
 
                 TextField("Enter task...", text: $viewModel.taskInput, axis: .vertical)
                     .textFieldStyle(.roundedBorder)

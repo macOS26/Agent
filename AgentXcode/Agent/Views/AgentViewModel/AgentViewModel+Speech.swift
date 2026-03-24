@@ -33,6 +33,10 @@ extension AgentViewModel {
     }
 
     func stopDictation() {
+        hotwordSilenceTimer?.invalidate()
+        hotwordSilenceTimer = nil
+        isHotwordCapturing = false
+        hotwordLastTranscriptionLength = 0
         speechAudioEngine?.stop()
         speechAudioEngine?.inputNode.removeTap(onBus: 0)
         speechRecognitionRequest?.endAudio()
@@ -41,14 +45,34 @@ extension AgentViewModel {
         speechRecognitionRequest = nil
         speechAudioEngine = nil
         isListening = false
-        // Clear the pre-dictation snapshot when stopping
         preDictationTabId = nil
+    }
+
+    // MARK: - Hotword Listening
+
+    func toggleHotwordListening() {
+        if isHotwordListening {
+            stopHotwordListening()
+        } else {
+            startHotwordListening()
+        }
+    }
+
+    func startHotwordListening() {
+        isHotwordListening = true
+        isHotwordCapturing = false
+        startDictation()
+    }
+
+    func stopHotwordListening() {
+        isHotwordListening = false
+        isHotwordCapturing = false
+        stopDictation()
     }
 
     // MARK: - Private
 
     private func beginAudioSession() {
-        // Clean up any prior session
         stopDictation()
 
         guard let recognizer = SFSpeechRecognizer(), recognizer.isAvailable else {
@@ -81,8 +105,6 @@ extension AgentViewModel {
         speechRecognitionRequest = request
         isListening = true
 
-        // Capture the currently selected tab and its existing text
-        // so dictation appends to the correct input field
         preDictationTabId = selectedTabId
         if let tabId = selectedTabId,
            let tab = scriptTabs.first(where: { $0.id == tabId }) {
@@ -99,23 +121,147 @@ extension AgentViewModel {
                 guard let self, self.isListening else { return }
 
                 if let transcription {
-                    let prefix = self.preDictationText
-                    let separator = prefix.isEmpty || prefix.hasSuffix(" ") ? "" : " "
-                    let newText = prefix + separator + transcription
-                    
-                    // Route to the correct input based on which tab was active when dictation started
-                    if let tabId = self.preDictationTabId,
-                       let tab = self.scriptTabs.first(where: { $0.id == tabId }) {
-                        tab.taskInput = newText
+                    if self.isHotwordListening {
+                        self.handleHotwordTranscription(transcription)
                     } else {
-                        self.taskInput = newText
+                        // Normal dictation mode
+                        let prefix = self.preDictationText
+                        let separator = prefix.isEmpty || prefix.hasSuffix(" ") ? "" : " "
+                        let newText = prefix + separator + transcription
+
+                        if let tabId = self.preDictationTabId,
+                           let tab = self.scriptTabs.first(where: { $0.id == tabId }) {
+                            tab.taskInput = newText
+                        } else {
+                            self.taskInput = newText
+                        }
                     }
                 }
 
                 if hasError || isFinal {
-                    self.stopDictation()
+                    if self.isHotwordListening {
+                        // Restart listening after a pause (recognition sessions time out)
+                        self.restartHotwordSession()
+                    } else {
+                        self.stopDictation()
+                    }
                 }
             }
+        }
+    }
+
+    // MARK: - Hotword Processing
+
+    private func handleHotwordTranscription(_ transcription: String) {
+        let lower = transcription.lowercased()
+
+        if !isHotwordCapturing {
+            // Look for the wake word "agent"
+            guard let range = lower.range(of: "agent") else { return }
+
+            // Wake word detected — start capturing the command after it
+            isHotwordCapturing = true
+            let afterAgent = String(transcription[range.upperBound...])
+                .trimmingCharacters(in: CharacterSet.whitespacesAndNewlines.union(CharacterSet(charactersIn: "!.,")))
+
+            let command = afterAgent.isEmpty ? "" : afterAgent
+            setInputText(command)
+            hotwordLastTranscriptionLength = command.count
+            resetSilenceTimer()
+            return
+        }
+
+        // Already capturing — extract command text after the wake word
+        if let range = lower.range(of: "agent") {
+            let afterAgent = String(transcription[range.upperBound...])
+                .trimmingCharacters(in: CharacterSet.whitespacesAndNewlines.union(CharacterSet(charactersIn: "!.,")))
+            setInputText(afterAgent)
+
+            if afterAgent.count != hotwordLastTranscriptionLength {
+                hotwordLastTranscriptionLength = afterAgent.count
+                resetSilenceTimer()
+            }
+        }
+    }
+
+    private func setInputText(_ text: String) {
+        let prefix = preDictationText
+        let separator = (prefix.isEmpty || prefix.hasSuffix(" ") || text.isEmpty) ? "" : " "
+        let newText = prefix + separator + text
+
+        if let tabId = preDictationTabId,
+           let tab = scriptTabs.first(where: { $0.id == tabId }) {
+            tab.taskInput = newText
+        } else {
+            taskInput = newText
+        }
+    }
+
+    private func resetSilenceTimer() {
+        hotwordSilenceTimer?.invalidate()
+        hotwordSilenceTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.submitHotwordCommand()
+            }
+        }
+    }
+
+    private func submitHotwordCommand() {
+        hotwordSilenceTimer?.invalidate()
+        hotwordSilenceTimer = nil
+
+        // Stop current recognition
+        speechAudioEngine?.stop()
+        speechAudioEngine?.inputNode.removeTap(onBus: 0)
+        speechRecognitionRequest?.endAudio()
+        speechRecognitionTask?.cancel()
+        speechRecognitionTask = nil
+        speechRecognitionRequest = nil
+        speechAudioEngine = nil
+        isListening = false
+        isHotwordCapturing = false
+
+        // Submit the command
+        if let tabId = preDictationTabId,
+           let tab = scriptTabs.first(where: { $0.id == tabId }) {
+            if !tab.taskInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                runTabTask(tab: tab)
+            }
+        } else {
+            if !taskInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                run()
+            }
+        }
+
+        // Restart hotword listening after a short delay
+        if isHotwordListening {
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(for: .seconds(1))
+                guard let self, self.isHotwordListening else { return }
+                self.startDictation()
+            }
+        }
+    }
+
+    private func restartHotwordSession() {
+        // Recognition timed out — restart if still in hotword mode
+        speechAudioEngine?.stop()
+        speechAudioEngine?.inputNode.removeTap(onBus: 0)
+        speechRecognitionRequest?.endAudio()
+        speechRecognitionTask?.cancel()
+        speechRecognitionTask = nil
+        speechRecognitionRequest = nil
+        speechAudioEngine = nil
+        isListening = false
+        isHotwordCapturing = false
+        hotwordLastTranscriptionLength = 0
+        hotwordSilenceTimer?.invalidate()
+        hotwordSilenceTimer = nil
+
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(0.5))
+            guard let self, self.isHotwordListening else { return }
+            self.startDictation()
         }
     }
 }
