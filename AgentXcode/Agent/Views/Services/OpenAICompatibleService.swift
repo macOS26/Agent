@@ -440,8 +440,16 @@ final class OpenAICompatibleService {
             if payload == "[DONE]" { break }
 
             guard let data = payload.data(using: .utf8),
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let choices = json["choices"] as? [[String: Any]],
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { continue }
+
+            // LM Studio Native: top-level "content" field without "choices"
+            if let nativeContent = json["content"] as? String, json["choices"] == nil {
+                fullText += nativeContent
+                onTextDelta(nativeContent)
+                continue
+            }
+
+            guard let choices = json["choices"] as? [[String: Any]],
                   let firstChoice = choices.first else { continue }
 
             // Check finish reason
