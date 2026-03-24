@@ -41,8 +41,8 @@ final class ClaudeService {
     }
 
     func tools(activeGroups: Set<String>? = nil) -> [[String: Any]] {
-        // Local endpoints (LM Studio etc.) get Core group only to fit small context windows
-        let groups = isLocalEndpoint ? Set(["Core"]) : activeGroups
+        // Local endpoints (LM Studio etc.) get essential groups only to fit small context windows
+        let groups = isLocalEndpoint ? Set(["Core", "User Agent", "File Manager", "Workflow"]) : activeGroups
         var t = AgentTools.claudeFormat(activeGroups: groups)
         // Only add web_search for real Anthropic API — local endpoints can't handle it
         if !isLocalEndpoint {
