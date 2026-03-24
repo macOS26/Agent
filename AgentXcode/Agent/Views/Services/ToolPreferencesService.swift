@@ -85,8 +85,9 @@ final class ToolPreferencesService {
 
     /// Tools enabled by default for Apple Intelligence (small context window).
     static let appleAIDefaults: Set<String> = [
-        AgentTools.Name.taskComplete, AgentTools.Name.agentScript,
-        AgentTools.Name.listNativeTools, AgentTools.Name.appleScriptTool
+        AgentTools.Name.executeAgentCommand, AgentTools.Name.readFile,
+        AgentTools.Name.writeFile, AgentTools.Name.editFile,
+        AgentTools.Name.agentScript, AgentTools.Name.taskComplete
     ]
 
     private static let groupSeededKey = "agent.groupsSeeded.v2"
