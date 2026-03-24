@@ -18,7 +18,7 @@ Agent! works with Claude API, Ollama Pro/Max Cloud, and local Ollama. Local LLMs
 
 ### Multi-Provider LLM Support
 
-Agent! supports multiple LLM providers with seamless switching. Configure your preferred provider in Settings. 
+Agent! supports multiple LLM providers with seamless switching. Configure your preferred provider in Settings.
 
 OpenAI, DeepSeek, HuggingFace is untested. If you have any issues please file an issue.
 
@@ -50,7 +50,10 @@ Annotations are tagged with `[AI]` prefixes to distinguish them from LLM resp
 Enable Apple Intelligence Mediator in Settings to enhance communication clarity. Requires Apple Intelligence-capable Mac running macOS 26+.
 
 **Recent Enhancements:**
-- **Timeout Protection**: 10-second timeout prevents LLM tabs from hanging when Apple Intelligence is slow to respond
+- **Optimized Tool Set**: Streamlined to 6 essential tools (read_file, write_file, edit_file, list_files, search_files, task_complete) for faster context
+- **Observer Role**: Apple AI is now strictly an observer/mediator, not a tool executor — it provides context without consuming tool budget
+- **Increased Call Limit**: Max tool calls raised to 50, with excess calls silently skipped to prevent hangs
+- **Timeout Protection**: 3-second start timeout, 6-second finish timeout prevents LLM tabs from hanging
 - **OS Log Diagnostics**: Built-in os.log diagnostics for debugging mediator behavior
 - **Brain Button Integration**: Toggle Apple Intelligence mediator directly from the brain button in the toolbar
 - **LoRA Training**: Apple Intelligence can also be used for LoRA adapter training with the main LLM
@@ -653,13 +656,28 @@ Agent! provides **100+ tools** across multiple categories for autonomous task ex
 | `git_diff_patch` | Apply a unified diff patch |
 | `git_branch` | Create a new git branch |
 
-### Command Execution (3 tools)
+### Command Execution (2 tools)
 
 | Tool | Description |
 |------|-------------|
 | `execute_agent_command` | Execute as current user (no TCC) — for git, builds, file ops, CLI tools |
 | `execute_daemon_command` | Execute as ROOT via LaunchDaemon (no TCC) — for system packages, /Library |
-| `execute_shell_command` | Smart routing: TCC commands in-process, others via UserService |
+
+**Important:** ALWAYS use `execute_agent_command` for shell commands. NEVER create `.sh` scripts — run commands directly.
+
+### File Manager (9 actions)
+
+| Action | Description |
+|--------|-------------|
+| `read` | Read file contents with line numbers |
+| `write` | Create or overwrite a file |
+| `edit` | Replace exact text in a file |
+| `list` | Find files matching a glob pattern |
+| `search` | Search file contents by regex pattern |
+| `read_dir` | List directory contents |
+| `if_to_switch` | Convert if-chains to switch/case statements |
+| `extract_function` | Move function to a new file |
+| `extract_section` | Extract section for incremental file splitting (plan_mode) |
 
 ### Apple Event Query (1 tool)
 
