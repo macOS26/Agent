@@ -32,7 +32,13 @@ final class OpenAICompatibleService {
         self.projectFolder = projectFolder
     }
 
+    /// LM Studio models use compact prompt to fit small context windows
+    private var isLMStudio: Bool { provider == .lmStudio }
+
     var systemPrompt: String {
+        if isLMStudio {
+            return AgentTools.compactSystemPrompt(userName: userName, userHome: userHome, projectFolder: projectFolder)
+        }
         var prompt = SystemPromptService.shared.prompt(for: provider, userName: userName, userHome: userHome, projectFolder: projectFolder)
         if !projectFolder.isEmpty {
             prompt = "CURRENT PROJECT FOLDER: \(projectFolder)\nAlways cd to this directory before running any shell commands. Use it as the default for all file operations. You may go outside it when needed.\n\n" + prompt
@@ -46,7 +52,10 @@ final class OpenAICompatibleService {
         return prompt
     }
 
-    func tools(activeGroups: Set<String>? = nil) -> [[String: Any]] { AgentTools.ollamaTools(for: provider, activeGroups: activeGroups) }
+    func tools(activeGroups: Set<String>? = nil) -> [[String: Any]] {
+        let groups = isLMStudio ? Set(["Core"]) : activeGroups
+        return AgentTools.ollamaTools(for: provider, activeGroups: groups)
+    }
 
     /// Prepend project folder to the last user message.
     private func withFolderPrefix(_ messages: [[String: Any]]) -> [[String: Any]] {
