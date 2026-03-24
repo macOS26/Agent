@@ -1,8 +1,9 @@
-# Create Archive with Agent Script 'mergedf'
+# Tag 1.0.23
 
-- [ ] 1. 1. Combine the 'ArchiveAndNotarizeMerged' and 'merged' agent scripts into a new script named 'mergedf'.
-- [ ] 2. 2. Verify the combined script compiles and runs successfully.
-- [ ] 3. 3. Create a ZIP archive of the 'mergedf' agent script.
+- [ ] 1. 1. Check git status
+- [ ] 2. 2. Commit any changes
+- [ ] 3. 3. Create a new tag 1.0.23
+- [ ] 4. 4. Push the tag to remote
 
 ---
-*Status: 3 steps pending*
+*Status: 4 steps pending*
