@@ -125,6 +125,7 @@
 		238B40E2A7DFCFB745101269 /* HeaderSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEA10A5913CDA508518F6EDA /* HeaderSectionView.swift */; };
 		E6A8395D5098ED44E0118609 /* InputSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C14A00A8D2269268767BD2D /* InputSectionView.swift */; };
 		9A9C3DD66695959EE70C20DD /* SearchBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70B4573B1D1FB583C85DC43C /* SearchBarView.swift */; };
+		F035BAFA78E9DDFDF6DD5A1C /* TaskBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4128E21FF13BC4029D6548B /* TaskBannerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -319,6 +320,7 @@
 		FEA10A5913CDA508518F6EDA /* HeaderSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HeaderSectionView.swift"; sourceTree = "<group>"; };
 		1C14A00A8D2269268767BD2D /* InputSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "InputSectionView.swift"; sourceTree = "<group>"; };
 		70B4573B1D1FB583C85DC43C /* SearchBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SearchBarView.swift"; sourceTree = "<group>"; };
+		B4128E21FF13BC4029D6548B /* TaskBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskBannerView.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -527,6 +529,7 @@
 							FEA10A5913CDA508518F6EDA /* HeaderSectionView.swift */,
 				1C14A00A8D2269268767BD2D /* InputSectionView.swift */,
 				70B4573B1D1FB583C85DC43C /* SearchBarView.swift */,
+				B4128E21FF13BC4029D6548B /* TaskBannerView.swift */,
 );
 			path = Views;
 			sourceTree = "<group>";
@@ -908,6 +911,7 @@
 				238B40E2A7DFCFB745101269 /* HeaderSectionView.swift in Sources */,
 				E6A8395D5098ED44E0118609 /* InputSectionView.swift in Sources */,
 				9A9C3DD66695959EE70C20DD /* SearchBarView.swift in Sources */,
+				F035BAFA78E9DDFDF6DD5A1C /* TaskBannerView.swift in Sources */,
 );
 			runOnlyForDeploymentPostprocessing = 0;
 		};

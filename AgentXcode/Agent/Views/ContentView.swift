@@ -108,63 +108,23 @@ struct ContentView: View {
 
             // Current task banner with cancel button
             if let prompt = activeTaskPrompt, !prompt.isEmpty {
-                VStack(spacing: 0) {
-                    HStack(spacing: 6) {
-                        Button { if activeAppleAIPrompt != nil { withAnimation(.easeInOut(duration: 0.2)) { showAppleAIBanner.toggle() } } } label: {
-                            Image(systemName: "person.fill")
-                                .font(.caption2)
-                                .frame(width: 14)
-                                .foregroundStyle(.white)
-                        }
-                        .buttonStyle(.plain)
-                        .help("User prompt")
-                        Text(prompt)
-                            .font(.caption)
-                            .lineLimit(1)
-                            .truncationMode(.tail)
-                            .foregroundStyle(.white)
-                        Spacer()
-                        Button {
-                            if let selId = viewModel.selectedTabId,
-                               let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
-                                if tab.isLLMRunning {
-                                    viewModel.stopTabTask(tab: tab)
-                                } else if tab.isRunning {
-                                    viewModel.cancelScriptTab(id: tab.id)
-                                }
-                            } else {
-                                viewModel.stop()
+                TaskBannerView(
+                    prompt: prompt,
+                    appleAIPrompt: activeAppleAIPrompt,
+                    showAppleAIBanner: $showAppleAIBanner,
+                    onCancel: {
+                        if let selId = viewModel.selectedTabId,
+                           let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+                            if tab.isLLMRunning {
+                                viewModel.stopTabTask(tab: tab)
+                            } else if tab.isRunning {
+                                viewModel.cancelScriptTab(id: tab.id)
                             }
-                        } label: {
-                            Label("Cancel", systemImage: "xmark.circle.fill")
-                                .font(.caption)
-                                .foregroundStyle(.white)
+                        } else {
+                            viewModel.stop()
                         }
-                        .buttonStyle(.plain)
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 5)
-                    .background(Color.green.opacity(0.7))
-
-                    // Apple AI prompt row (toggled by tapping person icon)
-                    if showAppleAIBanner, let aiPrompt = activeAppleAIPrompt {
-                        HStack(spacing: 6) {
-                            Text("\u{F8FF}")
-                                .font(.caption2)
-                                .frame(width: 14)
-                                .foregroundStyle(.white.opacity(0.8))
-                            Text(aiPrompt)
-                                .font(.caption)
-                                .lineLimit(4)
-                                .foregroundStyle(.white.opacity(0.9))
-                            Spacer()
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 4)
-                        .background(Color.blue.opacity(0.6))
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                    }
-                }
+                )
             }
 
             // Activity Log — switches between main and script tab
