@@ -1753,6 +1753,10 @@ extension AgentViewModel {
                     consecutiveNoTool = 0
                     messages.append(["role": "user", "content": "Continue with the task. Call task_complete when finished."])
                 } else if !hasToolUse {
+                    // LM Studio Native has no tool support — accept text response immediately
+                    if provider == .lmStudio && lmStudioProtocol == .lmStudio {
+                        break
+                    }
                     consecutiveNoTool += 1
                     if consecutiveNoTool >= 3 {
                         appendLog("LLM not calling tools after \(consecutiveNoTool) attempts — stopping.")
