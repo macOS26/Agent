@@ -132,7 +132,16 @@ extension AgentViewModel {
         }
         // MARK: edit_file (actions: edit, create, apply)
         if name == "edit_file" || name == "create_diff" || name == "apply_diff" {
-            let action = input["action"] as? String ?? (name == "create_diff" ? "create" : name == "apply_diff" ? "apply" : "edit")
+            let action: String
+            if let explicit = input["action"] as? String {
+                action = explicit
+            } else if name == "create_diff" || (input["source"] != nil && input["destination"] != nil) {
+                action = "create"
+            } else if name == "apply_diff" || input["diff"] != nil {
+                action = "apply"
+            } else {
+                action = "edit"
+            }
 
             if action == "edit" {
                 let path = input["file_path"] as? String ?? ""

@@ -41,8 +41,17 @@ extension AgentViewModel {
             )
 
         case "edit_file", "create_diff", "apply_diff":
-            // Resolve action: from action param, or legacy tool name
-            let action = input["action"] as? String ?? (name == "create_diff" ? "create" : name == "apply_diff" ? "apply" : "edit")
+            // Resolve action: from action param, legacy tool name, or infer from params
+            let action: String
+            if let explicit = input["action"] as? String {
+                action = explicit
+            } else if name == "create_diff" || (input["source"] != nil && input["destination"] != nil) {
+                action = "create"
+            } else if name == "apply_diff" || input["diff"] != nil {
+                action = "apply"
+            } else {
+                action = "edit"
+            }
 
             switch action {
             case "edit":
