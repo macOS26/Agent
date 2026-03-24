@@ -40,7 +40,8 @@ struct ContentView: View {
                 showMessages: $showMessages,
                 showAccessibility: $showAccessibility,
                 showAIPopover: $showAIPopover,
-                showClearConfirm: $showClearConfirm
+                showClearConfirm: $showClearConfirm,
+                showServices: $showServices
             )
 
             Divider()

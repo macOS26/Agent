@@ -12,6 +12,7 @@ struct HeaderSectionView: View {
     @Binding var showAccessibility: Bool
     @Binding var showAIPopover: Bool
     @Binding var showClearConfirm: Bool
+    @Binding var showServices: Bool
     @ObservedObject var aiMediator = AppleIntelligenceMediator.shared
     
     var currentTabColor: Color {
@@ -90,6 +91,18 @@ struct HeaderSectionView: View {
             Spacer()
 
             // Toolbar buttons (right side)
+            Button { showServices.toggle() } label: {
+                Image(systemName: "gearshape.2")
+                    .foregroundStyle(viewModel.servicesGearColor)
+                    .frame(width: 20, height: 16)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.mini)
+            .help(viewModel.servicesGearHelp)
+            .popover(isPresented: $showServices) {
+                ServicesPopover(viewModel: viewModel)
+            }
+
             Button { showMessages.toggle() } label: {
                 Image(systemName: "message.fill")
                     .frame(width: 20, height: 16)
