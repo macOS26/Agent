@@ -4,49 +4,7 @@ import Foundation
 
 /// Determines which tool groups are sent to the LLM based on task type.
 /// Reduces token usage by only sending relevant tools.
-enum TaskMode: String, CaseIterable {
-    case coding       // file editing, git, builds
-    case automation   // AppleScript, accessibility, app control
-    case web          // browser automation, selenium
-    case conversation // writing, messages, text transforms
-    case general      // all tools (fallback)
-
-    /// All groups always available — user controls via UI toggles.
-    var groups: Set<String> {
-        ["Core", "Workflow", "File Manager", "User Agent", "Launch Daemon", "Automation", "Web", "Experimental"]
-    }
-
-    /// Classify a user prompt into a task mode via keyword matching.
-    static func classify(_ prompt: String) -> TaskMode {
-        let p = prompt.lowercased()
-
-        let codingKeywords = ["build", "compile", "edit file", "edit_file", "read_file", "write_file",
-                              "git ", "commit", "xcode", "swift", "code", "fix bug", "refactor",
-                              "implement", "xcodeproj", "pbxproj", "merge", "branch", "diff",
-                              "source", "function", "class ", "struct ", "enum ", "import "]
-        let automationKeywords = ["applescript", "automate", "accessibility", "click", "type into",
-                                  "apple event", "music", "finder", "safari tab", "sdef",
-                                  "ax_", "osascript", "scripting bridge", "app control"]
-        let webKeywords = ["selenium", "browser", "web page", "scrape", "navigate to",
-                           "url ", "web form", "website", "webdriver", "web_"]
-        let conversationKeywords = ["write about", "summarize", "translate", "fix grammar",
-                                    "send message", "tell me about", "explain", "describe",
-                                    "write text", "transform text", "fix text"]
-
-        let codingScore = codingKeywords.filter { p.contains($0) }.count
-        let automationScore = automationKeywords.filter { p.contains($0) }.count
-        let webScore = webKeywords.filter { p.contains($0) }.count
-        let conversationScore = conversationKeywords.filter { p.contains($0) }.count
-
-        let maxScore = max(codingScore, automationScore, webScore, conversationScore)
-        guard maxScore > 0 else { return .general }
-
-        if codingScore == maxScore { return .coding }
-        if automationScore == maxScore { return .automation }
-        if webScore == maxScore { return .web }
-        return .conversation
-    }
-}
+// TaskMode removed — all tool groups always available, user controls via UI toggles.
 
 /// Manages which internal tools are enabled per LLM provider.
 /// Claude/Ollama: all tools on by default.
