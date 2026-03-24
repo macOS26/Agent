@@ -246,6 +246,12 @@ struct SettingsView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 4) {
+                        Text("API Key (optional)").font(.caption).foregroundStyle(.secondary)
+                        SecureField("Leave blank if not required", text: $viewModel.lmStudioAPIKey)
+                            .textFieldStyle(.roundedBorder)
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
                         Text("Endpoint").font(.caption).foregroundStyle(.secondary)
                         TextField(viewModel.lmStudioProtocol.defaultEndpoint, text: $viewModel.lmStudioEndpoint)
                             .textFieldStyle(.roundedBorder)

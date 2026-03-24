@@ -122,7 +122,7 @@ extension AgentViewModel {
         if provider == .claude {
             claude = ClaudeService(apiKey: apiKey, model: modelId, historyContext: tabHistoryContext, projectFolder: projectFolder)
         } else if provider == .lmStudio && lmStudioProtocol == .anthropic {
-            claude = ClaudeService(apiKey: "", model: modelId, historyContext: tabHistoryContext, projectFolder: projectFolder, baseURL: lmStudioEndpoint)
+            claude = ClaudeService(apiKey: lmStudioAPIKey, model: modelId, historyContext: tabHistoryContext, projectFolder: projectFolder, baseURL: lmStudioEndpoint)
         } else {
             claude = nil
         }
@@ -138,7 +138,7 @@ extension AgentViewModel {
             openAICompatible = OpenAICompatibleService(apiKey: vLLMAPIKey, model: modelId, baseURL: vLLMEndpoint, historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .vLLM)
         case .lmStudio where lmStudioProtocol != .anthropic:
             let key = lmStudioProtocol == .lmStudio ? "input" : "messages"
-            openAICompatible = OpenAICompatibleService(apiKey: "", model: modelId, baseURL: lmStudioEndpoint, historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .lmStudio, messagesKey: key)
+            openAICompatible = OpenAICompatibleService(apiKey: lmStudioAPIKey, model: modelId, baseURL: lmStudioEndpoint, historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .lmStudio, messagesKey: key)
         default:
             openAICompatible = nil
         }

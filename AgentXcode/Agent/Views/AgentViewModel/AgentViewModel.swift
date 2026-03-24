@@ -312,6 +312,10 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(lmStudioModel, forKey: "lmStudioModel") }
     }
 
+    var lmStudioAPIKey: String = UserDefaults.standard.string(forKey: "lmStudioAPIKey") ?? "" {
+        didSet { UserDefaults.standard.set(lmStudioAPIKey, forKey: "lmStudioAPIKey") }
+    }
+
     var lmStudioModels: [OpenAIModelInfo] = []
     var isFetchingLMStudioModels = false
 
