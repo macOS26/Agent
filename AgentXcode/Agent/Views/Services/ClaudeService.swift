@@ -8,6 +8,7 @@ final class ClaudeService {
 
     private static let defaultBaseURL = URL(string: "https://api.anthropic.com/v1/messages") ?? URL(filePath: "/")
     private static let apiVersion = "2023-06-01"
+    private let isLocalEndpoint: Bool
 
     let historyContext: String
     let userHome: String
@@ -18,6 +19,7 @@ final class ClaudeService {
         self.apiKey = apiKey
         self.model = model
         self.endpointURL = baseURL.flatMap { URL(string: $0) } ?? Self.defaultBaseURL
+        self.isLocalEndpoint = baseURL != nil
         self.historyContext = historyContext
         self.userHome = FileManager.default.homeDirectoryForCurrentUser.path
         self.userName = NSUserName()
@@ -67,7 +69,7 @@ final class ClaudeService {
     var temperature: Double = 0.2
 
     func send(messages: [[String: Any]], activeGroups: Set<String>? = nil) async throws -> (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int) {
-        guard !apiKey.isEmpty else { throw AgentError.noAPIKey }
+        guard isLocalEndpoint || !apiKey.isEmpty else { throw AgentError.noAPIKey }
 
         let body: [String: Any] = [
             "model": model,
@@ -131,7 +133,7 @@ final class ClaudeService {
         activeGroups: Set<String>? = nil,
         onTextDelta: @escaping @Sendable (String) -> Void
     ) async throws -> (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int) {
-        guard !apiKey.isEmpty else { throw AgentError.noAPIKey }
+        guard isLocalEndpoint || !apiKey.isEmpty else { throw AgentError.noAPIKey }
 
         let body: [String: Any] = [
             "model": model,
