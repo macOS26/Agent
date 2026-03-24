@@ -10,18 +10,22 @@ final class OpenAICompatibleService {
     let supportsVision: Bool
     let provider: APIProvider
     var temperature: Double = 0.2
+    /// Key name for the messages array in the request body.
+    /// OpenAI uses "messages", LM Studio Native uses "input".
+    let messagesKey: String
 
     let historyContext: String
     let userHome: String
     let userName: String
     let projectFolder: String
 
-    init(apiKey: String, model: String, baseURL: String, supportsVision: Bool = false, historyContext: String = "", projectFolder: String = "", provider: APIProvider) {
+    init(apiKey: String, model: String, baseURL: String, supportsVision: Bool = false, historyContext: String = "", projectFolder: String = "", provider: APIProvider, messagesKey: String = "messages") {
         self.apiKey = apiKey
         self.model = model
         self.baseURL = URL(string: baseURL) ?? URL(filePath: "/")
         self.supportsVision = supportsVision
         self.provider = provider
+        self.messagesKey = messagesKey
         self.historyContext = historyContext
         self.userHome = FileManager.default.homeDirectoryForCurrentUser.path
         self.userName = NSUserName()
@@ -160,14 +164,15 @@ final class OpenAICompatibleService {
     func send(messages: [[String: Any]], activeGroups: Set<String>? = nil) async throws -> (content: [[String: Any]], stopReason: String) {
         let chatMessages = convertMessages(messages)
 
-        let body: [String: Any] = [
+        var body: [String: Any] = [
             "model": model,
             "temperature": temperature,
-            "messages": chatMessages,
-            "tools": tools(activeGroups: activeGroups),
+            messagesKey: chatMessages,
             "stream": false,
             "max_tokens": 2048
         ]
+        let toolDefs = tools(activeGroups: activeGroups)
+        if !toolDefs.isEmpty { body["tools"] = toolDefs }
 
         let bodyData = try JSONSerialization.data(withJSONObject: body)
         return try await Self.performRequest(bodyData: bodyData, apiKey: apiKey, url: baseURL)
@@ -182,14 +187,15 @@ final class OpenAICompatibleService {
     ) async throws -> (content: [[String: Any]], stopReason: String) {
         let chatMessages = convertMessages(messages)
 
-        let body: [String: Any] = [
+        var body: [String: Any] = [
             "model": model,
             "temperature": temperature,
-            "messages": chatMessages,
-            "tools": tools(activeGroups: activeGroups),
+            messagesKey: chatMessages,
             "stream": true,
             "max_tokens": 2048
         ]
+        let toolDefs = tools(activeGroups: activeGroups)
+        if !toolDefs.isEmpty { body["tools"] = toolDefs }
 
         let bodyData = try JSONSerialization.data(withJSONObject: body)
         return try await Self.performStreamingRequest(

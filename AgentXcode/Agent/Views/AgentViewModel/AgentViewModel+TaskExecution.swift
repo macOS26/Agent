@@ -95,7 +95,8 @@ extension AgentViewModel {
         case .vLLM:
             openAICompatible = OpenAICompatibleService(apiKey: vLLMAPIKey, model: vLLMModel, baseURL: vLLMEndpoint, historyContext: historyContext, projectFolder: projectFolder, provider: .vLLM)
         case .lmStudio where lmStudioProtocol != .anthropic:
-            openAICompatible = OpenAICompatibleService(apiKey: "", model: lmStudioModel, baseURL: lmStudioEndpoint, historyContext: historyContext, projectFolder: projectFolder, provider: .lmStudio)
+            let key = lmStudioProtocol == .lmStudio ? "input" : "messages"
+            openAICompatible = OpenAICompatibleService(apiKey: "", model: lmStudioModel, baseURL: lmStudioEndpoint, historyContext: historyContext, projectFolder: projectFolder, provider: .lmStudio, messagesKey: key)
         default:
             openAICompatible = nil
         }
