@@ -214,20 +214,20 @@ struct SystemPromptsView: View {
 
     private let service = SystemPromptService.shared
 
-    // HSB: equidistant hues (60° apart) with matched saturation/brightness
+    // Brand colors for each LLM provider
     private let providerLabels: [(APIProvider, String, Color, NSColor)] = [
-        (.claude,          "Claude",       Color(hue: 0.0/360,   saturation: 0.5, brightness: 0.85),   // red 0°
-                                           NSColor(hue: 0.0/360,   saturation: 0.5, brightness: 0.85, alpha: 1.0)),
-        (.openAI,          "OpenAI",       Color(hue: 60.0/360,  saturation: 0.5, brightness: 0.85),   // gold 60°
-                                           NSColor(hue: 60.0/360,  saturation: 0.5, brightness: 0.85, alpha: 1.0)),
-        (.ollama,          "Ollama",       Color(hue: 120.0/360, saturation: 0.6, brightness: 0.65),   // green 120°
-                                           NSColor(hue: 120.0/360, saturation: 0.6, brightness: 0.65, alpha: 1.0)),
-        (.deepSeek,        "DeepSeek",     Color(hue: 180.0/360, saturation: 0.5, brightness: 0.80),   // cyan 180°
-                                           NSColor(hue: 180.0/360, saturation: 0.5, brightness: 0.80, alpha: 1.0)),
-        (.localOllama,     "Local",        Color(hue: 240.0/360, saturation: 0.6, brightness: 0.80),   // blue 240°
-                                           NSColor(hue: 240.0/360, saturation: 0.6, brightness: 0.80, alpha: 1.0)),
-        (.huggingFace,     "HuggingFace",  Color(hue: 300.0/360, saturation: 0.5, brightness: 0.80),   // magenta 300°
-                                           NSColor(hue: 300.0/360, saturation: 0.5, brightness: 0.80, alpha: 1.0)),
+        (.claude,          "Claude",       Color(red: 0.90, green: 0.55, blue: 0.25),   // Anthropic burnt orange
+                                           NSColor(red: 0.90, green: 0.55, blue: 0.25, alpha: 1.0)),
+        (.openAI,          "OpenAI",       Color(red: 0.40, green: 0.85, blue: 0.60),   // OpenAI green
+                                           NSColor(red: 0.40, green: 0.85, blue: 0.60, alpha: 1.0)),
+        (.ollama,          "Ollama",       Color(red: 0.95, green: 0.95, blue: 0.95),   // Ollama white
+                                           NSColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0)),
+        (.deepSeek,        "DeepSeek",     Color(red: 0.25, green: 0.45, blue: 0.95),   // DeepSeek royal blue
+                                           NSColor(red: 0.25, green: 0.45, blue: 0.95, alpha: 1.0)),
+        (.localOllama,     "Local",        Color(red: 0.70, green: 0.70, blue: 0.75),   // Local silver/gray
+                                           NSColor(red: 0.70, green: 0.70, blue: 0.75, alpha: 1.0)),
+        (.huggingFace,     "HuggingFace",  Color(red: 1.0,  green: 0.82, blue: 0.20),   // HuggingFace yellow
+                                           NSColor(red: 1.0,  green: 0.82, blue: 0.20, alpha: 1.0)),
     ]
 
     private func tabColor(for provider: APIProvider) -> Color {
