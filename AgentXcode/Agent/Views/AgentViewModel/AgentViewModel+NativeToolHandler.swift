@@ -23,10 +23,6 @@ extension AgentViewModel {
         let (name, input) = Self.expandConsolidatedTool(name: rawName, input: rawInput)
         let pf = projectFolder
         NativeToolContext.toolCallCount += 1
-        appendLog("🔧 \(name)")
-        flushLog()
-
-        // No tool call limit — mediator is an observer, main loop iteration limit handles stopping
 
         // AppleScript (NSAppleScript in-process with TCC)
         if name == "run_applescript" {

@@ -423,6 +423,8 @@ enum NativeToolContext {
     static let maxToolCalls = 50
     /// Handler that routes tool calls to real execution (set by ViewModel before task starts).
     nonisolated(unsafe) static var toolHandler: (@Sendable (String, sending [String: Any]) async -> String)?
+    /// Apple AI is a translator/mediator — skip all tool execution.
+    @MainActor static var mediatorMode = true
 }
 
 // MARK: - Native Shell Tool

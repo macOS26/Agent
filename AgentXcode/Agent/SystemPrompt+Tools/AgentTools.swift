@@ -924,6 +924,10 @@ struct NativeAgentTool: Tool {
                 input[label] = child.value
             }
         }
+        // Mediator mode — skip all tool execution
+        if await NativeToolContext.mediatorMode {
+            return AgentToolOutput(result: "(skipped)")
+        }
         // Route to handler for real execution
         if let handler = NativeToolContext.toolHandler {
             let result = await handler(name, input)
