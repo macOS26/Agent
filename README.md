@@ -624,46 +624,29 @@ Prompts are stored in `~/Documents/AgentScript/system/` as `{provider}.txt` file
 
 ## Available Tools
 
-Agent! provides **100+ tools** across multiple categories for autonomous task execution.
+Agent! provides **100+ tools** across multiple categories for autonomous task execution. Tools are organized into groups that can be dynamically loaded/unloaded to optimize context usage.
 
-### Diff Tools (2 tools)
+### Tool Groups
+
+| Group | Purpose |
+|-------|---------|
+| **Coding** | File operations, git, Xcode build — always loaded |
+| **Automation** | AppleScript, JavaScript, Agent Scripts, messaging — always loaded |
+| **Accessibility** | UI automation via AXUIElement API — always loaded |
+| **Web** | Web automation (Selenium, web search) — loaded on demand |
+
+### Core File Tools (6 tools)
+
+These tools are always available and optimized for fast context:
 
 | Tool | Description |
 |------|-------------|
-| `create_diff` | Compare two text strings and return a pretty D1F diff with emoji markers (📎 retain, ❌ delete, ✅ insert) |
-| `apply_diff` | Apply a D1F ASCII diff to a file for precise multi-line edits |
-
-### File Operations (7 tools)
-
-| Tool | Description |
-|------|-------------|
-| `read_file` | Read file contents with line numbers |
-| `write_file` | Create or overwrite a file |
+| `read_file` | Read file contents with line numbers (auto-truncates large files) |
+| `write_file` | Create or overwrite a file (creates parent dirs automatically) |
 | `edit_file` | Replace exact text in a file (shows D1F diff preview) |
-| `create_diff` | Compare two text strings and return a pretty D1F diff |
-| `apply_diff` | Apply a D1F ASCII diff to a file |
 | `list_files` | Find files matching a glob pattern |
 | `search_files` | Search file contents by regex pattern |
-
-### Git Operations (6 tools)
-
-| Tool | Description |
-|------|-------------|
-| `git_status` | Show current branch, staged/unstaged changes |
-| `git_diff` | Show file changes as unified diff |
-| `git_log` | Show recent commit history |
-| `git_commit` | Stage files and create a commit |
-| `git_diff_patch` | Apply a unified diff patch |
-| `git_branch` | Create a new git branch |
-
-### Command Execution (2 tools)
-
-| Tool | Description |
-|------|-------------|
-| `execute_agent_command` | Execute as current user (no TCC) — for git, builds, file ops, CLI tools |
-| `execute_daemon_command` | Execute as ROOT via LaunchDaemon (no TCC) — for system packages, /Library |
-
-**Important:** ALWAYS use `execute_agent_command` for shell commands. NEVER create `.sh` scripts — run commands directly.
+| `task_complete` | Signal that a task has been completed |
 
 ### File Manager (9 actions)
 
@@ -679,12 +662,34 @@ Agent! provides **100+ tools** across multiple categories for autonomous task ex
 | `extract_function` | Move function to a new file |
 | `extract_section` | Extract section for incremental file splitting (plan_mode) |
 
-### Apple Event Query (1 tool)
+### Git Operations (6 actions)
+
+| Action | Description |
+|--------|-------------|
+| `status` | Show current branch, staged/unstaged changes |
+| `diff` | Show file changes as unified diff |
+| `log` | Show recent commit history |
+| `commit` | Stage files and create a commit |
+| `diff_patch` | Apply a unified diff patch |
+| `branch` | Create a new git branch |
+
+### Command Execution (2 tools)
 
 | Tool | Description |
 |------|-------------|
-| `apple_event_query` | Query scriptable apps dynamically (zero compilation) |
-| `lookup_sdef` | Read app scripting dictionary before writing AppleScript |
+| `execute_agent_command` | Execute as current user (no TCC) — for git, builds, file ops, CLI tools |
+| `execute_daemon_command` | Execute as ROOT via LaunchDaemon (no TCC) — for system packages, /Library |
+
+**Important:** ALWAYS use `execute_agent_command` for shell commands. NEVER create `.sh` scripts — run commands directly.
+
+### AppleScript & JavaScript Tools (2 tools)
+
+| Tool | Description |
+|------|-------------|
+| `applescript_tool` | AppleScript with full TCC access — execute inline or saved scripts |
+| `javascript_tool` | JavaScript for Automation (JXA) — execute inline or saved scripts |
+
+**Note:** For `applescript_tool`, use `lookup_sdef` action to read app scripting dictionaries before writing AppleScript.
 
 ### Accessibility Tools (22 tools)
 
@@ -713,71 +718,68 @@ Agent! provides **100+ tools** across multiple categories for autonomous task ex
 | `ax_request_permission` | Request Accessibility permission |
 | `ax_get_audit_log` | View accessibility audit log |
 
-### Saved Scripts (8 tools)
+### Agent Scripts (6 actions)
+
+| Action | Description |
+|--------|-------------|
+| `list` | List all Swift automation scripts |
+| `read` | Read source code of a script |
+| `create` | Create a new Swift script |
+| `update` | Update an existing script |
+| `run` | Compile and run a Swift dylib script (full TCC) |
+| `delete` | Delete a script |
+| `combine` | Merge two scripts into one |
+
+### Xcode Automation (6 actions)
+
+| Action | Description |
+|--------|-------------|
+| `build` | Build an Xcode project/workspace (auto-detects project) |
+| `run` | Build and run an Xcode project |
+| `list_projects` | List all open Xcode projects |
+| `select_project` | Select a project by number |
+| `add_file` | Add a source file to the Xcode project |
+| `remove_file` | Remove a source file from the Xcode project |
+| `grant_permission` | Grant macOS Automation permission for Xcode |
+
+### Plan Mode (5 actions)
+
+| Action | Description |
+|--------|-------------|
+| `create` | Create a step-by-step plan |
+| `update` | Update plan status (in_progress, completed, failed) |
+| `read` | Read current plan state |
+| `list` | List all plans |
+| `delete` | Delete a plan |
+
+### Text Tools (3 tools)
 
 | Tool | Description |
 |------|-------------|
-| `list_apple_scripts` | List saved AppleScripts |
-| `run_apple_script` | Run saved AppleScript |
-| `save_apple_script` | Save AppleScript for reuse |
-| `delete_apple_script` | Delete saved AppleScript |
-| `list_javascript` | List saved JXA scripts |
-| `run_javascript` | Run saved JXA script |
-| `save_javascript` | Save JXA for reuse |
-| `delete_javascript` | Delete saved JXA |
+| `write_text` | Generate well-structured prose on any topic (articles, descriptions, creative writing) |
+| `transform_text` | Transform text into lists, outlines, summaries, bullet points, tables, Q&A |
+| `fix_text` | Fix spelling and grammar errors while preserving style |
 
-### AgentScripts (6 tools)
+### Messaging (1 tool)
 
 | Tool | Description |
 |------|-------------|
-| `list_agent_scripts` | List all Swift automation scripts |
-| `read_agent_script` | Read source code of a script |
-| `create_agent_script` | Create a new Swift script |
-| `update_agent_script` | Update an existing script |
-| `run_agent_script` | Compile and run a Swift dylib script |
-| `delete_agent_script` | Delete a script |
+| `send_message` | Send messages via iMessage, email, SMS, or clipboard |
 
-### Xcode Automation (5 tools)
+### Web Search (1 tool)
 
 | Tool | Description |
 |------|-------------|
-| `xcode_build` | Build an Xcode project/workspace |
-| `xcode_run` | Build and run an Xcode project |
-| `xcode_list_projects` | List all open Xcode projects |
-| `xcode_select_project` | Select a project by number |
-| `xcode_grant_permission` | Grant macOS Automation permission for Xcode |
+| `web_search` | Search the web for current information (titles, URLs, content snippets) |
 
-### Web Automation (7 tools)
+### Utility Tools (4 tools)
 
 | Tool | Description |
 |------|-------------|
-| `web_open` | Open a URL in Safari, Chrome, Firefox, or Edge |
-| `web_find` | Find element on page (auto-selects: AX → JS → Selenium) |
-| `web_click` | Click element by selector |
-| `web_type` | Type text into input field |
-| `web_execute_js` | Execute JavaScript in browser |
-| `web_get_url` | Get current URL from browser |
-| `web_get_title` | Get page title from browser |
-
-### Selenium WebDriver (8 tools)
-
-| Tool | Description |
-|------|-------------|
-| `selenium_start` | Start WebDriver session (Safari built-in, Chrome/Firefox need drivers) |
-| `selenium_stop` | End WebDriver session |
-| `selenium_navigate` | Navigate to URL |
-| `selenium_find` | Find element by CSS/XPath/id/name |
-| `selenium_click` | Click element |
-| `selenium_type` | Type text into element |
-| `selenium_execute` | Execute JavaScript |
-| `selenium_screenshot` | Take screenshot |
-| `selenium_wait` | Wait for element to appear |
-
-### Task Management (1 tool)
-
-| Tool | Description |
-|------|-------------|
-| `task_complete` | Signal that a task has been completed |
+| `list_tools` | List all enabled tools (built-in and MCP) |
+| `load_groups` | Load tool groups into active session (Coding, Automation, Accessibility, Web) |
+| `unload_groups` | Unload tool groups to reduce token usage |
+| `about_self` | Describe Agent's capabilities, features, and usage patterns |
 
 ### MCP Tools
 
@@ -848,12 +850,13 @@ Agent! includes a built-in Swift scripting system. Scripts live in `~/Documents/
 
 The AI can create, read, update, delete, compile, and run these scripts autonomously:
 
-- `list_agent_scripts` — list all scripts
-- `create_agent_script` — write a new script
-- `read_agent_script` — read source code
-- `update_agent_script` — modify an existing script
-- `run_agent_script` — compile with `swift build --product <name>` and execute
-- `delete_agent_script` — remove a script
+- `list` — list all scripts
+- `create` — write a new script
+- `read` — read source code
+- `update` — modify an existing script
+- `run` — compile with `swift build --product <name>` and execute
+- `delete` — remove a script
+- `combine` — merge two scripts into one
 
 ### D1F Diff Integration
 

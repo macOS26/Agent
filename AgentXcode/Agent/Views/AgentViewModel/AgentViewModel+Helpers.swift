@@ -400,9 +400,15 @@ extension AgentViewModel {
             }
 
         case "update":
-            guard let stepNum = input["step"] as? Int, stepNum > 0 else {
+            let stepNum: Int
+            if let n = input["step"] as? Int {
+                stepNum = n
+            } else if let s = input["step"] as? String, let n = Int(s) {
+                stepNum = n
+            } else {
                 return "Error: step number is required for plan_mode update"
             }
+            guard stepNum > 0 else { return "Error: step number must be > 0" }
             guard let status = input["status"] as? String else {
                 return "Error: status is required for plan_mode update (in_progress, completed, failed)"
             }

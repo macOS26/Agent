@@ -1,14 +1,44 @@
-# Update README Tools Section
+# Compare README with Current Tools
 
-- [✅] 1. 1. Extract the current "Available Tools" section from the README.md file for reference.
-- [⏳] 2. 2. Review the current tool groups and tools in the app to identify new additions or changes.
-- [ ] 3. 3. Rewrite the "Available Tools" section in the README.md to reflect the new tool groups and tools.
-- [ ] 4. 4. Add a new subsection for "Tool Groups" and list all available groups with descriptions.
-- [ ] 5. 5. Update the list of individual tools with their descriptions and parameters.
-- [ ] 6. 6. Add a note about TCC permissions and when to use specific tools.
-- [ ] 7. 7. Verify the updated README.md for accuracy and clarity.
-- [ ] 8. 8. Build the project to ensure no issues were introduced.
-- [ ] 9. 9. Mark the task as complete.
+- [ ] 1. - Verify the **File Manager** tool group in the README matches the current tools:
+- [✅] 2.   - Actions: read, write, edit, list, search, read_dir, if_to_switch, extract_function, extract_section
+- [✅] 3.   - Confirm no duplicates or omissions.
+- [✅] 4. - Verify the **Git Operations** tool group in the README matches the current tools:
+- [✅] 5.   - Actions: status, diff, log, commit, diff_patch, branch
+- [ ] 6.   - Confirm no duplicates or omissions.
+- [ ] 7. - Verify the **Command Execution** tool group in the README:
+- [ ] 8.   - Tools: execute_agent_command, execute_daemon_command
+- [ ] 9.   - Confirm no duplicates or omissions.
+- [ ] 10. - Verify the **AppleScript & JavaScript Tools** tool group in the README:
+- [ ] 11.   - Tools: applescript_tool, javascript_tool
+- [ ] 12.   - Confirm no duplicates or omissions.
+- [ ] 13. - Verify the **Accessibility Tools** tool group in the README:
+- [ ] 14.   - Tools: list_windows, get_properties, perform_action, type_text, click, press_key, screenshot, set_properties, find_element, get_children, check_permission, request_permission
+- [ ] 15.   - Confirm no duplicates or omissions.
+- [ ] 16. - Verify the **Agent Scripts** tool group in the README:
+- [ ] 17.   - Actions: list, read, create, update, run, delete, combine
+- [ ] 18.   - Confirm no duplicates or omissions.
+- [ ] 19. - Verify the **Xcode Automation** tool group in the README:
+- [ ] 20.   - Actions: build, run, list_projects, select_project, add_file, remove_file, grant_permission
+- [ ] 21.   - Confirm no duplicates or omissions.
+- [ ] 22. - Verify the **Plan Mode** tool group in the README:
+- [ ] 23.   - Actions: create, update, read, list, delete
+- [ ] 24.   - Confirm no duplicates or omissions.
+- [ ] 25. - Verify the **Text Tools** tool group in the README:
+- [ ] 26.   - Tools: write_text, transform_text, fix_text
+- [ ] 27.   - Confirm no duplicates or omissions.
+- [ ] 28. - Verify the **Messaging** tool group in the README:
+- [ ] 29.   - Tool: send_message
+- [ ] 30.   - Confirm no duplicates or omissions.
+- [ ] 31. - Verify the **Web Search** tool group in the README:
+- [ ] 32.   - Tool: web_search
+- [ ] 33.   - Confirm no duplicates or omissions.
+- [ ] 34. - Verify the **Utility Tools** tool group in the README:
+- [ ] 35.   - Tools: list_tools, load_groups, unload_groups, about_self
+- [ ] 36.   - Confirm no duplicates or omissions.
+- [ ] 37. - Verify the **MCP Tools** section in the README:
+- [ ] 38.   - Confirm all 16 MCP tools are listed and accurate.
+- [ ] 39.   - Ensure no obsolete tools are included.
 
 ---
-*Status: 1 done, 1 in progress, 0 failed, 7 pending*
+*Status: 4 done, 0 in progress, 0 failed, 35 pending*
