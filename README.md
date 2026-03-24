@@ -20,7 +20,7 @@ Agent! works with Claude API, Ollama Pro/Max Cloud, and local Ollama. Local LLMs
 
 Agent! supports multiple LLM providers with seamless switching. Configure your preferred provider in Settings. 
 
-OpenAI, DeepSeek, HuggingFace is untested. If you have any issues please file an issue.
+OpenAI, DeepSeek, HuggingFace is tested!
 
 | Provider | API Key | Vision | Notes |
 |----------|---------|--------|-------|
