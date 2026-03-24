@@ -1,11 +1,13 @@
-# Split FoundationModelService.swift into smaller files
+# Split CodeBlockSyntax.swift (1211 lines)
 
-- [⏳] 1. 1. Create FoundationModelToolDefinitions.swift with @Generable argument structs
-- [⏳] 2. 2. Create FoundationModelNativeTools.swift with all Native*Tool implementations
-- [ ] 3. 3. Create FoundationModelHelpers.swift with shell helpers and String extensions
-- [ ] 4. 4. Update FoundationModelService.swift to keep only core service logic
-- [ ] 5. 5. Add new files to Xcode project
-- [ ] 6. 6. Build and verify
+- [⏳] 1. 1. Extract Activity Log highlighting (lines 882-1126) to CodeBlockSyntax+ActivityLog.swift
+- [ ] 2. 2. Build project to verify
+- [ ] 3. 3. Extract Git Output highlighting (lines 623-690) to CodeBlockSyntax+Git.swift
+- [ ] 4. 4. Build project to verify
+- [ ] 5. 5. Extract Diff Block highlighting (lines 691-770) to CodeBlockSyntax+Diff.swift
+- [ ] 6. 6. Build project to verify
+- [ ] 7. 7. Extract Hex Dump highlighting (lines 771-881) to CodeBlockSyntax+HexDump.swift
+- [ ] 8. 8. Build project to verify
 
 ---
-*Status: 0 done, 2 in progress, 0 failed, 4 pending*
+*Status: 0 done, 1 in progress, 0 failed, 7 pending*

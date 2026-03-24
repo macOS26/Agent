@@ -113,6 +113,11 @@
 		088F38C5D0E90D019E33A0D9 /* AgentViewModel+TabHandlers+Selenium.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DBCE8EADB1BBD7A0E94AD0B /* AgentViewModel+TabHandlers+Selenium.swift */; };
 		7FA36E1A9CC0DFA5A3ECB9AD /* AgentViewModel+NativeToolHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C673DDB50E956B2E5FD610 /* AgentViewModel+NativeToolHandler.swift */; };
 		294AAA2C5E0241FCC1290B01 /* AgentViewModel+TaskUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEBEFF49533F8BC00811AE5C /* AgentViewModel+TaskUtilities.swift */; };
+		7AB0005863FDEB26A427D572 /* FoundationModelToolDefinitions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0031B8FF027D032D62F8DCFC /* FoundationModelToolDefinitions.swift */; };
+		1D4719DCD45082F4898C6A35 /* FoundationModelHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 348B39D2C50843DCCFD23620 /* FoundationModelHelpers.swift */; };
+		F123A9EA71C5383EFFFF1A8A /* ActivityLogView+Rendering.swift in Sources */ = {isa = PBXBuildFile; fileRef = C428D9A5859B0E1BB0D2FB6B /* ActivityLogView+Rendering.swift */; };
+		5F382EB905DEB6A80A6BE7EE /* CodeBlockSyntax+Terminal.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00B3F1FE027D878FA0CD426 /* CodeBlockSyntax+Terminal.swift */; };
+		EF36545C0DDFB57F98641ACC /* CodeBlockSyntax+Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 796A6667ACD88945C2FA33F8 /* CodeBlockSyntax+Theme.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -295,6 +300,11 @@
 		0DBCE8EADB1BBD7A0E94AD0B /* AgentViewModel+TabHandlers+Selenium.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Selenium.swift"; sourceTree = "<group>"; };
 		93C673DDB50E956B2E5FD610 /* AgentViewModel+NativeToolHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+NativeToolHandler.swift"; sourceTree = "<group>"; };
 		CEBEFF49533F8BC00811AE5C /* AgentViewModel+TaskUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TaskUtilities.swift"; sourceTree = "<group>"; };
+		0031B8FF027D032D62F8DCFC /* FoundationModelToolDefinitions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FoundationModelToolDefinitions.swift"; sourceTree = "<group>"; };
+		348B39D2C50843DCCFD23620 /* FoundationModelHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FoundationModelHelpers.swift"; sourceTree = "<group>"; };
+		C428D9A5859B0E1BB0D2FB6B /* ActivityLogView+Rendering.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ActivityLogView+Rendering.swift"; sourceTree = "<group>"; };
+		C00B3F1FE027D878FA0CD426 /* CodeBlockSyntax+Terminal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CodeBlockSyntax+Terminal.swift"; sourceTree = "<group>"; };
+		796A6667ACD88945C2FA33F8 /* CodeBlockSyntax+Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CodeBlockSyntax+Theme.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -470,6 +480,8 @@
 				AA100000000000000000B4 /* ToolPreferencesService.swift */,
 				AA10000000000000000102 /* RecentFoldersService.swift */,
 							C62E80DD07559CF2F825948A /* AccessibilityService+Security.swift */,
+				0031B8FF027D032D62F8DCFC /* FoundationModelToolDefinitions.swift */,
+				348B39D2C50843DCCFD23620 /* FoundationModelHelpers.swift */,
 );
 			path = Services;
 			sourceTree = "<group>";
@@ -497,7 +509,8 @@
 				AA100000000000000000B9 /* AgentOptionsView.swift */,
 				EASP000000000000000004 /* SystemPromptEditor.swift */,
 				EADF39D02F69018800CD01E5 /* AgentScriptTabs */,
-			);
+							C428D9A5859B0E1BB0D2FB6B /* ActivityLogView+Rendering.swift */,
+);
 			path = Views;
 			sourceTree = "<group>";
 		};
@@ -575,7 +588,9 @@
 			isa = PBXGroup;
 			children = (
 				AA10000000000000000055 /* CodeBlockSyntax.swift */,
-			);
+				C00B3F1FE027D878FA0CD426 /* CodeBlockSyntax+Terminal.swift */,
+				796A6667ACD88945C2FA33F8 /* CodeBlockSyntax+Theme.swift */,
+);
 			path = ColorSyntax;
 			sourceTree = "<group>";
 		};
@@ -860,6 +875,11 @@
 				8375A8F4BB60859635722350 /* TaskExecution+WebTools.swift in Sources */,
 				02706156F0F8E91DF8FB4E70 /* TaskExecution+Selenium.swift in Sources */,
 				78EBD1F124AB2D7D38E70E8E /* AgentViewModel+TaskExecution+AboutSelf.swift in Sources */,
+				7AB0005863FDEB26A427D572 /* FoundationModelToolDefinitions.swift in Sources */,
+				1D4719DCD45082F4898C6A35 /* FoundationModelHelpers.swift in Sources */,
+				F123A9EA71C5383EFFFF1A8A /* ActivityLogView+Rendering.swift in Sources */,
+				5F382EB905DEB6A80A6BE7EE /* CodeBlockSyntax+Terminal.swift in Sources */,
+				EF36545C0DDFB57F98641ACC /* CodeBlockSyntax+Theme.swift in Sources */,
 );
 			runOnlyForDeploymentPostprocessing = 0;
 		};
