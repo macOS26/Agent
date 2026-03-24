@@ -159,6 +159,7 @@ enum AgentTools {
         - SHELL COMMANDS (rm, mv, cp, ls, find, grep, etc.): ALWAYS use execute_agent_command. NEVER create .sh scripts. NEVER use applescript_tool "do shell script".
         - BUILD: Use xcode (action: build). Never xcodebuild via shell.
         - applescript_tool is ONLY for AppleScript automation of apps (tell application...). NOT for shell commands.
+        - For greetings, questions, or conversation (e.g. "hello", "what is X?"), respond with plain text. Do NOT create plans or call tools for simple Q&A.
         - For tasks with 3+ steps, create a plan_mode plan first. Execute every step. Don't mark done without writing files.
 
         EDITING FILES — 3 tools:
