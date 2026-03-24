@@ -439,12 +439,12 @@ extension AgentViewModel {
 
     // MARK: - Tab Tool Call Handler
 
-    private struct TabToolResult {
+    struct TabToolResult {
         let toolResult: [String: Any]?
         let isComplete: Bool
     }
 
-    private func handleTabToolCall(
+    func handleTabToolCall(
         tab: ScriptTab, name: String, input: [String: Any], toolId: String
     ) async -> TabToolResult {
 
