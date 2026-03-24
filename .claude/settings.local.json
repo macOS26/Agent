@@ -220,7 +220,8 @@
       "Read(//tmp/**)",
       "Bash(cd:*)",
       "Bash(while read:*)",
-      "Bash(do sed:*)"
+      "Bash(do sed:*)",
+      "Bash(xargs -I{} basename {})"
     ]
   }
 }

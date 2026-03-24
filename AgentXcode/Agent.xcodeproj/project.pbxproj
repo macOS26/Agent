@@ -122,6 +122,7 @@
 		DC2A6AB4367F3BCBC249663B /* CodeBlockSyntax+LanguageResolution.swift in Sources */ = {isa = PBXBuildFile; fileRef = 654AE34A3EAA418AF0636F70 /* CodeBlockSyntax+LanguageResolution.swift */; };
 		A34E0C76DC7DABD4CCA06D4B /* CodeBlockSyntax+Diff.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30A0E288397BF42CA9B7FFB /* CodeBlockSyntax+Diff.swift */; };
 		209FA1D0E1B571ED04CF5EDC /* AgentViewModel+MessageTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBA563ADA970F23E8E161254 /* AgentViewModel+MessageTypes.swift */; };
+		238B40E2A7DFCFB745101269 /* HeaderSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEA10A5913CDA508518F6EDA /* HeaderSectionView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -313,6 +314,7 @@
 		654AE34A3EAA418AF0636F70 /* CodeBlockSyntax+LanguageResolution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CodeBlockSyntax+LanguageResolution.swift"; sourceTree = "<group>"; };
 		D30A0E288397BF42CA9B7FFB /* CodeBlockSyntax+Diff.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CodeBlockSyntax+Diff.swift"; sourceTree = "<group>"; };
 		CBA563ADA970F23E8E161254 /* AgentViewModel+MessageTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+MessageTypes.swift"; sourceTree = "<group>"; };
+		FEA10A5913CDA508518F6EDA /* HeaderSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HeaderSectionView.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -518,7 +520,8 @@
 				EASP000000000000000004 /* SystemPromptEditor.swift */,
 				EADF39D02F69018800CD01E5 /* AgentScriptTabs */,
 				C428D9A5859B0E1BB0D2FB6B /* ActivityLogView+Rendering.swift */,
-			);
+							FEA10A5913CDA508518F6EDA /* HeaderSectionView.swift */,
+);
 			path = Views;
 			sourceTree = "<group>";
 		};
@@ -896,6 +899,7 @@
 							DC2A6AB4367F3BCBC249663B /* CodeBlockSyntax+LanguageResolution.swift in Sources */,
 				A34E0C76DC7DABD4CCA06D4B /* CodeBlockSyntax+Diff.swift in Sources */,
 				209FA1D0E1B571ED04CF5EDC /* AgentViewModel+MessageTypes.swift in Sources */,
+				238B40E2A7DFCFB745101269 /* HeaderSectionView.swift in Sources */,
 );
 			runOnlyForDeploymentPostprocessing = 0;
 		};
