@@ -98,6 +98,9 @@
 		WEB1000000000000000001 /* WebAutomationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = WEB1000000000000000002 /* WebAutomationService.swift */; };
 		1B1CD89FDA3F61AFB2E23066 /* AccessibilityService+Security.swift in Sources */ = {isa = PBXBuildFile; fileRef = C62E80DD07559CF2F825948A /* AccessibilityService+Security.swift */; };
 		AD0E84FCAA3A3D6AF61ECD16 /* AgentViewModel+TaskExecution+SavedScripts.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4709078FC05AA3587261B14 /* AgentViewModel+TaskExecution+SavedScripts.swift */; };
+		8375A8F4BB60859635722350 /* TaskExecution+WebTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F1A988F00C4E7050FED023 /* TaskExecution+WebTools.swift */; };
+		02706156F0F8E91DF8FB4E70 /* TaskExecution+Selenium.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D8FE3C1065B23B9424ED23C /* TaskExecution+Selenium.swift */; };
+		78EBD1F124AB2D7D38E70E8E /* AgentViewModel+TaskExecution+AboutSelf.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878ED6B87793FE4A12844669 /* AgentViewModel+TaskExecution+AboutSelf.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -265,6 +268,9 @@
 		WEB1000000000000000002 /* WebAutomationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebAutomationService.swift; sourceTree = "<group>"; };
 		C62E80DD07559CF2F825948A /* AccessibilityService+Security.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AccessibilityService+Security.swift"; sourceTree = "<group>"; };
 		B4709078FC05AA3587261B14 /* AgentViewModel+TaskExecution+SavedScripts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TaskExecution+SavedScripts.swift"; sourceTree = "<group>"; };
+		87F1A988F00C4E7050FED023 /* TaskExecution+WebTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskExecution+WebTools.swift"; sourceTree = "<group>"; };
+		5D8FE3C1065B23B9424ED23C /* TaskExecution+Selenium.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskExecution+Selenium.swift"; sourceTree = "<group>"; };
+		878ED6B87793FE4A12844669 /* AgentViewModel+TaskExecution+AboutSelf.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TaskExecution+AboutSelf.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -495,6 +501,9 @@
 				BB10000000000000000005 /* AgentViewModel+Helpers.swift */,
 				FF10000000000000000010 /* AgentViewModel+Speech.swift */,
 							B4709078FC05AA3587261B14 /* AgentViewModel+TaskExecution+SavedScripts.swift */,
+				87F1A988F00C4E7050FED023 /* TaskExecution+WebTools.swift */,
+				5D8FE3C1065B23B9424ED23C /* TaskExecution+Selenium.swift */,
+				878ED6B87793FE4A12844669 /* AgentViewModel+TaskExecution+AboutSelf.swift */,
 );
 			path = AgentViewModel;
 			sourceTree = "<group>";
@@ -800,6 +809,9 @@
 				AA100000000000000000C8 /* TaskExecution+FileTools.swift in Sources */,
 							1B1CD89FDA3F61AFB2E23066 /* AccessibilityService+Security.swift in Sources */,
 				AD0E84FCAA3A3D6AF61ECD16 /* AgentViewModel+TaskExecution+SavedScripts.swift in Sources */,
+				8375A8F4BB60859635722350 /* TaskExecution+WebTools.swift in Sources */,
+				02706156F0F8E91DF8FB4E70 /* TaskExecution+Selenium.swift in Sources */,
+				78EBD1F124AB2D7D38E70E8E /* AgentViewModel+TaskExecution+AboutSelf.swift in Sources */,
 );
 			runOnlyForDeploymentPostprocessing = 0;
 		};
