@@ -182,39 +182,40 @@ extension AgentViewModel {
 
         // MARK: create_diff
         if name == "create_diff" {
-            let source = input["source"] as? String ?? ""
+            var source = input["source"] as? String ?? ""
             let destination = input["destination"] as? String ?? ""
-            let diff = MultiLineDiff.createDiff(source: source, destination: destination, includeMetadata: true)
-            var asciiDiff = ""
-            var si = 0
-            for op in diff.operations {
-                switch op {
-                case .retain(let count):
-                    let end = source.index(source.startIndex, offsetBy: min(si + count, source.count))
-                    let text = String(source[source.index(source.startIndex, offsetBy: si)..<end])
-                    for line in text.components(separatedBy: "\n") { asciiDiff += "=\(line)\n" }
-                    si += count
-                case .delete(let count):
-                    let end = source.index(source.startIndex, offsetBy: min(si + count, source.count))
-                    let text = String(source[source.index(source.startIndex, offsetBy: si)..<end])
-                    for line in text.components(separatedBy: "\n") { asciiDiff += "-\(line)\n" }
-                    si += count
-                case .insert(let text):
-                    for line in text.components(separatedBy: "\n") { asciiDiff += "+\(line)\n" }
+            if let fp = input["file_path"] as? String, !fp.isEmpty {
+                let expanded = (fp as NSString).expandingTildeInPath
+                if let data = FileManager.default.contents(atPath: expanded),
+                   let text = String(data: data, encoding: .utf8) {
+                    source = text
                 }
             }
-            return asciiDiff
+            let diff = MultiLineDiff.createDiff(source: source, destination: destination, includeMetadata: true)
+            let d1f = MultiLineDiff.displayDiff(diff: diff, source: source, format: .ai)
+            let diffId = DiffStore.shared.store(diff: diff, source: source)
+            return "diff_id: \(diffId.uuidString)\n\n\(d1f)"
         }
 
         // MARK: apply_diff
         if name == "apply_diff" {
             let path = input["file_path"] as? String ?? ""
+            let diffIdStr = input["diff_id"] as? String ?? ""
             let asciiDiff = input["diff"] as? String ?? ""
-            guard let data = FileManager.default.contents(atPath: path),
+            let expanded = (path as NSString).expandingTildeInPath
+            guard let data = FileManager.default.contents(atPath: expanded),
                   let source = String(data: data, encoding: .utf8) else { return "Error: cannot read \(path)" }
             do {
-                let patched = try MultiLineDiff.applyASCIIDiff(to: source, asciiDiff: asciiDiff)
-                try patched.write(to: URL(fileURLWithPath: path), atomically: true, encoding: .utf8)
+                let patched: String
+                if let uuid = UUID(uuidString: diffIdStr),
+                   let stored = DiffStore.shared.retrieve(uuid) {
+                    patched = try MultiLineDiff.applyDiff(to: source, diff: stored.diff)
+                } else if !asciiDiff.isEmpty {
+                    patched = try MultiLineDiff.applyASCIIDiff(to: source, asciiDiff: asciiDiff)
+                } else {
+                    throw DiffError.invalidDiff
+                }
+                try patched.write(to: URL(fileURLWithPath: expanded), atomically: true, encoding: .utf8)
                 let verifyDiff = MultiLineDiff.createAndDisplayDiff(source: source, destination: patched, format: .ai)
                 return "Applied diff to \(path)\n\n\(verifyDiff)"
             } catch {

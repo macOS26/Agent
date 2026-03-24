@@ -17,6 +17,7 @@ extension AgentViewModel {
         userWasActive = false
         rootWasActive = false
         recentOutputHashes.removeAll()
+        DiffStore.shared.clear()
 
         // Start progress updates for iMessage requests (every 10 minutes)
         if agentReplyHandle != nil {
@@ -421,12 +422,21 @@ extension AgentViewModel {
                         }
 
                         if name == "create_diff" {
-                            let source = input["source"] as? String ?? ""
+                            var source = input["source"] as? String ?? ""
                             let destination = input["destination"] as? String ?? ""
+                            // Read source from file if file_path provided
+                            if let fp = input["file_path"] as? String, !fp.isEmpty {
+                                let expanded = (fp as NSString).expandingTildeInPath
+                                if let data = FileManager.default.contents(atPath: expanded),
+                                   let text = String(data: data, encoding: .utf8) {
+                                    source = text
+                                }
+                            }
                             let diff = MultiLineDiff.createDiff(source: source, destination: destination, includeMetadata: true)
                             let d1f = MultiLineDiff.displayDiff(diff: diff, source: source, format: .ai)
                             let summary = MultiLineDiff.generateDiffSummary(source: source, destination: destination)
-                            var result = d1f + "\n\n" + summary
+                            let diffId = DiffStore.shared.store(diff: diff, source: source)
+                            var result = "diff_id: \(diffId.uuidString)\n\n" + d1f + "\n\n" + summary
                             if let meta = diff.metadata, let startLine = meta.sourceStartLine {
                                 result += "\n📍 Changes start at line \(startLine + 1)"
                             }
@@ -437,6 +447,7 @@ extension AgentViewModel {
 
                         if name == "apply_diff" {
                             let filePath = input["file_path"] as? String ?? ""
+                            let diffIdStr = input["diff_id"] as? String ?? ""
                             let asciiDiff = input["diff"] as? String ?? ""
                             appendLog("📝 Apply D1F diff: \(filePath)")
                             let expandedPath = (filePath as NSString).expandingTildeInPath
@@ -448,7 +459,15 @@ extension AgentViewModel {
                                 continue
                             }
                             do {
-                                let patched = try MultiLineDiff.applyASCIIDiff(to: source, asciiDiff: asciiDiff)
+                                let patched: String
+                                if let uuid = UUID(uuidString: diffIdStr),
+                                   let stored = DiffStore.shared.retrieve(uuid) {
+                                    patched = try MultiLineDiff.applyDiff(to: source, diff: stored.diff)
+                                } else if !asciiDiff.isEmpty {
+                                    patched = try MultiLineDiff.applyASCIIDiff(to: source, asciiDiff: asciiDiff)
+                                } else {
+                                    throw DiffError.invalidDiff
+                                }
                                 try patched.write(to: URL(fileURLWithPath: expandedPath), atomically: true, encoding: .utf8)
                                 let verifyDiff = MultiLineDiff.createAndDisplayDiff(source: source, destination: patched, format: .ai)
                                 appendRawOutput(verifyDiff + "\n")

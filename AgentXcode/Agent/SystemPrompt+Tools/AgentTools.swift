@@ -219,8 +219,8 @@ enum AgentTools {
         Name.readFile:             #"read_file {"file_path": "/Users/toddbruss/Documents/example.txt"}"#,
         Name.writeFile:            #"write_file {"file_path": "/Users/toddbruss/Documents/out.txt", "content": "hello"}"#,
         Name.editFile:             #"edit_file {"file_path": "/path/file.txt", "old_string": "old", "new_string": "new"}"#,
-        Name.createDiff:           #"create_diff {"source": "line1\nold line\nline3", "destination": "line1\nnew line\nline3"}"#,
-        Name.applyDiff:            #"apply_diff {"file_path": "/path/file.txt", "diff": "=line1\n-old line\n+new line\n=line3"}"#,
+        Name.createDiff:           #"create_diff {"file_path": "/path/file.txt", "destination": "line1\nnew line\nline3"}"#,
+        Name.applyDiff:            #"apply_diff {"file_path": "/path/file.txt", "diff_id": "<UUID from create_diff>"}"#,
         Name.listFiles:            #"list_files {"pattern": "*.swift", "path": "/Users/toddbruss/Documents"}"#,
         Name.searchFiles:          #"search_files {"pattern": "TODO", "path": "/Users/toddbruss/Documents"}"#,
         Name.readDir:              #"read_dir {"path": "/Users/toddbruss/Documents"}"#,
@@ -330,21 +330,23 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.createDiff,
-            description: "Generate a diff from source and destination strings. Returns a diff string with =/-/+ prefixes that can be passed to apply_diff.",
+            description: "Generate a diff and store it. Returns a diff_id UUID. Pass diff_id to apply_diff to apply it to a file. Provide source+destination strings, or file_path+destination to read source from a file.",
             properties: [
-                "source": ["type": "string", "description": "The original text"],
+                "source": ["type": "string", "description": "The original text (omit if file_path is provided)"],
                 "destination": ["type": "string", "description": "The modified text"],
+                "file_path": ["type": "string", "description": "Read source from this file path instead of source param"],
             ],
-            required: ["source", "destination"]
+            required: ["destination"]
         ),
         ToolDef(
             name: Name.applyDiff,
-            description: "Apply a diff to a file. You MUST read_file first. Each line starts with = (keep), - (remove), or + (add) immediately followed by content.",
+            description: "Apply a diff to a file. Preferred: pass diff_id from create_diff. Fallback: pass inline diff text where each line starts with = (keep), - (remove), or + (add).",
             properties: [
                 "file_path": ["type": "string", "description": "Absolute path to the file"],
-                "diff": ["type": "string", "description": "Diff with =/-/+ prefixes. Example: =func hello() {\\n-    print(\"old\")\\n+    print(\"new\")\\n=}"],
+                "diff_id": ["type": "string", "description": "UUID from create_diff (preferred)"],
+                "diff": ["type": "string", "description": "Inline diff with =/-/+ prefixes (fallback if no diff_id)"],
             ],
-            required: ["file_path", "diff"]
+            required: ["file_path"]
         ),
         ToolDef(
             name: Name.listFiles,
