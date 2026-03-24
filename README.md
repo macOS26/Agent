@@ -4,10 +4,10 @@
 ## 🧠 Agentic AI for the  Mac Desktop 
 Now with Apple Intelligence
 
-[![Swift 6.2](https://img.shields.io/badge/Swift-6.2-aqua.svg)](https://swift.org)
+[![Swift 6.2](https://img.shields.io/badge/Swift-6.2-blue.svg)](https://swift.org)
 [![Website](https://img.shields.io/badge/website-macos26.app-blue.svg)](https://macos26.app)
-[![Version](https://img.shields.io/badge/version-1.0.16-red.svg)](https://github.com/macOS26/Agent)
-[![GitHub downloads](https://img.shields.io/github/downloads/macOS26/Agent/total.svg?v=4)](https://github.com/macOS26/Agent/releases)
+[![Version](https://img.shields.io/badge/version-1.0.20-blue.svg)](https://github.com/macOS26/Agent)
+[![GitHub downloads](https://img.shields.io/github/downloads/macOS26/Agent/total.svg)](https://github.com/macOS26/Agent/releases)
 [![GitHub stars](https://img.shields.io/github/stars/macOS26/Agent.svg?style=social)](https://github.com/macOS26/Agent/stargazers)
 
 Agent! works with Claude API, Ollama Pro/Max Cloud, and local Ollama. Local LLMs need 32-128GB RAM on Apple Silicon.
@@ -20,7 +20,7 @@ Agent! works with Claude API, Ollama Pro/Max Cloud, and local Ollama. Local LLMs
 
 Agent! supports multiple LLM providers with seamless switching. Configure your preferred provider in Settings.
 
-OpenAI, DeepSeek, HuggingFace is untested. If you have any issues please file an issue.
+OpenAI, DeepSeek, HuggingFace is tested!
 
 | Provider | API Key | Vision | Notes |
 |----------|---------|--------|-------|
