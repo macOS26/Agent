@@ -168,9 +168,8 @@ extension AgentViewModel {
             messages.append(["role": "user", "content": prompt])
         }
 
-        // Auto-classify task mode for tool subsetting
-        let taskMode = TaskMode.classify(prompt)
-        let activeGroups: Set<String>? = taskMode == .general ? nil : taskMode.groups
+        // All tool groups available — user controls via UI toggles
+        let activeGroups: Set<String>? = nil
 
         var iterations = 0
         let maxIter = maxIterations

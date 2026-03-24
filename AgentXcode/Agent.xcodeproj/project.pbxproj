@@ -7,6 +7,22 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		02706156F0F8E91DF8FB4E70 /* TaskExecution+Selenium.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D8FE3C1065B23B9424ED23C /* TaskExecution+Selenium.swift */; };
+		031BAABE48A31A26277EA3C6 /* AgentViewModel+TabHandlers+Accessibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7452B670C7ABBF7A1884569F /* AgentViewModel+TabHandlers+Accessibility.swift */; };
+		088F38C5D0E90D019E33A0D9 /* AgentViewModel+TabHandlers+Selenium.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DBCE8EADB1BBD7A0E94AD0B /* AgentViewModel+TabHandlers+Selenium.swift */; };
+		16AC65E0831D60B1FBA8C98E /* AgentViewModel+TabHandlers+FileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AEB37986AC0DAFF0627F9C3 /* AgentViewModel+TabHandlers+FileManager.swift */; };
+		1B1CD89FDA3F61AFB2E23066 /* AccessibilityService+Security.swift in Sources */ = {isa = PBXBuildFile; fileRef = C62E80DD07559CF2F825948A /* AccessibilityService+Security.swift */; };
+		1D4719DCD45082F4898C6A35 /* FoundationModelHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 348B39D2C50843DCCFD23620 /* FoundationModelHelpers.swift */; };
+		22439788DCAA5510D58ABEEC /* AgentViewModel+TabHandlers+Core.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D96CB6C2479E8BCCBF6B487 /* AgentViewModel+TabHandlers+Core.swift */; };
+		294AAA2C5E0241FCC1290B01 /* AgentViewModel+TaskUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEBEFF49533F8BC00811AE5C /* AgentViewModel+TaskUtilities.swift */; };
+		34558227A73FD129C9AF86AA /* AgentViewModel+TabHandlers+Automation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 224DF4E08C4D8857DC2B563B /* AgentViewModel+TabHandlers+Automation.swift */; };
+		5276D54C0C7BAB0F9F5DE24A /* AgentViewModel+TabHandlers+AgentScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CDC0CB629A59A0594ED17DA /* AgentViewModel+TabHandlers+AgentScript.swift */; };
+		78EBD1F124AB2D7D38E70E8E /* AgentViewModel+TaskExecution+AboutSelf.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878ED6B87793FE4A12844669 /* AgentViewModel+TaskExecution+AboutSelf.swift */; };
+		7AB0005863FDEB26A427D572 /* FoundationModelToolDefinitions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0031B8FF027D032D62F8DCFC /* FoundationModelToolDefinitions.swift */; };
+		7FA36E1A9CC0DFA5A3ECB9AD /* AgentViewModel+NativeToolHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C673DDB50E956B2E5FD610 /* AgentViewModel+NativeToolHandler.swift */; };
+		8375A8F4BB60859635722350 /* TaskExecution+WebTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F1A988F00C4E7050FED023 /* TaskExecution+WebTools.swift */; };
+		8B340428F90511F1772B985A /* AgentViewModel+TabHandlers+Shell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF8C3DA5A80E9774D8FE8E51 /* AgentViewModel+TabHandlers+Shell.swift */; };
+		8D9538B356CEFC7645A2A97E /* AgentViewModel+TabHandlers+Git.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF914BA393B97296A51A534F /* AgentViewModel+TabHandlers+Git.swift */; };
 		AA10000000000000000030 /* AgentApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000001A /* AgentApp.swift */; };
 		AA10000000000000000031 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000001B /* ContentView.swift */; };
 		AA10000000000000000032 /* AgentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000001C /* AgentViewModel.swift */; };
@@ -27,7 +43,6 @@
 		AA10000000000000000047 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000046 /* KeychainService.swift */; };
 		AA10000000000000000049 /* AgentViewModel+Logging.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000048 /* AgentViewModel+Logging.swift */; };
 		AA1000000000000000004B /* AgentViewModel+TaskExecution.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000004A /* AgentViewModel+TaskExecution.swift */; };
-		CC10000000000000000001 /* AgentViewModel+TabToolHandlers.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC10000000000000000002 /* AgentViewModel+TabToolHandlers.swift */; };
 		AA1000000000000000004D /* AgentTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000004C /* AgentTools.swift */; };
 		AA1000000000000000004F /* CodingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000004E /* CodingService.swift */; };
 		AA10000000000000000056 /* CodeBlockSyntax.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000055 /* CodeBlockSyntax.swift */; };
@@ -62,6 +77,7 @@
 		AA10000000000000000101 /* ProjectFolderField.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000100 /* ProjectFolderField.swift */; };
 		AA10000000000000000103 /* RecentFoldersService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000102 /* RecentFoldersService.swift */; };
 		AA10000000000000000104 /* TokenBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000105 /* TokenBadge.swift */; };
+		AD0E84FCAA3A3D6AF61ECD16 /* AgentViewModel+TaskExecution+SavedScripts.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4709078FC05AA3587261B14 /* AgentViewModel+TaskExecution+SavedScripts.swift */; };
 		AEB0000000000000000003 /* AppleEventBridges in Frameworks */ = {isa = PBXBuildFile; productRef = AEB0000000000000000002 /* AppleEventBridges */; };
 		BB10000000000000000015 /* AgentViewModel+Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB10000000000000000005 /* AgentViewModel+Helpers.swift */; };
 		BB10000000000000000017 /* AppleIntelligencePopover.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB10000000000000000007 /* AppleIntelligencePopover.swift */; };
@@ -69,6 +85,7 @@
 		BB10000000000000000031 /* HelperProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001B /* HelperProtocol.swift */; };
 		BB10000000000000000032 /* Agent.app.toddbruss.helper.plist in Copy Daemon Plist */ = {isa = PBXBuildFile; fileRef = AA10000000000000000023 /* Agent.app.toddbruss.helper.plist */; };
 		BB10000000000000000033 /* AgentHelper in Copy Helper */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001C /* AgentHelper */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		CC10000000000000000001 /* AgentViewModel+TabToolHandlers.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC10000000000000000002 /* AgentViewModel+TabToolHandlers.swift */; };
 		CC10000000000000000030 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1000000000000000001A /* main.swift */; };
 		CC10000000000000000031 /* UserProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1000000000000000001B /* UserProtocol.swift */; };
 		CC10000000000000000032 /* Agent.app.toddbruss.user.plist in Copy Agent Plist */ = {isa = PBXBuildFile; fileRef = AA10000000000000000027 /* Agent.app.toddbruss.user.plist */; };
@@ -77,6 +94,7 @@
 		DD10000000000000000030 /* ScriptServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000001 /* ScriptServiceTests.swift */; };
 		DD10000000000000000031 /* ScriptingBridgesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000002 /* ScriptingBridgesTests.swift */; };
 		DD10000000000000000032 /* PackageGenerationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD10000000000000000003 /* PackageGenerationTests.swift */; };
+		DE0C6B19A80C218E670D6C69 /* AgentViewModel+TabHandlers+Web.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05EEC654A3A0762D24BE1901 /* AgentViewModel+TabHandlers+Web.swift */; };
 		EA50MCP0000000003 /* MCPClient in Frameworks */ = {isa = PBXBuildFile; productRef = EA50MCP0000000002 /* MCPClient */; };
 		EA60000000000000000001 /* SDEFs in Resources */ = {isa = PBXBuildFile; fileRef = EA60000000000000000002 /* SDEFs */; };
 		EA6EA3842F6E35CF003FDB6C /* send_image_output.json in Resources */ = {isa = PBXBuildFile; fileRef = EA6EA3812F6E35CF003FDB6C /* send_image_output.json */; };
@@ -92,30 +110,12 @@
 		EASP000000000000000003 /* SystemPromptEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = EASP000000000000000004 /* SystemPromptEditor.swift */; };
 		EATD000000000000000001 /* TrainingData.swift in Sources */ = {isa = PBXBuildFile; fileRef = EATD000000000000000002 /* TrainingData.swift */; };
 		EE10000000000000000004 /* ObjCTry.m in Sources */ = {isa = PBXBuildFile; fileRef = EE10000000000000000002 /* ObjCTry.m */; };
+		F123A9EA71C5383EFFFF1A8A /* ActivityLogView+Rendering.swift in Sources */ = {isa = PBXBuildFile; fileRef = C428D9A5859B0E1BB0D2FB6B /* ActivityLogView+Rendering.swift */; };
 		FF10000000000000000002 /* PackageAutoDiscoveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000001 /* PackageAutoDiscoveryTests.swift */; };
 		FF10000000000000000004 /* CodingServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000003 /* CodingServiceTests.swift */; };
 		FF10000000000000000008 /* AccessibilityServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000007 /* AccessibilityServiceTests.swift */; };
 		FF10000000000000000011 /* AgentViewModel+Speech.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000010 /* AgentViewModel+Speech.swift */; };
 		WEB1000000000000000001 /* WebAutomationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = WEB1000000000000000002 /* WebAutomationService.swift */; };
-		1B1CD89FDA3F61AFB2E23066 /* AccessibilityService+Security.swift in Sources */ = {isa = PBXBuildFile; fileRef = C62E80DD07559CF2F825948A /* AccessibilityService+Security.swift */; };
-		AD0E84FCAA3A3D6AF61ECD16 /* AgentViewModel+TaskExecution+SavedScripts.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4709078FC05AA3587261B14 /* AgentViewModel+TaskExecution+SavedScripts.swift */; };
-		8375A8F4BB60859635722350 /* TaskExecution+WebTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F1A988F00C4E7050FED023 /* TaskExecution+WebTools.swift */; };
-		02706156F0F8E91DF8FB4E70 /* TaskExecution+Selenium.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D8FE3C1065B23B9424ED23C /* TaskExecution+Selenium.swift */; };
-		78EBD1F124AB2D7D38E70E8E /* AgentViewModel+TaskExecution+AboutSelf.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878ED6B87793FE4A12844669 /* AgentViewModel+TaskExecution+AboutSelf.swift */; };
-		22439788DCAA5510D58ABEEC /* AgentViewModel+TabHandlers+Core.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D96CB6C2479E8BCCBF6B487 /* AgentViewModel+TabHandlers+Core.swift */; };
-		16AC65E0831D60B1FBA8C98E /* AgentViewModel+TabHandlers+FileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AEB37986AC0DAFF0627F9C3 /* AgentViewModel+TabHandlers+FileManager.swift */; };
-		8D9538B356CEFC7645A2A97E /* AgentViewModel+TabHandlers+Git.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF914BA393B97296A51A534F /* AgentViewModel+TabHandlers+Git.swift */; };
-		5276D54C0C7BAB0F9F5DE24A /* AgentViewModel+TabHandlers+AgentScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CDC0CB629A59A0594ED17DA /* AgentViewModel+TabHandlers+AgentScript.swift */; };
-		8B340428F90511F1772B985A /* AgentViewModel+TabHandlers+Shell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF8C3DA5A80E9774D8FE8E51 /* AgentViewModel+TabHandlers+Shell.swift */; };
-		34558227A73FD129C9AF86AA /* AgentViewModel+TabHandlers+Automation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 224DF4E08C4D8857DC2B563B /* AgentViewModel+TabHandlers+Automation.swift */; };
-		031BAABE48A31A26277EA3C6 /* AgentViewModel+TabHandlers+Accessibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7452B670C7ABBF7A1884569F /* AgentViewModel+TabHandlers+Accessibility.swift */; };
-		DE0C6B19A80C218E670D6C69 /* AgentViewModel+TabHandlers+Web.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05EEC654A3A0762D24BE1901 /* AgentViewModel+TabHandlers+Web.swift */; };
-		088F38C5D0E90D019E33A0D9 /* AgentViewModel+TabHandlers+Selenium.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DBCE8EADB1BBD7A0E94AD0B /* AgentViewModel+TabHandlers+Selenium.swift */; };
-		7FA36E1A9CC0DFA5A3ECB9AD /* AgentViewModel+NativeToolHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C673DDB50E956B2E5FD610 /* AgentViewModel+NativeToolHandler.swift */; };
-		294AAA2C5E0241FCC1290B01 /* AgentViewModel+TaskUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEBEFF49533F8BC00811AE5C /* AgentViewModel+TaskUtilities.swift */; };
-		7AB0005863FDEB26A427D572 /* FoundationModelToolDefinitions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0031B8FF027D032D62F8DCFC /* FoundationModelToolDefinitions.swift */; };
-		1D4719DCD45082F4898C6A35 /* FoundationModelHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 348B39D2C50843DCCFD23620 /* FoundationModelHelpers.swift */; };
-		F123A9EA71C5383EFFFF1A8A /* ActivityLogView+Rendering.swift in Sources */ = {isa = PBXBuildFile; fileRef = C428D9A5859B0E1BB0D2FB6B /* ActivityLogView+Rendering.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -190,6 +190,19 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0031B8FF027D032D62F8DCFC /* FoundationModelToolDefinitions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoundationModelToolDefinitions.swift; sourceTree = "<group>"; };
+		05EEC654A3A0762D24BE1901 /* AgentViewModel+TabHandlers+Web.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Web.swift"; sourceTree = "<group>"; };
+		0AEB37986AC0DAFF0627F9C3 /* AgentViewModel+TabHandlers+FileManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+FileManager.swift"; sourceTree = "<group>"; };
+		0DBCE8EADB1BBD7A0E94AD0B /* AgentViewModel+TabHandlers+Selenium.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Selenium.swift"; sourceTree = "<group>"; };
+		1D96CB6C2479E8BCCBF6B487 /* AgentViewModel+TabHandlers+Core.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Core.swift"; sourceTree = "<group>"; };
+		224DF4E08C4D8857DC2B563B /* AgentViewModel+TabHandlers+Automation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Automation.swift"; sourceTree = "<group>"; };
+		348B39D2C50843DCCFD23620 /* FoundationModelHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoundationModelHelpers.swift; sourceTree = "<group>"; };
+		5D8FE3C1065B23B9424ED23C /* TaskExecution+Selenium.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskExecution+Selenium.swift"; sourceTree = "<group>"; };
+		6CDC0CB629A59A0594ED17DA /* AgentViewModel+TabHandlers+AgentScript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+AgentScript.swift"; sourceTree = "<group>"; };
+		7452B670C7ABBF7A1884569F /* AgentViewModel+TabHandlers+Accessibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Accessibility.swift"; sourceTree = "<group>"; };
+		878ED6B87793FE4A12844669 /* AgentViewModel+TaskExecution+AboutSelf.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TaskExecution+AboutSelf.swift"; sourceTree = "<group>"; };
+		87F1A988F00C4E7050FED023 /* TaskExecution+WebTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskExecution+WebTools.swift"; sourceTree = "<group>"; };
+		93C673DDB50E956B2E5FD610 /* AgentViewModel+NativeToolHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+NativeToolHandler.swift"; sourceTree = "<group>"; };
 		AA1000000000000000001A /* AgentApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentApp.swift; sourceTree = "<group>"; };
 		AA1000000000000000001B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		AA1000000000000000001C /* AgentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentViewModel.swift; sourceTree = "<group>"; };
@@ -214,7 +227,6 @@
 		AA10000000000000000046 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
 		AA10000000000000000048 /* AgentViewModel+Logging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+Logging.swift"; sourceTree = "<group>"; };
 		AA1000000000000000004A /* AgentViewModel+TaskExecution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TaskExecution.swift"; sourceTree = "<group>"; };
-		CC10000000000000000002 /* AgentViewModel+TabToolHandlers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabToolHandlers.swift"; sourceTree = "<group>"; };
 		AA1000000000000000004C /* AgentTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentTools.swift; sourceTree = "<group>"; };
 		AA1000000000000000004E /* CodingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodingService.swift; sourceTree = "<group>"; };
 		AA10000000000000000055 /* CodeBlockSyntax.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeBlockSyntax.swift; sourceTree = "<group>"; };
@@ -249,14 +261,20 @@
 		AA10000000000000000100 /* ProjectFolderField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectFolderField.swift; sourceTree = "<group>"; };
 		AA10000000000000000102 /* RecentFoldersService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentFoldersService.swift; sourceTree = "<group>"; };
 		AA10000000000000000105 /* TokenBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenBadge.swift; sourceTree = "<group>"; };
+		B4709078FC05AA3587261B14 /* AgentViewModel+TaskExecution+SavedScripts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TaskExecution+SavedScripts.swift"; sourceTree = "<group>"; };
 		BB10000000000000000005 /* AgentViewModel+Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+Helpers.swift"; sourceTree = "<group>"; };
 		BB10000000000000000007 /* AppleIntelligencePopover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleIntelligencePopover.swift; sourceTree = "<group>"; };
 		BB1000000000000000001A /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		BB1000000000000000001B /* HelperProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperProtocol.swift; sourceTree = "<group>"; };
 		BB1000000000000000001C /* AgentHelper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = AgentHelper; sourceTree = BUILT_PRODUCTS_DIR; };
+		C428D9A5859B0E1BB0D2FB6B /* ActivityLogView+Rendering.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ActivityLogView+Rendering.swift"; sourceTree = "<group>"; };
+		C62E80DD07559CF2F825948A /* AccessibilityService+Security.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AccessibilityService+Security.swift"; sourceTree = "<group>"; };
+		CC10000000000000000002 /* AgentViewModel+TabToolHandlers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabToolHandlers.swift"; sourceTree = "<group>"; };
 		CC1000000000000000001A /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		CC1000000000000000001B /* UserProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProtocol.swift; sourceTree = "<group>"; };
 		CC1000000000000000001C /* AgentUser */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = AgentUser; sourceTree = BUILT_PRODUCTS_DIR; };
+		CEBEFF49533F8BC00811AE5C /* AgentViewModel+TaskUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TaskUtilities.swift"; sourceTree = "<group>"; };
+		CF8C3DA5A80E9774D8FE8E51 /* AgentViewModel+TabHandlers+Shell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Shell.swift"; sourceTree = "<group>"; };
 		DD10000000000000000001 /* ScriptServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptServiceTests.swift; sourceTree = "<group>"; };
 		DD10000000000000000002 /* ScriptingBridgesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptingBridgesTests.swift; sourceTree = "<group>"; };
 		DD10000000000000000003 /* PackageGenerationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageGenerationTests.swift; sourceTree = "<group>"; };
@@ -277,30 +295,12 @@
 		EE10000000000000000001 /* ObjCTry.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ObjCTry.h; sourceTree = "<group>"; };
 		EE10000000000000000002 /* ObjCTry.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ObjCTry.m; sourceTree = "<group>"; };
 		EE10000000000000000003 /* Agent-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Agent-Bridging-Header.h"; sourceTree = "<group>"; };
+		EF914BA393B97296A51A534F /* AgentViewModel+TabHandlers+Git.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Git.swift"; sourceTree = "<group>"; };
 		FF10000000000000000001 /* PackageAutoDiscoveryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageAutoDiscoveryTests.swift; sourceTree = "<group>"; };
 		FF10000000000000000003 /* CodingServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodingServiceTests.swift; sourceTree = "<group>"; };
 		FF10000000000000000007 /* AccessibilityServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityServiceTests.swift; sourceTree = "<group>"; };
 		FF10000000000000000010 /* AgentViewModel+Speech.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+Speech.swift"; sourceTree = "<group>"; };
 		WEB1000000000000000002 /* WebAutomationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebAutomationService.swift; sourceTree = "<group>"; };
-		C62E80DD07559CF2F825948A /* AccessibilityService+Security.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AccessibilityService+Security.swift"; sourceTree = "<group>"; };
-		B4709078FC05AA3587261B14 /* AgentViewModel+TaskExecution+SavedScripts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TaskExecution+SavedScripts.swift"; sourceTree = "<group>"; };
-		87F1A988F00C4E7050FED023 /* TaskExecution+WebTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskExecution+WebTools.swift"; sourceTree = "<group>"; };
-		5D8FE3C1065B23B9424ED23C /* TaskExecution+Selenium.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskExecution+Selenium.swift"; sourceTree = "<group>"; };
-		878ED6B87793FE4A12844669 /* AgentViewModel+TaskExecution+AboutSelf.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TaskExecution+AboutSelf.swift"; sourceTree = "<group>"; };
-		1D96CB6C2479E8BCCBF6B487 /* AgentViewModel+TabHandlers+Core.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Core.swift"; sourceTree = "<group>"; };
-		0AEB37986AC0DAFF0627F9C3 /* AgentViewModel+TabHandlers+FileManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+FileManager.swift"; sourceTree = "<group>"; };
-		EF914BA393B97296A51A534F /* AgentViewModel+TabHandlers+Git.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Git.swift"; sourceTree = "<group>"; };
-		6CDC0CB629A59A0594ED17DA /* AgentViewModel+TabHandlers+AgentScript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+AgentScript.swift"; sourceTree = "<group>"; };
-		CF8C3DA5A80E9774D8FE8E51 /* AgentViewModel+TabHandlers+Shell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Shell.swift"; sourceTree = "<group>"; };
-		224DF4E08C4D8857DC2B563B /* AgentViewModel+TabHandlers+Automation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Automation.swift"; sourceTree = "<group>"; };
-		7452B670C7ABBF7A1884569F /* AgentViewModel+TabHandlers+Accessibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Accessibility.swift"; sourceTree = "<group>"; };
-		05EEC654A3A0762D24BE1901 /* AgentViewModel+TabHandlers+Web.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Web.swift"; sourceTree = "<group>"; };
-		0DBCE8EADB1BBD7A0E94AD0B /* AgentViewModel+TabHandlers+Selenium.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Selenium.swift"; sourceTree = "<group>"; };
-		93C673DDB50E956B2E5FD610 /* AgentViewModel+NativeToolHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+NativeToolHandler.swift"; sourceTree = "<group>"; };
-		CEBEFF49533F8BC00811AE5C /* AgentViewModel+TaskUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TaskUtilities.swift"; sourceTree = "<group>"; };
-		0031B8FF027D032D62F8DCFC /* FoundationModelToolDefinitions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FoundationModelToolDefinitions.swift"; sourceTree = "<group>"; };
-		348B39D2C50843DCCFD23620 /* FoundationModelHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FoundationModelHelpers.swift"; sourceTree = "<group>"; };
-		C428D9A5859B0E1BB0D2FB6B /* ActivityLogView+Rendering.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ActivityLogView+Rendering.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -359,7 +359,6 @@
 				EADF39CB2F68BFD600CD01E5 /* Protocols */,
 				EADF39CA2F68BFC400CD01E5 /* Models */,
 				EADF39C72F68BF2100CD01E5 /* Views */,
-				EADF39C62F68BEF100CD01E5 /* Services */,
 				EE10000000000000000010 /* ObjC */,
 				AA1000000000000000001A /* AgentApp.swift */,
 				EAE00000000000000001 /* UX */,
@@ -475,16 +474,17 @@
 				AA100000000000000000B0 /* SoundPlayerService.swift */,
 				AA100000000000000000B4 /* ToolPreferencesService.swift */,
 				AA10000000000000000102 /* RecentFoldersService.swift */,
-							C62E80DD07559CF2F825948A /* AccessibilityService+Security.swift */,
+				C62E80DD07559CF2F825948A /* AccessibilityService+Security.swift */,
 				0031B8FF027D032D62F8DCFC /* FoundationModelToolDefinitions.swift */,
 				348B39D2C50843DCCFD23620 /* FoundationModelHelpers.swift */,
-);
+			);
 			path = Services;
 			sourceTree = "<group>";
 		};
 		EADF39C72F68BF2100CD01E5 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				EADF39C62F68BEF100CD01E5 /* Services */,
 				EADF39CF2F69015200CD01E5 /* DependencyChecker */,
 				EADF39C92F68BF6400CD01E5 /* AgentViewModel */,
 				AA1000000000000000007D /* AccessibilitySettingsView.swift */,
@@ -505,8 +505,8 @@
 				AA100000000000000000B9 /* AgentOptionsView.swift */,
 				EASP000000000000000004 /* SystemPromptEditor.swift */,
 				EADF39D02F69018800CD01E5 /* AgentScriptTabs */,
-							C428D9A5859B0E1BB0D2FB6B /* ActivityLogView+Rendering.swift */,
-);
+				C428D9A5859B0E1BB0D2FB6B /* ActivityLogView+Rendering.swift */,
+			);
 			path = Views;
 			sourceTree = "<group>";
 		};
@@ -545,11 +545,11 @@
 				AA100000000000000000C9 /* TaskExecution+FileTools.swift */,
 				BB10000000000000000005 /* AgentViewModel+Helpers.swift */,
 				FF10000000000000000010 /* AgentViewModel+Speech.swift */,
-							B4709078FC05AA3587261B14 /* AgentViewModel+TaskExecution+SavedScripts.swift */,
+				B4709078FC05AA3587261B14 /* AgentViewModel+TaskExecution+SavedScripts.swift */,
 				87F1A988F00C4E7050FED023 /* TaskExecution+WebTools.swift */,
 				5D8FE3C1065B23B9424ED23C /* TaskExecution+Selenium.swift */,
 				878ED6B87793FE4A12844669 /* AgentViewModel+TaskExecution+AboutSelf.swift */,
-);
+			);
 			path = AgentViewModel;
 			sourceTree = "<group>";
 		};
@@ -584,7 +584,7 @@
 			isa = PBXGroup;
 			children = (
 				AA10000000000000000055 /* CodeBlockSyntax.swift */,
-);
+			);
 			path = ColorSyntax;
 			sourceTree = "<group>";
 		};
@@ -864,7 +864,7 @@
 				AA100000000000000000C4 /* TaskExecution+MCPTools.swift in Sources */,
 				AA100000000000000000C6 /* TaskExecution+GitTools.swift in Sources */,
 				AA100000000000000000C8 /* TaskExecution+FileTools.swift in Sources */,
-							1B1CD89FDA3F61AFB2E23066 /* AccessibilityService+Security.swift in Sources */,
+				1B1CD89FDA3F61AFB2E23066 /* AccessibilityService+Security.swift in Sources */,
 				AD0E84FCAA3A3D6AF61ECD16 /* AgentViewModel+TaskExecution+SavedScripts.swift in Sources */,
 				8375A8F4BB60859635722350 /* TaskExecution+WebTools.swift in Sources */,
 				02706156F0F8E91DF8FB4E70 /* TaskExecution+Selenium.swift in Sources */,
@@ -872,7 +872,7 @@
 				7AB0005863FDEB26A427D572 /* FoundationModelToolDefinitions.swift in Sources */,
 				1D4719DCD45082F4898C6A35 /* FoundationModelHelpers.swift in Sources */,
 				F123A9EA71C5383EFFFF1A8A /* ActivityLogView+Rendering.swift in Sources */,
-);
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		BB10000000000000000050 /* Sources */ = {
@@ -1061,7 +1061,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 20;
+				CURRENT_PROJECT_VERSION = 21;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 469UCUB275;
 				ENABLE_APP_SANDBOX = NO;
@@ -1104,7 +1104,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0.19;
+				MARKETING_VERSION = 1.0.20;
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1130,7 +1130,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 20;
+				CURRENT_PROJECT_VERSION = 21;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 469UCUB275;
 				ENABLE_APP_SANDBOX = NO;
@@ -1173,7 +1173,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0.19;
+				MARKETING_VERSION = 1.0.20;
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

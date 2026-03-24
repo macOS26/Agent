@@ -11,16 +11,9 @@ enum TaskMode: String, CaseIterable {
     case conversation // writing, messages, text transforms
     case general      // all tools (fallback)
 
-    /// Tool groups included for this mode. Core + Shell always included.
+    /// All groups always available — user controls via UI toggles.
     var groups: Set<String> {
-        let base: Set<String> = ["Core", "Workflow", "File Manager"]
-        switch self {
-        case .coding:       return base.union(["Automation"])
-        case .automation:   return base.union(["Automation"])
-        case .web:          return base.union(["Web"])
-        case .conversation: return base
-        case .general:      return base.union(["Automation", "Web"])
-        }
+        ["Core", "Workflow", "File Manager", "User Agent", "Launch Daemon", "Automation", "Web", "Experimental"]
     }
 
     /// Classify a user prompt into a task mode via keyword matching.

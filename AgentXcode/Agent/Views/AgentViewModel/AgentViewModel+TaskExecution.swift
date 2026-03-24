@@ -29,14 +29,10 @@ extension AgentViewModel {
         trimToRecentTasks()
         taskInputTokens = 0
         taskOutputTokens = 0
-        // Auto-classify task mode and set active tool groups
-        let taskMode = TaskMode.classify(prompt)
-        var activeGroups: Set<String>? = taskMode == .general ? nil : taskMode.groups
+        // All tool groups available — user controls via UI toggles
+        var activeGroups: Set<String>? = nil
         appendLog("--- New Task ---")
         appendLog("User: \(prompt)")
-        if taskMode != .general {
-            appendLog("Mode: \(taskMode.rawValue) (\(activeGroups?.count ?? 0) groups)")
-        }
 
         // Use ChatHistoryStore for LLM context (summaries for older tasks, full messages for recent)
         let historyContext = ChatHistoryStore.shared.buildLLMContext()
