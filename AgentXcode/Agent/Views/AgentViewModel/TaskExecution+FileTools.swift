@@ -45,81 +45,81 @@ extension AgentViewModel {
         }
 
         // MARK: edit_file
-        if name == "edit_file" {
-            let filePath = input["file_path"] as? String ?? ""
-            let oldString = input["old_string"] as? String ?? ""
-            let newString = input["new_string"] as? String ?? ""
-            let replaceAll = input["replace_all"] as? Bool ?? false
-            appendLog("📝 Edit: \(filePath)")
+        // MARK: edit_file (actions: edit, create, apply)
+        if name == "edit_file" || name == "create_diff" || name == "apply_diff" {
+            let action = input["action"] as? String ?? (name == "create_diff" ? "create" : name == "apply_diff" ? "apply" : "edit")
 
-            let output = await Self.offMain { CodingService.editFile(path: filePath, oldString: oldString, newString: newString, replaceAll: replaceAll) }
-
-            // Show D1F pretty diff with metadata
-            let diff = MultiLineDiff.createDiff(source: oldString, destination: newString, includeMetadata: true)
-            var d1f = MultiLineDiff.displayDiff(diff: diff, source: oldString, format: .ai)
-            // displayDiff can be empty for single-line character changes — show lines directly
-            if d1f.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                d1f = "❌" + oldString + "\n" + "✅" + newString
-            }
-            var diffLog = d1f
-            if let meta = diff.metadata, let startLine = meta.sourceStartLine {
-                diffLog += "\n📍 Changes start at line \(startLine + 1)"
-                if let total = meta.sourceTotalLines {
-                    diffLog += " (of \(total) lines)"
+            if action == "edit" {
+                let filePath = input["file_path"] as? String ?? ""
+                let oldString = input["old_string"] as? String ?? ""
+                let newString = input["new_string"] as? String ?? ""
+                let replaceAll = input["replace_all"] as? Bool ?? false
+                appendLog("📝 Edit: \(filePath)")
+                let output = await Self.offMain { CodingService.editFile(path: filePath, oldString: oldString, newString: newString, replaceAll: replaceAll) }
+                let diff = MultiLineDiff.createDiff(source: oldString, destination: newString, includeMetadata: true)
+                var d1f = MultiLineDiff.displayDiff(diff: diff, source: oldString, format: .ai)
+                if d1f.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    d1f = "❌" + oldString + "\n" + "✅" + newString
                 }
-            }
-            appendRawOutput(diffLog + "\n")
-
-            appendLog(output)
-            commandsRun.append("edit_file: \(filePath)")
-            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
-            return true
-        }
-
-        // MARK: create_diff
-        if name == "create_diff" {
-            let source = input["source"] as? String ?? ""
-            let destination = input["destination"] as? String ?? ""
-            let diff = MultiLineDiff.createDiff(source: source, destination: destination, includeMetadata: true)
-            let d1f = MultiLineDiff.displayDiff(diff: diff, source: source, format: .ai)
-            let summary = MultiLineDiff.generateDiffSummary(source: source, destination: destination)
-            var result = d1f + "\n\n" + summary
-            if let meta = diff.metadata, let startLine = meta.sourceStartLine {
-                result += "\n📍 Changes start at line \(startLine + 1)"
-            }
-            appendRawOutput(result + "\n")
-            commandsRun.append("create_diff")
-            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": result])
-            return true
-        }
-
-        // MARK: apply_diff
-        if name == "apply_diff" {
-            let filePath = input["file_path"] as? String ?? ""
-            let asciiDiff = input["diff"] as? String ?? ""
-            appendLog("📝 Apply D1F diff: \(filePath)")
-            let expandedPath = (filePath as NSString).expandingTildeInPath
-            guard let data = FileManager.default.contents(atPath: expandedPath),
-                  let source = String(data: data, encoding: .utf8) else {
-                let err = "Error: cannot read \(filePath)"
-                appendLog(err)
-                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
+                var diffLog = d1f
+                if let meta = diff.metadata, let startLine = meta.sourceStartLine {
+                    diffLog += "\n📍 Changes start at line \(startLine + 1)"
+                    if let total = meta.sourceTotalLines {
+                        diffLog += " (of \(total) lines)"
+                    }
+                }
+                appendRawOutput(diffLog + "\n")
+                appendLog(output)
+                commandsRun.append("edit_file: \(filePath)")
+                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                 return true
             }
-            do {
-                let patched = try MultiLineDiff.applyASCIIDiff(to: source, asciiDiff: asciiDiff)
-                try patched.write(to: URL(fileURLWithPath: expandedPath), atomically: true, encoding: .utf8)
-                let verifyDiff = MultiLineDiff.createAndDisplayDiff(source: source, destination: patched, format: .ai)
-                appendRawOutput(verifyDiff + "\n")
-                let output = "Applied diff to \(filePath)"
-                appendLog(output)
-                commandsRun.append("apply_diff: \(filePath)")
-                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
-            } catch {
-                let err = "Error applying diff: \(error.localizedDescription)"
-                appendLog(err)
-                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
+
+            if action == "create" {
+                let source = input["source"] as? String ?? ""
+                let destination = input["destination"] as? String ?? ""
+                let diff = MultiLineDiff.createDiff(source: source, destination: destination, includeMetadata: true)
+                let d1f = MultiLineDiff.displayDiff(diff: diff, source: source, format: .ai)
+                let summary = MultiLineDiff.generateDiffSummary(source: source, destination: destination)
+                var result = d1f + "\n\n" + summary
+                if let meta = diff.metadata, let startLine = meta.sourceStartLine {
+                    result += "\n📍 Changes start at line \(startLine + 1)"
+                }
+                appendRawOutput(result + "\n")
+                commandsRun.append("create_diff")
+                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": result])
+                return true
             }
+
+            if action == "apply" {
+                let filePath = input["file_path"] as? String ?? ""
+                let asciiDiff = input["diff"] as? String ?? ""
+                appendLog("📝 Apply diff: \(filePath)")
+                let expandedPath = (filePath as NSString).expandingTildeInPath
+                guard let data = FileManager.default.contents(atPath: expandedPath),
+                      let source = String(data: data, encoding: .utf8) else {
+                    let err = "Error: cannot read \(filePath)"
+                    appendLog(err)
+                    toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
+                    return true
+                }
+                do {
+                    let patched = try MultiLineDiff.applyASCIIDiff(to: source, asciiDiff: asciiDiff)
+                    try patched.write(to: URL(fileURLWithPath: expandedPath), atomically: true, encoding: .utf8)
+                    let verifyDiff = MultiLineDiff.createAndDisplayDiff(source: source, destination: patched, format: .ai)
+                    appendRawOutput(verifyDiff + "\n")
+                    let output = "Applied diff to \(filePath)"
+                    appendLog(output)
+                    commandsRun.append("apply_diff: \(filePath)")
+                    toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                } catch {
+                    let err = "Error applying diff: \(error.localizedDescription)"
+                    appendLog(err)
+                    toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
+                }
+                return true
+            }
+
             return true
         }
 
