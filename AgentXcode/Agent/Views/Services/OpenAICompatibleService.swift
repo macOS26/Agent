@@ -351,6 +351,33 @@ final class OpenAICompatibleService {
         // Accumulate streamed tool calls: index -> (id, name, arguments)
         var toolCallAccum: [Int: (id: String, name: String, arguments: String)] = [:]
 
+        // Buffer text line-by-line so we can suppress raw JSON tool calls
+        // that vLLM/Qwen outputs as text content instead of native tool_calls
+        var lineBuffer = ""
+
+        /// Check if a line is a raw JSON tool call (e.g. {"name": "...", "arguments": {...}})
+        func isToolCallJSON(_ line: String) -> Bool {
+            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard trimmed.hasPrefix("{"), trimmed.contains("\"name\""),
+                  trimmed.contains("\"arguments\"") else { return false }
+            // Verify it actually parses as JSON with name + arguments keys
+            if let data = trimmed.data(using: .utf8),
+               let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               obj["name"] is String, obj["arguments"] != nil {
+                return true
+            }
+            return false
+        }
+
+        /// Flush the line buffer — forward to UI if it's not a tool call JSON
+        func flushLineBuffer() {
+            guard !lineBuffer.isEmpty else { return }
+            if !isToolCallJSON(lineBuffer) {
+                onTextDelta(lineBuffer)
+            }
+            lineBuffer = ""
+        }
+
         // OpenAI SSE format: lines prefixed with "data: "
         for try await line in bytes.lines {
             // Skip empty lines and SSE comments
@@ -372,8 +399,7 @@ final class OpenAICompatibleService {
 
             guard let delta = firstChoice["delta"] as? [String: Any] else { continue }
 
-            // Tool call deltas (streamed incrementally) — process before text
-            // so we know if tool calls are present alongside text
+            // Tool call deltas (streamed incrementally)
             if let toolCalls = delta["tool_calls"] as? [[String: Any]] {
                 for tc in toolCalls {
                     let index = tc["index"] as? Int ?? 0
@@ -396,20 +422,31 @@ final class OpenAICompatibleService {
                 }
             }
 
-            // Text content delta — filter special tokens and suppress when
-            // tool calls are being streamed (vLLM/Qwen leaks raw JSON as text)
+            // Text content delta — buffer by newlines to detect and suppress
+            // raw JSON tool calls that vLLM/Qwen outputs as text
             if let content = delta["content"] as? String, !content.isEmpty {
-                // Strip special tokens inline
+                // Strip special tokens
                 let cleaned = content
                     .replacingOccurrences(of: "<|im_start|>", with: "")
                     .replacingOccurrences(of: "<|im_end|>", with: "")
                 fullText += cleaned
-                // Only forward to UI if no native tool calls are being streamed
-                if toolCallAccum.isEmpty && !cleaned.isEmpty {
-                    onTextDelta(cleaned)
+
+                // Suppress all text when native tool calls are being streamed
+                if !toolCallAccum.isEmpty { continue }
+
+                // Buffer text and flush on newlines to filter JSON tool calls
+                for ch in cleaned {
+                    if ch == "\n" {
+                        flushLineBuffer()
+                        onTextDelta("\n")
+                    } else {
+                        lineBuffer.append(ch)
+                    }
                 }
             }
         }
+        // Flush any remaining buffered text
+        flushLineBuffer()
 
         // Build Claude-compatible content blocks
         var contentBlocks: [[String: Any]] = []
