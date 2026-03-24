@@ -26,10 +26,9 @@ extension AgentViewModel {
         appendLog("🔧 \(name)")
         flushLog()
 
-        // Prevent infinite tool call loops — force completion after max calls
+        // Silently ignore tool calls after max — let the iteration limit handle stopping
         if name != "task_complete" && NativeToolContext.toolCallCount > NativeToolContext.maxToolCalls {
-            NativeToolContext.taskCompleteSummary = "Stopped: too many tool calls"
-            return "Error: too many tool calls. Call task_complete now."
+            return "(skipped)"
         }
 
         // AppleScript (NSAppleScript in-process with TCC)

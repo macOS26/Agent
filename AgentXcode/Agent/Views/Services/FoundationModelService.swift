@@ -420,7 +420,7 @@ enum NativeToolContext {
     /// Counts tool calls per session turn to prevent infinite loops.
     @MainActor static var toolCallCount = 0
     /// Max tool calls before forcing task_complete.
-    static let maxToolCalls = 5
+    static let maxToolCalls = 50
     /// Handler that routes tool calls to real execution (set by ViewModel before task starts).
     nonisolated(unsafe) static var toolHandler: (@Sendable (String, sending [String: Any]) async -> String)?
 }
