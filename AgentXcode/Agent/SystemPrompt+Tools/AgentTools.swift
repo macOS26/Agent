@@ -321,7 +321,24 @@ enum AgentTools {
             ],
             required: ["file_path", "old_string", "new_string"]
         ),
-        // create_diff and apply_diff available via file_manager actions
+        ToolDef(
+            name: Name.createDiff,
+            description: "Compare two strings and return a visual diff. Use to preview changes before applying.",
+            properties: [
+                "source": ["type": "string", "description": "The original text"],
+                "destination": ["type": "string", "description": "The modified text"],
+            ],
+            required: ["source", "destination"]
+        ),
+        ToolDef(
+            name: Name.applyDiff,
+            description: "Apply a diff to a file. Each line starts with = (retain), - (delete), or + (insert) followed by the content. No space after the prefix. You MUST read_file first.",
+            properties: [
+                "file_path": ["type": "string", "description": "Absolute path to the file"],
+                "diff": ["type": "string", "description": "Diff string with =/-/+ prefixes. Example: =unchanged\\n-old line\\n+new line"],
+            ],
+            required: ["file_path", "diff"]
+        ),
         ToolDef(
             name: Name.listFiles,
             description: "Find files matching a glob pattern. Use instead of `find`. Excludes hidden files and .build directories.",

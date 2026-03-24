@@ -195,7 +195,7 @@ struct StringHelper {
     static func prefixLines(_ text: String, with prefix: String) -> String {
         var result = ""
         text.enumerateLines { line, _ in
-            result.append("\(prefix) \(line)\n")
+            result.append("\(prefix)\(line)\n")
         }
         return result
     }

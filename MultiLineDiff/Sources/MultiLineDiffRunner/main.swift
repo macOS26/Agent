@@ -2086,19 +2086,15 @@ func showcaseEnhancedASCIIParser(asciiDiff: String) {
                 let lineContent: String
                 let symbol: String
                 
-                if asciiLine.hasPrefix("📎 ") {
+                if asciiLine.hasPrefix("📎") {
                     symbol = "📎"
-                    lineContent = String(asciiLine.dropFirst(2))
-                } else if asciiLine.hasPrefix("❌ ") {
+                    lineContent = String(asciiLine.dropFirst(1))
+                } else if asciiLine.hasPrefix("❌") {
                     symbol = "❌"
-                    lineContent = String(asciiLine.dropFirst(2))
-                } else if asciiLine.hasPrefix("✅ ") {
+                    lineContent = String(asciiLine.dropFirst(1))
+                } else if asciiLine.hasPrefix("✅") {
                     symbol = "✅"
-                    lineContent = String(asciiLine.dropFirst(2))
-                } else if asciiLine.hasPrefix("📎") && asciiLine.count == 1 {
-                    // Handle lines that are just the symbol (empty content lines)
-                    symbol = "📎"
-                    lineContent = ""
+                    lineContent = String(asciiLine.dropFirst(1))
                 } else {
                     // Handle lines without symbols (shouldn't happen in well-formed input)
                     continue
@@ -2403,36 +2399,19 @@ func parseASCIIDiff(_ asciiDiff: String) -> DiffLineMapping {
         let trimmedLine = asciiLine.trimmingCharacters(in: .whitespaces)
         let lineContent: String
         
-        if asciiLine.hasPrefix("📎 ") {
-            // Retained line - goes to both source and destination
-            lineContent = String(asciiLine.dropFirst(2))
+        if asciiLine.hasPrefix("📎") {
+            lineContent = String(asciiLine.dropFirst(1))
             sourceLines.append((sourceLineNum, ": " + lineContent))
             destLines.append((destLineNum, ": " + lineContent))
             sourceLineNum += 1
             destLineNum += 1
-        } else if asciiLine.hasPrefix("❌ ") {
-            // Deleted line - only in source
-            lineContent = String(asciiLine.dropFirst(2))
+        } else if asciiLine.hasPrefix("❌") {
+            lineContent = String(asciiLine.dropFirst(1))
             sourceLines.append((sourceLineNum, "- " + lineContent))
             sourceLineNum += 1
-        } else if asciiLine.hasPrefix("✅ ") {
-            // Added line - only in destination
-            lineContent = String(asciiLine.dropFirst(2))
+        } else if asciiLine.hasPrefix("✅") {
+            lineContent = String(asciiLine.dropFirst(1))
             destLines.append((destLineNum, "+ " + lineContent))
-            destLineNum += 1
-        } else if trimmedLine == "📎" {
-            // Empty retained line
-            sourceLines.append((sourceLineNum, ": "))
-            destLines.append((destLineNum, ": "))
-            sourceLineNum += 1
-            destLineNum += 1
-        } else if trimmedLine == "❌" {
-            // Empty deleted line
-            sourceLines.append((sourceLineNum, "- "))
-            sourceLineNum += 1
-        } else if trimmedLine == "✅" {
-            // Empty added line
-            destLines.append((destLineNum, "+ "))
             destLineNum += 1
         }
     }

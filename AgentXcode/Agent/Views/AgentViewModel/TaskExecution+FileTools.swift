@@ -59,7 +59,7 @@ extension AgentViewModel {
             var d1f = MultiLineDiff.displayDiff(diff: diff, source: oldString, format: .ai)
             // displayDiff can be empty for single-line character changes — show lines directly
             if d1f.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                d1f = "❌ " + oldString + "\n" + "✅ " + newString
+                d1f = "❌" + oldString + "\n" + "✅" + newString
             }
             var diffLog = d1f
             if let meta = diff.metadata, let startLine = meta.sourceStartLine {
