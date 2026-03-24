@@ -127,6 +127,7 @@
 		9A9C3DD66695959EE70C20DD /* SearchBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70B4573B1D1FB583C85DC43C /* SearchBarView.swift */; };
 		F035BAFA78E9DDFDF6DD5A1C /* TaskBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4128E21FF13BC4029D6548B /* TaskBannerView.swift */; };
 		5AA4A8B9EB5423A782B9D469 /* ScreenshotPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21810D90659A7DAD10CFA17A /* ScreenshotPreviewView.swift */; };
+		144AC666CD8BD1964F726B31 /* ServicesPopover.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AF4AB55766B9B0D5CA69DFD /* ServicesPopover.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -323,6 +324,7 @@
 		70B4573B1D1FB583C85DC43C /* SearchBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SearchBarView.swift"; sourceTree = "<group>"; };
 		B4128E21FF13BC4029D6548B /* TaskBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskBannerView.swift"; sourceTree = "<group>"; };
 		21810D90659A7DAD10CFA17A /* ScreenshotPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ScreenshotPreviewView.swift"; sourceTree = "<group>"; };
+		7AF4AB55766B9B0D5CA69DFD /* ServicesPopover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ServicesPopover.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -533,6 +535,7 @@
 				70B4573B1D1FB583C85DC43C /* SearchBarView.swift */,
 				B4128E21FF13BC4029D6548B /* TaskBannerView.swift */,
 				21810D90659A7DAD10CFA17A /* ScreenshotPreviewView.swift */,
+				7AF4AB55766B9B0D5CA69DFD /* ServicesPopover.swift */,
 );
 			path = Views;
 			sourceTree = "<group>";
@@ -916,6 +919,7 @@
 				9A9C3DD66695959EE70C20DD /* SearchBarView.swift in Sources */,
 				F035BAFA78E9DDFDF6DD5A1C /* TaskBannerView.swift in Sources */,
 				5AA4A8B9EB5423A782B9D469 /* ScreenshotPreviewView.swift in Sources */,
+				144AC666CD8BD1964F726B31 /* ServicesPopover.swift in Sources */,
 );
 			runOnlyForDeploymentPostprocessing = 0;
 		};
