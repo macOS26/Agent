@@ -11,7 +11,8 @@ extension AgentViewModel {
         tab: ScriptTab, name: String, input: [String: Any], toolId: String
     ) async -> TabToolResult {
 
-        if name == "web_open" {
+        switch name {
+        case "web_open":
             guard let urlString = input["url"] as? String,
                   let url = URL(string: urlString) else {
                 let errorMsg = "Error: Invalid or missing URL"
@@ -36,9 +37,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": tab.logBuffer],
                 isComplete: false
             )
-        }
 
-        if name == "web_find" {
+        case "web_find":
             let selector = input["selector"] as? String ?? ""
             let strategyStr = input["strategy"] as? String ?? "auto"
             let strategy = SelectorStrategy(rawValue: strategyStr) ?? .auto
@@ -66,9 +66,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": tab.logBuffer],
                 isComplete: false
             )
-        }
 
-        if name == "web_click" {
+        case "web_click":
             let selector = input["selector"] as? String ?? ""
             let strategyStr = input["strategy"] as? String ?? "auto"
             let strategy = SelectorStrategy(rawValue: strategyStr) ?? .auto
@@ -88,9 +87,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": tab.logBuffer],
                 isComplete: false
             )
-        }
 
-        if name == "web_type" {
+        case "web_type":
             let selector = input["selector"] as? String ?? ""
             let text = input["text"] as? String ?? ""
             let strategyStr = input["strategy"] as? String ?? "auto"
@@ -112,9 +110,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": tab.logBuffer],
                 isComplete: false
             )
-        }
 
-        if name == "web_execute_js" {
+        case "web_execute_js":
             let script = input["script"] as? String ?? ""
             let browser = input["browser"] as? String
             tab.appendLog("Executing JavaScript...")
@@ -130,9 +127,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": tab.logBuffer],
                 isComplete: false
             )
-        }
 
-        if name == "web_get_url" || name == "web_get_title" {
+        case "web_get_url":
             let action = name == "web_get_url" ? "getUrl" : "getTitle"
             tab.appendLog("\(name == "web_get_url" ? "Getting URL" : "Getting title")...")
             tab.flush()
@@ -153,11 +149,11 @@ extension AgentViewModel {
             tab.appendLog(result.output)
             tab.flush()
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": result.output], isComplete: false)
-        }
 
-        // Fallback
+        default:
         let output = await executeNativeTool(name, input: input)
         tab.appendLog(output); tab.flush()
         return tabResult(output, toolId: toolId)
+        }
     }
 }

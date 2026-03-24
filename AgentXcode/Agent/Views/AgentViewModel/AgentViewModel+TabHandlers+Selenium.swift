@@ -28,20 +28,19 @@ extension AgentViewModel {
         tab: ScriptTab, name: String, input: [String: Any], toolId: String
     ) async -> TabToolResult {
 
-        if name == "selenium_start" {
+        switch name {
+        case "selenium_start":
             let browser = input["browser"] as? String ?? "safari"
             let port = input["port"] as? Int ?? 7055
             let args = "{\"action\":\"start\",\"browser\":\"\(browser)\",\"port\":\(port)}"
             return await runSeleniumHelper(tab: tab, toolId: toolId, args: args, logMessage: "Starting Selenium session (\(browser))...")
-        }
 
-        if name == "selenium_stop" {
+        case "selenium_stop":
             let port = input["port"] as? Int ?? 7055
             let args = "{\"action\":\"stop\",\"port\":\(port)}"
             return await runSeleniumHelper(tab: tab, toolId: toolId, args: args, logMessage: "Stopping Selenium session...")
-        }
 
-        if name == "selenium_navigate" {
+        case "selenium_navigate":
             guard let url = input["url"] as? String else {
                 let errorMsg = "Error: URL required for selenium_navigate"
                 tab.appendLog(errorMsg)
@@ -50,25 +49,22 @@ extension AgentViewModel {
             let port = input["port"] as? Int ?? 7055
             let args = "{\"action\":\"navigate\",\"url\":\"\(url)\",\"port\":\(port)}"
             return await runSeleniumHelper(tab: tab, toolId: toolId, args: args, logMessage: "Navigating to: \(url)...")
-        }
 
-        if name == "selenium_find" {
+        case "selenium_find":
             let strategy = input["strategy"] as? String ?? "css"
             let value = input["value"] as? String ?? ""
             let port = input["port"] as? Int ?? 7055
             let args = "{\"action\":\"find\",\"strategy\":\"\(strategy)\",\"value\":\"\(value)\",\"port\":\(port)}"
             return await runSeleniumHelper(tab: tab, toolId: toolId, args: args, logMessage: "Finding element: \(strategy)=\(value)...")
-        }
 
-        if name == "selenium_click" {
+        case "selenium_click":
             let strategy = input["strategy"] as? String ?? "css"
             let value = input["value"] as? String ?? ""
             let port = input["port"] as? Int ?? 7055
             let args = "{\"action\":\"click\",\"strategy\":\"\(strategy)\",\"value\":\"\(value)\",\"port\":\(port)}"
             return await runSeleniumHelper(tab: tab, toolId: toolId, args: args, logMessage: "Clicking element: \(strategy)=\(value)...")
-        }
 
-        if name == "selenium_type" {
+        case "selenium_type":
             let strategy = input["strategy"] as? String ?? "css"
             let value = input["value"] as? String ?? ""
             let text = input["text"] as? String ?? ""
@@ -76,35 +72,32 @@ extension AgentViewModel {
             let escapedText = text.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
             let args = "{\"action\":\"type\",\"strategy\":\"\(strategy)\",\"value\":\"\(value)\",\"text\":\"\(escapedText)\",\"port\":\(port)}"
             return await runSeleniumHelper(tab: tab, toolId: toolId, args: args, logMessage: "Typing \(text.count) chars into: \(strategy)=\(value)...")
-        }
 
-        if name == "selenium_execute" {
+        case "selenium_execute":
             let script = input["script"] as? String ?? ""
             let port = input["port"] as? Int ?? 7055
             let escapedScript = script.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
             let args = "{\"action\":\"execute\",\"script\":\"\(escapedScript)\",\"port\":\(port)}"
             return await runSeleniumHelper(tab: tab, toolId: toolId, args: args, logMessage: "Executing JavaScript via Selenium...")
-        }
 
-        if name == "selenium_screenshot" {
+        case "selenium_screenshot":
             let filename = input["filename"] as? String ?? "selenium_\(Int(Date().timeIntervalSince1970)).png"
             let port = input["port"] as? Int ?? 7055
             let args = "{\"action\":\"screenshot\",\"filename\":\"\(filename)\",\"port\":\(port)}"
             return await runSeleniumHelper(tab: tab, toolId: toolId, args: args, logMessage: "Taking screenshot...")
-        }
 
-        if name == "selenium_wait" {
+        case "selenium_wait":
             let strategy = input["strategy"] as? String ?? "css"
             let value = input["value"] as? String ?? ""
             let timeout = input["timeout"] as? Double ?? 10.0
             let port = input["port"] as? Int ?? 7055
             let args = "{\"action\":\"waitFor\",\"strategy\":\"\(strategy)\",\"value\":\"\(value)\",\"timeout\":\(timeout),\"port\":\(port)}"
             return await runSeleniumHelper(tab: tab, toolId: toolId, args: args, logMessage: "Waiting for element: \(strategy)=\(value)...")
-        }
 
-        // Fallback
+        default:
         let output = await executeNativeTool(name, input: input)
         tab.appendLog(output); tab.flush()
         return tabResult(output, toolId: toolId)
+        }
     }
 }

@@ -11,7 +11,8 @@ extension AgentViewModel {
         tab: ScriptTab, name: String, input: [String: Any], toolId: String
     ) async -> TabToolResult {
 
-        if name == "ax_check_permission" {
+        switch name {
+        case "ax_check_permission":
             let hasPermission = AccessibilityService.hasAccessibilityPermission()
             let output = hasPermission ? "Accessibility permission: granted" : "Accessibility permission: NOT granted. Use ax_request_permission to prompt the user."
             tab.appendLog(output)
@@ -20,9 +21,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "ax_request_permission" {
+        case "ax_request_permission":
             tab.appendLog("♿️ Requesting Accessibility permission...")
             let granted = AccessibilityService.requestAccessibilityPermission()
             let output = granted ? "Accessibility permission granted!" : "Accessibility permission denied. Please enable it in System Settings > Privacy & Security > Accessibility."
@@ -32,9 +32,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "ax_list_windows" {
+        case "ax_list_windows":
             let limit = input["limit"] as? Int ?? 50
             tab.appendLog("Listing windows (limit: \(limit))...")
             tab.flush()
@@ -45,9 +44,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "ax_inspect_element" {
+        case "ax_inspect_element":
             guard let xVal = input["x"] as? Double,
                   let yVal = input["y"] as? Double else {
                 return TabToolResult(
@@ -67,9 +65,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "ax_get_properties" {
+        case "ax_get_properties":
             let role = input["role"] as? String
             let title = input["title"] as? String
             let value = input["value"] as? String
@@ -89,9 +86,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "ax_perform_action" {
+        case "ax_perform_action":
             let action = input["action"] as? String ?? ""
             let role = input["role"] as? String
             let title = input["title"] as? String
@@ -113,9 +109,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "ax_type_text" {
+        case "ax_type_text":
             let text = input["text"] as? String ?? ""
             let x = (input["x"] as? Double).map { CGFloat($0) }
             let y = (input["y"] as? Double).map { CGFloat($0) }
@@ -130,9 +125,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "ax_click" {
+        case "ax_click":
             guard let xVal = input["x"] as? Double,
                   let yVal = input["y"] as? Double else {
                 return TabToolResult(
@@ -155,9 +149,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "ax_scroll" {
+        case "ax_scroll":
             guard let xVal = input["x"] as? Double,
                   let yVal = input["y"] as? Double else {
                 return TabToolResult(
@@ -180,9 +173,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "ax_press_key" {
+        case "ax_press_key":
             guard let keyCodeVal = input["keyCode"] as? Int else {
                 return TabToolResult(
                     toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": "Error: keyCode is required"],
@@ -202,9 +194,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "ax_screenshot" {
+        case "ax_screenshot":
             let x = (input["x"] as? Double).map { CGFloat($0) }
             let y = (input["y"] as? Double).map { CGFloat($0) }
             let width = (input["width"] as? Double).map { CGFloat($0) }
@@ -239,9 +230,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "ax_get_audit_log" {
+        case "ax_get_audit_log":
             let limit = input["limit"] as? Int ?? 50
             tab.appendLog("Getting accessibility audit log...")
             tab.flush()
@@ -254,9 +244,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "ax_set_properties" {
+        case "ax_set_properties":
             guard let propertiesInput = input["properties"] as? [String: Any], !propertiesInput.isEmpty else {
                 return TabToolResult(
                     toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": "Error: properties dictionary is required"],
@@ -289,9 +278,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "ax_find_element" {
+        case "ax_find_element":
             let role = input["role"] as? String
             let title = input["title"] as? String
             let value = input["value"] as? String
@@ -310,9 +298,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "ax_get_focused_element" {
+        case "ax_get_focused_element":
             let appBundleId = input["appBundleId"] as? String
             tab.appendLog("Getting focused element...")
             tab.flush()
@@ -325,9 +312,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "ax_get_children" {
+        case "ax_get_children":
             let role = input["role"] as? String
             let title = input["title"] as? String
             let value = input["value"] as? String
@@ -348,9 +334,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "ax_drag" {
+        case "ax_drag":
             guard let fromXVal = input["fromX"] as? Double,
                   let fromYVal = input["fromY"] as? Double,
                   let toXVal = input["toX"] as? Double,
@@ -376,9 +361,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "ax_wait_for_element" {
+        case "ax_wait_for_element":
             let role = input["role"] as? String
             let title = input["title"] as? String
             let value = input["value"] as? String
@@ -398,9 +382,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "ax_click_element" {
+        case "ax_click_element":
             let role = input["role"] as? String
             let title = input["title"] as? String
             let value = input["value"] as? String
@@ -420,9 +403,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "ax_wait_adaptive" {
+        case "ax_wait_adaptive":
             let role = input["role"] as? String
             let title = input["title"] as? String
             let value = input["value"] as? String
@@ -444,9 +426,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "ax_type_into_element" {
+        case "ax_type_into_element":
             let role = input["role"] as? String
             let title = input["title"] as? String
             let text = input["text"] as? String ?? ""
@@ -465,9 +446,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "ax_highlight_element" {
+        case "ax_highlight_element":
             let role = input["role"] as? String
             let title = input["title"] as? String
             let value = input["value"] as? String
@@ -490,9 +470,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "ax_get_window_frame" {
+        case "ax_get_window_frame":
             let windowId = input["windowId"] as? Int ?? 0
             tab.appendLog("Getting frame for window \(windowId)...")
             tab.flush()
@@ -505,9 +484,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "ax_show_menu" {
+        case "ax_show_menu":
             let role = input["role"] as? String
             let title = input["title"] as? String
             let value = input["value"] as? String
@@ -527,11 +505,11 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        // Fallback
+        default:
         let output = await executeNativeTool(name, input: input)
         tab.appendLog(output); tab.flush()
         return tabResult(output, toolId: toolId)
+        }
     }
 }

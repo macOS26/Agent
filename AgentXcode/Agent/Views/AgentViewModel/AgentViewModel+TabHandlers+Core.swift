@@ -13,7 +13,8 @@ extension AgentViewModel {
         tab: ScriptTab, name: String, input: [String: Any], toolId: String
     ) async -> TabToolResult {
 
-        if name == "task_complete" {
+        switch name {
+        case "task_complete":
             let summary = input["summary"] as? String ?? "Done"
             tab.appendLog("✅ Completed: \(summary)")
             tab.flush()
@@ -37,9 +38,8 @@ extension AgentViewModel {
                 sendMessagesTabReply(summary, handle: handle)
             }
             return TabToolResult(toolResult: nil, isComplete: true)
-        }
 
-        if name == "plan_mode" {
+        case "plan_mode":
             let action = input["action"] as? String ?? "read"
             let output = Self.handlePlanMode(action: action, input: input, projectFolder: tab.projectFolder.isEmpty ? projectFolder : tab.projectFolder, tabName: tab.displayTitle)
             tab.appendLog(output)
@@ -48,11 +48,11 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        // Fallback
+        default:
         let output = await executeNativeTool(name, input: input)
         tab.appendLog(output); tab.flush()
         return tabResult(output, toolId: toolId)
+        }
     }
 }

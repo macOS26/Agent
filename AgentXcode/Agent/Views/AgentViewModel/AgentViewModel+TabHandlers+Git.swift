@@ -11,7 +11,8 @@ extension AgentViewModel {
         tab: ScriptTab, name: String, input: [String: Any], toolId: String
     ) async -> TabToolResult {
 
-        if name == "git_status" {
+        switch name {
+        case "git_status":
             let path = input["path"] as? String
             tab.appendLog("🔀 $ git status")
             tab.flush()
@@ -24,9 +25,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "git_diff" {
+        case "git_diff":
             let path = input["path"] as? String
             let staged = input["staged"] as? Bool ?? false
             let target = input["target"] as? String
@@ -47,9 +47,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "git_log" {
+        case "git_log":
             let path = input["path"] as? String
             let count = input["count"] as? Int
             tab.appendLog("🔀 $ git log")
@@ -63,9 +62,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "git_commit" {
+        case "git_commit":
             let path = input["path"] as? String
             let message = input["message"] as? String ?? ""
             let files = input["files"] as? [String]
@@ -82,11 +80,11 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        // Fallback
+        default:
         let output = await executeNativeTool(name, input: input)
         tab.appendLog(output); tab.flush()
         return tabResult(output, toolId: toolId)
+        }
     }
 }

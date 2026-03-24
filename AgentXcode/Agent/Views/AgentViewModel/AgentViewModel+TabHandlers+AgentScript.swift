@@ -11,7 +11,8 @@ extension AgentViewModel {
         tab: ScriptTab, name: String, input: [String: Any], toolId: String
     ) async -> TabToolResult {
 
-        if name == "list_agent_scripts" {
+        switch name {
+        case "list_agent_scripts":
             let scripts = scriptService.listScripts()
             let output = scripts.isEmpty
                 ? "No scripts found" : scripts.map { "\($0.name) (\($0.size) bytes)" }.joined(separator: "\n")
@@ -21,9 +22,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "read_agent_script" {
+        case "read_agent_script":
             let scriptName = input["name"] as? String ?? ""
             let output = scriptService.readScript(name: scriptName) ?? "Error: script '\(scriptName)' not found."
             tab.appendLog("📖 Read: \(scriptName)")
@@ -33,9 +33,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "create_agent_script" {
+        case "create_agent_script":
             let scriptName = input["name"] as? String ?? ""
             let content = input["content"] as? String ?? ""
             let output = scriptService.createScript(name: scriptName, content: content)
@@ -45,9 +44,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "update_agent_script" {
+        case "update_agent_script":
             let scriptName = input["name"] as? String ?? ""
             let content = input["content"] as? String ?? ""
             let output = scriptService.updateScript(name: scriptName, content: content)
@@ -57,9 +55,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "delete_agent_script" {
+        case "delete_agent_script":
             let scriptName = input["name"] as? String ?? ""
             let output = scriptService.deleteScript(name: scriptName)
             tab.appendLog(output)
@@ -68,9 +65,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "combine_agent_scripts" {
+        case "combine_agent_scripts":
             let sourceA = input["source_a"] as? String ?? ""
             let sourceB = input["source_b"] as? String ?? ""
             let target = input["target"] as? String ?? ""
@@ -98,9 +94,8 @@ extension AgentViewModel {
             tab.appendLog(output)
             tab.flush()
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
-        }
 
-        if name == "run_agent_script" {
+        case "run_agent_script":
             let scriptName = input["name"] as? String ?? ""
             let arguments = input["arguments"] as? String ?? ""
             guard let compileCmd = scriptService.compileCommand(name: scriptName) else {
@@ -165,11 +160,11 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": String(toolOutput.prefix(10000))],
                 isComplete: false
             )
-        }
 
-        // Fallback
+        default:
         let output = await executeNativeTool(name, input: input)
         tab.appendLog(output); tab.flush()
         return tabResult(output, toolId: toolId)
+        }
     }
 }

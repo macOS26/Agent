@@ -11,7 +11,8 @@ extension AgentViewModel {
         tab: ScriptTab, name: String, input: [String: Any], toolId: String
     ) async -> TabToolResult {
 
-        if name == "read_file" {
+        switch name {
+        case "read_file":
             let filePath = input["file_path"] as? String ?? ""
             let offset = input["offset"] as? Int
             let limit = input["limit"] as? Int
@@ -34,9 +35,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": toolOutput],
                 isComplete: false
             )
-        }
 
-        if name == "write_file" {
+        case "write_file":
             let filePath = input["file_path"] as? String ?? ""
             let content = input["content"] as? String ?? ""
             tab.appendLog("📝 Write: \(filePath)")
@@ -47,9 +47,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "edit_file" {
+        case "edit_file":
             let filePath = input["file_path"] as? String ?? ""
             let oldString = input["old_string"] as? String ?? ""
             let newString = input["new_string"] as? String ?? ""
@@ -75,9 +74,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "create_diff" {
+        case "create_diff":
             let source = input["source"] as? String ?? ""
             let destination = input["destination"] as? String ?? ""
             let diff = MultiLineDiff.createDiff(source: source, destination: destination, includeMetadata: true)
@@ -93,9 +91,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": result],
                 isComplete: false
             )
-        }
 
-        if name == "apply_diff" {
+        case "apply_diff":
             let filePath = input["file_path"] as? String ?? ""
             let asciiDiff = input["diff"] as? String ?? ""
             tab.appendLog("📝 Apply D1F diff: \(filePath)")
@@ -131,9 +128,8 @@ extension AgentViewModel {
                     isComplete: false
                 )
             }
-        }
 
-        if name == "list_files" {
+        case "list_files":
             let pattern = input["pattern"] as? String ?? "*"
             let path = input["path"] as? String
             tab.appendLog("🔍 $ find \(path ?? "~") -name '\(pattern)'")
@@ -147,9 +143,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "search_files" {
+        case "search_files":
             let pattern = input["pattern"] as? String ?? ""
             let path = input["path"] as? String
             let include = input["include"] as? String
@@ -164,11 +159,11 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        // Fallback
+        default:
         let output = await executeNativeTool(name, input: input)
         tab.appendLog(output); tab.flush()
         return tabResult(output, toolId: toolId)
+        }
     }
 }

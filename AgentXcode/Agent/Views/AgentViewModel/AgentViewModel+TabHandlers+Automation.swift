@@ -11,7 +11,8 @@ extension AgentViewModel {
         tab: ScriptTab, name: String, input: [String: Any], toolId: String
     ) async -> TabToolResult {
 
-        if name == "run_osascript" {
+        switch name {
+        case "run_osascript":
             let script = input["script"] as? String ?? input["command"] as? String ?? ""
             let escaped = script.replacingOccurrences(of: "'", with: "'\\''")
             let command = "osascript -e '\(escaped)'"
@@ -40,9 +41,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": truncated],
                 isComplete: false
             )
-        }
 
-        if name == "lookup_sdef" {
+        case "lookup_sdef":
             let bundleID = input["bundle_id"] as? String ?? ""
             let className = input["class_name"] as? String
 
@@ -72,9 +72,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        if name == "run_applescript" {
+        case "run_applescript":
             let source = input["source"] as? String ?? ""
             tab.appendLog("🍎 AppleScript:\n\(source)")
             tab.flush()
@@ -91,9 +90,8 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": result.output],
                 isComplete: false
             )
-        }
 
-        if name == "apple_event_query" {
+        case "apple_event_query":
             let bundleID = input["bundle_id"] as? String ?? ""
             let operations: [[String: Any]]
             if let ops = input["operations"] as? [[String: Any]] {
@@ -137,11 +135,11 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
             )
-        }
 
-        // Fallback
+        default:
         let output = await executeNativeTool(name, input: input)
         tab.appendLog(output); tab.flush()
         return tabResult(output, toolId: toolId)
+        }
     }
 }

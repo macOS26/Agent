@@ -11,7 +11,8 @@ extension AgentViewModel {
         tab: ScriptTab, name: String, input: [String: Any], toolId: String
     ) async -> TabToolResult {
 
-        if name == "execute_daemon_command" || name == "execute_agent_command" {
+        switch name {
+        case "execute_daemon_command":
             let command = Self.prependWorkingDirectory(
                 input["command"] as? String ?? "", projectFolder: projectFolder)
             if let pathErr = Self.preflightCommand(command) {
@@ -60,11 +61,11 @@ extension AgentViewModel {
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": truncated],
                 isComplete: false
             )
-        }
 
-        // Fallback
+        default:
         let output = await executeNativeTool(name, input: input)
         tab.appendLog(output); tab.flush()
         return tabResult(output, toolId: toolId)
+        }
     }
 }
