@@ -94,6 +94,12 @@ extension AgentViewModel {
         }
         let foundationModelService: FoundationModelService? = provider == .foundationModel
             ? FoundationModelService(historyContext: historyContext, projectFolder: projectFolder) : nil
+
+        // Set temperature per provider
+        claude?.temperature = temperatureForProvider(.claude)
+        ollama?.temperature = temperatureForProvider(provider)
+        openAICompatible?.temperature = temperatureForProvider(provider)
+
         // Prepend last task as conversation context so the LLM knows what just happened
         var messages: [[String: Any]] = history.lastTaskMessages()
 

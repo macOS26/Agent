@@ -3,6 +3,18 @@ import SwiftUI
 struct AgentOptionsView: View {
     @Bindable var viewModel: AgentViewModel
 
+    private var temperatureBinding: Binding<Double> {
+        switch viewModel.selectedProvider {
+        case .claude: return $viewModel.claudeTemperature
+        case .ollama: return $viewModel.ollamaTemperature
+        case .openAI: return $viewModel.openAITemperature
+        case .deepSeek: return $viewModel.deepSeekTemperature
+        case .huggingFace: return $viewModel.huggingFaceTemperature
+        case .localOllama: return $viewModel.localOllamaTemperature
+        case .foundationModel: return $viewModel.claudeTemperature // unused
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
@@ -81,6 +93,21 @@ struct AgentOptionsView: View {
                 }
             }
 
+
+            row {
+                Text("Temperature").font(.subheadline)
+                Spacer()
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("\(viewModel.selectedProvider.displayName)").font(.caption).foregroundStyle(.secondary)
+                    HStack(spacing: 4) {
+                        Slider(value: temperatureBinding, in: 0...2, step: 0.1)
+                            .frame(width: 120)
+                        Text(String(format: "%.1f", temperatureBinding.wrappedValue))
+                            .font(.caption.monospacedDigit())
+                            .frame(width: 28)
+                    }
+                }
+            }
 
             row {
                 Text("AgentScript").font(.subheadline)

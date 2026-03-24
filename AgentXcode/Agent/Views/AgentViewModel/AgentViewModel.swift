@@ -267,6 +267,39 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(maxIterations, forKey: "agentMaxIterations") }
     }
 
+    // MARK: - Temperature per provider
+    var claudeTemperature: Double = UserDefaults.standard.object(forKey: "claudeTemperature") as? Double ?? 0.2 {
+        didSet { UserDefaults.standard.set(claudeTemperature, forKey: "claudeTemperature") }
+    }
+    var ollamaTemperature: Double = UserDefaults.standard.object(forKey: "ollamaTemperature") as? Double ?? 0.2 {
+        didSet { UserDefaults.standard.set(ollamaTemperature, forKey: "ollamaTemperature") }
+    }
+    var openAITemperature: Double = UserDefaults.standard.object(forKey: "openAITemperature") as? Double ?? 0.2 {
+        didSet { UserDefaults.standard.set(openAITemperature, forKey: "openAITemperature") }
+    }
+    var deepSeekTemperature: Double = UserDefaults.standard.object(forKey: "deepSeekTemperature") as? Double ?? 0.2 {
+        didSet { UserDefaults.standard.set(deepSeekTemperature, forKey: "deepSeekTemperature") }
+    }
+    var huggingFaceTemperature: Double = UserDefaults.standard.object(forKey: "huggingFaceTemperature") as? Double ?? 0.2 {
+        didSet { UserDefaults.standard.set(huggingFaceTemperature, forKey: "huggingFaceTemperature") }
+    }
+    var localOllamaTemperature: Double = UserDefaults.standard.object(forKey: "localOllamaTemperature") as? Double ?? 0.2 {
+        didSet { UserDefaults.standard.set(localOllamaTemperature, forKey: "localOllamaTemperature") }
+    }
+
+    /// Get temperature for the current provider.
+    func temperatureForProvider(_ provider: APIProvider) -> Double {
+        switch provider {
+        case .claude: return claudeTemperature
+        case .ollama: return ollamaTemperature
+        case .openAI: return openAITemperature
+        case .deepSeek: return deepSeekTemperature
+        case .huggingFace: return huggingFaceTemperature
+        case .localOllama: return localOllamaTemperature
+        case .foundationModel: return 0.2
+        }
+    }
+
     var ollamaModel: String = UserDefaults.standard.string(forKey: "ollamaModel") ?? "" {
         didSet {
             UserDefaults.standard.set(ollamaModel, forKey: "ollamaModel")

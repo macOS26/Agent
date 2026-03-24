@@ -7,6 +7,7 @@ final class OllamaService {
     let baseURL: URL
     let supportsVision: Bool
     let provider: APIProvider
+    var temperature: Double = 0.2
 
     var onStreamText: (@MainActor @Sendable (String) -> Void)?
 
@@ -154,6 +155,7 @@ final class OllamaService {
             "tools": tools(activeGroups: activeGroups),
             "stream": false,
             "options": [
+                "temperature": temperature,
                 "num_predict": 2048,
                 "num_ctx": 16384
             ] as [String: Any]
@@ -258,6 +260,7 @@ final class OllamaService {
             "tools": tools(activeGroups: activeGroups),
             "stream": true,
             "options": [
+                "temperature": temperature,
                 "num_predict": 2048,
                 "num_ctx": 16384
             ] as [String: Any]

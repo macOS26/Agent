@@ -144,6 +144,11 @@ extension AgentViewModel {
         let foundationModelService: FoundationModelService? = provider == .foundationModel
             ? FoundationModelService(historyContext: tabHistoryContext, projectFolder: projectFolder) : nil
 
+        // Set temperature per provider
+        claude?.temperature = temperatureForProvider(.claude)
+        ollama?.temperature = temperatureForProvider(provider)
+        openAICompatible?.temperature = temperatureForProvider(provider)
+
         // Build on existing conversation or start fresh
         var messages: [[String: Any]] = tab.llmMessages
 

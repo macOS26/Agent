@@ -62,12 +62,15 @@ final class ClaudeService {
         return result
     }
 
+    var temperature: Double = 0.2
+
     func send(messages: [[String: Any]], activeGroups: Set<String>? = nil) async throws -> (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int) {
         guard !apiKey.isEmpty else { throw AgentError.noAPIKey }
 
         let body: [String: Any] = [
             "model": model,
             "max_tokens": 2048,
+            "temperature": temperature,
             "system": systemPrompt,
             "tools": tools(activeGroups: activeGroups),
             "messages": withFolderPrefix(messages)

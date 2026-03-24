@@ -9,6 +9,7 @@ final class OpenAICompatibleService {
     let baseURL: URL
     let supportsVision: Bool
     let provider: APIProvider
+    var temperature: Double = 0.2
 
     let historyContext: String
     let userHome: String
@@ -161,6 +162,7 @@ final class OpenAICompatibleService {
 
         let body: [String: Any] = [
             "model": model,
+            "temperature": temperature,
             "messages": chatMessages,
             "tools": tools(activeGroups: activeGroups),
             "stream": false,
@@ -182,6 +184,7 @@ final class OpenAICompatibleService {
 
         let body: [String: Any] = [
             "model": model,
+            "temperature": temperature,
             "messages": chatMessages,
             "tools": tools(activeGroups: activeGroups),
             "stream": true,
