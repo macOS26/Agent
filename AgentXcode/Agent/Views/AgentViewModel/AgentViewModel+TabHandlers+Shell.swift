@@ -12,7 +12,7 @@ extension AgentViewModel {
     ) async -> TabToolResult {
 
         switch name {
-        case "execute_daemon_command":
+        case "execute_agent_command", "execute_daemon_command":
             let command = Self.prependWorkingDirectory(
                 input["command"] as? String ?? "", projectFolder: projectFolder)
             if let pathErr = Self.preflightCommand(command) {
