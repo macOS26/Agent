@@ -11,6 +11,7 @@ struct AgentOptionsView: View {
         case .deepSeek: return $viewModel.deepSeekTemperature
         case .huggingFace: return $viewModel.huggingFaceTemperature
         case .localOllama: return $viewModel.localOllamaTemperature
+        case .vLLM: return $viewModel.vLLMTemperature
         case .foundationModel: return $viewModel.claudeTemperature // unused
         }
     }

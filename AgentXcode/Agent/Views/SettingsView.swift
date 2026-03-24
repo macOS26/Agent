@@ -229,6 +229,55 @@ struct SettingsView: View {
                         }
                     }
                 }
+            } else if viewModel.selectedProvider == .vLLM {
+                // vLLM settings
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("vLLM")
+                        .font(.headline)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Endpoint").font(.caption).foregroundStyle(.secondary)
+                        TextField("http://localhost:8000/v1/chat/completions", text: $viewModel.vLLMEndpoint)
+                            .textFieldStyle(.roundedBorder)
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("API Key (optional)").font(.caption).foregroundStyle(.secondary)
+                        LockedSecureField(text: $viewModel.vLLMAPIKey, placeholder: "Optional", lockKey: "lock.vLLMAPIKey")
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Model").font(.caption).foregroundStyle(.secondary)
+                        HStack {
+                            if viewModel.vLLMModels.isEmpty {
+                                TextField("Model name", text: $viewModel.vLLMModel)
+                                    .textFieldStyle(.roundedBorder)
+                            } else {
+                                Picker("Model", selection: $viewModel.vLLMModel) {
+                                    ForEach(viewModel.vLLMModels) { model in
+                                        Text(model.name).tag(model.id)
+                                    }
+                                }
+                                .labelsHidden()
+                            }
+
+                            Button {
+                                viewModel.fetchVLLMModels()
+                            } label: {
+                                if viewModel.isFetchingVLLMModels {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(viewModel.isFetchingVLLMModels)
+                            .help("Fetch available models")
+                        }
+                    }
+                }
             } else {
                 // Local Ollama settings
                 VStack(alignment: .leading, spacing: 10) {

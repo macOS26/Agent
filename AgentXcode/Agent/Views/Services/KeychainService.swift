@@ -14,6 +14,7 @@ final class KeychainService: Sendable {
     private static let openAIAPIKey = "agent.openAIAPIKey"
     private static let deepSeekAPIKey = "agent.deepSeekAPIKey"
     private static let huggingFaceAPIKey = "agent.huggingFaceAPIKey"
+    private static let vLLMAPIKey = "agent.vLLMAPIKey"
 
     func setClaudeAPIKey(_ key: String) { set(key: Self.claudeAPIKey, value: key) }
     func getClaudeAPIKey() -> String? { get(key: Self.claudeAPIKey) }
@@ -32,6 +33,9 @@ final class KeychainService: Sendable {
 
     func setHuggingFaceAPIKey(_ key: String) { set(key: Self.huggingFaceAPIKey, value: key) }
     func getHuggingFaceAPIKey() -> String? { get(key: Self.huggingFaceAPIKey) }
+
+    func setVLLMAPIKey(_ key: String) { set(key: Self.vLLMAPIKey, value: key) }
+    func getVLLMAPIKey() -> String? { get(key: Self.vLLMAPIKey) }
 
     private func set(key: String, value: String) {
         guard let data = value.data(using: .utf8) else { return }

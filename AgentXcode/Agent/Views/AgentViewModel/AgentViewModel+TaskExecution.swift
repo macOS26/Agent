@@ -58,6 +58,9 @@ extension AgentViewModel {
         case .localOllama:
             modelName = localOllamaModel
             isVision = selectedLocalOllamaSupportsVision
+        case .vLLM:
+            modelName = vLLMModel
+            isVision = false
         case .foundationModel:
             modelName = "Apple Intelligence"
             isVision = false
@@ -80,6 +83,8 @@ extension AgentViewModel {
             openAICompatible = OpenAICompatibleService(apiKey: deepSeekAPIKey, model: deepSeekModel, baseURL: "https://api.deepseek.com/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .deepSeek)
         case .huggingFace:
             openAICompatible = OpenAICompatibleService(apiKey: huggingFaceAPIKey, model: huggingFaceModel, baseURL: "https://router.huggingface.co/v1/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .huggingFace)
+        case .vLLM:
+            openAICompatible = OpenAICompatibleService(apiKey: vLLMAPIKey, model: vLLMModel, baseURL: vLLMEndpoint, historyContext: historyContext, projectFolder: projectFolder, provider: .vLLM)
         default:
             openAICompatible = nil
         }

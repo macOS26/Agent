@@ -116,6 +116,14 @@ struct NewMainTabSheet: View {
         case .localOllama:
             ollamaModelPicker(models: viewModel.localOllamaModels, fetch: { viewModel.fetchLocalOllamaModels() })
 
+        case .vLLM:
+            modelPickerWithFetch(
+                models: viewModel.vLLMModels,
+                fallbackBinding: $selectedModelId,
+                isFetching: viewModel.isFetchingVLLMModels,
+                fetch: { viewModel.fetchVLLMModels() }
+            )
+
         case .foundationModel:
             // Apple Intelligence - just show a label since there's only one "model"
             HStack {
@@ -210,6 +218,7 @@ struct NewMainTabSheet: View {
         case .huggingFace: return viewModel.huggingFaceModel
         case .ollama: return viewModel.ollamaModel
         case .localOllama: return viewModel.localOllamaModel
+        case .vLLM: return viewModel.vLLMModel
         case .foundationModel: return "Apple Intelligence"
         }
     }
@@ -230,6 +239,8 @@ struct NewMainTabSheet: View {
             if viewModel.ollamaModels.isEmpty { viewModel.fetchOllamaModels() }
         case .localOllama:
             if viewModel.localOllamaModels.isEmpty { viewModel.fetchLocalOllamaModels() }
+        case .vLLM:
+            if viewModel.vLLMModels.isEmpty { viewModel.fetchVLLMModels() }
         case .foundationModel:
             break  // No models to fetch for Apple Intelligence
         }

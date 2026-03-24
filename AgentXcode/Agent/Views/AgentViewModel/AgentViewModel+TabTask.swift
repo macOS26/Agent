@@ -128,6 +128,8 @@ extension AgentViewModel {
             openAICompatible = OpenAICompatibleService(apiKey: deepSeekAPIKey, model: modelId, baseURL: "https://api.deepseek.com/chat/completions", historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .deepSeek)
         case .huggingFace:
             openAICompatible = OpenAICompatibleService(apiKey: huggingFaceAPIKey, model: modelId, baseURL: "https://router.huggingface.co/v1/chat/completions", historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .huggingFace)
+        case .vLLM:
+            openAICompatible = OpenAICompatibleService(apiKey: vLLMAPIKey, model: modelId, baseURL: vLLMEndpoint, historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .vLLM)
         default:
             openAICompatible = nil
         }

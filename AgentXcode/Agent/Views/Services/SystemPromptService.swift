@@ -20,9 +20,10 @@ final class SystemPromptService {
         .huggingFace: "hugging_face.txt",
         .ollama: "ollama.txt",
         .localOllama: "local_ollama.txt",
+        .vLLM: "vllm.txt",
         .foundationModel: "foundation_model.txt",
     ]
-    
+
     /// Compact prompt file names for each provider.
     static let compactFileNames: [APIProvider: String] = [
         .claude: "claude_compact.txt",
@@ -31,6 +32,7 @@ final class SystemPromptService {
         .huggingFace: "hugging_face_compact.txt",
         .ollama: "ollama_compact.txt",
         .localOllama: "local_ollama_compact.txt",
+        .vLLM: "vllm_compact.txt",
         .foundationModel: "foundation_model_compact.txt",
     ]
 

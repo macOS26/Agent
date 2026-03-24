@@ -19,6 +19,7 @@ enum APIProvider: String, CaseIterable, Codable {
     case huggingFace = "huggingFace"
     case ollama = "ollama"
     case localOllama = "localOllama"
+    case vLLM = "vLLM"
     case foundationModel = "foundationModel"  // runs in the
         // background, Used for LoRA training & mediator tasks,
         //not selectable in UI
@@ -31,6 +32,7 @@ enum APIProvider: String, CaseIterable, Codable {
         case .huggingFace: "Hugging Face"
         case .ollama: "Ollama"
         case .localOllama: "Local Ollama"
+        case .vLLM: "vLLM"
         case .foundationModel: "Apple Intelligence"
         }
     }
@@ -39,7 +41,7 @@ enum APIProvider: String, CaseIterable, Codable {
     /// Note: foundationModel (Apple Intelligence) is NOT selectable - it's for LoRA training only.
     /// Apple Intelligence is an assistant to LLMs and users, not a direct LLM provider.
     static var selectableProviders: [APIProvider] {
-        [.claude, .openAI, .deepSeek, .huggingFace, .ollama, .localOllama]
+        [.claude, .openAI, .deepSeek, .huggingFace, .ollama, .localOllama, .vLLM]
     }
 }
 
@@ -164,6 +166,9 @@ final class AgentViewModel {
             if selectedProvider == .huggingFace && huggingFaceModels.isEmpty {
                 fetchHuggingFaceModels()
             }
+            if selectedProvider == .vLLM && vLLMModels.isEmpty {
+                fetchVLLMModels()
+            }
         }
     }
 
@@ -245,6 +250,22 @@ final class AgentViewModel {
     var huggingFaceModels: [OpenAIModelInfo] = []
     var isFetchingHuggingFaceModels = false
 
+    // vLLM settings
+    var vLLMAPIKey: String = KeychainService.shared.getVLLMAPIKey() ?? "" {
+        didSet { KeychainService.shared.setVLLMAPIKey(vLLMAPIKey) }
+    }
+
+    var vLLMEndpoint: String = UserDefaults.standard.string(forKey: "vLLMEndpoint") ?? "http://localhost:8000/v1/chat/completions" {
+        didSet { UserDefaults.standard.set(vLLMEndpoint, forKey: "vLLMEndpoint") }
+    }
+
+    var vLLMModel: String = UserDefaults.standard.string(forKey: "vLLMModel") ?? "" {
+        didSet { UserDefaults.standard.set(vLLMModel, forKey: "vLLMModel") }
+    }
+
+    var vLLMModels: [OpenAIModelInfo] = []
+    var isFetchingVLLMModels = false
+
     private static let defaultHuggingFaceModels: [OpenAIModelInfo] = [
         OpenAIModelInfo(id: "deepseek-ai/DeepSeek-V3-0324", name: "DeepSeek V3"),
         OpenAIModelInfo(id: "deepseek-ai/DeepSeek-R1", name: "DeepSeek R1"),
@@ -286,6 +307,9 @@ final class AgentViewModel {
     var localOllamaTemperature: Double = UserDefaults.standard.object(forKey: "localOllamaTemperature") as? Double ?? 0.2 {
         didSet { UserDefaults.standard.set(localOllamaTemperature, forKey: "localOllamaTemperature") }
     }
+    var vLLMTemperature: Double = UserDefaults.standard.object(forKey: "vLLMTemperature") as? Double ?? 0.2 {
+        didSet { UserDefaults.standard.set(vLLMTemperature, forKey: "vLLMTemperature") }
+    }
 
     /// Get temperature for the current provider.
     func temperatureForProvider(_ provider: APIProvider) -> Double {
@@ -296,6 +320,7 @@ final class AgentViewModel {
         case .deepSeek: return deepSeekTemperature
         case .huggingFace: return huggingFaceTemperature
         case .localOllama: return localOllamaTemperature
+        case .vLLM: return vLLMTemperature
         case .foundationModel: return 0.2
         }
     }
@@ -606,6 +631,7 @@ final class AgentViewModel {
         case .huggingFace: return huggingFaceModel
         case .ollama: return ollamaModel
         case .localOllama: return localOllamaModel
+        case .vLLM: return vLLMModel
         case .foundationModel: return "Apple Intelligence"
         }
     }
@@ -628,6 +654,8 @@ final class AgentViewModel {
             return ollamaModels.first(where: { $0.id == modelId })?.name ?? modelId
         case .localOllama:
             return localOllamaModels.first(where: { $0.id == modelId })?.name ?? modelId
+        case .vLLM:
+            return vLLMModels.first(where: { $0.id == modelId })?.name ?? modelId
         case .foundationModel:
             return "Apple Intelligence"
         }
@@ -1835,6 +1863,60 @@ final class AgentViewModel {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 90
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200,
+              let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let modelsData = json["data"] as? [[String: Any]] else {
+            return []
+        }
+
+        return modelsData.compactMap { model -> OpenAIModelInfo? in
+            guard let id = model["id"] as? String else { return nil }
+            return OpenAIModelInfo(id: id, name: id)
+        }.sorted { $0.name < $1.name }
+    }
+
+    // MARK: - vLLM Models
+
+    func fetchVLLMModels() {
+        isFetchingVLLMModels = true
+        let endpoint = vLLMEndpoint
+        let key = vLLMAPIKey
+        Task {
+            defer { isFetchingVLLMModels = false }
+            do {
+                let models = try await Self.fetchVLLMModelsFromAPI(endpoint: endpoint, apiKey: key)
+                vLLMModels = models
+                let ids = models.map(\.id)
+                if vLLMModel.isEmpty || (!ids.isEmpty && !ids.contains(vLLMModel)) {
+                    vLLMModel = ids.first ?? ""
+                }
+            } catch {
+                appendLog("Failed to fetch vLLM models: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private nonisolated static func fetchVLLMModelsFromAPI(endpoint: String, apiKey: String) async throws -> [OpenAIModelInfo] {
+        // Derive /v1/models from the chat completions endpoint
+        let modelsURL: URL
+        if let range = endpoint.range(of: "/v1/") {
+            let base = String(endpoint[endpoint.startIndex..<range.upperBound])
+            guard let url = URL(string: base + "models") else { throw AgentError.invalidURL }
+            modelsURL = url
+        } else {
+            guard let url = URL(string: endpoint) else { throw AgentError.invalidURL }
+            modelsURL = url.deletingLastPathComponent().appendingPathComponent("models")
+        }
+
+        var request = URLRequest(url: modelsURL)
+        request.httpMethod = "GET"
+        if !apiKey.isEmpty {
+            request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        }
         request.timeoutInterval = 90
 
         let (data, response) = try await URLSession.shared.data(for: request)

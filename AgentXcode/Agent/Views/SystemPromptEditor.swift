@@ -228,6 +228,8 @@ struct SystemPromptsView: View {
                                            NSColor(red: 0.70, green: 0.70, blue: 0.75, alpha: 1.0)),
         (.huggingFace,     "HuggingFace",  Color(red: 1.0,  green: 0.82, blue: 0.20),   // HuggingFace yellow
                                            NSColor(red: 1.0,  green: 0.82, blue: 0.20, alpha: 1.0)),
+        (.vLLM,            "vLLM",         Color(red: 0.30, green: 0.70, blue: 0.95),   // vLLM cyan
+                                           NSColor(red: 0.30, green: 0.70, blue: 0.95, alpha: 1.0)),
     ]
 
     private func tabColor(for provider: APIProvider) -> Color {
