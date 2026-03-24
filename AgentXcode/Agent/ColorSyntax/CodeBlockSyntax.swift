@@ -1,69 +1,5 @@
 import AppKit
 
-// MARK: - Code Block Theme (Xcode Dark/Light palette from JibberJabber)
-
-@MainActor enum CodeBlockTheme {
-    private static var isDark: Bool {
-        NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-    }
-
-    private static func c(_ d: UInt32, _ l: UInt32) -> NSColor {
-        let h = isDark ? d : l
-        return NSColor(
-            red: CGFloat((h >> 16) & 0xFF) / 255,
-            green: CGFloat((h >> 8) & 0xFF) / 255,
-            blue: CGFloat(h & 0xFF) / 255, alpha: 1
-        )
-    }
-
-    static var keyword: NSColor { c(0xFF7AB2, 0xAD3DA4) }
-    static var string: NSColor { c(0xFC6A5D, 0xD12F1B) }
-    static var number: NSColor { c(0xD9C97C, 0x272AD8) }
-    static var comment: NSColor { c(0x6C9C5A, 0x536579) }
-    static var type: NSColor { c(0xD0A8FF, 0x3E8087) }
-    static var funcCall: NSColor { c(0x67B7A4, 0x316E74) }
-    static var sysFunc: NSColor { c(0xB281EB, 0x6C36A9) }
-    static var preproc: NSColor { c(0xFFA14F, 0x78492A) }
-    static var attr: NSColor { c(0xFD8F3F, 0x643820) }
-    static var prop: NSColor { c(0x4EB0CC, 0x3E8087) }
-    static var selfKw: NSColor { c(0xFF7AB2, 0xAD3DA4) }
-    static var ident: NSColor { c(0xDFDFE0, 0x000000) }
-    static var text: NSColor { c(0xDFDFE0, 0x000000) }
-    static var bg: NSColor { c(0x292A30, 0xF0F0F2) }
-}
-
-// MARK: - Language Definition
-
-private struct LangDef {
-    let keywords: Set<String>
-    let declKeywords: Set<String>
-    let types: Set<String>
-    let selfKw: Set<String>
-    let sysFuncs: Set<String>
-    let commentPrefix: String?
-    let blockComStart: String?
-    let blockComEnd: String?
-    let hasAttrs: Bool
-    let hasPreproc: Bool
-    let stringRegex: NSRegularExpression?
-
-    init(kw: [String] = [], decl: [String] = [], types: [String] = [], selfKw: [String] = [],
-         sys: [String] = [], comment: String? = "//", blockStart: String? = "/*", blockEnd: String? = "*/",
-         attrs: Bool = false, preproc: Bool = false, strPat: String = #""(?:\\.|[^"\\])*""#) {
-        self.keywords = Set(kw)
-        self.declKeywords = Set(decl)
-        self.types = Set(types)
-        self.selfKw = Set(selfKw)
-        self.sysFuncs = Set(sys)
-        self.commentPrefix = comment
-        self.blockComStart = blockStart
-        self.blockComEnd = blockEnd
-        self.hasAttrs = attrs
-        self.hasPreproc = preproc
-        self.stringRegex = try? NSRegularExpression(pattern: strPat)
-    }
-}
-
 // MARK: - Highlighter
 
 @MainActor enum CodeBlockHighlighter {
@@ -228,55 +164,11 @@ private struct LangDef {
         }
     }
 
-    // MARK: - Language Resolution
-
-    private static let aliases: [String: String] = [
-        "js": "javascript", "jsx": "javascript", "ts": "typescript", "tsx": "typescript",
-        "sh": "bash", "shell": "bash", "zsh": "bash",
-        "c++": "cpp", "cc": "cpp", "cxx": "cpp", "h": "c", "hpp": "cpp",
-        "objective-c": "objc", "objectivec": "objc", "m": "objc",
-        "golang": "go", "rb": "ruby", "rs": "rust", "yml": "yaml",
-        "kt": "kotlin", "py": "python", "python3": "python",
-    ]
-
-    /// Shell command indicators — if an untagged code block starts with these, use bash highlighting.
-    private static let shellPrefixes = ["$", "#", "cd ", "ls ", "cat ", "echo ", "grep ", "find ",
-        "git ", "brew ", "sudo ", "mkdir ", "rm ", "cp ", "mv ", "curl ", "chmod ", "chown ",
-        "npm ", "pip ", "export ", "source ", "touch ", "tar ", "ssh ", "kill ", "xargs ",
-        "xcodebuild ", "swift ", "swiftc ", "clang ", "make ", "docker ", "pkill ",
-        "FILTER_BRANCH"]
-
-    private static func langDef(for language: String?) -> LangDef {
-        guard let l = language?.lowercased().trimmingCharacters(in: .whitespaces), !l.isEmpty else {
-            return genericDef
-        }
-        let key = aliases[l] ?? l
-        return defs[key] ?? genericDef
-    }
-
-    /// Guess language from code content when no language tag is provided.
-    static func guessLanguage(from code: String) -> String? {
-        let firstLine = code.prefix(200).split(separator: "\n").first.map(String.init) ?? code
-        let trimmed = firstLine.trimmingCharacters(in: .whitespaces)
-        // Shell commands
-        if shellPrefixes.contains(where: { trimmed.hasPrefix($0) }) { return "bash" }
-        // Swift indicators
-        if trimmed.hasPrefix("import ") || trimmed.hasPrefix("func ") || trimmed.hasPrefix("let ")
-            || trimmed.hasPrefix("var ") || trimmed.hasPrefix("struct ") || trimmed.hasPrefix("class ")
-            || trimmed.hasPrefix("@") || trimmed.hasPrefix("guard ") || trimmed.hasPrefix("enum ")
-            || trimmed.hasPrefix("protocol ") { return "swift" }
-        // Python
-        if trimmed.hasPrefix("def ") || trimmed.hasPrefix("from ") || trimmed.hasPrefix("print(") { return "python" }
-        // JSON
-        if trimmed.hasPrefix("{") || trimmed.hasPrefix("[") { return "json" }
-        return nil
-    }
-
-    private static let genericDef = LangDef()
+    static let genericDef = LangDef()
 
     // MARK: - Language Definitions
 
-    private static let defs: [String: LangDef] = [
+    static let defs: [String: LangDef] = [
         "swift": LangDef(
             kw: ["if", "else", "guard", "switch", "case", "default", "for", "while", "repeat",
                  "break", "continue", "return", "throw", "do", "try", "catch", "where", "in",
@@ -551,103 +443,6 @@ private struct LangDef {
         return outputIndicators >= 2
     }
 
-    // Path segment colors for multi-color file path highlighting
-    private static var pathHome: NSColor {
-        NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-            ? NSColor(red: 0.5, green: 0.5, blue: 0.55, alpha: 1)   // dim gray
-            : NSColor(red: 0.45, green: 0.45, blue: 0.5, alpha: 1)
-    }
-    private static var pathTopDir: NSColor {
-        NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-            ? NSColor(red: 0.6, green: 0.75, blue: 0.55, alpha: 1)  // muted green
-            : NSColor(red: 0.3, green: 0.5, blue: 0.25, alpha: 1)
-    }
-    private static var pathMiddle: NSColor {
-        NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-            ? NSColor(red: 0.816, green: 0.659, blue: 1.0, alpha: 1)  // lavender
-            : NSColor(red: 0.4, green: 0.2, blue: 0.7, alpha: 1)
-    }
-    private static var pathFilename: NSColor {
-        NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-            ? NSColor(red: 0.35, green: 0.7, blue: 1.0, alpha: 1)   // bright blue
-            : NSColor(red: 0.0, green: 0.3, blue: 0.8, alpha: 1)
-    }
-
-    /// Apply multi-color highlighting to a file path within an attributed string.
-    /// Segments: /Users/<user>/ → dim, top-level dir → green, middle dirs → cyan, filename → blue bold
-    private static func colorizePath(_ result: NSMutableAttributedString, pathRange: NSRange, path: String, bold: NSFont) {
-        var cursor = pathRange.location
-        let ns = path as NSString
-
-        // If path starts with /Users/<name>/ color that prefix dim
-        if path.hasPrefix("/Users/") || path.hasPrefix("/var/") {
-            // Find third slash: /Users/toddbruss/
-            var slashCount = 0
-            var homeEnd = 0
-            for (i, ch) in path.enumerated() {
-                if ch == "/" { slashCount += 1 }
-                if slashCount == 3 { homeEnd = i + 1; break }
-            }
-            if homeEnd == 0 { homeEnd = ns.length }
-            let homeRange = NSRange(location: cursor, length: homeEnd)
-            result.addAttribute(.foregroundColor, value: pathHome, range: homeRange)
-            cursor += homeEnd
-
-            // Next component is the top-level dir (e.g. Documents, Library)
-            let remaining = String(path.dropFirst(homeEnd))
-            if let slashIdx = remaining.firstIndex(of: "/") {
-                let topLen = remaining.distance(from: remaining.startIndex, to: slashIdx) + 1
-                let topRange = NSRange(location: cursor, length: topLen)
-                result.addAttribute(.foregroundColor, value: pathTopDir, range: topRange)
-                cursor += topLen
-            }
-        } else if path.hasPrefix("~/") {
-            // ~/ prefix → dim
-            let homeRange = NSRange(location: cursor, length: 2)
-            result.addAttribute(.foregroundColor, value: pathHome, range: homeRange)
-            cursor += 2
-
-            // Next component is the top-level dir
-            let remaining = String(path.dropFirst(2))
-            if let slashIdx = remaining.firstIndex(of: "/") {
-                let topLen = remaining.distance(from: remaining.startIndex, to: slashIdx) + 1
-                let topRange = NSRange(location: cursor, length: topLen)
-                result.addAttribute(.foregroundColor, value: pathTopDir, range: topRange)
-                cursor += topLen
-            }
-        }
-
-        // Find the filename (last component after final /)
-        let pathEnd = pathRange.location + pathRange.length
-        if let lastSlash = path.lastIndex(of: "/") {
-            let filenameStart = path.distance(from: path.startIndex, to: lastSlash) + 1
-            let filenameLen = ns.length - filenameStart
-            if filenameLen > 0 {
-                let filenameRange = NSRange(location: pathRange.location + filenameStart, length: filenameLen)
-                // Middle directories: everything between cursor and filename
-                let middleLen = (pathRange.location + filenameStart) - cursor
-                if middleLen > 0 {
-                    let middleRange = NSRange(location: cursor, length: middleLen)
-                    result.addAttribute(.foregroundColor, value: pathMiddle, range: middleRange)
-                }
-                // Filename → bright blue bold
-                result.addAttributes([.foregroundColor: pathFilename, .font: bold], range: filenameRange)
-            } else {
-                // Trailing slash, color remaining as middle
-                let middleLen = pathEnd - cursor
-                if middleLen > 0 {
-                    result.addAttribute(.foregroundColor, value: pathMiddle, range: NSRange(location: cursor, length: middleLen))
-                }
-            }
-        } else {
-            // No slash — entire thing is a filename
-            let remainLen = pathEnd - cursor
-            if remainLen > 0 {
-                result.addAttributes([.foregroundColor: pathFilename, .font: bold], range: NSRange(location: cursor, length: remainLen))
-            }
-        }
-    }
-
     // Terminal output theme colors
     private static var termDir: NSColor {
         NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
@@ -768,86 +563,6 @@ private struct LangDef {
         actTimestampRx?.enumerateMatches(in: line, range: r) { m, _, _ in
             guard let mr = m?.range else { return }
             result.addAttribute(.foregroundColor, value: termDate, range: mr)
-        }
-
-        return result
-    }
-
-    // MARK: - Diff Block Highlighting
-
-    /// Highlight a diff code block with red/green backgrounds for removed/added lines,
-    /// and line numbers for context. Format: "LINE_NUM -\tcode" or "LINE_NUM +\tcode" or "LINE_NUM\tcode"
-    private static func highlightDiffBlock(code: String, font: NSFont) -> NSAttributedString {
-        let text = CodeBlockTheme.text
-        let result = NSMutableAttributedString(string: code, attributes: [
-            .font: font, .foregroundColor: text
-        ])
-        let isDark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-
-        let removedBg = isDark
-            ? NSColor(red: 0.4, green: 0.1, blue: 0.1, alpha: 1.0)    // dark red
-            : NSColor(red: 1.0, green: 0.85, blue: 0.85, alpha: 1.0)
-        let addedBg = isDark
-            ? NSColor(red: 0.1, green: 0.3, blue: 0.1, alpha: 1.0)    // dark green
-            : NSColor(red: 0.85, green: 1.0, blue: 0.85, alpha: 1.0)
-        let lineNumColor = isDark
-            ? NSColor(red: 0.5, green: 0.5, blue: 0.55, alpha: 1)     // dim
-            : NSColor(red: 0.45, green: 0.45, blue: 0.5, alpha: 1)
-        let removedText = isDark
-            ? NSColor(red: 1.0, green: 0.7, blue: 0.7, alpha: 1)      // light red text
-            : NSColor(red: 0.6, green: 0.0, blue: 0.0, alpha: 1)
-        let addedText = isDark
-            ? NSColor(red: 0.7, green: 1.0, blue: 0.7, alpha: 1)      // light green text
-            : NSColor(red: 0.0, green: 0.5, blue: 0.0, alpha: 1)
-
-        // Line-numbered diff: "123 -\tcode" or "123 +\tcode" or "123\tcode"
-        let lineNumDiffRx = try? NSRegularExpression(
-            pattern: #"^(\d+)(\s[+-])?\t(.*)$"#, options: .anchorsMatchLines)
-        // Simple diff: "- code" or "+ code"
-        let simpleDiffRx = try? NSRegularExpression(
-            pattern: #"^([+-])\s(.*)$"#, options: .anchorsMatchLines)
-
-        let ns = code as NSString
-        let r = NSRange(location: 0, length: ns.length)
-
-        // Try line-numbered format first
-        var matched = false
-        lineNumDiffRx?.enumerateMatches(in: code, range: r) { m, _, _ in
-            guard let m else { return }
-            matched = true
-            let fullRange = m.range
-
-            // Color line number dim
-            let numRange = m.range(at: 1)
-            result.addAttribute(.foregroundColor, value: lineNumColor, range: numRange)
-
-            // Check for +/- marker
-            if m.range(at: 2).length > 0 {
-                let marker = ns.substring(with: m.range(at: 2)).trimmingCharacters(in: .whitespaces)
-                if marker == "-" {
-                    result.addAttribute(.backgroundColor, value: removedBg, range: fullRange)
-                    result.addAttribute(.foregroundColor, value: removedText, range: m.range(at: 3))
-                } else if marker == "+" {
-                    result.addAttribute(.backgroundColor, value: addedBg, range: fullRange)
-                    result.addAttribute(.foregroundColor, value: addedText, range: m.range(at: 3))
-                }
-            }
-        }
-
-        // Fallback to simple diff format if no line-numbered matches
-        if !matched {
-            simpleDiffRx?.enumerateMatches(in: code, range: r) { m, _, _ in
-                guard let m else { return }
-                let fullRange = m.range
-                let marker = ns.substring(with: m.range(at: 1))
-                if marker == "-" {
-                    result.addAttribute(.backgroundColor, value: removedBg, range: fullRange)
-                    result.addAttribute(.foregroundColor, value: removedText, range: fullRange)
-                } else if marker == "+" {
-                    result.addAttribute(.backgroundColor, value: addedBg, range: fullRange)
-                    result.addAttribute(.foregroundColor, value: addedText, range: fullRange)
-                }
-            }
         }
 
         return result

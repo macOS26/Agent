@@ -754,7 +754,7 @@ extension AgentViewModel {
             return Self.handlePlanMode(action: action, input: input, projectFolder: pf, tabName: "main")
         }
 
-        // Fallback
-        return "Tool \(name) not implemented for Apple AI"
+        // Silently skip tools not available to Apple AI
+        return "(skipped)"
     }
 }

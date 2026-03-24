@@ -1,10 +1,9 @@
-# Extract LangDef and defs from CodeBlockSyntax.swift
+# Split CodeBlockSyntax.swift Language Definitions
 
-- [ ] 1. Read full CodeBlockSyntax.swift to find LangDef struct location
-- [ ] 2. Create CodeBlockLangDefs.swift with LangDef struct and defs dictionary
-- [ ] 3. Add new file to Xcode project
-- [ ] 4. Remove LangDef struct and defs from CodeBlockSyntax.swift
-- [ ] 5. Build to verify compilation
+- [ ] 1. 1. Create CodeBlockSyntax+LanguageDefs.swift with the defs dictionary
+- [ ] 2. 2. Add the new file to the Xcode project
+- [ ] 3. 3. Remove the defs dictionary from CodeBlockSyntax.swift
+- [ ] 4. 4. Build to verify
 
 ---
-*Status: 5 steps pending*
+*Status: 4 steps pending*

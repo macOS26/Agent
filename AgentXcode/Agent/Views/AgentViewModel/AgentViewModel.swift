@@ -529,24 +529,12 @@ final class AgentViewModel {
     /// Timestamp when the current task started
     private var taskStartTime: Date?
 
-    enum MessageFilter: String, CaseIterable {
-        case fromOthers = "From Others"
-        case fromMe = "From Me"
-        case noFilter = "Both"
-    }
     var messageFilter: MessageFilter = {
         MessageFilter(rawValue: UserDefaults.standard.string(forKey: "agentMessageFilter") ?? "") ?? .fromOthers
     }() {
         didSet { UserDefaults.standard.set(messageFilter.rawValue, forKey: "agentMessageFilter") }
     }
 
-    /// Chat recipients discovered from Messages database
-    struct MessageRecipient: Identifiable, Hashable {
-        let id: String        // handle id (phone/email) — used as stable key for filtering
-        let displayName: String
-        let service: String   // "iMessage" or "SMS"
-        let fromMe: Bool      // true if discovered from a sent message
-    }
     var messageRecipients: [MessageRecipient] = []
     /// Set of handle IDs (phone/email) the user has enabled for monitoring
     var enabledHandleIds: Set<String> = {
@@ -1327,16 +1315,6 @@ final class AgentViewModel {
         let imp = method_getImplementation(method)
         let f = unsafeBitCast(imp, to: Fn.self)
         return f(cls, sel, data as NSData) as? NSAttributedString
-    }
-
-    struct RawMessage: Sendable {
-        let rowid: Int
-        let text: String
-        let handleId: String
-        let handleRowId: Int
-        let chatId: Int
-        let service: String
-        let account: String
     }
 
     /// Read new messages directly from chat.db using SQLite3 C API.
