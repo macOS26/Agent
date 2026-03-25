@@ -62,7 +62,7 @@ struct ProjectFolderField: View {
                         }
                     }
                     .onChange(of: isTextFieldFocused) { _, focused in
-                        if focused && !recentFolders.isEmpty && !projectFolder.isEmpty {
+                        if focused && !recentFolders.isEmpty {
                             showRecentFolders = true
                         } else if !focused {
                             // Delay dismiss so button click can register
