@@ -98,6 +98,16 @@ struct HeaderToolbarButtons: View {
         return ContentView.tabColor(for: tab.id, in: viewModel.scriptTabs)
     }
 
+    /// Whether any LLM task is actively running (main or any tab)
+    var isLLMActive: Bool {
+        viewModel.isRunning || viewModel.isThinking || viewModel.scriptTabs.contains(where: { $0.isLLMRunning })
+    }
+
+    /// LLM icon color: throbs between blue and tab color when running, static otherwise
+    var llmIconColor: Color {
+        isLLMActive ? .blue : viewModel.llmStatusColor
+    }
+
     var body: some View {
         Button { showServices.toggle() } label: {
             Image(systemName: "gearshape.2")
@@ -143,7 +153,8 @@ struct HeaderToolbarButtons: View {
 
         Button { showSettings.toggle() } label: {
             Image(systemName: "cpu")
-                .foregroundStyle(viewModel.llmStatusColor)
+                .foregroundStyle(llmIconColor)
+                .symbolEffect(.pulse, isActive: isLLMActive)
         }
         .popover(isPresented: $showSettings) {
             SettingsView(viewModel: viewModel)
