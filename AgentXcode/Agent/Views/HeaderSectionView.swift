@@ -69,6 +69,7 @@ struct HeaderStatusView: View {
                     }
                 }
             }
+            Spacer(minLength: 0)
         }
         .padding(.horizontal, 8)
         .frame(minWidth: 200, alignment: .leading)
