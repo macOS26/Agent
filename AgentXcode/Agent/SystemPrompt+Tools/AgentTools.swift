@@ -177,6 +177,7 @@ enum AgentTools {
         web: open, find, click, type, execute_js, get_url, get_title, google_search, read_content, scroll_to, select, upload, storage, submit, navigate, list_tabs, switch_tab, list_windows, switch_window, new_window, close_window, wait_for_element
 
         CRITICAL RULES:
+        - WEB PAGES / SAFARI / BROWSERS: ALWAYS use the web tool for ANY web page interaction. NEVER use accessibility for web pages. Examples: web(action: "google_search", query: "..."), web(action: "click", selector: "#btn"), web(action: "type", selector: "input", text: "..."), web(action: "execute_js", script: "document.title"), web(action: "open", url: "https://..."), web(action: "get_url"), web(action: "get_title"), web(action: "read_content"). For Google searches use web(action: "google_search", query: "...").
         - SHELL COMMANDS (rm, mv, cp, ls, find, grep, etc.): ALWAYS use execute_agent_command. NEVER create .sh scripts. NEVER use applescript_tool "do shell script".
         - BUILD: Use xcode (action: build). Never xcodebuild via shell.
         - applescript_tool is ONLY for AppleScript automation of apps (tell application...). NOT for shell commands.
