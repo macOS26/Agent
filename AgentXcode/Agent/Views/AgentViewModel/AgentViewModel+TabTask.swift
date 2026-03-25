@@ -251,6 +251,8 @@ extension AgentViewModel {
         // Inject direct command context (e.g. safari_open read page, google_search results)
         if let context = directCommandContext {
             messages.append(["role": "user", "content": context])
+            tab.appendLog("📄 Page results passed to LLM (\(context.count) chars)")
+            tab.flush()
         }
 
         if !attachedImagesBase64.isEmpty {
