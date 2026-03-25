@@ -423,6 +423,19 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
             }
         }
 
+        // "google search X", "google X", "search google for X" — Safari google search
+        let googlePatterns = ["google search for ", "google search ", "google web search in safari for ", "google web search for ", "google web search ", "search google for ", "google for "]
+        for prefix in googlePatterns {
+            if lower.hasPrefix(prefix) {
+                var arg = String(trimmed.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)
+                // Strip surrounding quotes
+                if (arg.hasPrefix("\"") && arg.hasSuffix("\"")) || (arg.hasPrefix("'") && arg.hasSuffix("'")) {
+                    arg = String(arg.dropFirst().dropLast())
+                }
+                if !arg.isEmpty { return DirectCommand(name: "google_search", argument: arg) }
+            }
+        }
+
         // "run X", "run agent X" — direct only if script needs no arguments
         let runPatterns = ["run agent ", "run script ", "run ", "execute "]
         for prefix in runPatterns {

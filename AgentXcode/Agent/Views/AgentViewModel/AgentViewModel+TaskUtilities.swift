@@ -229,6 +229,14 @@ extension AgentViewModel {
             appendLog(runResult.output)
             return runResult.output
 
+        case "google_search":
+            let query = cmd.argument
+            appendLog("🔍 Google search: \(query)")
+            flushLog()
+            let output = await WebAutomationService.shared.safariGoogleSearch(query: query)
+            appendLog(Self.preview(output, lines: 40))
+            return output
+
         default:
             return ""
         }
