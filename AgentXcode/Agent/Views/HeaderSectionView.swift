@@ -192,7 +192,7 @@ struct HeaderToolbarButtons: View {
 
         Button { showClearConfirm = true } label: {
             Image(systemName: "trash")
-                .foregroundStyle(currentTabColor)
+                .foregroundStyle(.red)
         }
         .alert("Clear Log", isPresented: $showClearConfirm) {
             Button("Clear", role: .destructive) { viewModel.clearSelectedLog() }
