@@ -452,16 +452,17 @@ final class WebAutomationService: @unchecked Sendable {
         let escaped = Self.escapeJS(selector)
         let isXPath = selector.hasPrefix("/") || selector.hasPrefix("./")
 
-        let js: String
+        // First try: JS click (works for most buttons)
+        let jsClick: String
         if isXPath {
-            js = """
+            jsClick = """
             var result = document.evaluate('\(escaped)', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
             var el = result.singleNodeValue;
             if (el) { el.click(); return 'clicked'; }
             return 'not found';
             """
         } else {
-            js = """
+            jsClick = """
             (function() {
                 var el = \(Self.querySelectorWithIframes("'\(escaped)'"));
                 if (el) { el.click(); return 'clicked'; }
@@ -469,9 +470,90 @@ final class WebAutomationService: @unchecked Sendable {
             })()
             """
         }
-        
-        _ = try await executeJavaScript(script: js, browser: browser)
-        return "Clicked element via JavaScript: \(selector)"
+
+        if let result = try? await executeJavaScript(script: jsClick, browser: browser) as? String,
+           result == "clicked" {
+            return "Clicked element via JavaScript: \(selector)"
+        }
+
+        // Second try: dispatch mousedown/mouseup/click events (handles event delegation)
+        let jsDispatch: String
+        if isXPath {
+            jsDispatch = """
+            (function() {
+                var result = document.evaluate('\(escaped)', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+                var el = result.singleNodeValue;
+                if (!el) return 'not found';
+                el.dispatchEvent(new MouseEvent('mousedown', {bubbles:true,cancelable:true}));
+                el.dispatchEvent(new MouseEvent('mouseup', {bubbles:true,cancelable:true}));
+                el.dispatchEvent(new MouseEvent('click', {bubbles:true,cancelable:true}));
+                return 'dispatched';
+            })()
+            """
+        } else {
+            jsDispatch = """
+            (function() {
+                var el = \(Self.querySelectorWithIframes("'\(escaped)'"));
+                if (!el) return 'not found';
+                el.dispatchEvent(new MouseEvent('mousedown', {bubbles:true,cancelable:true}));
+                el.dispatchEvent(new MouseEvent('mouseup', {bubbles:true,cancelable:true}));
+                el.dispatchEvent(new MouseEvent('click', {bubbles:true,cancelable:true}));
+                return 'dispatched';
+            })()
+            """
+        }
+
+        if let result = try? await executeJavaScript(script: jsDispatch, browser: browser) as? String,
+           result == "dispatched" {
+            return "Clicked element via event dispatch: \(selector)"
+        }
+
+        // Third try: get element coordinates and do OS-level click via accessibility
+        let jsCoords = isXPath ?
+            """
+            (function() {
+                var result = document.evaluate('\(escaped)', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+                var el = result.singleNodeValue;
+                if (!el) return 'not found';
+                var r = el.getBoundingClientRect();
+                return Math.round(r.x + r.width/2) + ',' + Math.round(r.y + r.height/2);
+            })()
+            """ :
+            """
+            (function() {
+                var el = \(Self.querySelectorWithIframes("'\(escaped)'"));
+                if (!el) return 'not found';
+                var r = el.getBoundingClientRect();
+                return Math.round(r.x + r.width/2) + ',' + Math.round(r.y + r.height/2);
+            })()
+            """
+
+        if let coordStr = try? await executeJavaScript(script: jsCoords, browser: browser) as? String,
+           coordStr != "not found",
+           let commaIdx = coordStr.firstIndex(of: ",") {
+            let xStr = String(coordStr[..<commaIdx])
+            let yStr = String(coordStr[coordStr.index(after: commaIdx)...])
+            if let x = Double(xStr), let y = Double(yStr) {
+                // Need to offset by browser window/toolbar position
+                // Get browser window bounds via AppleScript
+                let boundsJS = "JSON.stringify({scrollX: window.scrollX, scrollY: window.scrollY, screenX: window.screenX, screenY: window.screenY, outerHeight: window.outerHeight, innerHeight: window.innerHeight})"
+                if let boundsStr = try? await executeJavaScript(script: boundsJS, browser: browser) as? String,
+                   let boundsData = boundsStr.data(using: .utf8),
+                   let bounds = try? JSONSerialization.jsonObject(with: boundsData) as? [String: Double] {
+                    let screenX = bounds["screenX"] ?? 0
+                    let screenY = bounds["screenY"] ?? 0
+                    let outerH = bounds["outerHeight"] ?? 0
+                    let innerH = bounds["innerHeight"] ?? 0
+                    let toolbarH = outerH - innerH
+                    let absX = screenX + x
+                    let absY = screenY + toolbarH + y
+                    _ = AccessibilityService.shared.clickAt(x: CGFloat(absX), y: CGFloat(absY))
+                    return "Clicked element via OS click at (\(Int(absX)),\(Int(absY))): \(selector)"
+                }
+            }
+        }
+
+        return "Error: could not click element: \(selector)"
     }
     
     private func executeJavaScriptType(selector: String, text: String, browser: String) async throws -> String {
