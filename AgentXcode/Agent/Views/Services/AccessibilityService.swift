@@ -9,19 +9,13 @@ final class AccessibilityService: @unchecked Sendable {
 
     // MARK: - Browser Detection
 
-    /// Bundle IDs of web browsers — accessibility doesn't work on web page content.
-    /// Use the `web` tool (JavaScript automation) for these apps instead.
+    /// Bundle IDs of browsers with native JavaScript automation via AppleScript `do JavaScript`.
+    /// Accessibility is blocked for these — use the `web` tool instead.
+    /// Other browsers (Chrome, Firefox, Edge, etc.) still use accessibility as a fallback
+    /// since they lack reliable AppleScript JS injection.
     private static let browserBundleIDs: Set<String> = [
         "com.apple.Safari",
         "com.apple.SafariTechnologyPreview",
-        "com.google.Chrome",
-        "com.google.Chrome.canary",
-        "org.mozilla.firefox",
-        "com.microsoft.edgemac",
-        "com.brave.Browser",
-        "com.operasoftware.Opera",
-        "com.vivaldi.Vivaldi",
-        "company.thebrowser.Browser",  // Arc
     ]
 
     /// Check if a bundle ID belongs to a web browser.
@@ -36,9 +30,9 @@ final class AccessibilityService: @unchecked Sendable {
         return browserBundleIDs.contains(bid)
     }
 
-    /// Standard error message when accessibility is used on a browser.
+    /// Standard error message when accessibility is used on Safari.
     static let browserRedirectMessage = """
-    {"success": false, "error": "Accessibility API does not work on web page content. Use the web tool with JavaScript automation instead. Examples: web(action: 'click', selector: '#myButton'), web(action: 'type', selector: 'input[name=email]', text: 'hello'), web(action: 'execute_js', script: 'document.title'), web(action: 'get_url'), web(action: 'get_title')."}
+    {"success": false, "error": "Accessibility API does not work on Safari web page content. Use the web tool with JavaScript automation instead. Examples: web(action: 'click', selector: '#myButton'), web(action: 'type', selector: 'input[name=email]', text: 'hello'), web(action: 'execute_js', script: 'document.title'), web(action: 'get_url'), web(action: 'get_title')."}
     """
 
     // MARK: - Window Listing
