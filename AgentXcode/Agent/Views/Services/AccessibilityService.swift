@@ -75,8 +75,15 @@ final class AccessibilityService: @unchecked Sendable {
             
             results.append(windowInfo)
         }
-        
-        return successJSON(["windows": results, "count": results.count])
+
+        // If Safari is in the window list, hint the LLM to use the web tool for page content
+        let hasSafari = results.contains { ($0["ownerName"] as? String) == "Safari" }
+        var response: [String: Any] = ["windows": results, "count": results.count]
+        if hasSafari {
+            response["hint"] = "Safari detected. To read or interact with web page content, use the web tool: web(action: 'execute_js', script: 'document.body.innerText'), web(action: 'get_url'), web(action: 'get_title'), web(action: 'click', selector: '...'), web(action: 'type', selector: '...', text: '...'). The accessibility tool cannot access web page DOM elements."
+        }
+
+        return successJSON(response)
     }
     
     // MARK: - Element Inspection
