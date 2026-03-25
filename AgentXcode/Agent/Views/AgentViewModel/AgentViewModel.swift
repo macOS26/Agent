@@ -159,6 +159,17 @@ final class AgentViewModel {
         return .yellow
     }
 
+    /// Tool icon color reflecting tool accessibility
+    var toolsIconColor: Color {
+        let prefs = ToolPreferencesService.shared
+        let all = AgentTools.tools(for: selectedProvider)
+        let enabledCount = all.filter { prefs.isEnabled(selectedProvider, $0.name) }.count
+        if enabledCount == 0 { return .red }
+        if !userEnabled { return .yellow }
+        if !rootEnabled { return .orange }
+        return .green
+    }
+
     /// Tooltip for the gear icon
     var servicesGearHelp: String {
         let userStatus = userPingOK ? "connected" : (userEnabled ? "not responding" : "disabled")

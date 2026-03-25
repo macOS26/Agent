@@ -135,7 +135,7 @@ struct HeaderToolbarButtons: View {
 
         Button { showTools.toggle() } label: {
             Image(systemName: "wrench.and.screwdriver")
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(viewModel.toolsIconColor)
         }
         .popover(isPresented: $showTools) {
             ToolsView(selectedProvider: $viewModel.selectedProvider, viewModel: viewModel)
