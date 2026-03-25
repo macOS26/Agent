@@ -78,6 +78,9 @@ extension AgentViewModel {
         tab.isLLMRunning = true
         tabTaskLog.info("[\(tab.displayTitle)] executeTabTask started: \(prompt.prefix(80))")
 
+        var commandsRun: [String] = []
+        var completionSummary = ""
+
         tab.appendLog("--- Tab Task ---")
         tab.appendLog("User: \(prompt)")
         tab.flush()
@@ -311,11 +314,17 @@ extension AgentViewModel {
                         // Expand consolidated CRUDL tools into legacy tool names
                         let (name, input) = Self.expandConsolidatedTool(name: rawName, input: rawInput)
 
+                        commandsRun.append(name)
+                        if name == "task_complete" {
+                            completionSummary = input["summary"] as? String ?? "Done"
+                        }
                         let result = await handleTabToolCall(
                             tab: tab, name: name, input: input, toolId: toolId
                         )
                         if result.isComplete {
                             tab.llmMessages = messages
+                            // Save task history for tab
+                            history.add(TaskRecord(prompt: prompt, summary: completionSummary, commandsRun: commandsRun), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
                             tab.isLLMRunning = false
                             tab.isLLMThinking = false
                             return
@@ -339,12 +348,18 @@ extension AgentViewModel {
                     if provider == .lmStudio && (lmStudioProtocol == .lmStudio || lmStudioProtocol == .anthropic) {
                         break
                     }
+                    // Check if this is a conversational text reply (no tools needed)
+                    let responseText = response.content.compactMap { $0["text"] as? String }.joined()
+                    let isConversational = Self.isConversationalReply(responseText, iteration: iterations)
+                    if isConversational {
+                        completionSummary = String(responseText.prefix(200))
+                        break
+                    }
                     consecutiveNoTool += 1
                     if consecutiveNoTool >= 3 {
                         tab.appendLog("LLM not calling tools after \(consecutiveNoTool) attempts — stopping.")
                         break
                     }
-                    // No tool use this iteration — just nudge and continue
                     messages.append(["role": "user", "content": "Continue. You MUST use tools — do not output code as text. Use agent (action: create/update) for scripts, write_file/edit_file for files. Call task_complete when finished."])
                     tab.llmMessages = messages
                 }
@@ -465,6 +480,12 @@ extension AgentViewModel {
         }
 
         tabTaskLog.info("[\(tab.displayTitle)] executeTabTask finished after \(iterations) iteration(s), cancelled=\(Task.isCancelled)")
+
+        // Save task history if task didn't call task_complete
+        if completionSummary.isEmpty {
+            let summary = Task.isCancelled ? "(cancelled)" : commandsRun.isEmpty ? "(no actions)" : "(incomplete)"
+            history.add(TaskRecord(prompt: prompt, summary: summary, commandsRun: commandsRun), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
+        }
 
         // If Messages tab task ended without task_complete, still send a reply
         if tab.isMessagesTab, let handle = tab.replyHandle {
