@@ -27,6 +27,7 @@ struct InputSectionView: View {
                     Button { viewModel.stopTabTask(tab: tab) } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(.red)
+                            .frame(width: 36)
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.regular)
@@ -34,13 +35,17 @@ struct InputSectionView: View {
                     .opacity(tab.isLLMRunning ? 1 : 0.3)
                     .disabled(!tab.isLLMRunning)
 
-                    Button("Run") { viewModel.runTabTask(tab: tab) }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.regular)
-                        .disabled(tab.taskInput.isEmpty || {
-                            let provider = tab.llmConfig?.provider ?? viewModel.selectedProvider
-                            return provider == .claude && viewModel.apiKey.isEmpty
-                        }())
+                    Button { viewModel.runTabTask(tab: tab) } label: {
+                        Image(systemName: "play.fill")
+                            .foregroundStyle(.white)
+                            .frame(width: 36)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.regular)
+                    .disabled(tab.taskInput.isEmpty || {
+                        let provider = tab.llmConfig?.provider ?? viewModel.selectedProvider
+                        return provider == .claude && viewModel.apiKey.isEmpty
+                    }())
                 }
             }
             .padding()
@@ -64,6 +69,7 @@ struct InputSectionView: View {
                     Button { viewModel.stop() } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(.red)
+                            .frame(width: 36)
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.regular)
@@ -71,10 +77,14 @@ struct InputSectionView: View {
                     .opacity(viewModel.isRunning || viewModel.isThinking ? 1 : 0.3)
                     .disabled(!viewModel.isRunning && !viewModel.isThinking)
 
-                    Button("Run") { viewModel.run() }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.regular)
-                        .disabled(viewModel.taskInput.isEmpty || (viewModel.selectedProvider == .claude && viewModel.apiKey.isEmpty))
+                    Button { viewModel.run() } label: {
+                        Image(systemName: "play.fill")
+                            .foregroundStyle(.white)
+                            .frame(width: 36)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.regular)
+                    .disabled(viewModel.taskInput.isEmpty || (viewModel.selectedProvider == .claude && viewModel.apiKey.isEmpty))
                 }
             }
             .padding()
