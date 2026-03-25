@@ -448,7 +448,10 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
         }
 
         // Safari: "open X", "go to X", "navigate to X" — open URL in Safari
+        // Also handle "use safari and open X", "use safari to open X" etc.
         let openPatterns = [
+            "use safari and open ", "use safari to open ", "use safari open ",
+            "in safari open ", "on safari open ", "safari open ",
             "open safari to ", "open safari ", "open in safari ",
             "go to ", "navigate to ", "visit ", "open webpage ",
             "open web page ", "open website ", "open page ",
@@ -497,6 +500,34 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
                     }
                     return DirectCommand(name: "safari_open", argument: firstToken)
                 }
+            }
+        }
+
+        // Fallback: scan entire prompt for a known site name or URL + optional search query
+        // Handles any phrasing like "use safari and open linkedin and search for X"
+        let words = lower.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
+        for (i, word) in words.enumerated() {
+            let resolved = Self.resolveSiteName(word)
+            let isURL = resolved.contains(".") || resolved.hasPrefix("http")
+            if isURL {
+                // Check for search query anywhere after the URL word
+                let afterWords = words.dropFirst(i + 1).joined(separator: " ")
+                let searchPrefixes = ["and search for ", "and look for ", "and find ", "search for ", "look for ", "find ", "search "]
+                for sp in searchPrefixes {
+                    if let range = afterWords.range(of: sp) {
+                        var searchQuery = String(afterWords[range.upperBound...]).trimmingCharacters(in: .whitespaces)
+                        // Strip noise
+                        for suffix in [" on this page", " on the page", " on safari", " in safari", " and click see all results", " and click see all", " then click"] {
+                            if searchQuery.lowercased().hasSuffix(suffix) {
+                                searchQuery = String(searchQuery.dropLast(suffix.count)).trimmingCharacters(in: .whitespaces)
+                            }
+                        }
+                        if !searchQuery.isEmpty {
+                            return DirectCommand(name: "safari_open_and_search", argument: "\(resolved)|||\(searchQuery)")
+                        }
+                    }
+                }
+                return DirectCommand(name: "safari_open", argument: resolved)
             }
         }
 
