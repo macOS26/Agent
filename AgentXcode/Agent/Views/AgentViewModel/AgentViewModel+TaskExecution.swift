@@ -189,10 +189,9 @@ extension AgentViewModel {
                 messages.append(["role": "user", "content": "Summarize this web page for the user. Show the title, URL, and key content:\n\n\(output)"])
                 break  // Fall through to LLM loop
             }
+            // safari_open completes immediately — no LLM needed
             if cmd.name == "safari_open" {
-                taskLog.info("[main] safari_open done — passing to LLM")
-                messages.append(["role": "user", "content": "I opened the page. \(output). Now tell the user it's open and describe what you see if relevant."])
-                break  // Fall through to LLM loop
+                appendLog("✅ \(output)")
             }
 
             completionSummary = "Executed \(cmd.name)"
