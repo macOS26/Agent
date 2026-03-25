@@ -40,7 +40,6 @@ struct ProjectFolderField: View {
                     .font(.system(size: 11))
                     .textFieldStyle(.plain)
                     .padding(.horizontal, 8)
-                    .padding(.vertical, 6)
                     .background(Color(white: 0.12))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                     .focusEffectDisabled()
