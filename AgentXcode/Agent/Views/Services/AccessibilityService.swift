@@ -1716,6 +1716,278 @@ final class AccessibilityService: @unchecked Sendable {
         return errorJSON("Window \(windowId) not found")
     }
     
+    // MARK: - Menu Bar Navigation
+
+    /// Click a menu item by path, e.g. ["File", "Save"] or ["Edit", "Find", "Find..."]
+    func clickMenuItem(appBundleId: String?, menuPath: [String]) -> String {
+        guard Self.hasAccessibilityPermission() else {
+            return errorJSON("Accessibility permission required.")
+        }
+        Self.logAudit("clickMenuItem(app: \(appBundleId ?? "frontmost"), path: \(menuPath.joined(separator: " > ")))")
+        guard !menuPath.isEmpty else { return errorJSON("Menu path cannot be empty") }
+
+        let pid: pid_t
+        if let bundleId = appBundleId {
+            guard let app = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == bundleId }) else {
+                return errorJSON("App not found: \(bundleId)")
+            }
+            pid = app.processIdentifier
+        } else {
+            guard let app = NSWorkspace.shared.frontmostApplication else {
+                return errorJSON("No frontmost app")
+            }
+            pid = app.processIdentifier
+        }
+
+        let appElement = AXUIElementCreateApplication(pid)
+        var menuBarRef: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(appElement, kAXMenuBarAttribute as CFString, &menuBarRef) == .success else {
+            return errorJSON("Could not access menu bar")
+        }
+
+        var current = menuBarRef as! AXUIElement
+        for (i, menuName) in menuPath.enumerated() {
+            var childrenRef: CFTypeRef?
+            guard AXUIElementCopyAttributeValue(current, kAXChildrenAttribute as CFString, &childrenRef) == .success,
+                  let children = childrenRef as? [AXUIElement] else {
+                return errorJSON("Could not get children at level \(i)")
+            }
+            var found = false
+            for child in children {
+                var titleRef: CFTypeRef?
+                if AXUIElementCopyAttributeValue(child, kAXTitleAttribute as CFString, &titleRef) == .success,
+                   let title = titleRef as? String, title == menuName {
+                    if i == menuPath.count - 1 {
+                        // Last item — press it
+                        let err = AXUIElementPerformAction(child, kAXPressAction as CFString)
+                        if err == .success {
+                            return successJSON(["message": "Clicked menu: \(menuPath.joined(separator: " > "))"])
+                        } else {
+                            return errorJSON("Failed to press menu item: \(menuName)")
+                        }
+                    } else {
+                        // Intermediate — open submenu
+                        AXUIElementPerformAction(child, kAXPressAction as CFString)
+                        Thread.sleep(forTimeInterval: 0.15)
+                        // Get the submenu children
+                        var subRef: CFTypeRef?
+                        if AXUIElementCopyAttributeValue(child, kAXChildrenAttribute as CFString, &subRef) == .success,
+                           let subs = subRef as? [AXUIElement], let first = subs.first {
+                            current = first
+                        } else {
+                            current = child
+                        }
+                        found = true
+                        break
+                    }
+                }
+            }
+            if !found && i < menuPath.count - 1 {
+                return errorJSON("Menu '\(menuName)' not found at level \(i)")
+            }
+        }
+        return errorJSON("Menu item not found: \(menuPath.joined(separator: " > "))")
+    }
+
+    // MARK: - Window Move / Resize
+
+    /// Move and/or resize a window by app bundle ID
+    func setWindowFrame(appBundleId: String?, x: CGFloat?, y: CGFloat?, width: CGFloat?, height: CGFloat?) -> String {
+        guard Self.hasAccessibilityPermission() else {
+            return errorJSON("Accessibility permission required.")
+        }
+        Self.logAudit("setWindowFrame(app: \(appBundleId ?? "frontmost"), x: \(x ?? -1), y: \(y ?? -1), w: \(width ?? -1), h: \(height ?? -1))")
+
+        let pid: pid_t
+        if let bundleId = appBundleId {
+            guard let app = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == bundleId }) else {
+                return errorJSON("App not found: \(bundleId)")
+            }
+            pid = app.processIdentifier
+        } else {
+            guard let app = NSWorkspace.shared.frontmostApplication else { return errorJSON("No frontmost app") }
+            pid = app.processIdentifier
+        }
+
+        let appElement = AXUIElementCreateApplication(pid)
+        var windowsRef: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(appElement, kAXWindowsAttribute as CFString, &windowsRef) == .success,
+              let windows = windowsRef as? [AXUIElement], let window = windows.first else {
+            return errorJSON("No windows found")
+        }
+
+        // Move
+        if let x, let y {
+            var point = CGPoint(x: x, y: y)
+            if let posValue = AXValueCreate(.cgPoint, &point) {
+                AXUIElementSetAttributeValue(window, kAXPositionAttribute as CFString, posValue)
+            }
+        }
+
+        // Resize
+        if let width, let height {
+            var size = CGSize(width: width, height: height)
+            if let sizeValue = AXValueCreate(.cgSize, &size) {
+                AXUIElementSetAttributeValue(window, kAXSizeAttribute as CFString, sizeValue)
+            }
+        }
+
+        return successJSON(["message": "Window frame updated"])
+    }
+
+    // MARK: - App Launch / Activate / Quit
+
+    /// Launch, activate, or quit an app by bundle ID or name
+    func manageApp(action: String, bundleId: String?, name: String?) -> String {
+        Self.logAudit("manageApp(action: \(action), bundleId: \(bundleId ?? "nil"), name: \(name ?? "nil"))")
+
+        switch action {
+        case "launch":
+            if let bid = bundleId, let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bid) {
+                let config = NSWorkspace.OpenConfiguration()
+                NSWorkspace.shared.openApplication(at: url, configuration: config)
+                return successJSON(["message": "Launched \(bid)"])
+            } else if let n = name {
+                let url = URL(fileURLWithPath: "/Applications/\(n).app")
+                if FileManager.default.fileExists(atPath: url.path) {
+                    NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
+                    return successJSON(["message": "Launched \(n)"])
+                }
+                return errorJSON("App not found: \(n)")
+            }
+            return errorJSON("Specify bundleId or name")
+
+        case "activate":
+            if let bid = bundleId,
+               let app = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == bid }) {
+                app.activate()
+                return successJSON(["message": "Activated \(bid)"])
+            } else if let n = name,
+                      let app = NSWorkspace.shared.runningApplications.first(where: { $0.localizedName == n }) {
+                app.activate()
+                return successJSON(["message": "Activated \(n)"])
+            }
+            return errorJSON("App not running")
+
+        case "quit":
+            if let bid = bundleId,
+               let app = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == bid }) {
+                app.terminate()
+                return successJSON(["message": "Quit \(bid)"])
+            } else if let n = name,
+                      let app = NSWorkspace.shared.runningApplications.first(where: { $0.localizedName == n }) {
+                app.terminate()
+                return successJSON(["message": "Quit \(n)"])
+            }
+            return errorJSON("App not running")
+
+        case "list":
+            let apps = NSWorkspace.shared.runningApplications
+                .filter { $0.activationPolicy == .regular }
+                .map { "\($0.localizedName ?? "?") — \($0.bundleIdentifier ?? "?")\($0.isActive ? " (active)" : "")" }
+            return successJSON(["apps": apps])
+
+        default:
+            return errorJSON("Unknown action: \(action). Use launch, activate, quit, or list.")
+        }
+    }
+
+    // MARK: - Scroll to AX Element
+
+    /// Scroll within an app until an element with the given role/title becomes visible
+    func scrollToElement(role: String?, title: String?, appBundleId: String?, maxScrolls: Int = 20) -> String {
+        guard Self.hasAccessibilityPermission() else {
+            return errorJSON("Accessibility permission required.")
+        }
+        Self.logAudit("scrollToElement(role: \(role ?? "nil"), title: \(title ?? "nil"), app: \(appBundleId ?? "nil"))")
+
+        // Check if already visible
+        let existing = findElement(role: role, title: title, value: nil, appBundleId: appBundleId, timeout: 0.5)
+        if existing.contains("\"success\": true") {
+            return successJSON(["message": "Element already visible", "scrolls": 0])
+        }
+
+        // Get the frontmost window's center for scroll events
+        let pid: pid_t
+        if let bundleId = appBundleId,
+           let app = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == bundleId }) {
+            pid = app.processIdentifier
+        } else if let app = NSWorkspace.shared.frontmostApplication {
+            pid = app.processIdentifier
+        } else {
+            return errorJSON("No app to scroll in")
+        }
+
+        let appElement = AXUIElementCreateApplication(pid)
+        var windowsRef: CFTypeRef?
+        var scrollX: CGFloat = 400
+        var scrollY: CGFloat = 400
+        if AXUIElementCopyAttributeValue(appElement, kAXWindowsAttribute as CFString, &windowsRef) == .success,
+           let windows = windowsRef as? [AXUIElement], let window = windows.first {
+            var posRef: CFTypeRef?
+            var sizeRef: CFTypeRef?
+            if AXUIElementCopyAttributeValue(window, kAXPositionAttribute as CFString, &posRef) == .success,
+               AXUIElementCopyAttributeValue(window, kAXSizeAttribute as CFString, &sizeRef) == .success {
+                var pos = CGPoint.zero
+                var size = CGSize.zero
+                if let pv = posRef, CFGetTypeID(pv) == AXValueGetTypeID() { AXValueGetValue(pv as! AXValue, .cgPoint, &pos) }
+                if let sv = sizeRef, CFGetTypeID(sv) == AXValueGetTypeID() { AXValueGetValue(sv as! AXValue, .cgSize, &size) }
+                scrollX = pos.x + size.width / 2
+                scrollY = pos.y + size.height / 2
+            }
+        }
+
+        for i in 0..<maxScrolls {
+            _ = scrollAt(x: scrollX, y: scrollY, deltaX: 0, deltaY: -5)
+            Thread.sleep(forTimeInterval: 0.3)
+            let check = findElement(role: role, title: title, value: nil, appBundleId: appBundleId, timeout: 0.3)
+            if check.contains("\"success\": true") {
+                return successJSON(["message": "Found element after scrolling", "scrolls": i + 1])
+            }
+        }
+
+        return errorJSON("Element not found after \(maxScrolls) scrolls")
+    }
+
+    // MARK: - Read Focused Element
+
+    /// Read the value/text of the currently focused UI element
+    func readFocusedElement(appBundleId: String? = nil) -> String {
+        guard Self.hasAccessibilityPermission() else {
+            return errorJSON("Accessibility permission required.")
+        }
+        Self.logAudit("readFocusedElement(app: \(appBundleId ?? "frontmost"))")
+
+        let pid: pid_t
+        if let bundleId = appBundleId,
+           let app = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == bundleId }) {
+            pid = app.processIdentifier
+        } else if let app = NSWorkspace.shared.frontmostApplication {
+            pid = app.processIdentifier
+        } else {
+            return errorJSON("No frontmost app")
+        }
+
+        let appElement = AXUIElementCreateApplication(pid)
+        var focusedRef: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(appElement, kAXFocusedUIElementAttribute as CFString, &focusedRef) == .success else {
+            return errorJSON("No focused element")
+        }
+        let focused = focusedRef as! AXUIElement
+
+        var result: [String: Any] = [:]
+        var ref: CFTypeRef?
+        if AXUIElementCopyAttributeValue(focused, kAXRoleAttribute as CFString, &ref) == .success { result["role"] = ref as? String }
+        if AXUIElementCopyAttributeValue(focused, kAXTitleAttribute as CFString, &ref) == .success { result["title"] = ref as? String }
+        if AXUIElementCopyAttributeValue(focused, kAXValueAttribute as CFString, &ref) == .success {
+            if let val = ref as? String { result["value"] = val }
+        }
+        if AXUIElementCopyAttributeValue(focused, kAXDescriptionAttribute as CFString, &ref) == .success { result["description"] = ref as? String }
+        if AXUIElementCopyAttributeValue(focused, kAXPlaceholderValueAttribute as CFString, &ref) == .success { result["placeholder"] = ref as? String }
+
+        return successJSON(result)
+    }
+
     // MARK: - Audit Logging (Phase 5)
     
     private static nonisolated(unsafe) var auditLog: [String] = []
