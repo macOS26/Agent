@@ -330,7 +330,7 @@ extension AgentViewModel {
                         break
                     }
                     // No tool use this iteration — just nudge and continue
-                    messages.append(["role": "user", "content": "Continue. You MUST use tools — do not output code as text. Use agent_script (action: create/update) for scripts, write_file/edit_file for files. Call task_complete when finished."])
+                    messages.append(["role": "user", "content": "Continue. You MUST use tools — do not output code as text. Use agent (action: create/update) for scripts, write_file/edit_file for files. Call task_complete when finished."])
                     tab.llmMessages = messages
                 }
 

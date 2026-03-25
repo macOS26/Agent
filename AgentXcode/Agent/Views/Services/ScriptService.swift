@@ -325,7 +325,7 @@ final class ScriptService {
 
 
     /// Copy bundled scripts that don't already exist (preserve user modifications)
-    /// Skips scripts the user has explicitly deleted via delete_agent_script.
+    /// Skips scripts the user has explicitly deleted via delete_agent.
     private func installNewScripts() {
         let fm = FileManager.default
 
@@ -413,7 +413,7 @@ final class ScriptService {
         let fm = FileManager.default
 
         if fm.fileExists(atPath: scriptFile.path) {
-            return "Error: script '\(scriptName)' already exists. Use update_agent_script to modify it."
+            return "Error: script '\(scriptName)' already exists. Use update_agent to modify it."
         }
 
         let final = stripShebang(content)
@@ -439,7 +439,7 @@ final class ScriptService {
         let fm = FileManager.default
 
         if !fm.fileExists(atPath: scriptFile.path) {
-            return "Error: script '\(scriptName)' not found. Use create_agent_script to create it."
+            return "Error: script '\(scriptName)' not found. Use create_agent to create it."
         }
 
         let final = stripShebang(content)

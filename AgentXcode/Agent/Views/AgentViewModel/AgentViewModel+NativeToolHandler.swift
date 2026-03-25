@@ -65,11 +65,11 @@ extension AgentViewModel {
         }
 
         // Script management
-        if name == "list_agent_scripts" {
+        if name == "list_agents" {
             let scripts = scriptService.listScripts()
             return scripts.isEmpty ? "No scripts found" : scripts.map { "\($0.name) (\($0.size) bytes)" }.joined(separator: "\n")
         }
-        if name == "run_agent_script" {
+        if name == "run_agent" {
             let scriptName = input["name"] as? String ?? ""
             guard let cmd = scriptService.compileCommand(name: scriptName) else {
                 return "Error: script '\(scriptName)' not found"
@@ -81,16 +81,16 @@ extension AgentViewModel {
             let result = await Self.executeTCC(command: fullCmd)
             return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
         }
-        if name == "read_agent_script" {
+        if name == "read_agent" {
             return scriptService.readScript(name: input["name"] as? String ?? "") ?? "Not found"
         }
-        if name == "create_agent_script" || name == "update_agent_script" {
+        if name == "create_agent" || name == "update_agent" {
             return scriptService.createScript(name: input["name"] as? String ?? "", content: input["content"] as? String ?? "")
         }
-        if name == "delete_agent_script" {
+        if name == "delete_agent" {
             return scriptService.deleteScript(name: input["name"] as? String ?? "")
         }
-        if name == "combine_agent_scripts" {
+        if name == "combine_agents" {
             let sourceA = input["source_a"] as? String ?? ""
             let sourceB = input["source_b"] as? String ?? ""
             let target = input["target"] as? String ?? ""

@@ -39,7 +39,7 @@ extension AgentViewModel {
             - run_applescript, run_osascript: Execute AppleScript with full TCC permissions
             - execute_javascript: JavaScript for Automation (JXA)
             - apple_event_query: Query scriptable apps via Apple Events
-            - run_agent_script: Compile and run Swift automation scripts
+            - run_agent: Compile and run Swift automation scripts
             
             ACCESSIBILITY TOOLS:
             - ax_click, ax_type_text, ax_press_key: Simulate user input

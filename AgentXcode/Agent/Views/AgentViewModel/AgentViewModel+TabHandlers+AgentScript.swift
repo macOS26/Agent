@@ -12,7 +12,7 @@ extension AgentViewModel {
     ) async -> TabToolResult {
 
         switch name {
-        case "list_agent_scripts":
+        case "list_agents":
             let scripts = scriptService.listScripts()
             let output = scripts.isEmpty
                 ? "No scripts found" : scripts.map { "\($0.name) (\($0.size) bytes)" }.joined(separator: "\n")
@@ -23,7 +23,7 @@ extension AgentViewModel {
                 isComplete: false
             )
 
-        case "read_agent_script":
+        case "read_agent":
             let scriptName = input["name"] as? String ?? ""
             let output = scriptService.readScript(name: scriptName) ?? "Error: script '\(scriptName)' not found."
             tab.appendLog("📖 Read: \(scriptName)")
@@ -34,7 +34,7 @@ extension AgentViewModel {
                 isComplete: false
             )
 
-        case "create_agent_script":
+        case "create_agent":
             let scriptName = input["name"] as? String ?? ""
             let content = input["content"] as? String ?? ""
             let output = scriptService.createScript(name: scriptName, content: content)
@@ -45,7 +45,7 @@ extension AgentViewModel {
                 isComplete: false
             )
 
-        case "update_agent_script":
+        case "update_agent":
             let scriptName = input["name"] as? String ?? ""
             let content = input["content"] as? String ?? ""
             let output = scriptService.updateScript(name: scriptName, content: content)
@@ -56,7 +56,7 @@ extension AgentViewModel {
                 isComplete: false
             )
 
-        case "delete_agent_script":
+        case "delete_agent":
             let scriptName = input["name"] as? String ?? ""
             let output = scriptService.deleteScript(name: scriptName)
             tab.appendLog(output)
@@ -66,7 +66,7 @@ extension AgentViewModel {
                 isComplete: false
             )
 
-        case "combine_agent_scripts":
+        case "combine_agents":
             let sourceA = input["source_a"] as? String ?? ""
             let sourceB = input["source_b"] as? String ?? ""
             let target = input["target"] as? String ?? ""
@@ -95,7 +95,7 @@ extension AgentViewModel {
             tab.flush()
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
 
-        case "run_agent_script":
+        case "run_agent":
             let scriptName = input["name"] as? String ?? ""
             let arguments = input["arguments"] as? String ?? ""
             guard let compileCmd = scriptService.compileCommand(name: scriptName) else {

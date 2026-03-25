@@ -672,7 +672,7 @@ extension AgentViewModel {
 
 
                         // Script management tools
-                        if name == "list_agent_scripts" {
+                        if name == "list_agents" {
                             let scripts = scriptService.listScripts()
                             let output: String
                             if scripts.isEmpty {
@@ -684,7 +684,7 @@ extension AgentViewModel {
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
-                        if name == "read_agent_script" {
+                        if name == "read_agent" {
                             let scriptName = input["name"] as? String ?? ""
                             let output = scriptService.readScript(name: scriptName) ?? "Error: script '\(scriptName)' not found."
                             appendLog("📖 Read: \(scriptName)")
@@ -692,7 +692,7 @@ extension AgentViewModel {
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
-                        if name == "create_agent_script" {
+                        if name == "create_agent" {
                             let scriptName = input["name"] as? String ?? ""
                             let content = input["content"] as? String ?? ""
                             let output = scriptService.createScript(name: scriptName, content: content)
@@ -700,7 +700,7 @@ extension AgentViewModel {
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
-                        if name == "update_agent_script" {
+                        if name == "update_agent" {
                             let scriptName = input["name"] as? String ?? ""
                             let content = input["content"] as? String ?? ""
                             let output = scriptService.updateScript(name: scriptName, content: content)
@@ -708,14 +708,14 @@ extension AgentViewModel {
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
-                        if name == "delete_agent_script" {
+                        if name == "delete_agent" {
                             let scriptName = input["name"] as? String ?? ""
                             let output = scriptService.deleteScript(name: scriptName)
                             appendLog(output)
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
-                        if name == "combine_agent_scripts" {
+                        if name == "combine_agents" {
                             let sourceA = input["source_a"] as? String ?? ""
                             let sourceB = input["source_b"] as? String ?? ""
                             let target = input["target"] as? String ?? ""
@@ -748,7 +748,7 @@ extension AgentViewModel {
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
-                        if name == "run_agent_script" {
+                        if name == "run_agent" {
                             let scriptName = input["name"] as? String ?? ""
                             let arguments = input["arguments"] as? String ?? ""
                             guard let compileCmd = scriptService.compileCommand(name: scriptName) else {
@@ -1732,7 +1732,7 @@ extension AgentViewModel {
                         break
                     }
                     // No tool use this iteration — just nudge and continue
-                    messages.append(["role": "user", "content": "Continue. You MUST use tools — do not output code as text. Use agent_script (action: create/update) for scripts, write_file/edit_file for files. Call task_complete when finished."])
+                    messages.append(["role": "user", "content": "Continue. You MUST use tools — do not output code as text. Use agent (action: create/update) for scripts, write_file/edit_file for files. Call task_complete when finished."])
                 }
 
             } catch {

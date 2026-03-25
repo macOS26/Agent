@@ -68,15 +68,15 @@ enum AgentTools {
         static let axHighlightElement = "ax_highlight_element"
         static let axGetWindowFrame = "ax_get_window_frame"
         // Agent Script (consolidated CRUDL)
-        static let agentScript = "agent_script"
-        // Legacy agent script names (handlers still work)
-        static let listAgentScripts = "list_agent_scripts"
-        static let readAgentScript = "read_agent_script"
-        static let createAgentScript = "create_agent_script"
-        static let updateAgentScript = "update_agent_script"
-        static let runAgentScript = "run_agent_script"
-        static let deleteAgentScript = "delete_agent_script"
-        static let combineAgentScripts = "combine_agent_scripts"
+        static let agentScript = "agent"
+        // Agent action names (expanded from consolidated "agent" tool)
+        static let listAgentScripts = "list_agents"
+        static let readAgentScript = "read_agent"
+        static let createAgentScript = "create_agent"
+        static let updateAgentScript = "update_agent"
+        static let runAgentScript = "run_agent"
+        static let deleteAgentScript = "delete_agent"
+        static let combineAgentScripts = "combine_agents"
         // SDEF
         static let lookupSdef = "lookup_sdef"
         // Xcode (consolidated CRUDL)
@@ -143,12 +143,12 @@ enum AgentTools {
         return """
         You are an autonomous macOS agent. User: "\(userName)", home: "\(userHome)". Project: \(folder).
         Call task_complete when done. Don't repeat stdout. Don't ask — just act.
-        NEVER output code as text — use write_file/edit_file for files, agent_script (action: create/update) for scripts.
+        NEVER output code as text — use write_file/edit_file for files, agent (action: create/update) for scripts.
 
         DIRECT TOOLS (no action parameter): read_file, write_file, edit_file, create_diff, apply_diff, list_files, search_files, read_dir, task_complete, execute_agent_command, execute_daemon_command, apple_event_query.
         ACTION TOOLS (require "action" parameter):
         file_manager: read, write, edit, list, search, read_dir, if_to_switch, extract_function | git: status, diff, log, commit, diff_patch, branch
-        xcode: build, run, list_projects, select_project, add_file, remove_file | agent_script: list, read, create, update, run, delete, combine
+        xcode: build, run, list_projects, select_project, add_file, remove_file | agent: list, read, create, update, run, delete, combine
         plan_mode: create, update, read, list, delete | applescript_tool: execute, lookup_sdef, list, run, save, delete
         javascript_tool: execute, list, run, save, delete | accessibility: list_windows, get_properties, perform_action, type_text, click, press_key, screenshot, set_properties, find_element, get_children
         web: open, find, click, type, execute_js, get_url, get_title | selenium: start, stop, navigate, find, click, type, execute, screenshot, wait
@@ -231,13 +231,13 @@ enum AgentTools {
         Name.gitStatus:            #"git_status {"path": "/Users/toddbruss/Documents/GitHub/MyRepo"}"#,
         Name.gitCommit:            #"git_commit {"path": "/Users/toddbruss/Documents/GitHub/MyRepo", "message": "fix: update"}"#,
         Name.appleEventQuery:      #"apple_event_query {"bundle_id": "com.apple.Music", "action": "get", "key": "currentTrack"}"#,
-        Name.runAgentScript:       #"run_agent_script {"name": "MyScript"}"#,
-        Name.listAgentScripts:     "list_agent_scripts",
-        Name.readAgentScript:      #"read_agent_script {"name": "MyScript"}"#,
-        Name.createAgentScript:    #"create_agent_script {"name": "MyScript", "content": "..."}"#,
-        Name.updateAgentScript:    #"update_agent_script {"name": "MyScript", "content": "..."}"#,
-        Name.deleteAgentScript:    #"delete_agent_script {"name": "MyScript"}"#,
-        Name.combineAgentScripts:  #"combine_agent_scripts {"source_a": "ScriptA", "source_b": "ScriptB", "target": "Combined"}"#,
+        Name.runAgentScript:       #"run_agent {"name": "MyScript"}"#,
+        Name.listAgentScripts:     "list_agents",
+        Name.readAgentScript:      #"read_agent {"name": "MyScript"}"#,
+        Name.createAgentScript:    #"create_agent {"name": "MyScript", "content": "..."}"#,
+        Name.updateAgentScript:    #"update_agent {"name": "MyScript", "content": "..."}"#,
+        Name.deleteAgentScript:    #"delete_agent {"name": "MyScript"}"#,
+        Name.combineAgentScripts:  #"combine_agents {"source_a": "ScriptA", "source_b": "ScriptB", "target": "Combined"}"#,
         Name.lookupSdef:           #"lookup_sdef {"bundle_id": "com.apple.Music"}"#,
         Name.xcodeBuild:           #"xcode_build {"project_path": "/path/to/MyApp.xcodeproj"}"#,
         Name.xcodeListProjects:    "xcode_list_projects",

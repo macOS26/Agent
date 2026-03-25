@@ -7,7 +7,7 @@ extension AgentViewModel {
 
     // MARK: - Consolidated Tool Expansion
 
-    /// Expands consolidated CRUDL tool names (git, agent_script, applescript_tool, javascript_tool)
+    /// Expands consolidated CRUDL tool names (git, agent, applescript_tool, javascript_tool)
     /// into legacy tool names so existing handlers work unchanged.
     static func expandConsolidatedTool(name: String, input: [String: Any]) -> (String, [String: Any]) {
         let action = input["action"] as? String ?? ""
@@ -25,16 +25,16 @@ extension AgentViewModel {
             default:           return ("git_status", newInput)
             }
 
-        case "agent_script":
+        case "agent":
             switch action {
-            case "list":    return ("list_agent_scripts", newInput)
-            case "read":    return ("read_agent_script", newInput)
-            case "create":  return ("create_agent_script", newInput)
-            case "update":  return ("update_agent_script", newInput)
-            case "run":     return ("run_agent_script", newInput)
-            case "delete":  return ("delete_agent_script", newInput)
-            case "combine": return ("combine_agent_scripts", newInput)
-            default:        return ("list_agent_scripts", newInput)
+            case "list":    return ("list_agents", newInput)
+            case "read":    return ("read_agent", newInput)
+            case "create":  return ("create_agent", newInput)
+            case "update":  return ("update_agent", newInput)
+            case "run":     return ("run_agent", newInput)
+            case "delete":  return ("delete_agent", newInput)
+            case "combine": return ("combine_agents", newInput)
+            default:        return ("list_agents", newInput)
             }
 
         case "applescript_tool":
