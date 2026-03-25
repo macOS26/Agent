@@ -17,10 +17,11 @@ struct InputSectionView: View {
                         
                 ), axis: .vertical)
                     .textFieldStyle(.plain)
-                    .padding(5)
+                    .padding(.vertical, 5)
+                    .padding(.horizontal, 7)
                     .background(Color(nsColor: .controlBackgroundColor))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.4), lineWidth: 1))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.gray.opacity(0.4), lineWidth: 1))
                     .lineLimit(2...16)
                     .onSubmit {
                         if !tab.taskInput.isEmpty {
@@ -66,10 +67,11 @@ struct InputSectionView: View {
                 TextField("Enter task...", text: $viewModel.taskInput, axis: .vertical)
                     .focused($isTaskFieldFocused)
                     .textFieldStyle(.plain)
-                    .padding(5)
+                    .padding(.vertical, 5)
+                    .padding(.horizontal, 7)
                     .background(Color(nsColor: .controlBackgroundColor))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.4), lineWidth: 1))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.gray.opacity(0.4), lineWidth: 1))
                     .lineLimit(2...16)
                     .onSubmit {
                         if !viewModel.taskInput.isEmpty {
