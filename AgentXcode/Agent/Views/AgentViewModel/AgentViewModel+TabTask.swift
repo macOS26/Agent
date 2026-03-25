@@ -116,6 +116,12 @@ extension AgentViewModel {
                     break  // Fall through to LLM loop
                 }
             }
+            // safari_open_and_search: pass search results page to LLM
+            if cmd.name == "safari_open_and_search" {
+                tabTaskLog.info("[\(tab.displayTitle)] safari_open_and_search — passing results to LLM")
+                directCommandContext = "I opened the page and searched. Here are the results:\n\n\(output)\n\nOriginal request: \(prompt)\n\nSummarize the results or continue with any remaining instructions. Use safari tool for further interaction."
+                break
+            }
             // google_search with results: pass to LLM for formatting
             if cmd.name == "google_search" && output.contains("\"success\": true") {
                 tabTaskLog.info("[\(tab.displayTitle)] google_search succeeded — passing to LLM")
