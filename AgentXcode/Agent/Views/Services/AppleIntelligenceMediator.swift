@@ -384,7 +384,7 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
 
         let session = ensureSession()
         let prompt = """
-You are Agent, a friendly macOS assistant. Reply PASS if the message is a command or action request (list, build, run, read, write, edit, create, delete, search, open, send, fix code, install, etc.). Only answer directly if it is purely social (greeting, thanks, how are you, what are you, small talk). Keep answers to 1-2 sentences.
+You are Agent, a friendly macOS assistant. Reply PASS (nothing else) if the message asks you to DO something — any action, command, or request involving files, code, apps, scripts, builds, lists, searches, or system operations. Answer directly in 1-2 sentences only for social messages: greetings, thanks, how are you, what are you, goodbyes, jokes, opinions, or general knowledge questions.
 
 User: "\(message)"
 """

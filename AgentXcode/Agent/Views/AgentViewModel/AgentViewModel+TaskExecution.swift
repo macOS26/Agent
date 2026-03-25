@@ -1910,8 +1910,8 @@ extension AgentViewModel {
             appendLog("Reached maximum iterations (\(maxIterations))")
         }
 
-        // Apple Intelligence: suggest next steps after completion
-        if mediator.isEnabled && mediator.showAnnotationsToUser && !completionSummary.isEmpty {
+        // Apple Intelligence: suggest next steps after completion (skip for pure conversation)
+        if mediator.isEnabled && mediator.showAnnotationsToUser && !completionSummary.isEmpty && !commandsRun.isEmpty {
             taskLog.info("[main] Apple AI mediator: suggesting next steps...")
             let context = "Task: \(prompt)\nResult: \(completionSummary)\nCommands: \(commandsRun.joined(separator: ", "))"
             if let nextSteps = await mediator.suggestNextSteps(context: context) {
