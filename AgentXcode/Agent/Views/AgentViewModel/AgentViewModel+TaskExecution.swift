@@ -177,6 +177,14 @@ extension AgentViewModel {
             taskLog.info("[main] Direct command: \(cmd.name) arg=\(cmd.argument)")
             let output = await executeDirectCommand(cmd)
             flushLog()
+
+            // For google_search, pass results to LLM for formatting
+            if cmd.name == "google_search" && output.contains("\"success\": true") {
+                taskLog.info("[main] google_search succeeded — passing to LLM for formatting")
+                messages.append(["role": "user", "content": "Format these Google search results for the user. Be concise — show the top results with titles, URLs, and brief descriptions:\n\n\(output)"])
+                break  // Fall through to LLM loop
+            }
+
             completionSummary = "Executed \(cmd.name)"
             history.add(TaskRecord(prompt: prompt, summary: completionSummary, commandsRun: [cmd.name]), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
             ChatHistoryStore.shared.endCurrentTask(summary: completionSummary)
