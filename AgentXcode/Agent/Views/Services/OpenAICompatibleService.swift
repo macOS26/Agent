@@ -247,6 +247,10 @@ final class OpenAICompatibleService {
         }
 
         let bodyData = try JSONSerialization.data(withJSONObject: body)
+        // Debug: dump messages
+        if let jsonStr = String(data: bodyData, encoding: .utf8) {
+            print("[OpenAIService] REQUEST (\(model)):\n\(String(jsonStr.prefix(3000)))")
+        }
         return try await Self.performStreamingRequest(
             bodyData: bodyData,
             apiKey: apiKey,
