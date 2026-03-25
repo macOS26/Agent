@@ -1336,34 +1336,57 @@ final class WebAutomationService: @unchecked Sendable {
         let js = """
         (function() {
             var results = [];
+            var seen = new Set();
+            function bestSelector(el) {
+                if (el.id) return '#' + el.id;
+                if (el.name) return el.tagName.toLowerCase() + '[name=' + JSON.stringify(el.name) + ']';
+                var attr = el.getAttribute('aria-label');
+                if (attr) return el.tagName.toLowerCase() + '[aria-label=' + JSON.stringify(attr) + ']';
+                attr = el.getAttribute('placeholder');
+                if (attr) return el.tagName.toLowerCase() + '[placeholder=' + JSON.stringify(attr) + ']';
+                attr = el.getAttribute('type');
+                if (attr && attr !== 'text') return el.tagName.toLowerCase() + '[type=' + JSON.stringify(attr) + ']';
+                var role = el.getAttribute('role');
+                if (role) return el.tagName.toLowerCase() + '[role=' + JSON.stringify(role) + ']';
+                var parent = el.parentElement;
+                if (parent) {
+                    var siblings = parent.querySelectorAll(el.tagName);
+                    if (siblings.length === 1) return bestSelector(parent) + ' > ' + el.tagName.toLowerCase();
+                    for (var i = 0; i < siblings.length; i++) {
+                        if (siblings[i] === el) return bestSelector(parent) + ' > ' + el.tagName.toLowerCase() + ':nth-child(' + (i+1) + ')';
+                    }
+                }
+                return el.tagName.toLowerCase();
+            }
             var selectors = [
                 {sel: 'input:not([type=hidden])', type: 'input'},
                 {sel: 'textarea', type: 'textarea'},
                 {sel: 'button', type: 'button'},
                 {sel: 'select', type: 'select'},
-                {sel: 'a[href]', type: 'link'},
                 {sel: '[role=button]', type: 'role-button'},
                 {sel: '[role=search] input', type: 'search-input'},
                 {sel: '[role=searchbox]', type: 'searchbox'},
-                {sel: '[contenteditable=true]', type: 'editable'}
+                {sel: '[contenteditable=true]', type: 'editable'},
+                {sel: 'a[href]', type: 'link'}
             ];
             selectors.forEach(function(s) {
                 document.querySelectorAll(s.sel).forEach(function(el) {
                     if (results.length >= \(maxElements)) return;
                     var r = el.getBoundingClientRect();
                     if (r.width === 0 && r.height === 0) return;
+                    var sel = bestSelector(el);
+                    if (seen.has(sel)) return;
+                    seen.add(sel);
                     var info = {
                         type: s.type,
                         tag: el.tagName.toLowerCase(),
-                        id: el.id || '',
-                        name: el.name || '',
-                        className: (el.className || '').toString().substring(0, 60),
+                        selector: sel,
                         placeholder: el.placeholder || '',
-                        text: (el.textContent || '').trim().substring(0, 80),
                         ariaLabel: el.getAttribute('aria-label') || '',
-                        href: el.href ? el.href.substring(0, 120) : '',
+                        text: (el.textContent || '').trim().substring(0, 60),
+                        value: (el.value || '').substring(0, 60),
                         inputType: el.type || '',
-                        selector: el.id ? '#' + el.id : (el.name ? '[name=' + JSON.stringify(el.name) + ']' : '')
+                        href: (s.type === 'link' && el.href) ? el.href.substring(0, 120) : ''
                     };
                     results.push(info);
                 });
