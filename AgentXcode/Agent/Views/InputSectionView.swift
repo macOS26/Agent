@@ -116,7 +116,8 @@ struct InputSectionView: View {
         }
     }
 
-    /// Handle drag-and-drop of text files into the input area
+    /// Handle drag-and-drop of text files into the input area.
+    /// Works regardless of whether the text field has focus.
     private func handleDrop(_ providers: [NSItemProvider], tab: ScriptTab? = nil) -> Bool {
         for provider in providers {
             // File URLs — read text content
@@ -124,9 +125,8 @@ struct InputSectionView: View {
                 provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { data, _ in
                     guard let urlData = data as? Data,
                           let url = URL(dataRepresentation: urlData, relativeTo: nil) else { return }
-                    let path = url.path
                     // Read text-based files
-                    guard let content = try? String(contentsOfFile: path, encoding: .utf8) else { return }
+                    guard let content = try? String(contentsOfFile: url.path, encoding: .utf8) else { return }
                     let filename = url.lastPathComponent
                     let dropped = "[\(filename)]\n\(content)"
                     DispatchQueue.main.async {
@@ -134,6 +134,7 @@ struct InputSectionView: View {
                             tab.taskInput += (tab.taskInput.isEmpty ? "" : "\n") + dropped
                         } else {
                             viewModel.taskInput += (viewModel.taskInput.isEmpty ? "" : "\n") + dropped
+                            isTaskFieldFocused = true
                         }
                     }
                 }
@@ -148,6 +149,7 @@ struct InputSectionView: View {
                             tab.taskInput += (tab.taskInput.isEmpty ? "" : "\n") + text
                         } else {
                             viewModel.taskInput += (viewModel.taskInput.isEmpty ? "" : "\n") + text
+                            isTaskFieldFocused = true
                         }
                     }
                 }
