@@ -160,7 +160,7 @@ struct HeaderToolbarButtons: View {
 
         Button { showOptions.toggle() } label: {
             Image(systemName: "slider.horizontal.3")
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(viewModel.optionsIconColor)
         }
         .popover(isPresented: $showOptions) {
             AgentOptionsView(viewModel: viewModel)

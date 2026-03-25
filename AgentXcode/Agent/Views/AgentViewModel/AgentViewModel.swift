@@ -190,6 +190,15 @@ final class AgentViewModel {
         return .green
     }
 
+    /// Options slider icon color based on temperature
+    var optionsIconColor: Color {
+        let temp = temperatureForProvider(selectedProvider)
+        if temp >= 1.0 { return .red }
+        if temp >= 0.75 { return .orange }
+        if temp >= 0.5 { return .yellow }
+        return .green
+    }
+
     /// MCP server icon color based on connection and tool state
     var mcpIconColor: Color {
         let mcp = MCPService.shared
