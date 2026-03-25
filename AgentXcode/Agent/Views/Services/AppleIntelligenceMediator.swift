@@ -428,6 +428,25 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
             return DirectCommand(name: "google_search", argument: query)
         }
 
+        // Search on current page — "search for X", "do a search for X", "find X on this page"
+        let searchPatterns = [
+            "do a search for ", "search for ", "search this page for ",
+            "find on this page ", "look for ", "search page for ",
+            "type in search ", "search ",
+        ]
+        for prefix in searchPatterns {
+            if lower.hasPrefix(prefix) {
+                var arg = String(trimmed.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)
+                if (arg.hasPrefix("\"") && arg.hasSuffix("\"")) || (arg.hasPrefix("'") && arg.hasSuffix("'")) {
+                    arg = String(arg.dropFirst().dropLast())
+                }
+                // Don't match if it contains "google" (that's handled above)
+                if !arg.isEmpty && !lower.contains("google") {
+                    return DirectCommand(name: "safari_page_search", argument: arg)
+                }
+            }
+        }
+
         // Safari: "open X", "go to X", "navigate to X" — open URL in Safari
         let openPatterns = [
             "open safari to ", "open safari ", "open in safari ",
@@ -448,9 +467,10 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
                         arg = String(arg.dropLast(suffix.count)).trimmingCharacters(in: .whitespaces)
                     }
                 }
-                // Only match if it looks like a URL (has a dot) — not "open the file" etc.
-                if !arg.isEmpty && (arg.contains(".") || arg.lowercased().hasPrefix("http")) {
-                    return DirectCommand(name: "safari_open", argument: arg)
+                // Extract just the first token that looks like a URL
+                let firstToken = arg.components(separatedBy: .whitespaces).first ?? ""
+                if !firstToken.isEmpty && (firstToken.contains(".") || firstToken.lowercased().hasPrefix("http")) {
+                    return DirectCommand(name: "safari_open", argument: firstToken)
                 }
             }
         }
