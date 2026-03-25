@@ -95,6 +95,7 @@ extension AgentViewModel {
             case "get_url":       return ("web_get_url", newInput)
             case "get_title":     return ("web_get_title", newInput)
             case "google_search": return ("web_google_search", newInput)
+            case "search":        return ("web_search", newInput)
             default:              return ("web_open", newInput)
             }
 

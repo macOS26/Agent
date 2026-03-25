@@ -423,17 +423,9 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
             }
         }
 
-        // "google search X", "google X", "search google for X" — Safari google search
-        let googlePatterns = ["google search for ", "google search ", "google web search in safari for ", "google web search for ", "google web search ", "search google for ", "google for "]
-        for prefix in googlePatterns {
-            if lower.hasPrefix(prefix) {
-                var arg = String(trimmed.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)
-                // Strip surrounding quotes
-                if (arg.hasPrefix("\"") && arg.hasSuffix("\"")) || (arg.hasPrefix("'") && arg.hasSuffix("'")) {
-                    arg = String(arg.dropFirst().dropLast())
-                }
-                if !arg.isEmpty { return DirectCommand(name: "google_search", argument: arg) }
-            }
+        // Google search — extract query from many phrasings
+        if let query = extractGoogleQuery(lower, original: trimmed) {
+            return DirectCommand(name: "google_search", argument: query)
         }
 
         // "run X", "run agent X" — direct only if script needs no arguments
@@ -445,6 +437,56 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
             }
         }
 
+        return nil
+    }
+
+    /// Extract a Google search query from many phrasings.
+    /// Returns the query string or nil if no match.
+    private static func extractGoogleQuery(_ lower: String, original: String) -> String? {
+        // Prefix patterns — query comes after the prefix
+        let prefixPatterns = [
+            "google search for ", "google search ", "google web search in safari for ",
+            "google web search for ", "google web search ", "search google for ",
+            "google for ", "search the web for ", "search web for ",
+            "web search for ", "web search ",
+        ]
+        for prefix in prefixPatterns {
+            if lower.hasPrefix(prefix) {
+                var arg = String(original.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)
+                // Strip trailing noise like "using google search", "in safari", "on google"
+                let suffixes = [" using google search", " using google", " in safari", " on google", " with google", " with safari"]
+                for suffix in suffixes {
+                    if arg.lowercased().hasSuffix(suffix) {
+                        arg = String(arg.dropLast(suffix.count)).trimmingCharacters(in: .whitespaces)
+                    }
+                }
+                // Strip surrounding quotes
+                if (arg.hasPrefix("\"") && arg.hasSuffix("\"")) || (arg.hasPrefix("'") && arg.hasSuffix("'")) {
+                    arg = String(arg.dropFirst().dropLast())
+                }
+                if !arg.isEmpty { return arg }
+            }
+        }
+        // Keyword detection: contains "google" + "search" anywhere
+        if lower.contains("google") && lower.contains("search") {
+            // Strip known noise words to extract the query
+            var query = original
+            let noisePatterns = [
+                "google search", "search google", "google web search",
+                "in safari", "using safari", "on google", "using google",
+                "for me", "please", "the web for", "search the web",
+            ]
+            for noise in noisePatterns {
+                query = query.replacingOccurrences(of: noise, with: "", options: .caseInsensitive)
+            }
+            query = query.replacingOccurrences(of: "\"", with: "").replacingOccurrences(of: "'", with: "")
+            query = query.trimmingCharacters(in: .whitespacesAndNewlines)
+            // Remove leading "for" if present
+            if query.lowercased().hasPrefix("for ") {
+                query = String(query.dropFirst(4)).trimmingCharacters(in: .whitespaces)
+            }
+            if !query.isEmpty { return query }
+        }
         return nil
     }
 

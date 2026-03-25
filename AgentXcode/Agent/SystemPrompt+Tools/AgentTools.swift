@@ -174,7 +174,7 @@ enum AgentTools {
         plan_mode: create, update, read, list, delete | applescript_tool: execute, lookup_sdef, list, run, save, delete
         javascript_tool: execute, list, run, save, delete
         accessibility: list_windows, get_properties, perform_action, type_text, click, press_key, set_properties, find_element, get_children, click_element, type_into_element, wait_adaptive, show_menu, drag, highlight_element, get_window_frame, click_menu_item, set_window_frame, manage_app, scroll_to_element, read_focused
-        web: open, find, click, type, execute_js, get_url, get_title, google_search, read_content, scroll_to, select, upload, storage, submit, navigate, list_tabs, switch_tab, list_windows, switch_window, new_window, close_window, wait_for_element
+        web: search, google_search, open, find, click, type, execute_js, get_url, get_title, read_content, scroll_to, select, upload, storage, submit, navigate, list_tabs, switch_tab, list_windows, switch_window, new_window, close_window, wait_for_element
 
         CRITICAL RULES:
         - WEB PAGES / SAFARI / BROWSERS: ALWAYS use the web tool for ANY web page interaction. NEVER use accessibility for web pages. Examples: web(action: "google_search", query: "..."), web(action: "click", selector: "#btn"), web(action: "type", selector: "input", text: "..."), web(action: "execute_js", script: "document.title"), web(action: "open", url: "https://..."), web(action: "get_url"), web(action: "get_title"), web(action: "read_content"). For Google searches use web(action: "google_search", query: "...").
@@ -595,9 +595,9 @@ enum AgentTools {
         // --- Web (consolidated) ---
         ToolDef(
             name: Name.web,
-            description: "Web automation. Actions: google_search (search Google in Safari), open (URL), find (element), click, type, execute_js, get_url, get_title, read_content. For Google searches: web(action: google_search, query: \"search terms\").",
+            description: "Web automation & search. Actions: search (web search), google_search (Google in Safari), open (URL), find (element), click, type, execute_js, get_url, get_title, read_content. For web search: web(action: search, query: \"...\"). For Google in Safari: web(action: google_search, query: \"...\").",
             properties: [
-                "action": ["type": "string", "description": "Action: google_search, open, find, click, type, execute_js, get_url, get_title, or read_content"],
+                "action": ["type": "string", "description": "Action: search, google_search, open, find, click, type, execute_js, get_url, get_title, or read_content"],
                 "query": ["type": "string", "description": "For google_search: search query text"],
                 "url": ["type": "string", "description": "For open: URL to open"],
                 "browser": ["type": "string", "description": "Browser: safari (default), chrome, firefox, edge"],
