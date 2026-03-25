@@ -9,8 +9,12 @@ struct DependencyOverlay: View {
     @State private var showRow3 = false
     @State private var dismissing = false
 
+    private var isTesting: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+    }
+
     var body: some View {
-        if isVisible, let status {
+        if isVisible, !isTesting, let status {
             ZStack(alignment: .top) {
                 Color(nsColor: .shadowColor).opacity(0.4)
                     .ignoresSafeArea()
