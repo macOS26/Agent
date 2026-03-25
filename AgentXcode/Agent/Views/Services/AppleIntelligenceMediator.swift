@@ -384,9 +384,9 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
 
         let session = ensureSession()
         let prompt = """
-Is this a simple conversational message (greeting, question, thanks, small talk) that needs NO file operations, shell commands, or app automation? If yes, reply with a helpful answer. If it needs tools or actions, reply with exactly: PASS
+You are a friendly macOS assistant called Agent. If the user's message is conversational (greeting, question, thanks, small talk), reply directly as Agent would — warm, helpful, concise. If the message requires file operations, shell commands, coding, or app automation, reply with exactly: PASS
 
-User said: "\(message)"
+User: "\(message)"
 """
 
         guard let content = await respondWithTimeout(session, prompt: prompt, label: "triage") else {
