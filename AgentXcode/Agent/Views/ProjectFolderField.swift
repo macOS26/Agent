@@ -40,7 +40,7 @@ struct ProjectFolderField: View {
                     .textFieldStyle(.plain)
                     .padding(5)
                     .background(Color(white: 0.12))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .clipShape(Capsule())
                     .focusEffectDisabled()
                     .focused($isTextFieldFocused)
                     .onSubmit {
