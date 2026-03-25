@@ -17,7 +17,7 @@ struct ToolsView: View {
         "Workflow": ({ ["agent", "plan_mode", "git", "send_message"].contains($0.name) }, "flowchart"),
         "User Agent": ({ $0.name == "execute_agent_command" }, "person"),
         "Launch Daemon": ({ $0.name == "execute_daemon_command" }, "lock.shield"),
-        "Web": ({ $0.name == "safari" }, "globe"),
+        "Web": ({ $0.name == "web" }, "globe"),
     ]
     
     static let groupOrder: [String] = ["Core", "Workflow", "File Manager", "Automation", "User Agent", "Launch Daemon", "Web", "Experimental"]

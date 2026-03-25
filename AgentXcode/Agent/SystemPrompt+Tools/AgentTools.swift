@@ -110,24 +110,24 @@ enum AgentTools {
         static let listNativeTools = "list_tools"
         static let listMcpTools = "list_mcp_tools"
         // Safari (consolidated web automation)
-        static let safari = "safari"
+        static let safari = "web"
         // Legacy safari_ names (handlers still work)
-        static let safariOpen = "safari_open"
-        static let safariFind = "safari_find"
-        static let safariClick = "safari_click"
-        static let safariType = "safari_type"
-        static let safariExecuteJs = "safari_execute_js"
-        static let safariGetUrl = "safari_get_url"
-        static let safariGetTitle = "safari_get_title"
-        static let safariGoogleSearch = "safari_google_search"
-        static let safariReadContent = "safari_read_content"
-        static let safariScrollTo = "safari_scroll_to"
-        static let safariSelect = "safari_select"
-        static let safariSubmit = "safari_submit"
-        static let safariNavigate = "safari_navigate"
-        static let safariListTabs = "safari_list_tabs"
-        static let safariSwitchTab = "safari_switch_tab"
-        static let safariListWindows = "safari_list_windows"
+        static let safariOpen = "web_open"
+        static let safariFind = "web_find"
+        static let safariClick = "web_click"
+        static let safariType = "web_type"
+        static let safariExecuteJs = "web_execute_js"
+        static let safariGetUrl = "web_get_url"
+        static let safariGetTitle = "web_get_title"
+        static let safariGoogleSearch = "web_google_search"
+        static let safariReadContent = "web_read_content"
+        static let safariScrollTo = "web_scroll_to"
+        static let safariSelect = "web_select"
+        static let safariSubmit = "web_submit"
+        static let safariNavigate = "web_navigate"
+        static let safariListTabs = "web_list_tabs"
+        static let safariSwitchTab = "web_switch_tab"
+        static let safariListWindows = "web_list_windows"
         static let webSwitchWindow = "web_switch_window"
         static let webNewWindow = "web_new_window"
         static let webCloseWindow = "web_close_window"
@@ -172,10 +172,10 @@ enum AgentTools {
         plan_mode: create, update, read, list, delete | applescript_tool: execute, lookup_sdef, list, run, save, delete
         javascript_tool: execute, list, run, save, delete
         accessibility: list_windows, get_properties, perform_action, type_text, click, press_key, set_properties, find_element, get_children, click_element, type_into_element, wait_adaptive, show_menu, drag, highlight_element, get_window_frame, click_menu_item, set_window_frame, manage_app, scroll_to_element, read_focused
-        safari: search, google_search, open, find, click, type, execute_js, get_url, get_title, read_content, scroll_to, select, submit, navigate, list_tabs, switch_tab, list_windows, new_window, close_window
+        web: search, google_search, open, find, click, type, execute_js, get_url, get_title, read_content, scroll_to, select, submit, navigate, list_tabs, switch_tab, list_windows, new_window, close_window
 
         CRITICAL RULES:
-        - WEB PAGES / SAFARI: ALWAYS use the safari tool for ANY web page interaction. NEVER use accessibility for web pages. To open a URL: safari(action: "open", url: "https://..."). After opening, ALWAYS read the page: safari(action: "read_content"). To search a page: safari(action: "find", query: "..."). To click: safari(action: "click", selector: "#btn"). To type: safari(action: "type", selector: "input", text: "..."). To run JS: safari(action: "execute_js", script: "..."). For Google: safari(action: "google_search", query: "..."). WORKFLOW: open → read_content → then click/type/find as needed.
+        - WEB PAGES: ALWAYS use the web tool for ANY web page interaction. NEVER use accessibility for web pages. To open a URL: web(action: "open", url: "https://..."). After opening, ALWAYS read the page: web(action: "read_content"). To search a page: web(action: "find", query: "..."). To click: web(action: "click", selector: "#btn"). To type: web(action: "type", selector: "input", text: "..."). To run JS: web(action: "execute_js", script: "..."). For Google: web(action: "google_search", query: "..."). WORKFLOW: open → read_content → then click/type/find as needed.
         - SHELL COMMANDS (rm, mv, cp, ls, find, grep, etc.): ALWAYS use execute_agent_command. NEVER create .sh scripts. NEVER use applescript_tool "do shell script".
         - BUILD: Use xcode (action: build). Never xcodebuild via shell.
         - applescript_tool is ONLY for AppleScript automation of apps (tell application...). NOT for shell commands.
@@ -587,7 +587,7 @@ enum AgentTools {
         // --- Web (consolidated) ---
         ToolDef(
             name: Name.safari,
-            description: "Safari web automation. Actions: search (web search), google_search (Google search in Safari), open (URL), find (element), click, type, execute_js, get_url, get_title, read_content. Examples: safari(action: \"google_search\", query: \"...\"), safari(action: \"open\", url: \"...\"), safari(action: \"click\", selector: \"#btn\").",
+            description: "Web browser automation. Actions: search, google_search, open, find, click, type, execute_js, get_url, get_title, read_content. Examples: web(action: \"open\", url: \"https://...\"), web(action: \"read_content\"), web(action: \"click\", selector: \"#btn\"), web(action: \"type\", selector: \"input\", text: \"...\"), web(action: \"google_search\", query: \"...\").",
             properties: [
                 "action": ["type": "string", "description": "Action: search, google_search, open, find, click, type, execute_js, get_url, get_title, or read_content"],
                 "query": ["type": "string", "description": "For search/google_search: search query text"],

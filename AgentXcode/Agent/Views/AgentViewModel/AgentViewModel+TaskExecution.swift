@@ -180,9 +180,8 @@ extension AgentViewModel {
 
             // For safari commands, pass results to LLM for formatting
             if cmd.name == "safari_open_and_search" {
-                taskLog.info("[main] safari_open_and_search — passing results to LLM")
-                messages.append(["role": "user", "content": "I opened the page and searched. Here are the results:\n\n\(output)\n\nOriginal request: \(prompt)\n\nSummarize the results or continue with any remaining instructions. Use safari tool for further interaction."])
-                break
+                appendLog("✅ Opened page and searched. Results on screen.")
+                flushLog()
             }
             if cmd.name == "google_search" && output.contains("\"success\": true") {
                 taskLog.info("[main] google_search succeeded — passing to LLM for formatting")
@@ -1826,7 +1825,7 @@ extension AgentViewModel {
                     let isWebTask = lowerPrompt.contains("safari") || lowerPrompt.contains("web") || lowerPrompt.contains("page") || lowerPrompt.contains("search") || lowerPrompt.contains("open") || lowerPrompt.contains("click") || lowerPrompt.contains("browse") || lowerPrompt.contains("url") || lowerPrompt.contains("site") || lowerPrompt.contains(".com") || lowerPrompt.contains(".org")
                     let nudge: String
                     if isWebTask {
-                        nudge = "You MUST call tools now. For web tasks use the safari tool. Examples: safari(action: \"open\", url: \"https://example.com\"), safari(action: \"read_content\"), safari(action: \"find\", query: \"search text\"), safari(action: \"click\", selector: \"button\"), safari(action: \"type\", selector: \"input\", text: \"query\"). Do NOT describe what you'll do — call the tool."
+                        nudge = "You MUST call tools now. For web tasks use the web tool. Examples: web(action: \"open\", url: \"https://example.com\"), web(action: \"read_content\"), web(action: \"find\", query: \"search text\"), web(action: \"click\", selector: \"button\"), web(action: \"type\", selector: \"input\", text: \"query\"). Do NOT describe what you'll do — call the tool."
                     } else {
                         nudge = "Continue. You MUST use tools — do not output code as text. Use agent (action: create/update) for scripts, write_file/edit_file for files. Call task_complete when finished."
                     }
