@@ -14,8 +14,12 @@ struct InputSectionView: View {
                 TextField(tab.isMainTab ? "Enter task..." : tab.isMessagesTab ? "Messages task..." : "Ask about \(tab.scriptName)...", text: Binding(
                     get: { tab.taskInput },
                     set: { tab.taskInput = $0 }
+                        
                 ), axis: .vertical)
-                    .textFieldStyle(.roundedBorder)
+                    .textFieldStyle(.plain)
+                    .padding(8)
+                    .background(Color(white: 0.12))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                     .lineLimit(2...8)
                     .onSubmit {
                         if !tab.taskInput.isEmpty {
@@ -58,7 +62,10 @@ struct InputSectionView: View {
                 inputButtons
 
                 TextField("Enter task...", text: $viewModel.taskInput, axis: .vertical)
-                    .textFieldStyle(.roundedBorder)
+                    .textFieldStyle(.plain)
+                    .padding(8)
+                    .background(Color(white: 0.12))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                     .focused($isTaskFieldFocused)
                     .lineLimit(2...8)
                     .onSubmit {
