@@ -53,7 +53,7 @@ final class AccessibilityService: @unchecked Sendable {
         return shared.successJSON([
             "source": "safari_javascript",
             "pageInfo": text,
-            "hint": "For more web interaction use: web(action: 'click', selector: '...'), web(action: 'type', selector: '...', text: '...'), web(action: 'execute_js', script: '...')"
+            "hint": "For web interaction use the safari tool: safari(action: 'click', selector: '...'), safari(action: 'type', selector: '...', text: '...'), safari(action: 'execute_js', script: '...'). Do NOT use accessibility for web pages."
         ])
     }
 
