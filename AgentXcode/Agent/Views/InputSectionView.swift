@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct InputSectionView: View {
     @Bindable var viewModel: AgentViewModel
@@ -59,6 +60,9 @@ struct InputSectionView: View {
             .padding(.vertical, 8)
             .padding(.horizontal, 14)
             .background(Color(nsColor: .windowBackgroundColor))
+            .onDrop(of: [.fileURL, .text], isTargeted: nil) { providers in
+                handleDrop(providers, tab: tab)
+            }
         } else {
             // Main tab input
             HStack {
@@ -106,7 +110,51 @@ struct InputSectionView: View {
             .padding(.vertical, 8)
             .padding(.horizontal, 14)
             .background(Color(nsColor: .windowBackgroundColor))
+            .onDrop(of: [.fileURL, .text], isTargeted: nil) { providers in
+                handleDrop(providers, tab: nil)
+            }
         }
+    }
+
+    /// Handle drag-and-drop of text files into the input area
+    private func handleDrop(_ providers: [NSItemProvider], tab: ScriptTab? = nil) -> Bool {
+        for provider in providers {
+            // File URLs — read text content
+            if provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
+                provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { data, _ in
+                    guard let urlData = data as? Data,
+                          let url = URL(dataRepresentation: urlData, relativeTo: nil) else { return }
+                    let path = url.path
+                    // Read text-based files
+                    guard let content = try? String(contentsOfFile: path, encoding: .utf8) else { return }
+                    let filename = url.lastPathComponent
+                    let dropped = "[\(filename)]\n\(content)"
+                    DispatchQueue.main.async {
+                        if let tab {
+                            tab.taskInput += (tab.taskInput.isEmpty ? "" : "\n") + dropped
+                        } else {
+                            viewModel.taskInput += (viewModel.taskInput.isEmpty ? "" : "\n") + dropped
+                        }
+                    }
+                }
+                return true
+            }
+            // Plain text
+            if provider.hasItemConformingToTypeIdentifier(UTType.text.identifier) {
+                provider.loadItem(forTypeIdentifier: UTType.text.identifier, options: nil) { data, _ in
+                    guard let text = data as? String, !text.isEmpty else { return }
+                    DispatchQueue.main.async {
+                        if let tab {
+                            tab.taskInput += (tab.taskInput.isEmpty ? "" : "\n") + text
+                        } else {
+                            viewModel.taskInput += (viewModel.taskInput.isEmpty ? "" : "\n") + text
+                        }
+                    }
+                }
+                return true
+            }
+        }
+        return false
     }
 
     private var inputButtons: some View {
