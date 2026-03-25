@@ -251,6 +251,30 @@ extension AgentViewModel {
                 return "Error: \(error.localizedDescription)"
             }
 
+        case "safari_open_and_search":
+            // Format: "url|||query"
+            let parts = cmd.argument.components(separatedBy: "|||")
+            let url = parts.first ?? ""
+            let query = parts.count > 1 ? parts[1] : ""
+            appendLog("🌐 Opening: \(url)")
+            flushLog()
+            let fullURL = url.hasPrefix("http") ? url : "https://\(url)"
+            if let parsed = URL(string: fullURL) {
+                do { _ = try await WebAutomationService.shared.open(url: parsed) } catch {}
+            }
+            // Wait for page load
+            try? await Task.sleep(for: .seconds(3))
+            appendLog("🔍 Searching page for: \(query)")
+            flushLog()
+            let searchResult = await WebAutomationService.shared.safariSiteSearch(query: query)
+            return searchResult
+
+        case "safari_scan":
+            appendLog("🔍 Scanning interactive elements...")
+            flushLog()
+            let elements = await WebAutomationService.shared.scanInteractiveElements()
+            return elements
+
         case "safari_read":
             appendLog("📖 Reading page...")
             flushLog()

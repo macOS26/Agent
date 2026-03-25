@@ -470,6 +470,30 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
                 // Extract just the first token that looks like a URL
                 let firstToken = arg.components(separatedBy: .whitespaces).first(where: { !$0.isEmpty }) ?? ""
                 if !firstToken.isEmpty && (firstToken.contains(".") || firstToken.lowercased().hasPrefix("http")) {
+                    // Check if there's a "search for X" / "look for X" / "find X" after the URL
+                    let afterURL = arg.dropFirst(firstToken.count).trimmingCharacters(in: .whitespaces).lowercased()
+                    let searchPrefixes = ["and search for ", "and look for ", "and find ", "search for ", "look for ", "find ", "and search ", "and look up "]
+                    for sp in searchPrefixes {
+                        if afterURL.hasPrefix(sp) || afterURL.contains(" search for ") || afterURL.contains(" look for ") || afterURL.contains(" find ") {
+                            var searchQuery: String
+                            if afterURL.hasPrefix(sp) {
+                                searchQuery = String(afterURL.dropFirst(sp.count)).trimmingCharacters(in: .whitespaces)
+                            } else if let range = afterURL.range(of: " search for ") ?? afterURL.range(of: " look for ") ?? afterURL.range(of: " find ") {
+                                searchQuery = String(afterURL[range.upperBound...]).trimmingCharacters(in: .whitespaces)
+                            } else {
+                                continue
+                            }
+                            // Strip noise suffixes
+                            for suffix in [" on this page", " on the page", " on safari", " in safari", " on it", " there"] {
+                                if searchQuery.hasSuffix(suffix) {
+                                    searchQuery = String(searchQuery.dropLast(suffix.count)).trimmingCharacters(in: .whitespaces)
+                                }
+                            }
+                            if !searchQuery.isEmpty {
+                                return DirectCommand(name: "safari_open_and_search", argument: "\(firstToken)|||\(searchQuery)")
+                            }
+                        }
+                    }
                     return DirectCommand(name: "safari_open", argument: firstToken)
                 }
             }

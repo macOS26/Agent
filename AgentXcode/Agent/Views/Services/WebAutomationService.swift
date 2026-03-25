@@ -1330,6 +1330,105 @@ final class WebAutomationService: @unchecked Sendable {
         {"success": true, "query": "\(Self.escapeJS(query))", "url": "\(Self.escapeJS(url))", "title": "\(Self.escapeJS(title))", "content": "\(Self.escapeJS(content))"}
         """
     }
+
+    /// Scan the current page for interactive elements (inputs, buttons, links, selects).
+    func scanInteractiveElements(maxElements: Int = 50) async -> String {
+        let js = """
+        (function() {
+            var results = [];
+            var selectors = [
+                {sel: 'input:not([type=hidden])', type: 'input'},
+                {sel: 'textarea', type: 'textarea'},
+                {sel: 'button', type: 'button'},
+                {sel: 'select', type: 'select'},
+                {sel: 'a[href]', type: 'link'},
+                {sel: '[role=button]', type: 'role-button'},
+                {sel: '[role=search] input', type: 'search-input'},
+                {sel: '[role=searchbox]', type: 'searchbox'},
+                {sel: '[contenteditable=true]', type: 'editable'}
+            ];
+            selectors.forEach(function(s) {
+                document.querySelectorAll(s.sel).forEach(function(el) {
+                    if (results.length >= \(maxElements)) return;
+                    var r = el.getBoundingClientRect();
+                    if (r.width === 0 && r.height === 0) return;
+                    var info = {
+                        type: s.type,
+                        tag: el.tagName.toLowerCase(),
+                        id: el.id || '',
+                        name: el.name || '',
+                        className: (el.className || '').toString().substring(0, 60),
+                        placeholder: el.placeholder || '',
+                        text: (el.textContent || '').trim().substring(0, 80),
+                        ariaLabel: el.getAttribute('aria-label') || '',
+                        href: el.href ? el.href.substring(0, 120) : '',
+                        inputType: el.type || '',
+                        selector: el.id ? '#' + el.id : (el.name ? '[name=' + JSON.stringify(el.name) + ']' : '')
+                    };
+                    results.push(info);
+                });
+            });
+            return JSON.stringify(results);
+        })()
+        """.replacingOccurrences(of: "\n", with: " ")
+        return await runAppleScript("""
+        tell application "Safari" to do JavaScript "\(js.replacingOccurrences(of: "\"", with: "\\\""))" in front document
+        """)
+    }
+
+    /// Search on the current page by finding a search input field, typing the query, and submitting.
+    func safariSiteSearch(query: String) async -> String {
+        // Try common search input selectors
+        let escapedQuery = query.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "'", with: "\\'")
+        let js = """
+        (function() {
+            var selectors = [
+                'input[role=searchbox]', 'input[role=search]',
+                '[role=search] input[type=text]', '[role=search] input:not([type=hidden])',
+                'input[type=search]', 'input[name=q]', 'input[name=query]',
+                'input[name=search]', 'input[name=keywords]',
+                'input[aria-label*=earch]', 'input[aria-label*=Search]',
+                'input[placeholder*=earch]', 'input[placeholder*=Search]',
+                'input[placeholder*=looking]',
+                'input[id*=search]', 'input[class*=search]',
+                'textarea[role=searchbox]'
+            ];
+            for (var i = 0; i < selectors.length; i++) {
+                var el = document.querySelector(selectors[i]);
+                if (el && el.offsetWidth > 0) {
+                    el.focus();
+                    el.value = '\(escapedQuery)';
+                    el.dispatchEvent(new Event('input', {bubbles: true}));
+                    el.dispatchEvent(new Event('change', {bubbles: true}));
+                    var ke = new KeyboardEvent('keydown', {key: 'Enter', code: 'Enter', keyCode: 13, bubbles: true});
+                    el.dispatchEvent(ke);
+                    var ke2 = new KeyboardEvent('keypress', {key: 'Enter', code: 'Enter', keyCode: 13, bubbles: true});
+                    el.dispatchEvent(ke2);
+                    var ke3 = new KeyboardEvent('keyup', {key: 'Enter', code: 'Enter', keyCode: 13, bubbles: true});
+                    el.dispatchEvent(ke3);
+                    var form = el.closest('form');
+                    if (form) { form.submit(); }
+                    return JSON.stringify({success: true, selector: selectors[i], field: el.placeholder || el.name || el.id});
+                }
+            }
+            return JSON.stringify({success: false, error: 'No search field found on page'});
+        })()
+        """.replacingOccurrences(of: "\n", with: " ")
+        let result = await runAppleScript("""
+        tell application "Safari" to do JavaScript "\(js.replacingOccurrences(of: "\"", with: "\\\""))" in front document
+        """)
+
+        // Wait for results page to load
+        try? await Task.sleep(for: .seconds(2))
+
+        let url = await getPageURL()
+        let title = await getPageTitle()
+        let content = await readPageContent(maxLength: 3000)
+
+        return """
+        {"search": \(result), "url": "\(Self.escapeJS(url))", "title": "\(Self.escapeJS(title))", "content": "\(Self.escapeJS(content))"}
+        """
+    }
 }
 
 // MARK: - Supporting Types
