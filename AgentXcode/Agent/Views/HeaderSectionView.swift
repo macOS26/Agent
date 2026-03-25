@@ -143,7 +143,7 @@ struct HeaderToolbarButtons: View {
 
         Button { showSettings.toggle() } label: {
             Image(systemName: "cpu")
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(viewModel.llmStatusColor)
         }
         .popover(isPresented: $showSettings) {
             SettingsView(viewModel: viewModel)
