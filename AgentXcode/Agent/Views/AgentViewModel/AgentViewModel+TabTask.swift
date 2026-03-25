@@ -99,37 +99,31 @@ extension AgentViewModel {
             let output = await executeDirectCommand(cmd)
             tab.flush()
 
-            // safari_open with extra instructions: read page and pass to LLM (like google_search)
-            if cmd.name == "safari_open" {
-                let urlArg = cmd.argument.lowercased()
-                let remaining = prompt.lowercased().replacingOccurrences(of: urlArg, with: "")
-                let noise = Set(["open", "safari", "in", "on", "to", "and", "the", "using", "webpage", "web", "page", "website", "url", "go", "navigate", "visit", "browse"])
-                let meaningfulWords = remaining.components(separatedBy: .whitespacesAndNewlines)
-                    .filter { !$0.isEmpty && !noise.contains($0) }
-                if !meaningfulWords.isEmpty {
-                    try? await Task.sleep(for: .seconds(2))
-                    let pageContent = await WebAutomationService.shared.readPageContent(maxLength: 3000)
-                    let pageTitle = await WebAutomationService.shared.getPageTitle()
-                    let pageURL = await WebAutomationService.shared.getPageURL()
-                    tabTaskLog.info("[\(tab.displayTitle)] safari_open has extra instructions — passing page to LLM")
-                    directCommandContext = "I opened \(pageURL) (\(pageTitle)). Here is the page content:\n\n\(pageContent)\n\nNow complete this request: \(prompt)"
-                    break  // Fall through to LLM loop
-                }
+            // Web commands: show results and complete
+            if cmd.name == "web_open" {
+                tab.appendLog("✅ \(output)")
+                tab.flush()
             }
-            // safari_open_and_search: complete immediately — page is open and searched
-            if cmd.name == "safari_open_and_search" {
-                tab.appendLog("✅ Opened page and searched. Results on screen.")
+            if cmd.name == "web_open_and_search" {
+                // Show a preview of search results in the log
+                if let data = output.data(using: .utf8),
+                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let title = json["title"] as? String,
+                   let url = json["url"] as? String {
+                    tab.appendLog("✅ \(title)")
+                    tab.appendLog("🔗 \(url)")
+                    if let content = json["content"] as? String {
+                        tab.appendLog(String(content.prefix(1000)))
+                    }
+                } else {
+                    tab.appendLog("✅ Search complete. Results on screen.")
+                }
                 tab.flush()
             }
             // google_search with results: pass to LLM for formatting
             if cmd.name == "google_search" && output.contains("\"success\": true") {
                 tabTaskLog.info("[\(tab.displayTitle)] google_search succeeded — passing to LLM")
                 directCommandContext = "Format these Google search results for the user. Be concise — show the top results with titles, URLs, and brief descriptions:\n\n\(output)"
-                break
-            }
-            if cmd.name == "safari_read" && !output.contains("Error") {
-                tabTaskLog.info("[\(tab.displayTitle)] safari_read succeeded — passing to LLM")
-                directCommandContext = "Summarize this web page for the user. Show the title, URL, and key content:\n\n\(output)"
                 break
             }
 
