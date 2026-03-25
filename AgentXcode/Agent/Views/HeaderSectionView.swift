@@ -110,7 +110,7 @@ struct HeaderToolbarButtons: View {
 
         Button { showMessages.toggle() } label: {
             Image(systemName: "message.fill")
-                .foregroundStyle(viewModel.messagesMonitorEnabled ? Color.blue : Color.gray)
+                .foregroundStyle(viewModel.messagesMonitorEnabled ? Color.green : Color.gray)
         }
         .help(viewModel.messagesMonitorEnabled ? "Messages Monitor: ON" : "Messages Monitor: OFF")
         .popover(isPresented: $showMessages) {
@@ -151,7 +151,7 @@ struct HeaderToolbarButtons: View {
 
         Button { showAIPopover.toggle() } label: {
             Image(systemName: AppleIntelligenceMediator.isAvailable ? "brain.fill" : "brain")
-                .foregroundStyle(aiMediator.isEnabled ? Color.blue : Color.gray)
+                .foregroundStyle(!AppleIntelligenceMediator.isAvailable ? Color.red : (aiMediator.isEnabled ? Color.green : Color.gray))
         }
         .help("Apple Intelligence Settings")
         .popover(isPresented: $showAIPopover) {

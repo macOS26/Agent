@@ -146,10 +146,10 @@ final class AgentViewModel {
 
     /// CPU icon color: green = running, blue = configured, red = not configured
     var llmStatusColor: Color {
-        if isRunning || isThinking { return .green }
         let needsKey: Set<APIProvider> = [.claude, .openAI, .deepSeek, .huggingFace]
         if needsKey.contains(selectedProvider) && apiKey.isEmpty { return .red }
-        return .blue
+        if isRunning || isThinking { return .blue }
+        return .green
     }
 
     /// Gear icon color reflecting overall service health
