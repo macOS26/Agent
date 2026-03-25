@@ -10,6 +10,7 @@ struct ContentView: View {
     @State private var showDependencyOverlay = true
     @State private var showSearch = false
     @State private var searchText = ""
+    @State private var caseSensitive = false
     @FocusState private var isSearchFieldFocused: Bool
     @FocusState private var isTaskFieldFocused: Bool
     @State private var currentMatchIndex = 0
@@ -43,6 +44,7 @@ struct ContentView: View {
             if showSearch {
                 SearchBarView(
                     searchText: $searchText,
+                    caseSensitive: $caseSensitive,
                     totalMatches: totalMatches,
                     currentMatchIndex: currentMatchIndex,
                     previousMatch: previousMatch,
@@ -87,6 +89,7 @@ struct ContentView: View {
                         text: tab.activityLog,
                         tabID: selectedId,
                         searchText: searchText,
+                        caseSensitive: caseSensitive,
                         currentMatchIndex: currentMatchIndex,
                         onMatchCount: { count in
                             DispatchQueue.main.async {
@@ -102,6 +105,7 @@ struct ContentView: View {
                     ActivityLogView(
                         text: viewModel.activityLog,
                         searchText: searchText,
+                        caseSensitive: caseSensitive,
                         currentMatchIndex: currentMatchIndex,
                         onMatchCount: { count in
                             DispatchQueue.main.async {

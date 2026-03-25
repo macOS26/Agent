@@ -9,12 +9,13 @@ import SwiftUI
 
 struct SearchBarView: View {
     @Binding var searchText: String
+    @Binding var caseSensitive: Bool
     let totalMatches: Int
     let currentMatchIndex: Int
     let previousMatch: () -> Void
     let nextMatch: () -> Void
     let onClose: () -> Void
-    
+
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
@@ -29,6 +30,15 @@ struct SearchBarView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .frame(minWidth: 50)
+                    Button { caseSensitive.toggle() } label: {
+                        Text("Aa")
+                            .font(.system(size: 12, weight: caseSensitive ? .bold : .regular))
+                            .foregroundStyle(caseSensitive ? .blue : .secondary)
+                            .frame(width: 24, height: 14)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .help(caseSensitive ? "Case Sensitive: ON" : "Case Sensitive: OFF")
                     Button { previousMatch() } label: {
                         Image(systemName: "chevron.up")
                             .frame(height: 14)

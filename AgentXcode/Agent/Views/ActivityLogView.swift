@@ -8,6 +8,7 @@ struct ActivityLogView: NSViewRepresentable {
     let text: String
     var tabID: UUID?  // nil = main tab
     var searchText: String = ""
+    var caseSensitive: Bool = false
     var currentMatchIndex: Int = 0
     var onMatchCount: ((Int) -> Void)? = nil
 
@@ -44,6 +45,7 @@ struct ActivityLogView: NSViewRepresentable {
         // Store latest text for callbacks
         coord.latestText = text
         coord.latestSearchText = searchText
+        coord.latestCaseSensitive = caseSensitive
         coord.latestMatchIndex = currentMatchIndex
         coord.latestMatchCallback = onMatchCount
 
@@ -168,14 +170,14 @@ struct ActivityLogView: NSViewRepresentable {
             if searchChanged {
                 // User changed search text or match index — apply immediately
                 coord.pendingSearchWork?.cancel()
-                coord.applySearchHighlighting(textView: textView, searchText: searchText, currentMatch: currentMatchIndex, onMatchCount: onMatchCount)
+                coord.applySearchHighlighting(textView: textView, searchText: searchText, caseSensitive: caseSensitive, currentMatch: currentMatchIndex, onMatchCount: onMatchCount)
             } else if textChanged && !searchText.isEmpty {
                 // Text is streaming while search is active — debounce to avoid beach ball
                 coord.pendingSearchWork?.cancel()
                 let work = DispatchWorkItem { [weak coord] in
                     guard let coord else { return }
                     guard let tv = coord.latestTextView else { return }
-                    coord.applySearchHighlighting(textView: tv, searchText: coord.latestSearchText, currentMatch: coord.latestMatchIndex, onMatchCount: coord.latestMatchCallback)
+                    coord.applySearchHighlighting(textView: tv, searchText: coord.latestSearchText, caseSensitive: coord.latestCaseSensitive, currentMatch: coord.latestMatchIndex, onMatchCount: coord.latestMatchCallback)
                 }
                 coord.pendingSearchWork = work
                 coord.latestTextView = textView
@@ -201,6 +203,7 @@ struct ActivityLogView: NSViewRepresentable {
         /// Latest state from updateNSView
         var latestText = ""
         var latestSearchText = ""
+        var latestCaseSensitive = false
         var latestMatchIndex = 0
         var latestMatchCallback: ((Int) -> Void)?
         /// Weak reference to text view for debounced search callbacks
@@ -284,7 +287,7 @@ struct ActivityLogView: NSViewRepresentable {
         var pendingSearchWork: DispatchWorkItem?
 
         /// Highlight search matches in the text view's text storage
-        func applySearchHighlighting(textView: NSTextView, searchText: String, currentMatch: Int, onMatchCount: ((Int) -> Void)?) {
+        func applySearchHighlighting(textView: NSTextView, searchText: String, caseSensitive: Bool = false, currentMatch: Int, onMatchCount: ((Int) -> Void)?) {
             guard let storage = textView.textStorage else { return }
 
             let highlightColor = NSColor.systemYellow.withAlphaComponent(0.3)
@@ -310,17 +313,17 @@ struct ActivityLogView: NSViewRepresentable {
             // Search only the visible portion + buffer for large texts to avoid beach ball
             let text = storage.string
             let textLength = (text as NSString).length
-            let searchLower = searchText.lowercased()
+            let searchNeedle = caseSensitive ? searchText : searchText.lowercased()
 
             // For very large texts, limit search to last 60K chars (matches render cap)
             let maxSearchChars = 60_000
             let searchStart = textLength > maxSearchChars ? textLength - maxSearchChars : 0
-            let textLower = text.lowercased() as NSString
+            let searchableText = caseSensitive ? text as NSString : text.lowercased() as NSString
 
             var matchRanges: [NSRange] = []
             var searchRange = NSRange(location: searchStart, length: textLength - searchStart)
             while searchRange.location < textLength {
-                let found = textLower.range(of: searchLower, options: [], range: searchRange)
+                let found = searchableText.range(of: searchNeedle, options: [], range: searchRange)
                 guard found.location != NSNotFound else { break }
                 matchRanges.append(found)
                 searchRange.location = found.location + found.length
