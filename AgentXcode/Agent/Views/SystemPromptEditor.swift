@@ -13,7 +13,7 @@ private class PromptTextView: NSTextView {
 /// NSViewRepresentable wrapping NSTextView for plain-text editing with line numbers.
 struct PromptEditor: NSViewRepresentable {
     @Binding var text: String
-    var textColor: NSColor = NSColor(red: 0.2, green: 0.9, blue: 0.3, alpha: 1.0)
+    var textColor: NSColor = .labelColor
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
@@ -30,7 +30,7 @@ struct PromptEditor: NSViewRepresentable {
         textView.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
         textView.textColor = textColor
         textView.insertionPointColor = textColor
-        textView.backgroundColor = NSColor(red: 0.05, green: 0.05, blue: 0.05, alpha: 1.0)
+        textView.backgroundColor = .textBackgroundColor
         textView.isEditable = true
         textView.isSelectable = true
         textView.allowsUndo = true

@@ -106,11 +106,11 @@ private struct TabItem: View {
             Capsule()
                 .fill(isSelected
                       ? tint.opacity(0.2)
-                      : isHovering ? tint.opacity(0.1) : Color(white: 0.2, opacity: 0.5))
+                      : isHovering ? tint.opacity(0.1) : Color(nsColor: .separatorColor).opacity(0.5))
         )
         .overlay(
             Capsule()
-                .strokeBorder(isSelected ? tint.opacity(0.5) : Color.white.opacity(0.1), lineWidth: 0.5)
+                .strokeBorder(isSelected ? tint.opacity(0.5) : Color(nsColor: .separatorColor).opacity(0.3), lineWidth: 0.5)
         )
         .contentShape(Capsule())
         .onTapGesture(perform: onSelect)

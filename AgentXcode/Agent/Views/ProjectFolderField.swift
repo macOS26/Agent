@@ -41,7 +41,7 @@ struct ProjectFolderField: View {
                     .padding(.leading, 10)
                     .padding(.trailing, 5)
                     .padding(.vertical, 5)
-                    .background(Color(white: 0.12))
+                    .background(Color(nsColor: .controlBackgroundColor))
                     .clipShape(Capsule())
                     .focusEffectDisabled()
                     .focused($isTextFieldFocused)

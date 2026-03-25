@@ -18,7 +18,7 @@ struct InputSectionView: View {
                 ), axis: .vertical)
                     .textFieldStyle(.plain)
                     .padding(8)
-                    .background(Color(white: 0.12))
+                    .background(Color(nsColor: .controlBackgroundColor))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                     .lineLimit(2...8)
                     .onSubmit {
@@ -56,7 +56,7 @@ struct InputSectionView: View {
             }
             .padding(.vertical, 8)
             .padding(.horizontal, 14)
-            .background(Color(white: 0.08))
+            .background(Color(nsColor: .windowBackgroundColor))
         } else {
             // Main tab input
             HStack {
@@ -66,7 +66,7 @@ struct InputSectionView: View {
                     .focused($isTaskFieldFocused)
                     .textFieldStyle(.plain)
                     .padding(8)
-                    .background(Color(white: 0.12))
+                    .background(Color(nsColor: .controlBackgroundColor))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                     .lineLimit(2...8)
                     .onSubmit {
@@ -101,7 +101,7 @@ struct InputSectionView: View {
             }
             .padding(.vertical, 8)
             .padding(.horizontal, 14)
-            .background(Color(white: 0.08))
+            .background(Color(nsColor: .windowBackgroundColor))
         }
     }
 

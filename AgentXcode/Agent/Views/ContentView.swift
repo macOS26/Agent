@@ -139,7 +139,7 @@ struct ContentView: View {
             )
         }
         .frame(minWidth: 600, minHeight: 500)
-        .toolbarBackground(Color(white: 0.08), for: .windowToolbar)
+        .toolbarBackground(Color(nsColor: .windowBackgroundColor), for: .windowToolbar)
         .toolbar {
             ToolbarItemGroup(placement: .navigation) {
                 HeaderStatusView(viewModel: viewModel)
