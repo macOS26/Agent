@@ -241,8 +241,11 @@ extension AgentViewModel {
             appendLog("🌐 Opening: \(url)")
             flushLog()
             let fullURL = url.hasPrefix("http") ? url : "https://\(url)"
+            guard let parsed = URL(string: fullURL) else {
+                return "Error: Invalid URL '\(fullURL)'"
+            }
             do {
-                let output = try await WebAutomationService.shared.open(url: URL(string: fullURL)!)
+                let output = try await WebAutomationService.shared.open(url: parsed)
                 return output
             } catch {
                 return "Error: \(error.localizedDescription)"
@@ -276,6 +279,19 @@ extension AgentViewModel {
             flushLog()
             do {
                 return try await WebAutomationService.shared.type(text: text, selector: selector, strategy: .javascript)
+            } catch {
+                return "Error: \(error.localizedDescription)"
+            }
+
+        case "safari_page_search":
+            let query = cmd.argument
+            appendLog("🔍 Page search: \(query)")
+            flushLog()
+            let js = "window.find('\(query.replacingOccurrences(of: "'", with: "\\'"))')"
+            do {
+                let result = try await WebAutomationService.shared.executeJavaScript(script: js)
+                let output = (result as? String) ?? "Searched for '\(query)'"
+                return output
             } catch {
                 return "Error: \(error.localizedDescription)"
             }
