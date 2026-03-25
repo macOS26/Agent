@@ -127,7 +127,7 @@ struct HeaderToolbarButtons: View {
 
         Button { showMCPServers.toggle() } label: {
             Image(systemName: "server.rack")
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(viewModel.mcpIconColor)
         }
         .popover(isPresented: $showMCPServers) {
             MCPServersView()

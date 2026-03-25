@@ -170,6 +170,28 @@ final class AgentViewModel {
         return .green
     }
 
+    /// MCP server icon color based on connection and tool state
+    var mcpIconColor: Color {
+        let mcp = MCPService.shared
+        let config = MCPServerRegistry.shared
+        let servers = config.servers
+        // No servers configured
+        guard !servers.isEmpty else { return .gray }
+        let connectedIds = mcp.connectedServerIds
+        let tools = mcp.discoveredTools
+        // No servers connected
+        guard !connectedIds.isEmpty else { return .gray }
+        // Check if all tools are disabled
+        let enabledTools = tools.filter { mcp.isToolEnabled(serverName: $0.serverName, toolName: $0.name) }
+        if enabledTools.isEmpty && !tools.isEmpty { return .red }
+        // Check if some servers have errors or some tools disabled
+        let hasErrors = !mcp.connectionErrors.isEmpty
+        let someDisabled = enabledTools.count < tools.count
+        if hasErrors || someDisabled { return .orange }
+        // All good
+        return .green
+    }
+
     /// Tooltip for the gear icon
     var servicesGearHelp: String {
         let userStatus = userPingOK ? "connected" : (userEnabled ? "not responding" : "disabled")
