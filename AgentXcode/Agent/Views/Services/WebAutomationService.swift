@@ -631,6 +631,170 @@ final class WebAutomationService: @unchecked Sendable {
         return result
     }
 
+    // MARK: - Window Management
+
+    /// List all browser windows with their tabs
+    func listWindows(browser: String? = nil) async -> String {
+        let browserId = browser ?? detectActiveBrowser() ?? "com.apple.Safari"
+        let script: String
+
+        switch browserId {
+        case "com.apple.Safari":
+            script = """
+            tell application "Safari"
+                set windowList to ""
+                repeat with w from 1 to count of windows
+                    set win to window w
+                    set windowList to windowList & "Window " & w & ":"
+                    if w = 1 then set windowList to windowList & " (front)"
+                    set windowList to windowList & linefeed
+                    repeat with t from 1 to count of tabs of win
+                        set tabInfo to tab t of win
+                        set windowList to windowList & "  " & t & ". " & name of tabInfo & " — " & URL of tabInfo & linefeed
+                    end repeat
+                end repeat
+                return windowList
+            end tell
+            """
+        case "com.google.Chrome":
+            script = """
+            tell application "Google Chrome"
+                set windowList to ""
+                repeat with w from 1 to count of windows
+                    set win to window w
+                    set windowList to windowList & "Window " & w & ":"
+                    if w = 1 then set windowList to windowList & " (front)"
+                    set windowList to windowList & linefeed
+                    repeat with t from 1 to count of tabs of win
+                        set tabInfo to tab t of win
+                        set windowList to windowList & "  " & t & ". " & title of tabInfo & " — " & URL of tabInfo & linefeed
+                    end repeat
+                end repeat
+                return windowList
+            end tell
+            """
+        default:
+            return "Error: window listing not supported for this browser"
+        }
+
+        return await runAppleScript(script)
+    }
+
+    /// Switch to a specific browser window by index (1-based)
+    func switchWindow(browser: String? = nil, index: Int) async -> String {
+        let browserId = browser ?? detectActiveBrowser() ?? "com.apple.Safari"
+        let script: String
+
+        switch browserId {
+        case "com.apple.Safari":
+            script = """
+            tell application "Safari"
+                if \(index) > (count of windows) then return "Error: window \(index) does not exist"
+                set index of window \(index) to 1
+                return "Switched to window \(index): " & name of current tab of front window
+            end tell
+            """
+        case "com.google.Chrome":
+            script = """
+            tell application "Google Chrome"
+                if \(index) > (count of windows) then return "Error: window \(index) does not exist"
+                set index of window \(index) to 1
+                return "Switched to window \(index): " & title of active tab of front window
+            end tell
+            """
+        default:
+            return "Error: window switching not supported for this browser"
+        }
+
+        return await runAppleScript(script)
+    }
+
+    /// Open a new browser window
+    func newWindow(browser: String? = nil, url: String? = nil) async -> String {
+        let browserId = browser ?? detectActiveBrowser() ?? "com.apple.Safari"
+        let script: String
+
+        switch browserId {
+        case "com.apple.Safari":
+            if let u = url {
+                script = """
+                tell application "Safari"
+                    make new document with properties {URL:"\(Self.escapeJS(u))"}
+                    return "New window opened: \(Self.escapeJS(u))"
+                end tell
+                """
+            } else {
+                script = """
+                tell application "Safari"
+                    make new document
+                    return "New window opened"
+                end tell
+                """
+            }
+        case "com.google.Chrome":
+            if let u = url {
+                script = """
+                tell application "Google Chrome"
+                    set newWin to make new window
+                    set URL of active tab of newWin to "\(Self.escapeJS(u))"
+                    return "New window opened: \(Self.escapeJS(u))"
+                end tell
+                """
+            } else {
+                script = """
+                tell application "Google Chrome"
+                    make new window
+                    return "New window opened"
+                end tell
+                """
+            }
+        default:
+            return "Error: new window not supported for this browser"
+        }
+
+        return await runAppleScript(script)
+    }
+
+    /// Close a browser window by index (1-based). Defaults to front window.
+    func closeWindow(browser: String? = nil, index: Int = 1) async -> String {
+        let browserId = browser ?? detectActiveBrowser() ?? "com.apple.Safari"
+        let script: String
+
+        switch browserId {
+        case "com.apple.Safari":
+            script = """
+            tell application "Safari"
+                if \(index) > (count of windows) then return "Error: window \(index) does not exist"
+                close window \(index)
+                return "Closed window \(index)"
+            end tell
+            """
+        case "com.google.Chrome":
+            script = """
+            tell application "Google Chrome"
+                if \(index) > (count of windows) then return "Error: window \(index) does not exist"
+                close window \(index)
+                return "Closed window \(index)"
+            end tell
+            """
+        default:
+            return "Error: close window not supported for this browser"
+        }
+
+        return await runAppleScript(script)
+    }
+
+    /// Shared AppleScript runner
+    private func runAppleScript(_ script: String) async -> String {
+        await MainActor.run { () -> String in
+            var err: NSDictionary?
+            guard let appleScript = NSAppleScript(source: script) else { return "Error: script creation failed" }
+            let out = appleScript.executeAndReturnError(&err)
+            if let error = err { return "Error: \(error)" }
+            return out.stringValue ?? "OK"
+        }
+    }
+
     // MARK: - Wait for Element
 
     /// Wait for a CSS selector to appear in the page (polls via JavaScript)

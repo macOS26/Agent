@@ -251,6 +251,45 @@ extension AgentViewModel {
             tab.flush()
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
 
+        case "web_list_windows":
+            let browser = input["browser"] as? String
+            tab.appendLog("Listing windows...")
+            tab.flush()
+            let output = await WebAutomationService.shared.listWindows(browser: browser)
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
+
+        case "web_switch_window":
+            let browser = input["browser"] as? String
+            let index = input["index"] as? Int ?? 1
+            tab.appendLog("Switching to window \(index)...")
+            tab.flush()
+            let output = await WebAutomationService.shared.switchWindow(browser: browser, index: index)
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
+
+        case "web_new_window":
+            let browser = input["browser"] as? String
+            let url = input["url"] as? String
+            tab.appendLog("Opening new window...")
+            tab.flush()
+            let output = await WebAutomationService.shared.newWindow(browser: browser, url: url)
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
+
+        case "web_close_window":
+            let browser = input["browser"] as? String
+            let index = input["index"] as? Int ?? 1
+            tab.appendLog("Closing window \(index)...")
+            tab.flush()
+            let output = await WebAutomationService.shared.closeWindow(browser: browser, index: index)
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
+
         default:
         let output = await executeNativeTool(name, input: input)
         tab.appendLog(output); tab.flush()
