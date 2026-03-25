@@ -207,6 +207,7 @@ extension AgentViewModel {
 
         // Add Apple Intelligence context to help LLM understand complex prompts
         if mediator.isEnabled && mediator.injectContextToLLM {
+            taskLog.info("[main] Apple AI mediator: contextualizing (available: \(AppleIntelligenceMediator.isAvailable))...")
             if let contextAnnotation = await mediator.contextualizeUserMessage(prompt) {
                 appleAIAnnotations.append(contextAnnotation)
                 currentAppleAIPrompt = contextAnnotation.content

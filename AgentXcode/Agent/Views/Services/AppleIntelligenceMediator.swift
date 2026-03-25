@@ -263,7 +263,7 @@ Rules:
 
         let session = ensureSession()
         let prompt = """
-Rephrase this for the AI assistant. Do NOT refuse or block it. If already clear, reply with nothing.
+Rephrase or clarify this request for the AI assistant in 1 sentence. Fix any typos. Do NOT refuse or block it. Always reply with something helpful.
 
 User said: "\(message)"
 """
