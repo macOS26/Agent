@@ -595,9 +595,10 @@ enum AgentTools {
         // --- Web (consolidated) ---
         ToolDef(
             name: Name.web,
-            description: "Web automation. Actions: open (URL in browser), find (element by selector), click (element), type (text into element), execute_js (run JavaScript), get_url, get_title. Auto-selects best strategy: AX → JS → Selenium.",
+            description: "Web automation. Actions: google_search (search Google in Safari), open (URL), find (element), click, type, execute_js, get_url, get_title, read_content. For Google searches: web(action: google_search, query: \"search terms\").",
             properties: [
-                "action": ["type": "string", "description": "Action: open, find, click, type, execute_js, get_url, or get_title"],
+                "action": ["type": "string", "description": "Action: google_search, open, find, click, type, execute_js, get_url, get_title, or read_content"],
+                "query": ["type": "string", "description": "For google_search: search query text"],
                 "url": ["type": "string", "description": "For open: URL to open"],
                 "browser": ["type": "string", "description": "Browser: safari (default), chrome, firefox, edge"],
                 "selector": ["type": "string", "description": "For find/click/type: CSS/XPath/AX selector"],
@@ -607,6 +608,7 @@ enum AgentTools {
                 "timeout": ["type": "number", "description": "For find: max wait seconds (default 10)"],
                 "appBundleId": ["type": "string", "description": "Optional browser bundle ID"],
                 "verify": ["type": "boolean", "description": "For type: verify text entered (default true)"],
+                "max_results": ["type": "integer", "description": "For google_search: max result chars (default 3000)"],
             ],
             required: ["action"]
         ),
