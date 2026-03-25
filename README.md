@@ -1,1 +1,1 @@
-Updated the README with information about today's changes and committed the changes to the README.md file.
+Updated the README with information about the available agents and their descriptions.
