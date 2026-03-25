@@ -1264,8 +1264,6 @@ final class WebAutomationService: @unchecked Sendable {
     /// Perform a Google search in Safari and return the results page content.
     /// Opens google.com, types the query, submits, waits for results, returns text.
     func safariGoogleSearch(query: String, maxResults: Int = 3000) async -> String {
-        let escaped = Self.escapeJS(query)
-
         // 1. Open google.com
         let openScript = """
         tell application "Safari"
@@ -1286,21 +1284,10 @@ final class WebAutomationService: @unchecked Sendable {
             if ready == "complete" { break }
         }
 
-        // 3. Type query and submit
-        let searchJS = """
-        (function() {
-            var el = document.querySelector('textarea[name=q], input[name=q]');
-            if (!el) return 'not found';
-            el.focus();
-            el.value = '\(escaped)';
-            el.dispatchEvent(new Event('input', {bubbles: true}));
-            var form = el.closest('form');
-            if (form) { form.submit(); return 'submitted'; }
-            return 'no form';
-        })()
-        """
+        // 3. Type query and submit — use AppleScript string quoting (backslash-escape double quotes)
+        let safeQuery = query.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
         let submitResult = await runAppleScript("""
-        tell application "Safari" to do JavaScript "\(Self.escapeJS(searchJS))" in front document
+        tell application "Safari" to do JavaScript "var el=document.querySelector('textarea[name=q],input[name=q]');if(el){el.focus();el.value=\\"\(safeQuery)\\";el.dispatchEvent(new Event('input',{bubbles:true}));var f=el.closest('form');if(f){f.submit();'submitted'}else{'no form'}}else{'not found'}" in front document
         """)
         guard submitResult == "submitted" else {
             return "{\"success\": false, \"error\": \"Search submit failed: \(submitResult)\"}"
