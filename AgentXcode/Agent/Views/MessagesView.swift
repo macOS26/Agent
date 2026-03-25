@@ -26,7 +26,7 @@ struct MessagesView: View {
                 
                 Toggle("", isOn: $viewModel.messagesMonitorEnabled)
                     .toggleStyle(.switch)
-                    .controlSize(.mini)
+                    .controlSize(.small)
                     .tint(.blue)
                     .labelsHidden()
             }
