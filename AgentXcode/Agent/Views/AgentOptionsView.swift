@@ -28,10 +28,8 @@ struct AgentOptionsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            .padding(.bottom, 4)
+            .padding(.bottom, 8)
             
-            Divider()
-
             row {
                 Text("Iterations").font(.subheadline)
                 Spacer()

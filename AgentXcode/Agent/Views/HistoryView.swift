@@ -42,8 +42,6 @@ struct HistoryView: View {
             }
             .pickerStyle(.segmented)
 
-            Divider()
-
             // Content — fixed height so all tabs are the same size
             ScrollView {
                 if currentItems.isEmpty {

@@ -238,8 +238,6 @@ struct AccessibilitySettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
-                Divider()
-
                 LazyVGrid(columns: columns, alignment: .leading, spacing: 12) {
                     axSection(title: "AX Core Actions", items: AccessibilityEnabledIDs.axCoreActions)
                     axSection(title: "AX Value Actions", items: AccessibilityEnabledIDs.axValueActions)

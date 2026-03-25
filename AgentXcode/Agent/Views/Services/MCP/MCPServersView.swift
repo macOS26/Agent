@@ -20,9 +20,7 @@ struct MCPServersView: View {
             Text("Connect external tools via Model Context Protocol.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            
-            Divider()
-            
+                    
             HStack {
                 Spacer()
                 Button {
@@ -52,8 +50,6 @@ struct MCPServersView: View {
                 .controlSize(.small)
                 .help("Add MCP server")
             }
-
-            Divider()
 
             if registry.servers.isEmpty {
                 VStack(spacing: 12) {

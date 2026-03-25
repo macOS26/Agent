@@ -18,9 +18,7 @@ struct ServicesPopover: View {
             Text("Background agents for shell commands and automation.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            
-            Divider()
-            
+                        
             Grid(alignment: .leading, verticalSpacing: 10) {
                 GridRow {
                     StatusDot(

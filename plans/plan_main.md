@@ -1,10 +1,10 @@
-# Update README with release notes
+# Update README with Release Notes Section
 
-- [⏳] 1. 1. Check git status and recent commits
-- [ ] 2. 2. Add new "Release Notes" section after System Requirements
-- [ ] 3. 3. List recent changes from git log (last 10 commits)
-- [ ] 4. 4. Update version badge if needed
-- [ ] 5. 5. Build to verify formatting
+- [✅] 1. 1. Read the System Requirements section and surrounding context in README.md
+- [⏳] 2. 2. Determine the best location to insert the Release Notes section after System Requirements
+- [ ] 3. 3. Create the Release Notes section with today's changes (UI improvements from recent commits)
+- [ ] 4. 4. Update the Table of Contents to include Release Notes
+- [ ] 5. 5. Update the version badge in README.md from 1.0.23 to current version (1.0.19)
 
 ---
-*Status: 0 done, 1 in progress, 0 failed, 4 pending*
+*Status: 1 done, 1 in progress, 0 failed, 3 pending*

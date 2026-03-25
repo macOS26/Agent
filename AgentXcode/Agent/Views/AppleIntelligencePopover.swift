@@ -13,9 +13,7 @@ struct AppleIntelligencePopover: View {
                 Text("Train and manage LoRA adapters for local models.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                
-                Divider()
-                
+                                
                 // Mediator Section
                 mediatorSection
 
