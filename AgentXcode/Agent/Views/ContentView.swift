@@ -190,9 +190,8 @@ struct ContentView: View {
                 let status = DependencyChecker.check()
                 DispatchQueue.main.async {
                     dependencyStatus = status
-                    if status.allGood {
-                        showDependencyOverlay = false
-                    }
+                    // Don't dismiss here — the overlay animates its own
+                    // 2.5-second auto-dismiss when allGood is true.
                 }
             }
             NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in

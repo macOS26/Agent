@@ -95,7 +95,9 @@ struct DependencyOverlay: View {
                 .opacity(dismissing ? 0 : 1)
             }
             .onAppear {
-                SoundPlayer.shared.playStartupSound()
+                if !status.allGood {
+                    SoundPlayer.shared.playStartupSound()
+                }
                 withAnimation(.easeOut(duration: 0.4)) { showIcon = true }
                 withAnimation(.easeOut(duration: 0.3).delay(0.3)) { showRow1 = true }
                 withAnimation(.easeOut(duration: 0.3).delay(0.5)) { showRow2 = true }
