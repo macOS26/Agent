@@ -197,8 +197,23 @@ extension AgentViewModel {
         let mediator = AppleIntelligenceMediator.shared
         var appleAIAnnotations: [AppleIntelligenceMediator.Annotation] = []
 
-        // Optional: Add Apple Intelligence context to user message
-        if mediator.isEnabled && mediator.injectContextToLLM {
+        // Apple AI conversation triage — answer simple prompts directly without hitting the LLM
+        var triageHandled = false
+        if mediator.isEnabled {
+            let triageResult = await mediator.triagePrompt(prompt)
+            if case .answered(let reply) = triageResult {
+                tabTaskLog.info("[\(tab.displayTitle)] Apple AI answered directly — skipping LLM")
+                tab.appendLog(reply)
+                tab.flush()
+                tab.isLLMRunning = false
+                tab.isLLMThinking = false
+                return
+            }
+            triageHandled = true
+        }
+
+        // Add Apple Intelligence context only if triage didn't already evaluate the prompt
+        if !triageHandled && mediator.isEnabled && mediator.injectContextToLLM {
             tabTaskLog.info("[\(tab.displayTitle)] Apple AI mediator: contextualizing user message...")
             if let contextAnnotation = await mediator.contextualizeUserMessage(prompt) {
                 appleAIAnnotations.append(contextAnnotation)
