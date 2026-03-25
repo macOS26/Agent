@@ -234,7 +234,7 @@ extension AgentViewModel {
             appendLog("🔍 Google search: \(query)")
             flushLog()
             let output = await WebAutomationService.shared.safariGoogleSearch(query: query)
-            appendLog(Self.preview(output, lines: 40))
+            // Don't log raw JSON — LLM will format it nicely
             return output
 
         default:

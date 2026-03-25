@@ -29,7 +29,7 @@ struct ActivityLogView: NSViewRepresentable {
         // Improve text rendering performance
         textView.usesFontPanel = false
         textView.usesRuler = false
-        textView.isRichText = false
+        textView.isRichText = true
         textView.allowsUndo = false
         // Enable link detection and clicking
         textView.isAutomaticLinkDetectionEnabled = true
