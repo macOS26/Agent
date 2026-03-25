@@ -32,7 +32,7 @@ struct InputSectionView: View {
                     .buttonStyle(.bordered)
                     .controlSize(.regular)
                     .help("Cancel tab task")
-                    .opacity(tab.isLLMRunning ? 1 : 0.3)
+                    .opacity(tab.isLLMRunning ? 1 : 0)
                     .disabled(!tab.isLLMRunning)
 
                     Button { viewModel.runTabTask(tab: tab) } label: {
@@ -74,7 +74,7 @@ struct InputSectionView: View {
                     .buttonStyle(.bordered)
                     .controlSize(.regular)
                     .help("Cancel running task")
-                    .opacity(viewModel.isRunning || viewModel.isThinking ? 1 : 0.3)
+                    .opacity(viewModel.isRunning || viewModel.isThinking ? 1 : 0)
                     .disabled(!viewModel.isRunning && !viewModel.isThinking)
 
                     Button { viewModel.run() } label: {
