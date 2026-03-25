@@ -5,9 +5,7 @@ struct HeaderStatusView: View {
     @Bindable var viewModel: AgentViewModel
 
     var body: some View {
-        HStack(spacing: 8) {
-            Spacer()
-                .frame(width: 4)
+        HStack(spacing: 12) {
             // Service status indicators
             HStack(spacing: 4) {
                 StatusDot(
@@ -71,6 +69,7 @@ struct HeaderStatusView: View {
                 }
             }
         }
+        .padding(.horizontal, 8)
     }
 }
 
