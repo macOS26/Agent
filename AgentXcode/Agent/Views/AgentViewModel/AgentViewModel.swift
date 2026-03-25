@@ -148,7 +148,17 @@ final class AgentViewModel {
     var llmStatusColor: Color {
         let needsKey: Set<APIProvider> = [.claude, .openAI, .deepSeek, .huggingFace]
         if needsKey.contains(selectedProvider) && apiKey.isEmpty { return .red }
-        if isRunning || isThinking { return .blue }
+        // When running, use the active tab's color
+        if isRunning || isThinking {
+            if let selId = selectedTabId {
+                return ContentView.tabColor(for: selId, in: scriptTabs)
+            }
+            return .blue
+        }
+        // Check if any tab is running
+        if let runningTab = scriptTabs.first(where: { $0.isLLMRunning || $0.isLLMThinking }) {
+            return ContentView.tabColor(for: runningTab.id, in: scriptTabs)
+        }
         return .green
     }
 
