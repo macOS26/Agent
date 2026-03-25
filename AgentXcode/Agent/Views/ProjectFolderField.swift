@@ -38,6 +38,7 @@ struct ProjectFolderField: View {
                 TextField("Project folder...", text: $projectFolder)
                     .textContentType(.none)
                     .textFieldStyle(.plain)
+                    .autocorrectionDisabled()
                     .padding(.leading, 10)
                     .padding(.trailing, 5)
                     .padding(.vertical, 5)
@@ -61,7 +62,7 @@ struct ProjectFolderField: View {
                         }
                     }
                     .onChange(of: isTextFieldFocused) { _, focused in
-                        if focused && !recentFolders.isEmpty {
+                        if focused && !recentFolders.isEmpty && !projectFolder.isEmpty {
                             showRecentFolders = true
                         } else if !focused {
                             // Delay dismiss so button click can register
