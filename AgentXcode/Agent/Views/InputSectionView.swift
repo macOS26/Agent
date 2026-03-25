@@ -88,7 +88,7 @@ struct InputSectionView: View {
             HStack(spacing: 4) {
                 Button { viewModel.captureScreenshot() } label: {
                     Image(systemName: "camera")
-                        .frame(width: buttonWidth).frame(maxHeight: .infinity)
+                        .frame(width: buttonWidth)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.regular)
@@ -96,7 +96,7 @@ struct InputSectionView: View {
 
                 Button { viewModel.pasteImageFromClipboard() } label: {
                     Image(systemName: "photo.on.rectangle.angled")
-                        .frame(width: buttonWidth).frame(maxHeight: .infinity)
+                        .frame(width: buttonWidth)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.regular)
@@ -106,7 +106,7 @@ struct InputSectionView: View {
                 Button { viewModel.toggleDictation() } label: {
                     Image(systemName: viewModel.isListening ? "mic.fill" : "mic")
                         .foregroundStyle(viewModel.isListening ? Color.blue : .primary)
-                        .frame(width: buttonWidth).frame(maxHeight: .infinity)
+                        .frame(width: buttonWidth)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.regular)
@@ -117,7 +117,7 @@ struct InputSectionView: View {
                         .foregroundStyle(viewModel.isHotwordListening
                             ? (viewModel.isHotwordCapturing ? Color.green : Color.orange)
                             : .primary)
-                        .frame(width: buttonWidth).frame(maxHeight: .infinity)
+                        .frame(width: buttonWidth)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.regular)
