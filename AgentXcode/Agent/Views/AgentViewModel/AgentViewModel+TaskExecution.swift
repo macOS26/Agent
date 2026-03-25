@@ -154,6 +154,30 @@ extension AgentViewModel {
         let mediator = AppleIntelligenceMediator.shared
         var appleAIAnnotations: [AppleIntelligenceMediator.Annotation] = []
 
+        // Apple AI conversation triage — answer simple prompts directly without hitting the LLM
+        if mediator.isEnabled {
+            taskLog.info("[main] Apple AI triage: checking if prompt is conversational...")
+            let triageResult = await mediator.triagePrompt(prompt)
+            if case .answered(let reply) = triageResult {
+                taskLog.info("[main] Apple AI answered directly — skipping LLM")
+                appendLog(reply)
+                flushLog()
+                completionSummary = String(reply.prefix(200))
+                // Save history and finish
+                history.add(TaskRecord(prompt: prompt, summary: completionSummary, commandsRun: []), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
+                ChatHistoryStore.shared.endCurrentTask(summary: completionSummary)
+                stopProgressUpdates()
+                if agentReplyHandle != nil {
+                    sendProgressUpdate(reply)
+                }
+                flushLog()
+                persistLogNow()
+                isRunning = false
+                isThinking = false
+                return
+            }
+        }
+
         // Optional: Add Apple Intelligence context to user message
         if mediator.isEnabled && mediator.injectContextToLLM {
             taskLog.info("[main] Apple AI mediator: contextualizing user message...")
@@ -1720,13 +1744,21 @@ extension AgentViewModel {
                     if provider == .lmStudio && (lmStudioProtocol == .lmStudio || lmStudioProtocol == .anthropic) {
                         break
                     }
+                    // Check if this is a conversational text reply (no tools needed)
+                    let responseText = response.content.compactMap { $0["text"] as? String }.joined()
+                    let isConversational = Self.isConversationalReply(responseText, iteration: iterations)
+                    if isConversational {
+                        // LLM chose to reply with text — accept it as a valid response
+                        completionSummary = String(responseText.prefix(200))
+                        break
+                    }
                     consecutiveNoTool += 1
                     if consecutiveNoTool >= 3 {
                         appendLog("LLM not calling tools after \(consecutiveNoTool) attempts — stopping.")
                         flushLog()
                         break
                     }
-                    // No tool use this iteration — just nudge and continue
+                    // No tool use this iteration — nudge and continue
                     messages.append(["role": "user", "content": "Continue. You MUST use tools — do not output code as text. Use agent (action: create/update) for scripts, write_file/edit_file for files. Call task_complete when finished."])
                 }
 

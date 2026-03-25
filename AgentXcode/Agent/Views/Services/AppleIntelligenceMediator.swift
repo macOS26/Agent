@@ -368,6 +368,39 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
         return Annotation(target: .user, content: trimmed, timestamp: Date())
     }
 
+    // MARK: - Conversation Triage
+
+    /// Triage result: either Apple AI answers directly, or passes through to the LLM.
+    enum TriageResult {
+        case answered(String)   // Apple AI handled it — show this text and skip LLM
+        case passThrough        // Needs tools/LLM — proceed normally
+    }
+
+    /// Ask Apple AI if a user prompt is conversational (greeting, question, thanks)
+    /// and if so, answer it directly. Returns .answered with the reply text,
+    /// or .passThrough if the prompt needs tools/LLM.
+    func triagePrompt(_ message: String) async -> TriageResult {
+        guard isEnabled && Self.isAvailable else { return .passThrough }
+
+        let session = ensureSession()
+        let prompt = """
+Is this a simple conversational message (greeting, question, thanks, small talk) that needs NO file operations, shell commands, or app automation? If yes, reply with a helpful answer. If it needs tools or actions, reply with exactly: PASS
+
+User said: "\(message)"
+"""
+
+        guard let content = await respondWithTimeout(session, prompt: prompt, label: "triage") else {
+            return .passThrough
+        }
+        let trimmed = sanitize(content)
+        if trimmed.isEmpty || trimmed.uppercased().contains("PASS") {
+            return .passThrough
+        }
+        // Apple AI answered it directly
+        lastAppleAIMessage = String(trimmed.prefix(200))
+        return .answered(trimmed)
+    }
+
     /// Clear the session and conversation context to start fresh (call when switching contexts or starting a new conversation)
     func resetSession() {
         mediatorLog.info("Session reset")
