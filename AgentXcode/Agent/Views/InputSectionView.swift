@@ -34,6 +34,7 @@ struct InputSectionView: View {
                             .frame(width: 36)
                     }
                     .buttonStyle(.bordered)
+                    .clipShape(Capsule())
                     .controlSize(.small)
                     .help("Cancel tab task")
                     .opacity(tab.isLLMRunning ? 1 : 0)
@@ -81,6 +82,7 @@ struct InputSectionView: View {
                             .frame(width: 36)
                     }
                     .buttonStyle(.bordered)
+                    .clipShape(Capsule())
                     .controlSize(.small)
                     .help("Cancel running task")
                     .opacity(viewModel.isRunning || viewModel.isThinking ? 1 : 0)
