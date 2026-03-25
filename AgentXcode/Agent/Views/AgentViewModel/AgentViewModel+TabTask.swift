@@ -314,6 +314,9 @@ extension AgentViewModel {
                 sessionOutputTokens += response.outputTokens
                 let streamElapsed = CFAbsoluteTimeGetCurrent() - streamStart
                 tabTaskLog.info("[\(tab.displayTitle)] stream completed in \(String(format: "%.2f", streamElapsed))s, stopReason=\(response.stopReason), tokens: \(response.inputTokens)in/\(response.outputTokens)out")
+                // Show timing in activity log so user can see what's slow
+                tab.appendLog("[⏱ LLM \(String(format: "%.1f", streamElapsed))s | stop: \(response.stopReason) | iter \(iterations)]")
+                tab.flush()
                 tab.isLLMThinking = false
                 guard !Task.isCancelled else { break }
 
@@ -338,9 +341,15 @@ extension AgentViewModel {
                         if name == "task_complete" {
                             completionSummary = input["summary"] as? String ?? "Done"
                         }
+                        let toolStart = CFAbsoluteTimeGetCurrent()
                         let result = await handleTabToolCall(
                             tab: tab, name: name, input: input, toolId: toolId
                         )
+                        let toolElapsed = CFAbsoluteTimeGetCurrent() - toolStart
+                        if toolElapsed > 0.5 {
+                            tab.appendLog("[⏱ \(name) \(String(format: "%.1f", toolElapsed))s]")
+                            tab.flush()
+                        }
                         if result.isComplete {
                             tab.llmMessages = messages
                             // Save task history for tab
