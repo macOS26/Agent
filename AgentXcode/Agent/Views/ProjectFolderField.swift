@@ -32,12 +32,11 @@ struct ProjectFolderField: View {
                 }
                 .buttonStyle(.bordered)
                 .clipShape(Capsule())
-                .controlSize(.small)
+                .controlSize(.regular)
                 .help("Pick project folder or file")
 
                 TextField("Project folder or file...", text: $projectFolder)
                     .textContentType(.none)
-                    .font(.system(size: 10))
                     .textFieldStyle(.plain)
                     .padding(5)
                     .background(Color(white: 0.12))
@@ -70,7 +69,7 @@ struct ProjectFolderField: View {
                 }
                 .buttonStyle(.bordered)
                 .clipShape(Capsule())
-                .controlSize(.small)
+                .controlSize(.regular)
                 .help("Clear project folder")
                 .disabled(projectFolder.isEmpty)
             }
