@@ -30,7 +30,7 @@ struct InputSectionView: View {
                             .frame(width: 36)
                     }
                     .buttonStyle(.bordered)
-                    .controlSize(.regular)
+                    .controlSize(.small)
                     .help("Cancel tab task")
                     .opacity(tab.isLLMRunning ? 1 : 0)
                     .disabled(!tab.isLLMRunning)
@@ -41,7 +41,7 @@ struct InputSectionView: View {
                             .frame(width: 36)
                     }
                     .buttonStyle(.borderedProminent)
-                    .controlSize(.regular)
+                    .controlSize(.small)
                     .disabled(tab.taskInput.isEmpty || {
                         let provider = tab.llmConfig?.provider ?? viewModel.selectedProvider
                         return provider == .claude && viewModel.apiKey.isEmpty
@@ -72,7 +72,7 @@ struct InputSectionView: View {
                             .frame(width: 36)
                     }
                     .buttonStyle(.bordered)
-                    .controlSize(.regular)
+                    .controlSize(.small)
                     .help("Cancel running task")
                     .opacity(viewModel.isRunning || viewModel.isThinking ? 1 : 0)
                     .disabled(!viewModel.isRunning && !viewModel.isThinking)
@@ -83,7 +83,7 @@ struct InputSectionView: View {
                             .frame(width: 36)
                     }
                     .buttonStyle(.borderedProminent)
-                    .controlSize(.regular)
+                    .controlSize(.small)
                     .disabled(viewModel.taskInput.isEmpty || (viewModel.selectedProvider == .claude && viewModel.apiKey.isEmpty))
                 }
             }
@@ -101,7 +101,7 @@ struct InputSectionView: View {
                         .frame(width: buttonWidth)
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.regular)
+                .controlSize(.small)
                 .help("Take a screenshot to attach")
 
                 Button { viewModel.pasteImageFromClipboard() } label: {
@@ -109,7 +109,7 @@ struct InputSectionView: View {
                         .frame(width: buttonWidth)
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.regular)
+                .controlSize(.small)
                 .help("Paste image from clipboard")
             }
             HStack(spacing: 4) {
@@ -119,7 +119,7 @@ struct InputSectionView: View {
                         .frame(width: buttonWidth)
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.regular)
+                .controlSize(.small)
                 .help(viewModel.isListening ? "Stop dictation" : "Start dictation")
 
                 Button { viewModel.toggleHotwordListening() } label: {
@@ -130,7 +130,7 @@ struct InputSectionView: View {
                         .frame(width: buttonWidth)
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.regular)
+                .controlSize(.small)
                 .help(viewModel.isHotwordListening
                     ? (viewModel.isHotwordCapturing ? "Capturing command..." : "Listening for \"Agent!\" — click to stop")
                     : "Say \"Agent!\" to send a voice command")
