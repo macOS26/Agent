@@ -1216,10 +1216,14 @@ final class AgentViewModel {
 
         promptHistory.append(task)
         UserDefaults.standard.set(promptHistory, forKey: "agentPromptHistory")
-        // Also add to the selected tab's history so arrow keys work
+        // Sync to selected tab so arrow keys work — seed from viewModel if tab is empty
         if let selectedId = selectedTabId,
            let tab = scriptTabs.first(where: { $0.id == selectedId }) {
-            tab.addToHistory(task)
+            if tab.promptHistory.isEmpty && !promptHistory.isEmpty {
+                tab.promptHistory = promptHistory
+            } else {
+                tab.addToHistory(task)
+            }
         }
         historyIndex = -1
         savedInput = ""
