@@ -121,12 +121,7 @@ extension AgentViewModel {
         // Start fresh — no prior conversation context to avoid corrupted messages
         var messages: [[String: Any]] = []
 
-        // Inject available agent names so the LLM can run agents without calling list_agents first
-        let agentNames = scriptService.compactNameList()
-        if !agentNames.isEmpty {
-            messages.append(["role": "user", "content": "[Available agents: \(agentNames)]"])
-            messages.append(["role": "assistant", "content": "Noted."])
-        }
+        // No agent name injection — avoid message format issues with some APIs
 
         let effectivePrompt = prompt
 
