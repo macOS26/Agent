@@ -1777,12 +1777,12 @@ extension AgentViewModel {
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
-                        // Web browser tool — route through executeNativeTool
+                        // Web browser tool — handle same as tab tasks
                         if toolResults.isEmpty && (name.hasPrefix("web_") || name == "web") {
-                            let output = await executeNativeTool(name, input: input)
-                            appendLog(String(output.prefix(500)))
+                            let webResult = await handleMainWebTool(name: name, input: input)
+                            appendLog(String(webResult.prefix(500)))
                             flushLog()
-                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": webResult])
                         }
                     }
                 }
