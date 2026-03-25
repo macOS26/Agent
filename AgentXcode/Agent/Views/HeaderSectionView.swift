@@ -151,7 +151,7 @@ struct HeaderToolbarButtons: View {
 
         Button { showAIPopover.toggle() } label: {
             Image(systemName: AppleIntelligenceMediator.isAvailable ? "brain.fill" : "brain")
-                .foregroundStyle(!AppleIntelligenceMediator.isAvailable ? Color.red : (aiMediator.isEnabled ? Color.green : Color.gray))
+                .foregroundStyle(aiMediator.brainIconColor)
         }
         .help("Apple Intelligence Settings")
         .popover(isPresented: $showAIPopover) {

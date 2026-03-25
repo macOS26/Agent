@@ -1,5 +1,6 @@
 import Foundation
 import FoundationModels
+import SwiftUI
 import os.log
 
 private let mediatorLog = Logger(subsystem: AppConstants.subsystem, category: "AppleIntelligenceMediator")
@@ -52,6 +53,15 @@ final class AppleIntelligenceMediator: ObservableObject {
         didSet {
             UserDefaults.standard.set(trainingEnabled, forKey: "appleIntelligenceTrainingEnabled")
         }
+    }
+
+    /// Brain icon color for the toolbar
+    var brainIconColor: Color {
+        if !isEnabled { return .red }
+        if LoRAAdapterManager.shared.isLoaded { return .blue }
+        if trainingEnabled { return .orange }
+        if !showAnnotationsToUser || !injectContextToLLM { return .yellow }
+        return .green
     }
 
     // MARK: - Conversation Context (for Apple AI session)
