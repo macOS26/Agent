@@ -85,18 +85,18 @@ extension AgentViewModel {
             default:                return ("xcode_build", newInput)
             }
 
-        case "web":
+        case "safari", "web":
             switch action {
-            case "open":          return ("web_open", newInput)
-            case "find":          return ("web_find", newInput)
-            case "click":         return ("web_click", newInput)
-            case "type":          return ("web_type", newInput)
-            case "execute_js":    return ("web_execute_js", newInput)
-            case "get_url":       return ("web_get_url", newInput)
-            case "get_title":     return ("web_get_title", newInput)
-            case "google_search": return ("web_google_search", newInput)
+            case "open":          return ("safari_open", newInput)
+            case "find":          return ("safari_find", newInput)
+            case "click":         return ("safari_click", newInput)
+            case "type":          return ("safari_type", newInput)
+            case "execute_js":    return ("safari_execute_js", newInput)
+            case "get_url":       return ("safari_get_url", newInput)
+            case "get_title":     return ("safari_get_title", newInput)
+            case "google_search": return ("safari_google_search", newInput)
             case "search":        return ("web_search", newInput)
-            default:              return ("web_open", newInput)
+            default:              return ("safari_open", newInput)
             }
 
         case "selenium":

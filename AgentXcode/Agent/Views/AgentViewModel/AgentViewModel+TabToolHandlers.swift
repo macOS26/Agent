@@ -38,8 +38,8 @@ extension AgentViewModel {
         // Accessibility (prefix match via default + where)
         case let n where n.hasPrefix("ax_"):
             return await handleTabAccessibilityTool(tab: tab, name: name, input: input, toolId: toolId)
-        // Web (prefix match)
-        case let n where n.hasPrefix("web_"):
+        // Safari (prefix match)
+        case let n where n.hasPrefix("safari_"):
             return await handleTabWebTool(tab: tab, name: name, input: input, toolId: toolId)
         // Selenium (prefix match)
         case let n where n.hasPrefix("selenium_"):

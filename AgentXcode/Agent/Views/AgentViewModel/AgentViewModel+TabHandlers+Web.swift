@@ -12,7 +12,7 @@ extension AgentViewModel {
     ) async -> TabToolResult {
 
         switch name {
-        case "web_open":
+        case "safari_open":
             guard let urlString = input["url"] as? String,
                   let url = URL(string: urlString) else {
                 let errorMsg = "Error: Invalid or missing URL"
@@ -38,7 +38,7 @@ extension AgentViewModel {
                 isComplete: false
             )
 
-        case "web_find":
+        case "safari_find":
             let selector = input["selector"] as? String ?? ""
             let strategyStr = input["strategy"] as? String ?? "auto"
             let strategy = SelectorStrategy(rawValue: strategyStr) ?? .auto
@@ -67,7 +67,7 @@ extension AgentViewModel {
                 isComplete: false
             )
 
-        case "web_click":
+        case "safari_click":
             let selector = input["selector"] as? String ?? ""
             let strategyStr = input["strategy"] as? String ?? "auto"
             let strategy = SelectorStrategy(rawValue: strategyStr) ?? .auto
@@ -88,7 +88,7 @@ extension AgentViewModel {
                 isComplete: false
             )
 
-        case "web_type":
+        case "safari_type":
             let selector = input["selector"] as? String ?? ""
             let text = input["text"] as? String ?? ""
             let strategyStr = input["strategy"] as? String ?? "auto"
@@ -111,7 +111,7 @@ extension AgentViewModel {
                 isComplete: false
             )
 
-        case "web_execute_js":
+        case "safari_execute_js":
             let script = input["script"] as? String ?? ""
             let browser = input["browser"] as? String
             tab.appendLog("Executing JavaScript...")
@@ -128,7 +128,7 @@ extension AgentViewModel {
                 isComplete: false
             )
 
-        case "web_get_url":
+        case "safari_get_url":
             let browser = input["browser"] as? String
             tab.appendLog("Getting page URL...")
             tab.flush()
@@ -137,7 +137,7 @@ extension AgentViewModel {
             tab.flush()
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": url], isComplete: false)
 
-        case "web_get_title":
+        case "safari_get_title":
             let browser = input["browser"] as? String
             tab.appendLog("Getting page title...")
             tab.flush()
@@ -146,7 +146,7 @@ extension AgentViewModel {
             tab.flush()
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": title], isComplete: false)
 
-        case "web_read_content":
+        case "safari_read_content":
             let browser = input["browser"] as? String
             let maxLength = input["max_length"] as? Int ?? 10000
             tab.appendLog("Reading page content...")
@@ -156,7 +156,7 @@ extension AgentViewModel {
             tab.flush()
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": content], isComplete: false)
 
-        case "web_switch_tab":
+        case "safari_switch_tab":
             let browser = input["browser"] as? String
             let index = input["index"] as? Int
             let title = input["title"] as? String
@@ -167,7 +167,7 @@ extension AgentViewModel {
             tab.flush()
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
 
-        case "web_list_tabs":
+        case "safari_list_tabs":
             let browser = input["browser"] as? String
             tab.appendLog("Listing tabs...")
             tab.flush()
@@ -176,7 +176,7 @@ extension AgentViewModel {
             tab.flush()
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
 
-        case "web_wait_for_element":
+        case "safari_wait_for_element":
             let selector = input["selector"] as? String ?? ""
             let browser = input["browser"] as? String
             let timeout = input["timeout"] as? Double ?? 10.0
@@ -187,7 +187,7 @@ extension AgentViewModel {
             tab.flush()
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
 
-        case "web_scroll_to":
+        case "safari_scroll_to":
             let selector = input["selector"] as? String ?? ""
             let browser = input["browser"] as? String
             tab.appendLog("Scrolling to: \(selector)...")
@@ -197,7 +197,7 @@ extension AgentViewModel {
             tab.flush()
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
 
-        case "web_select":
+        case "safari_select":
             let selector = input["selector"] as? String ?? ""
             let value = input["value"] as? String
             let text = input["text"] as? String
@@ -210,7 +210,7 @@ extension AgentViewModel {
             tab.flush()
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
 
-        case "web_upload":
+        case "safari_upload":
             let selector = input["selector"] as? String ?? ""
             let browser = input["browser"] as? String
             tab.appendLog("Triggering file upload: \(selector)...")
@@ -220,7 +220,7 @@ extension AgentViewModel {
             tab.flush()
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
 
-        case "web_storage":
+        case "safari_storage":
             let storageType = input["storage_type"] as? String ?? "cookies"
             let key = input["key"] as? String
             let browser = input["browser"] as? String
@@ -231,7 +231,7 @@ extension AgentViewModel {
             tab.flush()
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
 
-        case "web_submit":
+        case "safari_submit":
             let selector = input["selector"] as? String
             let browser = input["browser"] as? String
             tab.appendLog("Submitting form...")
@@ -241,7 +241,7 @@ extension AgentViewModel {
             tab.flush()
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
 
-        case "web_navigate":
+        case "safari_navigate":
             let action = input["action"] as? String ?? "back"
             let browser = input["browser"] as? String
             tab.appendLog("Navigate: \(action)...")
@@ -251,7 +251,7 @@ extension AgentViewModel {
             tab.flush()
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
 
-        case "web_list_windows":
+        case "safari_list_windows":
             let browser = input["browser"] as? String
             tab.appendLog("Listing windows...")
             tab.flush()
@@ -260,7 +260,7 @@ extension AgentViewModel {
             tab.flush()
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
 
-        case "web_switch_window":
+        case "safari_switch_window":
             let browser = input["browser"] as? String
             let index = input["index"] as? Int ?? 1
             tab.appendLog("Switching to window \(index)...")
@@ -270,7 +270,7 @@ extension AgentViewModel {
             tab.flush()
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
 
-        case "web_new_window":
+        case "safari_new_window":
             let browser = input["browser"] as? String
             let url = input["url"] as? String
             tab.appendLog("Opening new window...")
@@ -280,7 +280,7 @@ extension AgentViewModel {
             tab.flush()
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
 
-        case "web_close_window":
+        case "safari_close_window":
             let browser = input["browser"] as? String
             let index = input["index"] as? Int ?? 1
             tab.appendLog("Closing window \(index)...")
@@ -290,7 +290,7 @@ extension AgentViewModel {
             tab.flush()
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
 
-        case "web_google_search":
+        case "safari_google_search":
             let query = input["query"] as? String ?? ""
             let maxResults = input["max_results"] as? Int ?? 3000
             guard !query.isEmpty else {

@@ -109,27 +109,25 @@ enum AgentTools {
         // Tool Discovery
         static let listNativeTools = "list_tools"
         static let listMcpTools = "list_mcp_tools"
-        // Web (consolidated CRUDL)
-        static let web = "web"
-        // Legacy web names (handlers still work)
-        static let webOpen = "web_open"
-        static let webFind = "web_find"
-        static let webClick = "web_click"
-        static let webType = "web_type"
-        static let webExecuteJs = "web_execute_js"
-        static let webGetUrl = "web_get_url"
-        static let webGetTitle = "web_get_title"
-        static let webGoogleSearch = "web_google_search"
-        static let webReadContent = "web_read_content"
-        static let webScrollTo = "web_scroll_to"
-        static let webSelect = "web_select"
-        static let webUpload = "web_upload"
-        static let webStorage = "web_storage"
-        static let webSubmit = "web_submit"
-        static let webNavigate = "web_navigate"
-        static let webListTabs = "web_list_tabs"
-        static let webSwitchTab = "web_switch_tab"
-        static let webListWindows = "web_list_windows"
+        // Safari (consolidated web automation)
+        static let safari = "safari"
+        // Legacy safari_ names (handlers still work)
+        static let safariOpen = "safari_open"
+        static let safariFind = "safari_find"
+        static let safariClick = "safari_click"
+        static let safariType = "safari_type"
+        static let safariExecuteJs = "safari_execute_js"
+        static let safariGetUrl = "safari_get_url"
+        static let safariGetTitle = "safari_get_title"
+        static let safariGoogleSearch = "safari_google_search"
+        static let safariReadContent = "safari_read_content"
+        static let safariScrollTo = "safari_scroll_to"
+        static let safariSelect = "safari_select"
+        static let safariSubmit = "safari_submit"
+        static let safariNavigate = "safari_navigate"
+        static let safariListTabs = "safari_list_tabs"
+        static let safariSwitchTab = "safari_switch_tab"
+        static let safariListWindows = "safari_list_windows"
         static let webSwitchWindow = "web_switch_window"
         static let webNewWindow = "web_new_window"
         static let webCloseWindow = "web_close_window"
@@ -174,10 +172,10 @@ enum AgentTools {
         plan_mode: create, update, read, list, delete | applescript_tool: execute, lookup_sdef, list, run, save, delete
         javascript_tool: execute, list, run, save, delete
         accessibility: list_windows, get_properties, perform_action, type_text, click, press_key, set_properties, find_element, get_children, click_element, type_into_element, wait_adaptive, show_menu, drag, highlight_element, get_window_frame, click_menu_item, set_window_frame, manage_app, scroll_to_element, read_focused
-        web: search, google_search, open, find, click, type, execute_js, get_url, get_title, read_content, scroll_to, select, upload, storage, submit, navigate, list_tabs, switch_tab, list_windows, switch_window, new_window, close_window, wait_for_element
+        safari: search, google_search, open, find, click, type, execute_js, get_url, get_title, read_content, scroll_to, select, submit, navigate, list_tabs, switch_tab, list_windows, new_window, close_window
 
         CRITICAL RULES:
-        - WEB PAGES / SAFARI / BROWSERS: ALWAYS use the web tool for ANY web page interaction. NEVER use accessibility for web pages. Examples: web(action: "google_search", query: "..."), web(action: "click", selector: "#btn"), web(action: "type", selector: "input", text: "..."), web(action: "execute_js", script: "document.title"), web(action: "open", url: "https://..."), web(action: "get_url"), web(action: "get_title"), web(action: "read_content"). For Google searches use web(action: "google_search", query: "...").
+        - WEB PAGES / SAFARI: ALWAYS use the safari tool for ANY web page interaction. NEVER use accessibility for web pages. Examples: safari(action: "google_search", query: "..."), safari(action: "click", selector: "#btn"), safari(action: "type", selector: "input", text: "..."), safari(action: "execute_js", script: "document.title"), safari(action: "open", url: "https://..."), safari(action: "get_url"), safari(action: "get_title"), safari(action: "read_content"). For Google searches use safari(action: "google_search", query: "...").
         - SHELL COMMANDS (rm, mv, cp, ls, find, grep, etc.): ALWAYS use execute_agent_command. NEVER create .sh scripts. NEVER use applescript_tool "do shell script".
         - BUILD: Use xcode (action: build). Never xcodebuild via shell.
         - applescript_tool is ONLY for AppleScript automation of apps (tell application...). NOT for shell commands.
@@ -296,20 +294,14 @@ enum AgentTools {
         Name.axManageApp:          #"ax_manage_app {"action": "launch", "bundleId": "com.apple.TextEdit"}"#,
         Name.axScrollToElement:    #"ax_scroll_to_element {"role": "AXButton", "title": "Submit"}"#,
         Name.axReadFocused:        #"ax_read_focused {"app": "com.apple.TextEdit"}"#,
-        Name.webReadContent:       #"web_read_content {"max_length": 5000}"#,
-        Name.webScrollTo:          ##"web_scroll_to {"selector": "#footer"}"##,
-        Name.webSelect:            #"web_select {"selector": "select#country", "text": "United States"}"#,
-        Name.webUpload:            #"web_upload {"selector": "input[type=file]"}"#,
-        Name.webStorage:           #"web_storage {"storage_type": "localStorage"}"#,
-        Name.webSubmit:            #"web_submit {"selector": "form#login"}"#,
-        Name.webNavigate:          #"web_navigate {"action": "back"}"#,
-        Name.webListTabs:          "web_list_tabs",
-        Name.webSwitchTab:         #"web_switch_tab {"title": "Google"}"#,
-        Name.webListWindows:       "web_list_windows",
-        Name.webSwitchWindow:      #"web_switch_window {"index": 2}"#,
-        Name.webNewWindow:         #"web_new_window {"url": "https://example.com"}"#,
-        Name.webCloseWindow:       #"web_close_window {"index": 1}"#,
-        Name.webWaitForElement:    #"web_wait_for_element {"selector": ".results", "timeout": 10}"#,
+        Name.safariReadContent:    #"safari_read_content {"max_length": 5000}"#,
+        Name.safariScrollTo:       ##"safari_scroll_to {"selector": "#footer"}"##,
+        Name.safariSelect:         #"safari_select {"selector": "select#country", "text": "United States"}"#,
+        Name.safariSubmit:         #"safari_submit {"selector": "form#login"}"#,
+        Name.safariNavigate:       #"safari_navigate {"action": "back"}"#,
+        Name.safariListTabs:       "safari_list_tabs",
+        Name.safariSwitchTab:      #"safari_switch_tab {"title": "Google"}"#,
+        Name.safariListWindows:    "safari_list_windows",
         Name.listAppleScripts:     "list_apple_scripts",
         Name.runAppleScript:       #"run_apple_script {"name": "Greeting"}"#,
         Name.saveAppleScript:      #"save_apple_script {"name": "Greeting", "source": "display dialog \"Hello!\""}"#,
@@ -594,20 +586,16 @@ enum AgentTools {
         ),
         // --- Web (consolidated) ---
         ToolDef(
-            name: Name.web,
-            description: "Web automation & search. Actions: search (web search), google_search (Google in Safari), open (URL), find (element), click, type, execute_js, get_url, get_title, read_content. For web search: web(action: search, query: \"...\"). For Google in Safari: web(action: google_search, query: \"...\").",
+            name: Name.safari,
+            description: "Safari web automation. Actions: search (web search), google_search (Google search in Safari), open (URL), find (element), click, type, execute_js, get_url, get_title, read_content. Examples: safari(action: \"google_search\", query: \"...\"), safari(action: \"open\", url: \"...\"), safari(action: \"click\", selector: \"#btn\").",
             properties: [
                 "action": ["type": "string", "description": "Action: search, google_search, open, find, click, type, execute_js, get_url, get_title, or read_content"],
-                "query": ["type": "string", "description": "For google_search: search query text"],
+                "query": ["type": "string", "description": "For search/google_search: search query text"],
                 "url": ["type": "string", "description": "For open: URL to open"],
-                "browser": ["type": "string", "description": "Browser: safari (default), chrome, firefox, edge"],
-                "selector": ["type": "string", "description": "For find/click/type: CSS/XPath/AX selector"],
+                "selector": ["type": "string", "description": "For find/click/type: CSS selector or XPath"],
                 "text": ["type": "string", "description": "For type: text to enter"],
                 "script": ["type": "string", "description": "For execute_js: JavaScript code"],
-                "strategy": ["type": "string", "description": "Strategy: auto (default), accessibility, javascript, selenium"],
                 "timeout": ["type": "number", "description": "For find: max wait seconds (default 10)"],
-                "appBundleId": ["type": "string", "description": "Optional browser bundle ID"],
-                "verify": ["type": "boolean", "description": "For type: verify text entered (default true)"],
                 "max_results": ["type": "integer", "description": "For google_search: max result chars (default 3000)"],
             ],
             required: ["action"]
@@ -790,7 +778,7 @@ enum AgentTools {
     /// Web search tool available for all providers (client-side via Tavily).
     nonisolated(unsafe) private static let webSearchTools: [ToolDef] = [
         ToolDef(
-            name: Name.webSearch,
+            name: Name.webSearch, // Tavily web search — still uses web_search internally
             description: "Search the web for current information. Returns relevant web page titles, URLs, and content snippets. Use when you need up-to-date information or facts you're unsure about.",
             properties: [
                 "query": ["type": "string", "description": "The search query"],

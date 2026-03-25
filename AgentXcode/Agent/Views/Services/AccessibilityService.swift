@@ -102,7 +102,7 @@ final class AccessibilityService: @unchecked Sendable {
         let hasSafari = results.contains { ($0["ownerName"] as? String) == "Safari" }
         var response: [String: Any] = ["windows": results, "count": results.count]
         if hasSafari {
-            response["hint"] = "Safari detected. To read or interact with web page content, use the web tool: web(action: 'execute_js', script: 'document.body.innerText'), web(action: 'get_url'), web(action: 'get_title'), web(action: 'click', selector: '...'), web(action: 'type', selector: '...', text: '...'). The accessibility tool cannot access web page DOM elements."
+            response["hint"] = "Safari detected. Use the safari tool for web page content: safari(action: 'execute_js', script: 'document.body.innerText'), safari(action: 'get_url'), safari(action: 'click', selector: '...'). Accessibility cannot access web page DOM."
         }
 
         return successJSON(response)

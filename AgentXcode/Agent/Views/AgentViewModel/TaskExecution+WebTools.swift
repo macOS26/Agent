@@ -14,7 +14,7 @@ extension AgentViewModel {
     /// Handles web automation tool calls (web_open, web_find, web_click, web_type, etc.)
     func handleWebTool(name: String, input: [String: Any]) async -> String? {
         // web_open
-        if name == "web_open" {
+        if name == "safari_open" {
             guard let urlString = input["url"] as? String,
                   let url = URL(string: urlString) else {
                 return "Error: Invalid or missing URL"
@@ -29,7 +29,7 @@ extension AgentViewModel {
         }
 
         // web_find
-        if name == "web_find" {
+        if name == "safari_find" {
             let selector = input["selector"] as? String ?? ""
             let strategyStr = input["strategy"] as? String ?? "auto"
             let strategy = SelectorStrategy(rawValue: strategyStr) ?? .auto
@@ -52,7 +52,7 @@ extension AgentViewModel {
         }
 
         // web_click
-        if name == "web_click" {
+        if name == "safari_click" {
             let selector = input["selector"] as? String ?? ""
             let strategyStr = input["strategy"] as? String ?? "auto"
             let strategy = SelectorStrategy(rawValue: strategyStr) ?? .auto
@@ -67,7 +67,7 @@ extension AgentViewModel {
         }
 
         // web_type
-        if name == "web_type" {
+        if name == "safari_type" {
             let selector = input["selector"] as? String ?? ""
             let text = input["text"] as? String ?? ""
             let strategyStr = input["strategy"] as? String ?? "auto"
@@ -84,7 +84,7 @@ extension AgentViewModel {
         }
 
         // web_execute_js
-        if name == "web_execute_js" {
+        if name == "safari_execute_js" {
             let script = input["script"] as? String ?? ""
             let browser = input["browser"] as? String
             do {
@@ -96,7 +96,7 @@ extension AgentViewModel {
         }
 
         // web_google_search
-        if name == "web_google_search" {
+        if name == "safari_google_search" {
             let query = input["query"] as? String ?? ""
             guard !query.isEmpty else { return "Error: query is required" }
             let maxResults = input["max_results"] as? Int ?? 3000
@@ -104,8 +104,8 @@ extension AgentViewModel {
         }
 
         // web_get_url / web_get_title (via Selenium AgentScript)
-        if name == "web_get_url" || name == "web_get_title" {
-            let action = name == "web_get_url" ? "getUrl" : "getTitle"
+        if name == "safari_get_url" || name == "safari_get_title" {
+            let action = name == "safari_get_url" ? "getUrl" : "getTitle"
             let args = "{\"action\":\"\(action)\"}"
             // Run Selenium via compile and execute
             guard let compileCmd = scriptService.compileCommand(name: "Selenium") else {
