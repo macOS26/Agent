@@ -84,37 +84,61 @@ final class ChatHistoryStore {
     /// Set to true when save has failed fatally — prevents repeated crash attempts
     private var storeDisabled = false
     
+    /// Dedicated store file — avoids sharing default.store with TrainingDataStore
+    private static var storeURL: URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+            .appendingPathComponent("chat.store")
+    }
+
     private init() {
         let schema = Schema([ChatMessage.self, ChatTask.self, ScriptTabRecord.self])
+        let url = Self.storeURL
+
+        // Migrate: if old default.store has our tables, rename it to chat.store
+        Self.migrateDefaultStoreToChatStore()
 
         // Pre-validate: if store file exists but lacks required tables, delete it
         // before creating the ModelContainer. This prevents ObjC NSExceptions
         // (e.g. _PFFaultHandlerLookupRow) that Swift do/catch cannot intercept.
-        if let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
-            let storeURL = appSupport.appendingPathComponent("default.store")
-            if FileManager.default.fileExists(atPath: storeURL.path) {
-                if !Self.storeHasRequiredTables(at: storeURL) {
-                    print("SwiftData store missing required tables — deleting for recreation")
-                    deleteStoreFiles()
-                }
+        if FileManager.default.fileExists(atPath: url.path) {
+            if !Self.storeHasRequiredTables(at: url) {
+                print("SwiftData store missing required tables — deleting for recreation")
+                deleteStoreFiles()
             }
         }
 
         do {
-            let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+            let config = ModelConfiguration(schema: schema, url: url)
             container = try ModelContainer(for: schema, configurations: config)
             context = container?.mainContext
         } catch {
             print("SwiftData init failed — recreating: \(error)")
             deleteStoreFiles()
             do {
-                let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+                let config = ModelConfiguration(schema: schema, url: url)
                 container = try ModelContainer(for: schema, configurations: config)
                 context = container?.mainContext
             } catch {
                 print("Failed to initialize SwiftData after reset: \(error)")
             }
         }
+    }
+
+    /// One-time migration: rename default.store → chat.store if it has our tables
+    private static func migrateDefaultStoreToChatStore() {
+        guard let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return }
+        let oldURL = appSupport.appendingPathComponent("default.store")
+        let newURL = storeURL
+        let fm = FileManager.default
+        // Only migrate if old exists and new doesn't
+        guard fm.fileExists(atPath: oldURL.path), !fm.fileExists(atPath: newURL.path) else { return }
+        guard storeHasRequiredTables(at: oldURL) else { return }
+        for suffix in ["", "-shm", "-wal"] {
+            let old = URL(fileURLWithPath: oldURL.path + suffix)
+            let new = URL(fileURLWithPath: newURL.path + suffix)
+            try? fm.moveItem(at: old, to: new)
+        }
+        print("Migrated default.store → chat.store")
     }
 
     /// Open the SQLite file read-only and verify all required tables exist.
@@ -140,12 +164,10 @@ final class ChatHistoryStore {
     private func deleteStoreFiles() {
         container = nil
         context = nil
-        guard let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return }
         let fm = FileManager.default
-        // SwiftData default store files
-        for suffix in ["default.store", "default.store-shm", "default.store-wal"] {
-            let url = appSupport.appendingPathComponent(suffix)
-            try? fm.removeItem(at: url)
+        let url = Self.storeURL
+        for suffix in ["", "-shm", "-wal"] {
+            try? fm.removeItem(at: URL(fileURLWithPath: url.path + suffix))
         }
     }
     
@@ -377,7 +399,7 @@ final class ChatHistoryStore {
 
     /// Clear persisted script tab records.
     func clearScriptTabs() {
-        guard let context else { return }
+        guard !storeDisabled, let context else { return }
         try? context.delete(model: ScriptTabRecord.self)
         try? context.save()
     }
@@ -385,12 +407,13 @@ final class ChatHistoryStore {
     /// Clear all history
     func clearAll() {
         currentTask = nil
+        storeDisabled = false
         // Nuke the store files and recreate — batch deletes trigger CoreData
         // ObjC exceptions on inverse relationships that Swift can't catch
         deleteStoreFiles()
         let schema = Schema([ChatMessage.self, ChatTask.self, ScriptTabRecord.self])
         do {
-            let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+            let config = ModelConfiguration(schema: schema, url: Self.storeURL)
             container = try ModelContainer(for: schema, configurations: config)
             context = container?.mainContext
         } catch {
@@ -482,7 +505,7 @@ final class ChatHistoryStore {
             }
         }
         
-        try? context?.save()
+        if !storeDisabled { try? context?.save() }
         UserDefaults.standard.set(true, forKey: "agentActivityLogMigrated")
         print("Migrated chat history to SwiftData")
     }

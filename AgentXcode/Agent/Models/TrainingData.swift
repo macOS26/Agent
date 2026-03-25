@@ -1,4 +1,5 @@
 import Foundation
+import SQLite3
 import SwiftData
 
 /// Training data captured from Apple Intelligence for LoRA adapter fine-tuning.
@@ -66,22 +67,71 @@ final class TrainingDataStore {
     
     var container: ModelContainer?
     var context: ModelContext?
-    
+
     private var currentRecord: TrainingRecord?
     private var startTime: Date?
-    
+    /// Set to true when save has failed fatally — prevents repeated crash attempts
+    private var storeDisabled = false
+
     /// Maximum characters to store for LLM response (prevent massive records)
     private static let maxResponseLength = 8000
-    
+
+    /// Dedicated store file so training data doesn't share default.store with ChatHistoryStore
+    private static var storeURL: URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+            .appendingPathComponent("training.store")
+    }
+
     private init() {
         let schema = Schema([TrainingRecord.self])
+
+        // Pre-validate: if store file exists but lacks required tables, delete it
+        let url = Self.storeURL
+        if FileManager.default.fileExists(atPath: url.path) {
+            if !Self.storeHasRequiredTables(at: url) {
+                print("TrainingDataStore: store missing required tables — deleting for recreation")
+                Self.deleteStoreFiles(at: url)
+            }
+        }
+
         do {
-            let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+            let config = ModelConfiguration(schema: schema, url: url)
             container = try ModelContainer(for: schema, configurations: config)
             context = container?.mainContext
-            _ = try context?.fetchCount(FetchDescriptor<TrainingRecord>())
         } catch {
-            print("TrainingDataStore: Failed to initialize SwiftData: \(error)")
+            print("TrainingDataStore: init failed — recreating: \(error)")
+            Self.deleteStoreFiles(at: url)
+            do {
+                let config = ModelConfiguration(schema: schema, url: url)
+                container = try ModelContainer(for: schema, configurations: config)
+                context = container?.mainContext
+            } catch {
+                print("TrainingDataStore: Failed to initialize after reset: \(error)")
+            }
+        }
+    }
+
+    /// Open the SQLite file read-only and verify required tables exist.
+    private static func storeHasRequiredTables(at url: URL) -> Bool {
+        var db: OpaquePointer?
+        guard sqlite3_open_v2(url.path, &db, SQLITE_OPEN_READONLY, nil) == SQLITE_OK else {
+            sqlite3_close(db)
+            return false
+        }
+        defer { sqlite3_close(db) }
+
+        var stmt: OpaquePointer?
+        let query = "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='ZTRAININGRECORD'"
+        guard sqlite3_prepare_v2(db, query, -1, &stmt, nil) == SQLITE_OK else { return false }
+        defer { sqlite3_finalize(stmt) }
+        guard sqlite3_step(stmt) == SQLITE_ROW else { return false }
+        return sqlite3_column_int(stmt, 0) > 0
+    }
+
+    private static func deleteStoreFiles(at url: URL) {
+        let fm = FileManager.default
+        for suffix in ["", "-shm", "-wal"] {
+            try? fm.removeItem(at: URL(fileURLWithPath: url.path + suffix))
         }
     }
     
@@ -151,11 +201,12 @@ final class TrainingDataStore {
     // MARK: - Persistence
     
     private func save() {
-        guard let context else { return }
+        guard !storeDisabled, let context else { return }
         do {
             try context.save()
         } catch {
-            print("TrainingDataStore: Save failed: \(error)")
+            print("TrainingDataStore: Save failed — disabling store: \(error)")
+            storeDisabled = true
             context.rollback()
         }
     }
@@ -324,7 +375,7 @@ final class TrainingDataStore {
     
     /// Clear all training records.
     func clearAll() {
-        guard let context else { return }
+        guard !storeDisabled, let context else { return }
         try? context.delete(model: TrainingRecord.self)
         try? context.save()
     }
