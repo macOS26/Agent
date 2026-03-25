@@ -30,31 +30,9 @@ final class AccessibilityService: @unchecked Sendable {
         return browserBundleIDs.contains(bid)
     }
 
-    /// When accessibility targets Safari, auto-fetch page info via JavaScript instead of failing.
-    /// Runs synchronously via NSAppleScript so it works from any AccessibilityService method.
+    /// When accessibility targets Safari, redirect to the web tool.
     static func safariPageInfo() -> String {
-        let script = """
-        tell application "Safari"
-            set t to name of front document
-            set u to URL of front document
-            set s to do JavaScript "document.body.innerText.substring(0, 3000)" in front document
-            return "URL: " & u & "\\nTitle: " & t & "\\nContent:\\n" & s
-        end tell
-        """
-        var err: NSDictionary?
-        guard let appleScript = NSAppleScript(source: script) else {
-            return shared.errorJSON("Could not create AppleScript for Safari page info")
-        }
-        let out = appleScript.executeAndReturnError(&err)
-        if let error = err {
-            return shared.errorJSON("Safari JavaScript error: \(error[NSAppleScript.errorMessage] ?? error)")
-        }
-        let text = out.stringValue ?? "(no content)"
-        return shared.successJSON([
-            "source": "safari_javascript",
-            "pageInfo": text,
-            "hint": "Page content loaded. Use accessibility to interact with elements on this page."
-        ])
+        return "Error: Safari/browser detected. Do not use accessibility for web pages. Use the web tool: web(action: \"scan\") to find inputs/buttons, web(action: \"open\", url: \"...\"), web(action: \"type\", selector: \"...\", text: \"...\"), web(action: \"click\", selector: \"...\"), web(action: \"read_content\")."
     }
 
     // MARK: - Window Listing
