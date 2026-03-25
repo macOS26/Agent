@@ -48,7 +48,8 @@ struct InputSectionView: View {
                     }())
                 }
             }
-            .padding(8)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 14)
             .background(Color(white: 0.15))
         } else {
             // Main tab input
@@ -87,7 +88,8 @@ struct InputSectionView: View {
                     .disabled(viewModel.taskInput.isEmpty || (viewModel.selectedProvider == .claude && viewModel.apiKey.isEmpty))
                 }
             }
-            .padding(8)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 14)
             .background(Color(white: 0.15))
         }
     }
