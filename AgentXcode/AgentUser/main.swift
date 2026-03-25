@@ -27,7 +27,7 @@ final class UserCommandHandler: NSObject, UserToolProtocol, @unchecked Sendable 
         lock.unlock()
 
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/bin/bash")
+        process.executableURL = URL(fileURLWithPath: "/bin/zsh")
         process.arguments = ["-c", script]
 
         // Force color output from CLI tools (ls, grep, git, etc.)

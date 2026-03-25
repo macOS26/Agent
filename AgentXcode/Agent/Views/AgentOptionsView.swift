@@ -134,6 +134,20 @@ struct AgentOptionsView: View {
                         onDecrement: { if viewModel.visibleTaskCount < 5 { viewModel.visibleTaskCount += 1 } })
                 }
             }
+
+            row {
+                Text("Shell").font(.subheadline)
+                Spacer()
+                Picker("", selection: Binding(
+                    get: { AppConstants.shellPath },
+                    set: { UserDefaults.standard.set($0, forKey: "agentShellPath") }
+                )) {
+                    Text("zsh").tag("/bin/zsh")
+                    Text("bash").tag("/bin/bash")
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 120)
+            }
         }
         .padding(16)
         .padding(.bottom, 15)

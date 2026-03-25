@@ -9,6 +9,12 @@ enum AppConstants {
     static let userID = "\(bundleID).user"
     static let helperPlist = "\(bundleID).helper.plist"
     static let userPlist = "\(bundleID).user.plist"
+
+    /// Preferred shell path for in-app Process() calls.
+    /// Reads from UserDefaults "agentShellPath", defaults to /bin/zsh.
+    static var shellPath: String {
+        UserDefaults.standard.string(forKey: "agentShellPath") ?? "/bin/zsh"
+    }
 }
 
 extension Notification.Name {

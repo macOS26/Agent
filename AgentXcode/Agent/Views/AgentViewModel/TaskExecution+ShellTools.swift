@@ -33,7 +33,7 @@ extension AgentViewModel {
         await withCheckedContinuation { continuation in
             DispatchQueue.global().async {
                 let process = Process()
-                process.executableURL = URL(fileURLWithPath: "/bin/bash")
+                process.executableURL = URL(fileURLWithPath: AppConstants.shellPath)
                 process.arguments = ["-c", command]
 
                 var env = ProcessInfo.processInfo.environment
@@ -75,7 +75,7 @@ extension AgentViewModel {
         await withCheckedContinuation { continuation in
             DispatchQueue.global().async {
                 let process = Process()
-                process.executableURL = URL(fileURLWithPath: "/bin/bash")
+                process.executableURL = URL(fileURLWithPath: AppConstants.shellPath)
                 process.arguments = ["-c", command]
 
                 var env = ProcessInfo.processInfo.environment

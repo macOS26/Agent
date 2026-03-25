@@ -6,7 +6,7 @@ import Foundation
 func nativeShellRun(_ cmd: String) -> String {
     let p = Process()
     let pipe = Pipe()
-    p.executableURL = URL(fileURLWithPath: "/bin/bash")
+    p.executableURL = URL(fileURLWithPath: AppConstants.shellPath)
     p.arguments = ["-c", cmd]
     p.standardOutput = pipe
     p.standardError = pipe
