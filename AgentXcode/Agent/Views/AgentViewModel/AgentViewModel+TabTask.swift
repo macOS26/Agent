@@ -76,6 +76,7 @@ extension AgentViewModel {
 
     func executeTabTask(tab: ScriptTab, prompt: String) async {
         tab.isLLMRunning = true
+        tab.llmMessages = []  // Fresh conversation for each task
         tabTaskLog.info("[\(tab.displayTitle)] executeTabTask started: \(prompt.prefix(80))")
 
         var commandsRun: [String] = []
