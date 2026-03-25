@@ -180,6 +180,16 @@ final class AgentViewModel {
         return .green
     }
 
+    /// History icon color reflecting history state
+    var historyIconColor: Color {
+        let hasPrompts = !currentTabPromptHistory.isEmpty
+        let hasTasks = !taskSummaries.isEmpty
+        let hasErrors = !errorHistory.isEmpty
+        if !hasPrompts && !hasTasks && !hasErrors { return Color.gray }
+        if hasErrors { return .red }
+        return .green
+    }
+
     /// MCP server icon color based on connection and tool state
     var mcpIconColor: Color {
         let mcp = MCPService.shared

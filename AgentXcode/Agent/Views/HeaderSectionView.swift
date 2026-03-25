@@ -168,7 +168,7 @@ struct HeaderToolbarButtons: View {
 
         Button { showHistory.toggle() } label: {
             Image(systemName: "clock.arrow.circlepath")
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(viewModel.historyIconColor)
         }
         .popover(isPresented: $showHistory) {
             HistoryView(
