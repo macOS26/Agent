@@ -59,6 +59,8 @@ let package = Package(
     products: [
         // Aggregate library for Agent app
         .library(name: "AppleEventBridges", targets: ["AppleEventBridges"]),
+        // Common utilities needed by individual scripts
+        .library(name: "ScriptingBridgeCommon", targets: ["ScriptingBridgeCommon"]),
     ] + bridgeProducts,
     targets: coreTargets + bridgeTargets
 )
