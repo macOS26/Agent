@@ -13,10 +13,9 @@ extension AgentViewModel {
 
         switch name {
         case "list_agents":
-            let scripts = scriptService.listScripts()
-            let output = scripts.isEmpty
-                ? "No scripts found" : scripts.map { "\($0.name) (\($0.size) bytes)" }.joined(separator: "\n")
-            tab.appendLog("🦾 AgentScripts: \(scripts.count) found")
+            let output = scriptService.numberedList()
+            let count = scriptService.listScripts().count
+            tab.appendLog("🦾 Agents: \(count) found")
             tab.flush()
             return TabToolResult(
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
@@ -24,7 +23,7 @@ extension AgentViewModel {
             )
 
         case "read_agent":
-            let scriptName = input["name"] as? String ?? ""
+            let scriptName = scriptService.resolveScriptName(input["name"] as? String ?? "")
             let output = scriptService.readScript(name: scriptName) ?? "Error: script '\(scriptName)' not found."
             tab.appendLog("📖 Read: \(scriptName)")
             tab.appendLog(Self.codeFence(output, language: "swift"))
@@ -46,7 +45,7 @@ extension AgentViewModel {
             )
 
         case "update_agent":
-            let scriptName = input["name"] as? String ?? ""
+            let scriptName = scriptService.resolveScriptName(input["name"] as? String ?? "")
             let content = input["content"] as? String ?? ""
             let output = scriptService.updateScript(name: scriptName, content: content)
             tab.appendLog(output)
@@ -57,7 +56,7 @@ extension AgentViewModel {
             )
 
         case "delete_agent":
-            let scriptName = input["name"] as? String ?? ""
+            let scriptName = scriptService.resolveScriptName(input["name"] as? String ?? "")
             let output = scriptService.deleteScript(name: scriptName)
             tab.appendLog(output)
             tab.flush()
@@ -67,8 +66,8 @@ extension AgentViewModel {
             )
 
         case "combine_agents":
-            let sourceA = input["source_a"] as? String ?? ""
-            let sourceB = input["source_b"] as? String ?? ""
+            let sourceA = scriptService.resolveScriptName(input["source_a"] as? String ?? "")
+            let sourceB = scriptService.resolveScriptName(input["source_b"] as? String ?? "")
             let target = input["target"] as? String ?? ""
             tab.appendLog("Combining: \(sourceA) + \(sourceB) → \(target)")
 
@@ -96,7 +95,7 @@ extension AgentViewModel {
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
 
         case "run_agent":
-            let scriptName = input["name"] as? String ?? ""
+            let scriptName = scriptService.resolveScriptName(input["name"] as? String ?? "")
             let arguments = input["arguments"] as? String ?? ""
             guard let compileCmd = scriptService.compileCommand(name: scriptName) else {
                 let err = "Error: script '\(scriptName)' not found."

@@ -673,19 +673,14 @@ extension AgentViewModel {
 
                         // Script management tools
                         if name == "list_agents" {
-                            let scripts = scriptService.listScripts()
-                            let output: String
-                            if scripts.isEmpty {
-                                output = "No scripts found in ~/Documents/AgentScript/agents/"
-                            } else {
-                                output = scripts.map { "\($0.name) (\($0.size) bytes)" }.joined(separator: "\n")
-                            }
-                            appendLog("🦾 AgentScripts: \(scripts.count) found")
+                            let output = scriptService.numberedList()
+                            let count = scriptService.listScripts().count
+                            appendLog("🦾 Agents: \(count) found")
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
                         if name == "read_agent" {
-                            let scriptName = input["name"] as? String ?? ""
+                            let scriptName = scriptService.resolveScriptName(input["name"] as? String ?? "")
                             let output = scriptService.readScript(name: scriptName) ?? "Error: script '\(scriptName)' not found."
                             appendLog("📖 Read: \(scriptName)")
                             appendLog(Self.codeFence(output, language: "swift"))
@@ -701,7 +696,7 @@ extension AgentViewModel {
                         }
 
                         if name == "update_agent" {
-                            let scriptName = input["name"] as? String ?? ""
+                            let scriptName = scriptService.resolveScriptName(input["name"] as? String ?? "")
                             let content = input["content"] as? String ?? ""
                             let output = scriptService.updateScript(name: scriptName, content: content)
                             appendLog(output)
@@ -709,15 +704,15 @@ extension AgentViewModel {
                         }
 
                         if name == "delete_agent" {
-                            let scriptName = input["name"] as? String ?? ""
+                            let scriptName = scriptService.resolveScriptName(input["name"] as? String ?? "")
                             let output = scriptService.deleteScript(name: scriptName)
                             appendLog(output)
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
                         if name == "combine_agents" {
-                            let sourceA = input["source_a"] as? String ?? ""
-                            let sourceB = input["source_b"] as? String ?? ""
+                            let sourceA = scriptService.resolveScriptName(input["source_a"] as? String ?? "")
+                            let sourceB = scriptService.resolveScriptName(input["source_b"] as? String ?? "")
                             let target = input["target"] as? String ?? ""
                             appendLog("🔗 Combining: \(sourceA) + \(sourceB) → \(target)")
 
@@ -749,7 +744,7 @@ extension AgentViewModel {
                         }
 
                         if name == "run_agent" {
-                            let scriptName = input["name"] as? String ?? ""
+                            let scriptName = scriptService.resolveScriptName(input["name"] as? String ?? "")
                             let arguments = input["arguments"] as? String ?? ""
                             guard let compileCmd = scriptService.compileCommand(name: scriptName) else {
                                 let err = "Error: script '\(scriptName)' not found."

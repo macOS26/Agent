@@ -382,6 +382,26 @@ final class ScriptService {
         }
     }
 
+    /// Format scripts as a numbered list
+    func numberedList() -> String {
+        let scripts = listScripts()
+        guard !scripts.isEmpty else { return "No agents found in ~/Documents/AgentScript/agents/" }
+        return scripts.enumerated().map { "#\($0.offset + 1) \($0.element.name) (\($0.element.size) bytes)" }.joined(separator: "\n")
+    }
+
+    /// Resolve a script name — accepts a name or a number like "#4" or "4"
+    func resolveScriptName(_ input: String) -> String {
+        let trimmed = input.trimmingCharacters(in: .whitespaces)
+        let numStr = trimmed.hasPrefix("#") ? String(trimmed.dropFirst()) : trimmed
+        if let num = Int(numStr) {
+            let scripts = listScripts()
+            if num >= 1 && num <= scripts.count {
+                return scripts[num - 1].name
+            }
+        }
+        return trimmed
+    }
+
     /// Read a script's source code
     func readScript(name: String) -> String? {
         ensurePackage()
