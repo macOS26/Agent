@@ -39,7 +39,7 @@ extension AgentViewModel {
             )
 
         case "web_find":
-            let selector = input["selector"] as? String ?? ""
+            let selector = input["selector"] as? String ?? input["query"] as? String ?? ""
             let strategyStr = input["strategy"] as? String ?? "auto"
             let strategy = SelectorStrategy(rawValue: strategyStr) ?? .auto
             let timeout = input["timeout"] as? Double ?? 10.0
@@ -68,7 +68,7 @@ extension AgentViewModel {
             )
 
         case "web_click":
-            let selector = input["selector"] as? String ?? ""
+            let selector = input["selector"] as? String ?? input["query"] as? String ?? ""
             let strategyStr = input["strategy"] as? String ?? "auto"
             let strategy = SelectorStrategy(rawValue: strategyStr) ?? .auto
             let appBundleId = input["appBundleId"] as? String
@@ -89,7 +89,7 @@ extension AgentViewModel {
             )
 
         case "web_type":
-            let selector = input["selector"] as? String ?? ""
+            let selector = input["selector"] as? String ?? input["query"] as? String ?? ""
             let text = input["text"] as? String ?? ""
             let strategyStr = input["strategy"] as? String ?? "auto"
             let strategy = SelectorStrategy(rawValue: strategyStr) ?? .auto
@@ -177,7 +177,7 @@ extension AgentViewModel {
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
 
         case "web_wait_for_element":
-            let selector = input["selector"] as? String ?? ""
+            let selector = input["selector"] as? String ?? input["query"] as? String ?? ""
             let browser = input["browser"] as? String
             let timeout = input["timeout"] as? Double ?? 10.0
             tab.appendLog("Waiting for: \(selector)...")
@@ -188,7 +188,7 @@ extension AgentViewModel {
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
 
         case "web_scroll_to":
-            let selector = input["selector"] as? String ?? ""
+            let selector = input["selector"] as? String ?? input["query"] as? String ?? ""
             let browser = input["browser"] as? String
             tab.appendLog("Scrolling to: \(selector)...")
             tab.flush()
@@ -198,7 +198,7 @@ extension AgentViewModel {
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
 
         case "web_select":
-            let selector = input["selector"] as? String ?? ""
+            let selector = input["selector"] as? String ?? input["query"] as? String ?? ""
             let value = input["value"] as? String
             let text = input["text"] as? String
             let index = input["index"] as? Int
@@ -211,7 +211,7 @@ extension AgentViewModel {
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
 
         case "web_upload":
-            let selector = input["selector"] as? String ?? ""
+            let selector = input["selector"] as? String ?? input["query"] as? String ?? ""
             let browser = input["browser"] as? String
             tab.appendLog("Triggering file upload: \(selector)...")
             tab.flush()
