@@ -70,7 +70,7 @@ struct HeaderStatusView: View {
             }
         }
         .padding(.horizontal, 8)
-        .frame(minWidth: 300, alignment: .leading)
+        .frame(minWidth: 200, alignment: .leading)
     }
 }
 
@@ -109,7 +109,7 @@ struct HeaderToolbarButtons: View {
 
         Button { showMessages.toggle() } label: {
             Image(systemName: "message.fill")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.tertiary)
         }
         .help(viewModel.messagesMonitorEnabled ? "Messages Monitor: ON" : "Messages Monitor: OFF")
         .popover(isPresented: $showMessages) {
@@ -118,7 +118,7 @@ struct HeaderToolbarButtons: View {
 
         Button { showAccessibility.toggle() } label: {
             Image(systemName: "hand.raised")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.tertiary)
         }
         .popover(isPresented: $showAccessibility) {
             AccessibilitySettingsView()
@@ -126,7 +126,7 @@ struct HeaderToolbarButtons: View {
 
         Button { showMCPServers.toggle() } label: {
             Image(systemName: "server.rack")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.tertiary)
         }
         .popover(isPresented: $showMCPServers) {
             MCPServersView()
@@ -134,7 +134,7 @@ struct HeaderToolbarButtons: View {
 
         Button { showTools.toggle() } label: {
             Image(systemName: "wrench.and.screwdriver")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.tertiary)
         }
         .popover(isPresented: $showTools) {
             ToolsView(selectedProvider: $viewModel.selectedProvider, viewModel: viewModel)
@@ -142,7 +142,7 @@ struct HeaderToolbarButtons: View {
 
         Button { showSettings.toggle() } label: {
             Image(systemName: "cpu")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.tertiary)
         }
         .popover(isPresented: $showSettings) {
             SettingsView(viewModel: viewModel)
@@ -150,7 +150,7 @@ struct HeaderToolbarButtons: View {
 
         Button { showAIPopover.toggle() } label: {
             Image(systemName: AppleIntelligenceMediator.isAvailable ? "brain.fill" : "brain")
-                .foregroundStyle(aiMediator.isEnabled ? .blue : .secondary)
+                .foregroundStyle(aiMediator.isEnabled ? Color.blue : Color.gray)
         }
         .help("Apple Intelligence Settings")
         .popover(isPresented: $showAIPopover) {
@@ -159,7 +159,7 @@ struct HeaderToolbarButtons: View {
 
         Button { showOptions.toggle() } label: {
             Image(systemName: "slider.horizontal.3")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.tertiary)
         }
         .popover(isPresented: $showOptions) {
             AgentOptionsView(viewModel: viewModel)
@@ -167,7 +167,7 @@ struct HeaderToolbarButtons: View {
 
         Button { showHistory.toggle() } label: {
             Image(systemName: "clock.arrow.circlepath")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.tertiary)
         }
         .popover(isPresented: $showHistory) {
             HistoryView(
