@@ -149,24 +149,29 @@ final class WebAutomationService: @unchecked Sendable {
         
         switch strategy {
         case .auto:
-            // 1. Try Accessibility (instant, works for Safari)
-            if let element = try? await findViaAccessibility(selector: selector, timeout: timeout, appBundleId: appBundleId) {
-                result = element
-                source = .accessibility
+            let browserId = appBundleId ?? detectActiveBrowser()
+            let isBrowser = browserId != nil && ["com.apple.Safari", "com.google.Chrome", "org.mozilla.firefox", "com.microsoft.edgemac"].contains(browserId!)
+
+            if isBrowser {
+                // Web page: JS only (fast), skip accessibility (too slow on browser AX trees)
+                if let jsResult = try? await findViaJavaScript(selector: selector, browser: browserId!) {
+                    result = jsResult
+                    source = .javascript
+                }
+            } else {
+                // Native app: accessibility first
+                if let element = try? await findViaAccessibility(selector: selector, timeout: min(timeout, 3), appBundleId: appBundleId) {
+                    result = element
+                    source = .accessibility
+                }
             }
-            
-            // 2. Try AppleScript JS (works in Safari/Firefox)
-            if result == nil, let browserId = appBundleId ?? detectActiveBrowser(),
-               let jsResult = try? await findViaJavaScript(selector: selector, browser: browserId) {
-                result = jsResult
-                source = .javascript
-            }
-            
-            // 3. Fall back to Selenium
+
+            // Fall back to Selenium if nothing found
             if result == nil {
-                let seleniumResult = try await findViaSelenium(selector: selector, timeout: timeout)
-                result = seleniumResult
-                source = .selenium
+                if let seleniumResult = try? await findViaSelenium(selector: selector, timeout: timeout) {
+                    result = seleniumResult
+                    source = .selenium
+                }
             }
             
         case .accessibility:
@@ -199,15 +204,22 @@ final class WebAutomationService: @unchecked Sendable {
     
     /// Click an element using the best available strategy
     func click(selector: String, strategy: SelectorStrategy = .auto, appBundleId: String? = nil) async throws -> String {
+        let browserId = appBundleId ?? detectActiveBrowser()
+        let isBrowser = browserId != nil && ["com.apple.Safari", "com.google.Chrome", "org.mozilla.firefox", "com.microsoft.edgemac"].contains(browserId!)
+
+        // For browsers, skip findElement and click directly via JS (much faster)
+        if isBrowser && (strategy == .auto || strategy == .javascript) {
+            return try await executeJavaScriptClick(selector: selector, browser: browserId!)
+        }
+
         let element = try await findElement(selector: selector, strategy: strategy, appBundleId: appBundleId)
-        
+
         guard let source = element["source"] as? String else {
             throw WebAutomationError.invalidState("No source in element")
         }
-        
+
         switch ElementSource(rawValue: source) {
         case .accessibility:
-            // Use AccessibilityService for clicking
             let role = element["role"] as? String
             let title = element["title"] as? String
             let result = AccessibilityService.shared.clickElement(
@@ -219,18 +231,16 @@ final class WebAutomationService: @unchecked Sendable {
                 verify: false
             )
             return result
-            
+
         case .javascript:
-            // Execute JavaScript click
-            guard let browserId = appBundleId ?? detectActiveBrowser() else {
+            guard let bid = browserId else {
                 throw WebAutomationError.browserNotFound
             }
-            return try await executeJavaScriptClick(selector: selector, browser: browserId)
-            
+            return try await executeJavaScriptClick(selector: selector, browser: bid)
+
         case .selenium:
-            // Use Selenium to click
             return try await seleniumClick(selector: selector)
-            
+
         case .none:
             throw WebAutomationError.invalidState("Unknown source: \(source)")
         }
@@ -238,12 +248,20 @@ final class WebAutomationService: @unchecked Sendable {
     
     /// Type text into an element using the best available strategy
     func type(text: String, selector: String, strategy: SelectorStrategy = .auto, verify: Bool = true, appBundleId: String? = nil) async throws -> String {
+        let browserId = appBundleId ?? detectActiveBrowser()
+        let isBrowser = browserId != nil && ["com.apple.Safari", "com.google.Chrome", "org.mozilla.firefox", "com.microsoft.edgemac"].contains(browserId!)
+
+        // For browsers, skip findElement and type directly via JS (much faster)
+        if isBrowser && (strategy == .auto || strategy == .javascript) {
+            return try await executeJavaScriptType(selector: selector, text: text, browser: browserId!)
+        }
+
         let element = try await findElement(selector: selector, strategy: strategy, appBundleId: appBundleId)
-        
+
         guard let source = element["source"] as? String else {
             throw WebAutomationError.invalidState("No source in element")
         }
-        
+
         switch ElementSource(rawValue: source) {
         case .accessibility:
             let role = element["role"] as? String
@@ -255,12 +273,12 @@ final class WebAutomationService: @unchecked Sendable {
                 appBundleId: appBundleId,
                 verify: verify
             )
-            
+
         case .javascript:
-            guard let browserId = appBundleId ?? detectActiveBrowser() else {
+            guard let bid = browserId else {
                 throw WebAutomationError.browserNotFound
             }
-            return try await executeJavaScriptType(selector: selector, text: text, browser: browserId)
+            return try await executeJavaScriptType(selector: selector, text: text, browser: bid)
             
         case .selenium:
             return try await seleniumType(selector: selector, text: text)
