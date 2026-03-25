@@ -90,14 +90,14 @@ struct AccessibilityServiceTests {
     
     @Test("getElementProperties returns valid JSON")
     func getElementPropertiesJSON() {
-        let result = service.getElementProperties(role: nil, title: nil, appBundleId: nil, x: 200, y: 200)
+        let result = service.getElementProperties(role: nil, title: nil, value: nil, appBundleId: nil, x: 200, y: 200)
         #expect(result.hasPrefix("{"))
         #expect(result.contains("\"success\""))
     }
     
     @Test("getElementProperties with nil parameters falls back to global search")
     func getElementPropertiesNilParams() {
-        let result = service.getElementProperties(role: nil, title: nil, appBundleId: nil, x: nil, y: nil)
+        let result = service.getElementProperties(role: nil, title: nil, value: nil, appBundleId: nil, x: nil, y: nil)
         // Should either find an element or return an error
         #expect(result.hasPrefix("{"))
     }
@@ -111,6 +111,7 @@ struct AccessibilityServiceTests {
         let result = service.performAction(
             role: nil,
             title: nil,
+            value: nil,
             appBundleId: nil,
             x: nil,
             y: nil,
@@ -125,6 +126,7 @@ struct AccessibilityServiceTests {
         let result = service.performAction(
             role: nil,
             title: nil,
+            value: nil,
             appBundleId: nil,
             x: nil,
             y: nil,
@@ -267,6 +269,7 @@ struct AccessibilityServiceTests {
         let result = service.performAction(
             role: "AXSecureTextField",
             title: nil,
+            value: nil,
             appBundleId: nil,
             x: nil,
             y: nil,
@@ -285,6 +288,7 @@ struct AccessibilityServiceTests {
             let result = service.performAction(
                 role: nil,
                 title: nil,
+                value: nil,
                 appBundleId: nil,
                 x: nil,
                 y: nil,

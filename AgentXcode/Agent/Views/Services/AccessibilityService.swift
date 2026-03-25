@@ -2135,13 +2135,13 @@ final class AccessibilityService: @unchecked Sendable {
         return app.localizedName ?? app.bundleIdentifier
     }
     
-    private func successJSON(_ data: Any) -> String {
+    func successJSON(_ data: Any) -> String {
         if let d = try? JSONSerialization.data(withJSONObject: ["success": true, "data": data], options: .prettyPrinted),
            let s = String(data: d, encoding: .utf8) { return s }
         return "{\"success\": true}"
     }
     
-    private func errorJSON(_ msg: String) -> String {
+    func errorJSON(_ msg: String) -> String {
         return "{\"success\": false, \"error\": \"\(msg.replacingOccurrences(of: "\"", with: "\\\""))\"}"
     }
 }
