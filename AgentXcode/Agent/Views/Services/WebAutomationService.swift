@@ -65,12 +65,12 @@ final class WebAutomationService: @unchecked Sendable {
     
     // MARK: - Unified API
     
-    /// Open a URL in the specified browser, optionally waiting for page load
-    func open(url: URL, browser: BrowserType = .safari, waitForLoad: Bool = true) async throws -> String {
+    /// Open a URL in the specified browser. Returns immediately after the URL is sent — no page load wait.
+    func open(url: URL, browser: BrowserType = .safari, waitForLoad: Bool = false) async throws -> String {
         // Try AppleScript first (fastest, most reliable)
         if let result = try? await openViaAppleScript(url: url, browser: browser) {
             if waitForLoad {
-                await waitForPageReady(browser: browser.rawValue)
+                await waitForPageReady(browser: browser.rawValue, timeout: 3)
             }
             return result
         }
@@ -78,13 +78,13 @@ final class WebAutomationService: @unchecked Sendable {
         // Fallback to opening via NSWorkspace
         NSWorkspace.shared.open(url)
         if waitForLoad {
-            try? await Task.sleep(for: .seconds(2))
+            try? await Task.sleep(for: .seconds(1))
         }
         return "Opened \(url.absoluteString) in default browser"
     }
 
     /// Wait for the current page to finish loading (document.readyState == "complete")
-    func waitForPageReady(browser: String? = nil, timeout: TimeInterval = 10) async {
+    func waitForPageReady(browser: String? = nil, timeout: TimeInterval = 3) async {
         let browserId = browser ?? detectActiveBrowser() ?? "com.apple.Safari"
         let start = CFAbsoluteTimeGetCurrent()
         while CFAbsoluteTimeGetCurrent() - start < timeout {
