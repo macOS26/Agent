@@ -15,7 +15,7 @@ struct TabBarView: View {
                     title: "Main",
                     isSelected: viewModel.selectedTabId == nil,
                     isRunning: viewModel.isRunning,
-                    tint: .red,
+                    tint: .green,
                     onSelect: { viewModel.selectMainTab() },
                     onClose: nil
                 )
