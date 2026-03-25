@@ -17,7 +17,7 @@ struct InputSectionView: View {
                         
                 ), axis: .vertical)
                     .textFieldStyle(.plain)
-                    .padding(8)
+                    .padding(0)
                     .background(Color(nsColor: .controlBackgroundColor))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                     .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.4), lineWidth: 1))
@@ -66,7 +66,7 @@ struct InputSectionView: View {
                 TextField("Enter task...", text: $viewModel.taskInput, axis: .vertical)
                     .focused($isTaskFieldFocused)
                     .textFieldStyle(.plain)
-                    .padding(8)
+                    .padding(0)
                     .background(Color(nsColor: .controlBackgroundColor))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                     .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.4), lineWidth: 1))
