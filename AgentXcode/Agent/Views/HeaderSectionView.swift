@@ -14,7 +14,7 @@ struct HeaderStatusView: View {
                     isBusy: viewModel.isRunning,
                     enabled: viewModel.userEnabled
                 )
-                Text("Agent")
+                Text("Agent!")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
