@@ -10,7 +10,7 @@ Now with Apple Intelligence
 [![GitHub downloads](https://img.shields.io/github/downloads/macOS26/Agent/total.svg)](https://github.com/macOS26/Agent/releases)
 [![GitHub stars](https://img.shields.io/github/stars/macOS26/Agent.svg?style=social)](https://github.com/macOS26/Agent/stargazers)
 
-Agent! works with Claude API, Ollama Pro/Max Cloud, and local Ollama. Local LLMs need 32-128GB RAM on Apple Silicon.
+Agent! works with Claude API, Ollama Pro/Max Cloud, and local Ollama, vLLM, LMStudio. Local LLMs need 32-128GB RAM on Apple Silicon. Large Cloud LLMs recommended.
 
 <img width="1215" height="862" alt="image" src="https://github.com/user-attachments/assets/17265c25-2c33-4359-a0f5-66b812c7068d" />
 
