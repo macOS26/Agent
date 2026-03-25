@@ -62,11 +62,11 @@ struct InputSectionView: View {
                 inputButtons
 
                 TextField("Enter task...", text: $viewModel.taskInput, axis: .vertical)
+                    .focused($isTaskFieldFocused)
                     .textFieldStyle(.plain)
                     .padding(8)
                     .background(Color(white: 0.12))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .focused($isTaskFieldFocused)
                     .lineLimit(2...8)
                     .onSubmit {
                         if !viewModel.taskInput.isEmpty {
