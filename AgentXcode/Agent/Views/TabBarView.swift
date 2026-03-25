@@ -9,7 +9,7 @@ struct TabBarView: View {
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 1) {
+            HStack(spacing: 6) {
                 // Main tab (always present, not closable, not draggable)
                 TabItem(
                     title: "Main",
@@ -101,13 +101,18 @@ private struct TabItem: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 4)
+        .foregroundStyle(isSelected ? tint : .secondary)
         .background(
-            RoundedRectangle(cornerRadius: 5)
+            Capsule()
                 .fill(isSelected
-                      ? tint.opacity(0.285)
-                      : isHovering ? tint.opacity(0.15) : Color.clear)
+                      ? tint.opacity(0.2)
+                      : isHovering ? tint.opacity(0.1) : Color(white: 0.2, opacity: 0.5))
         )
-        .contentShape(Rectangle())
+        .overlay(
+            Capsule()
+                .strokeBorder(isSelected ? tint.opacity(0.5) : Color.white.opacity(0.1), lineWidth: 0.5)
+        )
+        .contentShape(Capsule())
         .onTapGesture(perform: onSelect)
         .onHover { isHovering = $0 }
     }
