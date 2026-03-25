@@ -55,6 +55,7 @@ struct AgentApp: App {
                 }
         }
         .windowResizability(.contentSize)
+        .windowToolbarStyle(.unified(showsTitle: false))
         .commands {
             CommandGroup(after: .windowArrangement) {
                 Button("System Prompts") {

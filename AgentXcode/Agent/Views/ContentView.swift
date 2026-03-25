@@ -29,23 +29,6 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header
-            HeaderSectionView(
-                viewModel: viewModel,
-                showSettings: $showSettings,
-                showHistory: $showHistory,
-                showMCPServers: $showMCPServers,
-                showTools: $showTools,
-                showOptions: $showOptions,
-                showMessages: $showMessages,
-                showAccessibility: $showAccessibility,
-                showAIPopover: $showAIPopover,
-                showClearConfirm: $showClearConfirm,
-                showServices: $showServices
-            )
-
-            Divider()
-
             // Project folder section (main tab or selected script tab)
             ProjectFolderSectionView(
                 viewModel: viewModel,
@@ -152,6 +135,26 @@ struct ContentView: View {
             )
         }
         .frame(minWidth: 600, minHeight: 500)
+        .toolbar {
+            ToolbarItemGroup(placement: .navigation) {
+                HeaderStatusView(viewModel: viewModel)
+            }
+            ToolbarItemGroup(placement: .automatic) {
+                HeaderToolbarButtons(
+                    viewModel: viewModel,
+                    showServices: $showServices,
+                    showMessages: $showMessages,
+                    showAccessibility: $showAccessibility,
+                    showMCPServers: $showMCPServers,
+                    showTools: $showTools,
+                    showSettings: $showSettings,
+                    showAIPopover: $showAIPopover,
+                    showOptions: $showOptions,
+                    showHistory: $showHistory,
+                    showClearConfirm: $showClearConfirm
+                )
+            }
+        }
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 isTaskFieldFocused = true
