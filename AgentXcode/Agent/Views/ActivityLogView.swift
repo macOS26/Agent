@@ -5,6 +5,7 @@ import AppKit
 /// Detects image/HTML file paths in log output and shows clickable links that open in Preview/Browser.
 /// Optimized for smooth streaming with incremental updates and debouncing.
 struct ActivityLogView: NSViewRepresentable {
+    @Environment(\.colorScheme) private var colorScheme
     let text: String
     var tabID: UUID?  // nil = main tab
     var searchText: String = ""
@@ -70,8 +71,18 @@ struct ActivityLogView: NSViewRepresentable {
         // Detect tab switch first — must not be skipped
         let tabSwitched = tabID != coord.lastTabID
 
-        // Skip if nothing changed (but always process tab switches)
-        guard len != coord.lastLength || coord.showingPlaceholder || searchChanged || tabSwitched else { return }
+        // Detect appearance change (light/dark mode) — force full re-render
+        let currentAppearance = scrollView.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua])
+        let appearanceChanged = currentAppearance != coord.lastAppearanceName
+        if appearanceChanged {
+            coord.lastAppearanceName = currentAppearance
+            coord.lastLength = 0
+            coord.lastRenderedText = ""
+            coord.clearCache()
+        }
+
+        // Skip if nothing changed (but always process tab switches and appearance changes)
+        guard len != coord.lastLength || coord.showingPlaceholder || searchChanged || tabSwitched || appearanceChanged else { return }
 
         let textChanged = len != coord.lastLength || coord.showingPlaceholder
         let textGrew = len > coord.lastLength
@@ -224,8 +235,10 @@ struct ActivityLogView: NSViewRepresentable {
         var isProgrammaticScroll = false
         /// Observation token for scroll notifications
         nonisolated(unsafe) var scrollObserver: NSObjectProtocol?
+        /// Last known appearance name — used to detect light/dark mode changes
+        var lastAppearanceName: NSAppearance.Name?
 
-        /// Start observing scroll position changes on the clip view
+        /// Start observing scroll position changes and appearance changes
         func startObservingScroll(_ scrollView: NSScrollView) {
             scrollView.contentView.postsBoundsChangedNotifications = true
             scrollObserver = NotificationCenter.default.addObserver(
@@ -240,6 +253,7 @@ struct ActivityLogView: NSViewRepresentable {
                     self.userIsAtBottom = self.isNearBottom(textView)
                 }
             }
+            lastAppearanceName = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua])
         }
 
         deinit {
