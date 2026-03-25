@@ -617,41 +617,60 @@ final class WebAutomationService: @unchecked Sendable {
         let escapedSel = Self.escapeJS(selector)
         let isXPath = selector.hasPrefix("/") || selector.hasPrefix("./")
 
-        // Set value using React-compatible native setter, then fire events
-        // React/Vue/Angular track input via native property descriptors — el.value = 'x' alone doesn't work
-        let setValueAndDispatch = """
-        el.focus();
-        var nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value');
-        if (!nativeSetter) nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value');
-        if (nativeSetter && nativeSetter.set) {
-            nativeSetter.set.call(el, '\(escapedText)');
-        } else {
-            el.value = '\(escapedText)';
-        }
-        el.dispatchEvent(new Event('input', {bubbles: true}));
-        el.dispatchEvent(new Event('change', {bubbles: true}));
-        el.dispatchEvent(new Event('blur', {bubbles: true}));
+        // Universal type function that handles:
+        // 1. <input> / <textarea> — use React-compatible native setter
+        // 2. contenteditable divs — use innerText + InputEvent (LinkedIn post, Gmail, Slack)
+        // 3. [role="textbox"] — same as contenteditable
+        // 4. Plain elements with .value — fallback
+        let typeJS = """
+        (function() {
+            var sel = '\(escapedSel)';
+            var text = '\(escapedText)';
+            var el = \(isXPath ?
+                "document.evaluate(sel, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue" :
+                Self.querySelectorWithIframes("sel"));
+            if (!el) return 'not found';
+
+            el.focus();
+
+            var tag = el.tagName.toUpperCase();
+            var isEditable = el.isContentEditable || el.getAttribute('contenteditable') === 'true' || el.getAttribute('role') === 'textbox';
+
+            if (isEditable) {
+                // contenteditable: set innerText and fire InputEvent
+                el.innerText = text;
+                el.dispatchEvent(new InputEvent('input', {bubbles: true, inputType: 'insertText', data: text}));
+                return 'typed';
+            }
+
+            if (tag === 'INPUT' || tag === 'TEXTAREA') {
+                // React-compatible: use native property setter
+                var proto = tag === 'INPUT' ? window.HTMLInputElement.prototype : window.HTMLTextAreaElement.prototype;
+                var setter = Object.getOwnPropertyDescriptor(proto, 'value');
+                if (setter && setter.set) {
+                    setter.set.call(el, text);
+                } else {
+                    el.value = text;
+                }
+                el.dispatchEvent(new Event('input', {bubbles: true}));
+                el.dispatchEvent(new Event('change', {bubbles: true}));
+                return 'typed';
+            }
+
+            // Fallback: try .value, then innerText
+            if ('value' in el) {
+                el.value = text;
+                el.dispatchEvent(new Event('input', {bubbles: true}));
+                el.dispatchEvent(new Event('change', {bubbles: true}));
+            } else {
+                el.innerText = text;
+                el.dispatchEvent(new InputEvent('input', {bubbles: true, inputType: 'insertText', data: text}));
+            }
+            return 'typed';
+        })()
         """
 
-        let js: String
-        if isXPath {
-            js = """
-            var result = document.evaluate('\(escapedSel)', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
-            var el = result.singleNodeValue;
-            if (el) { \(setValueAndDispatch) return 'typed'; }
-            return 'not found';
-            """
-        } else {
-            js = """
-            (function() {
-                var el = \(Self.querySelectorWithIframes("'\(escapedSel)'"));
-                if (el) { \(setValueAndDispatch) return 'typed'; }
-                return 'not found';
-            })()
-            """
-        }
-
-        _ = try await executeJavaScript(script: js, browser: browser)
+        _ = try await executeJavaScript(script: typeJS, browser: browser)
         return "Typed text via JavaScript into: \(selector)"
     }
     
