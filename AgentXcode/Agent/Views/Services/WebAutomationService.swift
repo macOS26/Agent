@@ -1275,13 +1275,13 @@ final class WebAutomationService: @unchecked Sendable {
         let openOK = await runAppleScript(openScript)
         guard !openOK.hasPrefix("Error") else { return openOK }
 
-        // 2. Wait for google.com to load
-        for _ in 0..<10 {
-            try? await Task.sleep(for: .milliseconds(300))
-            let ready = await runAppleScript("""
-            tell application "Safari" to do JavaScript "document.readyState" in front document
+        // 2. Wait for search field to appear (not just readyState)
+        for _ in 0..<20 {
+            try? await Task.sleep(for: .milliseconds(500))
+            let found = await runAppleScript("""
+            tell application "Safari" to do JavaScript "document.querySelector('textarea[name=q],input[name=q]') ? 'ready' : 'waiting'" in front document
             """)
-            if ready == "complete" { break }
+            if found == "ready" { break }
         }
 
         // 3. Type query and submit — use AppleScript string quoting (backslash-escape double quotes)
