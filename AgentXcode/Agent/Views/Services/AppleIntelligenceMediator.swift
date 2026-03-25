@@ -370,10 +370,22 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
 
     // MARK: - Conversation Triage
 
-    /// Triage result: either Apple AI answers directly, or passes through to the LLM.
+    /// Triage result: Apple AI answers, a direct command is executed, or pass through to the LLM.
     enum TriageResult {
-        case answered(String)   // Apple AI handled it — show this text and skip LLM
-        case passThrough        // Needs tools/LLM — proceed normally
+        case answered(String)           // Apple AI handled it — show this text and skip LLM
+        case directCommand(String, String)  // (command name, tool output) — executed locally, inject context to LLM
+        case passThrough                // Needs tools/LLM — proceed normally
+    }
+
+    /// Known direct commands that can be executed without the LLM.
+    /// Returns (command name, nil) if matched, nil if not a direct command.
+    static func matchDirectCommand(_ message: String) -> String? {
+        let lower = message.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        if lower == "list agents" || lower == "list agent" || lower == "list scripts"
+            || lower == "show agents" || lower == "show scripts" {
+            return "list_agents"
+        }
+        return nil
     }
 
     /// Local pattern check: is this message purely conversational?
@@ -408,10 +420,13 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
         return false
     }
 
-    /// Triage a user prompt. Uses a local pattern check (reliable) to classify,
-    /// then asks Apple AI to answer conversational prompts directly.
-    /// Falls back to .passThrough if Apple AI can't answer.
+    /// Triage a user prompt. Checks direct commands first, then social patterns.
+    /// Falls back to .passThrough for anything that needs the LLM.
     func triagePrompt(_ message: String) async -> TriageResult {
+        // Direct commands execute without any AI — works even if Apple AI is off
+        if let cmd = Self.matchDirectCommand(message) {
+            return .directCommand(cmd, "")  // Caller executes the tool
+        }
         guard isEnabled && Self.isAvailable else { return .passThrough }
         // Local classification — no AI needed
         guard Self.isConversationalPrompt(message) else { return .passThrough }

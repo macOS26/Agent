@@ -154,26 +154,54 @@ extension AgentViewModel {
         let mediator = AppleIntelligenceMediator.shared
         var appleAIAnnotations: [AppleIntelligenceMediator.Annotation] = []
 
-        // Apple AI conversation triage — answer simple prompts directly without hitting the LLM
-        if mediator.isEnabled {
-            let triageResult = await mediator.triagePrompt(prompt)
-            if case .answered(let reply) = triageResult {
-                taskLog.info("[main] Apple AI answered directly — skipping LLM")
-                appendLog(reply)
-                flushLog()
-                completionSummary = String(reply.prefix(200))
-                history.add(TaskRecord(prompt: prompt, summary: completionSummary, commandsRun: []), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
-                ChatHistoryStore.shared.endCurrentTask(summary: completionSummary)
-                stopProgressUpdates()
-                if agentReplyHandle != nil {
-                    sendProgressUpdate(reply)
-                }
-                flushLog()
-                persistLogNow()
-                isRunning = false
-                isThinking = false
-                return
+        // Triage: direct commands, Apple AI conversation, or pass through to LLM
+        let triageResult = await mediator.triagePrompt(prompt)
+        switch triageResult {
+        case .directCommand(let cmd, _):
+            // Execute known commands instantly without the LLM
+            taskLog.info("[main] Direct command: \(cmd)")
+            let output: String
+            switch cmd {
+            case "list_agents":
+                let list = scriptService.numberedList()
+                let count = scriptService.listScripts().count
+                appendLog("🦾 Agents: \(count) found")
+                appendLog(list)
+                output = list
+            default:
+                output = ""
             }
+            flushLog()
+            completionSummary = "Executed \(cmd)"
+            // Inject into LLM context so it knows what's available
+            let contextMsg: [String: Any] = ["role": "user", "content": "[\(cmd) output]\n\(output)"]
+            messages.append(contextMsg)
+            messages.append(["role": "assistant", "content": "Here are the results."])
+            history.add(TaskRecord(prompt: prompt, summary: completionSummary, commandsRun: [cmd]), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
+            ChatHistoryStore.shared.endCurrentTask(summary: completionSummary)
+            stopProgressUpdates()
+            if agentReplyHandle != nil { sendProgressUpdate(output) }
+            flushLog()
+            persistLogNow()
+            isRunning = false
+            isThinking = false
+            return
+        case .answered(let reply):
+            taskLog.info("[main] Apple AI answered directly — skipping LLM")
+            appendLog(reply)
+            flushLog()
+            completionSummary = String(reply.prefix(200))
+            history.add(TaskRecord(prompt: prompt, summary: completionSummary, commandsRun: []), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
+            ChatHistoryStore.shared.endCurrentTask(summary: completionSummary)
+            stopProgressUpdates()
+            if agentReplyHandle != nil { sendProgressUpdate(reply) }
+            flushLog()
+            persistLogNow()
+            isRunning = false
+            isThinking = false
+            return
+        case .passThrough:
+            break
         }
 
         // Add Apple Intelligence context to help LLM understand complex prompts
