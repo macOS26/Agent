@@ -33,7 +33,7 @@ final class ToolPreferencesService {
         "Automation": Set(["applescript_tool", "accessibility", "javascript_tool", "xcode"]),
         "Experimental": Set(["apple_event_query"]),
         // accessibility is in Automation
-        "Core": Set(["task_complete", "list_tools", "load_groups", "unload_groups", "web_search",
+        "Core": Set(["task_complete", "list_tools", "web_search",
                     "write_text", "transform_text", "about_self", "fix_text"]),
         "Workflow": Set(["agent_script", "plan_mode", "git", "send_message"]),
         "User Agent": Set(["execute_agent_command"]),
@@ -139,8 +139,7 @@ final class ToolPreferencesService {
             let toolInActiveGroup = Self.toolGroups.contains { group, tools in
                 activeGroups.contains(group) && tools.contains(toolName)
             }
-            // load/unload groups are always available
-            if !toolInActiveGroup && toolName != "load_groups" && toolName != "unload_groups" { return false }
+            if !toolInActiveGroup { return false }
         }
         return isEnabled(provider, toolName)
     }

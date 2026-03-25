@@ -31,7 +31,7 @@ extension AgentViewModel {
         taskInputTokens = 0
         taskOutputTokens = 0
         // All tool groups available — user controls via UI toggles
-        var activeGroups: Set<String>? = nil
+        let activeGroups: Set<String>? = nil
         appendLog("--- New Task ---")
         appendLog("User: \(prompt)")
 
@@ -670,38 +670,6 @@ extension AgentViewModel {
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
-                        // Load additional tool groups mid-task
-                        if name == "load_groups" {
-                            if let groups = input["groups"] as? [String] {
-                                let validGroups = Set(groups).intersection(Set(ToolPreferencesService.toolGroups.keys))
-                                if activeGroups != nil {
-                                    activeGroups = activeGroups!.union(validGroups)
-                                } else {
-                                    activeGroups = validGroups
-                                }
-                                let output = "Loaded groups: \(validGroups.sorted().joined(separator: ", ")). \(activeGroups?.count ?? 0) groups active."
-                                appendLog("🔧 \(output)")
-                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
-                            } else {
-                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Error: groups array required"])
-                            }
-                        }
-
-                        if name == "unload_groups" {
-                            if let groups = input["groups"] as? [String] {
-                                let toRemove = Set(groups)
-                                if activeGroups != nil {
-                                    activeGroups = activeGroups!.subtracting(toRemove)
-                                    // Always keep Core
-                                    activeGroups!.insert("Core")
-                                }
-                                let output = "Unloaded groups: \(toRemove.sorted().joined(separator: ", ")). \(activeGroups?.count ?? 0) groups active."
-                                appendLog("🔧 \(output)")
-                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
-                            } else {
-                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Error: groups array required"])
-                            }
-                        }
 
                         // Script management tools
                         if name == "list_agent_scripts" {

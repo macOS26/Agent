@@ -104,8 +104,6 @@ enum AgentTools {
         // Tool Discovery
         static let listNativeTools = "list_tools"
         static let listMcpTools = "list_mcp_tools"
-        static let loadGroups = "load_groups"
-        static let unloadGroups = "unload_groups"
         // Web (consolidated CRUDL)
         static let web = "web"
         // Legacy web names (handlers still work)
@@ -543,22 +541,6 @@ enum AgentTools {
             description: "List all enabled tools (built-in and MCP).",
             properties: [:],
             required: []
-        ),
-        ToolDef(
-            name: Name.loadGroups,
-            description: "Load tool groups into the active session. Available: Coding, Automation, Accessibility, Web.",
-            properties: [
-                "groups": ["type": "array", "items": ["type": "string"] as [String: Any], "description": "Group names to load"] as [String: Any],
-            ],
-            required: ["groups"]
-        ),
-        ToolDef(
-            name: Name.unloadGroups,
-            description: "Unload tool groups from the active session to reduce token usage.",
-            properties: [
-                "groups": ["type": "array", "items": ["type": "string"] as [String: Any], "description": "Group names to unload"] as [String: Any],
-            ],
-            required: ["groups"]
         ),
         // --- Web (consolidated) ---
         ToolDef(
