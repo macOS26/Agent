@@ -31,14 +31,14 @@ final class ToolPreferencesService {
         // Coding removed — xcode in Automation
         "File Manager": Set(["read_file", "write_file", "edit_file", "list_files", "search_files", "read_dir", "file_manager"]),
         "Automation": Set(["applescript_tool", "accessibility", "javascript_tool", "xcode"]),
-        "Experimental": Set(["apple_event_query"]),
+        "Experimental": Set(["apple_event_query", "selenium"]),
         // accessibility is in Automation
         "Core": Set(["task_complete", "list_tools", "web_search",
                     "write_text", "transform_text", "about_self", "fix_text"]),
         "Workflow": Set(["agent", "plan_mode", "git", "send_message"]),
         "User Agent": Set(["execute_agent_command"]),
         "Launch Daemon": Set(["execute_daemon_command"]),
-        "Web": Set(["web", "selenium"]),
+        "Web": Set(["web"]),
     ]
 
     /// Tools enabled by default for Apple Intelligence (small context window).
@@ -64,7 +64,6 @@ final class ToolPreferencesService {
         guard !UserDefaults.standard.bool(forKey: Self.groupSeededKey) else { return }
         UserDefaults.standard.set(true, forKey: Self.groupSeededKey)
         disabledGroups.insert("Accessibility")
-        disabledGroups.insert("Web")
         disabledGroups.insert("Experimental")
     }
 
