@@ -6,6 +6,8 @@ struct HeaderStatusView: View {
 
     var body: some View {
         HStack(spacing: 8) {
+            Spacer()
+                .frame(width: 4)
             // Service status indicators
             HStack(spacing: 4) {
                 StatusDot(
