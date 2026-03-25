@@ -85,6 +85,42 @@ extension AgentViewModel {
         tab.appendLog("User: \(prompt)")
         tab.flush()
 
+        // Triage: direct commands and Apple AI conversation (same as main task)
+        let mediator = AppleIntelligenceMediator.shared
+        let triageResult = await mediator.triagePrompt(prompt)
+        switch triageResult {
+        case .directCommand(let cmd):
+            if cmd.name == "run_agent" {
+                let resolved = scriptService.resolveScriptName(cmd.argument)
+                if !scriptService.canRunDirectly(name: resolved) { break }
+            }
+            tabTaskLog.info("[\(tab.displayTitle)] Direct command: \(cmd.name)")
+            _ = await executeDirectCommand(cmd)
+            tab.flush()
+            completionSummary = "Executed \(cmd.name)"
+            let formatter = DateFormatter()
+            formatter.dateFormat = "HH:mm:ss"
+            let time = formatter.string(from: Date())
+            tab.tabTaskSummaries.append("[\(time)] \(prompt) → \(completionSummary)")
+            history.add(TaskRecord(prompt: prompt, summary: completionSummary, commandsRun: [cmd.name]), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
+            tab.flush()
+            tab.isLLMRunning = false
+            tab.isLLMThinking = false
+            return
+        case .answered(let reply):
+            tabTaskLog.info("[\(tab.displayTitle)] Apple AI answered directly")
+            tab.appendLog(reply)
+            tab.flush()
+            completionSummary = String(reply.prefix(200))
+            history.add(TaskRecord(prompt: prompt, summary: completionSummary, commandsRun: []), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
+            tab.flush()
+            tab.isLLMRunning = false
+            tab.isLLMThinking = false
+            return
+        case .passThrough:
+            break
+        }
+
         // Build tab context from the existing log (cap at 8K characters)
         let tabContext = String(tab.activityLog.suffix(8000))
         let tccNote: String
@@ -205,35 +241,10 @@ extension AgentViewModel {
         var timeoutRetryCount = 0
         let maxTimeoutRetries = 2
 
-        // Apple Intelligence mediator for contextual annotations (same as main task)
-        let mediator = AppleIntelligenceMediator.shared
-        var appleAIAnnotations: [AppleIntelligenceMediator.Annotation] = []
-
-        // Apple AI conversation triage — answer simple prompts directly without hitting the LLM
-        var triageHandled = false
-        if mediator.isEnabled {
-            let triageResult = await mediator.triagePrompt(prompt)
-            if case .answered(let reply) = triageResult {
-                tabTaskLog.info("[\(tab.displayTitle)] Apple AI answered directly — skipping LLM")
-                tab.appendLog(reply)
-                tab.flush()
-                tab.isLLMRunning = false
-                tab.isLLMThinking = false
-                return
-            }
-            triageHandled = true
-        }
-
-        // Add Apple Intelligence context only if triage didn't already evaluate the prompt
-        if !triageHandled && mediator.isEnabled && mediator.injectContextToLLM {
-            tabTaskLog.info("[\(tab.displayTitle)] Apple AI mediator: contextualizing user message...")
+        // Add Apple Intelligence context to help LLM understand complex prompts
+        if mediator.isEnabled && mediator.injectContextToLLM {
             if let contextAnnotation = await mediator.contextualizeUserMessage(prompt) {
-                appleAIAnnotations.append(contextAnnotation)
                 tab.currentAppleAIPrompt = contextAnnotation.content
-                if mediator.trainingEnabled {
-                    TrainingDataStore.shared.captureAppleAIDecision(contextAnnotation.content)
-                }
-                // Inject rephrased context into LLM messages
                 let contextMessage: [String: Any] = [
                     "role": "user",
                     "content": contextAnnotation.formatted
