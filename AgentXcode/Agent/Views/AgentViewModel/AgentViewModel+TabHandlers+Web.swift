@@ -41,29 +41,69 @@ extension AgentViewModel {
         case "web_find":
             let selector = input["selector"] as? String ?? input["query"] as? String ?? ""
             let strategyStr = input["strategy"] as? String ?? "auto"
-            let strategy = SelectorStrategy(rawValue: strategyStr) ?? .auto
             let timeout = input["timeout"] as? Double ?? 10.0
             let fuzzyThreshold = input["fuzzyThreshold"] as? Double ?? 0.6
             let appBundleId = input["appBundleId"] as? String
-            tab.appendLog("Finding element: \(selector)...")
+            tab.appendLog("Finding: \(selector)...")
             tab.flush()
-            do {
-                let output = try await WebAutomationService.shared.findElement(
-                    selector: selector, strategy: strategy, timeout: timeout,
-                    fuzzyThreshold: fuzzyThreshold, appBundleId: appBundleId
-                )
-                if let jsonData = try? JSONSerialization.data(withJSONObject: output, options: .prettyPrinted),
-                   let jsonStr = String(data: jsonData, encoding: .utf8) {
-                    tab.appendLog(jsonStr)
+            // If it looks like plain text (not CSS selector), search for clickable elements containing that text
+            let isPlainText = !selector.contains(".") && !selector.contains("#") && !selector.contains("[") && !selector.contains(":") && !selector.contains("/") && !selector.contains(">")
+            var resultContent = ""
+            if isPlainText {
+                // Use JS to find elements containing the text
+                let escaped = WebAutomationService.escapeJS(selector)
+                let js = """
+                JSON.stringify((function() {
+                    var all = document.querySelectorAll('a, button, input[type=submit], [role=button]');
+                    var matches = [];
+                    for (var i = 0; i < all.length; i++) {
+                        var el = all[i];
+                        var text = el.textContent.trim();
+                        if (text.toLowerCase().indexOf('\(escaped.lowercased())') >= 0) {
+                            var rect = el.getBoundingClientRect();
+                            matches.push({
+                                tag: el.tagName, text: text.substring(0, 100),
+                                href: el.href || '', id: el.id || '',
+                                className: (el.className || '').substring(0, 80),
+                                x: Math.round(rect.x), y: Math.round(rect.y),
+                                width: Math.round(rect.width), height: Math.round(rect.height)
+                            });
+                        }
+                    }
+                    return matches;
+                })())
+                """
+                if let result = try? await WebAutomationService.shared.executeJavaScript(script: js) as? String, !result.isEmpty, result != "[]" {
+                    resultContent = result
+                    tab.appendLog(result)
                 } else {
-                    tab.appendLog("Found element: \(output)")
+                    resultContent = "No clickable elements found containing '\(selector)'"
+                    tab.appendLog(resultContent)
                 }
-            } catch {
-                tab.appendLog("Error: \(error.localizedDescription)")
+            } else {
+                // CSS/XPath selector — use findElement
+                let strategy = SelectorStrategy(rawValue: strategyStr) ?? .auto
+                do {
+                    let output = try await WebAutomationService.shared.findElement(
+                        selector: selector, strategy: strategy, timeout: timeout,
+                        fuzzyThreshold: fuzzyThreshold, appBundleId: appBundleId
+                    )
+                    if let jsonData = try? JSONSerialization.data(withJSONObject: output, options: .prettyPrinted),
+                       let jsonStr = String(data: jsonData, encoding: .utf8) {
+                        resultContent = jsonStr
+                        tab.appendLog(jsonStr)
+                    } else {
+                        resultContent = "Found element: \(output)"
+                        tab.appendLog(resultContent)
+                    }
+                } catch {
+                    resultContent = "Error: \(error.localizedDescription)"
+                    tab.appendLog(resultContent)
+                }
             }
             tab.flush()
             return TabToolResult(
-                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": tab.logBuffer],
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": resultContent],
                 isComplete: false
             )
 
@@ -112,19 +152,36 @@ extension AgentViewModel {
             )
 
         case "web_execute_js":
-            let script = input["script"] as? String ?? ""
+            let script = input["script"] as? String ?? input["query"] as? String ?? ""
             let browser = input["browser"] as? String
             tab.appendLog("Executing JavaScript...")
             tab.flush()
-            do {
-                let output = try await WebAutomationService.shared.executeJavaScript(script: script, browser: browser)
-                tab.appendLog(output as? String ?? "Script executed")
-            } catch {
-                tab.appendLog("Error: \(error.localizedDescription)")
+            // Wrap script to ensure result is captured as JSON string
+            // Safari's do JavaScript returns the last expression value, not return statements
+            let wrappedScript: String
+            if script.contains("return ") && !script.contains("JSON.stringify") {
+                // Wrap IIFE-style scripts: replace return with JSON.stringify
+                wrappedScript = "JSON.stringify((function(){" + script + "})())"
+            } else if !script.contains("JSON.stringify") && (script.contains("querySelectorAll") || script.contains("document.")) {
+                wrappedScript = "JSON.stringify(" + script + ")"
+            } else {
+                wrappedScript = script
             }
+            var jsResult = "(no output)"
+            do {
+                let output = try await WebAutomationService.shared.executeJavaScript(script: wrappedScript, browser: browser)
+                if let str = output as? String, !str.isEmpty {
+                    jsResult = str
+                } else if let val = output {
+                    jsResult = String(describing: val)
+                }
+            } catch {
+                jsResult = "Error: \(error.localizedDescription)"
+            }
+            tab.appendLog(jsResult)
             tab.flush()
             return TabToolResult(
-                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": tab.logBuffer],
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": jsResult],
                 isComplete: false
             )
 
