@@ -103,20 +103,20 @@ extension AgentViewModel {
             return await WebAutomationService.shared.safariGoogleSearch(query: query, maxResults: maxResults)
         }
 
-        // web_get_url / web_get_title (via Selenium AgentScript)
-        if name == "web_get_url" || name == "web_get_title" {
-            let action = name == "web_get_url" ? "getUrl" : "getTitle"
-            let args = "{\"action\":\"\(action)\"}"
-            // Run Selenium via compile and execute
-            guard let compileCmd = scriptService.compileCommand(name: "Selenium") else {
-                return "Error: Selenium script not found"
-            }
-            let compileResult = await Self.executeTCC(command: compileCmd)
-            if compileResult.status != 0 {
-                return "Compile failed: \(compileResult.output)"
-            }
-            let result = await scriptService.loadAndRunScript(name: "Selenium", arguments: args, captureStderr: false, isCancelled: nil) { _ in }
-            return result.output
+        // web_get_url / web_get_title
+        if name == "web_get_url" {
+            let browser = input["browser"] as? String
+            return await WebAutomationService.shared.getPageURL(browser: browser)
+        }
+        if name == "web_get_title" {
+            let browser = input["browser"] as? String
+            return await WebAutomationService.shared.getPageTitle(browser: browser)
+        }
+        // web_read_content
+        if name == "web_read_content" {
+            let browser = input["browser"] as? String
+            let maxLength = input["max_length"] as? Int ?? 10000
+            return await WebAutomationService.shared.readPageContent(browser: browser, maxLength: maxLength)
         }
         
         // web_scan — discover interactive elements on the page
