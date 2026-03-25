@@ -139,6 +139,9 @@ struct ContentView: View {
             ToolbarItemGroup(placement: .navigation) {
                 HeaderStatusView(viewModel: viewModel)
             }
+            ToolbarItem(placement: .automatic) {
+                Spacer()
+            }
             ToolbarItemGroup(placement: .automatic) {
                 HeaderToolbarButtons(
                     viewModel: viewModel,
