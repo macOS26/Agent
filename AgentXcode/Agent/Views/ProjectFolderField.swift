@@ -28,17 +28,19 @@ struct ProjectFolderField: View {
                     }
                 } label: {
                     Image(systemName: "folder")
+                        .frame(width: 36)
                 }
                 .buttonStyle(.bordered)
+                .clipShape(Capsule())
                 .controlSize(.small)
                 .help("Pick project folder or file")
 
                 TextField("Project folder or file...", text: $projectFolder)
                     .textContentType(.none)
                     .textFieldStyle(.plain)
-                    .padding(6)
+                    .padding(8)
                     .background(Color(white: 0.12))
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                     .controlSize(.small)
                     .focused($isTextFieldFocused)
                     .onSubmit {
@@ -63,8 +65,10 @@ struct ProjectFolderField: View {
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundStyle(.secondary)
+                        .frame(width: 36)
                 }
                 .buttonStyle(.bordered)
+                .clipShape(Capsule())
                 .controlSize(.small)
                 .help("Clear project folder")
                 .disabled(projectFolder.isEmpty)
