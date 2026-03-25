@@ -69,8 +69,8 @@ struct HeaderStatusView: View {
                 }
             }
         }
-        .padding(.leading, 10)
-        .padding(.trailing, 100)
+        .padding(.leading, 15)
+        .padding(.trailing, 105)
     }
 }
 
