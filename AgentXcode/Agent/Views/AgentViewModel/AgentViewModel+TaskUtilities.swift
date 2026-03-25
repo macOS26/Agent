@@ -209,6 +209,26 @@ extension AgentViewModel {
             appendLog(output)
             return output
 
+        case "run_agent":
+            // Only called when canRunDirectly returned true (no args needed)
+            guard let compileCmd = scriptService.compileCommand(name: name) else {
+                let err = "Error: agent '\(name)' not found."
+                appendLog(err)
+                return err
+            }
+            appendLog("🦾 Compiling: \(name)")
+            flushLog()
+            let compileResult = await userService.execute(command: compileCmd)
+            if compileResult.status != 0 {
+                appendLog("Compile error:\n\(compileResult.output)")
+                return compileResult.output
+            }
+            appendLog("🦾 Running: \(name)")
+            flushLog()
+            let runResult = await scriptService.loadAndRunScriptViaProcess(name: name)
+            appendLog(runResult.output)
+            return runResult.output
+
         default:
             return ""
         }

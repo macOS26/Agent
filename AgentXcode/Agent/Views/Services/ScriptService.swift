@@ -409,6 +409,81 @@ final class ScriptService {
         return trimmed
     }
 
+    // MARK: - Script Metadata
+
+    /// Cached metadata about script requirements (persisted in UserDefaults)
+    private static let metadataKey = "agentScriptMetadata"
+
+    struct ScriptMetadata: Codable {
+        var requiresArguments: Bool
+        var requiresInput: Bool       // stdin / readLine / JSON input
+        var lastModified: Date
+    }
+
+    /// Scan script source and return metadata about its requirements
+    static func analyzeScript(_ source: String) -> ScriptMetadata {
+        let requiresArgs = source.contains("CommandLine.arguments")
+            || source.contains("ProcessInfo.processInfo.arguments")
+            || source.contains("CommandLine.argc")
+        let requiresInput = source.contains("readLine(")
+            || source.contains("FileHandle.standardInput")
+            || source.contains("stdin")
+            || source.contains("JSONDecoder()")
+            || source.contains("Codable")
+        return ScriptMetadata(requiresArguments: requiresArgs, requiresInput: requiresInput, lastModified: Date())
+    }
+
+    /// Store metadata for a script in UserDefaults
+    func updateMetadata(name: String, source: String) {
+        let meta = Self.analyzeScript(source)
+        var all = loadAllMetadata()
+        all[name] = meta
+        if let data = try? JSONEncoder().encode(all) {
+            UserDefaults.standard.set(data, forKey: Self.metadataKey)
+        }
+    }
+
+    /// Load all script metadata from UserDefaults
+    func loadAllMetadata() -> [String: ScriptMetadata] {
+        guard let data = UserDefaults.standard.data(forKey: Self.metadataKey),
+              let dict = try? JSONDecoder().decode([String: ScriptMetadata].self, from: data) else {
+            return [:]
+        }
+        return dict
+    }
+
+    /// Get metadata for a single script. Returns nil if not yet analyzed.
+    func metadata(for name: String) -> ScriptMetadata? {
+        return loadAllMetadata()[name]
+    }
+
+    /// Check if a script can run without arguments (safe for direct execution)
+    func canRunDirectly(name: String) -> Bool {
+        guard let meta = metadata(for: name) else {
+            // Not yet analyzed — scan it now
+            if let source = readScript(name: name) {
+                updateMetadata(name: name, source: source)
+                let fresh = Self.analyzeScript(source)
+                return !fresh.requiresArguments && !fresh.requiresInput
+            }
+            return false
+        }
+        return !meta.requiresArguments && !meta.requiresInput
+    }
+
+    /// Rebuild metadata for all scripts (call on app launch or after bulk changes)
+    func rebuildAllMetadata() {
+        var all: [String: ScriptMetadata] = [:]
+        for script in listScripts() {
+            if let source = readScript(name: script.name) {
+                all[script.name] = Self.analyzeScript(source)
+            }
+        }
+        if let data = try? JSONEncoder().encode(all) {
+            UserDefaults.standard.set(data, forKey: Self.metadataKey)
+        }
+    }
+
     /// Read a script's source code
     func readScript(name: String) -> String? {
         ensurePackage()
@@ -470,6 +545,7 @@ final class ScriptService {
             try fm.createDirectory(at: scriptsDir, withIntermediateDirectories: true)
             try final.write(to: scriptFile, atomically: true, encoding: .utf8)
             unmarkScriptDeleted(scriptName)
+            updateMetadata(name: scriptName, source: final)
 
             // Regenerate Package.swift to include the new script
             packageLock.lock()
@@ -494,6 +570,7 @@ final class ScriptService {
         let final = stripShebang(content)
         do {
             try final.write(to: scriptFile, atomically: true, encoding: .utf8)
+            updateMetadata(name: scriptName, source: final)
             return "Updated \(scriptName) (\(final.count) bytes)"
         } catch {
             return "Error updating script: \(error.localizedDescription)"

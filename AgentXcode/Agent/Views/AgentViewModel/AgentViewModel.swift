@@ -958,6 +958,7 @@ final class AgentViewModel {
     init() {
         // Restore ~/Documents/AgentScript/ folder and bundled resources if missing
         scriptService.ensurePackage()
+        scriptService.rebuildAllMetadata()
         SystemPromptService.shared.ensureDefaults()
 
         // Cancel any orphaned processes from a previous app session

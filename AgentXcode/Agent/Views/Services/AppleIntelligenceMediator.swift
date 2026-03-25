@@ -413,7 +413,14 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
             }
         }
 
-        // "run X" — pass through to LLM since scripts may need arguments
+        // "run X", "run agent X" — direct only if script needs no arguments
+        let runPatterns = ["run agent ", "run script ", "run ", "execute "]
+        for prefix in runPatterns {
+            if lower.hasPrefix(prefix) {
+                let arg = String(trimmed.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)
+                if !arg.isEmpty { return DirectCommand(name: "run_agent", argument: arg) }
+            }
+        }
 
         return nil
     }
