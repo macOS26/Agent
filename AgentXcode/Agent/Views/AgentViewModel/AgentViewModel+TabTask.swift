@@ -232,12 +232,15 @@ extension AgentViewModel {
         // Build on existing conversation or start fresh
         var messages: [[String: Any]] = tab.llmMessages
 
-        // Remove orphaned tool calls at the end (assistant with tool_use but no matching tool_result)
-        while let last = messages.last, last["role"] as? String == "assistant",
-              let content = last["content"] as? [[String: Any]],
-              content.contains(where: { $0["type"] as? String == "tool_use" }) {
-            // Check if next message has tool results — if not, it's orphaned
-            messages.removeLast()
+        // Remove orphaned tool calls at the end (assistant with tool_use/tool_calls but no matching responses)
+        while let last = messages.last, last["role"] as? String == "assistant" {
+            let hasClaudeTools = (last["content"] as? [[String: Any]])?.contains(where: { $0["type"] as? String == "tool_use" }) ?? false
+            let hasOpenAITools = last["tool_calls"] != nil
+            if hasClaudeTools || hasOpenAITools {
+                messages.removeLast()
+            } else {
+                break
+            }
         }
 
         // Inject available agent names on first message so the LLM knows what's available

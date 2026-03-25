@@ -24,6 +24,14 @@ struct InputSectionView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.gray.opacity(0.4), lineWidth: 1))
                     .lineLimit(2...16)
+                    .onKeyPress(.upArrow) {
+                        tab.navigateHistory(direction: -1)
+                        return .handled
+                    }
+                    .onKeyPress(.downArrow) {
+                        tab.navigateHistory(direction: 1)
+                        return .handled
+                    }
                     .onSubmit {
                         if !tab.taskInput.isEmpty {
                             viewModel.runTabTask(tab: tab)
@@ -77,6 +85,14 @@ struct InputSectionView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.gray.opacity(0.4), lineWidth: 1))
                     .lineLimit(2...16)
+                    .onKeyPress(.upArrow) {
+                        viewModel.navigatePromptHistory(direction: -1)
+                        return .handled
+                    }
+                    .onKeyPress(.downArrow) {
+                        viewModel.navigatePromptHistory(direction: 1)
+                        return .handled
+                    }
                     .onSubmit {
                         if !viewModel.taskInput.isEmpty {
                             viewModel.run()
