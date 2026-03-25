@@ -17,12 +17,12 @@ struct ProjectFolderField: View {
             HStack(spacing: 8) {
                 Button {
                     let panel = NSOpenPanel()
-                    panel.canChooseFiles = true
+                    panel.canChooseFiles = false
                     panel.canChooseDirectories = true
                     panel.allowsMultipleSelection = false
-                    panel.message = "Select a project folder or file"
+                    panel.message = "Select a project folder"
                     if panel.runModal() == .OK, let url = panel.url {
-                        projectFolder = url.path
+                        projectFolder = Self.resolveToFolder(url.path)
                         RecentFoldersService.shared.addFolder(url.path)
                         onFolderSelected?()
                     }
@@ -33,9 +33,9 @@ struct ProjectFolderField: View {
                 .buttonStyle(.bordered)
                 .clipShape(Capsule())
                 .controlSize(.regular)
-                .help("Pick project folder or file")
+                .help("Pick project folder")
 
-                TextField("Project folder or file...", text: $projectFolder)
+                TextField("Project folder...", text: $projectFolder)
                     .textContentType(.none)
                     .textFieldStyle(.plain)
                     .padding(.leading, 10)
@@ -48,6 +48,7 @@ struct ProjectFolderField: View {
                     .focused($isTextFieldFocused)
                     .onSubmit {
                         if !projectFolder.isEmpty {
+                            projectFolder = Self.resolveToFolder(projectFolder)
                             RecentFoldersService.shared.addFolder(projectFolder)
                         }
                         showRecentFolders = false
@@ -140,5 +141,20 @@ struct ProjectFolderField: View {
                 RecentFoldersService.shared.addFolder(projectFolder)
             }
         }
+    }
+
+    /// If the path points to a file (not a directory), return its parent folder.
+    /// .app bundles are treated as files — returns their containing folder.
+    static func resolveToFolder(_ path: String) -> String {
+        var isDir: ObjCBool = false
+        let exists = FileManager.default.fileExists(atPath: path, isDirectory: &isDir)
+        if exists && !isDir.boolValue {
+            return (path as NSString).deletingLastPathComponent
+        }
+        // .app bundles report as directories but are packages — use parent
+        if path.hasSuffix(".app") {
+            return (path as NSString).deletingLastPathComponent
+        }
+        return path
     }
 }
