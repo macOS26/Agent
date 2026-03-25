@@ -87,14 +87,15 @@ extension AgentViewModel {
 
         case "web":
             switch action {
-            case "open":       return ("web_open", newInput)
-            case "find":       return ("web_find", newInput)
-            case "click":      return ("web_click", newInput)
-            case "type":       return ("web_type", newInput)
-            case "execute_js": return ("web_execute_js", newInput)
-            case "get_url":    return ("web_get_url", newInput)
-            case "get_title":  return ("web_get_title", newInput)
-            default:           return ("web_open", newInput)
+            case "open":          return ("web_open", newInput)
+            case "find":          return ("web_find", newInput)
+            case "click":         return ("web_click", newInput)
+            case "type":          return ("web_type", newInput)
+            case "execute_js":    return ("web_execute_js", newInput)
+            case "get_url":       return ("web_get_url", newInput)
+            case "get_title":     return ("web_get_title", newInput)
+            case "google_search": return ("web_google_search", newInput)
+            default:              return ("web_open", newInput)
             }
 
         case "selenium":

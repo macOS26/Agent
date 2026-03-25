@@ -95,6 +95,14 @@ extension AgentViewModel {
             }
         }
 
+        // web_google_search
+        if name == "web_google_search" {
+            let query = input["query"] as? String ?? ""
+            guard !query.isEmpty else { return "Error: query is required" }
+            let maxResults = input["max_results"] as? Int ?? 3000
+            return await WebAutomationService.shared.safariGoogleSearch(query: query, maxResults: maxResults)
+        }
+
         // web_get_url / web_get_title (via Selenium AgentScript)
         if name == "web_get_url" || name == "web_get_title" {
             let action = name == "web_get_url" ? "getUrl" : "getTitle"

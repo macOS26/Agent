@@ -1258,6 +1258,81 @@ final class WebAutomationService: @unchecked Sendable {
         }
         return CGRect(x: x, y: y, width: w, height: h)
     }
+
+    // MARK: - Safari Google Search
+
+    /// Perform a Google search in Safari and return the results page content.
+    /// Opens google.com, types the query, submits, waits for results, returns text.
+    func safariGoogleSearch(query: String, maxResults: Int = 3000) async -> String {
+        let escaped = Self.escapeJS(query)
+
+        // 1. Open google.com
+        let openScript = """
+        tell application "Safari"
+            activate
+            if (count of windows) = 0 then make new document
+            set URL of front document to "https://www.google.com"
+        end tell
+        """
+        let openOK = await runAppleScript(openScript)
+        guard !openOK.hasPrefix("Error") else { return openOK }
+
+        // 2. Wait for google.com to load
+        for _ in 0..<10 {
+            try? await Task.sleep(for: .milliseconds(300))
+            let ready = await runAppleScript("""
+            tell application "Safari" to do JavaScript "document.readyState" in front document
+            """)
+            if ready == "complete" { break }
+        }
+
+        // 3. Type query and submit
+        let searchJS = """
+        (function() {
+            var el = document.querySelector('textarea[name=q], input[name=q]');
+            if (!el) return 'not found';
+            el.focus();
+            el.value = '\(escaped)';
+            el.dispatchEvent(new Event('input', {bubbles: true}));
+            var form = el.closest('form');
+            if (form) { form.submit(); return 'submitted'; }
+            return 'no form';
+        })()
+        """
+        let submitResult = await runAppleScript("""
+        tell application "Safari" to do JavaScript "\(Self.escapeJS(searchJS))" in front document
+        """)
+        guard submitResult == "submitted" else {
+            return "{\"success\": false, \"error\": \"Search submit failed: \(submitResult)\"}"
+        }
+
+        // 4. Wait for results page to load
+        for _ in 0..<20 {
+            try? await Task.sleep(for: .milliseconds(300))
+            let title = await runAppleScript("""
+            tell application "Safari" to return name of front document
+            """)
+            if title.contains("Google Search") || title.contains("- Google") { break }
+        }
+
+        // Small extra wait for content to render
+        try? await Task.sleep(for: .milliseconds(500))
+
+        // 5. Get results
+        let url = await runAppleScript("""
+        tell application "Safari" to return URL of front document
+        """)
+        let title = await runAppleScript("""
+        tell application "Safari" to return name of front document
+        """)
+        let content = await runAppleScript("""
+        tell application "Safari" to do JavaScript "document.body.innerText.substring(0, \(maxResults))" in front document
+        """)
+
+        return """
+        {"success": true, "query": "\(Self.escapeJS(query))", "url": "\(Self.escapeJS(url))", "title": "\(Self.escapeJS(title))", "content": "\(Self.escapeJS(content))"}
+        """
+    }
 }
 
 // MARK: - Supporting Types
@@ -1272,6 +1347,7 @@ enum SelectorStrategy: String {
 enum WebAutomationError: Error, LocalizedError {
     case elementNotFound(String)
     case browserNotFound
+    case timeout(String)
     case appleScriptError(String)
     case seleniumError(String)
     case invalidState(String)
@@ -1280,6 +1356,8 @@ enum WebAutomationError: Error, LocalizedError {
         switch self {
         case .elementNotFound(let selector):
             return "Element not found: \(selector)"
+        case .timeout(let msg):
+            return "Timeout: \(msg)"
         case .browserNotFound:
             return "No active browser found"
         case .appleScriptError(let msg):

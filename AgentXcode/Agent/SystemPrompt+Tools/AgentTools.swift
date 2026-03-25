@@ -119,6 +119,7 @@ enum AgentTools {
         static let webExecuteJs = "web_execute_js"
         static let webGetUrl = "web_get_url"
         static let webGetTitle = "web_get_title"
+        static let webGoogleSearch = "web_google_search"
         static let webReadContent = "web_read_content"
         static let webScrollTo = "web_scroll_to"
         static let webSelect = "web_select"
@@ -173,7 +174,7 @@ enum AgentTools {
         plan_mode: create, update, read, list, delete | applescript_tool: execute, lookup_sdef, list, run, save, delete
         javascript_tool: execute, list, run, save, delete
         accessibility: list_windows, get_properties, perform_action, type_text, click, press_key, set_properties, find_element, get_children, click_element, type_into_element, wait_adaptive, show_menu, drag, highlight_element, get_window_frame, click_menu_item, set_window_frame, manage_app, scroll_to_element, read_focused
-        web: open, find, click, type, execute_js, get_url, get_title, read_content, scroll_to, select, upload, storage, submit, navigate, list_tabs, switch_tab, list_windows, switch_window, new_window, close_window, wait_for_element
+        web: open, find, click, type, execute_js, get_url, get_title, google_search, read_content, scroll_to, select, upload, storage, submit, navigate, list_tabs, switch_tab, list_windows, switch_window, new_window, close_window, wait_for_element
 
         CRITICAL RULES:
         - SHELL COMMANDS (rm, mv, cp, ls, find, grep, etc.): ALWAYS use execute_agent_command. NEVER create .sh scripts. NEVER use applescript_tool "do shell script".

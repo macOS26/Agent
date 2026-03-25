@@ -290,6 +290,21 @@ extension AgentViewModel {
             tab.flush()
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
 
+        case "web_google_search":
+            let query = input["query"] as? String ?? ""
+            let maxResults = input["max_results"] as? Int ?? 3000
+            guard !query.isEmpty else {
+                let err = "Error: query is required"
+                tab.appendLog(err); tab.flush()
+                return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": err], isComplete: false)
+            }
+            tab.appendLog("🔍 Google search: \(query)...")
+            tab.flush()
+            let output = await WebAutomationService.shared.safariGoogleSearch(query: query, maxResults: maxResults)
+            tab.appendLog(Self.preview(output, lines: 40))
+            tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
+
         default:
         let output = await executeNativeTool(name, input: input)
         tab.appendLog(output); tab.flush()
