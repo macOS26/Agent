@@ -75,6 +75,7 @@ struct InputSectionView: View {
                     }())
             }
             .padding()
+            .background(Color(white: 0.08))
         } else {
             // Main tab input
             HStack {
@@ -138,6 +139,7 @@ struct InputSectionView: View {
                     .disabled(viewModel.taskInput.isEmpty || (viewModel.selectedProvider == .claude && viewModel.apiKey.isEmpty))
             }
             .padding()
+            .background(Color(white: 0.08))
         }
     }
     
