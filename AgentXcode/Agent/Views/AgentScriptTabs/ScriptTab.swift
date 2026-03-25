@@ -108,6 +108,14 @@ final class ScriptTab: Identifiable {
            let history = try? JSONDecoder().decode([String].self, from: data) {
             self.promptHistory = history
         }
+        if let json = record.taskSummariesJSON, let data = json.data(using: .utf8),
+           let summaries = try? JSONDecoder().decode([String].self, from: data) {
+            self.tabTaskSummaries = summaries
+        }
+        if let json = record.errorsJSON, let data = json.data(using: .utf8),
+           let errors = try? JSONDecoder().decode([String].self, from: data) {
+            self.tabErrors = errors
+        }
     }
 
     // MARK: - Logging

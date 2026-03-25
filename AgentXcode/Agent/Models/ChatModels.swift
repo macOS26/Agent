@@ -56,10 +56,13 @@ final class ScriptTabRecord {
     var isMessagesTab: Bool          // Dedicated Messages tab flag
     var projectFolder: String        // Per-tab project folder
     var promptHistoryJSON: String?   // JSON-encoded [String] for prompt history
+    var taskSummariesJSON: String?    // JSON-encoded [String] for per-tab task summaries
+    var errorsJSON: String?           // JSON-encoded [String] for per-tab errors
 
     init(tabId: UUID, scriptName: String, activityLog: String, exitCode: Int = -999,
          llmConfigJSON: String? = nil, parentTabIdString: String? = nil, isMessagesTab: Bool = false,
-         projectFolder: String = "", promptHistoryJSON: String? = nil) {
+         projectFolder: String = "", promptHistoryJSON: String? = nil,
+         taskSummariesJSON: String? = nil, errorsJSON: String? = nil) {
         self.tabId = tabId
         self.scriptName = scriptName
         self.activityLog = activityLog
@@ -69,6 +72,8 @@ final class ScriptTabRecord {
         self.isMessagesTab = isMessagesTab
         self.projectFolder = projectFolder
         self.promptHistoryJSON = promptHistoryJSON
+        self.taskSummariesJSON = taskSummariesJSON
+        self.errorsJSON = errorsJSON
     }
 }
 
@@ -368,7 +373,7 @@ final class ChatHistoryStore {
     // MARK: - Script Tab Persistence
 
     /// Save script tab data to SwiftData. Replaces any existing records.
-    func saveScriptTabs(_ tabs: [(id: UUID, scriptName: String, activityLog: String, exitCode: Int32?, llmConfigJSON: String?, parentTabIdString: String?, isMessagesTab: Bool, projectFolder: String, promptHistoryJSON: String?)]) {
+    func saveScriptTabs(_ tabs: [(id: UUID, scriptName: String, activityLog: String, exitCode: Int32?, llmConfigJSON: String?, parentTabIdString: String?, isMessagesTab: Bool, projectFolder: String, promptHistoryJSON: String?, taskSummariesJSON: String?, errorsJSON: String?)]) {
         guard !storeDisabled, let context else { return }
         // Delete old records
         try? context.delete(model: ScriptTabRecord.self)
@@ -383,7 +388,9 @@ final class ChatHistoryStore {
                 parentTabIdString: tab.parentTabIdString,
                 isMessagesTab: tab.isMessagesTab,
                 projectFolder: tab.projectFolder,
-                promptHistoryJSON: tab.promptHistoryJSON
+                promptHistoryJSON: tab.promptHistoryJSON,
+                taskSummariesJSON: tab.taskSummariesJSON,
+                errorsJSON: tab.errorsJSON
             )
             context.insert(record)
         }

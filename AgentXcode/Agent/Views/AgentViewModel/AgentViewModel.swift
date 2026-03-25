@@ -921,11 +921,22 @@ final class AgentViewModel {
                       let data = try? JSONEncoder().encode(tab.promptHistory) else { return nil }
                 return String(data: data, encoding: .utf8)
             }()
+            let summariesJSON: String? = {
+                guard !tab.tabTaskSummaries.isEmpty,
+                      let data = try? JSONEncoder().encode(tab.tabTaskSummaries) else { return nil }
+                return String(data: data, encoding: .utf8)
+            }()
+            let tabErrorsJSON: String? = {
+                guard !tab.tabErrors.isEmpty,
+                      let data = try? JSONEncoder().encode(tab.tabErrors) else { return nil }
+                return String(data: data, encoding: .utf8)
+            }()
             return (id: tab.id, scriptName: tab.scriptName, activityLog: tab.activityLog,
                     exitCode: tab.exitCode, llmConfigJSON: configJSON,
                     parentTabIdString: tab.parentTabId?.uuidString,
                     isMessagesTab: tab.isMessagesTab, projectFolder: tab.projectFolder,
-                    promptHistoryJSON: historyJSON)
+                    promptHistoryJSON: historyJSON, taskSummariesJSON: summariesJSON,
+                    errorsJSON: tabErrorsJSON)
         }
         ChatHistoryStore.shared.saveScriptTabs(tabData)
     }
