@@ -395,17 +395,8 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
             return DirectCommand(name: "list_agents", argument: "")
         }
 
-        // "run X", "run agent X", "execute X"
-        let runPatterns = ["run agent ", "run script ", "run ", "execute "]
-        for prefix in runPatterns {
-            if lower.hasPrefix(prefix) {
-                let arg = String(trimmed.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)
-                if !arg.isEmpty { return DirectCommand(name: "run_agent", argument: arg) }
-            }
-        }
-
-        // "read X", "read agent X", "show agent X"
-        let readPatterns = ["read agent ", "read script ", "show agent ", "read "]
+        // "read X", "read agent X", "show agent X" — safe, no args needed
+        let readPatterns = ["read agent ", "read script ", "show agent "]
         for prefix in readPatterns {
             if lower.hasPrefix(prefix) {
                 let arg = String(trimmed.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)
@@ -413,14 +404,16 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
             }
         }
 
-        // "delete X", "delete agent X", "remove agent X"
-        let deletePatterns = ["delete agent ", "remove agent ", "delete script ", "remove script ", "delete ", "remove "]
+        // "delete agent X", "remove agent X" — safe, no args needed
+        let deletePatterns = ["delete agent ", "remove agent ", "delete script ", "remove script "]
         for prefix in deletePatterns {
             if lower.hasPrefix(prefix) {
                 let arg = String(trimmed.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)
                 if !arg.isEmpty { return DirectCommand(name: "delete_agent", argument: arg) }
             }
         }
+
+        // "run X" — pass through to LLM since scripts may need arguments
 
         return nil
     }

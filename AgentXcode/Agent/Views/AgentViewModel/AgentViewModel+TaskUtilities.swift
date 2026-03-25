@@ -194,28 +194,6 @@ extension AgentViewModel {
             appendLog(list)
             return list
 
-        case "run_agent":
-            // Validate the agent exists, then compile+run via ScriptService
-            guard scriptService.compileCommand(name: name) != nil else {
-                let err = "Error: agent '\(name)' not found."
-                appendLog(err)
-                return err
-            }
-            appendLog("🦾 Compiling: \(name)")
-            flushLog()
-            let compileCmd = scriptService.compileCommand(name: name)!
-            let compileResult = await userService.execute(command: compileCmd)
-            if compileResult.status != 0 {
-                let err = "Compile error:\n\(compileResult.output)"
-                appendLog(err)
-                return err
-            }
-            appendLog("🦾 Running: \(name)")
-            flushLog()
-            let runResult = await scriptService.loadAndRunScriptViaProcess(name: name)
-            appendLog(runResult.output)
-            return runResult.output
-
         case "read_agent":
             guard let content = scriptService.readScript(name: name) else {
                 let err = "Error: agent '\(name)' not found."
