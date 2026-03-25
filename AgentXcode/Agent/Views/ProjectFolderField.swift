@@ -35,7 +35,10 @@ struct ProjectFolderField: View {
 
                 TextField("Project folder or file...", text: $projectFolder)
                     .textContentType(.none)
-                    .textFieldStyle(.roundedBorder)
+                    .textFieldStyle(.plain)
+                    .padding(6)
+                    .background(Color(white: 0.12))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
                     .controlSize(.small)
                     .focused($isTextFieldFocused)
                     .onSubmit {
