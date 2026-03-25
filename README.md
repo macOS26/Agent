@@ -23,8 +23,8 @@ Now with Apple Intelligence
 | **Hugging Face** | Hugging Face API key | ✓ | Hosted inference API |
 | **Ollama Cloud** | Ollama Pro API key | Auto | Cloud-hosted Ollama models |
 | **Local Ollama** | None | Auto | Requires 32-128GB RAM on Apple Silicon |
-| **vLLM** | Optional | Auto | OpenAI-compatible local server; OpenAI mode recommended |
-| **LM Studio** | None | Auto | OpenAI or Anthropic mode; OpenAI mode recommended |
+| **vLLM** | Optional | ? | OpenAI-compatible local server; OpenAI mode recommended |
+| **LM Studio** | None | ? | OpenAI or Anthropic mode; OpenAI mode recommended |
 
 ### Apple Intelligence Mediator
 
