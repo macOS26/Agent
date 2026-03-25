@@ -1816,8 +1816,16 @@ extension AgentViewModel {
                         flushLog()
                         break
                     }
-                    // No tool use this iteration — nudge and continue
-                    messages.append(["role": "user", "content": "Continue. You MUST use tools — do not output code as text. Use agent (action: create/update) for scripts, write_file/edit_file for files. Call task_complete when finished."])
+                    // Give a specific nudge based on what the task looks like
+                    let lowerPrompt = prompt.lowercased()
+                    let isWebTask = lowerPrompt.contains("safari") || lowerPrompt.contains("web") || lowerPrompt.contains("page") || lowerPrompt.contains("search") || lowerPrompt.contains("open") || lowerPrompt.contains("click") || lowerPrompt.contains("browse") || lowerPrompt.contains("url") || lowerPrompt.contains("site") || lowerPrompt.contains(".com") || lowerPrompt.contains(".org")
+                    let nudge: String
+                    if isWebTask {
+                        nudge = "You MUST call tools now. For web tasks use the safari tool. Examples: safari(action: \"open\", url: \"https://example.com\"), safari(action: \"read_content\"), safari(action: \"find\", query: \"search text\"), safari(action: \"click\", selector: \"button\"), safari(action: \"type\", selector: \"input\", text: \"query\"). Do NOT describe what you'll do — call the tool."
+                    } else {
+                        nudge = "Continue. You MUST use tools — do not output code as text. Use agent (action: create/update) for scripts, write_file/edit_file for files. Call task_complete when finished."
+                    }
+                    messages.append(["role": "user", "content": nudge])
                 }
 
             } catch {
