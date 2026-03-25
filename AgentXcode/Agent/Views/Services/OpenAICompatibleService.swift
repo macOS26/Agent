@@ -108,7 +108,8 @@ final class OpenAICompatibleService {
                             if block["type"] as? String == "text",
                                let t = block["text"] as? String {
                                 contentParts.append(["type": "text", "text": t])
-                            } else if block["type"] as? String == "image",
+                            } else if supportsVision,
+                                      block["type"] as? String == "image",
                                       let source = block["source"] as? [String: Any],
                                       let base64 = source["data"] as? String {
                                 let mediaType = source["media_type"] as? String ?? "image/png"
@@ -121,7 +122,7 @@ final class OpenAICompatibleService {
                             }
                         }
                         if contentParts.isEmpty {
-                            contentParts.append(["type": "text", "text": "Describe the attached image(s)."])
+                            contentParts.append(["type": "text", "text": "(image was attached but this model does not support vision)"])
                         }
                         chatMessages.append(["role": "user", "content": contentParts])
                     }
