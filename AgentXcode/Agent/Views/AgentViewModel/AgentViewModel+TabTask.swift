@@ -283,8 +283,8 @@ extension AgentViewModel {
         var timeoutRetryCount = 0
         let maxTimeoutRetries = 2
 
-        // Add Apple Intelligence context to help LLM understand complex prompts
-        if mediator.isEnabled && mediator.injectContextToLLM {
+        // Add Apple Intelligence context — skip if direct command already handled it
+        if directCommandContext == nil && mediator.isEnabled && mediator.injectContextToLLM {
             if let contextAnnotation = await mediator.contextualizeUserMessage(prompt) {
                 tab.currentAppleAIPrompt = contextAnnotation.content
                 let contextMessage: [String: Any] = [

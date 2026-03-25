@@ -53,7 +53,7 @@ final class AccessibilityService: @unchecked Sendable {
         return shared.successJSON([
             "source": "safari_javascript",
             "pageInfo": text,
-            "hint": "For web interaction use the safari tool: safari(action: 'click', selector: '...'), safari(action: 'type', selector: '...', text: '...'), safari(action: 'execute_js', script: '...'). Do NOT use accessibility for web pages."
+            "hint": "Page content loaded. Use accessibility to interact with elements on this page."
         ])
     }
 
@@ -98,13 +98,7 @@ final class AccessibilityService: @unchecked Sendable {
             results.append(windowInfo)
         }
 
-        // If Safari is in the window list, hint the LLM to use the web tool for page content
-        let hasSafari = results.contains { ($0["ownerName"] as? String) == "Safari" }
-        var response: [String: Any] = ["windows": results, "count": results.count]
-        if hasSafari {
-            response["hint"] = "Safari detected. Use the safari tool for web page content: safari(action: 'execute_js', script: 'document.body.innerText'), safari(action: 'get_url'), safari(action: 'click', selector: '...'). Accessibility cannot access web page DOM."
-        }
-
+        let response: [String: Any] = ["windows": results, "count": results.count]
         return successJSON(response)
     }
     
