@@ -393,7 +393,13 @@ User: "\(message)"
             return .passThrough
         }
         let trimmed = sanitize(content)
-        if trimmed.isEmpty || trimmed.uppercased().contains("PASS") {
+        let upper = trimmed.uppercased()
+        // Pass through if: empty, explicit PASS, or Apple AI refused/deflected
+        if trimmed.isEmpty || upper.contains("PASS")
+            || upper.contains("I CAN'T") || upper.contains("I CANNOT")
+            || upper.contains("I'M UNABLE") || upper.contains("I AM UNABLE")
+            || upper.contains("NOT ABLE TO") || upper.contains("I DON'T HAVE")
+            || upper.contains("BEYOND MY") || upper.contains("OUTSIDE MY") {
             return .passThrough
         }
         // Apple AI answered it directly
