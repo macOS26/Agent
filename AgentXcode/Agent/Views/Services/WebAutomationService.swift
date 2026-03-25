@@ -637,9 +637,17 @@ final class WebAutomationService: @unchecked Sendable {
             var isEditable = el.isContentEditable || el.getAttribute('contenteditable') === 'true' || el.getAttribute('role') === 'textbox';
 
             if (isEditable) {
-                // contenteditable: set innerText and fire InputEvent
-                el.innerText = text;
-                el.dispatchEvent(new InputEvent('input', {bubbles: true, inputType: 'insertText', data: text}));
+                // contenteditable: use execCommand to simulate real typing
+                el.focus();
+                // Clear existing content first
+                if (el.innerText) { document.execCommand('selectAll', false, null); }
+                // Insert text like a real keyboard
+                var inserted = document.execCommand('insertText', false, text);
+                if (!inserted) {
+                    // Fallback: set innerText directly
+                    el.innerText = text;
+                    el.dispatchEvent(new InputEvent('input', {bubbles: true, inputType: 'insertText', data: text}));
+                }
                 return 'typed';
             }
 
@@ -657,11 +665,14 @@ final class WebAutomationService: @unchecked Sendable {
                 return 'typed';
             }
 
-            // Fallback: try .value, then innerText
-            if ('value' in el) {
+            // Fallback: try execCommand (simulates real keyboard input), then .value
+            el.focus();
+            if (document.execCommand) {
+                document.execCommand('selectAll', false, null);
+                document.execCommand('insertText', false, text);
+            } else if ('value' in el) {
                 el.value = text;
                 el.dispatchEvent(new Event('input', {bubbles: true}));
-                el.dispatchEvent(new Event('change', {bubbles: true}));
             } else {
                 el.innerText = text;
                 el.dispatchEvent(new InputEvent('input', {bubbles: true, inputType: 'insertText', data: text}));
