@@ -506,6 +506,70 @@ extension AgentViewModel {
                 isComplete: false
             )
 
+        case "ax_click_menu_item":
+            let app = input["app"] as? String
+            let menuPath = input["menu_path"] as? [String] ?? []
+            tab.appendLog("Clicking menu: \(menuPath.joined(separator: " > "))...")
+            tab.flush()
+            let output = await Self.offMain {
+                AccessibilityService.shared.clickMenuItem(appBundleId: app, menuPath: menuPath)
+            }
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
+
+        case "ax_set_window_frame":
+            let app = input["app"] as? String
+            let x = (input["x"] as? Double).map { CGFloat($0) }
+            let y = (input["y"] as? Double).map { CGFloat($0) }
+            let width = (input["width"] as? Double).map { CGFloat($0) }
+            let height = (input["height"] as? Double).map { CGFloat($0) }
+            tab.appendLog("Setting window frame...")
+            tab.flush()
+            let output = await Self.offMain {
+                AccessibilityService.shared.setWindowFrame(appBundleId: app, x: x, y: y, width: width, height: height)
+            }
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
+
+        case "ax_manage_app":
+            let action = input["action"] as? String ?? "list"
+            let bundleId = input["bundleId"] as? String
+            let appName = input["name"] as? String
+            tab.appendLog("App \(action)...")
+            tab.flush()
+            let output = await Self.offMain {
+                AccessibilityService.shared.manageApp(action: action, bundleId: bundleId, name: appName)
+            }
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
+
+        case "ax_scroll_to_element":
+            let role = input["role"] as? String
+            let title = input["title"] as? String
+            let app = input["app"] as? String ?? input["appBundleId"] as? String
+            tab.appendLog("Scrolling to element...")
+            tab.flush()
+            let output = await Self.offMain {
+                AccessibilityService.shared.scrollToElement(role: role, title: title, appBundleId: app)
+            }
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
+
+        case "ax_read_focused":
+            let app = input["app"] as? String ?? input["appBundleId"] as? String
+            tab.appendLog("Reading focused element...")
+            tab.flush()
+            let output = await Self.offMain {
+                AccessibilityService.shared.readFocusedElement(appBundleId: app)
+            }
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
+
         default:
         let output = await executeNativeTool(name, input: input)
         tab.appendLog(output); tab.flush()

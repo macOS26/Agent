@@ -67,6 +67,11 @@ enum AgentTools {
         static let axTypeIntoElement = "ax_type_into_element"
         static let axHighlightElement = "ax_highlight_element"
         static let axGetWindowFrame = "ax_get_window_frame"
+        static let axClickMenuItem = "ax_click_menu_item"
+        static let axSetWindowFrame = "ax_set_window_frame"
+        static let axManageApp = "ax_manage_app"
+        static let axScrollToElement = "ax_scroll_to_element"
+        static let axReadFocused = "ax_read_focused"
         // Agent Script (consolidated CRUDL)
         static let agentScript = "agent"
         // Agent action names (expanded from consolidated "agent" tool)
@@ -114,6 +119,20 @@ enum AgentTools {
         static let webExecuteJs = "web_execute_js"
         static let webGetUrl = "web_get_url"
         static let webGetTitle = "web_get_title"
+        static let webReadContent = "web_read_content"
+        static let webScrollTo = "web_scroll_to"
+        static let webSelect = "web_select"
+        static let webUpload = "web_upload"
+        static let webStorage = "web_storage"
+        static let webSubmit = "web_submit"
+        static let webNavigate = "web_navigate"
+        static let webListTabs = "web_list_tabs"
+        static let webSwitchTab = "web_switch_tab"
+        static let webListWindows = "web_list_windows"
+        static let webSwitchWindow = "web_switch_window"
+        static let webNewWindow = "web_new_window"
+        static let webCloseWindow = "web_close_window"
+        static let webWaitForElement = "web_wait_for_element"
         // Selenium (consolidated CRUDL)
         static let seleniumTool = "selenium"
         // Legacy selenium names (handlers still work)
@@ -152,8 +171,9 @@ enum AgentTools {
         file_manager: read, write, edit, list, search, read_dir, if_to_switch, extract_function | git: status, diff, log, commit, diff_patch, branch
         xcode: build, run, list_projects, select_project, add_file, remove_file | agent: list, read, create, update, run, delete, combine
         plan_mode: create, update, read, list, delete | applescript_tool: execute, lookup_sdef, list, run, save, delete
-        javascript_tool: execute, list, run, save, delete | accessibility: list_windows, get_properties, perform_action, type_text, click, press_key, screenshot, set_properties, find_element, get_children
-        web: open, find, click, type, execute_js, get_url, get_title | selenium: start, stop, navigate, find, click, type, execute, screenshot, wait
+        javascript_tool: execute, list, run, save, delete
+        accessibility: list_windows, get_properties, perform_action, type_text, click, press_key, set_properties, find_element, get_children, click_element, type_into_element, wait_adaptive, show_menu, drag, highlight_element, get_window_frame, click_menu_item, set_window_frame, manage_app, scroll_to_element, read_focused
+        web: open, find, click, type, execute_js, get_url, get_title, read_content, scroll_to, select, upload, storage, submit, navigate, list_tabs, switch_tab, list_windows, switch_window, new_window, close_window, wait_for_element
 
         CRITICAL RULES:
         - SHELL COMMANDS (rm, mv, cp, ls, find, grep, etc.): ALWAYS use execute_agent_command. NEVER create .sh scripts. NEVER use applescript_tool "do shell script".
@@ -269,6 +289,25 @@ enum AgentTools {
         Name.axHighlightElement:   #"ax_highlight_element {"role": "AXButton", "title": "Submit", "duration": 2.0}"#,
         Name.axGetWindowFrame:     #"ax_get_window_frame {"windowId": 1234}"#,
         Name.axShowMenu:           #"ax_show_menu {"x": 100, "y": 200}"#,
+        Name.axClickMenuItem:      #"ax_click_menu_item {"menu_path": ["File", "Save"], "app": "com.apple.TextEdit"}"#,
+        Name.axSetWindowFrame:     #"ax_set_window_frame {"app": "com.apple.TextEdit", "x": 100, "y": 100, "width": 800, "height": 600}"#,
+        Name.axManageApp:          #"ax_manage_app {"action": "launch", "bundleId": "com.apple.TextEdit"}"#,
+        Name.axScrollToElement:    #"ax_scroll_to_element {"role": "AXButton", "title": "Submit"}"#,
+        Name.axReadFocused:        #"ax_read_focused {"app": "com.apple.TextEdit"}"#,
+        Name.webReadContent:       #"web_read_content {"max_length": 5000}"#,
+        Name.webScrollTo:          ##"web_scroll_to {"selector": "#footer"}"##,
+        Name.webSelect:            #"web_select {"selector": "select#country", "text": "United States"}"#,
+        Name.webUpload:            #"web_upload {"selector": "input[type=file]"}"#,
+        Name.webStorage:           #"web_storage {"storage_type": "localStorage"}"#,
+        Name.webSubmit:            #"web_submit {"selector": "form#login"}"#,
+        Name.webNavigate:          #"web_navigate {"action": "back"}"#,
+        Name.webListTabs:          "web_list_tabs",
+        Name.webSwitchTab:         #"web_switch_tab {"title": "Google"}"#,
+        Name.webListWindows:       "web_list_windows",
+        Name.webSwitchWindow:      #"web_switch_window {"index": 2}"#,
+        Name.webNewWindow:         #"web_new_window {"url": "https://example.com"}"#,
+        Name.webCloseWindow:       #"web_close_window {"index": 1}"#,
+        Name.webWaitForElement:    #"web_wait_for_element {"selector": ".results", "timeout": 10}"#,
         Name.listAppleScripts:     "list_apple_scripts",
         Name.runAppleScript:       #"run_apple_script {"name": "Greeting"}"#,
         Name.saveAppleScript:      #"save_apple_script {"name": "Greeting", "source": "display dialog \"Hello!\""}"#,
