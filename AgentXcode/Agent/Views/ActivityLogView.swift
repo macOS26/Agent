@@ -910,12 +910,38 @@ struct ActivityLogView: NSViewRepresentable {
         /// Detect https/http URLs in attributed text and make them clickable links.
         private func linkifyURLs(_ input: NSAttributedString) -> NSAttributedString {
             let text = input.string
-            guard text.contains("http") else { return input }
             let result = NSMutableAttributedString(attributedString: input)
+
+            // 1. Convert markdown links [text](url) → clickable "text" with link
+            if text.contains("](") {
+                let mdPattern = try? NSRegularExpression(pattern: #"\[([^\]]+)\]\((https?://[^\)]+)\)"#)
+                let mdMatches = mdPattern?.matches(in: text, range: NSRange(location: 0, length: (text as NSString).length)) ?? []
+                for match in mdMatches.reversed() {
+                    let displayRange = match.range(at: 1)
+                    let urlRange = match.range(at: 2)
+                    let displayText = (text as NSString).substring(with: displayRange)
+                    let urlString = (text as NSString).substring(with: urlRange)
+                    let linked = NSMutableAttributedString(string: displayText, attributes: result.attributes(at: match.range.location, effectiveRange: nil))
+                    linked.addAttribute(.link, value: urlString, range: NSRange(location: 0, length: displayText.count))
+                    linked.addAttribute(.foregroundColor, value: NSColor.linkColor, range: NSRange(location: 0, length: displayText.count))
+                    linked.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: NSRange(location: 0, length: displayText.count))
+                    result.replaceCharacters(in: match.range, with: linked)
+                }
+            }
+
+            // 2. Linkify bare URLs not already in markdown links
+            let updatedText = result.string
+            guard updatedText.contains("http") else { return result }
             let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
-            let matches = detector?.matches(in: text, range: NSRange(location: 0, length: (text as NSString).length)) ?? []
+            let matches = detector?.matches(in: updatedText, range: NSRange(location: 0, length: (updatedText as NSString).length)) ?? []
             for match in matches.reversed() {
                 guard let url = match.url else { continue }
+                // Skip if this range already has a link attribute
+                var existingLink: Any?
+                if match.range.location < result.length {
+                    existingLink = result.attribute(.link, at: match.range.location, effectiveRange: nil)
+                }
+                if existingLink != nil { continue }
                 result.addAttribute(.link, value: url.absoluteString, range: match.range)
                 result.addAttribute(.foregroundColor, value: NSColor.linkColor, range: match.range)
                 result.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: match.range)
