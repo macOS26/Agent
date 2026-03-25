@@ -20,6 +20,7 @@ struct InputSectionView: View {
                     .padding(8)
                     .background(Color(nsColor: .controlBackgroundColor))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.4), lineWidth: 1))
                     .lineLimit(2...8)
                     .onSubmit {
                         if !tab.taskInput.isEmpty {
@@ -68,6 +69,7 @@ struct InputSectionView: View {
                     .padding(8)
                     .background(Color(nsColor: .controlBackgroundColor))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.4), lineWidth: 1))
                     .lineLimit(2...8)
                     .onSubmit {
                         if !viewModel.taskInput.isEmpty {

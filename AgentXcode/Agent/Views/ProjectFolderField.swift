@@ -43,6 +43,7 @@ struct ProjectFolderField: View {
                     .padding(.vertical, 5)
                     .background(Color(nsColor: .controlBackgroundColor))
                     .clipShape(Capsule())
+                    .overlay(Capsule().stroke(Color.gray.opacity(0.4), lineWidth: 1))
                     .focusEffectDisabled()
                     .focused($isTextFieldFocused)
                     .onSubmit {
