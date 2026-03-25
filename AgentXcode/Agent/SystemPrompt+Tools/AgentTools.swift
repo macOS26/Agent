@@ -175,7 +175,7 @@ enum AgentTools {
         safari: search, google_search, open, find, click, type, execute_js, get_url, get_title, read_content, scroll_to, select, submit, navigate, list_tabs, switch_tab, list_windows, new_window, close_window
 
         CRITICAL RULES:
-        - WEB PAGES / SAFARI: ALWAYS use the safari tool for ANY web page interaction. NEVER use accessibility for web pages. Examples: safari(action: "google_search", query: "..."), safari(action: "click", selector: "#btn"), safari(action: "type", selector: "input", text: "..."), safari(action: "execute_js", script: "document.title"), safari(action: "open", url: "https://..."), safari(action: "get_url"), safari(action: "get_title"), safari(action: "read_content"). For Google searches use safari(action: "google_search", query: "...").
+        - WEB PAGES / SAFARI: ALWAYS use the safari tool for ANY web page interaction. NEVER use accessibility for web pages. To open a URL: safari(action: "open", url: "https://..."). After opening, ALWAYS read the page: safari(action: "read_content"). To search a page: safari(action: "find", query: "..."). To click: safari(action: "click", selector: "#btn"). To type: safari(action: "type", selector: "input", text: "..."). To run JS: safari(action: "execute_js", script: "..."). For Google: safari(action: "google_search", query: "..."). WORKFLOW: open → read_content → then click/type/find as needed.
         - SHELL COMMANDS (rm, mv, cp, ls, find, grep, etc.): ALWAYS use execute_agent_command. NEVER create .sh scripts. NEVER use applescript_tool "do shell script".
         - BUILD: Use xcode (action: build). Never xcodebuild via shell.
         - applescript_tool is ONLY for AppleScript automation of apps (tell application...). NOT for shell commands.

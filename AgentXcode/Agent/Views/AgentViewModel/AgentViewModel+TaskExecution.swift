@@ -189,9 +189,25 @@ extension AgentViewModel {
                 messages.append(["role": "user", "content": "Summarize this web page for the user. Show the title, URL, and key content:\n\n\(output)"])
                 break  // Fall through to LLM loop
             }
-            // safari_open completes immediately — no LLM needed
+            // safari_open: if user had additional instructions, read page and pass to LLM
             if cmd.name == "safari_open" {
                 appendLog("✅ \(output)")
+                // Check if the original prompt has more than just "open <url>"
+                let urlArg = cmd.argument.lowercased()
+                let remaining = prompt.lowercased().replacingOccurrences(of: urlArg, with: "")
+                let noise = Set(["open", "safari", "in", "on", "to", "and", "the", "using", "webpage", "web", "page", "website", "url", "go", "navigate", "visit", "browse"])
+                let meaningfulWords = remaining.components(separatedBy: .whitespacesAndNewlines)
+                    .filter { !$0.isEmpty && !noise.contains($0) }
+                if !meaningfulWords.isEmpty {
+                    // Wait briefly for page to load
+                    try? await Task.sleep(for: .seconds(2))
+                    let pageContent = await WebAutomationService.shared.readPageContent(maxLength: 3000)
+                    let pageTitle = await WebAutomationService.shared.getPageTitle()
+                    let pageURL = await WebAutomationService.shared.getPageURL()
+                    taskLog.info("[main] safari_open has extra instructions — passing page to LLM")
+                    messages.append(["role": "user", "content": "I opened \(pageURL) (\(pageTitle)). Here is the page content:\n\n\(pageContent)\n\nNow complete this request: \(prompt)"])
+                    break  // Fall through to LLM loop
+                }
             }
 
             completionSummary = "Executed \(cmd.name)"

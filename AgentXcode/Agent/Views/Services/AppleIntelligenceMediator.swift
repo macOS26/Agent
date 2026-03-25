@@ -468,12 +468,8 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
                     }
                 }
                 // Extract just the first token that looks like a URL
-                let tokens = arg.components(separatedBy: .whitespaces).filter { !$0.isEmpty }
-                let firstToken = tokens.first ?? ""
-                // Only use direct command if the URL is the only instruction
-                // If there are extra words (e.g. "and look for..."), pass through to LLM
-                let extraWords = tokens.dropFirst().filter { !["safari", "in", "on", "using"].contains($0.lowercased()) }
-                if !firstToken.isEmpty && extraWords.isEmpty && (firstToken.contains(".") || firstToken.lowercased().hasPrefix("http")) {
+                let firstToken = arg.components(separatedBy: .whitespaces).first(where: { !$0.isEmpty }) ?? ""
+                if !firstToken.isEmpty && (firstToken.contains(".") || firstToken.lowercased().hasPrefix("http")) {
                     return DirectCommand(name: "safari_open", argument: firstToken)
                 }
             }
