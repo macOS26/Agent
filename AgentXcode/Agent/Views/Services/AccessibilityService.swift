@@ -6,7 +6,41 @@ import AppKit
 /// Provides tools for window listing, element inspection, and UI interaction.
 final class AccessibilityService: @unchecked Sendable {
     static let shared = AccessibilityService()
-    
+
+    // MARK: - Browser Detection
+
+    /// Bundle IDs of web browsers — accessibility doesn't work on web page content.
+    /// Use the `web` tool (JavaScript automation) for these apps instead.
+    private static let browserBundleIDs: Set<String> = [
+        "com.apple.Safari",
+        "com.apple.SafariTechnologyPreview",
+        "com.google.Chrome",
+        "com.google.Chrome.canary",
+        "org.mozilla.firefox",
+        "com.microsoft.edgemac",
+        "com.brave.Browser",
+        "com.operasoftware.Opera",
+        "com.vivaldi.Vivaldi",
+        "company.thebrowser.Browser",  // Arc
+    ]
+
+    /// Check if a bundle ID belongs to a web browser.
+    static func isBrowser(_ bundleId: String?) -> Bool {
+        guard let bid = bundleId else { return false }
+        return browserBundleIDs.contains(bid)
+    }
+
+    /// Check if the frontmost app is a web browser.
+    static func frontmostAppIsBrowser() -> Bool {
+        guard let bid = NSWorkspace.shared.frontmostApplication?.bundleIdentifier else { return false }
+        return browserBundleIDs.contains(bid)
+    }
+
+    /// Standard error message when accessibility is used on a browser.
+    static let browserRedirectMessage = """
+    {"success": false, "error": "Accessibility API does not work on web page content. Use the web tool with JavaScript automation instead. Examples: web(action: 'click', selector: '#myButton'), web(action: 'type', selector: 'input[name=email]', text: 'hello'), web(action: 'execute_js', script: 'document.title'), web(action: 'get_url'), web(action: 'get_title')."}
+    """
+
     // MARK: - Window Listing
     
     /// List all visible windows from all applications
@@ -175,6 +209,9 @@ final class AccessibilityService: @unchecked Sendable {
     // MARK: - Get Element Properties
     
     func getElementProperties(role: String?, title: String?, value: String?, appBundleId: String?, x: CGFloat?, y: CGFloat?) -> String {
+        if Self.isBrowser(appBundleId) || (appBundleId == nil && x == nil && Self.frontmostAppIsBrowser()) {
+            return Self.browserRedirectMessage
+        }
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
@@ -295,6 +332,9 @@ final class AccessibilityService: @unchecked Sendable {
     // MARK: - Perform Actions
     
     func performAction(role: String?, title: String?, value: String?, appBundleId: String?, x: CGFloat?, y: CGFloat?, action: String) -> String {
+        if Self.isBrowser(appBundleId) || (appBundleId == nil && x == nil && Self.frontmostAppIsBrowser()) {
+            return Self.browserRedirectMessage
+        }
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
@@ -686,6 +726,9 @@ final class AccessibilityService: @unchecked Sendable {
     
     /// Set accessibility property values on an element. CRITICAL for setting text fields, selections, etc.
     func setProperties(role: String?, title: String?, value: String?, appBundleId: String?, x: CGFloat?, y: CGFloat?, properties: [String: Any]) -> String {
+        if Self.isBrowser(appBundleId) || (appBundleId == nil && x == nil && Self.frontmostAppIsBrowser()) {
+            return Self.browserRedirectMessage
+        }
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
@@ -786,6 +829,9 @@ final class AccessibilityService: @unchecked Sendable {
     
     /// Find an element by role, title, or other criteria with optional timeout
     func findElement(role: String?, title: String?, value: String?, appBundleId: String?, timeout: TimeInterval = automationFinishTimeout) -> String {
+        if Self.isBrowser(appBundleId) || (appBundleId == nil && Self.frontmostAppIsBrowser()) {
+            return Self.browserRedirectMessage
+        }
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
@@ -948,6 +994,9 @@ final class AccessibilityService: @unchecked Sendable {
     
     /// Get all children of an element
     func getChildren(role: String?, title: String?, value: String?, appBundleId: String?, x: CGFloat?, y: CGFloat?, depth: Int = 3) -> String {
+        if Self.isBrowser(appBundleId) || (appBundleId == nil && x == nil && Self.frontmostAppIsBrowser()) {
+            return Self.browserRedirectMessage
+        }
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
@@ -1100,6 +1149,9 @@ final class AccessibilityService: @unchecked Sendable {
     
     /// Wait for an element to appear, polling periodically
     func waitForElement(role: String?, title: String?, value: String?, appBundleId: String?, timeout: TimeInterval = automationFinishTimeout, pollInterval: TimeInterval = 0.5) -> String {
+        if Self.isBrowser(appBundleId) || (appBundleId == nil && Self.frontmostAppIsBrowser()) {
+            return Self.browserRedirectMessage
+        }
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
@@ -1143,6 +1195,9 @@ final class AccessibilityService: @unchecked Sendable {
     
     /// Show context menu for an element
     func showMenu(role: String?, title: String?, value: String?, appBundleId: String?, x: CGFloat?, y: CGFloat?) -> String {
+        if Self.isBrowser(appBundleId) || (appBundleId == nil && x == nil && Self.frontmostAppIsBrowser()) {
+            return Self.browserRedirectMessage
+        }
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
@@ -1235,6 +1290,9 @@ final class AccessibilityService: @unchecked Sendable {
     ///   - verify: Whether to verify the click succeeded via screenshot (default false)
     /// - Returns: JSON result with click position and verification status
     func clickElement(role: String?, title: String?, value: String?, appBundleId: String?, timeout: TimeInterval = automationFinishTimeout, verify: Bool = false) -> String {
+        if Self.isBrowser(appBundleId) || (appBundleId == nil && Self.frontmostAppIsBrowser()) {
+            return Self.browserRedirectMessage
+        }
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
@@ -1355,6 +1413,9 @@ final class AccessibilityService: @unchecked Sendable {
         maxDelay: TimeInterval = automationMaxDelay,
         multiplier: Double = 1.5
     ) -> String {
+        if Self.isBrowser(appBundleId) || (appBundleId == nil && Self.frontmostAppIsBrowser()) {
+            return Self.browserRedirectMessage
+        }
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
@@ -1447,6 +1508,9 @@ final class AccessibilityService: @unchecked Sendable {
     ///   - verify: Whether to verify the text was entered (default true)
     /// - Returns: JSON result with verification status
     func typeTextIntoElement(role: String?, title: String?, text: String, appBundleId: String?, verify: Bool = true) -> String {
+        if Self.isBrowser(appBundleId) || (appBundleId == nil && Self.frontmostAppIsBrowser()) {
+            return Self.browserRedirectMessage
+        }
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
