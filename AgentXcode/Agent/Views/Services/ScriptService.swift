@@ -420,24 +420,33 @@ final class ScriptService {
         return content
     }
 
+    /// Convert a name to UpperCamelCase: "compress_dmg" → "CompressDmg", "hello" → "Hello"
+    static func toUpperCamelCase(_ name: String) -> String {
+        let parts = name.split(whereSeparator: { $0 == "_" || $0 == "-" || $0 == " " })
+        if parts.isEmpty { return name }
+        return parts.map { $0.prefix(1).uppercased() + $0.dropFirst() }.joined()
+    }
+
     /// Create a new script as Sources/Scripts/{name}.swift and register in Package.swift
     func createScript(name: String, content: String) -> String {
         // Ensure package exists first (without lock - just creates directories)
         ensurePackage()
 
-        let scriptName = name.replacingOccurrences(of: ".swift", with: "")
+        let raw = name.replacingOccurrences(of: ".swift", with: "")
             .replacingOccurrences(of: ".md", with: "")
-        guard !scriptName.isEmpty else {
+        guard !raw.isEmpty else {
             return "Error: script name cannot be empty."
         }
-        // Reject invalid names: pure numbers, names with dots/spaces, tool name conflicts
-        let invalidNames: Set<String> = ["list_agents", "run_agent", "read_agent", "create_agent",
-                                          "update_agent", "delete_agent", "combine_agents", "agent"]
+        // Auto-convert to UpperCamelCase
+        let scriptName = Self.toUpperCamelCase(raw)
+        // Reject invalid names: pure numbers, names with dots, tool name conflicts
+        let invalidNames: Set<String> = ["ListAgents", "RunAgent", "ReadAgent", "CreateAgent",
+                                          "UpdateAgent", "DeleteAgent", "CombineAgents", "Agent"]
         if Int(scriptName) != nil {
             return "Error: script name cannot be a number. Use a descriptive name like 'MyScript'."
         }
-        if scriptName.contains(".") || scriptName.contains(" ") {
-            return "Error: script name cannot contain dots or spaces."
+        if scriptName.contains(".") {
+            return "Error: script name cannot contain dots."
         }
         if invalidNames.contains(scriptName) {
             return "Error: '\(scriptName)' is a reserved tool name."
