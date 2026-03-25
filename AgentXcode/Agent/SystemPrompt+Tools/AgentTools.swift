@@ -111,7 +111,7 @@ enum AgentTools {
         static let listMcpTools = "list_mcp_tools"
         // Safari (consolidated web automation)
         static let safari = "web"
-        // Legacy safari_ names (handlers still work)
+        // Legacy web_ names (handlers still work)
         static let safariOpen = "web_open"
         static let safariFind = "web_find"
         static let safariClick = "web_click"
@@ -294,14 +294,14 @@ enum AgentTools {
         Name.axManageApp:          #"ax_manage_app {"action": "launch", "bundleId": "com.apple.TextEdit"}"#,
         Name.axScrollToElement:    #"ax_scroll_to_element {"role": "AXButton", "title": "Submit"}"#,
         Name.axReadFocused:        #"ax_read_focused {"app": "com.apple.TextEdit"}"#,
-        Name.safariReadContent:    #"safari_read_content {"max_length": 5000}"#,
-        Name.safariScrollTo:       ##"safari_scroll_to {"selector": "#footer"}"##,
-        Name.safariSelect:         #"safari_select {"selector": "select#country", "text": "United States"}"#,
-        Name.safariSubmit:         #"safari_submit {"selector": "form#login"}"#,
-        Name.safariNavigate:       #"safari_navigate {"action": "back"}"#,
-        Name.safariListTabs:       "safari_list_tabs",
-        Name.safariSwitchTab:      #"safari_switch_tab {"title": "Google"}"#,
-        Name.safariListWindows:    "safari_list_windows",
+        Name.safariReadContent:    #"web_read_content {"max_length": 5000}"#,
+        Name.safariScrollTo:       ##"web_scroll_to {"selector": "#footer"}"##,
+        Name.safariSelect:         #"web_select {"selector": "select#country", "text": "United States"}"#,
+        Name.safariSubmit:         #"web_submit {"selector": "form#login"}"#,
+        Name.safariNavigate:       #"web_navigate {"action": "back"}"#,
+        Name.safariListTabs:       "web_list_tabs",
+        Name.safariSwitchTab:      #"web_switch_tab {"title": "Google"}"#,
+        Name.safariListWindows:    "web_list_windows",
         Name.listAppleScripts:     "list_apple_scripts",
         Name.runAppleScript:       #"run_apple_script {"name": "Greeting"}"#,
         Name.saveAppleScript:      #"save_apple_script {"name": "Greeting", "source": "display dialog \"Hello!\""}"#,

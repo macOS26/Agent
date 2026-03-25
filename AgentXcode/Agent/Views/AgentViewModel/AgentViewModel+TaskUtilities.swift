@@ -236,7 +236,7 @@ extension AgentViewModel {
             let output = await WebAutomationService.shared.safariGoogleSearch(query: query)
             return output
 
-        case "safari_open":
+        case "web_open":
             let url = cmd.argument
             appendLog("🌐 Opening: \(url)")
             flushLog()
@@ -251,7 +251,7 @@ extension AgentViewModel {
                 return "Error: \(error.localizedDescription)"
             }
 
-        case "safari_open_and_search":
+        case "web_open_and_search":
             // Format: "url|||query"
             let parts = cmd.argument.components(separatedBy: "|||")
             let url = parts.first ?? ""
@@ -269,13 +269,13 @@ extension AgentViewModel {
             let searchResult = await WebAutomationService.shared.safariSiteSearch(query: query)
             return searchResult
 
-        case "safari_scan":
+        case "web_scan":
             appendLog("🔍 Scanning interactive elements...")
             flushLog()
             let elements = await WebAutomationService.shared.scanInteractiveElements()
             return elements
 
-        case "safari_read":
+        case "web_read":
             appendLog("📖 Reading page...")
             flushLog()
             let url = await WebAutomationService.shared.getPageURL()
@@ -283,7 +283,7 @@ extension AgentViewModel {
             let content = await WebAutomationService.shared.readPageContent(maxLength: 3000)
             return "{\"url\": \"\(WebAutomationService.escapeJS(url))\", \"title\": \"\(WebAutomationService.escapeJS(title))\", \"content\": \"\(WebAutomationService.escapeJS(content))\"}"
 
-        case "safari_click":
+        case "web_click":
             let selector = cmd.argument
             appendLog("👆 Clicking: \(selector)")
             flushLog()
@@ -293,7 +293,7 @@ extension AgentViewModel {
                 return "Error: \(error.localizedDescription)"
             }
 
-        case "safari_type":
+        case "web_type":
             // argument format: "selector|text"
             let parts = cmd.argument.components(separatedBy: "|")
             guard parts.count >= 2 else { return "Error: format is selector|text" }
@@ -307,7 +307,7 @@ extension AgentViewModel {
                 return "Error: \(error.localizedDescription)"
             }
 
-        case "safari_page_search":
+        case "web_page_search":
             let query = cmd.argument
             appendLog("🔍 Page search: \(query)")
             flushLog()
@@ -320,7 +320,7 @@ extension AgentViewModel {
                 return "Error: \(error.localizedDescription)"
             }
 
-        case "safari_js":
+        case "web_js":
             let script = cmd.argument
             appendLog("📜 Running JS...")
             flushLog()
