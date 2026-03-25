@@ -175,6 +175,11 @@ enum AgentTools {
         6. Mark plan step completed ONLY if build succeeds
         Do ONE file at a time. Build between EVERY file. Never batch multiple files before building.
 
+        CONVERSATION TOOLS (no action parameter):
+        - write_text: Generate prose on any subject. Params: subject (required), style (default: informative), length (short/medium/long or word count), context (optional).
+        - transform_text: Restructure text into a formatted output. Params: text (required), transform (required: grocery_list, todo_list, outline, summary, bullet_points, numbered_list, table, qa), options (optional).
+        - fix_text: Correct spelling and grammar. - send_message: Send content via iMessage, email, or SMS. - about_self: Describe Agent's capabilities.
+
         TCC (in-process): agent_script (run), applescript_tool (execute), accessibility. NO TCC: execute_agent_command, execute_daemon_command.
         AGENT SCRIPTS: ~/Documents/AgentScript/agents/. 100% Swift. @_cdecl("script_main") public func scriptMain() -> Int32 { return 0 }
         """

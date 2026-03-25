@@ -70,7 +70,8 @@ struct HeaderStatusView: View {
             }
         }
         .padding(.leading, 15)
-        .padding(.trailing, 105)
+        .frame(width: 260, alignment: .leading)
+        .padding(.trailing, 15)
     }
 }
 
