@@ -131,9 +131,9 @@ struct InputSectionView: View {
                     let dropped = "[\(filename)]\n\(content)"
                     DispatchQueue.main.async {
                         if let tab {
-                            tab.taskInput += (tab.taskInput.isEmpty ? "" : "\n") + dropped
+                            tab.taskInput += (tab.taskInput.isEmpty ? "" : " ") + dropped
                         } else {
-                            viewModel.taskInput += (viewModel.taskInput.isEmpty ? "" : "\n") + dropped
+                            viewModel.taskInput += (viewModel.taskInput.isEmpty ? "" : " ") + dropped
                             isTaskFieldFocused = true
                         }
                     }
@@ -146,9 +146,9 @@ struct InputSectionView: View {
                     guard let text = data as? String, !text.isEmpty else { return }
                     DispatchQueue.main.async {
                         if let tab {
-                            tab.taskInput += (tab.taskInput.isEmpty ? "" : "\n") + text
+                            tab.taskInput += (tab.taskInput.isEmpty ? "" : " ") + text
                         } else {
-                            viewModel.taskInput += (viewModel.taskInput.isEmpty ? "" : "\n") + text
+                            viewModel.taskInput += (viewModel.taskInput.isEmpty ? "" : " ") + text
                             isTaskFieldFocused = true
                         }
                     }
