@@ -53,11 +53,21 @@ struct ProjectFolderField: View {
                         onFolderSelected?()
                     }
                     .onChange(of: projectFolder) { oldValue, newValue in
-                        // Auto-add when user types a path and hits enter or focus leaves
-                    }
-                    .onTapGesture {
-                        if !recentFolders.isEmpty {
+                        // Show popup while editing if there are recent folders
+                        if isTextFieldFocused && !recentFolders.isEmpty {
                             showRecentFolders = true
+                        }
+                    }
+                    .onChange(of: isTextFieldFocused) { _, focused in
+                        if focused && !recentFolders.isEmpty {
+                            showRecentFolders = true
+                        } else if !focused {
+                            // Delay dismiss so button click can register
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                if !isTextFieldFocused {
+                                    showRecentFolders = false
+                                }
+                            }
                         }
                     }
 
