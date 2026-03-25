@@ -852,7 +852,7 @@ struct ActivityLogView: NSViewRepresentable {
             let hasMarkdownChars = text.contains("*") || text.contains("_") || text.contains("`")
                 || text.contains("[") || text.contains("~")
             guard hasMarkdownChars else {
-                return NSAttributedString(string: text, attributes: plainAttrs)
+                return linkifyURLs(NSAttributedString(string: text, attributes: plainAttrs))
             }
 
             // SAFETY: Skip markdown parsing if text contains Swift raw strings with backticks
@@ -905,6 +905,22 @@ struct ActivityLogView: NSViewRepresentable {
                 applyManualBoldItalic(nsAttr, baseFont: baseFont)
                 return nsAttr
             }
+        }
+
+        /// Detect https/http URLs in attributed text and make them clickable links.
+        private func linkifyURLs(_ input: NSAttributedString) -> NSAttributedString {
+            let text = input.string
+            guard text.contains("http") else { return input }
+            let result = NSMutableAttributedString(attributedString: input)
+            let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
+            let matches = detector?.matches(in: text, range: NSRange(location: 0, length: (text as NSString).length)) ?? []
+            for match in matches.reversed() {
+                guard let url = match.url else { continue }
+                result.addAttribute(.link, value: url.absoluteString, range: match.range)
+                result.addAttribute(.foregroundColor, value: NSColor.linkColor, range: match.range)
+                result.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: match.range)
+            }
+            return result
         }
 
         /// Manually apply **bold** and *italic* markers that Apple's markdown parser missed.
