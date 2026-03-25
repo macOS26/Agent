@@ -12,6 +12,8 @@ Now with Apple Intelligence
 
 Agent! works with Claude API, Ollama Pro/Max Cloud, and local Ollama. Local LLMs need 32-128GB RAM on Apple Silicon.
 
+<img width="1215" height="862" alt="image" src="https://github.com/user-attachments/assets/17265c25-2c33-4359-a0f5-66b812c7068d" />
+
 ## What's Supported
 
 <img width="1501" height="900" alt="Screenshot 2026-03-21 at 3 44 08 AM" src="https://github.com/user-attachments/assets/f293be2a-8e58-4a4c-b266-af2bb4dde1af" />
