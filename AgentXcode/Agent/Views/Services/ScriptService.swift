@@ -426,8 +426,21 @@ final class ScriptService {
         ensurePackage()
 
         let scriptName = name.replacingOccurrences(of: ".swift", with: "")
+            .replacingOccurrences(of: ".md", with: "")
         guard !scriptName.isEmpty else {
             return "Error: script name cannot be empty."
+        }
+        // Reject invalid names: pure numbers, names with dots/spaces, tool name conflicts
+        let invalidNames: Set<String> = ["list_agents", "run_agent", "read_agent", "create_agent",
+                                          "update_agent", "delete_agent", "combine_agents", "agent"]
+        if Int(scriptName) != nil {
+            return "Error: script name cannot be a number. Use a descriptive name like 'MyScript'."
+        }
+        if scriptName.contains(".") || scriptName.contains(" ") {
+            return "Error: script name cannot contain dots or spaces."
+        }
+        if invalidNames.contains(scriptName) {
+            return "Error: '\(scriptName)' is a reserved tool name."
         }
         let scriptFile = scriptsDir.appendingPathComponent("\(scriptName).swift")
         let fm = FileManager.default
