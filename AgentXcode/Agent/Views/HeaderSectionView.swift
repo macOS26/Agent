@@ -119,7 +119,7 @@ struct HeaderToolbarButtons: View {
 
         Button { showAccessibility.toggle() } label: {
             Image(systemName: "hand.raised")
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(viewModel.accessibilityIconColor)
         }
         .popover(isPresented: $showAccessibility) {
             AccessibilitySettingsView()
