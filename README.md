@@ -1,1 +1,1 @@
-- Updated the list of available agents in the README.md file.
+- Version 1.0.30: Updated the README file and tagged the version as 1.0.30.

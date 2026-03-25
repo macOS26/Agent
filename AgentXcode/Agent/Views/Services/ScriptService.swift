@@ -471,28 +471,27 @@ final class ScriptService {
         }
     }
 
-    /// Delete a script and remove from Package.swift
+    /// Delete a script and remove from Package.swift (idempotent — succeeds even if file already gone)
     func deleteScript(name: String) -> String {
         let scriptName = name.replacingOccurrences(of: ".swift", with: "")
         let scriptFile = scriptsDir.appendingPathComponent("\(scriptName).swift")
         let fm = FileManager.default
 
-        if !fm.fileExists(atPath: scriptFile.path) {
-            return "Error: script '\(scriptName)' not found."
+        // Remove file if it exists
+        if fm.fileExists(atPath: scriptFile.path) {
+            do {
+                try fm.removeItem(at: scriptFile)
+            } catch {
+                return "Error deleting script: \(error.localizedDescription)"
+            }
         }
 
-        do {
-            try fm.removeItem(at: scriptFile)
-            markScriptDeleted(scriptName)
-
-            // Regenerate Package.swift without the deleted script
-            packageLock.lock()
-            defer { packageLock.unlock() }
-            generatePackageSwift()
-            return "Deleted \(scriptName). Removed from Package.swift."
-        } catch {
-            return "Error deleting script: \(error.localizedDescription)"
-        }
+        // Always mark deleted and regenerate Package.swift (self-heal stale entries)
+        markScriptDeleted(scriptName)
+        packageLock.lock()
+        defer { packageLock.unlock() }
+        generatePackageSwift()
+        return "Deleted \(scriptName). Removed from Package.swift."
     }
 
     // MARK: - Package.swift path
