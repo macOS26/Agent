@@ -377,29 +377,35 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
     }
 
     /// Local pattern check: is this message purely conversational?
-    /// Action verbs and tool-related words → not conversational.
-    /// Short social messages with no action words → conversational.
+    /// Matches a small set of known social patterns. Everything else passes through.
+    /// Default is passThrough — when in doubt, let the LLM handle it.
     private static func isConversationalPrompt(_ message: String) -> Bool {
         let lower = message.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-        // Action verbs that mean "do something"
-        let actionWords = [
-            "list", "build", "run", "read", "write", "edit", "create", "delete",
-            "search", "find", "open", "send", "fix", "install", "update", "remove",
-            "commit", "push", "pull", "deploy", "test", "compile", "execute",
-            "show", "get", "set", "make", "add", "move", "copy", "rename",
-            "download", "upload", "start", "stop", "restart", "check", "analyze",
-            "refactor", "debug", "grep", "diff", "patch", "merge", "rebase",
-        ]
-        let words = lower.components(separatedBy: .whitespacesAndNewlines)
-        for word in words {
-            if actionWords.contains(word) { return false }
+        // Must be short — long prompts are almost always tasks
+        guard lower.count < 80 else { return false }
+        // Known social patterns
+        let greetings = ["hello", "hi", "hey", "howdy", "hola", "yo", "sup",
+                         "good morning", "good afternoon", "good evening", "good night"]
+        let thanks = ["thanks", "thank you", "thx", "ty", "appreciated", "cheers"]
+        let farewells = ["bye", "goodbye", "see you", "later", "goodnight", "cya"]
+        let social = ["how are you", "what are you", "who are you", "what can you do",
+                      "how's it going", "what's up", "whats up", "tell me about yourself",
+                      "nice to meet you", "i'm doing", "i am doing", "doing well",
+                      "doing good", "not bad", "i'm fine", "i am fine"]
+        // Check exact match or starts-with for greetings (e.g. "hi agent", "hello there")
+        for g in greetings {
+            if lower == g || lower.hasPrefix(g + " ") { return true }
         }
-        // File paths, code patterns
-        if lower.contains("/") || lower.contains(".swift") || lower.contains(".py")
-            || lower.contains(".js") || lower.contains(".ts") || lower.contains("```") {
-            return false
+        for t in thanks {
+            if lower == t || lower.hasPrefix(t + " ") { return true }
         }
-        return true
+        for f in farewells {
+            if lower == f || lower.hasPrefix(f + " ") { return true }
+        }
+        for s in social {
+            if lower.contains(s) { return true }
+        }
+        return false
     }
 
     /// Triage a user prompt. Uses a local pattern check (reliable) to classify,
