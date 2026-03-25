@@ -1772,9 +1772,16 @@ extension AgentViewModel {
                             let query = input["query"] as? String ?? ""
                             appendLog("Web search: \(query)")
                             flushLog()
-                            // Use Ollama web_search API for Ollama provider, Tavily as backup
                             let output = await Self.performWebSearchForTask(query: query, apiKey: tavilyAPIKey, provider: selectedProvider)
                             appendLog(Self.preview(output, lines: 5))
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        // Web browser tool — route through executeNativeTool
+                        if toolResults.isEmpty && (name.hasPrefix("web_") || name == "web") {
+                            let output = await executeNativeTool(name, input: input)
+                            appendLog(String(output.prefix(500)))
+                            flushLog()
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
                     }
