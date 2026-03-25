@@ -177,6 +177,7 @@ enum AgentTools {
         CRITICAL RULES:
         - WEB PAGES: ALWAYS use the web tool for ANY web page interaction. NEVER use accessibility for web pages. WORKFLOW: 1) web(action: "open", url: "https://...") 2) web(action: "scan") to discover inputs, buttons, links with their CSS selectors 3) web(action: "type", selector: "...", text: "...") to type into fields 4) web(action: "click", selector: "...") to click buttons/links 5) web(action: "read_content") to read page text. Use scan FIRST to find the right selectors before clicking or typing.
         - AFTER CLICKING: When a click succeeds ("Clicked element..."), call task_complete immediately. Do NOT re-read the page or click again. The click was successful — stop.
+        - TYPING INTO WEB FIELDS: When the user says "enter/type X in the text field", use web(action: "scan") to find input fields, then web(action: "type", selector: "input[name=...]", text: "..."). Do NOT read_content — that reads page text, not inputs. For LinkedIn "Start a post", the selector is div[role="textbox"] or contenteditable.
         - SHELL COMMANDS (rm, mv, cp, ls, find, grep, etc.): ALWAYS use execute_agent_command. NEVER create .sh scripts. NEVER use applescript_tool "do shell script".
         - BUILD: Use xcode (action: build). Never xcodebuild via shell.
         - applescript_tool is ONLY for AppleScript automation of apps (tell application...). NOT for shell commands.
