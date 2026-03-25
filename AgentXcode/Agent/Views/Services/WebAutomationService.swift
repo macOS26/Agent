@@ -9,12 +9,22 @@ final class WebAutomationService: @unchecked Sendable {
     
     // MARK: - JavaScript Escaping
 
-    /// Properly escape a string for embedding in JavaScript string literals.
-    /// Handles quotes, backslashes, control characters, and Unicode.
+    /// Escape a string for embedding in JavaScript string literals (single or double quoted).
     static func escapeJS(_ str: String) -> String {
         str.replacingOccurrences(of: "\\", with: "\\\\")
            .replacingOccurrences(of: "\"", with: "\\\"")
            .replacingOccurrences(of: "'", with: "\\'")
+           .replacingOccurrences(of: "\n", with: "\\n")
+           .replacingOccurrences(of: "\r", with: "\\r")
+           .replacingOccurrences(of: "\t", with: "\\t")
+           .replacingOccurrences(of: "\0", with: "")
+    }
+
+    /// Escape JavaScript for embedding inside AppleScript `do JavaScript "..."`.
+    /// AppleScript only needs `\` and `"` escaped — single quotes are fine as-is.
+    static func escapeJSForAppleScript(_ str: String) -> String {
+        str.replacingOccurrences(of: "\\", with: "\\\\")
+           .replacingOccurrences(of: "\"", with: "\\\"")
            .replacingOccurrences(of: "\n", with: "\\n")
            .replacingOccurrences(of: "\r", with: "\\r")
            .replacingOccurrences(of: "\t", with: "\\t")
@@ -299,7 +309,7 @@ final class WebAutomationService: @unchecked Sendable {
             appleScript = """
             tell application "Safari"
                 tell front document
-                    do JavaScript "\(Self.escapeJS(script))"
+                    do JavaScript "\(Self.escapeJSForAppleScript(script))"
                 end tell
             end tell
             """
@@ -307,7 +317,7 @@ final class WebAutomationService: @unchecked Sendable {
             appleScript = """
             tell application "Firefox"
                 tell front window
-                    execute JavaScript "\(Self.escapeJS(script))"
+                    execute JavaScript "\(Self.escapeJSForAppleScript(script))"
                 end tell
             end tell
             """
