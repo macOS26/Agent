@@ -223,7 +223,9 @@
       "Bash(do sed:*)",
       "Bash(xargs -I{} basename {})",
       "Bash(find /Users/toddbruss/Documents/AgentScript -maxdepth 3 -type f \\\\\\(-name *[Dd]iff* -o -name *[Pp]atch* \\\\\\))",
-      "mcp__xcf-server__xcf"
+      "mcp__xcf-server__xcf",
+      "Read(//Users/toddbruss/Documents/GitHub/Agent/**)",
+      "Bash(/tmp/test_safari_google.sh)"
     ]
   }
 }
