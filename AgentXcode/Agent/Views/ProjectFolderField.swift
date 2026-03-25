@@ -37,11 +37,11 @@ struct ProjectFolderField: View {
 
                 TextField("Project folder or file...", text: $projectFolder)
                     .textContentType(.none)
+                    .font(.system(size: 11))
                     .textFieldStyle(.plain)
                     .padding(8)
                     .background(Color(white: 0.12))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .controlSize(.small)
                     .focused($isTextFieldFocused)
                     .onSubmit {
                         if !projectFolder.isEmpty {
