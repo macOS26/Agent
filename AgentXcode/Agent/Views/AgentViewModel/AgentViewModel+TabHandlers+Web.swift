@@ -187,6 +187,70 @@ extension AgentViewModel {
             tab.flush()
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
 
+        case "web_scroll_to":
+            let selector = input["selector"] as? String ?? ""
+            let browser = input["browser"] as? String
+            tab.appendLog("Scrolling to: \(selector)...")
+            tab.flush()
+            let output = await WebAutomationService.shared.scrollToElement(selector: selector, browser: browser)
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
+
+        case "web_select":
+            let selector = input["selector"] as? String ?? ""
+            let value = input["value"] as? String
+            let text = input["text"] as? String
+            let index = input["index"] as? Int
+            let browser = input["browser"] as? String
+            tab.appendLog("Selecting option in: \(selector)...")
+            tab.flush()
+            let output = await WebAutomationService.shared.selectOption(selector: selector, value: value, text: text, index: index, browser: browser)
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
+
+        case "web_upload":
+            let selector = input["selector"] as? String ?? ""
+            let browser = input["browser"] as? String
+            tab.appendLog("Triggering file upload: \(selector)...")
+            tab.flush()
+            let output = await WebAutomationService.shared.triggerFileUpload(selector: selector, browser: browser)
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
+
+        case "web_storage":
+            let storageType = input["storage_type"] as? String ?? "cookies"
+            let key = input["key"] as? String
+            let browser = input["browser"] as? String
+            tab.appendLog("Reading \(storageType)...")
+            tab.flush()
+            let output = await WebAutomationService.shared.readStorage(type: storageType, key: key, browser: browser)
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
+
+        case "web_submit":
+            let selector = input["selector"] as? String
+            let browser = input["browser"] as? String
+            tab.appendLog("Submitting form...")
+            tab.flush()
+            let output = await WebAutomationService.shared.submitForm(selector: selector, browser: browser)
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
+
+        case "web_navigate":
+            let action = input["action"] as? String ?? "back"
+            let browser = input["browser"] as? String
+            tab.appendLog("Navigate: \(action)...")
+            tab.flush()
+            let output = await WebAutomationService.shared.navigate(action: action, browser: browser)
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
+
         default:
         let output = await executeNativeTool(name, input: input)
         tab.appendLog(output); tab.flush()

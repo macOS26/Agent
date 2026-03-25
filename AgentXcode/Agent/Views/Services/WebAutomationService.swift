@@ -650,6 +650,163 @@ final class WebAutomationService: @unchecked Sendable {
         return "Timeout: element '\(selector)' not found after \(Int(timeout))s"
     }
 
+    // MARK: - Scroll to Element
+
+    /// Scroll until a CSS selector is visible, handling lazy-loaded content
+    func scrollToElement(selector: String, browser: String? = nil, maxScrolls: Int = 20) async -> String {
+        let browserId = browser ?? detectActiveBrowser() ?? "com.apple.Safari"
+        let escaped = Self.escapeJS(selector)
+        let js = """
+        (function() {
+            var el = \(Self.querySelectorWithIframes("'\(escaped)'"));
+            if (el) { el.scrollIntoView({behavior:'smooth',block:'center'}); return 'scrolled'; }
+            return 'not found';
+        })()
+        """
+        // First try — element might already exist
+        if let result = try? await executeJavaScript(script: js, browser: browserId) as? String,
+           result == "scrolled" {
+            return "Scrolled to: \(selector)"
+        }
+        // Scroll down incrementally to trigger lazy loading
+        for i in 0..<maxScrolls {
+            _ = try? await executeJavaScript(script: "window.scrollBy(0, window.innerHeight * 0.8)", browser: browserId)
+            try? await Task.sleep(for: .milliseconds(300))
+            if let result = try? await executeJavaScript(script: js, browser: browserId) as? String,
+               result == "scrolled" {
+                return "Scrolled to: \(selector) (after \(i + 1) scroll(s))"
+            }
+        }
+        return "Element '\(selector)' not found after scrolling \(maxScrolls) times"
+    }
+
+    // MARK: - Select Dropdown
+
+    /// Select an option in a <select> dropdown by value, text, or index
+    func selectOption(selector: String, value: String? = nil, text: String? = nil, index: Int? = nil, browser: String? = nil) async -> String {
+        let browserId = browser ?? detectActiveBrowser() ?? "com.apple.Safari"
+        let escapedSel = Self.escapeJS(selector)
+
+        let setOption: String
+        if let val = value {
+            setOption = "el.value = '\(Self.escapeJS(val))';"
+        } else if let txt = text {
+            let esc = Self.escapeJS(txt)
+            setOption = "for(var i=0;i<el.options.length;i++){if(el.options[i].text.indexOf('\(esc)')>=0){el.selectedIndex=i;break;}}"
+        } else if let idx = index {
+            setOption = "el.selectedIndex = \(idx);"
+        } else {
+            return "Error: specify value, text, or index"
+        }
+
+        let js = """
+        (function() {
+            var el = \(Self.querySelectorWithIframes("'\(escapedSel)'"));
+            if (!el || el.tagName !== 'SELECT') return 'not found or not a select';
+            \(setOption)
+            el.dispatchEvent(new Event('change', {bubbles: true}));
+            return 'selected: ' + el.options[el.selectedIndex].text;
+        })()
+        """
+        if let result = try? await executeJavaScript(script: js, browser: browserId) as? String {
+            return result
+        }
+        return "Error: could not select option"
+    }
+
+    // MARK: - File Upload
+
+    /// Trigger file upload dialog for an <input type="file"> via accessibility click
+    /// Note: JS cannot set file input values (browser security). This clicks the input to open the file picker.
+    func triggerFileUpload(selector: String, browser: String? = nil) async -> String {
+        let browserId = browser ?? detectActiveBrowser() ?? "com.apple.Safari"
+        let escaped = Self.escapeJS(selector)
+        let js = """
+        (function() {
+            var el = \(Self.querySelectorWithIframes("'\(escaped)'"));
+            if (!el) return 'not found';
+            el.click();
+            return 'file dialog triggered';
+        })()
+        """
+        if let result = try? await executeJavaScript(script: js, browser: browserId) as? String {
+            return result
+        }
+        return "Error: could not trigger file upload"
+    }
+
+    // MARK: - Cookie / localStorage
+
+    /// Read cookies or localStorage for the current page
+    func readStorage(type: String = "cookies", key: String? = nil, browser: String? = nil) async -> String {
+        let browserId = browser ?? detectActiveBrowser() ?? "com.apple.Safari"
+        let js: String
+        switch type {
+        case "localStorage":
+            if let k = key {
+                js = "localStorage.getItem('\(Self.escapeJS(k))') || '(not set)'"
+            } else {
+                js = "(function(){var r={};for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);r[k]=localStorage.getItem(k);}return JSON.stringify(r);})()"
+            }
+        case "sessionStorage":
+            if let k = key {
+                js = "sessionStorage.getItem('\(Self.escapeJS(k))') || '(not set)'"
+            } else {
+                js = "(function(){var r={};for(var i=0;i<sessionStorage.length;i++){var k=sessionStorage.key(i);r[k]=sessionStorage.getItem(k);}return JSON.stringify(r);})()"
+            }
+        default: // cookies
+            js = "document.cookie || '(no cookies)'"
+        }
+        if let result = try? await executeJavaScript(script: js, browser: browserId) as? String {
+            return result
+        }
+        return "Error: could not read \(type)"
+    }
+
+    // MARK: - Form Submit
+
+    /// Submit a form by selector or find the closest form to an element
+    func submitForm(selector: String? = nil, browser: String? = nil) async -> String {
+        let browserId = browser ?? detectActiveBrowser() ?? "com.apple.Safari"
+        let js: String
+        if let sel = selector {
+            let escaped = Self.escapeJS(sel)
+            js = """
+            (function() {
+                var el = \(Self.querySelectorWithIframes("'\(escaped)'"));
+                if (!el) return 'not found';
+                var form = el.tagName === 'FORM' ? el : el.closest('form');
+                if (!form) return 'no form found';
+                form.dispatchEvent(new Event('submit', {bubbles:true,cancelable:true}));
+                form.submit();
+                return 'submitted';
+            })()
+            """
+        } else {
+            js = "(function(){var f=document.querySelector('form');if(f){f.submit();return 'submitted';}return 'no form found';})()"
+        }
+        if let result = try? await executeJavaScript(script: js, browser: browserId) as? String {
+            return result
+        }
+        return "Error: could not submit form"
+    }
+
+    // MARK: - Browser Navigation
+
+    /// Navigate back, forward, or reload
+    func navigate(action: String, browser: String? = nil) async -> String {
+        let browserId = browser ?? detectActiveBrowser() ?? "com.apple.Safari"
+        let js: String
+        switch action {
+        case "back": js = "history.back(); 'navigated back'"
+        case "forward": js = "history.forward(); 'navigated forward'"
+        case "reload": js = "location.reload(); 'reloaded'"
+        default: return "Error: unknown action '\(action)'. Use back, forward, or reload."
+        }
+        _ = try? await executeJavaScript(script: js, browser: browserId)
+        return "Navigated: \(action)"
+    }
+
     // MARK: - Selenium Helpers
     // Note: Selenium operations are handled via Selenium AgentScript through tool handlers
     // These methods are placeholders - actual Selenium calls go through run_agent_script
