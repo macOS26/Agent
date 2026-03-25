@@ -587,19 +587,14 @@ enum AgentTools {
         // --- Web (consolidated) ---
         ToolDef(
             name: Name.safari,
-            description: "Web browser automation via AppleScript/JavaScript. Actions: open (URL), scan (discover all inputs, buttons, links with CSS selectors), read_content (get page text), find (element), click (element), type (text into field), execute_js (run JavaScript), get_url, get_title, google_search (search Google), scroll_to (element), select (dropdown option), submit (form), navigate (back/forward/reload), list_tabs, switch_tab, list_windows. WORKFLOW: open → scan (see what's on the page) → type/click/read_content as needed. Examples: web(action: \"open\", url: \"https://linkedin.com\"), web(action: \"scan\"), web(action: \"type\", selector: \"input[type=search]\", text: \"query\"), web(action: \"click\", selector: \"button.submit\"), web(action: \"read_content\").",
+            description: "Web browser automation. Actions: open, scan, read_content, click, type, execute_js, get_url, get_title, google_search, submit, navigate, list_tabs, switch_tab.",
             properties: [
-                "action": ["type": "string", "description": "Action: open, scan, read_content, find, click, type, execute_js, get_url, get_title, google_search, scroll_to, select, submit, navigate, list_tabs, switch_tab, list_windows"],
-                "query": ["type": "string", "description": "For google_search: search query text"],
-                "url": ["type": "string", "description": "For open: URL to open"],
-                "selector": ["type": "string", "description": "For find/click/type/scroll_to/select/submit: CSS selector, XPath, or element identifier"],
-                "text": ["type": "string", "description": "For type/select: text to enter or option to select"],
-                "script": ["type": "string", "description": "For execute_js: JavaScript code to run on the page"],
-                "timeout": ["type": "number", "description": "For find: max wait seconds (default 10)"],
-                "max_length": ["type": "integer", "description": "For read_content: max chars to return (default 10000)"],
-                "max_results": ["type": "integer", "description": "For google_search: max result chars (default 3000)"],
-                "title": ["type": "string", "description": "For switch_tab: tab title to switch to"],
-                "value": ["type": "string", "description": "For select: option value"],
+                "action": ["type": "string", "description": "Action to perform"],
+                "url": ["type": "string", "description": "URL to open"],
+                "selector": ["type": "string", "description": "CSS selector for click/type/submit"],
+                "text": ["type": "string", "description": "Text to type"],
+                "query": ["type": "string", "description": "Search query"],
+                "script": ["type": "string", "description": "JavaScript code"],
             ],
             required: ["action"]
         ),
