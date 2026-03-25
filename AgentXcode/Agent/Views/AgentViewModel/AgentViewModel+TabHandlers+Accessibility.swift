@@ -11,6 +11,14 @@ extension AgentViewModel {
         tab: ScriptTab, name: String, input: [String: Any], toolId: String
     ) async -> TabToolResult {
 
+        // Block accessibility when Safari is frontmost — use web tool instead
+        if let bid = NSWorkspace.shared.frontmostApplication?.bundleIdentifier, bid == "com.apple.Safari" {
+            let msg = "Error: Safari is active. Use the web tool: web(action: \"scan\"), web(action: \"open\", url: \"...\"), web(action: \"type\", selector: \"...\", text: \"...\"), web(action: \"click\", selector: \"...\"), web(action: \"read_content\")."
+            tab.appendLog(msg)
+            tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": msg], isComplete: false)
+        }
+
         switch name {
         case "ax_check_permission":
             let hasPermission = AccessibilityService.hasAccessibilityPermission()
