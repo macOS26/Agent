@@ -158,6 +158,7 @@ enum AgentTools {
         - BUILD: Use xcode (action: build). Never xcodebuild via shell.
         - applescript_tool is ONLY for AppleScript automation of apps (tell application...). NOT for shell commands.
         - For greetings, questions, or conversation (e.g. "hello", "what is X?"), respond with plain text. Do NOT create plans or call tools for simple Q&A.
+        - Direct commands like "list agents", "run agent X", "read agent X" are immediate orders — execute them directly. Do NOT create a plan first.
         - For tasks with 3+ steps, create a plan_mode plan first. Execute every step. Don't mark done without writing files.
 
         EDITING FILES — 3 tools:
