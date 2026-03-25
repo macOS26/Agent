@@ -467,8 +467,9 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
                         arg = String(arg.dropLast(suffix.count)).trimmingCharacters(in: .whitespaces)
                     }
                 }
-                // Extract just the first token that looks like a URL
-                let firstToken = arg.components(separatedBy: .whitespaces).first(where: { !$0.isEmpty }) ?? ""
+                // Extract just the first token — resolve common site names to URLs
+                var firstToken = arg.components(separatedBy: .whitespaces).first(where: { !$0.isEmpty }) ?? ""
+                firstToken = Self.resolveSiteName(firstToken)
                 if !firstToken.isEmpty && (firstToken.contains(".") || firstToken.lowercased().hasPrefix("http")) {
                     // Check if there's a "search for X" / "look for X" / "find X" after the URL
                     let afterURL = arg.dropFirst(firstToken.count).trimmingCharacters(in: .whitespaces).lowercased()
@@ -583,6 +584,39 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
             }
         }
         return nil
+    }
+
+    /// Resolve common site names to their URLs (e.g. "linkedin" → "linkedin.com")
+    private static let siteNames: [String: String] = [
+        "linkedin": "linkedin.com", "linked in": "linkedin.com",
+        "facebook": "facebook.com", "face book": "facebook.com",
+        "twitter": "twitter.com", "x": "x.com",
+        "instagram": "instagram.com", "insta": "instagram.com",
+        "youtube": "youtube.com", "yt": "youtube.com",
+        "reddit": "reddit.com",
+        "github": "github.com",
+        "gmail": "gmail.com", "google mail": "gmail.com",
+        "google": "google.com",
+        "amazon": "amazon.com",
+        "ebay": "ebay.com",
+        "netflix": "netflix.com",
+        "spotify": "spotify.com",
+        "pinterest": "pinterest.com",
+        "tiktok": "tiktok.com", "tik tok": "tiktok.com",
+        "wikipedia": "wikipedia.org", "wiki": "wikipedia.org",
+        "stackoverflow": "stackoverflow.com", "stack overflow": "stackoverflow.com",
+        "apple": "apple.com",
+        "microsoft": "microsoft.com",
+        "slack": "slack.com",
+        "discord": "discord.com",
+        "twitch": "twitch.tv",
+        "hacker news": "news.ycombinator.com", "hackernews": "news.ycombinator.com", "hn": "news.ycombinator.com",
+    ]
+
+    private static func resolveSiteName(_ token: String) -> String {
+        let lower = token.lowercased()
+        if let url = siteNames[lower] { return url }
+        return token
     }
 
     /// Local pattern check: is this message purely conversational?
