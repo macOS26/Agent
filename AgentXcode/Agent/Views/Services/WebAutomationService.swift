@@ -7,6 +7,32 @@ import AppKit
 final class WebAutomationService: @unchecked Sendable {
     static let shared = WebAutomationService()
     
+    // MARK: - JavaScript Escaping
+
+    /// Properly escape a string for embedding in JavaScript string literals.
+    /// Handles quotes, backslashes, control characters, and Unicode.
+    static func escapeJS(_ str: String) -> String {
+        str.replacingOccurrences(of: "\\", with: "\\\\")
+           .replacingOccurrences(of: "\"", with: "\\\"")
+           .replacingOccurrences(of: "'", with: "\\'")
+           .replacingOccurrences(of: "\n", with: "\\n")
+           .replacingOccurrences(of: "\r", with: "\\r")
+           .replacingOccurrences(of: "\t", with: "\\t")
+           .replacingOccurrences(of: "\0", with: "")
+    }
+
+    /// Properly escape a string for embedding in a JSON value (for Selenium args).
+    /// Uses JSONSerialization for correctness.
+    static func escapeJSON(_ str: String) -> String {
+        if let data = try? JSONSerialization.data(withJSONObject: str),
+           let json = String(data: data, encoding: .utf8) {
+            // JSONSerialization wraps in quotes — strip them
+            return String(json.dropFirst().dropLast())
+        }
+        // Fallback to manual escaping
+        return escapeJS(str)
+    }
+
     // MARK: - Element Cache
     
     /// Cache for element lookups to reduce repeated searches
@@ -39,16 +65,63 @@ final class WebAutomationService: @unchecked Sendable {
     
     // MARK: - Unified API
     
-    /// Open a URL in the specified browser
-    func open(url: URL, browser: BrowserType = .safari) async throws -> String {
+    /// Open a URL in the specified browser, optionally waiting for page load
+    func open(url: URL, browser: BrowserType = .safari, waitForLoad: Bool = true) async throws -> String {
         // Try AppleScript first (fastest, most reliable)
         if let result = try? await openViaAppleScript(url: url, browser: browser) {
+            if waitForLoad {
+                await waitForPageReady(browser: browser.rawValue)
+            }
             return result
         }
-        
+
         // Fallback to opening via NSWorkspace
         NSWorkspace.shared.open(url)
+        if waitForLoad {
+            try? await Task.sleep(for: .seconds(2))
+        }
         return "Opened \(url.absoluteString) in default browser"
+    }
+
+    /// Wait for the current page to finish loading (document.readyState == "complete")
+    func waitForPageReady(browser: String? = nil, timeout: TimeInterval = 10) async {
+        let browserId = browser ?? detectActiveBrowser() ?? "com.apple.Safari"
+        let start = CFAbsoluteTimeGetCurrent()
+        while CFAbsoluteTimeGetCurrent() - start < timeout {
+            if let result = try? await executeJavaScript(script: "document.readyState", browser: browserId) as? String,
+               result == "complete" {
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(300))
+        }
+    }
+
+    /// Read the text content of the current web page
+    func readPageContent(browser: String? = nil, maxLength: Int = 10000) async -> String {
+        let browserId = browser ?? detectActiveBrowser() ?? "com.apple.Safari"
+        let js = "(function(){ var t = document.body.innerText; return t ? t.substring(0, \(maxLength)) : ''; })()"
+        if let result = try? await executeJavaScript(script: js, browser: browserId) as? String {
+            return result
+        }
+        return "Error: could not read page content"
+    }
+
+    /// Read the current page URL
+    func getPageURL(browser: String? = nil) async -> String {
+        let browserId = browser ?? detectActiveBrowser() ?? "com.apple.Safari"
+        if let result = try? await executeJavaScript(script: "window.location.href", browser: browserId) as? String {
+            return result
+        }
+        return "Error: could not get page URL"
+    }
+
+    /// Read the current page title
+    func getPageTitle(browser: String? = nil) async -> String {
+        let browserId = browser ?? detectActiveBrowser() ?? "com.apple.Safari"
+        if let result = try? await executeJavaScript(script: "document.title", browser: browserId) as? String {
+            return result
+        }
+        return "Error: could not get page title"
     }
     
     /// Find an element using the best available strategy
@@ -208,7 +281,7 @@ final class WebAutomationService: @unchecked Sendable {
             appleScript = """
             tell application "Safari"
                 tell front document
-                    do JavaScript "\(script.replacingOccurrences(of: "\"", with: "\\\""))"
+                    do JavaScript "\(Self.escapeJS(script))"
                 end tell
             end tell
             """
@@ -216,7 +289,7 @@ final class WebAutomationService: @unchecked Sendable {
             appleScript = """
             tell application "Firefox"
                 tell front window
-                    execute JavaScript "\(script.replacingOccurrences(of: "\"", with: "\\\""))"
+                    execute JavaScript "\(Self.escapeJS(script))"
                 end tell
             end tell
             """
@@ -267,10 +340,8 @@ final class WebAutomationService: @unchecked Sendable {
     
     private func findViaJavaScript(selector: String, browser: String) async throws -> [String: Any]? {
         // Escape selector for JavaScript
-        let escapedSelector = selector
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "'", with: "\\'")
-        
+        let escapedSelector = Self.escapeJS(selector)
+
         // Determine if it's a CSS selector or XPath
         let isXPath = selector.hasPrefix("/") || selector.hasPrefix("./")
         
@@ -378,18 +449,19 @@ final class WebAutomationService: @unchecked Sendable {
     }
     
     private func executeJavaScriptClick(selector: String, browser: String) async throws -> String {
+        let escaped = Self.escapeJS(selector)
         let isXPath = selector.hasPrefix("/") || selector.hasPrefix("./")
-        
+
         let js: String
         if isXPath {
             js = """
-            var result = document.evaluate('\(selector)', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+            var result = document.evaluate('\(escaped)', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
             var el = result.singleNodeValue;
             if (el) { el.click(); return 'clicked'; }
             return 'not found';
             """
         } else {
-            js = "var el = document.querySelector('\(selector)'); if (el) { el.click(); return 'clicked'; } return 'not found';"
+            js = "var el = document.querySelector('\(escaped)'); if (el) { el.click(); return 'clicked'; } return 'not found';"
         }
         
         _ = try await executeJavaScript(script: js, browser: browser)
@@ -397,19 +469,20 @@ final class WebAutomationService: @unchecked Sendable {
     }
     
     private func executeJavaScriptType(selector: String, text: String, browser: String) async throws -> String {
-        let escapedText = text.replacingOccurrences(of: "'", with: "\\'")
+        let escapedText = Self.escapeJS(text)
+        let escapedSel = Self.escapeJS(selector)
         let isXPath = selector.hasPrefix("/") || selector.hasPrefix("./")
         
         let js: String
         if isXPath {
             js = """
-            var result = document.evaluate('\(selector)', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+            var result = document.evaluate('\(escapedSel)', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
             var el = result.singleNodeValue;
             if (el) { el.value = '\(escapedText)'; return 'typed'; }
             return 'not found';
             """
         } else {
-            js = "var el = document.querySelector('\(selector)'); if (el) { el.value = '\(escapedText)'; return 'typed'; } return 'not found';"
+            js = "var el = document.querySelector('\(escapedSel)'); if (el) { el.value = '\(escapedText)'; return 'typed'; } return 'not found';"
         }
         
         _ = try await executeJavaScript(script: js, browser: browser)

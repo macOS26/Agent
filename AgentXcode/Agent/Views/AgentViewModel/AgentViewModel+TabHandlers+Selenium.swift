@@ -69,14 +69,15 @@ extension AgentViewModel {
             let value = input["value"] as? String ?? ""
             let text = input["text"] as? String ?? ""
             let port = input["port"] as? Int ?? 7055
-            let escapedText = text.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
-            let args = "{\"action\":\"type\",\"strategy\":\"\(strategy)\",\"value\":\"\(value)\",\"text\":\"\(escapedText)\",\"port\":\(port)}"
+            let escapedText = WebAutomationService.escapeJSON(text)
+            let escapedValue = WebAutomationService.escapeJSON(value)
+            let args = "{\"action\":\"type\",\"strategy\":\"\(strategy)\",\"value\":\"\(escapedValue)\",\"text\":\"\(escapedText)\",\"port\":\(port)}"
             return await runSeleniumHelper(tab: tab, toolId: toolId, args: args, logMessage: "Typing \(text.count) chars into: \(strategy)=\(value)...")
 
         case "selenium_execute":
             let script = input["script"] as? String ?? ""
             let port = input["port"] as? Int ?? 7055
-            let escapedScript = script.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+            let escapedScript = WebAutomationService.escapeJSON(script)
             let args = "{\"action\":\"execute\",\"script\":\"\(escapedScript)\",\"port\":\(port)}"
             return await runSeleniumHelper(tab: tab, toolId: toolId, args: args, logMessage: "Executing JavaScript via Selenium...")
 

@@ -129,26 +129,32 @@ extension AgentViewModel {
             )
 
         case "web_get_url":
-            let action = name == "web_get_url" ? "getUrl" : "getTitle"
-            tab.appendLog("\(name == "web_get_url" ? "Getting URL" : "Getting title")...")
+            let browser = input["browser"] as? String
+            tab.appendLog("Getting page URL...")
             tab.flush()
-            let args = "{\"action\":\"\(action)\"}"
-            // Run Selenium agent script
-            guard let compileCmd = scriptService.compileCommand(name: "Selenium") else {
-                let err = "Error: Selenium script not found"
-                tab.appendLog(err)
-                return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": err], isComplete: false)
-            }
-            let compileResult = await executeForTab(command: compileCmd)
-            if compileResult.status != 0 {
-                tab.appendLog("Compile failed: \(compileResult.output)")
-                return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": compileResult.output], isComplete: false)
-            }
-            let cancelFlag = tab._cancelFlag
-            let result = await scriptService.loadAndRunScriptViaProcess(name: "Selenium", arguments: args, captureStderr: false, isCancelled: { cancelFlag.value }) { chunk in }
-            tab.appendLog(result.output)
+            let url = await WebAutomationService.shared.getPageURL(browser: browser)
+            tab.appendLog(url)
             tab.flush()
-            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": result.output], isComplete: false)
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": url], isComplete: false)
+
+        case "web_get_title":
+            let browser = input["browser"] as? String
+            tab.appendLog("Getting page title...")
+            tab.flush()
+            let title = await WebAutomationService.shared.getPageTitle(browser: browser)
+            tab.appendLog(title)
+            tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": title], isComplete: false)
+
+        case "web_read_content":
+            let browser = input["browser"] as? String
+            let maxLength = input["max_length"] as? Int ?? 10000
+            tab.appendLog("Reading page content...")
+            tab.flush()
+            let content = await WebAutomationService.shared.readPageContent(browser: browser, maxLength: maxLength)
+            tab.appendLog(String(content.prefix(500)) + (content.count > 500 ? "... (\(content.count) chars)" : ""))
+            tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": content], isComplete: false)
 
         default:
         let output = await executeNativeTool(name, input: input)
