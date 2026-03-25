@@ -1,4 +1,5 @@
 import Foundation
+import SQLite3
 import SwiftData
 
 /// A single log entry in the chat history
@@ -80,17 +81,31 @@ final class ChatHistoryStore {
     private var currentTask: ChatTask?
     /// Monotonically increasing counter for message ordering within a task
     private var nextOrdinal: Int = 0
+    /// Set to true when save has failed fatally — prevents repeated crash attempts
+    private var storeDisabled = false
     
     private init() {
         let schema = Schema([ChatMessage.self, ChatTask.self, ScriptTabRecord.self])
+
+        // Pre-validate: if store file exists but lacks required tables, delete it
+        // before creating the ModelContainer. This prevents ObjC NSExceptions
+        // (e.g. _PFFaultHandlerLookupRow) that Swift do/catch cannot intercept.
+        if let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
+            let storeURL = appSupport.appendingPathComponent("default.store")
+            if FileManager.default.fileExists(atPath: storeURL.path) {
+                if !Self.storeHasRequiredTables(at: storeURL) {
+                    print("SwiftData store missing required tables — deleting for recreation")
+                    deleteStoreFiles()
+                }
+            }
+        }
+
         do {
             let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
             container = try ModelContainer(for: schema, configurations: config)
             context = container?.mainContext
-            // Test fetch to verify tables exist (catches stale schema)
-            _ = try context?.fetchCount(FetchDescriptor<ChatTask>())
         } catch {
-            print("SwiftData schema stale or corrupt — recreating: \(error)")
+            print("SwiftData init failed — recreating: \(error)")
             deleteStoreFiles()
             do {
                 let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
@@ -100,6 +115,26 @@ final class ChatHistoryStore {
                 print("Failed to initialize SwiftData after reset: \(error)")
             }
         }
+    }
+
+    /// Open the SQLite file read-only and verify all required tables exist.
+    private static func storeHasRequiredTables(at url: URL) -> Bool {
+        var db: OpaquePointer?
+        guard sqlite3_open_v2(url.path, &db, SQLITE_OPEN_READONLY, nil) == SQLITE_OK else {
+            sqlite3_close(db)
+            return false
+        }
+        defer { sqlite3_close(db) }
+
+        for table in ["ZCHATTASK", "ZCHATMESSAGE", "ZSCRIPTTABRECORD"] {
+            var stmt: OpaquePointer?
+            let query = "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='\(table)'"
+            guard sqlite3_prepare_v2(db, query, -1, &stmt, nil) == SQLITE_OK else { return false }
+            defer { sqlite3_finalize(stmt) }
+            guard sqlite3_step(stmt) == SQLITE_ROW else { return false }
+            if sqlite3_column_int(stmt, 0) == 0 { return false }
+        }
+        return true
     }
 
     private func deleteStoreFiles() {
@@ -168,7 +203,7 @@ final class ChatHistoryStore {
     /// relationship maintenance (an ObjC NSException that Swift can't catch and
     /// that CoreData's internal performBlockAndWait rethrows past ObjCTry).
     func save() {
-        guard let context else { return }
+        guard !storeDisabled, let context else { return }
         // Check if current task is still valid before saving
         if let task = currentTask, task.modelContext == nil || task.isDeleted {
             currentTask = nil
@@ -188,6 +223,8 @@ final class ChatHistoryStore {
         do {
             try context.save()
         } catch {
+            print("SwiftData save failed — disabling store: \(error)")
+            storeDisabled = true
             context.rollback()
         }
     }
@@ -308,7 +345,7 @@ final class ChatHistoryStore {
 
     /// Save script tab data to SwiftData. Replaces any existing records.
     func saveScriptTabs(_ tabs: [(id: UUID, scriptName: String, activityLog: String, exitCode: Int32?, llmConfigJSON: String?, parentTabIdString: String?, isMessagesTab: Bool, projectFolder: String)]) {
-        guard let context else { return }
+        guard !storeDisabled, let context else { return }
         // Delete old records
         try? context.delete(model: ScriptTabRecord.self)
         // Insert new
