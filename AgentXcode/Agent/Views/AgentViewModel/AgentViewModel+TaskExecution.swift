@@ -178,10 +178,20 @@ extension AgentViewModel {
             let output = await executeDirectCommand(cmd)
             flushLog()
 
-            // For google_search, pass results to LLM for formatting
+            // For safari commands, pass results to LLM for formatting
             if cmd.name == "google_search" && output.contains("\"success\": true") {
                 taskLog.info("[main] google_search succeeded — passing to LLM for formatting")
                 messages.append(["role": "user", "content": "Format these Google search results for the user. Be concise — show the top results with titles, URLs, and brief descriptions:\n\n\(output)"])
+                break  // Fall through to LLM loop
+            }
+            if cmd.name == "safari_read" && !output.contains("Error") {
+                taskLog.info("[main] safari_read succeeded — passing to LLM for formatting")
+                messages.append(["role": "user", "content": "Summarize this web page for the user. Show the title, URL, and key content:\n\n\(output)"])
+                break  // Fall through to LLM loop
+            }
+            if cmd.name == "safari_open" {
+                taskLog.info("[main] safari_open done — passing to LLM")
+                messages.append(["role": "user", "content": "I opened the page. \(output). Now tell the user it's open and describe what you see if relevant."])
                 break  // Fall through to LLM loop
             }
 

@@ -234,8 +234,62 @@ extension AgentViewModel {
             appendLog("🔍 Google search: \(query)")
             flushLog()
             let output = await WebAutomationService.shared.safariGoogleSearch(query: query)
-            // Don't log raw JSON — LLM will format it nicely
             return output
+
+        case "safari_open":
+            let url = cmd.argument
+            appendLog("🌐 Opening: \(url)")
+            flushLog()
+            let fullURL = url.hasPrefix("http") ? url : "https://\(url)"
+            do {
+                let output = try await WebAutomationService.shared.open(url: URL(string: fullURL)!)
+                return output
+            } catch {
+                return "Error: \(error.localizedDescription)"
+            }
+
+        case "safari_read":
+            appendLog("📖 Reading page...")
+            flushLog()
+            let url = await WebAutomationService.shared.getPageURL()
+            let title = await WebAutomationService.shared.getPageTitle()
+            let content = await WebAutomationService.shared.readPageContent(maxLength: 3000)
+            return "{\"url\": \"\(WebAutomationService.escapeJS(url))\", \"title\": \"\(WebAutomationService.escapeJS(title))\", \"content\": \"\(WebAutomationService.escapeJS(content))\"}"
+
+        case "safari_click":
+            let selector = cmd.argument
+            appendLog("👆 Clicking: \(selector)")
+            flushLog()
+            do {
+                return try await WebAutomationService.shared.click(selector: selector, strategy: .javascript)
+            } catch {
+                return "Error: \(error.localizedDescription)"
+            }
+
+        case "safari_type":
+            // argument format: "selector|text"
+            let parts = cmd.argument.components(separatedBy: "|")
+            guard parts.count >= 2 else { return "Error: format is selector|text" }
+            let selector = parts[0].trimmingCharacters(in: .whitespaces)
+            let text = parts.dropFirst().joined(separator: "|").trimmingCharacters(in: .whitespaces)
+            appendLog("⌨️ Typing into \(selector): \(text.prefix(50))")
+            flushLog()
+            do {
+                return try await WebAutomationService.shared.type(text: text, selector: selector, strategy: .javascript)
+            } catch {
+                return "Error: \(error.localizedDescription)"
+            }
+
+        case "safari_js":
+            let script = cmd.argument
+            appendLog("📜 Running JS...")
+            flushLog()
+            do {
+                let result = try await WebAutomationService.shared.executeJavaScript(script: script)
+                return result as? String ?? "(no output)"
+            } catch {
+                return "Error: \(error.localizedDescription)"
+            }
 
         default:
             return ""

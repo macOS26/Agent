@@ -428,6 +428,48 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
             return DirectCommand(name: "google_search", argument: query)
         }
 
+        // Safari: "open X", "go to X", "navigate to X" — open URL in Safari
+        let openPatterns = [
+            "open safari to ", "open safari ", "open in safari ",
+            "go to ", "navigate to ", "visit ", "open webpage ",
+            "open web page ", "open website ", "open page ",
+            "open url ", "browse to ", "open "
+        ]
+        for prefix in openPatterns {
+            if lower.hasPrefix(prefix) {
+                var arg = String(trimmed.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)
+                // Strip quotes
+                if (arg.hasPrefix("\"") && arg.hasSuffix("\"")) || (arg.hasPrefix("'") && arg.hasSuffix("'")) {
+                    arg = String(arg.dropFirst().dropLast())
+                }
+                // Strip trailing "in safari"
+                for suffix in [" in safari", " using safari", " on safari"] {
+                    if arg.lowercased().hasSuffix(suffix) {
+                        arg = String(arg.dropLast(suffix.count)).trimmingCharacters(in: .whitespaces)
+                    }
+                }
+                // Only match if it looks like a URL (has a dot) — not "open the file" etc.
+                if !arg.isEmpty && (arg.contains(".") || arg.lowercased().hasPrefix("http")) {
+                    return DirectCommand(name: "safari_open", argument: arg)
+                }
+            }
+        }
+
+        // Safari: "read the page", "get page info", "what's on this page"
+        let pageReadPatterns = [
+            "read the page", "read this page", "read the web page", "read this web page",
+            "read current page", "read the current page", "read current web page",
+            "get page info", "get the page info", "get page content", "get web page",
+            "what is on this page", "what's on this page", "whats on this page",
+            "get info from current web page", "get info from the web page",
+            "get info on the current webpage", "read page", "show page content",
+        ]
+        for pattern in pageReadPatterns {
+            if lower == pattern || lower.hasPrefix(pattern + " ") {
+                return DirectCommand(name: "safari_read", argument: "")
+            }
+        }
+
         // "run X", "run agent X" — direct only if script needs no arguments
         let runPatterns = ["run agent ", "run script ", "run ", "execute "]
         for prefix in runPatterns {
