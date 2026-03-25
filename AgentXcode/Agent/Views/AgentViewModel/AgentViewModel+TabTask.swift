@@ -333,6 +333,10 @@ extension AgentViewModel {
                         if result.isComplete {
                             tab.llmMessages = messages
                             // Save task history for tab
+                            let formatter = DateFormatter()
+                            formatter.dateFormat = "HH:mm:ss"
+                            let time = formatter.string(from: Date())
+                            tab.tabTaskSummaries.append("[\(time)] \(prompt) → \(completionSummary)")
                             history.add(TaskRecord(prompt: prompt, summary: completionSummary, commandsRun: commandsRun), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
                             tab.isLLMRunning = false
                             tab.isLLMThinking = false
@@ -493,6 +497,10 @@ extension AgentViewModel {
         // Save task history if task didn't call task_complete
         if completionSummary.isEmpty {
             let summary = Task.isCancelled ? "(cancelled)" : commandsRun.isEmpty ? "(no actions)" : "(incomplete)"
+            let formatter = DateFormatter()
+            formatter.dateFormat = "HH:mm:ss"
+            let time = formatter.string(from: Date())
+            tab.tabTaskSummaries.append("[\(time)] \(prompt) → \(summary)")
             history.add(TaskRecord(prompt: prompt, summary: summary, commandsRun: commandsRun), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
         }
 

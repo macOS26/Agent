@@ -65,6 +65,11 @@ final class ScriptTab: Identifiable {
     var historyIndex: Int = -1
     var savedInput: String = ""
 
+    // MARK: - Per-Tab Task & Error History
+
+    var tabTaskSummaries: [String] = []
+    var tabErrors: [String] = []
+
     // LLM streaming state
     var llmStreamBuffer: String = ""
     var llmStreamFlushTask: Task<Void, Never>?

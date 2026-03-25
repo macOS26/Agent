@@ -32,7 +32,13 @@ extension AgentViewModel {
             stackTrace: Thread.callStackSymbols.joined(separator: "\n")
         )
         ErrorHistory.shared.add(errorRecord)
-        
+
+        // Also store per-tab error if a tab is active
+        if let selectedId = selectedTabId,
+           let tab = scriptTabs.first(where: { $0.id == selectedId }) {
+            tab.tabErrors.append("[\(timestamp)] \(String(describing: type(of: error))): \(fullMessage.truncate(to: 100))")
+        }
+
         // Log to buffer
         if !logBuffer.isEmpty && !logBuffer.hasSuffix("\n") {
             logBuffer += "\n"

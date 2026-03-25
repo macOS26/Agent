@@ -593,9 +593,14 @@ final class AgentViewModel {
         return "Main"
     }
     
-    /// Error history for UI display
+    /// Error history for UI display — per-tab when a tab is selected, global for main
     var errorHistory: [String] {
-        ErrorHistory.shared.recentErrors(limit: 50).map { error in
+        if let selectedId = selectedTabId,
+           let tab = scriptTabs.first(where: { $0.id == selectedId }),
+           !tab.isMainTab {
+            return tab.tabErrors
+        }
+        return ErrorHistory.shared.recentErrors(limit: 50).map { error in
             let formatter = DateFormatter()
             formatter.dateFormat = "HH:mm:ss"
             let time = formatter.string(from: error.timestamp)
@@ -603,10 +608,15 @@ final class AgentViewModel {
             return "[\(time)] \(error.errorType): \(message)"
         }
     }
-    
-    /// Task summaries for UI display
+
+    /// Task summaries for UI display — per-tab when a tab is selected, global for main
     var taskSummaries: [String] {
-        history.records.suffix(50).map { record in
+        if let selectedId = selectedTabId,
+           let tab = scriptTabs.first(where: { $0.id == selectedId }),
+           !tab.isMainTab {
+            return tab.tabTaskSummaries
+        }
+        return history.records.suffix(50).map { record in
             let formatter = DateFormatter()
             formatter.dateFormat = "HH:mm:ss"
             let time = formatter.string(from: record.date)
@@ -631,15 +641,32 @@ final class AgentViewModel {
 
     /// Clear history by type: "Prompts", "Error History", or "Task Summaries".
     func clearHistory(type: String) {
-        switch type {
-        case "Prompts":
-            clearCurrentTabPromptHistory()
-        case "Error History":
-            ErrorHistory.shared.clear()
-        case "Task Summaries":
-            history.clearAll()
-        default:
-            break
+        if let selectedId = selectedTabId,
+           let tab = scriptTabs.first(where: { $0.id == selectedId }),
+           !tab.isMainTab {
+            switch type {
+            case "Prompts":
+                tab.promptHistory.removeAll()
+                tab.historyIndex = -1
+                tab.savedInput = ""
+            case "Error History":
+                tab.tabErrors.removeAll()
+            case "Task Summaries":
+                tab.tabTaskSummaries.removeAll()
+            default:
+                break
+            }
+        } else {
+            switch type {
+            case "Prompts":
+                clearCurrentTabPromptHistory()
+            case "Error History":
+                ErrorHistory.shared.clear()
+            case "Task Summaries":
+                history.clearAll()
+            default:
+                break
+            }
         }
     }
 
