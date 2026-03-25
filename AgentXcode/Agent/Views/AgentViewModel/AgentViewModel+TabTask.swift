@@ -166,6 +166,15 @@ extension AgentViewModel {
         // Build on existing conversation or start fresh
         var messages: [[String: Any]] = tab.llmMessages
 
+        // Inject available agent names on first message so the LLM knows what's available
+        if messages.isEmpty {
+            let agentNames = scriptService.compactNameList()
+            if !agentNames.isEmpty {
+                messages.append(["role": "user", "content": "[Available agents: \(agentNames)]"])
+                messages.append(["role": "assistant", "content": "Noted."])
+            }
+        }
+
         if !attachedImagesBase64.isEmpty {
             tab.appendLog("(\(attachedImagesBase64.count) screenshot(s) attached)")
             tab.flush()

@@ -373,18 +373,55 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
     /// Triage result: Apple AI answers, a direct command is executed, or pass through to the LLM.
     enum TriageResult {
         case answered(String)           // Apple AI handled it — show this text and skip LLM
-        case directCommand(String, String)  // (command name, tool output) — executed locally, inject context to LLM
+        case directCommand(DirectCommand) // Matched command — execute locally, skip LLM
         case passThrough                // Needs tools/LLM — proceed normally
     }
 
+    /// Parsed direct command with optional argument.
+    struct DirectCommand {
+        let name: String
+        let argument: String
+    }
+
     /// Known direct commands that can be executed without the LLM.
-    /// Returns (command name, nil) if matched, nil if not a direct command.
-    static func matchDirectCommand(_ message: String) -> String? {
-        let lower = message.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+    /// Matches patterns like "list agents", "run AgentName", "read AgentName", "delete AgentName".
+    static func matchDirectCommand(_ message: String) -> DirectCommand? {
+        let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)
+        let lower = trimmed.lowercased()
+
+        // list agents
         if lower == "list agents" || lower == "list agent" || lower == "list scripts"
             || lower == "show agents" || lower == "show scripts" {
-            return "list_agents"
+            return DirectCommand(name: "list_agents", argument: "")
         }
+
+        // "run X", "run agent X", "execute X"
+        let runPatterns = ["run agent ", "run script ", "run ", "execute "]
+        for prefix in runPatterns {
+            if lower.hasPrefix(prefix) {
+                let arg = String(trimmed.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)
+                if !arg.isEmpty { return DirectCommand(name: "run_agent", argument: arg) }
+            }
+        }
+
+        // "read X", "read agent X", "show agent X"
+        let readPatterns = ["read agent ", "read script ", "show agent ", "read "]
+        for prefix in readPatterns {
+            if lower.hasPrefix(prefix) {
+                let arg = String(trimmed.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)
+                if !arg.isEmpty { return DirectCommand(name: "read_agent", argument: arg) }
+            }
+        }
+
+        // "delete X", "delete agent X", "remove agent X"
+        let deletePatterns = ["delete agent ", "remove agent ", "delete script ", "remove script ", "delete ", "remove "]
+        for prefix in deletePatterns {
+            if lower.hasPrefix(prefix) {
+                let arg = String(trimmed.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)
+                if !arg.isEmpty { return DirectCommand(name: "delete_agent", argument: arg) }
+            }
+        }
+
         return nil
     }
 
@@ -425,7 +462,7 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
     func triagePrompt(_ message: String) async -> TriageResult {
         // Direct commands execute without any AI — works even if Apple AI is off
         if let cmd = Self.matchDirectCommand(message) {
-            return .directCommand(cmd, "")  // Caller executes the tool
+            return .directCommand(cmd)  // Caller executes the tool
         }
         guard isEnabled && Self.isAvailable else { return .passThrough }
         // Local classification — no AI needed

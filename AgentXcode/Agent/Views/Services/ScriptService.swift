@@ -389,6 +389,13 @@ final class ScriptService {
         return scripts.enumerated().map { "#\($0.offset + 1) \($0.element.name) (\($0.element.size) bytes)" }.joined(separator: "\n")
     }
 
+    /// Compact comma-separated list of agent names (for LLM context injection)
+    func compactNameList() -> String {
+        let names = listScripts().map { $0.name }
+        guard !names.isEmpty else { return "" }
+        return names.joined(separator: ", ")
+    }
+
     /// Resolve a script name — accepts a name or a number like "#4" or "4"
     func resolveScriptName(_ input: String) -> String {
         let trimmed = input.trimmingCharacters(in: .whitespaces)

@@ -121,6 +121,13 @@ extension AgentViewModel {
         // Prepend last task as conversation context so the LLM knows what just happened
         var messages: [[String: Any]] = history.lastTaskMessages()
 
+        // Inject available agent names so the LLM can run agents without calling list_agents first
+        let agentNames = scriptService.compactNameList()
+        if !agentNames.isEmpty {
+            messages.append(["role": "user", "content": "[Available agents: \(agentNames)]"])
+            messages.append(["role": "assistant", "content": "Noted."])
+        }
+
         let effectivePrompt = prompt
 
         if !attachedImagesBase64.isEmpty {
@@ -157,27 +164,13 @@ extension AgentViewModel {
         // Triage: direct commands, Apple AI conversation, or pass through to LLM
         let triageResult = await mediator.triagePrompt(prompt)
         switch triageResult {
-        case .directCommand(let cmd, _):
+        case .directCommand(let cmd):
             // Execute known commands instantly without the LLM
-            taskLog.info("[main] Direct command: \(cmd)")
-            let output: String
-            switch cmd {
-            case "list_agents":
-                let list = scriptService.numberedList()
-                let count = scriptService.listScripts().count
-                appendLog("🦾 Agents: \(count) found")
-                appendLog(list)
-                output = list
-            default:
-                output = ""
-            }
+            taskLog.info("[main] Direct command: \(cmd.name) arg=\(cmd.argument)")
+            let output = await executeDirectCommand(cmd)
             flushLog()
-            completionSummary = "Executed \(cmd)"
-            // Inject into LLM context so it knows what's available
-            let contextMsg: [String: Any] = ["role": "user", "content": "[\(cmd) output]\n\(output)"]
-            messages.append(contextMsg)
-            messages.append(["role": "assistant", "content": "Here are the results."])
-            history.add(TaskRecord(prompt: prompt, summary: completionSummary, commandsRun: [cmd]), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
+            completionSummary = "Executed \(cmd.name)"
+            history.add(TaskRecord(prompt: prompt, summary: completionSummary, commandsRun: [cmd.name]), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
             ChatHistoryStore.shared.endCurrentTask(summary: completionSummary)
             stopProgressUpdates()
             if agentReplyHandle != nil { sendProgressUpdate(output) }

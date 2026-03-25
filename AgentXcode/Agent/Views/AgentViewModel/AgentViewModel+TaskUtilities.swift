@@ -180,6 +180,62 @@ extension AgentViewModel {
         } catch { return "Error: \(error.localizedDescription)" }
     }
 
+    // MARK: - Direct Command Execution
+
+    /// Execute a direct command matched by triage, without the LLM.
+    func executeDirectCommand(_ cmd: AppleIntelligenceMediator.DirectCommand) async -> String {
+        let name = scriptService.resolveScriptName(cmd.argument)
+
+        switch cmd.name {
+        case "list_agents":
+            let list = scriptService.numberedList()
+            let count = scriptService.listScripts().count
+            appendLog("🦾 Agents: \(count) found")
+            appendLog(list)
+            return list
+
+        case "run_agent":
+            // Validate the agent exists, then compile+run via ScriptService
+            guard scriptService.compileCommand(name: name) != nil else {
+                let err = "Error: agent '\(name)' not found."
+                appendLog(err)
+                return err
+            }
+            appendLog("🦾 Compiling: \(name)")
+            flushLog()
+            let compileCmd = scriptService.compileCommand(name: name)!
+            let compileResult = await userService.execute(command: compileCmd)
+            if compileResult.status != 0 {
+                let err = "Compile error:\n\(compileResult.output)"
+                appendLog(err)
+                return err
+            }
+            appendLog("🦾 Running: \(name)")
+            flushLog()
+            let runResult = await scriptService.loadAndRunScriptViaProcess(name: name)
+            appendLog(runResult.output)
+            return runResult.output
+
+        case "read_agent":
+            guard let content = scriptService.readScript(name: name) else {
+                let err = "Error: agent '\(name)' not found."
+                appendLog(err)
+                return err
+            }
+            appendLog("📖 Read: \(name)")
+            appendLog(Self.codeFence(content, language: "swift"))
+            return content
+
+        case "delete_agent":
+            let output = scriptService.deleteScript(name: name)
+            appendLog(output)
+            return output
+
+        default:
+            return ""
+        }
+    }
+
     // MARK: - Conversational Reply Detection
 
     /// Determines if an LLM text response (with no tool calls) is a valid conversational reply
