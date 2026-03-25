@@ -244,16 +244,18 @@ extension AgentViewModel {
             }
         }
 
-        // Inject available agent names on first message so the LLM knows what's available
-        if messages.isEmpty {
-            let agentNames = scriptService.compactNameList()
-            if !agentNames.isEmpty {
-                messages.append(["role": "user", "content": "[Available agents: \(agentNames)]"])
-                messages.append(["role": "assistant", "content": "Noted."])
+        // Apple Intelligence context — prepend to user prompt (not separate message)
+        var promptPrefix = ""
+        if directCommandContext == nil && mediator.isEnabled && mediator.injectContextToLLM {
+            if let contextAnnotation = await mediator.contextualizeUserMessage(prompt) {
+                tab.currentAppleAIPrompt = contextAnnotation.content
+                promptPrefix = contextAnnotation.content + "\n\n"
+                tab.appendLog(contextAnnotation.formatted)
+                tab.flush()
             }
         }
 
-        // Inject direct command context (e.g. safari_open read page, google_search results)
+        // Inject direct command context if set
         if let context = directCommandContext {
             messages.append(["role": "user", "content": context])
             tab.appendLog("📄 Page results passed to LLM (\(context.count) chars)")
@@ -278,7 +280,7 @@ extension AgentViewModel {
             attachedImages.removeAll()
             attachedImagesBase64.removeAll()
         } else {
-            messages.append(["role": "user", "content": prompt])
+            messages.append(["role": "user", "content": promptPrefix + prompt])
         }
 
         // All tool groups available — user controls via UI toggles
@@ -289,20 +291,6 @@ extension AgentViewModel {
         var consecutiveNoTool = 0
         var timeoutRetryCount = 0
         let maxTimeoutRetries = 2
-
-        // Add Apple Intelligence context — skip if direct command already handled it
-        if directCommandContext == nil && mediator.isEnabled && mediator.injectContextToLLM {
-            if let contextAnnotation = await mediator.contextualizeUserMessage(prompt) {
-                tab.currentAppleAIPrompt = contextAnnotation.content
-                let contextMessage: [String: Any] = [
-                    "role": "user",
-                    "content": contextAnnotation.formatted
-                ]
-                messages.insert(contextMessage, at: messages.count)
-                tab.appendLog(contextAnnotation.formatted)
-                tab.flush()
-            }
-        }
 
         while !Task.isCancelled && iterations < maxIter {
             iterations += 1
