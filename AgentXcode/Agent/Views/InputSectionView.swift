@@ -51,7 +51,7 @@ struct InputSectionView: View {
             }
             .padding(.vertical, 8)
             .padding(.horizontal, 14)
-            .background(Color(white: 0.15))
+            .background(Color(white: 0.08))
         } else {
             // Main tab input
             HStack {
@@ -92,7 +92,7 @@ struct InputSectionView: View {
             }
             .padding(.vertical, 8)
             .padding(.horizontal, 14)
-            .background(Color(white: 0.15))
+            .background(Color(white: 0.08))
         }
     }
 
