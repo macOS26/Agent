@@ -305,6 +305,14 @@ extension AgentViewModel {
             tab.flush()
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
 
+        case "web_scan":
+            tab.appendLog("Scanning page for interactive elements...")
+            tab.flush()
+            let elements = await WebAutomationService.shared.scanInteractiveElements()
+            tab.appendLog(String(elements.prefix(2000)))
+            tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": elements], isComplete: false)
+
         default:
         let output = await executeNativeTool(name, input: input)
         tab.appendLog(output); tab.flush()

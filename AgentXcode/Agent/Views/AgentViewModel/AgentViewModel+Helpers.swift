@@ -103,6 +103,7 @@ extension AgentViewModel {
             case "list_tabs":     return ("web_list_tabs", newInput)
             case "switch_tab":    return ("web_switch_tab", newInput)
             case "list_windows":  return ("web_list_windows", newInput)
+            case "scan":          return ("web_scan", newInput)
             case "search":        return ("web_search", newInput)
             default:              return ("web_open", newInput)
             }

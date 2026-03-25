@@ -119,6 +119,11 @@ extension AgentViewModel {
             return result.output
         }
         
+        // web_scan — discover interactive elements on the page
+        if name == "web_scan" {
+            return await WebAutomationService.shared.scanInteractiveElements()
+        }
+
         return nil
     }
 }

@@ -175,7 +175,7 @@ enum AgentTools {
         web: search, google_search, open, find, click, type, execute_js, get_url, get_title, read_content, scroll_to, select, submit, navigate, list_tabs, switch_tab, list_windows, new_window, close_window
 
         CRITICAL RULES:
-        - WEB PAGES: ALWAYS use the web tool for ANY web page interaction. NEVER use accessibility for web pages. To open a URL: web(action: "open", url: "https://..."). After opening, ALWAYS read the page: web(action: "read_content"). To search a page: web(action: "find", query: "..."). To click: web(action: "click", selector: "#btn"). To type: web(action: "type", selector: "input", text: "..."). To run JS: web(action: "execute_js", script: "..."). For Google: web(action: "google_search", query: "..."). WORKFLOW: open → read_content → then click/type/find as needed.
+        - WEB PAGES: ALWAYS use the web tool for ANY web page interaction. NEVER use accessibility for web pages. WORKFLOW: 1) web(action: "open", url: "https://...") 2) web(action: "scan") to discover inputs, buttons, links with their CSS selectors 3) web(action: "type", selector: "...", text: "...") to type into fields 4) web(action: "click", selector: "...") to click buttons/links 5) web(action: "read_content") to read page text. Use scan FIRST to find the right selectors before clicking or typing.
         - SHELL COMMANDS (rm, mv, cp, ls, find, grep, etc.): ALWAYS use execute_agent_command. NEVER create .sh scripts. NEVER use applescript_tool "do shell script".
         - BUILD: Use xcode (action: build). Never xcodebuild via shell.
         - applescript_tool is ONLY for AppleScript automation of apps (tell application...). NOT for shell commands.
@@ -587,9 +587,9 @@ enum AgentTools {
         // --- Web (consolidated) ---
         ToolDef(
             name: Name.safari,
-            description: "Web browser automation via AppleScript/JavaScript. Actions: open (URL), read_content (get page text), find (element), click (element), type (text into field), execute_js (run JavaScript), get_url, get_title, google_search (search Google), scroll_to (element), select (dropdown option), submit (form), navigate (back/forward/reload), list_tabs, switch_tab, list_windows. WORKFLOW: open → read_content → find/click/type as needed. Examples: web(action: \"open\", url: \"https://linkedin.com\"), web(action: \"read_content\"), web(action: \"type\", selector: \"input[type=search]\", text: \"query\"), web(action: \"click\", selector: \"button.submit\").",
+            description: "Web browser automation via AppleScript/JavaScript. Actions: open (URL), scan (discover all inputs, buttons, links with CSS selectors), read_content (get page text), find (element), click (element), type (text into field), execute_js (run JavaScript), get_url, get_title, google_search (search Google), scroll_to (element), select (dropdown option), submit (form), navigate (back/forward/reload), list_tabs, switch_tab, list_windows. WORKFLOW: open → scan (see what's on the page) → type/click/read_content as needed. Examples: web(action: \"open\", url: \"https://linkedin.com\"), web(action: \"scan\"), web(action: \"type\", selector: \"input[type=search]\", text: \"query\"), web(action: \"click\", selector: \"button.submit\"), web(action: \"read_content\").",
             properties: [
-                "action": ["type": "string", "description": "Action: open, read_content, find, click, type, execute_js, get_url, get_title, google_search, scroll_to, select, submit, navigate, list_tabs, switch_tab, list_windows"],
+                "action": ["type": "string", "description": "Action: open, scan, read_content, find, click, type, execute_js, get_url, get_title, google_search, scroll_to, select, submit, navigate, list_tabs, switch_tab, list_windows"],
                 "query": ["type": "string", "description": "For google_search: search query text"],
                 "url": ["type": "string", "description": "For open: URL to open"],
                 "selector": ["type": "string", "description": "For find/click/type/scroll_to/select/submit: CSS selector, XPath, or element identifier"],
