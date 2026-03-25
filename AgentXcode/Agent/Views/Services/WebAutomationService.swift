@@ -477,6 +477,34 @@ final class WebAutomationService: @unchecked Sendable {
     }
     
     private func executeJavaScriptClick(selector: String, browser: String) async throws -> String {
+        // Handle jQuery-style :contains() or plain text — extract text, find by content, click by href/class
+        if selector.contains(":contains(") {
+            if let start = selector.range(of: ":contains(")?.upperBound {
+                var text = String(selector[start...])
+                text = text.trimmingCharacters(in: CharacterSet(charactersIn: "\"')"))
+                if text.hasSuffix(")") { text = String(text.dropLast()) }
+                text = text.trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
+                // Use text search to find element, then click by its actual selector
+                let escaped = Self.escapeJS(text)
+                let js = """
+                (function() {
+                    var all = document.querySelectorAll('a, button, input[type=submit], [role=button]');
+                    for (var i = 0; i < all.length; i++) {
+                        if (all[i].textContent.toLowerCase().indexOf('\(escaped.lowercased())') >= 0) {
+                            all[i].click();
+                            return 'clicked';
+                        }
+                    }
+                    return 'not found';
+                })()
+                """
+                if let result = try? await executeJavaScript(script: js, browser: browser) as? String,
+                   result == "clicked" {
+                    return "Clicked element containing '\(text)'"
+                }
+            }
+        }
+
         let escaped = Self.escapeJS(selector)
         let isXPath = selector.hasPrefix("/") || selector.hasPrefix("./")
 
