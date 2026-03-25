@@ -271,9 +271,11 @@ final class OllamaService {
         ]
 
         let bodyData = try JSONSerialization.data(withJSONObject: body)
-        // Debug: dump messages being sent
-        let roles = chatMessages.map { "\($0["role"] as? String ?? "?")\($0["tool_calls"] != nil ? "+tools" : "")\($0["tool_call_id"] != nil ? "+result" : "")" }
-        print("[OllamaService] Sending \(chatMessages.count) messages: \(roles.joined(separator: " → "))")
+        // Debug: dump full message payload
+        if let jsonStr = String(data: bodyData, encoding: .utf8) {
+            let preview = String(jsonStr.prefix(3000))
+            print("[OllamaService] REQUEST BODY:\n\(preview)")
+        }
         return try await Self.performStreamingRequest(
             bodyData: bodyData,
             apiKey: apiKey,
