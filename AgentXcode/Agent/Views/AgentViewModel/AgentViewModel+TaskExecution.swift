@@ -155,15 +155,14 @@ extension AgentViewModel {
         var appleAIAnnotations: [AppleIntelligenceMediator.Annotation] = []
 
         // Apple AI conversation triage — answer simple prompts directly without hitting the LLM
+        var triageHandled = false
         if mediator.isEnabled {
-            taskLog.info("[main] Apple AI triage: checking if prompt is conversational...")
             let triageResult = await mediator.triagePrompt(prompt)
             if case .answered(let reply) = triageResult {
                 taskLog.info("[main] Apple AI answered directly — skipping LLM")
                 appendLog(reply)
                 flushLog()
                 completionSummary = String(reply.prefix(200))
-                // Save history and finish
                 history.add(TaskRecord(prompt: prompt, summary: completionSummary, commandsRun: []), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
                 ChatHistoryStore.shared.endCurrentTask(summary: completionSummary)
                 stopProgressUpdates()
@@ -176,19 +175,17 @@ extension AgentViewModel {
                 isThinking = false
                 return
             }
+            triageHandled = true  // Triage ran — skip contextualizeUserMessage
         }
 
-        // Optional: Add Apple Intelligence context to user message
-        if mediator.isEnabled && mediator.injectContextToLLM {
-            taskLog.info("[main] Apple AI mediator: contextualizing user message...")
+        // Add Apple Intelligence context only if triage didn't already evaluate the prompt
+        if !triageHandled && mediator.isEnabled && mediator.injectContextToLLM {
             if let contextAnnotation = await mediator.contextualizeUserMessage(prompt) {
                 appleAIAnnotations.append(contextAnnotation)
                 currentAppleAIPrompt = contextAnnotation.content
-                // Capture Apple AI decision for training (only when toggle is on)
                 if mediator.trainingEnabled {
                     TrainingDataStore.shared.captureAppleAIDecision(contextAnnotation.content)
                 }
-                // Inject rephrased context into LLM messages
                 let contextMessage: [String: Any] = [
                     "role": "user",
                     "content": contextAnnotation.formatted
