@@ -16,7 +16,7 @@ struct InputSectionView: View {
                     set: { tab.taskInput = $0 }
                 ), axis: .vertical)
                     .textFieldStyle(.roundedBorder)
-                    .lineLimit(1...8)
+                    .lineLimit(2...8)
                     .onSubmit {
                         if !tab.taskInput.isEmpty {
                             viewModel.runTabTask(tab: tab)
@@ -41,7 +41,7 @@ struct InputSectionView: View {
                 TextField("Enter task...", text: $viewModel.taskInput, axis: .vertical)
                     .textFieldStyle(.roundedBorder)
                     .focused($isTaskFieldFocused)
-                    .lineLimit(1...8)
+                    .lineLimit(2...8)
                     .onSubmit {
                         if !viewModel.taskInput.isEmpty {
                             viewModel.run()
