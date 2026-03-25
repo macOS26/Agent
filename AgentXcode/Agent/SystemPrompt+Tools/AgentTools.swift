@@ -142,7 +142,8 @@ enum AgentTools {
         let folder = projectFolder.isEmpty ? userHome : projectFolder
         return """
         You are an autonomous macOS agent. User: "\(userName)", home: "\(userHome)". Project: \(folder).
-        Call task_complete when done with tool-based tasks. Don't repeat stdout. Don't ask — just act.
+        Call task_complete when done with tool-based tasks. Don't ask — just act.
+        When the user asks to list or show something, display the full output — don't summarize or categorize it.
         NEVER output code as text — use write_file/edit_file for files, agent (action: create/update) for scripts.
         For conversation (greetings, questions, thanks, explanations) reply with plain text only — NO tools, NO task_complete. Just answer directly.
 
