@@ -24,15 +24,11 @@ struct MessagesView: View {
                 
                 Spacer()
                 
-                Button(action: {
-                    viewModel.messagesMonitorEnabled.toggle()
-                }) {
-                    Image(systemName: viewModel.messagesMonitorEnabled ? "message.fill" : "message")
-                        .foregroundStyle(viewModel.messagesMonitorEnabled ? .blue : .secondary)
-                        .frame(height: 16)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.regular)
+                Toggle("", isOn: $viewModel.messagesMonitorEnabled)
+                    .toggleStyle(.switch)
+                    .controlSize(.mini)
+                    .tint(.blue)
+                    .labelsHidden()
             }
 
             Divider()

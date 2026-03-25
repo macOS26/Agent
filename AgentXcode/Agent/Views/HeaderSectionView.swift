@@ -110,7 +110,7 @@ struct HeaderToolbarButtons: View {
 
         Button { showMessages.toggle() } label: {
             Image(systemName: "message.fill")
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(viewModel.messagesMonitorEnabled ? Color.blue : Color.gray)
         }
         .help(viewModel.messagesMonitorEnabled ? "Messages Monitor: ON" : "Messages Monitor: OFF")
         .popover(isPresented: $showMessages) {
