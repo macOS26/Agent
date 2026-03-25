@@ -37,7 +37,7 @@ struct ProjectFolderField: View {
 
                 TextField("Project folder or file...", text: $projectFolder)
                     .textContentType(.none)
-                    .font(.system(size: 11))
+                    .font(.system(size: 10))
                     .textFieldStyle(.plain)
                     .padding(5)
                     .background(Color(white: 0.12))
