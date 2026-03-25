@@ -41,6 +41,7 @@ struct InputSectionView: View {
                             .frame(width: 36)
                     }
                     .buttonStyle(.borderedProminent)
+                    .clipShape(Capsule())
                     .controlSize(.small)
                     .disabled(tab.taskInput.isEmpty || {
                         let provider = tab.llmConfig?.provider ?? viewModel.selectedProvider
@@ -84,6 +85,7 @@ struct InputSectionView: View {
                             .frame(width: 36)
                     }
                     .buttonStyle(.borderedProminent)
+                    .clipShape(Capsule())
                     .controlSize(.small)
                     .disabled(viewModel.taskInput.isEmpty || (viewModel.selectedProvider == .claude && viewModel.apiKey.isEmpty))
                 }
@@ -103,6 +105,7 @@ struct InputSectionView: View {
                         .frame(width: buttonWidth)
                 }
                 .buttonStyle(.bordered)
+                .clipShape(Capsule())
                 .controlSize(.small)
                 .help("Take a screenshot to attach")
 
@@ -111,6 +114,7 @@ struct InputSectionView: View {
                         .frame(width: buttonWidth)
                 }
                 .buttonStyle(.bordered)
+                .clipShape(Capsule())
                 .controlSize(.small)
                 .help("Paste image from clipboard")
             }
@@ -121,6 +125,7 @@ struct InputSectionView: View {
                         .frame(width: buttonWidth)
                 }
                 .buttonStyle(.bordered)
+                .clipShape(Capsule())
                 .controlSize(.small)
                 .help(viewModel.isListening ? "Stop dictation" : "Start dictation")
 
@@ -132,6 +137,7 @@ struct InputSectionView: View {
                         .frame(width: buttonWidth)
                 }
                 .buttonStyle(.bordered)
+                .clipShape(Capsule())
                 .controlSize(.small)
                 .help(viewModel.isHotwordListening
                     ? (viewModel.isHotwordCapturing ? "Capturing command..." : "Listening for \"Agent!\" — click to stop")
