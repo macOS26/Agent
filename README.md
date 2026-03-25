@@ -10,19 +10,10 @@ Now with Apple Intelligence
 [![GitHub downloads](https://img.shields.io/github/downloads/macOS26/Agent/total.svg)](https://github.com/macOS26/Agent/releases)
 [![GitHub stars](https://img.shields.io/github/stars/macOS26/Agent.svg?style=social)](https://github.com/macOS26/Agent/stargazers)
 
-Agent! works with OpenAI, Claude API, DeekSeek, Ollama Pro/Max Cloud, and local Ollama, vLLM, LMStudio. Local LLMs need 32-128GB RAM on Apple Silicon. For best results Large Cloud LLMs recommended. GLM-5 have been heavily tested.
+### Multi-Provider LLM Support
 
 <img width="1215" height="862" alt="image" src="https://github.com/user-attachments/assets/17265c25-2c33-4359-a0f5-66b812c7068d" />
 
-## What's Supported
-
-<img width="1501" height="900" alt="Screenshot 2026-03-21 at 3 44 08 AM" src="https://github.com/user-attachments/assets/f293be2a-8e58-4a4c-b266-af2bb4dde1af" />
-
-### Multi-Provider LLM Support
-
-Agent! supports multiple LLM providers with seamless switching. Configure your preferred provider in Settings. 
-
-OpenAI, DeepSeek, HuggingFace is tested!
 
 | Provider | API Key | Vision | Notes |
 |----------|---------|--------|-------|
@@ -36,6 +27,9 @@ OpenAI, DeepSeek, HuggingFace is tested!
 | **LM Studio** | None | Auto | OpenAI or Anthropic mode; OpenAI mode recommended |
 
 ### Apple Intelligence Mediator
+
+<img width="1501" height="900" alt="Screenshot 2026-03-21 at 3 44 08 AM" src="https://github.com/user-attachments/assets/f293be2a-8e58-4a4c-b266-af2bb4dde1af" />
+
 
 Apple Intelligence serves as a **communication mediator** between the LLM and the user, not as an LLM provider. It observes conversations and adds helpful context using on-device intelligence:
 
