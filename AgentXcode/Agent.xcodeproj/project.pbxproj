@@ -129,6 +129,7 @@
 		FF10000000000000000002 /* PackageAutoDiscoveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000001 /* PackageAutoDiscoveryTests.swift */; };
 		FF10000000000000000004 /* CodingServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000003 /* CodingServiceTests.swift */; };
 		FF10000000000000000008 /* AccessibilityServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000007 /* AccessibilityServiceTests.swift */; };
+		FF20000000000000000002 /* WebAutomationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF20000000000000000001 /* WebAutomationTests.swift */; };
 		FF10000000000000000011 /* AgentViewModel+Speech.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000010 /* AgentViewModel+Speech.swift */; };
 		WEB1000000000000000001 /* WebAutomationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = WEB1000000000000000002 /* WebAutomationService.swift */; };
 /* End PBXBuildFile section */
@@ -329,6 +330,7 @@
 		FF10000000000000000001 /* PackageAutoDiscoveryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageAutoDiscoveryTests.swift; sourceTree = "<group>"; };
 		FF10000000000000000003 /* CodingServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodingServiceTests.swift; sourceTree = "<group>"; };
 		FF10000000000000000007 /* AccessibilityServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityServiceTests.swift; sourceTree = "<group>"; };
+		FF20000000000000000001 /* WebAutomationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebAutomationTests.swift; sourceTree = "<group>"; };
 		FF10000000000000000010 /* AgentViewModel+Speech.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+Speech.swift"; sourceTree = "<group>"; };
 		WEB1000000000000000002 /* WebAutomationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebAutomationService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -464,6 +466,7 @@
 				FF10000000000000000001 /* PackageAutoDiscoveryTests.swift */,
 				FF10000000000000000003 /* CodingServiceTests.swift */,
 				FF10000000000000000007 /* AccessibilityServiceTests.swift */,
+				FF20000000000000000001 /* WebAutomationTests.swift */,
 			);
 			path = AgentTests;
 			sourceTree = "<group>";
@@ -963,6 +966,7 @@
 				FF10000000000000000002 /* PackageAutoDiscoveryTests.swift in Sources */,
 				FF10000000000000000004 /* CodingServiceTests.swift in Sources */,
 				FF10000000000000000008 /* AccessibilityServiceTests.swift in Sources */,
+				FF20000000000000000002 /* WebAutomationTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
