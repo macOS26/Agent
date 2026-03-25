@@ -652,15 +652,24 @@ final class WebAutomationService: @unchecked Sendable {
             }
 
             if (tag === 'INPUT' || tag === 'TEXTAREA') {
-                // React-compatible: use native property setter
+                // Simulate character-by-character typing (works on React/Vue/Angular)
                 var proto = tag === 'INPUT' ? window.HTMLInputElement.prototype : window.HTMLTextAreaElement.prototype;
                 var setter = Object.getOwnPropertyDescriptor(proto, 'value');
-                if (setter && setter.set) {
-                    setter.set.call(el, text);
-                } else {
-                    el.value = text;
-                }
+                // Clear existing value
+                if (setter && setter.set) { setter.set.call(el, ''); }
+                else { el.value = ''; }
                 el.dispatchEvent(new Event('input', {bubbles: true}));
+                // Type each character individually
+                for (var i = 0; i < text.length; i++) {
+                    var ch = text[i];
+                    el.dispatchEvent(new KeyboardEvent('keydown', {key: ch, bubbles: true}));
+                    // Set value to current prefix using native setter
+                    var newVal = text.substring(0, i + 1);
+                    if (setter && setter.set) { setter.set.call(el, newVal); }
+                    else { el.value = newVal; }
+                    el.dispatchEvent(new InputEvent('input', {bubbles: true, inputType: 'insertText', data: ch}));
+                    el.dispatchEvent(new KeyboardEvent('keyup', {key: ch, bubbles: true}));
+                }
                 el.dispatchEvent(new Event('change', {bubbles: true}));
                 return 'typed';
             }
@@ -701,35 +710,31 @@ final class WebAutomationService: @unchecked Sendable {
             }
         }
 
-        // Phase 2: JS failed to set visible text — use OS-level keystrokes (works on React/LinkedIn/Gmail)
-        // First focus the element via JS
-        let focusJS = """
+        // Phase 2: JS verify failed — retry with character-by-character approach
+        let retryJS = """
         (function() {
             var sel = '\(escapedSel)';
+            var text = '\(escapedText)';
             var el = \(isXPath ?
                 "document.evaluate(sel, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue" :
                 Self.querySelectorWithIframes("sel"));
-            if (el) { el.focus(); el.click(); return 'focused'; }
-            return 'not found';
+            if (!el) return 'not found';
+            el.focus();
+            el.click();
+            // Try execCommand first (works in contenteditable and some inputs in Safari)
+            document.execCommand('selectAll', false, null);
+            if (document.execCommand('insertText', false, text)) return 'typed';
+            // Last resort: set value + char-by-char events
+            el.value = '';
+            for (var i = 0; i < text.length; i++) {
+                el.value += text[i];
+                el.dispatchEvent(new InputEvent('input', {bubbles: true, inputType: 'insertText', data: text[i]}));
+            }
+            return 'typed';
         })()
         """
-        _ = try? await executeJavaScript(script: focusJS, browser: browser)
-        try? await Task.sleep(for: .milliseconds(200))
-
-        // Type via AppleScript keystroke (real keyboard input — works everywhere)
-        let escapedForAS = text.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
-        let keystrokeScript = "tell application \"System Events\" to keystroke \"\(escapedForAS)\""
-        let result = await MainActor.run { () -> String in
-            var err: NSDictionary?
-            guard let script = NSAppleScript(source: keystrokeScript) else { return "Error: script creation failed" }
-            _ = script.executeAndReturnError(&err)
-            if let error = err { return "Error: \(error)" }
-            return "Typed via keystroke"
-        }
-        if result.hasPrefix("Error") {
-            return result
-        }
-        return "Typed text via keystroke into: \(selector)"
+        _ = try? await executeJavaScript(script: retryJS, browser: browser)
+        return "Typed text into: \(selector)"
     }
     
     // MARK: - iframe Support
