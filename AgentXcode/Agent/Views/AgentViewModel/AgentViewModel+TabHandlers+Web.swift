@@ -156,6 +156,37 @@ extension AgentViewModel {
             tab.flush()
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": content], isComplete: false)
 
+        case "web_switch_tab":
+            let browser = input["browser"] as? String
+            let index = input["index"] as? Int
+            let title = input["title"] as? String
+            tab.appendLog("Switching tab...")
+            tab.flush()
+            let output = await WebAutomationService.shared.switchTab(browser: browser, index: index, titleContains: title)
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
+
+        case "web_list_tabs":
+            let browser = input["browser"] as? String
+            tab.appendLog("Listing tabs...")
+            tab.flush()
+            let output = await WebAutomationService.shared.listTabs(browser: browser)
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
+
+        case "web_wait_for_element":
+            let selector = input["selector"] as? String ?? ""
+            let browser = input["browser"] as? String
+            let timeout = input["timeout"] as? Double ?? 10.0
+            tab.appendLog("Waiting for: \(selector)...")
+            tab.flush()
+            let output = await WebAutomationService.shared.waitForElement(selector: selector, browser: browser, timeout: timeout)
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
+
         default:
         let output = await executeNativeTool(name, input: input)
         tab.appendLog(output); tab.flush()

@@ -461,7 +461,13 @@ final class WebAutomationService: @unchecked Sendable {
             return 'not found';
             """
         } else {
-            js = "var el = document.querySelector('\(escaped)'); if (el) { el.click(); return 'clicked'; } return 'not found';"
+            js = """
+            (function() {
+                var el = \(Self.querySelectorWithIframes("'\(escaped)'"));
+                if (el) { el.click(); return 'clicked'; }
+                return 'not found';
+            })()
+            """
         }
         
         _ = try await executeJavaScript(script: js, browser: browser)
@@ -472,25 +478,178 @@ final class WebAutomationService: @unchecked Sendable {
         let escapedText = Self.escapeJS(text)
         let escapedSel = Self.escapeJS(selector)
         let isXPath = selector.hasPrefix("/") || selector.hasPrefix("./")
-        
+
+        // Set value AND fire input/change/blur events so React/Vue/Angular detect the change
+        let eventDispatch = """
+        el.dispatchEvent(new Event('input', {bubbles: true}));
+        el.dispatchEvent(new Event('change', {bubbles: true}));
+        el.dispatchEvent(new Event('blur', {bubbles: true}));
+        """
+
         let js: String
         if isXPath {
             js = """
             var result = document.evaluate('\(escapedSel)', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
             var el = result.singleNodeValue;
-            if (el) { el.value = '\(escapedText)'; return 'typed'; }
+            if (el) { el.focus(); el.value = '\(escapedText)'; \(eventDispatch) return 'typed'; }
             return 'not found';
             """
         } else {
-            js = "var el = document.querySelector('\(escapedSel)'); if (el) { el.value = '\(escapedText)'; return 'typed'; } return 'not found';"
+            js = """
+            (function() {
+                var el = \(Self.querySelectorWithIframes("'\(escapedSel)'"));
+                if (el) { el.focus(); el.value = '\(escapedText)'; \(eventDispatch) return 'typed'; }
+                return 'not found';
+            })()
+            """
         }
-        
+
         _ = try await executeJavaScript(script: js, browser: browser)
         return "Typed text via JavaScript into: \(selector)"
     }
     
-    // MARK: - Selenium Helpers
-    
+    // MARK: - iframe Support
+
+    /// JavaScript snippet that queries the main document and all same-origin iframes.
+    /// Call with a quoted CSS selector string, e.g. querySelectorWithIframes("'button.submit'")
+    static func querySelectorWithIframes(_ selectorExpr: String) -> String {
+        """
+        (function(sel) {
+            var el = document.querySelector(sel);
+            if (el) return el;
+            var frames = document.querySelectorAll('iframe');
+            for (var i = 0; i < frames.length; i++) {
+                try {
+                    var doc = frames[i].contentDocument;
+                    if (doc) { el = doc.querySelector(sel); if (el) return el; }
+                } catch(e) {}
+            }
+            return null;
+        })(\(selectorExpr))
+        """
+    }
+
+    // MARK: - Tab Switching
+
+    /// Switch to a browser tab by index (0-based) or by title substring
+    func switchTab(browser: String? = nil, index: Int? = nil, titleContains: String? = nil) async -> String {
+        let browserId = browser ?? detectActiveBrowser() ?? "com.apple.Safari"
+        let script: String
+
+        if let idx = index {
+            switch browserId {
+            case "com.apple.Safari":
+                script = "tell application \"Safari\" to set current tab of front window to tab \(idx + 1) of front window"
+            case "com.google.Chrome":
+                script = "tell application \"Google Chrome\" to set active tab index of front window to \(idx + 1)"
+            default:
+                return "Error: tab switching not supported for this browser"
+            }
+        } else if let title = titleContains {
+            let escaped = Self.escapeJS(title)
+            switch browserId {
+            case "com.apple.Safari":
+                script = """
+                tell application "Safari"
+                    repeat with t in tabs of front window
+                        if name of t contains "\(escaped)" then
+                            set current tab of front window to t
+                            return name of t
+                        end if
+                    end repeat
+                    return "Tab not found"
+                end tell
+                """
+            case "com.google.Chrome":
+                script = """
+                tell application "Google Chrome"
+                    repeat with t in tabs of front window
+                        if title of t contains "\(escaped)" then
+                            set active tab index of front window to (index of t)
+                            return title of t
+                        end if
+                    end repeat
+                    return "Tab not found"
+                end tell
+                """
+            default:
+                return "Error: tab switching not supported for this browser"
+            }
+        } else {
+            return "Error: specify index or titleContains"
+        }
+
+        let result = await MainActor.run { () -> String in
+            var err: NSDictionary?
+            guard let appleScript = NSAppleScript(source: script) else { return "Error: script creation failed" }
+            let out = appleScript.executeAndReturnError(&err)
+            if let error = err { return "Error: \(error)" }
+            return out.stringValue ?? "Switched tab"
+        }
+        return result
+    }
+
+    /// List open browser tabs
+    func listTabs(browser: String? = nil) async -> String {
+        let browserId = browser ?? detectActiveBrowser() ?? "com.apple.Safari"
+        let script: String
+
+        switch browserId {
+        case "com.apple.Safari":
+            script = """
+            tell application "Safari"
+                set tabList to ""
+                repeat with i from 1 to count of tabs of front window
+                    set t to tab i of front window
+                    set tabList to tabList & i & ". " & name of t & " — " & URL of t & linefeed
+                end repeat
+                return tabList
+            end tell
+            """
+        case "com.google.Chrome":
+            script = """
+            tell application "Google Chrome"
+                set tabList to ""
+                repeat with i from 1 to count of tabs of front window
+                    set t to tab i of front window
+                    set tabList to tabList & i & ". " & title of t & " — " & URL of t & linefeed
+                end repeat
+                return tabList
+            end tell
+            """
+        default:
+            return "Error: tab listing not supported for this browser"
+        }
+
+        let result = await MainActor.run { () -> String in
+            var err: NSDictionary?
+            guard let appleScript = NSAppleScript(source: script) else { return "Error: script creation failed" }
+            let out = appleScript.executeAndReturnError(&err)
+            if let error = err { return "Error: \(error)" }
+            return out.stringValue ?? ""
+        }
+        return result
+    }
+
+    // MARK: - Wait for Element
+
+    /// Wait for a CSS selector to appear in the page (polls via JavaScript)
+    func waitForElement(selector: String, browser: String? = nil, timeout: TimeInterval = 10) async -> String {
+        let browserId = browser ?? detectActiveBrowser() ?? "com.apple.Safari"
+        let escaped = Self.escapeJS(selector)
+        let start = CFAbsoluteTimeGetCurrent()
+
+        while CFAbsoluteTimeGetCurrent() - start < timeout {
+            let js = "(function(){ var el = \(Self.querySelectorWithIframes("'\(escaped)'")); return el ? 'found' : 'waiting'; })()"
+            if let result = try? await executeJavaScript(script: js, browser: browserId) as? String,
+               result == "found" {
+                return "Element found: \(selector)"
+            }
+            try? await Task.sleep(for: .milliseconds(500))
+        }
+        return "Timeout: element '\(selector)' not found after \(Int(timeout))s"
+    }
+
     // MARK: - Selenium Helpers
     // Note: Selenium operations are handled via Selenium AgentScript through tool handlers
     // These methods are placeholders - actual Selenium calls go through run_agent_script
