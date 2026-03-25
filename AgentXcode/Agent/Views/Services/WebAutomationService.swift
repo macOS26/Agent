@@ -617,8 +617,17 @@ final class WebAutomationService: @unchecked Sendable {
         let escapedSel = Self.escapeJS(selector)
         let isXPath = selector.hasPrefix("/") || selector.hasPrefix("./")
 
-        // Set value AND fire input/change/blur events so React/Vue/Angular detect the change
-        let eventDispatch = """
+        // Set value using React-compatible native setter, then fire events
+        // React/Vue/Angular track input via native property descriptors — el.value = 'x' alone doesn't work
+        let setValueAndDispatch = """
+        el.focus();
+        var nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value');
+        if (!nativeSetter) nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value');
+        if (nativeSetter && nativeSetter.set) {
+            nativeSetter.set.call(el, '\(escapedText)');
+        } else {
+            el.value = '\(escapedText)';
+        }
         el.dispatchEvent(new Event('input', {bubbles: true}));
         el.dispatchEvent(new Event('change', {bubbles: true}));
         el.dispatchEvent(new Event('blur', {bubbles: true}));
@@ -629,14 +638,14 @@ final class WebAutomationService: @unchecked Sendable {
             js = """
             var result = document.evaluate('\(escapedSel)', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
             var el = result.singleNodeValue;
-            if (el) { el.focus(); el.value = '\(escapedText)'; \(eventDispatch) return 'typed'; }
+            if (el) { \(setValueAndDispatch) return 'typed'; }
             return 'not found';
             """
         } else {
             js = """
             (function() {
                 var el = \(Self.querySelectorWithIframes("'\(escapedSel)'"));
-                if (el) { el.focus(); el.value = '\(escapedText)'; \(eventDispatch) return 'typed'; }
+                if (el) { \(setValueAndDispatch) return 'typed'; }
                 return 'not found';
             })()
             """
