@@ -294,6 +294,15 @@ extension AgentViewModel {
 
         while !Task.isCancelled && iterations < maxIter {
             iterations += 1
+
+            // Prune old messages every 8 iterations to save tokens (same as main task)
+            if iterations > 1 && iterations % 8 == 0 && messages.count > 14 {
+                let beforeCount = messages.count
+                Self.pruneMessages(&messages)
+                tabTaskLog.info("[\(tab.displayTitle)] pruned messages: \(beforeCount) → \(messages.count)")
+            }
+            if iterations > 2 { Self.stripOldImages(&messages) }
+
             tabTaskLog.info("[\(tab.displayTitle)] iteration \(iterations)/\(maxIter)")
 
             do {
@@ -547,6 +556,14 @@ extension AgentViewModel {
                     } else {
                         // Non-timeout error
                         tab.appendLog("\(errorSource) Error: \(errMsg)")
+                    }
+
+                    // Apple AI error explanation (same as main task)
+                    if mediator.isEnabled && mediator.showAnnotationsToUser {
+                        if let errorAnnotation = await mediator.explainError(toolName: "LLM request", error: errMsg) {
+                            tab.appendLog(errorAnnotation.formatted)
+                            tab.flush()
+                        }
                     }
                 }
                 break
