@@ -23,13 +23,25 @@ struct InputSectionView: View {
                         }
                     }
 
-                Button("Run") { viewModel.runTabTask(tab: tab) }
-                    .buttonStyle(.borderedProminent)
+                VStack(spacing: 4) {
+                    Button { viewModel.stopTabTask(tab: tab) } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.red)
+                    }
+                    .buttonStyle(.bordered)
                     .controlSize(.regular)
-                    .disabled(tab.taskInput.isEmpty || {
-                        let provider = tab.llmConfig?.provider ?? viewModel.selectedProvider
-                        return provider == .claude && viewModel.apiKey.isEmpty
-                    }())
+                    .help("Cancel tab task")
+                    .opacity(tab.isLLMRunning ? 1 : 0.3)
+                    .disabled(!tab.isLLMRunning)
+
+                    Button("Run") { viewModel.runTabTask(tab: tab) }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.regular)
+                        .disabled(tab.taskInput.isEmpty || {
+                            let provider = tab.llmConfig?.provider ?? viewModel.selectedProvider
+                            return provider == .claude && viewModel.apiKey.isEmpty
+                        }())
+                }
             }
             .padding()
             .background(Color(white: 0.15))
@@ -48,10 +60,22 @@ struct InputSectionView: View {
                         }
                     }
 
-                Button("Run") { viewModel.run() }
-                    .buttonStyle(.borderedProminent)
+                VStack(spacing: 4) {
+                    Button { viewModel.stop() } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.red)
+                    }
+                    .buttonStyle(.bordered)
                     .controlSize(.regular)
-                    .disabled(viewModel.taskInput.isEmpty || (viewModel.selectedProvider == .claude && viewModel.apiKey.isEmpty))
+                    .help("Cancel running task")
+                    .opacity(viewModel.isRunning || viewModel.isThinking ? 1 : 0.3)
+                    .disabled(!viewModel.isRunning && !viewModel.isThinking)
+
+                    Button("Run") { viewModel.run() }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.regular)
+                        .disabled(viewModel.taskInput.isEmpty || (viewModel.selectedProvider == .claude && viewModel.apiKey.isEmpty))
+                }
             }
             .padding()
             .background(Color(white: 0.15))
@@ -64,7 +88,7 @@ struct InputSectionView: View {
             HStack(spacing: 4) {
                 Button { viewModel.captureScreenshot() } label: {
                     Image(systemName: "camera")
-                        .frame(width: buttonWidth)
+                        .frame(width: buttonWidth).frame(maxHeight: .infinity)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.regular)
@@ -72,7 +96,7 @@ struct InputSectionView: View {
 
                 Button { viewModel.pasteImageFromClipboard() } label: {
                     Image(systemName: "photo.on.rectangle.angled")
-                        .frame(width: buttonWidth)
+                        .frame(width: buttonWidth).frame(maxHeight: .infinity)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.regular)
@@ -82,7 +106,7 @@ struct InputSectionView: View {
                 Button { viewModel.toggleDictation() } label: {
                     Image(systemName: viewModel.isListening ? "mic.fill" : "mic")
                         .foregroundStyle(viewModel.isListening ? Color.blue : .primary)
-                        .frame(width: buttonWidth)
+                        .frame(width: buttonWidth).frame(maxHeight: .infinity)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.regular)
@@ -93,7 +117,7 @@ struct InputSectionView: View {
                         .foregroundStyle(viewModel.isHotwordListening
                             ? (viewModel.isHotwordCapturing ? Color.green : Color.orange)
                             : .primary)
-                        .frame(width: buttonWidth)
+                        .frame(width: buttonWidth).frame(maxHeight: .infinity)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.regular)
