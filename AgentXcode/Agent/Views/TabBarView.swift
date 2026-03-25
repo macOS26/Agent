@@ -12,7 +12,7 @@ struct TabBarView: View {
             HStack(spacing: 6) {
                 // Main tab (always present, not closable, not draggable)
                 TabItem(
-                    title: "Main",
+                    title: viewModel.selectedProvider.displayName,
                     isSelected: viewModel.selectedTabId == nil,
                     isRunning: viewModel.isRunning,
                     tint: viewModel.isRunning ? .green : .red,
