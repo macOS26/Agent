@@ -681,8 +681,55 @@ final class WebAutomationService: @unchecked Sendable {
         })()
         """
 
-        _ = try await executeJavaScript(script: typeJS, browser: browser)
-        return "Typed text via JavaScript into: \(selector)"
+        // Phase 1: Try JS-based typing (works for most sites)
+        if let jsResult = try? await executeJavaScript(script: typeJS, browser: browser) as? String,
+           jsResult == "typed" {
+            // Verify the value was actually set
+            let verifyJS = """
+            (function() {
+                var sel = '\(escapedSel)';
+                var el = \(isXPath ?
+                    "document.evaluate(sel, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue" :
+                    Self.querySelectorWithIframes("sel"));
+                if (!el) return '';
+                return el.value || el.innerText || el.textContent || '';
+            })()
+            """
+            if let val = try? await executeJavaScript(script: verifyJS, browser: browser) as? String,
+               val.contains(text.prefix(5)) {
+                return "Typed text via JavaScript into: \(selector)"
+            }
+        }
+
+        // Phase 2: JS failed to set visible text — use OS-level keystrokes (works on React/LinkedIn/Gmail)
+        // First focus the element via JS
+        let focusJS = """
+        (function() {
+            var sel = '\(escapedSel)';
+            var el = \(isXPath ?
+                "document.evaluate(sel, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue" :
+                Self.querySelectorWithIframes("sel"));
+            if (el) { el.focus(); el.click(); return 'focused'; }
+            return 'not found';
+        })()
+        """
+        _ = try? await executeJavaScript(script: focusJS, browser: browser)
+        try? await Task.sleep(for: .milliseconds(200))
+
+        // Type via AppleScript keystroke (real keyboard input — works everywhere)
+        let escapedForAS = text.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+        let keystrokeScript = "tell application \"System Events\" to keystroke \"\(escapedForAS)\""
+        let result = await MainActor.run { () -> String in
+            var err: NSDictionary?
+            guard let script = NSAppleScript(source: keystrokeScript) else { return "Error: script creation failed" }
+            _ = script.executeAndReturnError(&err)
+            if let error = err { return "Error: \(error)" }
+            return "Typed via keystroke"
+        }
+        if result.hasPrefix("Error") {
+            return result
+        }
+        return "Typed text via keystroke into: \(selector)"
     }
     
     // MARK: - iframe Support
