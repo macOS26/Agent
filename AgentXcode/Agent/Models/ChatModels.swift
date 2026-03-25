@@ -55,10 +55,11 @@ final class ScriptTabRecord {
     var parentTabIdString: String?   // UUID string of parent main tab
     var isMessagesTab: Bool          // Dedicated Messages tab flag
     var projectFolder: String        // Per-tab project folder
+    var promptHistoryJSON: String?   // JSON-encoded [String] for prompt history
 
     init(tabId: UUID, scriptName: String, activityLog: String, exitCode: Int = -999,
          llmConfigJSON: String? = nil, parentTabIdString: String? = nil, isMessagesTab: Bool = false,
-         projectFolder: String = "") {
+         projectFolder: String = "", promptHistoryJSON: String? = nil) {
         self.tabId = tabId
         self.scriptName = scriptName
         self.activityLog = activityLog
@@ -67,6 +68,7 @@ final class ScriptTabRecord {
         self.parentTabIdString = parentTabIdString
         self.isMessagesTab = isMessagesTab
         self.projectFolder = projectFolder
+        self.promptHistoryJSON = promptHistoryJSON
     }
 }
 
@@ -366,7 +368,7 @@ final class ChatHistoryStore {
     // MARK: - Script Tab Persistence
 
     /// Save script tab data to SwiftData. Replaces any existing records.
-    func saveScriptTabs(_ tabs: [(id: UUID, scriptName: String, activityLog: String, exitCode: Int32?, llmConfigJSON: String?, parentTabIdString: String?, isMessagesTab: Bool, projectFolder: String)]) {
+    func saveScriptTabs(_ tabs: [(id: UUID, scriptName: String, activityLog: String, exitCode: Int32?, llmConfigJSON: String?, parentTabIdString: String?, isMessagesTab: Bool, projectFolder: String, promptHistoryJSON: String?)]) {
         guard !storeDisabled, let context else { return }
         // Delete old records
         try? context.delete(model: ScriptTabRecord.self)
@@ -380,7 +382,8 @@ final class ChatHistoryStore {
                 llmConfigJSON: tab.llmConfigJSON,
                 parentTabIdString: tab.parentTabIdString,
                 isMessagesTab: tab.isMessagesTab,
-                projectFolder: tab.projectFolder
+                projectFolder: tab.projectFolder,
+                promptHistoryJSON: tab.promptHistoryJSON
             )
             context.insert(record)
         }

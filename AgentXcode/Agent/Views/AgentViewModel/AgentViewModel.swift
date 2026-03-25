@@ -827,10 +827,16 @@ final class AgentViewModel {
                       let data = try? JSONEncoder().encode(config) else { return nil }
                 return String(data: data, encoding: .utf8)
             }()
+            let historyJSON: String? = {
+                guard !tab.promptHistory.isEmpty,
+                      let data = try? JSONEncoder().encode(tab.promptHistory) else { return nil }
+                return String(data: data, encoding: .utf8)
+            }()
             return (id: tab.id, scriptName: tab.scriptName, activityLog: tab.activityLog,
                     exitCode: tab.exitCode, llmConfigJSON: configJSON,
                     parentTabIdString: tab.parentTabId?.uuidString,
-                    isMessagesTab: tab.isMessagesTab, projectFolder: tab.projectFolder)
+                    isMessagesTab: tab.isMessagesTab, projectFolder: tab.projectFolder,
+                    promptHistoryJSON: historyJSON)
         }
         ChatHistoryStore.shared.saveScriptTabs(tabData)
     }

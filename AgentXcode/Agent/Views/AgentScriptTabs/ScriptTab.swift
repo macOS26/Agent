@@ -99,6 +99,10 @@ final class ScriptTab: Identifiable {
         if let parentStr = record.parentTabIdString {
             self.parentTabId = UUID(uuidString: parentStr)
         }
+        if let json = record.promptHistoryJSON, let data = json.data(using: .utf8),
+           let history = try? JSONDecoder().decode([String].self, from: data) {
+            self.promptHistory = history
+        }
     }
 
     // MARK: - Logging
