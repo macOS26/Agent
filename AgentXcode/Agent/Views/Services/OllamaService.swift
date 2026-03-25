@@ -117,7 +117,9 @@ final class OllamaService {
                     }
                 }
             } else if role == "assistant" {
-                if let blocks = msg["content"] as? [[String: Any]] {
+                if let text = msg["content"] as? String {
+                    chatMessages.append(["role": "assistant", "content": text])
+                } else if let blocks = msg["content"] as? [[String: Any]] {
                     var textParts = ""
                     var toolCalls: [[String: Any]] = []
 
@@ -223,7 +225,9 @@ final class OllamaService {
                     }
                 }
             } else if role == "assistant" {
-                if let blocks = msg["content"] as? [[String: Any]] {
+                if let text = msg["content"] as? String {
+                    chatMessages.append(["role": "assistant", "content": text])
+                } else if let blocks = msg["content"] as? [[String: Any]] {
                     var textParts = ""
                     var toolCalls: [[String: Any]] = []
 

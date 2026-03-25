@@ -118,8 +118,8 @@ extension AgentViewModel {
         ollama?.temperature = temperatureForProvider(provider)
         openAICompatible?.temperature = temperatureForProvider(provider)
 
-        // Prepend last task as conversation context so the LLM knows what just happened
-        var messages: [[String: Any]] = history.lastTaskMessages()
+        // Start fresh — no prior conversation context to avoid corrupted messages
+        var messages: [[String: Any]] = []
 
         // Inject available agent names so the LLM can run agents without calling list_agents first
         let agentNames = scriptService.compactNameList()
