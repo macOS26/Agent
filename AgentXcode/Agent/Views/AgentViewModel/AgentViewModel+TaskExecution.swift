@@ -762,10 +762,17 @@ extension AgentViewModel {
 
                         if name == "read_agent" {
                             let scriptName = scriptService.resolveScriptName(input["name"] as? String ?? "")
-                            let output = scriptService.readScript(name: scriptName) ?? "Error: script '\(scriptName)' not found."
+                            let rawOutput = scriptService.readScript(name: scriptName) ?? "Error: script '\(scriptName)' not found."
+                            // Add line numbers
+                            let lines = rawOutput.components(separatedBy: "\n")
+                            let width = String(lines.count).count
+                            let numbered = lines.enumerated().map { (i, line) in
+                                let num = String(i + 1).padding(toLength: width, withPad: " ", startingAt: 0)
+                                return "\(num)\t\(line)"
+                            }.joined(separator: "\n")
                             appendLog("📖 Read: \(scriptName)")
-                            appendLog(Self.codeFence(output, language: "swift"))
-                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                            appendLog(Self.codeFence(numbered, language: "swift"))
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": numbered])
                         }
 
                         if name == "create_agent" {
