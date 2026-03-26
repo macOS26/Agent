@@ -36,7 +36,7 @@ final class ToolPreferencesService {
         "Core": Set(["task_complete", "list_tools", "web_search",
                     "write_text", "transform_text", "about_self", "fix_text"]),
         "Workflow": Set(["agent", "plan_mode", "git", "send_message"]),
-        "User Agent": Set(["execute_agent_command", "batch_commands"]),
+        "User Agent": Set(["execute_agent_command", "batch_commands", "batch_tools"]),
         "Launch Daemon": Set(["execute_daemon_command"]),
         "Web": Set(["web"]),
     ]
