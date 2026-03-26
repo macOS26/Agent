@@ -289,7 +289,7 @@ struct AccessibilitySettingsView: View {
                     Button("Test") {
                         // Use AppleEventService to activate System Settings — triggers Automation permission
                         let ops: [[String: Any]] = [["action": "activate"]]
-                        _ = AppleEventService.shared.execute(bundleID: "com.apple.systemevents", operations: ops)
+                        _ = AppleEventService.shared.execute(bundleID: "com.apple.finder", operations: ops)
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
