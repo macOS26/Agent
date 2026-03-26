@@ -1815,14 +1815,7 @@ extension AgentViewModel {
                     if provider == .lmStudio && (lmStudioProtocol == .lmStudio || lmStudioProtocol == .anthropic) {
                         break
                     }
-                    // Check if this is a conversational text reply (no tools needed)
                     let responseText = response.content.compactMap { $0["text"] as? String }.joined()
-                    let isConversational = Self.isConversationalReply(responseText, iteration: iterations)
-                    if isConversational {
-                        // LLM chose to reply with text — accept it as a valid response
-                        completionSummary = String(responseText.prefix(200))
-                        break
-                    }
                     if responseText.count > 20 {
                         consecutiveNoTool = 0
                     } else {
