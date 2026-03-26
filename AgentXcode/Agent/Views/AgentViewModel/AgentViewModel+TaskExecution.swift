@@ -1823,7 +1823,11 @@ extension AgentViewModel {
                         completionSummary = String(responseText.prefix(200))
                         break
                     }
-                    consecutiveNoTool += 1
+                    if responseText.count > 20 {
+                        consecutiveNoTool = 0
+                    } else {
+                        consecutiveNoTool += 1
+                    }
                     if consecutiveNoTool >= 50 {
                         appendLog("LLM not calling tools after \(consecutiveNoTool) attempts — stopping.")
                         flushLog()

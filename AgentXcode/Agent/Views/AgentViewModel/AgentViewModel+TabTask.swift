@@ -434,7 +434,12 @@ extension AgentViewModel {
                         completionSummary = String(responseText.prefix(200))
                         break
                     }
-                    consecutiveNoTool += 1
+                    // If LLM output substantial text, it's thinking — don't count as failure
+                    if responseText.count > 20 {
+                        consecutiveNoTool = 0
+                    } else {
+                        consecutiveNoTool += 1
+                    }
                     if consecutiveNoTool >= 50 {
                         tab.appendLog("LLM not calling tools after \(consecutiveNoTool) attempts — stopping.")
                         break
