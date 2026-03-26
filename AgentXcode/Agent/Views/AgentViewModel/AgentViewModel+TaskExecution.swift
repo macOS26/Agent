@@ -738,6 +738,33 @@ extension AgentViewModel {
                             ])
                         }
 
+                        // Batch commands — run multiple shell commands in one tool call
+                        if name == "batch_commands" {
+                            let rawCommands = input["commands"] as? String ?? ""
+                            let commands = rawCommands.components(separatedBy: "\n").filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+                            var batchOutput = ""
+                            for (idx, rawCmd) in commands.enumerated() {
+                                let cmd = Self.prependWorkingDirectory(rawCmd, projectFolder: projectFolder)
+                                if let pathErr = Self.preflightCommand(cmd) {
+                                    batchOutput += "[\(idx + 1)] $ \(rawCmd)\n\(pathErr)\n\n"
+                                    continue
+                                }
+                                appendLog("🔧 [\(idx + 1)/\(commands.count)] $ \(Self.collapseHeredocs(cmd))")
+                                flushLog()
+                                commandsRun.append(cmd)
+                                let result = await executeViaUserAgent(command: cmd)
+                                guard !Task.isCancelled else { break }
+                                let output = result.output.isEmpty ? "(no output)" : result.output
+                                batchOutput += "[\(idx + 1)] $ \(rawCmd)\n"
+                                if result.status != 0 { batchOutput += "exit code: \(result.status)\n" }
+                                batchOutput += output + "\n\n"
+                            }
+                            let truncated = batchOutput.count > 50_000
+                                ? String(batchOutput.prefix(50_000)) + "\n...(truncated)"
+                                : batchOutput
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": truncated])
+                        }
+
                         // Tool discovery
                         if name == "list_tools" {
                             let prefs = ToolPreferencesService.shared

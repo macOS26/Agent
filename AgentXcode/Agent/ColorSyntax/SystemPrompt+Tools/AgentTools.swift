@@ -38,6 +38,7 @@ enum AgentTools {
         // Shell Execution
         static let executeAgentCommand = "execute_agent_command"
         static let executeDaemonCommand = "execute_daemon_command"
+        static let batchCommands = "batch_commands"
         // Task
         static let taskComplete = "task_complete"
         // Accessibility (consolidated)
@@ -165,7 +166,8 @@ enum AgentTools {
         NEVER output code as text — use write_file/edit_file for files, agent (action: create/update) for scripts.
         For conversation (greetings, questions, thanks, explanations) reply with plain text AND call task_complete. Every response MUST end with task_complete — no exceptions.
 
-        DIRECT TOOLS (no action parameter): read_file, write_file, edit_file, create_diff, apply_diff, list_files, search_files, read_dir, task_complete, execute_agent_command, execute_daemon_command, apple_event_query.
+        DIRECT TOOLS (no action parameter): read_file, write_file, edit_file, create_diff, apply_diff, list_files, search_files, read_dir, task_complete, execute_agent_command, execute_daemon_command, batch_commands, apple_event_query.
+        - BATCH: Use batch_commands to run multiple shell commands in one call (newline-separated). Avoids round-trips. Ideal for gathering info (ls, cat, grep, find, git).
         ACTION TOOLS (require "action" parameter):
         file_manager: read, write, edit, list, search, read_dir, if_to_switch, extract_function | git: status, diff, log, commit, diff_patch, branch
         xcode: build, run, list_projects, select_project, add_file, remove_file | agent: list, read, create, update, run, delete, combine
@@ -241,6 +243,7 @@ enum AgentTools {
     private static let toolExamples: [String: String] = [
         Name.executeAgentCommand:  #"execute_agent_command {"command": "ls -la"}"#,
         Name.executeDaemonCommand: #"execute_daemon_command {"command": "whoami"}"#,
+        Name.batchCommands:        #"batch_commands {"commands": "ls -la\ncat README.md\ngit status"}"#,
         Name.runApplescript:       #"run_applescript {"source": "tell application \"Finder\" to get name of home"}"#,
         Name.runOsascript:         #"run_osascript {"script": "display dialog \"Hello\""}"#,
         Name.executeJavascript:    #"execute_javascript {"source": "var app = Application.currentApplication(); app.includeStandardAdditions = true; app.displayDialog('Hello')"}"#,
@@ -483,6 +486,14 @@ enum AgentTools {
                 "command": ["type": "string", "description": "The bash command to execute as root"],
             ],
             required: ["command"]
+        ),
+        ToolDef(
+            name: Name.batchCommands,
+            description: "Run multiple shell commands sequentially in one call. Returns all results without LLM round-trips. Use for information gathering (ls, cat, grep, find, git log, etc.) when you need to run several commands in a row.",
+            properties: [
+                "commands": ["type": "string", "description": "Commands separated by newlines. Each runs sequentially as the current user."],
+            ],
+            required: ["commands"]
         ),
         ToolDef(
             name: Name.taskComplete,

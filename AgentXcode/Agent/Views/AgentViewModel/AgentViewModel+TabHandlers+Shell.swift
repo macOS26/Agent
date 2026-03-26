@@ -12,6 +12,35 @@ extension AgentViewModel {
     ) async -> TabToolResult {
 
         switch name {
+        case "batch_commands":
+            let tabFolder = Self.resolvedWorkingDirectory(tab.projectFolder.isEmpty ? projectFolder : tab.projectFolder)
+            let rawCommands = input["commands"] as? String ?? ""
+            let commands = rawCommands.components(separatedBy: "\n").filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+            var batchOutput = ""
+            for (idx, rawCmd) in commands.enumerated() {
+                let cmd = Self.prependWorkingDirectory(rawCmd, projectFolder: tabFolder)
+                if let pathErr = Self.preflightCommand(cmd) {
+                    batchOutput += "[\(idx + 1)] $ \(rawCmd)\n\(pathErr)\n\n"
+                    continue
+                }
+                tab.appendLog("🔧 [\(idx + 1)/\(commands.count)] $ \(Self.collapseHeredocs(cmd))")
+                tab.flush()
+                let result = await executeForTab(command: cmd)
+                guard !Task.isCancelled else { return TabToolResult(toolResult: nil, isComplete: false) }
+                let output = result.output.isEmpty ? "(no output)" : result.output
+                batchOutput += "[\(idx + 1)] $ \(rawCmd)\n"
+                if result.status != 0 { batchOutput += "exit code: \(result.status)\n" }
+                batchOutput += output + "\n\n"
+            }
+            let truncated = batchOutput.count > 50_000
+                ? String(batchOutput.prefix(50_000)) + "\n...(truncated)"
+                : batchOutput
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": truncated],
+                isComplete: false
+            )
+
         case "execute_agent_command", "execute_daemon_command":
             let tabFolder = Self.resolvedWorkingDirectory(tab.projectFolder.isEmpty ? projectFolder : tab.projectFolder)
             let command = Self.prependWorkingDirectory(
