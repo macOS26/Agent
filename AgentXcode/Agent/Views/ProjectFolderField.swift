@@ -80,10 +80,6 @@ struct ProjectFolderField: View {
 
     @State private var showTree = false
 
-    private var recentFolders: [String] {
-        RecentFoldersService.shared.recentFolders
-    }
-
     private func selectFolder(_ path: String) {
         projectFolder = path
         RecentFoldersService.shared.addFolder(path)
@@ -94,8 +90,12 @@ struct ProjectFolderField: View {
     var body: some View {
         HStack(spacing: 8) {
             Button { showTree.toggle() } label: {
-                Image(systemName: "folder")
-                    .frame(width: 36)
+                HStack(spacing: 2) {
+                    Image(systemName: "folder")
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 8, weight: .bold))
+                }
+                .frame(width: 36)
             }
             .buttonStyle(.bordered)
             .clipShape(Capsule())
@@ -103,7 +103,6 @@ struct ProjectFolderField: View {
             .help("Pick project folder")
             .popover(isPresented: $showTree) {
                 FolderTreePopover(
-                    recentFolders: recentFolders,
                     selectedFolder: projectFolder,
                     onSelect: selectFolder
                 )
@@ -166,48 +165,14 @@ struct ProjectFolderField: View {
 
 // MARK: - Tree Popover
 
-/// Popover with recent folders + expandable directory tree from Home.
+/// Popover with expandable directory tree from Home.
 private struct FolderTreePopover: View {
-    let recentFolders: [String]
     let selectedFolder: String
     let onSelect: (String) -> Void
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                // Recent folders
-                if !recentFolders.isEmpty {
-                    Text("Recent")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 8)
-                        .padding(.top, 6)
-
-                    ForEach(recentFolders, id: \.self) { folder in
-                        Button {
-                            onSelect(folder)
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: folder == selectedFolder ? "folder.fill" : "folder")
-                                    .foregroundStyle(.blue)
-                                    .frame(width: 16)
-                                Text((folder as NSString).lastPathComponent)
-                                    .lineLimit(1)
-                                Spacer()
-                            }
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .background(folder == selectedFolder ? Color.accentColor.opacity(0.15) : Color.clear)
-                        .cornerRadius(4)
-                    }
-
-                    Divider().padding(.vertical, 4)
-                }
-
-                // Directory tree from Home
                 let home = FileManager.default.homeDirectoryForCurrentUser.path
                 FolderTreeRow(path: home, name: "Home", depth: 0, selectedFolder: selectedFolder, onSelect: onSelect)
             }
