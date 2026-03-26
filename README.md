@@ -8,6 +8,9 @@
 [![GitHub downloads](https://img.shields.io/github/downloads/macOS26/Agent/total.svg)](https://github.com/macOS26/Agent/releases)
 [![GitHub stars](https://img.shields.io/github/stars/macOS26/Agent.svg?style=social)](https://github.com/macOS26/Agent/stargazers)
 
+## Agent! running inside a virtual machine
+<img width="1467" height="1065" alt="Screenshot 2026-03-26 at 5 11 38 PM" src="https://github.com/user-attachments/assets/f521c7f2-6dbc-40b6-b4e6-9dcfed299cf7" />
+
 
 ## 🧠 Agentic AI for the  Mac Desktop 
 Agent! is the result of 27 years of Mac automation experience — from FaceSpan and AppleScript on macOS 9 through AppleScript Studio, AppleScript-ObjC, and now Swift. It connects LLMs to Apple Events, ScriptingBridge, Accessibility APIs, and XPC services for native macOS control.
@@ -15,14 +18,7 @@ Agent! is the result of 27 years of Mac automation experience — from FaceSpan 
 Now with Apple Intelligence supporting 8 LLM providers.
 
 
-<img width="1275" height="812" alt="Screenshot 2026-03-25 at 11 32 24 PM" src="https://github.com/user-attachments/assets/b695da68-3a7b-4ecc-9b7a-4fab6a55a8bf" />
-
-
-
 ### Apple Intelligence Mediator
-
-<img width="1501" height="900" alt="Screenshot 2026-03-21 at 3 44 08 AM" src="https://github.com/user-attachments/assets/f293be2a-8e58-4a4c-b266-af2bb4dde1af" />
-
 
 Apple Intelligence serves as a **communication mediator** between the LLM and the user, not as an LLM provider. It observes conversations and adds helpful context using on-device intelligence:
 
