@@ -78,95 +78,131 @@ struct ProjectFolderField: View {
     @Binding var projectFolder: String
     var onFolderSelected: (() -> Void)? = nil
 
+    @State private var showRecentFolders = false
+    @State private var isFieldFocused = false
+    
     private var recentFolders: [String] {
         RecentFoldersService.shared.recentFolders
     }
-
-    @State private var showBrowser = false
-    @State private var browserPath = FileManager.default.homeDirectoryForCurrentUser.path
-
-    /// List subdirectories of a given path, sorted alphabetically. Folders only.
-    static func subdirs(of path: String) -> [String] {
-        let fm = FileManager.default
-        guard let items = try? fm.contentsOfDirectory(atPath: path) else { return [] }
-        return items
-            .filter { !$0.hasPrefix(".") && !$0.hasSuffix(".app") }
-            .sorted(by: { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending })
-            .compactMap { name -> String? in
-                let full = (path as NSString).appendingPathComponent(name)
-                var isDir: ObjCBool = false
-                guard fm.fileExists(atPath: full, isDirectory: &isDir), isDir.boolValue else { return nil }
-                return full
-            }
-    }
-
-    private func selectFolder(_ path: String) {
-        projectFolder = path
-        RecentFoldersService.shared.addFolder(path)
-        showBrowser = false
-        onFolderSelected?()
-    }
-
+    
     var body: some View {
-        HStack(spacing: 8) {
-            Button {
-                // Start browser at current project folder or home
-                if !projectFolder.isEmpty {
-                    browserPath = projectFolder
-                } else {
-                    browserPath = FileManager.default.homeDirectoryForCurrentUser.path
-                }
-                showBrowser.toggle()
-            } label: {
-                Image(systemName: "folder")
-                    .frame(width: 36)
-            }
-            .buttonStyle(.bordered)
-            .clipShape(Capsule())
-            .controlSize(.regular)
-            .help("Pick project folder")
-            .popover(isPresented: $showBrowser) {
-                FolderBrowserView(
-                    currentPath: $browserPath,
-                    recentFolders: recentFolders,
-                    selectedFolder: projectFolder,
-                    onSelect: selectFolder
-                )
-            }
-
-            PathTextField(
-                text: $projectFolder,
-                placeholder: "Project folder...",
-                onSubmit: {
-                    if !projectFolder.isEmpty {
-                        projectFolder = Self.resolveToFolder(projectFolder)
-                        RecentFoldersService.shared.addFolder(projectFolder)
+        VStack(spacing: 0) {
+            HStack(spacing: 8) {
+                Button {
+                    let panel = NSOpenPanel()
+                    panel.canChooseFiles = false
+                    panel.canChooseDirectories = true
+                    panel.allowsMultipleSelection = false
+                    panel.message = "Select a project folder"
+                    if panel.runModal() == .OK, let url = panel.url {
+                        projectFolder = Self.resolveToFolder(url.path)
+                        RecentFoldersService.shared.addFolder(url.path)
+                        onFolderSelected?()
                     }
-                    onFolderSelected?()
-                },
-                onFocusChange: { _ in }
-            )
-                .padding(.leading, 10)
-                .padding(.trailing, 5)
-                .padding(.vertical, 5)
-                .background(Color(nsColor: .controlBackgroundColor))
+                } label: {
+                    Image(systemName: "folder")
+                        .frame(width: 36)
+                }
+                .buttonStyle(.bordered)
                 .clipShape(Capsule())
-                .overlay(Capsule().stroke(Color.gray.opacity(0.4), lineWidth: 1))
+                .controlSize(.regular)
+                .help("Pick project folder")
 
-            Button {
-                projectFolder = ""
-            } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .foregroundStyle(.secondary)
-                    .frame(width: 36)
+                PathTextField(
+                    text: $projectFolder,
+                    placeholder: "Project folder...",
+                    onSubmit: {
+                        if !projectFolder.isEmpty {
+                            projectFolder = Self.resolveToFolder(projectFolder)
+                            RecentFoldersService.shared.addFolder(projectFolder)
+                        }
+                        showRecentFolders = false
+                        onFolderSelected?()
+                    },
+                    onFocusChange: { focused in
+                        if focused && !recentFolders.isEmpty {
+                            showRecentFolders = true
+                        } else if !focused {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                if !isFieldFocused {
+                                    showRecentFolders = false
+                                }
+                            }
+                        }
+                        isFieldFocused = focused
+                    }
+                )
+                    .padding(.leading, 10)
+                    .padding(.trailing, 5)
+                    .padding(.vertical, 5)
+                    .background(Color(nsColor: .controlBackgroundColor))
+                    .clipShape(Capsule())
+                    .overlay(Capsule().stroke(Color.gray.opacity(0.4), lineWidth: 1))
+
+                Button {
+                    projectFolder = ""
+                    showRecentFolders = false
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                        .frame(width: 36)
+                }
+                .buttonStyle(.bordered)
+                .clipShape(Capsule())
+                .controlSize(.regular)
+                .help("Clear project folder")
+                .disabled(projectFolder.isEmpty)
             }
-            .buttonStyle(.bordered)
-            .clipShape(Capsule())
-            .controlSize(.regular)
-            .help("Clear project folder")
-            .disabled(projectFolder.isEmpty)
+            
+            // Recent folders dropdown
+            if showRecentFolders && !recentFolders.isEmpty {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 2) {
+                        ForEach(recentFolders, id: \.self) { folder in
+                            Button {
+                                projectFolder = folder
+                                RecentFoldersService.shared.addFolder(folder)
+                                showRecentFolders = false
+                                onFolderSelected?()
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "folder.fill")
+                                        .font(.caption)
+                                        .foregroundStyle(.blue)
+                                        .frame(width: 16)
+                                    
+                                    VStack(alignment: .leading, spacing: 1) {
+                                        Text((folder as NSString).lastPathComponent)
+                                            .font(.system(size: 11, weight: .medium))
+                                            .lineLimit(1)
+                                        
+                                        Text(folder)
+                                            .font(.system(size: 9))
+                                            .foregroundStyle(.secondary)
+                                            .lineLimit(1)
+                                    }
+                                }
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            .background(folder == projectFolder ? Color.accentColor.opacity(0.15) : Color.clear)
+                            .cornerRadius(4)
+                        }
+                    }
+                    .padding(4)
+                }
+                .frame(maxHeight: min(CGFloat(recentFolders.count) * 44, 200))
+                .background(Color(nsColor: .windowBackgroundColor))
+                .cornerRadius(6)
+                .shadow(radius: 2)
+                .padding(.top, 4)
+            }
         }
         .onAppear {
+            // Add current folder to recents if it exists
             if !projectFolder.isEmpty {
                 RecentFoldersService.shared.addFolder(projectFolder)
             }
@@ -186,108 +222,5 @@ struct ProjectFolderField: View {
             return (path as NSString).deletingLastPathComponent
         }
         return path
-    }
-}
-
-/// Flat folder browser — shows one directory level at a time. Click to drill in, back button to go up.
-private struct FolderBrowserView: View {
-    @Binding var currentPath: String
-    let recentFolders: [String]
-    let selectedFolder: String
-    let onSelect: (String) -> Void
-
-    @State private var children: [String] = []
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Header: back button + current folder name + select button
-            HStack {
-                Button {
-                    currentPath = (currentPath as NSString).deletingLastPathComponent
-                } label: {
-                    Image(systemName: "chevron.left")
-                }
-                .disabled(currentPath == "/")
-                .buttonStyle(.borderless)
-
-                Text((currentPath as NSString).lastPathComponent)
-                    .font(.system(size: 12, weight: .semibold))
-                    .lineLimit(1)
-                    .truncationMode(.head)
-
-                Spacer()
-
-                Button("Select") {
-                    onSelect(currentPath)
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 8)
-
-            Divider()
-
-            // Recent folders section
-            if !recentFolders.isEmpty {
-                Text("Recent")
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 10)
-                    .padding(.top, 6)
-
-                ForEach(recentFolders.prefix(6), id: \.self) { folder in
-                    Button {
-                        onSelect(folder)
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: folder == selectedFolder ? "folder.fill" : "folder")
-                                .foregroundStyle(.blue)
-                                .frame(width: 16)
-                            Text((folder as NSString).lastPathComponent)
-                                .lineLimit(1)
-                            Spacer()
-                        }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 3)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                }
-
-                Divider()
-                    .padding(.vertical, 4)
-            }
-
-            // Directory listing
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 0) {
-                    ForEach(children, id: \.self) { child in
-                        Button {
-                            currentPath = child
-                        } label: {
-                            HStack(spacing: 6) {
-                                Image(systemName: "folder")
-                                    .foregroundStyle(.blue)
-                                    .frame(width: 16)
-                                Text((child as NSString).lastPathComponent)
-                                    .lineLimit(1)
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                            }
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 4)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
-        }
-        .frame(width: 260, height: 340)
-        .onAppear { children = ProjectFolderField.subdirs(of: currentPath) }
-        .onChange(of: currentPath) { children = ProjectFolderField.subdirs(of: currentPath) }
     }
 }
