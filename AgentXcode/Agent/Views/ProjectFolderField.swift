@@ -82,21 +82,31 @@ struct ProjectFolderField: View {
         RecentFoldersService.shared.recentFolders
     }
 
-    /// List subdirectories of a given path, sorted alphabetically.
+    /// List subdirectories of a given path, sorted alphabetically. Folders only.
     static func subdirs(of path: String) -> [String] {
         let fm = FileManager.default
         guard let items = try? fm.contentsOfDirectory(atPath: path) else { return [] }
         return items
-            .filter { !$0.hasPrefix(".") }
+            .filter { !$0.hasPrefix(".") && !$0.hasSuffix(".app") }
             .sorted(by: { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending })
             .compactMap { name -> String? in
                 let full = (path as NSString).appendingPathComponent(name)
                 var isDir: ObjCBool = false
                 guard fm.fileExists(atPath: full, isDirectory: &isDir), isDir.boolValue else { return nil }
-                // Skip .app bundles
-                if name.hasSuffix(".app") { return nil }
                 return full
             }
+    }
+
+    /// Check if a directory has any subdirectories (without listing all).
+    static func hasSubdirs(_ path: String) -> Bool {
+        let fm = FileManager.default
+        guard let items = try? fm.contentsOfDirectory(atPath: path) else { return false }
+        return items.contains { name in
+            guard !name.hasPrefix("."), !name.hasSuffix(".app") else { return false }
+            var isDir: ObjCBool = false
+            let full = (path as NSString).appendingPathComponent(name)
+            return fm.fileExists(atPath: full, isDirectory: &isDir) && isDir.boolValue
+        }
     }
 
     private func selectFolder(_ path: String) {
@@ -190,7 +200,7 @@ struct ProjectFolderField: View {
     }
 }
 
-/// Recursive folder submenu — shows subdirectories as expandable submenus.
+/// Recursive folder submenu — only loads children when the user hovers/clicks the arrow.
 private struct FolderSubmenu: View {
     let path: String
     let label: String
@@ -198,24 +208,25 @@ private struct FolderSubmenu: View {
 
     var body: some View {
         Menu {
-            // "Select this folder" action
             Button {
                 selectFolder(path)
             } label: {
-                Label("Select \"\(label)\"", systemImage: "checkmark.circle")
+                Label("Use \"\(label)\"", systemImage: "checkmark.circle")
             }
 
             Divider()
 
-            // Subdirectories as nested submenus
             let children = ProjectFolderField.subdirs(of: path)
-            if children.isEmpty {
-                Text("(empty)")
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(children, id: \.self) { child in
-                    let name = (child as NSString).lastPathComponent
+            ForEach(children, id: \.self) { child in
+                let name = (child as NSString).lastPathComponent
+                if ProjectFolderField.hasSubdirs(child) {
                     FolderSubmenu(path: child, label: name, selectFolder: selectFolder)
+                } else {
+                    Button {
+                        selectFolder(child)
+                    } label: {
+                        Label(name, systemImage: "folder")
+                    }
                 }
             }
         } label: {
