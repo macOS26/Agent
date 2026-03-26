@@ -506,11 +506,12 @@ The AI follows this priority order when automating Mac applications:
 
 | Priority | Tool | When to Use |
 |----------|------|-------------|
-| 1 | `apple_event_query` | First choice for reading app data — instant ObjC dispatch, zero compilation |
-| 2 | `execute_shell_command` | osascript with TCC — quick one-off AppleScript commands |
-| 3 | Accessibility tools (`ax_*`) | AXUIElement API for UI inspection and interaction |
-| 4 | `run_agent_script` | ScriptingBridge Swift dylib for complex/persistent automation (full TCC) |
-| 5 | NSAppleScript inside `run_agent_script` | Fallback when ScriptingBridge has issues with an app |
+| 1 | `run_agent_script` | ScriptingBridge Swift dylib for complex/persistent automation (full TCC) |
+| 2 | NSAppleScript inside `run_agent_script` | Fallback when ScriptingBridge has issues with an app |
+| 3 | `execute_shell_command` | osascript with TCC — quick one-off AppleScript commands |
+| 4 | Accessibility tools (`ax_*`) | AXUIElement API for UI inspection and interaction |
+| 5 | `apple_event_query` | First choice for reading app data — instant ObjC dispatch, zero compilation |
+
 
 ### Coding Tools Priority
 

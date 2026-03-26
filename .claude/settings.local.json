@@ -231,7 +231,9 @@
       "Bash(xcrun xcodebuild:*)",
       "Read(//Users/toddbruss/Documents/**)",
       "WebFetch(domain:coryrylan.com)",
-      "WebFetch(domain:medium.com)"
+      "WebFetch(domain:medium.com)",
+      "Bash(mode\", \"create a plan\", etc. LLM cannot spontaneously enter plan mode.:*)",
+      "Bash(defaults domains:*)"
     ]
   }
 }
