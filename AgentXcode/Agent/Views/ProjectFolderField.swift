@@ -82,6 +82,9 @@ struct ProjectFolderField: View {
         RecentFoldersService.shared.recentFolders
     }
 
+    @State private var showBrowser = false
+    @State private var browserPath = FileManager.default.homeDirectoryForCurrentUser.path
+
     /// List subdirectories of a given path, sorted alphabetically. Folders only.
     static func subdirs(of path: String) -> [String] {
         let fm = FileManager.default
@@ -97,38 +100,23 @@ struct ProjectFolderField: View {
             }
     }
 
-
     private func selectFolder(_ path: String) {
         projectFolder = path
         RecentFoldersService.shared.addFolder(path)
+        showBrowser = false
         onFolderSelected?()
     }
 
     var body: some View {
         HStack(spacing: 8) {
-            Menu {
-                // Recent folders at top
-                if !recentFolders.isEmpty {
-                    ForEach(recentFolders, id: \.self) { folder in
-                        Button {
-                            selectFolder(folder)
-                        } label: {
-                            Label {
-                                Text((folder as NSString).lastPathComponent)
-                            } icon: {
-                                Image(systemName: folder == projectFolder ? "folder.fill" : "folder")
-                            }
-                        }
-                    }
-                    Divider()
+            Button {
+                // Start browser at current project folder or home
+                if !projectFolder.isEmpty {
+                    browserPath = projectFolder
+                } else {
+                    browserPath = FileManager.default.homeDirectoryForCurrentUser.path
                 }
-
-                // Home directory — only common project locations
-                let homePath = FileManager.default.homeDirectoryForCurrentUser.path
-                let knownDirs = ["Documents", "Desktop", "Developer", "Downloads", "Projects"]
-                ForEach(knownDirs.filter { FileManager.default.fileExists(atPath: (homePath as NSString).appendingPathComponent($0)) }, id: \.self) { name in
-                    FolderSubmenu(path: (homePath as NSString).appendingPathComponent(name), label: name, selectFolder: selectFolder)
-                }
+                showBrowser.toggle()
             } label: {
                 Image(systemName: "folder")
                     .frame(width: 36)
@@ -137,6 +125,14 @@ struct ProjectFolderField: View {
             .clipShape(Capsule())
             .controlSize(.regular)
             .help("Pick project folder")
+            .popover(isPresented: $showBrowser) {
+                FolderBrowserView(
+                    currentPath: $browserPath,
+                    recentFolders: recentFolders,
+                    selectedFolder: projectFolder,
+                    onSelect: selectFolder
+                )
+            }
 
             PathTextField(
                 text: $projectFolder,
@@ -193,35 +189,105 @@ struct ProjectFolderField: View {
     }
 }
 
-/// Folder submenu — always shows as a Menu with an arrow.
-/// Children are listed inside; SwiftUI only evaluates the Menu body when opened.
-private struct FolderSubmenu: View {
-    let path: String
-    let label: String
-    let selectFolder: (String) -> Void
+/// Flat folder browser — shows one directory level at a time. Click to drill in, back button to go up.
+private struct FolderBrowserView: View {
+    @Binding var currentPath: String
+    let recentFolders: [String]
+    let selectedFolder: String
+    let onSelect: (String) -> Void
+
+    @State private var children: [String] = []
 
     var body: some View {
-        Menu {
-            Button {
-                selectFolder(path)
-            } label: {
-                Label("Use \"\(label)\"", systemImage: "checkmark.circle")
+        VStack(alignment: .leading, spacing: 0) {
+            // Header: back button + current folder name + select button
+            HStack {
+                Button {
+                    currentPath = (currentPath as NSString).deletingLastPathComponent
+                } label: {
+                    Image(systemName: "chevron.left")
+                }
+                .disabled(currentPath == "/")
+                .buttonStyle(.borderless)
+
+                Text((currentPath as NSString).lastPathComponent)
+                    .font(.system(size: 12, weight: .semibold))
+                    .lineLimit(1)
+                    .truncationMode(.head)
+
+                Spacer()
+
+                Button("Select") {
+                    onSelect(currentPath)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
             }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
 
             Divider()
 
-            // This only runs when the user opens this submenu
-            let children = ProjectFolderField.subdirs(of: path)
-            if children.isEmpty {
-                Text("(empty)").foregroundStyle(.secondary)
-            } else {
-                ForEach(children, id: \.self) { child in
-                    let name = (child as NSString).lastPathComponent
-                    FolderSubmenu(path: child, label: name, selectFolder: selectFolder)
+            // Recent folders section
+            if !recentFolders.isEmpty {
+                Text("Recent")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 10)
+                    .padding(.top, 6)
+
+                ForEach(recentFolders.prefix(6), id: \.self) { folder in
+                    Button {
+                        onSelect(folder)
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: folder == selectedFolder ? "folder.fill" : "folder")
+                                .foregroundStyle(.blue)
+                                .frame(width: 16)
+                            Text((folder as NSString).lastPathComponent)
+                                .lineLimit(1)
+                            Spacer()
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 3)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                Divider()
+                    .padding(.vertical, 4)
+            }
+
+            // Directory listing
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    ForEach(children, id: \.self) { child in
+                        Button {
+                            currentPath = child
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "folder")
+                                    .foregroundStyle(.blue)
+                                    .frame(width: 16)
+                                Text((child as NSString).lastPathComponent)
+                                    .lineLimit(1)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
             }
-        } label: {
-            Label(label, systemImage: "folder")
         }
+        .frame(width: 260, height: 340)
+        .onAppear { children = ProjectFolderField.subdirs(of: currentPath) }
+        .onChange(of: currentPath) { children = ProjectFolderField.subdirs(of: currentPath) }
     }
 }
