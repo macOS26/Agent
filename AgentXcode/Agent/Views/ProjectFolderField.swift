@@ -1,6 +1,17 @@
 import SwiftUI
 import AppKit
 
+/// NSTextField subclass that notifies on focus (click/tab into field).
+private class FocusAwareTextField: NSTextField {
+    var onFocus: (() -> Void)?
+
+    override func becomeFirstResponder() -> Bool {
+        let result = super.becomeFirstResponder()
+        if result { onFocus?() }
+        return result
+    }
+}
+
 /// NSTextField wrapper that disables macOS system file path autocomplete.
 private struct PathTextField: NSViewRepresentable {
     @Binding var text: String
@@ -8,8 +19,8 @@ private struct PathTextField: NSViewRepresentable {
     var onSubmit: () -> Void
     var onFocusChange: (Bool) -> Void
 
-    func makeNSView(context: Context) -> NSTextField {
-        let tf = NSTextField()
+    func makeNSView(context: Context) -> FocusAwareTextField {
+        let tf = FocusAwareTextField()
         tf.placeholderString = placeholder
         tf.isAutomaticTextCompletionEnabled = false
         tf.isBordered = false
@@ -19,13 +30,15 @@ private struct PathTextField: NSViewRepresentable {
         tf.lineBreakMode = .byTruncatingTail
         tf.cell?.isScrollable = true
         tf.delegate = context.coordinator
+        tf.onFocus = { onFocusChange(true) }
         return tf
     }
 
-    func updateNSView(_ tf: NSTextField, context: Context) {
+    func updateNSView(_ tf: FocusAwareTextField, context: Context) {
         if tf.stringValue != text {
             tf.stringValue = text
         }
+        tf.onFocus = { onFocusChange(true) }
     }
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
@@ -42,10 +55,6 @@ private struct PathTextField: NSViewRepresentable {
         func controlTextDidEndEditing(_ obj: Notification) {
             parent.onSubmit()
             parent.onFocusChange(false)
-        }
-
-        func controlTextDidBeginEditing(_ obj: Notification) {
-            parent.onFocusChange(true)
         }
 
         func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
