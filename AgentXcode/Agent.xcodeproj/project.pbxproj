@@ -63,6 +63,7 @@
 		AA10000000000000000062 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000005D /* SettingsView.swift */; };
 		AA10000000000000000063 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000005E /* HistoryView.swift */; };
 		AA10000000000000000064 /* PulseRingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000005F /* PulseRingView.swift */; };
+		AA100000000000000000C1 /* ShimmerText.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100000000000000000C0 /* ShimmerText.swift */; };
 		AA10000000000000000065 /* StatusDotView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000068 /* StatusDotView.swift */; };
 		AA10000000000000000066 /* ActivityLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000061 /* ActivityLogView.swift */; };
 		AA10000000000000000070 /* ChatModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000069 /* ChatModels.swift */; };
@@ -254,6 +255,7 @@
 		AA1000000000000000005D /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		AA1000000000000000005E /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		AA1000000000000000005F /* PulseRingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PulseRingView.swift; sourceTree = "<group>"; };
+		AA100000000000000000C0 /* ShimmerText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShimmerText.swift; sourceTree = "<group>"; };
 		AA10000000000000000061 /* ActivityLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityLogView.swift; sourceTree = "<group>"; };
 		AA10000000000000000068 /* StatusDotView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusDotView.swift; sourceTree = "<group>"; };
 		AA10000000000000000069 /* ChatModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModels.swift; sourceTree = "<group>"; };
@@ -513,6 +515,7 @@
 				AA1000000000000000007C /* TabBarView.swift */,
 				AA1000000000000000001B /* ContentView.swift */,
 				AA1000000000000000005F /* PulseRingView.swift */,
+				AA100000000000000000C0 /* ShimmerText.swift */,
 				AA10000000000000000061 /* ActivityLogView.swift */,
 				AA10000000000000000068 /* StatusDotView.swift */,
 				AA100000000000000000B6 /* ToolsView.swift */,
@@ -882,6 +885,7 @@
 				AA10000000000000000062 /* SettingsView.swift in Sources */,
 				AA10000000000000000063 /* HistoryView.swift in Sources */,
 				AA10000000000000000064 /* PulseRingView.swift in Sources */,
+				AA100000000000000000C1 /* ShimmerText.swift in Sources */,
 				AA10000000000000000065 /* StatusDotView.swift in Sources */,
 				AA10000000000000000101 /* ProjectFolderField.swift in Sources */,
 				AA10000000000000000066 /* ActivityLogView.swift in Sources */,
@@ -917,7 +921,7 @@
 				144AC666CD8BD1964F726B31 /* ServicesPopover.swift in Sources */,
 				4992CD23A14EED92AB5B902A /* KeyboardShortcuts.swift in Sources */,
 				9813192DF858B26C6D4135F3 /* ProjectFolderSectionView.swift in Sources */,
-			);
+);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		BB10000000000000000050 /* Sources */ = {
