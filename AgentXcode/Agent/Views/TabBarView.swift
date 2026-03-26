@@ -19,6 +19,7 @@ struct TabBarView: View {
                     onSelect: { viewModel.selectMainTab() },
                     onClose: nil
                 )
+                .id("main-\(viewModel.selectedProvider.rawValue)")
 
                 ForEach(viewModel.scriptTabs) { tab in
                     let isDragging = draggingTabId == tab.id
