@@ -525,10 +525,10 @@ extension AgentViewModel {
                             break
                         }
                     } else if let agentErr = error as? AgentError, agentErr.isRecoverable, timeoutRetryCount < maxTimeoutRetries {
-                        // Server error (5xx) — retry with backoff
+                        // Server/network error — retry every 10 seconds
                         timeoutRetryCount += 1
-                        let retryDelay = TimeInterval(min(5 * timeoutRetryCount, 20))
-                        tab.appendLog("\(errorSource) server error (attempt \(timeoutRetryCount)/\(maxTimeoutRetries)) — retrying in \(Int(retryDelay))s...")
+                        let retryDelay: TimeInterval = 10
+                        tab.appendLog("\(errorSource) recoverable error (attempt \(timeoutRetryCount)/\(maxTimeoutRetries)) — retrying in \(Int(retryDelay))s...")
                         tab.flush()
                         tabTaskLog.info("[\(tab.displayTitle)] \(errorSource) server error, retry \(timeoutRetryCount)/\(maxTimeoutRetries), waiting \(retryDelay)s")
                         try? await Task.sleep(for: .seconds(retryDelay))
