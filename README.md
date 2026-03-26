@@ -12,8 +12,7 @@ Now with Apple Intelligence
 
 ### Multi-Provider LLM Support
 
-<img width="1215" height="862" alt="image" src="https://github.com/user-attachments/assets/17265c25-2c33-4359-a0f5-66b812c7068d" />
-
+<img width="1275" height="812" alt="Screenshot 2026-03-25 at 11 32 24 PM" src="https://github.com/user-attachments/assets/b695da68-3a7b-4ecc-9b7a-4fab6a55a8bf" />
 
 | Provider | API Key | Vision | Notes |
 |----------|---------|--------|-------|
@@ -101,17 +100,12 @@ Full macOS Accessibility API for apps without AppleScript support:
 - Web: `Selenium`, `WebForm`, `WebNavigate`, `WebScrape`
 - More: `CreateDMG`, `CapturePhoto`, `ListNotes`, `ListReminders`
 
-<img width="1056" height="597" alt="IMG_5716" src="https://github.com/user-attachments/assets/117cbeb8-46e4-4f92-8494-f6058a92059e" />
-
 ### Background
 Agent! is the result of 27 years of Mac automation experience — from FaceSpan and AppleScript on macOS 9 through AppleScript Studio, AppleScript-ObjC, and now Swift. It connects LLMs to Apple Events, ScriptingBridge, Accessibility APIs, and XPC services for native macOS control.
 
 A native macOS autonomous AI agent built entirely in Swift.
 
 Agent uses SwiftUI, XPC, SMAppService, Apple Events, ScriptingBridge, Accessibility APIs, and MCP to give an AI agent native access to your Mac. It's an `.app` that speaks macOS natively. Xcode command line tools are required which is Agent!'s only dependency.
-
-<img width="1535" height="1008" alt="IMG_4776" src="https://github.com/user-attachments/assets/56549e6b-06ff-449c-b1b7-fd77b90ad9f6" />
-
 
 ---
 
