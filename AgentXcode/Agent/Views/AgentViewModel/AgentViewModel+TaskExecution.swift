@@ -1842,12 +1842,6 @@ extension AgentViewModel {
                         errorSource = "Apple Intelligence"
                     }
                     
-                    // Log rate limit errors but don't retry — let the user decide
-                    if errMsg.contains("429") || errMsg.lowercased().contains("rate limit") || errMsg.lowercased().contains("concurrent request") {
-                        appendLog("Rate limited: \(errMsg)")
-                        flushLog()
-                    }
-                    
                     // Handle timeout errors with retry logic
                     if isNetworkTimeout {
                         // Check if we've already retried this timeout
@@ -1937,6 +1931,7 @@ extension AgentViewModel {
                             if agentReplyHandle != nil {
                                 sendProgressUpdate(timeoutMessage)
                             }
+                            break
                         }
                     } else if let agentErr = error as? AgentError, agentErr.isRecoverable, timeoutRetryCount < maxTimeoutRetries {
                         // Server error (5xx) — retry with backoff
@@ -1961,18 +1956,6 @@ extension AgentViewModel {
                             }
                         }
                         break
-                    }
-
-                    // Apple Intelligence error explanation (timeout path only — non-timeout breaks above)
-                    if mediator.isEnabled && mediator.showAnnotationsToUser {
-                        taskLog.info("[main] Apple AI mediator: explaining error...")
-                        if let errorAnnotation = await mediator.explainError(toolName: "LLM request", error: errMsg) {
-                            appendLog(errorAnnotation.formatted)
-                            flushLog()
-                            if agentReplyHandle != nil {
-                                sendProgressUpdate(errorAnnotation.formatted)
-                            }
-                        }
                     }
                 }
                 continue

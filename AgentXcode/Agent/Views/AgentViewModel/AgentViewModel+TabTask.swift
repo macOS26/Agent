@@ -523,6 +523,7 @@ extension AgentViewModel {
                             
                             let timeoutMessage = "\(errorSource) timeout after \(maxTimeoutRetries) retries. Please check your network connection or try a different LLM provider."
                             tab.appendLog(timeoutMessage)
+                            break
                         }
                     } else if let agentErr = error as? AgentError, agentErr.isRecoverable, timeoutRetryCount < maxTimeoutRetries {
                         // Server error (5xx) — retry with backoff
@@ -546,14 +547,6 @@ extension AgentViewModel {
                             }
                         }
                         break
-                    }
-
-                    // Apple AI error explanation (timeout path only)
-                    if mediator.isEnabled && mediator.showAnnotationsToUser {
-                        if let errorAnnotation = await mediator.explainError(toolName: "LLM request", error: errMsg) {
-                            tab.appendLog(errorAnnotation.formatted)
-                            tab.flush()
-                        }
                     }
                 }
                 continue
