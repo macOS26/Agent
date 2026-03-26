@@ -46,11 +46,9 @@ struct HeaderStatusView: View {
                     HStack(spacing: 4) {
                         ProgressView().controlSize(.mini)
                         if tab.taskQueue.isEmpty {
-                            Text("Running...")
-                                .font(.caption).foregroundStyle(.green)
+                            ShimmerText("Running...", color: .green)
                         } else {
-                            Text("Running... +\(tab.taskQueue.count) queued")
-                                .font(.caption).foregroundStyle(.orange)
+                            ShimmerText("Running... +\(tab.taskQueue.count) queued", color: .orange)
                         }
                     }
                 }
@@ -64,11 +62,9 @@ struct HeaderStatusView: View {
                     HStack(spacing: 4) {
                         ProgressView().controlSize(.mini)
                         if viewModel.mainTaskQueue.isEmpty {
-                            Text(viewModel.rootServiceActive ? "Root..." : viewModel.userServiceActive ? "Executing..." : "Running...")
-                                .font(.caption).foregroundStyle(.green)
+                            ShimmerText(viewModel.rootServiceActive ? "Root..." : viewModel.userServiceActive ? "Executing..." : "Running...", color: .green)
                         } else {
-                            Text("Running... +\(viewModel.mainTaskQueue.count) queued")
-                                .font(.caption).foregroundStyle(.orange)
+                            ShimmerText("Running... +\(viewModel.mainTaskQueue.count) queued", color: .orange)
                         }
                     }
                 }
