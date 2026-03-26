@@ -271,10 +271,6 @@ final class OllamaService {
         ]
 
         let bodyData = try JSONSerialization.data(withJSONObject: body)
-        // Debug: dump full request
-        if let jsonStr = String(data: bodyData, encoding: .utf8) {
-            print("[OllamaService] REQUEST:\n\(jsonStr)")
-        }
         return try await Self.performStreamingRequest(
             bodyData: bodyData,
             apiKey: apiKey,
