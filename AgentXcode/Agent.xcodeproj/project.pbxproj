@@ -377,7 +377,6 @@
 			isa = PBXGroup;
 			children = (
 				EADF39CE2F69011500CD01E5 /* ColorSyntax */,
-				EADF39CD2F6900F400CD01E5 /* SystemPrompt+Tools */,
 				EADF39CB2F68BFD600CD01E5 /* Protocols */,
 				EADF39CA2F68BFC400CD01E5 /* Models */,
 				EADF39C72F68BF2100CD01E5 /* Views */,
@@ -617,6 +616,7 @@
 				A3C2A06B1A601A55BD6156A3 /* CodeBlockLangDef.swift */,
 				654AE34A3EAA418AF0636F70 /* CodeBlockSyntax+LanguageResolution.swift */,
 				D30A0E288397BF42CA9B7FFB /* CodeBlockSyntax+Diff.swift */,
+				EADF39CD2F6900F400CD01E5 /* SystemPrompt+Tools */,
 			);
 			path = ColorSyntax;
 			sourceTree = "<group>";

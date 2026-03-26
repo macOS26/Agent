@@ -334,10 +334,8 @@ struct ContentView: View {
                     let direction = event.keyCode == 126 ? -1 : 1
                     if let tabId = viewModel.selectedTabId,
                        let tab = viewModel.scriptTabs.first(where: { $0.id == tabId }) {
-                        print("[History] tab(\(tab.scriptName)) dir=\(direction) count=\(tab.promptHistory.count) idx=\(tab.historyIndex)")
                         tab.navigateHistory(direction: direction)
                     } else {
-                        print("[History] main dir=\(direction) count=\(viewModel.currentTabPromptHistory.count)")
                         viewModel.navigatePromptHistory(direction: direction)
                     }
                     return nil

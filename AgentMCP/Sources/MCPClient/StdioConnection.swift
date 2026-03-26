@@ -39,7 +39,7 @@ final class StdioConnection: @unchecked Sendable, MCPConnection {
 
             // Guard against unbounded buffer growth from malicious servers
             if self.buffer.count > Self.maxBufferSize {
-                print("[MCPClient] Buffer exceeded \(Self.maxBufferSize) bytes — disconnecting server")
+                // Buffer exceeded limit — disconnect
                 self.buffer.removeAll()
                 let pendingCopy = self.pending
                 self.pending.removeAll()

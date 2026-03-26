@@ -26,17 +26,7 @@ Now with Apple Intelligence supporting 8 LLM providers.
 
 Apple Intelligence serves as a **communication mediator** between the LLM and the user, not as an LLM provider. It observes conversations and adds helpful context using on-device intelligence:
 
-| Feature | Description |
-|---------|-------------|
-| **Autonomous Task Loop** | The task loop is unstoppable — it runs until the LLM calls task_complete or the user hits cancel/escape. No iteration caps, no nudges, no artificial limits. The LLM drives; Agent! never interrupts. Errors continue the loop instead of breaking it. Text-only responses (no tool calls) are treated as task completion, preventing infinite loops when the LLM forgets to call task_complete. |
-| **Safari JavaScript Web Automation** | Built-in web automation via Safari's JavaScript bridge — open URLs, scan pages for CSS selectors, click elements, type into fields, read page content, execute JavaScript, and navigate tabs. No WebDriver installation required. Selenium WebDriver also available for Chrome/Firefox when needed. |
-| **Shimmer Thinking Animation** | "Thinking..." text pulses with shimmer effect matching the LLM icon throb |
-| **Status Colors** | "Running..." in green, "Running... +N queued" in orange for multi-task visibility |
-| **task_complete Enforcement** | System prompt requires every LLM response to end with task_complete; if the LLM needs user input it puts the question in the summary and calls task_complete |
-| **Timeout Protection** | 10-second timeout prevents LLM tabs from hanging when Apple Intelligence is slow to respond |
-| **OS Log Diagnostics** | Built-in os.log diagnostics for debugging mediator behavior |
-| **Brain Button Integration** | Toggle Apple Intelligence mediator directly from the brain button in the toolbar |
-| **LoRA Training** | Apple Intelligence can also be used for LoRA adapter training with the main LLM |
+
 
 Annotations are tagged with `[AI]` prefixes to distinguish them from LLM responses.
 
@@ -44,11 +34,7 @@ Enable Apple Intelligence Mediator in Settings to enhance communication clarity.
 
 
 
-### System Requirements
 
-- **macOS 26+** (Tahoe)
-- **Xcode Command Line Tools** (auto-installed if missing)
-- **Apple Silicon recommended** for local LLMs
 
 ### App Automation (50 apps via ScriptingBridge)
 
@@ -113,7 +99,9 @@ Full macOS Accessibility API for apps without AppleScript support:
 ### 1. Prerequisites
 
 - macOS 26 (Tahoe) or later
-- Xcode Command Line Tools (Agent will prompt to install if missing)
+- **macOS 26+** (Tahoe)
+- **Xcode Command Line Tools** (Agent will prompt to install if missing)
+- **Apple Silicon recommended** for local LLMs (minimum 32GB RAM, recommended 64-128GB for local models)
 - An API key for your preferred provider
 
 ### 2. Build and Run
@@ -190,9 +178,7 @@ Click the **gear icon** (⚙️) to open Settings:
 
 ### 6. Set a Project Folder (optional)
 
-Click the **folder icon** in the toolbar to select a project folder or file. This sets a default working directory that the AI uses as context for all commands and file operations. The project folder is included in the system prompt on every API call, so the AI always knows your workspace context — even across multi-step tasks. You can change it at any time between tasks.
-
-The AI is not restricted to this folder — it can look outside it when needed to complete a task.
+Click the **folder icon** in the toolbar to select a project folder or file. This sets a default working directory for file operations.
 
 ### 7. Connect and Run
 

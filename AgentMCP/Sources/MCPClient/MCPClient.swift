@@ -188,10 +188,8 @@ public actor MCPClient {
 
         let connection: any MCPConnection
         if config.isHTTP {
-            print("[MCPClient] Adding HTTP server: \(config.name) at \(config.url ?? "")")
             connection = try connectHTTP(config)
         } else {
-            print("[MCPClient] Adding server: \(config.name) at \(config.command)")
             connection = try launchServer(config)
         }
         connections[config.id] = connection
@@ -201,7 +199,6 @@ public actor MCPClient {
         do {
             try await withThrowingTaskGroup(of: Void.self) { group in
                 group.addTask {
-                    print("[MCPClient] Sending initialize...")
                     let initResponse = try await connection.sendRequest(
                         method: "initialize",
                         params: [
@@ -217,7 +214,6 @@ public actor MCPClient {
                     }
 
                     let serverName = serverInfo["name"] as? String ?? config.name
-                    print("[MCPClient] Connected to: \(serverName)")
 
                     try connection.sendNotification(method: "notifications/initialized", params: nil)
 
@@ -243,7 +239,6 @@ public actor MCPClient {
         }
 
         errors.removeValue(forKey: config.id)
-        print("[MCPClient] Server \(config.name) ready with \(discoveredTools[config.id]?.count ?? 0) tools")
     }
 
     public func removeServer(_ serverId: UUID) {
@@ -403,7 +398,6 @@ public actor MCPClient {
         for (key, value) in config.env {
             let upper = key.uppercased()
             if Self.blockedEnvVars.contains(upper) || upper.hasPrefix("DYLD_") {
-                print("[MCPClient] Blocked dangerous environment variable: \(key)")
                 continue
             }
             env[key] = value
@@ -418,7 +412,6 @@ public actor MCPClient {
         process.standardError = stderrPipe
 
         try process.run()
-        print("[MCPClient] Launched PID \(process.processIdentifier): \(config.command)")
 
         return StdioConnection(
             process: process,
@@ -445,9 +438,6 @@ public actor MCPClient {
                 throw MCPClientError.connectionFailed("Plain HTTP only allowed for localhost. Use HTTPS for remote servers.")
             }
         }
-        print("[MCPClient] Creating HTTP connection to \(urlString)" +
-              (config.sseEndpoint != nil ? " (sse: \(config.sseEndpoint!))" : "") +
-              (config.httpEndpoint != nil ? " (http: \(config.httpEndpoint!))" : ""))
         return HTTPConnection(url: url, headers: config.headers, sseEndpoint: config.sseEndpoint, httpEndpoint: config.httpEndpoint)
     }
 
@@ -462,7 +452,6 @@ public actor MCPClient {
                         let description = tool["description"] as? String ?? ""
                         guard !name.isEmpty, name.count <= 128,
                               name.allSatisfy({ $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "_" || $0 == "-") }) else {
-                            print("[MCPClient] Skipping tool with invalid name: '\(name.prefix(64))'")
                             return nil
                         }
                         var schema = tool["inputSchema"] as? [String: Any] ?? [:]

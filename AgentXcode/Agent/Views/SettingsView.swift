@@ -414,14 +414,14 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Max Output Tokens").font(.caption).foregroundStyle(.secondary)
                     HStack {
-                        TextField("0 = default", text: Binding(
+                        TextField(viewModel.selectedProvider == .claude ? "16384" : "0 = default", text: Binding(
                             get: { viewModel.maxTokens == 0 ? "" : "\(viewModel.maxTokens)" },
                             set: { viewModel.maxTokens = Int($0) ?? 0 }
                         ))
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 100)
 
-                        Text(viewModel.maxTokens == 0 ? (viewModel.selectedProvider == .claude ? "Default: 16384" : "Provider default") : "\(viewModel.maxTokens) tokens")
+                        Text(viewModel.maxTokens == 0 ? (viewModel.selectedProvider == .claude ? "Defaults to 16384" : "Provider default") : "\(viewModel.maxTokens) tokens")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
