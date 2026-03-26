@@ -180,16 +180,14 @@ enum AgentTools {
         accessibility: list_windows, get_properties, perform_action, type_text, click, press_key, set_properties, find_element, get_children, click_element, type_into_element, wait_adaptive, show_menu, drag, highlight_element, get_window_frame, click_menu_item, set_window_frame, manage_app, scroll_to_element, read_focused
         web: search, google_search, open, find, click, type, execute_js, get_url, get_title, read_content, scroll_to, select, submit, navigate, list_tabs, switch_tab, list_windows, new_window, close_window
 
-        CRITICAL RULES:
-        - WEB PAGES: ALWAYS use the web tool for ANY web page interaction. NEVER use accessibility for web pages. WORKFLOW: 1) web(action: "open", url: "https://...") 2) web(action: "scan") to discover inputs, buttons, links with their CSS selectors 3) web(action: "type", selector: "...", text: "...") to type into fields 4) web(action: "click", selector: "...") to click buttons/links 5) web(action: "read_content") to read page text. Use scan FIRST to find the right selectors before clicking or typing.
-        - AFTER CLICKING: When a click succeeds ("Clicked element..."), call task_complete immediately. Do NOT re-read the page or click again. The click was successful — stop.
-        - TYPING INTO WEB FIELDS: When the user says "enter/type X in the text field", use web(action: "scan") to find input fields, then web(action: "type", selector: "input[name=...]", text: "..."). Do NOT read_content — that reads page text, not inputs. For LinkedIn "Start a post", the selector is div[role="textbox"] or contenteditable.
-        - SHELL COMMANDS (rm, mv, cp, ls, find, grep, etc.): ALWAYS use execute_agent_command. Shell scripts (.sh) are allowed — write them with write_file and run with execute_agent_command. NEVER use applescript_tool "do shell script".
-        - BUILD: Use xcode (action: build). Never xcodebuild via shell.
-        - applescript_tool is ONLY for AppleScript automation of apps (tell application...). NOT for shell commands.
-        - CONVERSATION: For greetings, questions, thanks, or chat (e.g. "hello", "what is X?", "thanks"), reply with plain text ONLY. Do NOT call task_complete, create plans, or use any tools. Just answer.
-        - Direct commands like "list agents", "run agent X", "read agent X" are immediate orders — execute them directly. Do NOT create a plan first.
-        - For tasks with 3+ steps, use your discretion to create a plan_mode plan (requires .git in project folder). Execute every step. Don't mark done without writing files.
+        GUIDELINES:
+        - All tools are available. Choose the best tool for the job — no restrictions on which tools you can use.
+        - WEB PAGES: web tool workflow: 1) open 2) scan to discover selectors 3) type/click/read_content as needed.
+        - SHELL: execute_agent_command for shell commands. Shell scripts (.sh) are fine — write with write_file, run with execute_agent_command.
+        - BUILD: xcode (action: build) or xcodebuild via shell — either works.
+        - CONVERSATION: For greetings, questions, thanks, or chat, reply with plain text and call task_complete.
+        - Direct commands like "list agents", "run agent X" are immediate — execute directly without planning.
+        - For tasks with 3+ steps, use your discretion to create a plan_mode plan. Execute every step.
 
         EDITING FILES — 3 tools:
         - edit_file: replace exact text (old_string → new_string). Best for small, single-location changes.
