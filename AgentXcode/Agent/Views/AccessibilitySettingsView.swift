@@ -287,10 +287,9 @@ struct AccessibilitySettingsView: View {
                         .foregroundStyle(.secondary)
                     Spacer()
                     Button("Test") {
-                        // Triggers Automation permission prompt for Finder
-                        let script = NSAppleScript(source: "tell application \"Finder\" to activate")
-                        var err: NSDictionary?
-                        script?.executeAndReturnError(&err)
+                        // Use AppleEventService to activate System Settings — triggers Automation permission
+                        let ops: [[String: Any]] = [["action": "activate"]]
+                        _ = AppleEventService.shared.execute(bundleID: "com.apple.systemevents", operations: ops)
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
