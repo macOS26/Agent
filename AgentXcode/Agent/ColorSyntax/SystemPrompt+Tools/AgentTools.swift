@@ -379,7 +379,36 @@ enum AgentTools {
             ],
             required: ["file_path", "old_string", "new_string"]
         ),
-        // create_diff, apply_diff, undo_edit, diff_and_apply are all actions inside file_manager
+        ToolDef(
+            name: Name.createDiff,
+            description: "Create a diff between source text and destination text. If file_path is provided, reads the file as source. Returns a diff_id UUID for use with apply_diff.",
+            properties: [
+                "source": ["type": "string", "description": "Original text (ignored if file_path is provided)"],
+                "destination": ["type": "string", "description": "New text to diff against source"],
+                "file_path": ["type": "string", "description": "Path to file to use as source (optional — overrides source parameter)"],
+            ],
+            required: ["destination"]
+        ),
+        ToolDef(
+            name: Name.applyDiff,
+            description: "Apply a diff to a file. Use diff_id from create_diff, or provide a diff string in =/-/+ format (= keep, - remove, + add).",
+            properties: [
+                "file_path": ["type": "string", "description": "Path to the file to patch"],
+                "diff_id": ["type": "string", "description": "UUID from create_diff (preferred)"],
+                "diff": ["type": "string", "description": "ASCII diff in =/-/+ format (alternative to diff_id)"],
+            ],
+            required: ["file_path"]
+        ),
+        ToolDef(
+            name: Name.diffAndApply,
+            description: "Create and apply a diff in one step. Provide file_path and destination text. Reads the file, diffs it against destination, and writes the result.",
+            properties: [
+                "file_path": ["type": "string", "description": "Path to the file to modify"],
+                "destination": ["type": "string", "description": "The desired new content of the file"],
+                "source": ["type": "string", "description": "Original text (optional — reads from file if omitted)"],
+            ],
+            required: ["file_path", "destination"]
+        ),
         ToolDef(
             name: Name.listFiles,
             description: "Find files matching a glob pattern. Use instead of `find`. Excludes hidden files and .build directories.",
