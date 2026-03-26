@@ -21,6 +21,7 @@ final class DiffStore {
 
     private var diffs: [UUID: DiffResult] = [:]
     private var sources: [UUID: String] = [:]
+    private var editHistory: [String: String] = [:] // file path → original content before last edit
 
     private init() {}
 
@@ -38,9 +39,25 @@ final class DiffStore {
         return (diff, source)
     }
 
+    /// Record original content before an edit for undo support.
+    func recordEdit(filePath: String, originalContent: String) {
+        editHistory[filePath] = originalContent
+    }
+
+    /// Retrieve original content for undo.
+    func lastEdit(for filePath: String) -> String? {
+        editHistory[filePath]
+    }
+
+    /// Clear undo history for a file after successful undo.
+    func clearEditHistory(for filePath: String) {
+        editHistory.removeValue(forKey: filePath)
+    }
+
     /// Clear all stored diffs (call at task start).
     func clear() {
         diffs.removeAll()
         sources.removeAll()
+        editHistory.removeAll()
     }
 }

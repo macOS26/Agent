@@ -45,8 +45,19 @@ extension AgentViewModel {
             let oldString = input["old_string"] as? String ?? ""
             let newString = input["new_string"] as? String ?? ""
             let replaceAll = input["replace_all"] as? Bool ?? false
+            let context = input["context"] as? String
             tab.appendLog("📝 Edit: \(filePath)")
-            let output = await Self.offMain { CodingService.editFile(path: filePath, oldString: oldString, newString: newString, replaceAll: replaceAll) }
+            // Capture original for undo
+            let expandedPath = (filePath as NSString).expandingTildeInPath
+            let originalContent: String? = await Self.offMain {
+                guard let data = FileManager.default.contents(atPath: expandedPath),
+                      let text = String(data: data, encoding: .utf8) else { return nil }
+                return text
+            }
+            let output = await Self.offMain { CodingService.editFile(path: filePath, oldString: oldString, newString: newString, replaceAll: replaceAll, context: context) }
+            if !output.hasPrefix("Error"), let original = originalContent {
+                DiffStore.shared.recordEdit(filePath: expandedPath, originalContent: original)
+            }
             let diff = MultiLineDiff.createDiff(source: oldString, destination: newString, includeMetadata: true)
             var d1f = MultiLineDiff.displayDiff(diff: diff, source: oldString, format: .ai)
             if d1f.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -70,14 +81,24 @@ extension AgentViewModel {
         case "create_diff":
             var source = input["source"] as? String ?? ""
             let destination = input["destination"] as? String ?? ""
+            let startLine = input["start_line"] as? Int
+            let endLine = input["end_line"] as? Int
             if let fp = input["file_path"] as? String, !fp.isEmpty {
                 let expanded = (fp as NSString).expandingTildeInPath
                 if let data = FileManager.default.contents(atPath: expanded),
                    let text = String(data: data, encoding: .utf8) {
-                    source = text
+                    if let sl = startLine, let el = endLine {
+                        let lines = text.components(separatedBy: "\n")
+                        let s = max(sl - 1, 0)
+                        let e = min(el, lines.count)
+                        source = lines[s..<e].joined(separator: "\n")
+                    } else {
+                        source = text
+                    }
                 }
             }
-            let diff = MultiLineDiff.createDiff(source: source, destination: destination, includeMetadata: true)
+            let algorithm = CodingService.selectDiffAlgorithm(source: source, destination: destination)
+            let diff = MultiLineDiff.createDiff(source: source, destination: destination, algorithm: algorithm, includeMetadata: true, sourceStartLine: startLine.map { $0 - 1 })
             let d1f = MultiLineDiff.displayDiff(diff: diff, source: source, format: .ai)
             let diffId = DiffStore.shared.store(diff: diff, source: source)
             tab.appendOutput(d1f + "\n")
@@ -114,9 +135,12 @@ extension AgentViewModel {
                     throw DiffError.invalidDiff
                 }
                 try patched.write(to: URL(fileURLWithPath: expandedPath), atomically: true, encoding: .utf8)
-                let verifyDiff = MultiLineDiff.createAndDisplayDiff(source: source, destination: patched, format: .ai)
+                DiffStore.shared.recordEdit(filePath: expandedPath, originalContent: source)
+                let verifyResult = MultiLineDiff.createDiff(source: source, destination: patched, includeMetadata: true)
+                let verified = MultiLineDiff.verifyDiff(verifyResult)
+                let verifyDiff = MultiLineDiff.displayDiff(diff: verifyResult, source: source, format: .ai)
                 tab.appendOutput(verifyDiff + "\n")
-                let output = "Applied diff to \(filePath)"
+                let output = "Applied diff to \(filePath) [verified: \(verified)]"
                 tab.appendLog(output)
                 tab.flush()
                 return TabToolResult(
@@ -132,6 +156,39 @@ extension AgentViewModel {
                     isComplete: false
                 )
             }
+
+        case "undo_edit":
+            let filePath = input["file_path"] as? String ?? ""
+            let expandedUndo = (filePath as NSString).expandingTildeInPath
+            guard let original = DiffStore.shared.lastEdit(for: expandedUndo) else {
+                let err = "Error: no edit history for \(filePath)"
+                tab.appendLog(err); tab.flush()
+                return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": err], isComplete: false)
+            }
+            tab.appendLog("↩️ Undo: \(filePath)")
+            let undoOutput = await Self.offMain { CodingService.undoEdit(path: filePath, originalContent: original) }
+            if !undoOutput.hasPrefix("Error") { DiffStore.shared.clearEditHistory(for: expandedUndo) }
+            tab.appendLog(undoOutput); tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": undoOutput], isComplete: false)
+
+        case "diff_and_apply":
+            let filePath = input["file_path"] as? String ?? ""
+            let source = input["source"] as? String
+            let destination = input["destination"] as? String ?? ""
+            tab.appendLog("📝 Diff+Apply: \(filePath)")
+            let expandedDA = (filePath as NSString).expandingTildeInPath
+            let originalDA: String? = await Self.offMain {
+                guard let data = FileManager.default.contents(atPath: expandedDA),
+                      let text = String(data: data, encoding: .utf8) else { return nil }
+                return text
+            }
+            let result = await Self.offMain { CodingService.diffAndApply(path: filePath, source: source, destination: destination) }
+            if !result.output.hasPrefix("Error"), let orig = originalDA {
+                DiffStore.shared.recordEdit(filePath: expandedDA, originalContent: orig)
+            }
+            if !result.display.isEmpty { tab.appendOutput(result.display + "\n") }
+            tab.appendLog(result.output); tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": result.output], isComplete: false)
 
         case "list_files":
             let pattern = input["pattern"] as? String ?? "*"

@@ -19,6 +19,8 @@ enum AgentTools {
         static let applyDiff = "apply_diff"
         static let listFiles = "list_files"
         static let searchFiles = "search_files"
+        static let undoEdit = "undo_edit"
+        static let diffAndApply = "diff_and_apply"
         // File Manager (consolidated CRUDL)
         static let fileManager = "file_manager"
         // Git (consolidated CRUDL)
@@ -169,7 +171,7 @@ enum AgentTools {
         DIRECT TOOLS (no action parameter): read_file, write_file, edit_file, create_diff, apply_diff, list_files, search_files, read_dir, task_complete, execute_agent_command, execute_daemon_command, batch_commands, apple_event_query.
         - BATCH: Use batch_commands to run multiple shell commands in one call (newline-separated). Avoids round-trips. Ideal for gathering info (ls, cat, grep, find, git).
         ACTION TOOLS (require "action" parameter):
-        file_manager: read, write, edit, list, search, read_dir, if_to_switch, extract_function | git: status, diff, log, commit, diff_patch, branch
+        file_manager: read, write, edit, list, search, read_dir, create, apply, undo, diff_apply, if_to_switch, extract_function | git: status, diff, log, commit, diff_patch, branch
         xcode: build, run, list_projects, select_project, add_file, remove_file | agent: list, read, create, update, run, delete, combine
         plan_mode: create, update, read, list, delete | applescript_tool: execute, lookup_sdef, list, run, save, delete
         javascript_tool: execute, list, run, save, delete
@@ -363,12 +365,13 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.editFile,
-            description: "Replace exact text in a file. You MUST read_file first. The old_string must be unique unless replace_all is true.",
+            description: "Replace exact text in a file. You MUST read_file first. The old_string must be unique unless replace_all is true. Use context to disambiguate multiple matches.",
             properties: [
                 "file_path": ["type": "string", "description": "Absolute path to the file to edit"],
                 "old_string": ["type": "string", "description": "The exact text to find and replace"],
                 "new_string": ["type": "string", "description": "The replacement text"],
                 "replace_all": ["type": "boolean", "description": "Replace all occurrences (default false)"],
+                "context": ["type": "string", "description": "Surrounding lines to disambiguate when old_string matches multiple times"],
             ],
             required: ["file_path", "old_string", "new_string"]
         ),
@@ -379,18 +382,38 @@ enum AgentTools {
                 "source": ["type": "string", "description": "The original text (omit if file_path is provided)"],
                 "destination": ["type": "string", "description": "The modified text"],
                 "file_path": ["type": "string", "description": "Read source from this file path instead of source param"],
+                "start_line": ["type": "integer", "description": "1-based start line for section editing (only diff this range)"],
+                "end_line": ["type": "integer", "description": "1-based end line for section editing"],
             ],
             required: ["destination"]
         ),
         ToolDef(
             name: Name.applyDiff,
-            description: "Apply a diff to a file. Preferred: pass diff_id from create_diff. Fallback: pass inline diff text where each line starts with = (keep), - (remove), or + (add).",
+            description: "Apply a diff to a file. Preferred: pass diff_id from create_diff. Fallback: pass inline diff text where each line starts with = (keep), - (remove), or + (add). Auto-verifies after apply.",
             properties: [
                 "file_path": ["type": "string", "description": "Absolute path to the file"],
                 "diff_id": ["type": "string", "description": "UUID from create_diff (preferred)"],
                 "diff": ["type": "string", "description": "Inline diff with =/-/+ prefixes (fallback if no diff_id)"],
             ],
             required: ["file_path"]
+        ),
+        ToolDef(
+            name: Name.undoEdit,
+            description: "Undo the last edit_file or diff_and_apply on a file. Restores original content.",
+            properties: [
+                "file_path": ["type": "string", "description": "Absolute path to the file to undo"],
+            ],
+            required: ["file_path"]
+        ),
+        ToolDef(
+            name: Name.diffAndApply,
+            description: "Create and apply a diff in one call. Reads source from file_path, diffs against destination, writes result. Combines create_diff + apply_diff. Auto-verifies.",
+            properties: [
+                "file_path": ["type": "string", "description": "Absolute path to the file to read and write"],
+                "source": ["type": "string", "description": "Original text (omit to read from file_path)"],
+                "destination": ["type": "string", "description": "The modified text to write"],
+            ],
+            required: ["file_path", "destination"]
         ),
         ToolDef(
             name: Name.listFiles,

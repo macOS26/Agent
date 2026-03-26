@@ -1,8 +1,23 @@
 import Foundation
+import MultiLineDiff
 
 /// Pure file operations for coding tools — no shell, no Process, no escaping issues.
 /// Process-based tools (list, search, git) route through UserService XPC instead.
 enum CodingService {
+
+    // MARK: - Adaptive Algorithm Selection
+
+    /// Choose the best diff algorithm based on change size.
+    static func selectDiffAlgorithm(source: String, destination: String) -> DiffAlgorithm {
+        let sourceLines = source.components(separatedBy: "\n").count
+        let destLines = destination.components(separatedBy: "\n").count
+        let maxLines = max(sourceLines, destLines)
+        let charDiff = abs(source.count - destination.count)
+        if maxLines < 50 || charDiff < 2000 {
+            return .flash
+        }
+        return .megatron
+    }
 
     // MARK: - Read File
 
@@ -81,7 +96,8 @@ enum CodingService {
     // MARK: - Edit File (exact string replacement)
 
     /// Replace exact text in a file. The old_string must be unique unless replace_all is true.
-    static func editFile(path: String, oldString: String, newString: String, replaceAll: Bool) -> String {
+    /// If `context` is provided and old_string has multiple matches, uses context to disambiguate.
+    static func editFile(path: String, oldString: String, newString: String, replaceAll: Bool, context: String? = nil) -> String {
         let url = URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
 
         guard FileManager.default.fileExists(atPath: url.path) else {
@@ -132,6 +148,17 @@ enum CodingService {
         }
 
         if !replaceAll && occurrences > 1 {
+            // Try context-based disambiguation
+            if let context = context, !context.isEmpty,
+               let range = findOccurrenceByContext(in: content, target: oldString, context: context) {
+                content.replaceSubrange(range, with: newString)
+                do {
+                    try content.write(to: url, atomically: true, encoding: .utf8)
+                    return "Replaced 1 of \(occurrences) occurrences in \(url.path) (disambiguated by context)"
+                } catch {
+                    return "Error: \(error.localizedDescription)"
+                }
+            }
             return "Error: old_string appears \(occurrences) times. Provide more context to make it unique, or set replace_all=true."
         }
 
@@ -196,6 +223,80 @@ enum CodingService {
             }
         }
         return nil
+    }
+
+    /// Find the occurrence of `target` in `content` closest to the given `context` text.
+    private static func findOccurrenceByContext(in content: String, target: String, context: String) -> Range<String.Index>? {
+        var ranges: [Range<String.Index>] = []
+        var searchStart = content.startIndex
+        while let range = content.range(of: target, range: searchStart..<content.endIndex) {
+            ranges.append(range)
+            searchStart = range.upperBound
+        }
+        guard ranges.count > 1 else { return ranges.first }
+
+        let contextLines = context.trimmingCharacters(in: .whitespacesAndNewlines)
+            .components(separatedBy: "\n")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        guard !contextLines.isEmpty else { return nil }
+
+        var bestRange: Range<String.Index>?
+        var bestScore = 0
+        for range in ranges {
+            let windowStart = content.index(range.lowerBound, offsetBy: -min(500, content.distance(from: content.startIndex, to: range.lowerBound)), limitedBy: content.startIndex) ?? content.startIndex
+            let windowEnd = content.index(range.upperBound, offsetBy: min(500, content.distance(from: range.upperBound, to: content.endIndex)), limitedBy: content.endIndex) ?? content.endIndex
+            let window = String(content[windowStart..<windowEnd])
+            var score = 0
+            for line in contextLines where window.contains(line) { score += 1 }
+            if score > bestScore { bestScore = score; bestRange = range }
+        }
+        return bestScore > 0 ? bestRange : nil
+    }
+
+    // MARK: - Undo Edit
+
+    /// Restore a file to its original content (before last edit).
+    static func undoEdit(path: String, originalContent: String) -> String {
+        let url = URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
+        do {
+            try originalContent.write(to: url, atomically: true, encoding: .utf8)
+            let lines = originalContent.components(separatedBy: "\n").count
+            return "Undo successful: restored \(url.path) (\(lines) lines)"
+        } catch {
+            return "Error undoing edit: \(error.localizedDescription)"
+        }
+    }
+
+    // MARK: - Diff + Apply (single call)
+
+    /// Create a diff and apply it to a file in one call.
+    static func diffAndApply(path: String, source: String?, destination: String) -> (output: String, display: String) {
+        let url = URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
+        let actualSource: String
+        if let source = source, !source.isEmpty {
+            actualSource = source
+        } else {
+            guard let data = FileManager.default.contents(atPath: url.path),
+                  let text = String(data: data, encoding: .utf8) else {
+                return ("Error: cannot read \(path)", "")
+            }
+            actualSource = text
+        }
+        guard actualSource != destination else {
+            return ("Error: source and destination are identical", "")
+        }
+        let algorithm = selectDiffAlgorithm(source: actualSource, destination: destination)
+        let diff = MultiLineDiff.createDiff(source: actualSource, destination: destination, algorithm: algorithm, includeMetadata: true)
+        let display = MultiLineDiff.displayDiff(diff: diff, source: actualSource, format: .ai)
+        let verified = MultiLineDiff.verifyDiff(diff)
+        do {
+            try destination.write(to: url, atomically: true, encoding: .utf8)
+            let lines = destination.components(separatedBy: "\n").count
+            return ("Applied diff to \(url.path) (\(lines) lines, algorithm: \(algorithm.displayName), verified: \(verified))", display)
+        } catch {
+            return ("Error: \(error.localizedDescription)", "")
+        }
     }
 
     // MARK: - Shell Command Builders (testable, executed via UserService XPC)

@@ -70,6 +70,8 @@ extension AgentViewModel {
             case "read_dir":         return ("read_dir", newInput)
             case "if_to_switch":     return ("if_to_switch", newInput)
             case "extract_function": return ("extract_function", newInput)
+            case "undo":             return ("undo_edit", newInput)
+            case "diff_apply":       return ("diff_and_apply", newInput)
             default:                 return ("read_file", newInput)
             }
 
