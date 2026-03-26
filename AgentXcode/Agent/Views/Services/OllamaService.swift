@@ -154,6 +154,11 @@ final class OllamaService {
             }
         }
 
+        // Ollama requires the last message to be user or tool — strip trailing assistant messages
+        while chatMessages.last?["role"] as? String == "assistant" {
+            chatMessages.removeLast()
+        }
+
         var body: [String: Any] = [
             "model": model,
             "messages": chatMessages,
@@ -264,6 +269,11 @@ final class OllamaService {
                     chatMessages.append(assistantMsg)
                 }
             }
+        }
+
+        // Ollama requires the last message to be user or tool — strip trailing assistant messages
+        while chatMessages.last?["role"] as? String == "assistant" {
+            chatMessages.removeLast()
         }
 
         var body: [String: Any] = [

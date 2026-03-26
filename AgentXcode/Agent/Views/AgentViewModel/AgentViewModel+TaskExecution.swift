@@ -1938,11 +1938,21 @@ extension AgentViewModel {
                             }
                         }
                     } else {
-                        // Non-timeout error
+                        // Non-timeout error — don't retry (400 bad request, auth errors, etc.)
                         appendLog("\(errorSource) Error: \(errMsg)")
+                        flushLog()
+
+                        // Apple Intelligence error explanation
+                        if mediator.isEnabled && mediator.showAnnotationsToUser {
+                            if let errorAnnotation = await mediator.explainError(toolName: "LLM request", error: errMsg) {
+                                appendLog(errorAnnotation.formatted)
+                                flushLog()
+                            }
+                        }
+                        break
                     }
-                    
-                    // Apple Intelligence error explanation
+
+                    // Apple Intelligence error explanation (timeout path only — non-timeout breaks above)
                     if mediator.isEnabled && mediator.showAnnotationsToUser {
                         taskLog.info("[main] Apple AI mediator: explaining error...")
                         if let errorAnnotation = await mediator.explainError(toolName: "LLM request", error: errMsg) {

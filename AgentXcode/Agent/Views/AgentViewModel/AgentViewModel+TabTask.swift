@@ -236,15 +236,11 @@ extension AgentViewModel {
         // Build on existing conversation or start fresh
         var messages: [[String: Any]] = tab.llmMessages
 
-        // Remove orphaned tool calls at the end (assistant with tool_use/tool_calls but no matching responses)
+        // Remove trailing assistant messages — Ollama requires the last message
+        // to be user or tool role. Strip any assistant messages at the end
+        // (orphaned tool calls or plain text from a previous session/restart).
         while let last = messages.last, last["role"] as? String == "assistant" {
-            let hasClaudeTools = (last["content"] as? [[String: Any]])?.contains(where: { $0["type"] as? String == "tool_use" }) ?? false
-            let hasOpenAITools = last["tool_calls"] != nil
-            if hasClaudeTools || hasOpenAITools {
-                messages.removeLast()
-            } else {
-                break
-            }
+            messages.removeLast()
         }
 
         // Apple Intelligence context — prepend to user prompt (not separate message)
@@ -528,11 +524,20 @@ extension AgentViewModel {
                             tab.appendLog(timeoutMessage)
                         }
                     } else {
-                        // Non-timeout error
+                        // Non-timeout error — don't retry (400 bad request, auth errors, etc.)
                         tab.appendLog("\(errorSource) Error: \(errMsg)")
+                        tab.flush()
+
+                        if mediator.isEnabled && mediator.showAnnotationsToUser {
+                            if let errorAnnotation = await mediator.explainError(toolName: "LLM request", error: errMsg) {
+                                tab.appendLog(errorAnnotation.formatted)
+                                tab.flush()
+                            }
+                        }
+                        break
                     }
 
-                    // Apple AI error explanation (same as main task)
+                    // Apple AI error explanation (timeout path only)
                     if mediator.isEnabled && mediator.showAnnotationsToUser {
                         if let errorAnnotation = await mediator.explainError(toolName: "LLM request", error: errMsg) {
                             tab.appendLog(errorAnnotation.formatted)
