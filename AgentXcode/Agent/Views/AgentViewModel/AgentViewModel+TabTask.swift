@@ -523,8 +523,18 @@ extension AgentViewModel {
                             let timeoutMessage = "\(errorSource) timeout after \(maxTimeoutRetries) retries. Please check your network connection or try a different LLM provider."
                             tab.appendLog(timeoutMessage)
                         }
+                    } else if let agentErr = error as? AgentError, agentErr.isRecoverable, timeoutRetryCount < maxTimeoutRetries {
+                        // Server error (5xx) — retry with backoff
+                        timeoutRetryCount += 1
+                        let retryDelay = TimeInterval(min(5 * timeoutRetryCount, 20))
+                        tab.appendLog("\(errorSource) server error (attempt \(timeoutRetryCount)/\(maxTimeoutRetries)) — retrying in \(Int(retryDelay))s...")
+                        tab.flush()
+                        tabTaskLog.info("[\(tab.displayTitle)] \(errorSource) server error, retry \(timeoutRetryCount)/\(maxTimeoutRetries), waiting \(retryDelay)s")
+                        try? await Task.sleep(for: .seconds(retryDelay))
+                        if Task.isCancelled { break }
+                        continue
                     } else {
-                        // Non-timeout error — don't retry (400 bad request, auth errors, etc.)
+                        // Non-recoverable error — don't retry (400 bad request, auth errors, etc.)
                         tab.appendLog("\(errorSource) Error: \(errMsg)")
                         tab.flush()
 

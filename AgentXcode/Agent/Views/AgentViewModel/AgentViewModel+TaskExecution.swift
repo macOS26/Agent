@@ -1937,8 +1937,18 @@ extension AgentViewModel {
                                 sendProgressUpdate(timeoutMessage)
                             }
                         }
+                    } else if let agentErr = error as? AgentError, agentErr.isRecoverable, timeoutRetryCount < maxTimeoutRetries {
+                        // Server error (5xx) — retry with backoff
+                        timeoutRetryCount += 1
+                        let retryDelay = TimeInterval(min(5 * timeoutRetryCount, 20))
+                        appendLog("\(errorSource) server error (attempt \(timeoutRetryCount)/\(maxTimeoutRetries)) — retrying in \(Int(retryDelay))s...")
+                        flushLog()
+                        taskLog.info("[main] \(errorSource) server error, retry \(timeoutRetryCount)/\(maxTimeoutRetries), waiting \(retryDelay)s")
+                        try? await Task.sleep(for: .seconds(retryDelay))
+                        if Task.isCancelled { break }
+                        continue
                     } else {
-                        // Non-timeout error — don't retry (400 bad request, auth errors, etc.)
+                        // Non-recoverable error — don't retry (400 bad request, auth errors, etc.)
                         appendLog("\(errorSource) Error: \(errMsg)")
                         flushLog()
 
