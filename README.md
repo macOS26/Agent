@@ -2,7 +2,9 @@
 
 # Agent!
 ## 🧠 Agentic AI for the  Mac Desktop 
-Now with Apple Intelligence
+Now with Apple Intelligence supporting 8 LLM providers.
+
+<img width="1275" height="812" alt="Screenshot 2026-03-25 at 11 32 24 PM" src="https://github.com/user-attachments/assets/b695da68-3a7b-4ecc-9b7a-4fab6a55a8bf" />
 
 [![Swift 6.2](https://img.shields.io/badge/Swift-6.2-blue.svg)](https://swift.org)
 [![Website](https://img.shields.io/badge/website-macos26.app-blue.svg)](https://macos26.app)
@@ -12,7 +14,6 @@ Now with Apple Intelligence
 
 ### Multi-Provider LLM Support
 
-<img width="1275" height="812" alt="Screenshot 2026-03-25 at 11 32 24 PM" src="https://github.com/user-attachments/assets/b695da68-3a7b-4ecc-9b7a-4fab6a55a8bf" />
 
 | Provider | API Key | Vision | Notes |
 |----------|---------|--------|-------|
