@@ -10,25 +10,14 @@
 
 
 ## 🧠 Agentic AI for the  Mac Desktop 
+Agent! is the result of 27 years of Mac automation experience — from FaceSpan and AppleScript on macOS 9 through AppleScript Studio, AppleScript-ObjC, and now Swift. It connects LLMs to Apple Events, ScriptingBridge, Accessibility APIs, and XPC services for native macOS control.
+
 Now with Apple Intelligence supporting 8 LLM providers.
 
 
 <img width="1275" height="812" alt="Screenshot 2026-03-25 at 11 32 24 PM" src="https://github.com/user-attachments/assets/b695da68-3a7b-4ecc-9b7a-4fab6a55a8bf" />
 
 
-### Multi-Provider LLM Support
-
-
-| Provider | API Key | Vision | Notes |
-|----------|---------|--------|-------|
-| **Claude** | Anthropic API key | ✓ | Sonnet 4, Opus 4, Haiku 3.5 |
-| **OpenAI** | OpenAI API key | ✓ | GPT-4o, GPT-4 Turbo, GPT-3.5 |
-| **DeepSeek** | DeepSeek API key | ✓ | DeepSeek V2, DeepSeek Coder |
-| **Hugging Face** | Hugging Face API key | ✓ | Hosted inference API |
-| **Ollama Cloud** | Ollama Pro API key | Auto | Cloud-hosted Ollama models |
-| **Local Ollama** | None | Auto | Requires 32-128GB RAM on Apple Silicon |
-| **vLLM** | Optional | ? | OpenAI-compatible local server; OpenAI mode recommended |
-| **LM Studio** | None | ? | OpenAI or Anthropic mode; OpenAI mode recommended |
 
 ### Apple Intelligence Mediator
 
@@ -39,10 +28,15 @@ Apple Intelligence serves as a **communication mediator** between the LLM and th
 
 | Feature | Description |
 |---------|-------------|
-| **Error Explanations** | Translates technical errors into user-friendly explanations |
-| **Next Step Suggestions** | Suggests logical follow-up actions after task completion |
-| **Context Injection** | Clarifies ambiguous user messages for the LLM |
-| **Conversation Summaries** | Provides brief summaries of completed tasks |
+| **Autonomous Task Loop** | The task loop is unstoppable — it runs until the LLM calls task_complete or the user hits cancel/escape. No iteration caps, no nudges, no artificial limits. The LLM drives; Agent! never interrupts. Errors continue the loop instead of breaking it. Text-only responses (no tool calls) are treated as task completion, preventing infinite loops when the LLM forgets to call task_complete. |
+| **Safari JavaScript Web Automation** | Built-in web automation via Safari's JavaScript bridge — open URLs, scan pages for CSS selectors, click elements, type into fields, read page content, execute JavaScript, and navigate tabs. No WebDriver installation required. Selenium WebDriver also available for Chrome/Firefox when needed. |
+| **Shimmer Thinking Animation** | "Thinking..." text pulses with shimmer effect matching the LLM icon throb |
+| **Status Colors** | "Running..." in green, "Running... +N queued" in orange for multi-task visibility |
+| **task_complete Enforcement** | System prompt requires every LLM response to end with task_complete; if the LLM needs user input it puts the question in the summary and calls task_complete |
+| **Timeout Protection** | 10-second timeout prevents LLM tabs from hanging when Apple Intelligence is slow to respond |
+| **OS Log Diagnostics** | Built-in os.log diagnostics for debugging mediator behavior |
+| **Brain Button Integration** | Toggle Apple Intelligence mediator directly from the brain button in the toolbar |
+| **LoRA Training** | Apple Intelligence can also be used for LoRA adapter training with the main LLM |
 
 Annotations are tagged with `[AI]` prefixes to distinguish them from LLM responses:
 - `[AI → User]` — User-facing explanations
@@ -51,16 +45,7 @@ Annotations are tagged with `[AI]` prefixes to distinguish them from LLM resp
 
 Enable Apple Intelligence Mediator in Settings to enhance communication clarity. Requires Apple Intelligence-capable Mac running macOS 26+.
 
-**Recent Enhancements:**
-- **Autonomous Task Loop**: The task loop is unstoppable — it runs until the LLM calls task_complete or the user hits cancel/escape. No iteration caps, no nudges, no artificial limits. The LLM drives; Agent! never interrupts. Errors continue the loop instead of breaking it. Text-only responses (no tool calls) are treated as task completion, preventing infinite loops when the LLM forgets to call task_complete.
-- **Safari JavaScript Web Automation**: Built-in web automation via Safari's JavaScript bridge — open URLs, scan pages for CSS selectors, click elements, type into fields, read page content, execute JavaScript, and navigate tabs. No WebDriver installation required. Selenium WebDriver also available for Chrome/Firefox when needed.
-- **Shimmer Thinking Animation**: "Thinking..." text pulses with shimmer effect matching the LLM icon throb
-- **Status Colors**: "Running..." in green, "Running... +N queued" in orange for multi-task visibility
-- **task_complete Enforcement**: System prompt requires every LLM response to end with task_complete; if the LLM needs user input it puts the question in the summary and calls task_complete
-- **Timeout Protection**: 10-second timeout prevents LLM tabs from hanging when Apple Intelligence is slow to respond
-- **OS Log Diagnostics**: Built-in os.log diagnostics for debugging mediator behavior
-- **Brain Button Integration**: Toggle Apple Intelligence mediator directly from the brain button in the toolbar
-- **LoRA Training**: Apple Intelligence can also be used for LoRA adapter training with the main LLM
+
 
 ### System Requirements
 
@@ -105,12 +90,7 @@ Full macOS Accessibility API for apps without AppleScript support:
 - Web: `Selenium`, `WebForm`, `WebNavigate`, `WebScrape`
 - More: `CreateDMG`, `CapturePhoto`, `ListNotes`, `ListReminders`
 
-### Background
-Agent! is the result of 27 years of Mac automation experience — from FaceSpan and AppleScript on macOS 9 through AppleScript Studio, AppleScript-ObjC, and now Swift. It connects LLMs to Apple Events, ScriptingBridge, Accessibility APIs, and XPC services for native macOS control.
 
-A native macOS autonomous AI agent built entirely in Swift.
-
-Agent uses SwiftUI, XPC, SMAppService, Apple Events, ScriptingBridge, Accessibility APIs, and MCP to give an AI agent native access to your Mac. It's an `.app` that speaks macOS natively. Xcode command line tools are required which is Agent!'s only dependency.
 
 ---
 
@@ -137,15 +117,7 @@ Agent uses SwiftUI, XPC, SMAppService, Apple Events, ScriptingBridge, Accessibil
 
 - macOS 26 (Tahoe) or later
 - Xcode Command Line Tools (Agent will prompt to install if missing)
-- An API key for your preferred provider:
-  - **Claude** (Anthropic API key)
-  - **OpenAI** (OpenAI API key)
-  - **DeepSeek** (DeepSeek API key)
-  - **Hugging Face** (Hugging Face API key)
-  - **Ollama Pro Cloud** (Ollama API key)
-  - **Local Ollama** (no API key required, but requires significant RAM)
-  - **vLLM** (no API key; local OpenAI-compatible server)
-  - **LM Studio** (no API key; local OpenAI or Anthropic mode)
+- An API key for your preferred provider (see [Multi-Provider LLM Support](#multi-provider-llm-support))
 
 ### 2. Build and Run
 
