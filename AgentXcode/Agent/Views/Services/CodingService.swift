@@ -100,6 +100,17 @@ enum CodingService {
         let occurrences = content.components(separatedBy: oldString).count - 1
 
         if occurrences == 0 {
+            // Fuzzy fallback: match with whitespace-trimmed lines
+            if !replaceAll, let range = fuzzyFindRange(in: content, target: oldString) {
+                content.replaceSubrange(range, with: newString)
+                do {
+                    try content.write(to: url, atomically: true, encoding: .utf8)
+                    return "Replaced 1 occurrence in \(url.path) (fuzzy whitespace match)"
+                } catch {
+                    return "Error: \(error.localizedDescription)"
+                }
+            }
+
             // Try to give a helpful hint
             let trimmed = oldString.trimmingCharacters(in: .whitespacesAndNewlines)
             if !trimmed.isEmpty && content.contains(trimmed) {
@@ -128,6 +139,33 @@ enum CodingService {
         } catch {
             return "Error: \(error.localizedDescription)"
         }
+    }
+
+    /// Fuzzy line-by-line match: compares lines with trailing whitespace stripped
+    /// and tabs normalized to spaces. Returns the range of the matching block in the original content.
+    private static func fuzzyFindRange(in content: String, target: String) -> Range<String.Index>? {
+        let contentLines = content.components(separatedBy: "\n")
+        let targetLines = target.components(separatedBy: "\n")
+        guard !targetLines.isEmpty, targetLines.count <= contentLines.count else { return nil }
+
+        let normalize: (String) -> String = { line in
+            line.replacingOccurrences(of: "\t", with: "    ")
+                .replacingOccurrences(of: "\\s+$", with: "", options: .regularExpression)
+        }
+        let targetNorm = targetLines.map(normalize)
+
+        for start in 0...(contentLines.count - targetLines.count) {
+            let window = contentLines[start..<(start + targetLines.count)]
+            if window.enumerated().allSatisfy({ normalize($0.element) == targetNorm[$0.offset] }) {
+                // Calculate range in original string
+                let beforeCount = contentLines[..<start].reduce(0) { $0 + $1.count + 1 }  // +1 for \n
+                let matchStr = contentLines[start..<(start + targetLines.count)].joined(separator: "\n")
+                let startIdx = content.index(content.startIndex, offsetBy: beforeCount)
+                let endIdx = content.index(startIdx, offsetBy: matchStr.count)
+                return startIdx..<endIdx
+            }
+        }
+        return nil
     }
 
     // MARK: - Shell Command Builders (testable, executed via UserService XPC)
