@@ -393,9 +393,25 @@ extension AgentViewModel {
         return (id, (dir as NSString).appendingPathComponent(filename))
     }
 
+    /// Check if the user's prompt explicitly requested plan mode.
+    static func userRequestedPlanMode(_ prompt: String) -> Bool {
+        let lower = prompt.lowercased()
+        return lower.contains("plan mode") || lower.contains("planning mode")
+            || lower.contains("create a plan") || lower.contains("make a plan")
+            || lower.contains("update plan") || lower.contains("read plan")
+            || lower.contains("delete plan") || lower.contains("show plan")
+            || lower.contains("list plan")
+    }
+
     /// Handle plan_mode tool calls: create, update, read, list, or delete.
     /// tabName is used as the plan ID — "main" for the main tab, or the tab's display title.
-    static func handlePlanMode(action: String, input: [String: Any], projectFolder: String, tabName: String = "main") -> String {
+    /// userPrompt is checked to ensure the user explicitly asked for plan mode.
+    static func handlePlanMode(action: String, input: [String: Any], projectFolder: String, tabName: String = "main", userPrompt: String = "") -> String {
+        // Only allow plan_mode if the user explicitly requested it
+        if !userPrompt.isEmpty && !userRequestedPlanMode(userPrompt) {
+            return "Error: plan_mode not requested. The user must explicitly ask for plan mode (e.g. \"enter plan mode\", \"create a plan\"). Do not use plan_mode unless the user asks for it."
+        }
+
         let fm = FileManager.default
         guard let dir = planDir(projectFolder) else {
             return "Error: plan_mode requires a git repository. Set the project folder to a directory inside a git repo."
