@@ -248,7 +248,7 @@ private struct FolderTreePopover: View {
             }
             .padding(6)
         }
-        .frame(width: 280, height: 600)
+        .frame(width: 420, height: 600)
     }
 }
 
