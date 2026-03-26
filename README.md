@@ -1,16 +1,18 @@
 <img width="107" height="107" alt="Agent! Agentic AI for the rest of us only on  macOS Desktop" src="https://github.com/user-attachments/assets/245b3612-c354-4177-a500-3ee4f22a5111" />
 
-# Agent!
-## 🧠 Agentic AI for the  Mac Desktop 
-Now with Apple Intelligence supporting 8 LLM providers.
-
-<img width="1275" height="812" alt="Screenshot 2026-03-25 at 11 32 24 PM" src="https://github.com/user-attachments/assets/b695da68-3a7b-4ecc-9b7a-4fab6a55a8bf" />
-
 [![Swift 6.2](https://img.shields.io/badge/Swift-6.2-blue.svg)](https://swift.org)
 [![Website](https://img.shields.io/badge/website-macos26.app-blue.svg)](https://macos26.app)
 [![Version](https://img.shields.io/badge/version-1.0.20-blue.svg)](https://github.com/macOS26/Agent)
 [![GitHub downloads](https://img.shields.io/github/downloads/macOS26/Agent/total.svg)](https://github.com/macOS26/Agent/releases)
 [![GitHub stars](https://img.shields.io/github/stars/macOS26/Agent.svg?style=social)](https://github.com/macOS26/Agent/stargazers)
+
+# Agent!
+## 🧠 Agentic AI for the  Mac Desktop 
+Now with Apple Intelligence supporting 8 LLM providers.
+
+
+<img width="1275" height="812" alt="Screenshot 2026-03-25 at 11 32 24 PM" src="https://github.com/user-attachments/assets/b695da68-3a7b-4ecc-9b7a-4fab6a55a8bf" />
+
 
 ### Multi-Provider LLM Support
 
