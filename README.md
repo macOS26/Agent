@@ -1,6 +1,6 @@
 <img width="107" height="107" alt="Agent! Agentic AI for the rest of us only on  macOS Desktop" src="https://github.com/user-attachments/assets/245b3612-c354-4177-a500-3ee4f22a5111" />
 
-# Agent!
+# Agent! for macOS26
 
 [![Swift 6.2](https://img.shields.io/badge/Swift-6.2-blue.svg)](https://swift.org)
 [![Website](https://img.shields.io/badge/website-macos26.app-blue.svg)](https://macos26.app)
@@ -9,7 +9,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/macOS26/Agent.svg?style=social)](https://github.com/macOS26/Agent/stargazers)
 
 
-## 🧠 Agewnt! for macOS26, Agentic AI for the  Mac Desktop 
+## 🧠 Agentic AI for the  Mac Desktop 
 Now with Apple Intelligence supporting 8 LLM providers.
 
 
