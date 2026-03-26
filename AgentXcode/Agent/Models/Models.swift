@@ -357,7 +357,7 @@ final class TaskHistory {
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
         request.setValue("application/json", forHTTPHeaderField: "content-type")
         request.httpBody = bodyData
-        request.timeoutInterval = 9000
+        request.timeoutInterval = llmAPITimeout
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, http.statusCode == 200,

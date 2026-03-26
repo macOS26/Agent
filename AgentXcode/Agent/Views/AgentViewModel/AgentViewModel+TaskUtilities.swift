@@ -114,7 +114,7 @@ extension AgentViewModel {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.timeoutInterval = 90
+        request.timeoutInterval = llmAPITimeout
         let body: [String: Any] = ["query": query, "max_results": 5]
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: body)
@@ -156,7 +156,7 @@ extension AgentViewModel {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.timeoutInterval = 90
+        request.timeoutInterval = llmAPITimeout
         let body: [String: Any] = ["query": query, "max_results": 5]
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: body)
