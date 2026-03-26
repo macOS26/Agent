@@ -185,7 +185,7 @@ enum AgentTools {
         GUIDELINES:
         - All tools are available. Choose the best tool for the job — no restrictions on which tools you can use.
         - WEB PAGES: web tool workflow: 1) open 2) scan to discover selectors 3) type/click/read_content as needed.
-        - SHELL: execute_agent_command for shell commands. Shell scripts (.sh) are fine — write with write_file, run with execute_agent_command.
+        - SHELL: execute_agent_command for shell commands. NEVER use AppleScript "do shell script" or osascript to run shell commands — always use execute_agent_command or batch_commands instead.
         - BUILD: xcode (action: build) or xcodebuild via shell — either works.
         - CONVERSATION: For greetings, questions, thanks, or chat, reply with plain text and call task_complete.
         - Direct commands like "list agents", "run agent X" are immediate — execute directly without planning.
