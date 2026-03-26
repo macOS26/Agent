@@ -286,13 +286,6 @@ struct AccessibilitySettingsView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Button("Test") {
-                        // Use AppleEventService to activate System Settings — triggers Automation permission
-                        let ops: [[String: Any]] = [["action": "activate"]]
-                        _ = AppleEventService.shared.execute(bundleID: "com.apple.finder", operations: ops)
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
                     Button("Settings") {
                         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation") {
                             NSWorkspace.shared.open(url)
