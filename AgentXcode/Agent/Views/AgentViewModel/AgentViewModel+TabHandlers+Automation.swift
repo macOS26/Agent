@@ -32,13 +32,9 @@ extension AgentViewModel {
             let toolOutput = result.output.isEmpty
                 ? "(no output, exit code: \(result.status))"
                 : result.output
-            let truncated = toolOutput.count > 50_000
-                ? String(toolOutput.prefix(50_000)) + "\n...(truncated)"
-                : toolOutput
-
             tab.flush()
             return TabToolResult(
-                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": truncated],
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": toolOutput],
                 isComplete: false
             )
 

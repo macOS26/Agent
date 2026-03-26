@@ -32,12 +32,9 @@ extension AgentViewModel {
                 if result.status != 0 { batchOutput += "exit code: \(result.status)\n" }
                 batchOutput += output + "\n\n"
             }
-            let truncated = batchOutput.count > 50_000
-                ? String(batchOutput.prefix(50_000)) + "\n...(truncated)"
-                : batchOutput
             tab.flush()
             return TabToolResult(
-                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": truncated],
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": batchOutput],
                 isComplete: false
             )
 
@@ -82,13 +79,9 @@ extension AgentViewModel {
                 toolOutput = result.output
             }
 
-            let truncated = toolOutput.count > 50_000
-                ? String(toolOutput.prefix(50_000)) + "\n...(truncated)"
-                : toolOutput
-
             tab.flush()
             return TabToolResult(
-                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": truncated],
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": toolOutput],
                 isComplete: false
             )
 

@@ -40,8 +40,6 @@ extension AgentViewModel {
             let output: String
             if result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 output = staged ? "No staged changes" : "No changes"
-            } else if result.output.count > 50_000 {
-                output = String(result.output.prefix(50_000)) + "\n...(diff truncated)"
             } else {
                 output = result.output
             }

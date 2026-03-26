@@ -726,15 +726,10 @@ extension AgentViewModel {
                             }
                             recentOutputHashes.insert(outputHash)
 
-                            // Truncate very long outputs for the API (50K keeps full bridge files)
-                            let truncated = toolOutput.count > 50_000
-                                ? String(toolOutput.prefix(50_000)) + "\n...(truncated)"
-                                : toolOutput
-
                             toolResults.append([
                                 "type": "tool_result",
                                 "tool_use_id": toolId,
-                                "content": truncated
+                                "content": toolOutput
                             ])
                         }
 
@@ -759,10 +754,7 @@ extension AgentViewModel {
                                 if result.status != 0 { batchOutput += "exit code: \(result.status)\n" }
                                 batchOutput += output + "\n\n"
                             }
-                            let truncated = batchOutput.count > 50_000
-                                ? String(batchOutput.prefix(50_000)) + "\n...(truncated)"
-                                : batchOutput
-                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": truncated])
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": batchOutput])
                         }
 
                         // Tool discovery
@@ -1835,8 +1827,7 @@ extension AgentViewModel {
 
                 if hasToolUse && !toolResults.isEmpty {
                     // Truncate large tool results to save tokens
-                    let truncatedResults = Self.truncateToolResults(toolResults)
-                    messages.append(["role": "user", "content": truncatedResults])
+                    messages.append(["role": "user", "content": toolResults])
                 } else if !hasToolUse {
                     // LLM responded with text and no tool calls — task is complete
                     // The LLM should have called task_complete but didn't; treat text-only response as done
