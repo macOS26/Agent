@@ -287,11 +287,10 @@ extension AgentViewModel {
         let activeGroups: Set<String>? = nil
 
         var iterations = 0
-        let maxIter = maxIterations
         var timeoutRetryCount = 0
         let maxTimeoutRetries = 2
 
-        while !Task.isCancelled && iterations < maxIter {
+        while !Task.isCancelled {
             iterations += 1
 
             // Prune old messages every 8 iterations to save tokens (same as main task)
@@ -302,7 +301,7 @@ extension AgentViewModel {
             }
             if iterations > 2 { Self.stripOldImages(&messages) }
 
-            tabTaskLog.info("[\(tab.displayTitle)] iteration \(iterations)/\(maxIter)")
+            tabTaskLog.info("[\(tab.displayTitle)] iteration \(iterations)")
 
             do {
                 tab.isLLMThinking = true
@@ -537,13 +536,8 @@ extension AgentViewModel {
                         }
                     }
                 }
-                break
+                continue
             }
-        }
-
-        if iterations >= maxIter {
-            tabTaskLog.warning("[\(tab.displayTitle)] hit max iterations (\(maxIter))")
-            tab.appendLog("Reached maximum iterations (\(maxIter))")
         }
 
         tabTaskLog.info("[\(tab.displayTitle)] executeTabTask finished after \(iterations) iteration(s), cancelled=\(Task.isCancelled)")
@@ -561,7 +555,7 @@ extension AgentViewModel {
         // If Messages tab task ended without task_complete, still send a reply
         if tab.isMessagesTab, let handle = tab.replyHandle {
             tab.replyHandle = nil
-            let reason = Task.isCancelled ? "(cancelled)" : iterations >= maxIter ? "(max iterations)" : "(incomplete)"
+            let reason = Task.isCancelled ? "(cancelled)" : "(incomplete)"
             sendMessagesTabReply(reason, handle: handle)
         }
 

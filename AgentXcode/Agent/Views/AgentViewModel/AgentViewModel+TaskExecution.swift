@@ -259,9 +259,8 @@ extension AgentViewModel {
         }
 
         var iterations = 0
-        let maxIterations = self.maxIterations
 
-        while !Task.isCancelled && iterations < maxIterations {
+        while !Task.isCancelled {
             iterations += 1
 
             // Prune old messages every 8 iterations to save tokens
@@ -275,7 +274,7 @@ extension AgentViewModel {
                 Self.stripOldImages(&messages)
             }
 
-            taskLog.info("[main] iteration \(iterations)/\(maxIterations), messages=\(messages.count)")
+            taskLog.info("[main] iteration \(iterations), messages=\(messages.count)")
 
             do {
                 isThinking = true
@@ -1944,12 +1943,8 @@ extension AgentViewModel {
                         }
                     }
                 }
-                break
+                continue
             }
-        }
-
-        if iterations >= maxIterations {
-            appendLog("Reached maximum iterations (\(maxIterations))")
         }
 
         // Apple Intelligence: suggest next steps after completion (skip for pure conversation)
