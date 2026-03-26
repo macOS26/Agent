@@ -282,7 +282,7 @@ struct AccessibilitySettingsView: View {
                     Circle()
                         .fill(Color.green.opacity(0.6))
                         .frame(width: 8, height: 8)
-                    Text("Apple Events: Granted on first use")
+                    Text("Apple Events: Granted on first use of each application")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Spacer()
