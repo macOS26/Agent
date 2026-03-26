@@ -421,6 +421,12 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(maxIterations, forKey: "agentMaxIterations") }
     }
 
+    static let retryOptions = [1, 2, 3, 5, 10, 15, 20]
+
+    var maxRetries: Int = UserDefaults.standard.object(forKey: "agentMaxRetries") as? Int ?? 10 {
+        didSet { UserDefaults.standard.set(maxRetries, forKey: "agentMaxRetries") }
+    }
+
     // MARK: - Temperature per provider
     var claudeTemperature: Double = UserDefaults.standard.object(forKey: "claudeTemperature") as? Double ?? 0.2 {
         didSet { UserDefaults.standard.set(claudeTemperature, forKey: "claudeTemperature") }

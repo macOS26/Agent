@@ -52,6 +52,27 @@ struct AgentOptionsView: View {
             }
 
             row {
+                Text("Retries").font(.subheadline)
+                Spacer()
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("On server/timeout errors").font(.caption).foregroundStyle(.secondary)
+                    Stepper("\(viewModel.maxRetries)",
+                        onIncrement: {
+                            let opts = AgentViewModel.retryOptions
+                            if let i = opts.firstIndex(of: viewModel.maxRetries), i + 1 < opts.count {
+                                viewModel.maxRetries = opts[i + 1]
+                            }
+                        },
+                        onDecrement: {
+                            let opts = AgentViewModel.retryOptions
+                            if let i = opts.firstIndex(of: viewModel.maxRetries), i > 0 {
+                                viewModel.maxRetries = opts[i - 1]
+                            }
+                        })
+                }
+            }
+
+            row {
                 Text("Output").font(.subheadline)
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {

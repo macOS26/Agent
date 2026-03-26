@@ -287,7 +287,7 @@ extension AgentViewModel {
 
         var iterations = 0
         var timeoutRetryCount = 0
-        let maxTimeoutRetries = 2
+        let maxTimeoutRetries = maxRetries
 
         while !Task.isCancelled {
             iterations += 1
@@ -361,6 +361,7 @@ extension AgentViewModel {
                 tab.appendLog("[⏱ LLM \(String(format: "%.1f", streamElapsed))s | stop: \(response.stopReason) | iter \(iterations)]")
                 tab.flush()
                 tab.isLLMThinking = false
+                timeoutRetryCount = 0 // Reset on successful response
                 guard !Task.isCancelled else { break }
 
                 var toolResults: [[String: Any]] = []

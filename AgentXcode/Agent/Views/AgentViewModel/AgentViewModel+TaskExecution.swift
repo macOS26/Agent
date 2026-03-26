@@ -150,7 +150,7 @@ extension AgentViewModel {
         var commandsRun: [String] = []
         var completionSummary = ""
         var timeoutRetryCount = 0
-        let maxTimeoutRetries = 2
+        let maxTimeoutRetries = maxRetries
         
         // Apple Intelligence mediator for contextual annotations
         let mediator = AppleIntelligenceMediator.shared
@@ -354,6 +354,7 @@ extension AgentViewModel {
                 taskLog.info("[main] stream completed in \(String(format: "%.2f", streamElapsed))s, stopReason=\(response.stopReason), tokens: \(response.inputTokens)in/\(response.outputTokens)out")
                 flushStreamBuffer()
                 isThinking = false
+                timeoutRetryCount = 0 // Reset on successful response
                 guard !Task.isCancelled else { break }
 
                 var toolResults: [[String: Any]] = []
