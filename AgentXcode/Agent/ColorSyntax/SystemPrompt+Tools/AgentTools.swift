@@ -183,7 +183,7 @@ enum AgentTools {
         - applescript_tool is ONLY for AppleScript automation of apps (tell application...). NOT for shell commands.
         - CONVERSATION: For greetings, questions, thanks, or chat (e.g. "hello", "what is X?", "thanks"), reply with plain text ONLY. Do NOT call task_complete, create plans, or use any tools. Just answer.
         - Direct commands like "list agents", "run agent X", "read agent X" are immediate orders — execute them directly. Do NOT create a plan first.
-        - For tasks with 3+ steps, create a plan_mode plan first. Execute every step. Don't mark done without writing files.
+        - For tasks with 3+ steps, use your discretion to create a plan_mode plan (requires .git in project folder). Execute every step. Don't mark done without writing files.
 
         EDITING FILES — 3 tools:
         - edit_file: replace exact text (old_string → new_string). Best for small, single-location changes.
