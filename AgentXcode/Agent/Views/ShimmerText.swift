@@ -15,7 +15,7 @@ struct ShimmerText: View {
         Text(text)
             .font(.caption)
             .foregroundStyle(color)
-            .opacity(dimmed ? 0.3 : 1.0)
+            .opacity(dimmed ? 0.65 : 1.0)
             .onAppear {
                 withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
                     dimmed = true
