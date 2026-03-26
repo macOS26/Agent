@@ -1,8 +1,6 @@
 <img width="107" height="107" alt="Agent! Agentic AI for the rest of us only on  macOS Desktop" src="https://github.com/user-attachments/assets/245b3612-c354-4177-a500-3ee4f22a5111" />
 
-# Agent!
-## 🧠 Agentic AI for the  Mac Desktop 
-Now with Apple Intelligence
+# Agent! for macOS26
 
 [![Swift 6.2](https://img.shields.io/badge/Swift-6.2-blue.svg)](https://swift.org)
 [![Website](https://img.shields.io/badge/website-macos26.app-blue.svg)](https://macos26.app)
@@ -10,9 +8,15 @@ Now with Apple Intelligence
 [![GitHub downloads](https://img.shields.io/github/downloads/macOS26/Agent/total.svg)](https://github.com/macOS26/Agent/releases)
 [![GitHub stars](https://img.shields.io/github/stars/macOS26/Agent.svg?style=social)](https://github.com/macOS26/Agent/stargazers)
 
-### Multi-Provider LLM Support
 
-<img width="1215" height="862" alt="image" src="https://github.com/user-attachments/assets/17265c25-2c33-4359-a0f5-66b812c7068d" />
+## 🧠 Agentic AI for the  Mac Desktop 
+Now with Apple Intelligence supporting 8 LLM providers.
+
+
+<img width="1275" height="812" alt="Screenshot 2026-03-25 at 11 32 24 PM" src="https://github.com/user-attachments/assets/b695da68-3a7b-4ecc-9b7a-4fab6a55a8bf" />
+
+
+### Multi-Provider LLM Support
 
 
 | Provider | API Key | Vision | Notes |
@@ -101,17 +105,12 @@ Full macOS Accessibility API for apps without AppleScript support:
 - Web: `Selenium`, `WebForm`, `WebNavigate`, `WebScrape`
 - More: `CreateDMG`, `CapturePhoto`, `ListNotes`, `ListReminders`
 
-<img width="1056" height="597" alt="IMG_5716" src="https://github.com/user-attachments/assets/117cbeb8-46e4-4f92-8494-f6058a92059e" />
-
 ### Background
 Agent! is the result of 27 years of Mac automation experience — from FaceSpan and AppleScript on macOS 9 through AppleScript Studio, AppleScript-ObjC, and now Swift. It connects LLMs to Apple Events, ScriptingBridge, Accessibility APIs, and XPC services for native macOS control.
 
 A native macOS autonomous AI agent built entirely in Swift.
 
 Agent uses SwiftUI, XPC, SMAppService, Apple Events, ScriptingBridge, Accessibility APIs, and MCP to give an AI agent native access to your Mac. It's an `.app` that speaks macOS natively. Xcode command line tools are required which is Agent!'s only dependency.
-
-<img width="1535" height="1008" alt="IMG_4776" src="https://github.com/user-attachments/assets/56549e6b-06ff-449c-b1b7-fd77b90ad9f6" />
-
 
 ---
 
@@ -543,38 +542,6 @@ Agent.app (SwiftUI)
   |-- Package.swift          Declares all bridge and script targets
   |-- Sources/Scripts/       One .swift file per executable script
   |-- Sources/XCFScriptingBridges/  One .swift file per app bridge + Common
-```
-
-### Command Routing
-
-Every shell command follows one of three execution paths based on privilege needs and TCC requirements:
-
-```mermaid
-%%{init: {"flowchart": {"htmlLabels": false}, "themeVariables": {"fontSize": "12px"}} }%%
-flowchart TD
-    A[Command] --> B{Tool?}
-    B --> C[exec_cmd]
-    B --> D[exec_user]
-    B --> E[exec_shell]
-
-    C --> F{Root?}
-    F -- Y --> G(Daemon)
-    F -- N --> H{osa?}
-
-    D --> H
-
-    H -- Y --> I(App TCC)
-    H -- N --> J(Agent)
-
-    E --> K{TCC?}
-    K -- Y --> L(App TCC)
-    K -- N --> M(Agent)
-
-    style G fill:#f96,stroke:#333,color:#000
-    style I fill:#6b6,stroke:#333,color:#000
-    style L fill:#6b6,stroke:#333,color:#000
-    style J fill:#69f,stroke:#333,color:#000
-    style M fill:#69f,stroke:#333,color:#000
 ```
 
 | Path | Service | Runs As | TCC | Used For |
