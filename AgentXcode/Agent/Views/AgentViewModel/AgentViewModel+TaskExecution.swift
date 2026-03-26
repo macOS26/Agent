@@ -1824,20 +1824,12 @@ extension AgentViewModel {
                         break
                     }
                     consecutiveNoTool += 1
-                    if consecutiveNoTool >= 3 {
+                    if consecutiveNoTool >= 50 {
                         appendLog("LLM not calling tools after \(consecutiveNoTool) attempts — stopping.")
                         flushLog()
                         break
                     }
-                    // Give a specific nudge based on what the task looks like
-                    let lowerPrompt = prompt.lowercased()
-                    let isWebTask = lowerPrompt.contains("safari") || lowerPrompt.contains("web") || lowerPrompt.contains("page") || lowerPrompt.contains("search") || lowerPrompt.contains("open") || lowerPrompt.contains("click") || lowerPrompt.contains("browse") || lowerPrompt.contains("url") || lowerPrompt.contains("site") || lowerPrompt.contains(".com") || lowerPrompt.contains(".org")
-                    let nudge: String
-                    if isWebTask {
-                        nudge = "You MUST call tools now. For web tasks use the web tool. Examples: web(action: \"open\", url: \"https://example.com\"), web(action: \"read_content\"), web(action: \"find\", query: \"search text\"), web(action: \"click\", selector: \"button\"), web(action: \"type\", selector: \"input\", text: \"query\"). Do NOT describe what you'll do — call the tool."
-                    } else {
-                        nudge = "Continue. You MUST use tools — do not output code as text. Use agent (action: create/update) for scripts, write_file/edit_file for files. Call task_complete when finished."
-                    }
+                    let nudge = "ORIGINAL TASK: \(prompt)\n\nYou MUST call tools now. Do not output code as text. Use agent (action: create/update) for scripts, write_file/edit_file for files, web tool for web pages. Call task_complete when finished."
                     messages.append(["role": "user", "content": nudge])
                 }
 
