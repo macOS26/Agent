@@ -544,38 +544,6 @@ Agent.app (SwiftUI)
   |-- Sources/XCFScriptingBridges/  One .swift file per app bridge + Common
 ```
 
-### Command Routing
-
-Every shell command follows one of three execution paths based on privilege needs and TCC requirements:
-
-```mermaid
-%%{init: {"flowchart": {"htmlLabels": false}, "themeVariables": {"fontSize": "12px"}} }%%
-flowchart TD
-    A[Command] --> B{Tool?}
-    B --> C[exec_cmd]
-    B --> D[exec_user]
-    B --> E[exec_shell]
-
-    C --> F{Root?}
-    F -- Y --> G(Daemon)
-    F -- N --> H{osa?}
-
-    D --> H
-
-    H -- Y --> I(App TCC)
-    H -- N --> J(Agent)
-
-    E --> K{TCC?}
-    K -- Y --> L(App TCC)
-    K -- N --> M(Agent)
-
-    style G fill:#f96,stroke:#333,color:#000
-    style I fill:#6b6,stroke:#333,color:#000
-    style L fill:#6b6,stroke:#333,color:#000
-    style J fill:#69f,stroke:#333,color:#000
-    style M fill:#69f,stroke:#333,color:#000
-```
-
 | Path | Service | Runs As | TCC | Used For |
 |------|---------|---------|-----|----------|
 | **In-Process** | Agent.app directly | User | ALL (Automation, Accessibility, Screen Recording) | osascript, screencapture, TCC-dependent commands |
