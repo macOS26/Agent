@@ -1,12 +1,76 @@
 import SwiftUI
+import AppKit
+
+/// NSTextField wrapper that disables macOS system file path autocomplete.
+private struct PathTextField: NSViewRepresentable {
+    @Binding var text: String
+    var placeholder: String
+    var onSubmit: () -> Void
+    var onFocusChange: (Bool) -> Void
+
+    func makeNSView(context: Context) -> NSTextField {
+        let tf = NSTextField()
+        tf.placeholderString = placeholder
+        tf.isAutomaticTextCompletionEnabled = false
+        tf.isBordered = false
+        tf.drawsBackground = false
+        tf.font = .systemFont(ofSize: NSFont.systemFontSize)
+        tf.focusRingType = .none
+        tf.lineBreakMode = .byTruncatingTail
+        tf.cell?.isScrollable = true
+        tf.delegate = context.coordinator
+        return tf
+    }
+
+    func updateNSView(_ tf: NSTextField, context: Context) {
+        if tf.stringValue != text {
+            tf.stringValue = text
+        }
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    class Coordinator: NSObject, NSTextFieldDelegate {
+        let parent: PathTextField
+        init(_ parent: PathTextField) { self.parent = parent }
+
+        func controlTextDidChange(_ obj: Notification) {
+            guard let tf = obj.object as? NSTextField else { return }
+            parent.text = tf.stringValue
+        }
+
+        func controlTextDidEndEditing(_ obj: Notification) {
+            parent.onSubmit()
+            parent.onFocusChange(false)
+        }
+
+        func controlTextDidBeginEditing(_ obj: Notification) {
+            parent.onFocusChange(true)
+        }
+
+        func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+            if commandSelector == #selector(NSResponder.insertNewline(_:)) {
+                parent.onSubmit()
+                // Resign first responder to dismiss
+                control.window?.makeFirstResponder(nil)
+                return true
+            }
+            // Block system completion (F5, Escape completion)
+            if commandSelector == #selector(NSResponder.complete(_:)) {
+                return true
+            }
+            return false
+        }
+    }
+}
 
 /// A text field with a dropdown of recent project folders
 struct ProjectFolderField: View {
     @Binding var projectFolder: String
     var onFolderSelected: (() -> Void)? = nil
-    
+
     @State private var showRecentFolders = false
-    @FocusState private var isTextFieldFocused: Bool
+    @State private var isFieldFocused = false
     
     private var recentFolders: [String] {
         RecentFoldersService.shared.recentFolders
@@ -35,44 +99,36 @@ struct ProjectFolderField: View {
                 .controlSize(.regular)
                 .help("Pick project folder")
 
-                TextField("Project folder...", text: $projectFolder)
-                    .textContentType(.none)
-                    .textFieldStyle(.plain)
-                    .autocorrectionDisabled()
-                    .padding(.leading, 10)
-                    .padding(.trailing, 5)
-                    .padding(.vertical, 5)
-                    .background(Color(nsColor: .controlBackgroundColor))
-                    .clipShape(Capsule())
-                    .overlay(Capsule().stroke(Color.gray.opacity(0.4), lineWidth: 1))
-                    .focusEffectDisabled()
-                    .focused($isTextFieldFocused)
-                    .onSubmit {
+                PathTextField(
+                    text: $projectFolder,
+                    placeholder: "Project folder...",
+                    onSubmit: {
                         if !projectFolder.isEmpty {
                             projectFolder = Self.resolveToFolder(projectFolder)
                             RecentFoldersService.shared.addFolder(projectFolder)
                         }
                         showRecentFolders = false
                         onFolderSelected?()
-                    }
-                    .onChange(of: projectFolder) { oldValue, newValue in
-                        // Show popup while editing if there are recent folders
-                        if isTextFieldFocused && !recentFolders.isEmpty {
-                            showRecentFolders = true
-                        }
-                    }
-                    .onChange(of: isTextFieldFocused) { _, focused in
+                    },
+                    onFocusChange: { focused in
                         if focused && !recentFolders.isEmpty {
                             showRecentFolders = true
                         } else if !focused {
-                            // Delay dismiss so button click can register
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                                if !isTextFieldFocused {
+                                if !isFieldFocused {
                                     showRecentFolders = false
                                 }
                             }
                         }
+                        isFieldFocused = focused
                     }
+                )
+                    .padding(.leading, 10)
+                    .padding(.trailing, 5)
+                    .padding(.vertical, 5)
+                    .background(Color(nsColor: .controlBackgroundColor))
+                    .clipShape(Capsule())
+                    .overlay(Capsule().stroke(Color.gray.opacity(0.4), lineWidth: 1))
 
                 Button {
                     projectFolder = ""
