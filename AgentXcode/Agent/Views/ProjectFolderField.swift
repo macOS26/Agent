@@ -81,37 +81,38 @@ struct ProjectFolderField: View {
     private var recentFolders: [String] {
         RecentFoldersService.shared.recentFolders
     }
-    
-    private func browseForFolder() {
-        let panel = NSOpenPanel()
-        panel.canChooseFiles = false
-        panel.canChooseDirectories = true
-        panel.allowsMultipleSelection = false
-        panel.message = "Select a project folder"
-        if panel.runModal() == .OK, let url = panel.url {
-            projectFolder = Self.resolveToFolder(url.path)
-            RecentFoldersService.shared.addFolder(projectFolder)
-            onFolderSelected?()
-        }
+
+    /// List subdirectories of a given path, sorted alphabetically.
+    static func subdirs(of path: String) -> [String] {
+        let fm = FileManager.default
+        guard let items = try? fm.contentsOfDirectory(atPath: path) else { return [] }
+        return items
+            .filter { !$0.hasPrefix(".") }
+            .sorted(by: { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending })
+            .compactMap { name -> String? in
+                let full = (path as NSString).appendingPathComponent(name)
+                var isDir: ObjCBool = false
+                guard fm.fileExists(atPath: full, isDirectory: &isDir), isDir.boolValue else { return nil }
+                // Skip .app bundles
+                if name.hasSuffix(".app") { return nil }
+                return full
+            }
+    }
+
+    private func selectFolder(_ path: String) {
+        projectFolder = path
+        RecentFoldersService.shared.addFolder(path)
+        onFolderSelected?()
     }
 
     var body: some View {
         HStack(spacing: 8) {
             Menu {
-                Button {
-                    browseForFolder()
-                } label: {
-                    Label("Browse...", systemImage: "folder.badge.plus")
-                }
-
+                // Recent folders at top
                 if !recentFolders.isEmpty {
-                    Divider()
-
                     ForEach(recentFolders, id: \.self) { folder in
                         Button {
-                            projectFolder = folder
-                            RecentFoldersService.shared.addFolder(folder)
-                            onFolderSelected?()
+                            selectFolder(folder)
                         } label: {
                             Label {
                                 Text((folder as NSString).lastPathComponent)
@@ -120,7 +121,11 @@ struct ProjectFolderField: View {
                             }
                         }
                     }
+                    Divider()
                 }
+
+                // Home directory tree
+                FolderSubmenu(path: FileManager.default.homeDirectoryForCurrentUser.path, label: "Home", selectFolder: selectFolder)
             } label: {
                 Image(systemName: "folder")
                     .frame(width: 36)
@@ -182,5 +187,39 @@ struct ProjectFolderField: View {
             return (path as NSString).deletingLastPathComponent
         }
         return path
+    }
+}
+
+/// Recursive folder submenu — shows subdirectories as expandable submenus.
+private struct FolderSubmenu: View {
+    let path: String
+    let label: String
+    let selectFolder: (String) -> Void
+
+    var body: some View {
+        Menu {
+            // "Select this folder" action
+            Button {
+                selectFolder(path)
+            } label: {
+                Label("Select \"\(label)\"", systemImage: "checkmark.circle")
+            }
+
+            Divider()
+
+            // Subdirectories as nested submenus
+            let children = ProjectFolderField.subdirs(of: path)
+            if children.isEmpty {
+                Text("(empty)")
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(children, id: \.self) { child in
+                    let name = (child as NSString).lastPathComponent
+                    FolderSubmenu(path: child, label: name, selectFolder: selectFolder)
+                }
+            }
+        } label: {
+            Label(label, systemImage: "folder")
+        }
     }
 }
