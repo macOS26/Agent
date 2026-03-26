@@ -17,7 +17,6 @@ extension AgentViewModel {
         appendLog: @escaping @MainActor @Sendable (String) -> Void,
         flushLog: @escaping @MainActor @Sendable () -> Void,
         commandsRun: inout [String],
-        consecutiveNoTool: inout Int,
         toolResults: inout [[String: Any]]
     ) async -> Bool {
         guard name.hasPrefix("git_") else { return false }
@@ -38,7 +37,7 @@ extension AgentViewModel {
             let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 ? "(no output, exit code: \(result.status))" : result.output
             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
-            consecutiveNoTool = 0
+
             return true
         }
 
@@ -68,7 +67,7 @@ extension AgentViewModel {
             }
             flushLog()
             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
-            consecutiveNoTool = 0
+
             return true
         }
 
@@ -95,7 +94,7 @@ extension AgentViewModel {
             }
             flushLog()
             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
-            consecutiveNoTool = 0
+
             return true
         }
 
@@ -120,7 +119,7 @@ extension AgentViewModel {
                 ? "(no output, exit code: \(result.status))"
                 : result.output
             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
-            consecutiveNoTool = 0
+
             return true
         }
 
@@ -146,7 +145,7 @@ extension AgentViewModel {
                 output = result.output.isEmpty ? "Patch applied successfully" : result.output
             }
             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
-            consecutiveNoTool = 0
+
             return true
         }
 
@@ -171,7 +170,7 @@ extension AgentViewModel {
                 ? (result.status == 0 ? "Created branch '\(branchName)'" : "Error (exit code: \(result.status))")
                 : result.output
             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
-            consecutiveNoTool = 0
+
             return true
         }
 

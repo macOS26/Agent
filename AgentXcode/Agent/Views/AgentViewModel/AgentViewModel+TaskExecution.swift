@@ -148,7 +148,6 @@ extension AgentViewModel {
 
         var commandsRun: [String] = []
         var completionSummary = ""
-        var consecutiveNoTool = 0
         var timeoutRetryCount = 0
         let maxTimeoutRetries = 2
         
@@ -433,7 +432,6 @@ extension AgentViewModel {
                             toolId: toolId,
                             appendLog: { @MainActor [weak self] msg in self?.appendLog(msg) },
                             flushLog: { @MainActor [weak self] in self?.flushLog() },
-                            consecutiveNoTool: &consecutiveNoTool,
                             toolResults: &toolResults
                         ) {
                             continue
@@ -645,7 +643,6 @@ extension AgentViewModel {
                             appendLog: appendLog,
                             flushLog: flushLog,
                             commandsRun: &commandsRun,
-                            consecutiveNoTool: &consecutiveNoTool,
                             toolResults: &toolResults
                         ) {
                             continue
@@ -1805,29 +1802,12 @@ extension AgentViewModel {
                     // Truncate large tool results to save tokens
                     let truncatedResults = Self.truncateToolResults(toolResults)
                     messages.append(["role": "user", "content": truncatedResults])
-                    consecutiveNoTool = 0
                 } else if hasToolUse && toolResults.isEmpty {
                     // Server-side tools only (web search) — no client results needed
-                    consecutiveNoTool = 0
                     messages.append(["role": "user", "content": "Continue with the task. Call task_complete when finished."])
                 } else if !hasToolUse {
-                    // LM Studio Native/Anthropic local have no tool support — accept text response immediately
-                    if provider == .lmStudio && (lmStudioProtocol == .lmStudio || lmStudioProtocol == .anthropic) {
-                        break
-                    }
-                    let responseText = response.content.compactMap { $0["text"] as? String }.joined()
-                    if responseText.count > 20 {
-                        consecutiveNoTool = 0
-                    } else {
-                        consecutiveNoTool += 1
-                    }
-                    if consecutiveNoTool >= 50 {
-                        appendLog("LLM not calling tools after \(consecutiveNoTool) attempts — stopping.")
-                        flushLog()
-                        break
-                    }
-                    let nudge = "ORIGINAL TASK: \(prompt)\n\nYou MUST call tools now. Do not output code as text. Use agent (action: create/update) for scripts, write_file/edit_file for files, web tool for web pages. Call task_complete when finished."
-                    messages.append(["role": "user", "content": nudge])
+                    // No tool calls — LLM replied with text, continue the loop without nudging
+                    messages.append(["role": "user", "content": "Continue with the task."])
                 }
 
             } catch {

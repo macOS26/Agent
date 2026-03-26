@@ -16,7 +16,6 @@ extension AgentViewModel {
         toolId: String,
         appendLog: @escaping @MainActor @Sendable (String) -> Void,
         flushLog: @escaping @MainActor @Sendable () -> Void,
-        consecutiveNoTool: inout Int,
         toolResults: inout [[String: Any]]
     ) async -> Bool {
         guard name.hasPrefix("mcp_") else { return false }
@@ -49,7 +48,7 @@ extension AgentViewModel {
             appendLog(mcpOutput)
             flushLog()
             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": mcpOutput])
-            consecutiveNoTool = 0
+    
             return true
         }
 
@@ -83,7 +82,7 @@ extension AgentViewModel {
             "tool_use_id": toolId,
             "content": mcpOutput,
         ])
-        consecutiveNoTool = 0
+
         return true
     }
 }
