@@ -183,63 +183,72 @@ extension AgentViewModel {
     // MARK: - Direct Command Execution
 
     /// Execute a direct command matched by triage, without the LLM.
-    func executeDirectCommand(_ cmd: AppleIntelligenceMediator.DirectCommand) async -> String {
+    /// When `tab` is provided, output is logged to that tab; otherwise to the main activity log.
+    func executeDirectCommand(_ cmd: AppleIntelligenceMediator.DirectCommand, tab: ScriptTab? = nil) async -> String {
         let name = scriptService.resolveScriptName(cmd.argument)
+
+        // Local helpers to route logging to the correct destination
+        func log(_ message: String) {
+            if let tab { tab.appendLog(message) } else { appendLog(message) }
+        }
+        func flush() {
+            if let tab { tab.flush() } else { flushLog() }
+        }
 
         switch cmd.name {
         case "list_agents":
             let list = scriptService.numberedList()
             let count = scriptService.listScripts().count
-            appendLog("🦾 Agents: \(count) found")
-            appendLog(list)
+            log("🦾 Agents: \(count) found")
+            log(list)
             return list
 
         case "read_agent":
             guard let content = scriptService.readScript(name: name) else {
                 let err = "Error: agent '\(name)' not found."
-                appendLog(err)
+                log(err)
                 return err
             }
-            appendLog("📖 Read: \(name)")
-            appendLog(Self.codeFence(content, language: "swift"))
+            log("📖 Read: \(name)")
+            log(Self.codeFence(content, language: "swift"))
             return content
 
         case "delete_agent":
             let output = scriptService.deleteScript(name: name)
-            appendLog(output)
+            log(output)
             return output
 
         case "run_agent":
             // Only called when canRunDirectly returned true (no args needed)
             guard let compileCmd = scriptService.compileCommand(name: name) else {
                 let err = "Error: agent '\(name)' not found."
-                appendLog(err)
+                log(err)
                 return err
             }
-            appendLog("🦾 Compiling: \(name)")
-            flushLog()
+            log("🦾 Compiling: \(name)")
+            flush()
             let compileResult = await userService.execute(command: compileCmd)
             if compileResult.status != 0 {
-                appendLog("Compile error:\n\(compileResult.output)")
+                log("Compile error:\n\(compileResult.output)")
                 return compileResult.output
             }
-            appendLog("🦾 Running: \(name)")
-            flushLog()
+            log("🦾 Running: \(name)")
+            flush()
             let runResult = await scriptService.loadAndRunScriptViaProcess(name: name)
-            appendLog(runResult.output)
+            log(runResult.output)
             return runResult.output
 
         case "google_search":
             let query = cmd.argument
-            appendLog("🔍 Google search: \(query)")
-            flushLog()
+            log("🔍 Google search: \(query)")
+            flush()
             let output = await WebAutomationService.shared.safariGoogleSearch(query: query)
             return output
 
         case "web_open":
             let url = cmd.argument
-            appendLog("🌐 Opening: \(url)")
-            flushLog()
+            log("🌐 Opening: \(url)")
+            flush()
             let fullURL = url.hasPrefix("http") ? url : "https://\(url)"
             guard let parsed = URL(string: fullURL) else {
                 return "Error: Invalid URL '\(fullURL)'"
@@ -256,28 +265,28 @@ extension AgentViewModel {
             let parts = cmd.argument.components(separatedBy: "|||")
             let url = parts.first ?? ""
             let query = parts.count > 1 ? parts[1] : ""
-            appendLog("🌐 Opening: \(url)")
-            flushLog()
+            log("🌐 Opening: \(url)")
+            flush()
             let fullURL = url.hasPrefix("http") ? url : "https://\(url)"
             if let parsed = URL(string: fullURL) {
                 do { _ = try await WebAutomationService.shared.open(url: parsed) } catch {}
             }
             // Wait for page load
             try? await Task.sleep(for: .seconds(3))
-            appendLog("🔍 Searching page for: \(query)")
-            flushLog()
+            log("🔍 Searching page for: \(query)")
+            flush()
             let searchResult = await WebAutomationService.shared.safariSiteSearch(query: query)
             return searchResult
 
         case "web_scan":
-            appendLog("🔍 Scanning interactive elements...")
-            flushLog()
+            log("🔍 Scanning interactive elements...")
+            flush()
             let elements = await WebAutomationService.shared.scanInteractiveElements()
             return elements
 
         case "web_read":
-            appendLog("📖 Reading page...")
-            flushLog()
+            log("📖 Reading page...")
+            flush()
             let url = await WebAutomationService.shared.getPageURL()
             let title = await WebAutomationService.shared.getPageTitle()
             let content = await WebAutomationService.shared.readPageContent(maxLength: 3000)
@@ -285,8 +294,8 @@ extension AgentViewModel {
 
         case "web_click":
             let selector = cmd.argument
-            appendLog("👆 Clicking: \(selector)")
-            flushLog()
+            log("👆 Clicking: \(selector)")
+            flush()
             do {
                 return try await WebAutomationService.shared.click(selector: selector, strategy: .javascript)
             } catch {
@@ -299,8 +308,8 @@ extension AgentViewModel {
             guard parts.count >= 2 else { return "Error: format is selector|text" }
             let selector = parts[0].trimmingCharacters(in: .whitespaces)
             let text = parts.dropFirst().joined(separator: "|").trimmingCharacters(in: .whitespaces)
-            appendLog("⌨️ Typing into \(selector): \(text.prefix(50))")
-            flushLog()
+            log("⌨️ Typing into \(selector): \(text.prefix(50))")
+            flush()
             do {
                 return try await WebAutomationService.shared.type(text: text, selector: selector, strategy: .javascript)
             } catch {
@@ -309,8 +318,8 @@ extension AgentViewModel {
 
         case "web_page_search":
             let query = cmd.argument
-            appendLog("🔍 Page search: \(query)")
-            flushLog()
+            log("🔍 Page search: \(query)")
+            flush()
             let js = "window.find('\(query.replacingOccurrences(of: "'", with: "\\'"))')"
             do {
                 let result = try await WebAutomationService.shared.executeJavaScript(script: js)
@@ -322,8 +331,8 @@ extension AgentViewModel {
 
         case "web_js":
             let script = cmd.argument
-            appendLog("📜 Running JS...")
-            flushLog()
+            log("📜 Running JS...")
+            flush()
             do {
                 let result = try await WebAutomationService.shared.executeJavaScript(script: script)
                 return result as? String ?? "(no output)"

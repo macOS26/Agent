@@ -97,7 +97,7 @@ extension AgentViewModel {
                 if !scriptService.canRunDirectly(name: resolved) { break }
             }
             tabTaskLog.info("[\(tab.displayTitle)] Direct command: \(cmd.name)")
-            let output = await executeDirectCommand(cmd)
+            let output = await executeDirectCommand(cmd, tab: tab)
             tab.flush()
 
             // Web commands: show results and complete
