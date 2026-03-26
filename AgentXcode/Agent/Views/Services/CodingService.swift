@@ -93,6 +93,11 @@ enum CodingService {
             return "Error: could not read file: \(path)"
         }
 
+        // Normalize line endings
+        content = content.replacingOccurrences(of: "\r\n", with: "\n")
+        let oldString = oldString.replacingOccurrences(of: "\r\n", with: "\n")
+        let newString = newString.replacingOccurrences(of: "\r\n", with: "\n")
+
         guard oldString != newString else {
             return "Error: old_string and new_string are identical"
         }
@@ -114,9 +119,16 @@ enum CodingService {
             // Try to give a helpful hint
             let trimmed = oldString.trimmingCharacters(in: .whitespacesAndNewlines)
             if !trimmed.isEmpty && content.contains(trimmed) {
-                return "Error: old_string not found (exact match). A similar string exists — check whitespace/indentation."
+                return "Error: old_string not found (exact match). A similar string exists — check whitespace/indentation. Re-read the file to verify content."
             }
-            return "Error: old_string not found in \(path)"
+            // Check if first non-blank line exists anywhere in the file
+            let firstLine = oldString.components(separatedBy: "\n")
+                .first(where: { !$0.trimmingCharacters(in: .whitespaces).isEmpty })?
+                .trimmingCharacters(in: .whitespaces)
+            if let firstLine, !firstLine.isEmpty, content.contains(firstLine) {
+                return "Error: old_string not found in \(path). Content may have changed — re-read the file before retrying."
+            }
+            return "Error: old_string not found in \(path). Re-read the file to verify the exact content."
         }
 
         if !replaceAll && occurrences > 1 {
@@ -141,28 +153,46 @@ enum CodingService {
         }
     }
 
-    /// Fuzzy line-by-line match: compares lines with trailing whitespace stripped
-    /// and tabs normalized to spaces. Returns the range of the matching block in the original content.
+    /// Fuzzy line-by-line match with multiple normalization passes.
+    /// Pass 1: tabs→spaces + strip trailing whitespace.
+    /// Pass 2: trim all leading/trailing whitespace per line (catches indentation mismatches).
+    /// Also strips leading/trailing blank lines from target before matching.
     private static func fuzzyFindRange(in content: String, target: String) -> Range<String.Index>? {
         let contentLines = content.components(separatedBy: "\n")
-        let targetLines = target.components(separatedBy: "\n")
+        var targetLines = target.components(separatedBy: "\n")
+
+        // Strip leading/trailing blank lines from target
+        while let first = targetLines.first, first.trimmingCharacters(in: .whitespaces).isEmpty {
+            targetLines.removeFirst()
+        }
+        while let last = targetLines.last, last.trimmingCharacters(in: .whitespaces).isEmpty {
+            targetLines.removeLast()
+        }
+
         guard !targetLines.isEmpty, targetLines.count <= contentLines.count else { return nil }
 
-        let normalize: (String) -> String = { line in
+        // Pass 1: normalize tabs + trailing whitespace only
+        let normalizeLight: (String) -> String = { line in
             line.replacingOccurrences(of: "\t", with: "    ")
                 .replacingOccurrences(of: "\\s+$", with: "", options: .regularExpression)
         }
-        let targetNorm = targetLines.map(normalize)
+        // Pass 2: trim all whitespace (catches indentation differences)
+        let normalizeStrong: (String) -> String = { line in
+            line.trimmingCharacters(in: .whitespaces)
+        }
 
-        for start in 0...(contentLines.count - targetLines.count) {
-            let window = contentLines[start..<(start + targetLines.count)]
-            if window.enumerated().allSatisfy({ normalize($0.element) == targetNorm[$0.offset] }) {
-                // Calculate range in original string
-                let beforeCount = contentLines[..<start].reduce(0) { $0 + $1.count + 1 }  // +1 for \n
-                let matchStr = contentLines[start..<(start + targetLines.count)].joined(separator: "\n")
-                let startIdx = content.index(content.startIndex, offsetBy: beforeCount)
-                let endIdx = content.index(startIdx, offsetBy: matchStr.count)
-                return startIdx..<endIdx
+        for normalize in [normalizeLight, normalizeStrong] {
+            let targetNorm = targetLines.map(normalize)
+
+            for start in 0...(contentLines.count - targetLines.count) {
+                let window = contentLines[start..<(start + targetLines.count)]
+                if window.enumerated().allSatisfy({ normalize($0.element) == targetNorm[$0.offset] }) {
+                    let beforeCount = contentLines[..<start].reduce(0) { $0 + $1.count + 1 }  // +1 for \n
+                    let matchStr = contentLines[start..<(start + targetLines.count)].joined(separator: "\n")
+                    let startIdx = content.index(content.startIndex, offsetBy: beforeCount)
+                    let endIdx = content.index(startIdx, offsetBy: matchStr.count)
+                    return startIdx..<endIdx
+                }
             }
         }
         return nil
