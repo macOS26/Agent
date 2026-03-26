@@ -342,17 +342,16 @@ extension AgentViewModel {
 
     // MARK: - Plan Mode
 
-    /// Directory for all plan files — always stored at the git repo root's `plans/` folder.
+    /// Git repo root for plan files. Plans go directly in the repo root (no subdirectory).
     /// Returns nil if the project folder is not inside a git repository.
     private static func planDir(_ projectFolder: String) -> String? {
         let base = projectFolder.isEmpty ? NSHomeDirectory() : resolvedWorkingDirectory(projectFolder)
-        // Walk up to find the git repo root
         var dir = base
         let fm = FileManager.default
         while dir != "/" && !dir.isEmpty {
             let gitDir = (dir as NSString).appendingPathComponent(".git")
             if fm.fileExists(atPath: gitDir) {
-                return (dir as NSString).appendingPathComponent("plans")
+                return dir
             }
             dir = (dir as NSString).deletingLastPathComponent
         }
@@ -418,7 +417,6 @@ extension AgentViewModel {
             }
             md += "\n---\n*Status: \(steps.count) steps pending*\n"
             do {
-                try fm.createDirectory(atPath: dir, withIntermediateDirectories: true)
                 guard let path = planFilePath(planId, projectFolder: projectFolder) else {
                     return "Error: could not resolve plan file path."
                 }
