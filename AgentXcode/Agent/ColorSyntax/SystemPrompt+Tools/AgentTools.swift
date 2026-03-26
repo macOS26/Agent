@@ -410,6 +410,23 @@ enum AgentTools {
             required: ["file_path", "destination"]
         ),
         ToolDef(
+            name: Name.undoEdit,
+            description: "Undo the last edit_file or apply_diff change to a file. Restores the file to its state before the most recent edit.",
+            properties: [
+                "file_path": ["type": "string", "description": "Path to the file to undo"],
+            ],
+            required: ["file_path"]
+        ),
+        ToolDef(
+            name: Name.lookupSdef,
+            description: "Look up an app's AppleScript scripting dictionary (SDEF). Use bundle_id \"list\" to see all available apps. Add class_name to inspect a specific class's properties and elements.",
+            properties: [
+                "bundle_id": ["type": "string", "description": "App bundle ID (e.g. \"com.apple.Music\") or \"list\" to show all available SDEFs"],
+                "class_name": ["type": "string", "description": "Optional class name to inspect (e.g. \"track\", \"playlist\")"],
+            ],
+            required: ["bundle_id"]
+        ),
+        ToolDef(
             name: Name.listFiles,
             description: "Find files matching a glob pattern. Use instead of `find`. Excludes hidden files and .build directories.",
             properties: [

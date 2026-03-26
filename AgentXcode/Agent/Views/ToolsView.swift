@@ -9,8 +9,8 @@ struct ToolsView: View {
     // Group definitions matching ToolPreferencesService — use exact name sets to avoid overlap
     static let groups: [String: (filter: (AgentTools.ToolDef) -> Bool, icon: String)] = [
         // Coding group removed — xcode moved to Automation
-        "File Manager": ({ ["read_file", "write_file", "edit_file", "create_diff", "apply_diff", "diff_and_apply", "list_files", "search_files", "read_dir", "file_manager"].contains($0.name) }, "folder"),
-        "Automation": ({ ["applescript_tool", "accessibility", "javascript_tool", "xcode"].contains($0.name) }, "gearshape.2"),
+        "File Manager": ({ ["read_file", "write_file", "edit_file", "create_diff", "apply_diff", "diff_and_apply", "undo_edit", "list_files", "search_files", "read_dir", "file_manager"].contains($0.name) }, "folder"),
+        "Automation": ({ ["applescript_tool", "accessibility", "javascript_tool", "xcode", "lookup_sdef"].contains($0.name) }, "gearshape.2"),
         "Experimental": ({ ["apple_event_query", "ax_screenshot", "selenium"].contains($0.name) }, "flask"),
         // accessibility is in Automation
         "Core": ({ ["task_complete", "list_tools", "web_search", "write_text", "transform_text", "about_self", "fix_text"].contains($0.name) }, "checkmark.circle"),
