@@ -128,11 +128,11 @@ struct ProjectFolderField: View {
                 },
                 onFocusChange: { focused in
                     if focused && !recentFolders.isEmpty {
-                        showRecentFolders = true
+                        withAnimation(.easeInOut(duration: 0.2)) { showRecentFolders = true }
                     } else if !focused {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                             if !isFieldFocused {
-                                showRecentFolders = false
+                                withAnimation(.easeInOut(duration: 0.2)) { showRecentFolders = false }
                             }
                         }
                     }
@@ -244,7 +244,7 @@ private struct FolderTreePopover: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 let home = FileManager.default.homeDirectoryForCurrentUser.path
-                FolderTreeRow(path: home, name: "Home", depth: 0, selectedFolder: selectedFolder, onSelect: onSelect)
+                FolderTreeRow(path: home, name: "Home", depth: 0, selectedFolder: selectedFolder, onSelect: onSelect, startExpanded: true)
             }
             .padding(6)
         }
@@ -260,8 +260,34 @@ private struct FolderTreeRow: View {
     let selectedFolder: String
     let onSelect: (String) -> Void
 
-    @State private var isExpanded = false
+    @State private var isExpanded: Bool
     @State private var children: [String]?
+
+    init(path: String, name: String, depth: Int, selectedFolder: String, onSelect: @escaping (String) -> Void, startExpanded: Bool = false) {
+        self.path = path
+        self.name = name
+        self.depth = depth
+        self.selectedFolder = selectedFolder
+        self.onSelect = onSelect
+        self._isExpanded = State(initialValue: startExpanded)
+        if startExpanded {
+            self._children = State(initialValue: Self.loadChildrenStatic(path))
+        }
+    }
+
+    private static func loadChildrenStatic(_ path: String) -> [String] {
+        let fm = FileManager.default
+        guard let items = try? fm.contentsOfDirectory(atPath: path) else { return [] }
+        return items
+            .filter { !$0.hasPrefix(".") && !$0.hasSuffix(".app") }
+            .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+            .compactMap { name -> String? in
+                let full = (path as NSString).appendingPathComponent(name)
+                var isDir: ObjCBool = false
+                guard fm.fileExists(atPath: full, isDirectory: &isDir), isDir.boolValue else { return nil }
+                return full
+            }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -271,18 +297,17 @@ private struct FolderTreeRow: View {
 
                 // Disclosure arrow
                 Button {
-                    if isExpanded {
-                        isExpanded = false
-                    } else {
-                        if children == nil {
-                            children = loadChildren()
-                        }
-                        isExpanded = true
+                    if children == nil {
+                        children = loadChildren()
+                    }
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isExpanded.toggle()
                     }
                 } label: {
-                    Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                    Image(systemName: "chevron.right")
                         .font(.system(size: 9, weight: .bold))
                         .foregroundStyle(.secondary)
+                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
                         .frame(width: 16, height: 16)
                 }
                 .buttonStyle(.plain)
@@ -319,6 +344,7 @@ private struct FolderTreeRow: View {
                         selectedFolder: selectedFolder,
                         onSelect: onSelect
                     )
+                    .transition(.move(edge: .top).combined(with: .opacity))
                 }
             }
         }
