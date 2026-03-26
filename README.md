@@ -38,10 +38,7 @@ Apple Intelligence serves as a **communication mediator** between the LLM and th
 | **Brain Button Integration** | Toggle Apple Intelligence mediator directly from the brain button in the toolbar |
 | **LoRA Training** | Apple Intelligence can also be used for LoRA adapter training with the main LLM |
 
-Annotations are tagged with `[AI]` prefixes to distinguish them from LLM responses:
-- `[AI → User]` — User-facing explanations
-- `[AI → LLM]` — Context injected into LLM prompts
-- `[AI → Both]` — Information for both parties
+Annotations are tagged with `[AI]` prefixes to distinguish them from LLM responses.
 
 Enable Apple Intelligence Mediator in Settings to enhance communication clarity. Requires Apple Intelligence-capable Mac running macOS 26+.
 
@@ -117,7 +114,7 @@ Full macOS Accessibility API for apps without AppleScript support:
 
 - macOS 26 (Tahoe) or later
 - Xcode Command Line Tools (Agent will prompt to install if missing)
-- An API key for your preferred provider (see [Multi-Provider LLM Support](#multi-provider-llm-support))
+- An API key for your preferred provider
 
 ### 2. Build and Run
 
