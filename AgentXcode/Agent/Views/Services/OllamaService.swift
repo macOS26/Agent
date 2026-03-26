@@ -8,6 +8,8 @@ final class OllamaService {
     let supportsVision: Bool
     let provider: APIProvider
     var temperature: Double = 0.2
+    /// Context window size for local Ollama. 0 = let model decide.
+    let contextSize: Int
 
     var onStreamText: (@MainActor @Sendable (String) -> Void)?
 
@@ -16,13 +18,14 @@ final class OllamaService {
     let userName: String
     let projectFolder: String
 
-    init(apiKey: String, model: String, endpoint: String, supportsVision: Bool = false, historyContext: String = "", projectFolder: String = "", provider: APIProvider = .ollama) {
+    init(apiKey: String, model: String, endpoint: String, supportsVision: Bool = false, historyContext: String = "", projectFolder: String = "", provider: APIProvider = .ollama, contextSize: Int = 0) {
         self.apiKey = apiKey
         self.model = model
         let effectiveEndpoint = endpoint.isEmpty ? "http://localhost:11434/api/chat" : endpoint
         self.baseURL = URL(string: effectiveEndpoint) ?? URL(filePath: "/")
         self.supportsVision = supportsVision
         self.provider = provider
+        self.contextSize = contextSize
         self.historyContext = historyContext
         self.userHome = FileManager.default.homeDirectoryForCurrentUser.path
         self.userName = NSUserName()
@@ -160,11 +163,12 @@ final class OllamaService {
 
         // Only send options for local Ollama; cloud providers manage their own context limits
         if provider == .localOllama {
-            body["options"] = [
-                "temperature": temperature,
-                "num_predict": 2048,
-                "num_ctx": 16384
-            ] as [String: Any]
+            var opts: [String: Any] = ["temperature": temperature]
+            if contextSize > 0 {
+                opts["num_ctx"] = contextSize
+                opts["num_predict"] = max(2048, contextSize / 4)
+            }
+            body["options"] = opts
         }
 
         let bodyData = try JSONSerialization.data(withJSONObject: body)
@@ -271,11 +275,12 @@ final class OllamaService {
 
         // Only send options for local Ollama; cloud providers manage their own context limits
         if provider == .localOllama {
-            body["options"] = [
-                "temperature": temperature,
-                "num_predict": 2048,
-                "num_ctx": 16384
-            ] as [String: Any]
+            var opts: [String: Any] = ["temperature": temperature]
+            if contextSize > 0 {
+                opts["num_ctx"] = contextSize
+                opts["num_predict"] = max(2048, contextSize / 4)
+            }
+            body["options"] = opts
         }
 
         let bodyData = try JSONSerialization.data(withJSONObject: body)

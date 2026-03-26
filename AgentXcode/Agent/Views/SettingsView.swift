@@ -389,6 +389,22 @@ struct SettingsView: View {
                             .help("Fetch available local models")
                         }
                     }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Context Window").font(.caption).foregroundStyle(.secondary)
+                        HStack {
+                            TextField("0 = auto", text: Binding(
+                                get: { viewModel.localOllamaContextSize == 0 ? "" : "\(viewModel.localOllamaContextSize)" },
+                                set: { viewModel.localOllamaContextSize = Int($0) ?? 0 }
+                            ))
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 100)
+
+                            Text(viewModel.localOllamaContextSize == 0 ? "Model default" : "\(viewModel.localOllamaContextSize / 1024)K tokens")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
             }
 

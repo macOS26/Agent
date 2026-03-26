@@ -440,6 +440,10 @@ final class AgentViewModel {
     var localOllamaTemperature: Double = UserDefaults.standard.object(forKey: "localOllamaTemperature") as? Double ?? 0.2 {
         didSet { UserDefaults.standard.set(localOllamaTemperature, forKey: "localOllamaTemperature") }
     }
+    /// Context window size for local Ollama. 0 = let model decide.
+    var localOllamaContextSize: Int = UserDefaults.standard.object(forKey: "localOllamaContextSize") as? Int ?? 0 {
+        didSet { UserDefaults.standard.set(localOllamaContextSize, forKey: "localOllamaContextSize") }
+    }
     var vLLMTemperature: Double = UserDefaults.standard.object(forKey: "vLLMTemperature") as? Double ?? 0.2 {
         didSet { UserDefaults.standard.set(vLLMTemperature, forKey: "vLLMTemperature") }
     }
