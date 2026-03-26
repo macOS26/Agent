@@ -1801,12 +1801,6 @@ extension AgentViewModel {
                     // Truncate large tool results to save tokens
                     let truncatedResults = Self.truncateToolResults(toolResults)
                     messages.append(["role": "user", "content": truncatedResults])
-                } else if hasToolUse && toolResults.isEmpty {
-                    // Server-side tools only (web search) — no client results needed
-                    messages.append(["role": "user", "content": "Continue with the task. Call task_complete when finished."])
-                } else if !hasToolUse {
-                    // No tool calls — LLM replied with text, remind to use tools or finish
-                    messages.append(["role": "user", "content": "If you are done, call task_complete now."])
                 }
 
             } catch {
