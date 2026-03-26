@@ -2,114 +2,206 @@ import Foundation
 
 @_cdecl("script_main")
 public func scriptMain() -> Int32 {
-    createDMG()
-    return 0
-}
-
-func createDMG() {
-    let home = NSHomeDirectory()
-    let inputPath = "\(home)/Documents/AgentScript/json/CreateDMG_input.json"
-    let outputPath = "\(home)/Documents/AgentScript/json/CreateDMG_output.json"
+    let args = ProcessInfo.processInfo.arguments
+    let fileManager = FileManager.default
     
-    // Default values
-    var appName = "Agent!"
-    var sourcePath = "/Applications/Agent!.app"
-    var destFolder = "\(home)/Documents/Releases/Agent"
-    var dmgName = "Agent.dmg"
-    var volumeName = "Agent"
+    // Parse arguments: --app <path> --output <path> [--name <volume-name>] [--size <mb>] [--compress]
+    var appPath: String?
+    var outputPath: String?
+    var volumeName = "DiskImage"
+    var sizeMB = 200
+    var compress = false
     
-    // Read input JSON if exists
-    if let data = FileManager.default.contents(atPath: inputPath),
-       let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-        appName = json["appName"] as? String ?? appName
-        sourcePath = json["sourcePath"] as? String ?? sourcePath
-        destFolder = json["destFolder"] as? String ?? destFolder
-        dmgName = json["dmgName"] as? String ?? dmgName
-        volumeName = json["volumeName"] as? String ?? volumeName
+    var i = 1
+    while i < args.count {
+        switch args[i] {
+        case "--app":
+            appPath = i + 1 < args.count ? args[i + 1] : nil
+            i += 2
+        case "--output":
+            outputPath = i + 1 < args.count ? args[i + 1] : nil
+            i += 2
+        case "--name":
+            volumeName = i + 1 < args.count ? args[i + 1] : "DiskImage"
+            i += 2
+        case "--size":
+            if let sizeStr = i + 1 < args.count ? args[i + 1] : nil {
+                sizeMB = Int(sizeStr) ?? 200
+            }
+            i += 2
+        case "--compress":
+            compress = true
+            i += 1
+        default:
+            i += 1
+        }
     }
     
-    print("Creating DMG for \(appName)...")
-    print("Source: \(sourcePath)")
-    print("Destination: \(destFolder)/\(dmgName)")
-    
-    // Create destination folder if needed
-    do {
-        try FileManager.default.createDirectory(atPath: destFolder, withIntermediateDirectories: true)
-    } catch {
-        print("Error creating destination folder: \(error)")
-        writeOutput(outputPath, success: false, error: "Failed to create destination folder")
-        return
+    guard let appPath = appPath else {
+        print("Usage: CreateDmg --app <path-to-app> --output <dmg-path> [--name <volume-name>] [--size <mb>] [--compress]")
+        print("Options:")
+        print("  --app      Path to the .app bundle (required)")
+        print("  --output   Output DMG path (optional, defaults to app path with .dmg extension)")
+        print("  --name     Volume name shown when mounted (default: DiskImage)")
+        print("  --size     Size in MB (default: 200)")
+        print("  --compress Convert to compressed read-only UDZO format")
+        print("\nExample: CreateDmg --app /path/to/MyApp.app --output /path/to/MyApp.dmg --name \"MyApp\" --compress")
+        return 1
     }
     
-    let tempDir = "\(destFolder)/dmg_temp_\(UUID().uuidString)"
-    let dmgPath = "\(destFolder)/\(dmgName)"
+    // Resolve paths
+    let resolvedAppPath = (appPath as NSString).expandingTildeInPath
+    let resolvedOutputPath = outputPath ?? resolvedAppPath.replacingOccurrences(of: ".app$", with: ".dmg", options: .regularExpression)
+    
+    // Check if app exists
+    guard fileManager.fileExists(atPath: resolvedAppPath) else {
+        print("Error: App not found at \(resolvedAppPath)")
+        return 1
+    }
     
     // Remove existing DMG if present
-    try? FileManager.default.removeItem(atPath: dmgPath)
-    
-    // Create temp directory
-    do {
-        try FileManager.default.createDirectory(atPath: tempDir, withIntermediateDirectories: true)
-    } catch {
-        print("Error creating temp directory: \(error)")
-        writeOutput(outputPath, success: false, error: "Failed to create temp directory")
-        return
+    if fileManager.fileExists(atPath: resolvedOutputPath) {
+        do {
+            try fileManager.removeItem(atPath: resolvedOutputPath)
+            print("Removed existing DMG: \(resolvedOutputPath)")
+        } catch {
+            print("Error removing existing DMG: \(error)")
+            return 1
+        }
     }
     
-    // Copy app to temp
-    let task = Process()
-    task.launchPath = "/bin/bash"
-    task.arguments = ["-c", """
-    cp -R '\(sourcePath)' '\(tempDir)/'
-    ln -s /Applications '\(tempDir)/Applications'
-    """]
+    // Create temporary directory
+    let tempDir = fileManager.temporaryDirectory.appendingPathComponent("dmg_build_\(UUID().uuidString)").path
     
     do {
-        try task.run()
-        task.waitUntilExit()
+        try fileManager.createDirectory(atPath: tempDir, withIntermediateDirectories: true)
+    } catch {
+        print("Error creating temp directory: \(error)")
+        return 1
+    }
+    
+    defer {
+        try? fileManager.removeItem(atPath: tempDir)
+    }
+    
+    // Copy app to temp directory
+    let appName = (resolvedAppPath as NSString).lastPathComponent
+    let tempAppPath = (tempDir as NSString).appendingPathComponent(appName)
+    
+    do {
+        try fileManager.copyItem(atPath: resolvedAppPath, toPath: tempAppPath)
+        print("Copied \(appName) to temp directory")
     } catch {
         print("Error copying app: \(error)")
-        try? FileManager.default.removeItem(atPath: tempDir)
-        writeOutput(outputPath, success: false, error: "Failed to copy app")
-        return
+        return 1
     }
     
     // Create DMG
-    let dmgTask = Process()
-    dmgTask.launchPath = "/usr/bin/hdiutil"
-    dmgTask.arguments = ["create", "-volname", volumeName, "-srcfolder", tempDir, "-ov", "-format", "UDZO", dmgPath]
+    let task = Process()
+    task.executableURL = URL(fileURLWithPath: "/usr/bin/hdiutil")
+    task.arguments = [
+        "create",
+        "-volname", volumeName,
+        "-srcfolder", tempDir,
+        "-ov",
+        "-format", "UDRW",
+        "-size", "\(sizeMB)m",
+        resolvedOutputPath
+    ]
+    
+    let pipe = Pipe()
+    task.standardOutput = pipe
+    task.standardError = pipe
     
     do {
-        try dmgTask.run()
-        dmgTask.waitUntilExit()
+        print("Creating DMG: \((resolvedOutputPath as NSString).lastPathComponent)...")
+        try task.run()
+        task.waitUntilExit()
+        
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        let output = String(data: data, encoding: .utf8) ?? ""
+        if !output.isEmpty {
+            print(output)
+        }
+        
+        if task.terminationStatus == 0 {
+            print("\n✓ Successfully created: \(resolvedOutputPath)")
+            print("  Volume name: \(volumeName)")
+            print("  Format: Read/Write (UDRW)")
+            print("  Size: \(sizeMB) MB")
+            
+            if compress {
+                // Convert to compressed UDZO format
+                let compressedPath = resolvedOutputPath
+                let tempRwPath = (resolvedOutputPath as NSString).deletingPathExtension + "_temp.dmg"
+                
+                // Rename the RW DMG temporarily
+                do {
+                    try fileManager.moveItem(atPath: resolvedOutputPath, toPath: tempRwPath)
+                } catch {
+                    print("Error preparing for compression: \(error)")
+                    return 1
+                }
+                
+                let convertTask = Process()
+                convertTask.executableURL = URL(fileURLWithPath: "/usr/bin/hdiutil")
+                convertTask.arguments = [
+                    "convert",
+                    tempRwPath,
+                    "-format", "UDZO",
+                    "-o", compressedPath,
+                    "-imagekey", "zlib-level=9"
+                ]
+                
+                let convertPipe = Pipe()
+                convertTask.standardOutput = convertPipe
+                convertTask.standardError = convertPipe
+                
+                do {
+                    print("\nConverting to compressed format...")
+                    try convertTask.run()
+                    convertTask.waitUntilExit()
+                    
+                    let convertData = convertPipe.fileHandleForReading.readDataToEndOfFile()
+                    let convertOutput = String(data: convertData, encoding: .utf8) ?? ""
+                    if !convertOutput.isEmpty {
+                        print(convertOutput)
+                    }
+                    
+                    // Remove temp RW DMG
+                    try? fileManager.removeItem(atPath: tempRwPath)
+                    
+                    if convertTask.terminationStatus == 0 {
+                        print("\n✓ Compressed DMG created: \(compressedPath)")
+                        
+                        // Show size savings
+                        if let compressedAttrs = try? fileManager.attributesOfItem(atPath: compressedPath),
+                           let compressedSize = compressedAttrs[.size] as? UInt64 {
+                            let compressedMB = Double(compressedSize) / 1024 / 1024
+                            print("  Final size: \(String(format: "%.2f", compressedMB)) MB")
+                        }
+                    } else {
+                        print("Error compressing DMG, exit code: \(convertTask.terminationStatus)")
+                        return 1
+                    }
+                } catch {
+                    print("Error during compression: \(error)")
+                    return 1
+                }
+            } else {
+                print("\nTo customize:")
+                print("  1. Open the DMG")
+                print("  2. In Finder, use View > Show View Options")
+                print("  3. Set background color/image")
+                print("  4. Convert to compressed: hdiutil convert \"\(resolvedOutputPath)\" -format UDZO -o final.dmg")
+            }
+        } else {
+            print("Error creating DMG, exit code: \(task.terminationStatus)")
+        }
+        
+        return task.terminationStatus
     } catch {
-        print("Error creating DMG: \(error)")
-        try? FileManager.default.removeItem(atPath: tempDir)
-        writeOutput(outputPath, success: false, error: "Failed to create DMG")
-        return
-    }
-    
-    // Cleanup temp
-    try? FileManager.default.removeItem(atPath: tempDir)
-    
-    // Get file size
-    let attributes = try? FileManager.default.attributesOfItem(atPath: dmgPath)
-    let fileSize = (attributes?[.size] as? Int64) ?? 0
-    let sizeMB = Double(fileSize) / 1024.0 / 1024.0
-    
-    print("DMG created successfully: \(dmgPath)")
-    print(String(format: "Size: %.1f MB", sizeMB))
-    
-    writeOutput(outputPath, success: true, dmgPath: dmgPath, sizeMB: sizeMB)
-}
-
-func writeOutput(_ path: String, success: Bool, dmgPath: String? = nil, sizeMB: Double? = nil, error: String? = nil) {
-    var result: [String: Any] = ["success": success]
-    if let dmgPath = dmgPath { result["dmgPath"] = dmgPath }
-    if let sizeMB = sizeMB { result["sizeMB"] = sizeMB }
-    if let error = error { result["error"] = error }
-    
-    if let data = try? JSONSerialization.data(withJSONObject: result, options: .prettyPrinted) {
-        try? data.write(to: URL(fileURLWithPath: path))
+        print("Error: \(error)")
+        return 1
     }
 }

@@ -5,14 +5,15 @@ import Foundation
 // Scripts compile as dynamic libraries (.dylib) loaded into Agent! via dlopen.
 // ScriptService adds/removes entries when scripts are created/deleted.
 let scriptNames = [
-    "AXDemo",
     "AccessibilityRecorder",
+    "ArchiveXcode",
     "CapturePhoto",
     "CheckMail",
     "CreateDMG",
     "EmailAccounts",
     "ExtractAlbumArt",
     "GenerateBridge",
+    "GitHubReleasePro",
     "Hello",
     "ListHomeContents",
     "ListNotes",
@@ -28,14 +29,10 @@ let scriptNames = [
     "SDEFtoJSON",
     "SafariSearch",
     "SaveImageFromClipboard",
-    "Selenium",
     "SendGroupMessage",
     "SendMessage",
     "SystemInfo",
     "TodayEvents",
-    "WebForm",
-    "WebNavigate",
-    "WebScrape",
 ]
 
 // Auto-detect bridge names from AppleEventBridges source files (single source of truth)

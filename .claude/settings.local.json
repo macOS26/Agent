@@ -229,7 +229,9 @@
       "Bash(/tmp/test_safari_google2.sh)",
       "Bash(/Users/toddbruss/Documents/AgentScript/tests/test_google_search.sh)",
       "Bash(xcrun xcodebuild:*)",
-      "Read(//Users/toddbruss/Documents/**)"
+      "Read(//Users/toddbruss/Documents/**)",
+      "WebFetch(domain:coryrylan.com)",
+      "WebFetch(domain:medium.com)"
     ]
   }
 }

@@ -63,7 +63,6 @@
 		AA10000000000000000062 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000005D /* SettingsView.swift */; };
 		AA10000000000000000063 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000005E /* HistoryView.swift */; };
 		AA10000000000000000064 /* PulseRingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000005F /* PulseRingView.swift */; };
-		AA10000000000000000E01 /* ShimmerText.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000E00 /* ShimmerText.swift */; };
 		AA10000000000000000065 /* StatusDotView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000068 /* StatusDotView.swift */; };
 		AA10000000000000000066 /* ActivityLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000061 /* ActivityLogView.swift */; };
 		AA10000000000000000070 /* ChatModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000069 /* ChatModels.swift */; };
@@ -89,6 +88,7 @@
 		AA10000000000000000101 /* ProjectFolderField.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000100 /* ProjectFolderField.swift */; };
 		AA10000000000000000103 /* RecentFoldersService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000102 /* RecentFoldersService.swift */; };
 		AA10000000000000000104 /* TokenBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000105 /* TokenBadge.swift */; };
+		AA10000000000000000E01 /* ShimmerText.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000E00 /* ShimmerText.swift */; };
 		AD0E84FCAA3A3D6AF61ECD16 /* AgentViewModel+TaskExecution+SavedScripts.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4709078FC05AA3587261B14 /* AgentViewModel+TaskExecution+SavedScripts.swift */; };
 		AEB0000000000000000003 /* AppleEventBridges in Frameworks */ = {isa = PBXBuildFile; productRef = AEB0000000000000000002 /* AppleEventBridges */; };
 		BB10000000000000000015 /* AgentViewModel+Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB10000000000000000005 /* AgentViewModel+Helpers.swift */; };
@@ -255,7 +255,6 @@
 		AA1000000000000000005D /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		AA1000000000000000005E /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		AA1000000000000000005F /* PulseRingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PulseRingView.swift; sourceTree = "<group>"; };
-		AA10000000000000000E00 /* ShimmerText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShimmerText.swift; sourceTree = "<group>"; };
 		AA10000000000000000061 /* ActivityLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityLogView.swift; sourceTree = "<group>"; };
 		AA10000000000000000068 /* StatusDotView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusDotView.swift; sourceTree = "<group>"; };
 		AA10000000000000000069 /* ChatModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModels.swift; sourceTree = "<group>"; };
@@ -281,6 +280,7 @@
 		AA10000000000000000100 /* ProjectFolderField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectFolderField.swift; sourceTree = "<group>"; };
 		AA10000000000000000102 /* RecentFoldersService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentFoldersService.swift; sourceTree = "<group>"; };
 		AA10000000000000000105 /* TokenBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenBadge.swift; sourceTree = "<group>"; };
+		AA10000000000000000E00 /* ShimmerText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShimmerText.swift; sourceTree = "<group>"; };
 		B4128E21FF13BC4029D6548B /* TaskBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskBannerView.swift; sourceTree = "<group>"; };
 		B4709078FC05AA3587261B14 /* AgentViewModel+TaskExecution+SavedScripts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TaskExecution+SavedScripts.swift"; sourceTree = "<group>"; };
 		BB10000000000000000005 /* AgentViewModel+Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+Helpers.swift"; sourceTree = "<group>"; };
@@ -921,7 +921,7 @@
 				144AC666CD8BD1964F726B31 /* ServicesPopover.swift in Sources */,
 				4992CD23A14EED92AB5B902A /* KeyboardShortcuts.swift in Sources */,
 				9813192DF858B26C6D4135F3 /* ProjectFolderSectionView.swift in Sources */,
-);
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		BB10000000000000000050 /* Sources */ = {
@@ -1105,7 +1105,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 38;
+				CURRENT_PROJECT_VERSION = 39;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 469UCUB275;
 				ENABLE_APP_SANDBOX = NO;
@@ -1148,7 +1148,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0.37;
+				MARKETING_VERSION = 1.0.38;
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1174,7 +1174,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 38;
+				CURRENT_PROJECT_VERSION = 39;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 469UCUB275;
 				ENABLE_APP_SANDBOX = NO;
@@ -1217,7 +1217,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0.37;
+				MARKETING_VERSION = 1.0.38;
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
