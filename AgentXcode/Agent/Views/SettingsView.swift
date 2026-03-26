@@ -408,6 +408,26 @@ struct SettingsView: View {
                 }
             }
 
+            // Max Output Tokens — for providers that support it
+            if viewModel.selectedProvider != .localOllama && viewModel.selectedProvider != .foundationModel {
+                Divider()
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Max Output Tokens").font(.caption).foregroundStyle(.secondary)
+                    HStack {
+                        TextField("0 = default", text: Binding(
+                            get: { viewModel.maxTokens == 0 ? "" : "\(viewModel.maxTokens)" },
+                            set: { viewModel.maxTokens = Int($0) ?? 0 }
+                        ))
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 100)
+
+                        Text(viewModel.maxTokens == 0 ? (viewModel.selectedProvider == .claude ? "Default: 16384" : "Provider default") : "\(viewModel.maxTokens) tokens")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+
             // Web Search (Tavily) — available for all providers
             VStack(alignment: .leading, spacing: 10) {
                 Text("Web Search")

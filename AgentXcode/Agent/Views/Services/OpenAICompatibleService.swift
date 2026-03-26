@@ -18,14 +18,17 @@ final class OpenAICompatibleService {
     let userHome: String
     let userName: String
     let projectFolder: String
+    /// Max output tokens. 0 = omit (let provider decide).
+    let maxTokens: Int
 
-    init(apiKey: String, model: String, baseURL: String, supportsVision: Bool = false, historyContext: String = "", projectFolder: String = "", provider: APIProvider, messagesKey: String = "messages") {
+    init(apiKey: String, model: String, baseURL: String, supportsVision: Bool = false, historyContext: String = "", projectFolder: String = "", provider: APIProvider, messagesKey: String = "messages", maxTokens: Int = 0) {
         self.apiKey = apiKey
         self.model = model
         self.baseURL = URL(string: baseURL) ?? URL(filePath: "/")
         self.supportsVision = supportsVision
         self.provider = provider
         self.messagesKey = messagesKey
+        self.maxTokens = maxTokens
         self.historyContext = historyContext
         self.userHome = FileManager.default.homeDirectoryForCurrentUser.path
         self.userName = NSUserName()
@@ -216,7 +219,7 @@ final class OpenAICompatibleService {
             "stream": false
         ]
         if !isNativeFormat {
-            body["max_tokens"] = 2048
+            if maxTokens > 0 { body["max_tokens"] = maxTokens }
             let toolDefs = tools(activeGroups: activeGroups)
             if !toolDefs.isEmpty { body["tools"] = toolDefs }
         }
@@ -241,7 +244,7 @@ final class OpenAICompatibleService {
             "stream": true
         ]
         if !isNativeFormat {
-            body["max_tokens"] = 2048
+            if maxTokens > 0 { body["max_tokens"] = maxTokens }
             let toolDefs = tools(activeGroups: activeGroups)
             if !toolDefs.isEmpty { body["tools"] = toolDefs }
         }

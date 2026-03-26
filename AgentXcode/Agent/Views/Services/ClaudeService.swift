@@ -14,12 +14,15 @@ final class ClaudeService {
     let userHome: String
     let userName: String
     let projectFolder: String
+    /// Max output tokens. 0 = use default (16384). Claude API requires this field.
+    let maxTokens: Int
 
-    init(apiKey: String, model: String, historyContext: String = "", projectFolder: String = "", baseURL: String? = nil) {
+    init(apiKey: String, model: String, historyContext: String = "", projectFolder: String = "", baseURL: String? = nil, maxTokens: Int = 0) {
         self.apiKey = apiKey
         self.model = model
         self.endpointURL = baseURL.flatMap { URL(string: $0) } ?? Self.defaultBaseURL
         self.isLocalEndpoint = baseURL != nil
+        self.maxTokens = maxTokens
         self.historyContext = historyContext
         self.userHome = FileManager.default.homeDirectoryForCurrentUser.path
         self.userName = NSUserName()
@@ -81,7 +84,7 @@ final class ClaudeService {
 
         var body: [String: Any] = [
             "model": model,
-            "max_tokens": 2048,
+            "max_tokens": maxTokens > 0 ? maxTokens : 16384,
             "temperature": temperature,
             "system": systemPrompt,
             "messages": withFolderPrefix(messages)
@@ -149,7 +152,7 @@ final class ClaudeService {
 
         var body: [String: Any] = [
             "model": model,
-            "max_tokens": 2048,
+            "max_tokens": maxTokens > 0 ? maxTokens : 16384,
             "system": systemPrompt,
             "messages": withFolderPrefix(messages),
             "stream": true

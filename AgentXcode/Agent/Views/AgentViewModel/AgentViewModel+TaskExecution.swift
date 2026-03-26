@@ -77,27 +77,28 @@ extension AgentViewModel {
         }
         flushLog()
 
+        let mt = maxTokens
         let claude: ClaudeService?
         if provider == .claude {
-            claude = ClaudeService(apiKey: apiKey, model: selectedModel, historyContext: historyContext, projectFolder: projectFolder)
+            claude = ClaudeService(apiKey: apiKey, model: selectedModel, historyContext: historyContext, projectFolder: projectFolder, maxTokens: mt)
         } else if provider == .lmStudio && lmStudioProtocol == .anthropic {
-            claude = ClaudeService(apiKey: lmStudioAPIKey, model: lmStudioModel, historyContext: historyContext, projectFolder: projectFolder, baseURL: lmStudioEndpoint)
+            claude = ClaudeService(apiKey: lmStudioAPIKey, model: lmStudioModel, historyContext: historyContext, projectFolder: projectFolder, baseURL: lmStudioEndpoint, maxTokens: mt)
         } else {
             claude = nil
         }
         let openAICompatible: OpenAICompatibleService?
         switch provider {
         case .openAI:
-            openAICompatible = OpenAICompatibleService(apiKey: openAIAPIKey, model: openAIModel, baseURL: "https://api.openai.com/v1/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .openAI)
+            openAICompatible = OpenAICompatibleService(apiKey: openAIAPIKey, model: openAIModel, baseURL: "https://api.openai.com/v1/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .openAI, maxTokens: mt)
         case .deepSeek:
-            openAICompatible = OpenAICompatibleService(apiKey: deepSeekAPIKey, model: deepSeekModel, baseURL: "https://api.deepseek.com/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .deepSeek)
+            openAICompatible = OpenAICompatibleService(apiKey: deepSeekAPIKey, model: deepSeekModel, baseURL: "https://api.deepseek.com/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .deepSeek, maxTokens: mt)
         case .huggingFace:
-            openAICompatible = OpenAICompatibleService(apiKey: huggingFaceAPIKey, model: huggingFaceModel, baseURL: "https://router.huggingface.co/v1/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .huggingFace)
+            openAICompatible = OpenAICompatibleService(apiKey: huggingFaceAPIKey, model: huggingFaceModel, baseURL: "https://router.huggingface.co/v1/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .huggingFace, maxTokens: mt)
         case .vLLM:
-            openAICompatible = OpenAICompatibleService(apiKey: vLLMAPIKey, model: vLLMModel, baseURL: vLLMEndpoint, historyContext: historyContext, projectFolder: projectFolder, provider: .vLLM)
+            openAICompatible = OpenAICompatibleService(apiKey: vLLMAPIKey, model: vLLMModel, baseURL: vLLMEndpoint, historyContext: historyContext, projectFolder: projectFolder, provider: .vLLM, maxTokens: mt)
         case .lmStudio where lmStudioProtocol != .anthropic:
             let key = lmStudioProtocol == .lmStudio ? "input" : "messages"
-            openAICompatible = OpenAICompatibleService(apiKey: lmStudioAPIKey, model: lmStudioModel, baseURL: lmStudioEndpoint, historyContext: historyContext, projectFolder: projectFolder, provider: .lmStudio, messagesKey: key)
+            openAICompatible = OpenAICompatibleService(apiKey: lmStudioAPIKey, model: lmStudioModel, baseURL: lmStudioEndpoint, historyContext: historyContext, projectFolder: projectFolder, provider: .lmStudio, messagesKey: key, maxTokens: mt)
         default:
             openAICompatible = nil
         }

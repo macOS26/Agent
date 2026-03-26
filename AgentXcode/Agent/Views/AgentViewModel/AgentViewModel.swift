@@ -466,6 +466,12 @@ final class AgentViewModel {
         }
     }
 
+    /// Max output tokens per provider. 0 = let provider decide (omit from request).
+    /// Claude API requires max_tokens so 0 defaults to 16384 at the service level.
+    var maxTokens: Int = UserDefaults.standard.object(forKey: "maxTokens") as? Int ?? 0 {
+        didSet { UserDefaults.standard.set(maxTokens, forKey: "maxTokens") }
+    }
+
     var ollamaModel: String = UserDefaults.standard.string(forKey: "ollamaModel") ?? "" {
         didSet {
             UserDefaults.standard.set(ollamaModel, forKey: "ollamaModel")
