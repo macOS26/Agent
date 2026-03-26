@@ -9,8 +9,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/macOS26/Agent.svg?style=social)](https://github.com/macOS26/Agent/stargazers)
 
 ## Agent! running inside a virtual machine
-<img width="1467" height="1065" alt="Screenshot 2026-03-26 at 5 11 38 PM" src="https://github.com/user-attachments/assets/f521c7f2-6dbc-40b6-b4e6-9dcfed299cf7" />
-
+<img width="1460" height="1031" alt="Screenshot 2026-03-26 at 5 22 43 PM" src="https://github.com/user-attachments/assets/05e25a70-f101-4118-bb07-dbce897ea007" />
 
 ## 🧠 Agentic AI for the  Mac Desktop 
 Agent! is the result of 27 years of Mac automation experience — from FaceSpan and AppleScript on macOS 9 through AppleScript Studio, AppleScript-ObjC, and now Swift. It connects LLMs to Apple Events, ScriptingBridge, Accessibility APIs, and XPC services for native macOS control.
