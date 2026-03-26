@@ -103,9 +103,9 @@ struct HeaderToolbarButtons: View {
         viewModel.isRunning || viewModel.isThinking || viewModel.scriptTabs.contains(where: { $0.isLLMRunning })
     }
 
-    /// LLM icon color: throbs between blue and tab color when running, static otherwise
+    /// LLM icon color: throbs when running, static otherwise
     var llmIconColor: Color {
-        isLLMActive ? .blue : viewModel.llmStatusColor
+        isLLMActive ? .cyan : viewModel.llmStatusColor
     }
 
     var body: some View {
