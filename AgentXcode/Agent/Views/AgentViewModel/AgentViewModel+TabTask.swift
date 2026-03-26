@@ -473,12 +473,10 @@ extension AgentViewModel {
                         errorSource = "Apple Intelligence"
                     }
                     
-                    // Auto-retry on 429 rate limit after 10 seconds
+                    // Log rate limit errors but don't retry
                     if errMsg.contains("429") || errMsg.lowercased().contains("rate limit") || errMsg.lowercased().contains("concurrent request") {
-                        tab.appendLog("Rate limited — retrying in 10 seconds...")
-                        try? await Task.sleep(for: .seconds(10))
-                        if Task.isCancelled { break }
-                        continue
+                        tab.appendLog("Rate limited: \(errMsg)")
+                        tab.flush()
                     }
                     
                     // Handle timeout errors with retry logic
