@@ -48,6 +48,10 @@ Annotations are tagged with `[AI]` prefixes to distinguish them from LLM resp
 Enable Apple Intelligence Mediator in Settings to enhance communication clarity. Requires Apple Intelligence-capable Mac running macOS 26+.
 
 **Recent Enhancements:**
+- **Autonomous Task Loop**: Task loop runs until task_complete or user cancel — no iteration caps, no nudges, no artificial limits
+- **Shimmer Thinking Animation**: "Thinking..." text pulses with shimmer effect matching the LLM icon throb
+- **Status Colors**: "Running..." in green, "Running... +N queued" in orange for multi-task visibility
+- **task_complete Enforcement**: System prompt requires every LLM response to end with task_complete; text-only replies treated as done
 - **Timeout Protection**: 10-second timeout prevents LLM tabs from hanging when Apple Intelligence is slow to respond
 - **OS Log Diagnostics**: Built-in os.log diagnostics for debugging mediator behavior
 - **Brain Button Integration**: Toggle Apple Intelligence mediator directly from the brain button in the toolbar
