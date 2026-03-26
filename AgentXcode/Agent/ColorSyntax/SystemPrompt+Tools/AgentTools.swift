@@ -168,7 +168,7 @@ enum AgentTools {
         NEVER output code as text — use write_file/edit_file for files, agent (action: create/update) for scripts.
         For conversation (greetings, questions, thanks, explanations) reply with plain text AND call task_complete. Every response MUST end with task_complete — no exceptions.
 
-        DIRECT TOOLS (no action parameter): read_file, write_file, edit_file, create_diff, apply_diff, list_files, search_files, read_dir, task_complete, execute_agent_command, execute_daemon_command, batch_commands, apple_event_query.
+        DIRECT TOOLS (no action parameter): read_file, write_file, edit_file, list_files, search_files, read_dir, task_complete, execute_agent_command, execute_daemon_command, batch_commands, apple_event_query.
         - BATCH: Use batch_commands to run multiple shell commands in one call (newline-separated). Avoids round-trips. Ideal for gathering info (ls, cat, grep, find, git).
         ACTION TOOLS (require "action" parameter):
         file_manager: read, write, edit, list, search, read_dir, create, apply, undo, diff_apply, if_to_switch, extract_function | git: status, diff, log, commit, diff_patch, branch
@@ -375,46 +375,7 @@ enum AgentTools {
             ],
             required: ["file_path", "old_string", "new_string"]
         ),
-        ToolDef(
-            name: Name.createDiff,
-            description: "Generate a diff and store it. Returns a diff_id UUID. Pass diff_id to apply_diff to apply it to a file. Provide source+destination strings, or file_path+destination to read source from a file.",
-            properties: [
-                "source": ["type": "string", "description": "The original text (omit if file_path is provided)"],
-                "destination": ["type": "string", "description": "The modified text"],
-                "file_path": ["type": "string", "description": "Read source from this file path instead of source param"],
-                "start_line": ["type": "integer", "description": "1-based start line for section editing (only diff this range)"],
-                "end_line": ["type": "integer", "description": "1-based end line for section editing"],
-            ],
-            required: ["destination"]
-        ),
-        ToolDef(
-            name: Name.applyDiff,
-            description: "Apply a diff to a file. Preferred: pass diff_id from create_diff. Fallback: pass inline diff text where each line starts with = (keep), - (remove), or + (add). Auto-verifies after apply.",
-            properties: [
-                "file_path": ["type": "string", "description": "Absolute path to the file"],
-                "diff_id": ["type": "string", "description": "UUID from create_diff (preferred)"],
-                "diff": ["type": "string", "description": "Inline diff with =/-/+ prefixes (fallback if no diff_id)"],
-            ],
-            required: ["file_path"]
-        ),
-        ToolDef(
-            name: Name.undoEdit,
-            description: "Undo the last edit_file or diff_and_apply on a file. Restores original content.",
-            properties: [
-                "file_path": ["type": "string", "description": "Absolute path to the file to undo"],
-            ],
-            required: ["file_path"]
-        ),
-        ToolDef(
-            name: Name.diffAndApply,
-            description: "Create and apply a diff in one call. Reads source from file_path, diffs against destination, writes result. Combines create_diff + apply_diff. Auto-verifies.",
-            properties: [
-                "file_path": ["type": "string", "description": "Absolute path to the file to read and write"],
-                "source": ["type": "string", "description": "Original text (omit to read from file_path)"],
-                "destination": ["type": "string", "description": "The modified text to write"],
-            ],
-            required: ["file_path", "destination"]
-        ),
+        // create_diff, apply_diff, undo_edit, diff_and_apply are all actions inside file_manager
         ToolDef(
             name: Name.listFiles,
             description: "Find files matching a glob pattern. Use instead of `find`. Excludes hidden files and .build directories.",
@@ -445,15 +406,22 @@ enum AgentTools {
         // --- File Manager (consolidated — maps to direct file tools) ---
         ToolDef(
             name: Name.fileManager,
-            description: "File operations and refactoring. Actions: read, write, edit, create (diff), apply (diff), list, search, read_dir, if_to_switch, extract_function.",
+            description: "File operations and refactoring. Actions: read, write, edit, create (diff), apply (diff), undo, diff_apply, list, search, read_dir, if_to_switch, extract_function.",
             properties: [
-                "action": ["type": "string", "description": "Action: read, write, edit, create, apply, list, search, read_dir, if_to_switch, or extract_function"],
-                "file_path": ["type": "string", "description": "File path (for read/write/edit/apply)"],
+                "action": ["type": "string", "description": "Action: read, write, edit, create, apply, undo, diff_apply, list, search, read_dir, if_to_switch, or extract_function"],
+                "file_path": ["type": "string", "description": "File path (for read/write/edit/apply/undo/diff_apply)"],
                 "path": ["type": "string", "description": "Directory path (for list/search/read_dir)"],
                 "content": ["type": "string", "description": "For write: file content"],
                 "old_string": ["type": "string", "description": "For edit: text to find"],
                 "new_string": ["type": "string", "description": "For edit: replacement text"],
                 "replace_all": ["type": "boolean", "description": "For edit: replace all (default false)"],
+                "context": ["type": "string", "description": "For edit: surrounding lines to disambiguate multiple matches"],
+                "source": ["type": "string", "description": "For create/diff_apply: original text (omit to read from file_path)"],
+                "destination": ["type": "string", "description": "For create/diff_apply: the modified text"],
+                "start_line": ["type": "integer", "description": "For create: 1-based start line for section editing"],
+                "end_line": ["type": "integer", "description": "For create: 1-based end line for section editing"],
+                "diff_id": ["type": "string", "description": "For apply: UUID from create"],
+                "diff": ["type": "string", "description": "For apply: inline diff with =/-/+ prefixes"],
                 "offset": ["type": "integer", "description": "For read: start line (default 1)"],
                 "limit": ["type": "integer", "description": "For read: max lines (default 2000)"],
                 "pattern": ["type": "string", "description": "For list: glob. For search: regex"],
