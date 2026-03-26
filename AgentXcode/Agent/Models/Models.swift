@@ -99,7 +99,7 @@ enum AgentError: Error, LocalizedError {
 let llmAPITimeout: TimeInterval = 10800
 
 /// Timeout for an internal tool call to start executing (seconds).
-let toolStartTimeout: TimeInterval = 90
+let toolStartTimeout: TimeInterval = 600
 
 /// Timeout for an internal tool call to finish once started (seconds).
 let toolFinishTimeout: TimeInterval = 43200
