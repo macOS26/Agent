@@ -99,16 +99,16 @@ enum AgentError: Error, LocalizedError {
 let llmAPITimeout: TimeInterval = 10800
 
 /// Timeout for an internal tool call to start executing (seconds).
-let toolStartTimeout: TimeInterval = 15
+let toolStartTimeout: TimeInterval = 90
 
 /// Timeout for an internal tool call to finish once started (seconds).
 let toolFinishTimeout: TimeInterval = 43200
 
 /// Timeout for automation calls (Accessibility, Selenium, AppleScript, JavaScript) to start (seconds).
-let automationStartTimeout: TimeInterval = 30
+let automationStartTimeout: TimeInterval = 30000
 
 /// Timeout for automation calls to finish once started (seconds).
-let automationFinishTimeout: TimeInterval = 180
+let automationFinishTimeout: TimeInterval = 18000
 
 /// Maximum delay between automation retries (seconds).
 let automationMaxDelay: TimeInterval = 5
@@ -357,7 +357,7 @@ final class TaskHistory {
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
         request.setValue("application/json", forHTTPHeaderField: "content-type")
         request.httpBody = bodyData
-        request.timeoutInterval = 90
+        request.timeoutInterval = 9000
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, http.statusCode == 200,
