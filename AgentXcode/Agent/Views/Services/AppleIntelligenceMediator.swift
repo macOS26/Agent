@@ -263,7 +263,7 @@ Rules:
 
         let session = ensureSession()
         let prompt = """
-Rephrase or clarify this request for the AI assistant in 1 sentence. Fix any typos. Do NOT refuse or block it. Do NOT add actions, formats, or goals the user did not mention. Only clarify what the user actually said — never invent new instructions.
+Rephrase or clarify this request for the AI assistant in 1 sentence. Fix any typos in regular words only. Do NOT refuse or block it. Do NOT add actions, formats, or goals the user did not mention. Only clarify what the user actually said — never invent new instructions. NEVER change agent names, tool names, script names, or other specific identifiers — keep them exactly as the user wrote them.
 
 User said: "\(message)"
 """
