@@ -757,6 +757,48 @@ extension AgentViewModel {
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": batchOutput])
                         }
 
+                        // Batch tools — run multiple tool calls in one batch
+                        if name == "batch_tools" {
+                            let desc = input["description"] as? String ?? "Batch Tasks"
+                            guard let tasks = input["tasks"] as? [[String: Any]] else {
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Error: tasks must be an array of {\"tool\": \"name\", \"input\": {...}} objects"])
+                                continue
+                            }
+
+                            appendLog("● \(desc) (\(tasks.count) tasks)")
+                            flushLog()
+
+                            var batchOutput = ""
+                            var completed = 0
+                            for (idx, task) in tasks.enumerated() {
+                                guard !Task.isCancelled else { break }
+                                var subName = task["tool"] as? String ?? ""
+                                var subInput = task["input"] as? [String: Any] ?? [:]
+
+                                // Prevent recursion and dangerous nesting
+                                if subName == "batch_tools" || subName == "batch_commands" || subName == "task_complete" {
+                                    batchOutput += "[\(idx + 1)] \(subName): skipped (not allowed in batch)\n\n"
+                                    continue
+                                }
+
+                                // Expand consolidated tools
+                                (subName, subInput) = Self.expandConsolidatedTool(name: subName, input: subInput)
+
+                                let brief = Self.briefToolSummary(subName, input: subInput)
+                                appendLog("├ [\(idx + 1)/\(tasks.count)] \(subName)(\(brief))")
+                                flushLog()
+
+                                // Dispatch through executeNativeTool for unified handling
+                                let output = await executeNativeTool(subName, input: subInput)
+                                completed += 1
+                                batchOutput += "[\(idx + 1)] \(subName): \(output)\n\n"
+                            }
+
+                            appendLog("● \(completed)/\(tasks.count) tasks completed")
+                            flushLog()
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": batchOutput])
+                        }
+
                         // Tool discovery
                         if name == "list_tools" {
                             let prefs = ToolPreferencesService.shared

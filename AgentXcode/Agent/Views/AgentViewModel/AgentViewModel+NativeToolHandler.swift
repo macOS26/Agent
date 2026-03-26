@@ -755,6 +755,30 @@ extension AgentViewModel {
             return Self.handlePlanMode(action: action, input: input, projectFolder: pf, tabName: "main")
         }
 
+        // batch_tools — run multiple tool calls in one batch
+        if name == "batch_tools" {
+            let desc = input["description"] as? String ?? "Batch Tasks"
+            guard let tasks = input["tasks"] as? [[String: Any]] else {
+                return "Error: tasks must be an array of {\"tool\": \"name\", \"input\": {...}} objects"
+            }
+            var batchOutput = "● \(desc) (\(tasks.count) tasks)\n"
+            var completed = 0
+            for (idx, task) in tasks.enumerated() {
+                var subName = task["tool"] as? String ?? ""
+                var subInput = task["input"] as? [String: Any] ?? [:]
+                if subName == "batch_tools" || subName == "batch_commands" || subName == "task_complete" {
+                    batchOutput += "[\(idx + 1)] \(subName): skipped (not allowed in batch)\n\n"
+                    continue
+                }
+                (subName, subInput) = Self.expandConsolidatedTool(name: subName, input: subInput)
+                let output = await executeNativeTool(subName, input: subInput)
+                completed += 1
+                batchOutput += "[\(idx + 1)] \(subName): \(output)\n\n"
+            }
+            batchOutput += "● \(completed)/\(tasks.count) tasks completed"
+            return batchOutput
+        }
+
         // Silently skip tools not available to Apple AI
         return "(skipped)"
     }

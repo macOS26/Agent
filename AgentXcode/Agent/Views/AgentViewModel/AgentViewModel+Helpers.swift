@@ -180,6 +180,40 @@ extension AgentViewModel {
         return name.isEmpty ? "untitled_\(Int(Date().timeIntervalSince1970))" : String(name)
     }
     
+    /// Brief one-line summary of a tool call for batch_tools progress display.
+    static func briefToolSummary(_ name: String, input: [String: Any]) -> String {
+        // Pick the most informative parameter to show
+        if let path = input["file_path"] as? String {
+            return (path as NSString).lastPathComponent
+        }
+        if let cmd = input["command"] as? String {
+            let trimmed = cmd.trimmingCharacters(in: .whitespaces)
+            return trimmed.count > 60 ? String(trimmed.prefix(57)) + "..." : trimmed
+        }
+        if let pattern = input["pattern"] as? String {
+            if let path = input["path"] as? String {
+                return "\(pattern), \((path as NSString).lastPathComponent)"
+            }
+            return pattern
+        }
+        if let path = input["path"] as? String {
+            return (path as NSString).lastPathComponent
+        }
+        if let scriptName = input["name"] as? String {
+            return scriptName
+        }
+        if let action = input["action"] as? String {
+            return action
+        }
+        // Fallback: show first string value
+        for (_, value) in input {
+            if let s = value as? String, !s.isEmpty {
+                return s.count > 40 ? String(s.prefix(37)) + "..." : s
+            }
+        }
+        return ""
+    }
+
     /// Show first N lines of output, then "..." if there's more.
     static func preview(_ text: String, lines count: Int) -> String {
         let lines = text.split(separator: "\n", omittingEmptySubsequences: false)

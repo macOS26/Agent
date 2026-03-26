@@ -41,6 +41,7 @@ enum AgentTools {
         static let executeAgentCommand = "execute_agent_command"
         static let executeDaemonCommand = "execute_daemon_command"
         static let batchCommands = "batch_commands"
+        static let batchTools = "batch_tools"
         // Task
         static let taskComplete = "task_complete"
         // Accessibility (consolidated)
@@ -168,8 +169,9 @@ enum AgentTools {
         NEVER output code as text — use write_file/edit_file for files, agent (action: create/update) for scripts.
         For conversation (greetings, questions, thanks, explanations) reply with plain text AND call task_complete. Every response MUST end with task_complete — no exceptions.
 
-        DIRECT TOOLS (no action parameter): read_file, write_file, edit_file, list_files, search_files, read_dir, task_complete, execute_agent_command, execute_daemon_command, batch_commands, apple_event_query.
-        - BATCH: Use batch_commands to run multiple shell commands in one call (newline-separated). Avoids round-trips. Ideal for gathering info (ls, cat, grep, find, git).
+        DIRECT TOOLS (no action parameter): read_file, write_file, edit_file, list_files, search_files, read_dir, task_complete, execute_agent_command, execute_daemon_command, batch_commands, batch_tools, apple_event_query.
+        - BATCH COMMANDS: Use batch_commands to run multiple shell commands in one call (newline-separated). Avoids round-trips. Ideal for gathering info (ls, cat, grep, find, git).
+        - BATCH TOOLS: Use batch_tools to run multiple tool calls in one batch. Provide a description and an array of {tool, input} tasks. Each task runs sequentially with progress tracking. Avoids LLM round-trips for multi-step operations like reading several files or combining file reads with searches.
         ACTION TOOLS (require "action" parameter):
         file_manager: read, write, edit, list, search, read_dir, create, apply, undo, diff_apply, if_to_switch, extract_function | git: status, diff, log, commit, diff_patch, branch
         xcode: build, run, list_projects, select_project, add_file, remove_file | agent: list, read, create, update, run, delete, combine
@@ -246,6 +248,7 @@ enum AgentTools {
         Name.executeAgentCommand:  #"execute_agent_command {"command": "ls -la"}"#,
         Name.executeDaemonCommand: #"execute_daemon_command {"command": "whoami"}"#,
         Name.batchCommands:        #"batch_commands {"commands": "ls -la\ncat README.md\ngit status"}"#,
+        Name.batchTools:           #"batch_tools {"description": "Read project files", "tasks": [{"tool": "read_file", "input": {"file_path": "/path/a.swift"}}, {"tool": "search_files", "input": {"pattern": "TODO", "path": "/path"}}]}"#,
         Name.runApplescript:       #"run_applescript {"source": "tell application \"Finder\" to get name of home"}"#,
         Name.runOsascript:         #"run_osascript {"script": "display dialog \"Hello\""}"#,
         Name.executeJavascript:    #"execute_javascript {"source": "var app = Application.currentApplication(); app.includeStandardAdditions = true; app.displayDialog('Hello')"}"#,
@@ -485,6 +488,15 @@ enum AgentTools {
                 "commands": ["type": "string", "description": "Commands separated by newlines. Each runs sequentially as the current user."],
             ],
             required: ["commands"]
+        ),
+        ToolDef(
+            name: Name.batchTools,
+            description: "Run multiple tool calls sequentially in one batch. Shows progress as a mini task list. Avoids LLM round-trips for multi-step operations like reading several files, combining reads with searches, or gathering info from different tools.",
+            properties: [
+                "description": ["type": "string", "description": "Brief description of this batch (shown as header in task list)"],
+                "tasks": ["type": "array", "description": "Array of tool calls. Each: {\"tool\": \"tool_name\", \"input\": {param: value}}", "items": ["type": "object"] as [String: Any]] as [String: Any],
+            ],
+            required: ["description", "tasks"]
         ),
         ToolDef(
             name: Name.taskComplete,

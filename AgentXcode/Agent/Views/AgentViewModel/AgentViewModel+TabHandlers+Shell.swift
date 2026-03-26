@@ -38,6 +38,54 @@ extension AgentViewModel {
                 isComplete: false
             )
 
+        case "batch_tools":
+            let desc = input["description"] as? String ?? "Batch Tasks"
+            guard let tasks = input["tasks"] as? [[String: Any]] else {
+                let err = "Error: tasks must be an array of {\"tool\": \"name\", \"input\": {...}} objects"
+                tab.appendLog(err); tab.flush()
+                return tabResult(err, toolId: toolId)
+            }
+
+            tab.appendLog("● \(desc) (\(tasks.count) tasks)")
+            tab.flush()
+
+            var batchOutput = ""
+            var completed = 0
+            for (idx, task) in tasks.enumerated() {
+                guard !Task.isCancelled else { return TabToolResult(toolResult: nil, isComplete: false) }
+                var toolName = task["tool"] as? String ?? ""
+                var toolInput = task["input"] as? [String: Any] ?? [:]
+
+                // Prevent recursion and dangerous nesting
+                if toolName == "batch_tools" || toolName == "batch_commands" || toolName == "task_complete" {
+                    batchOutput += "[\(idx + 1)] \(toolName): skipped (not allowed in batch)\n\n"
+                    continue
+                }
+
+                // Expand consolidated tools
+                (toolName, toolInput) = Self.expandConsolidatedTool(name: toolName, input: toolInput)
+
+                let brief = Self.briefToolSummary(toolName, input: toolInput)
+                tab.appendLog("├ [\(idx + 1)/\(tasks.count)] \(toolName)(\(brief))")
+                tab.flush()
+
+                // Dispatch through existing tab handler (suppresses sub-logging via synthetic toolId)
+                let subResult = await handleTabToolCallBody(
+                    tab: tab, name: toolName, input: toolInput, toolId: "\(toolId)_\(idx)"
+                )
+
+                let output = (subResult.toolResult?["content"] as? String) ?? "(no output)"
+                completed += 1
+                batchOutput += "[\(idx + 1)] \(toolName): \(output)\n\n"
+            }
+
+            tab.appendLog("● \(completed)/\(tasks.count) tasks completed")
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": batchOutput],
+                isComplete: false
+            )
+
         case "execute_agent_command", "execute_daemon_command":
             let tabFolder = Self.resolvedWorkingDirectory(tab.projectFolder.isEmpty ? projectFolder : tab.projectFolder)
             let command = Self.prependWorkingDirectory(
