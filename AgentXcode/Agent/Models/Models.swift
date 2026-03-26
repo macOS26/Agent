@@ -108,7 +108,7 @@ let toolFinishTimeout: TimeInterval = 43200
 let automationStartTimeout: TimeInterval = 30
 
 /// Timeout for automation calls to finish once started (seconds).
-let automationFinishTimeout: TimeInterval = 20
+let automationFinishTimeout: TimeInterval = 180
 
 /// Maximum delay between automation retries (seconds).
 let automationMaxDelay: TimeInterval = 5
