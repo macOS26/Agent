@@ -238,6 +238,8 @@ extension AgentViewModel {
         }
 
         // Add Apple Intelligence context to help LLM understand complex prompts
+        // Prepend to the existing user message (not a separate message) to avoid
+        // consecutive user messages which confuse Ollama/Mistral models.
         if mediator.isEnabled && mediator.injectContextToLLM {
             taskLog.info("[main] Apple AI mediator: contextualizing (available: \(AppleIntelligenceMediator.isAvailable))...")
             if let contextAnnotation = await mediator.contextualizeUserMessage(prompt) {
@@ -246,11 +248,16 @@ extension AgentViewModel {
                 if mediator.trainingEnabled {
                     TrainingDataStore.shared.captureAppleAIDecision(contextAnnotation.content)
                 }
-                let contextMessage: [String: Any] = [
-                    "role": "user",
-                    "content": contextAnnotation.formatted
-                ]
-                messages.insert(contextMessage, at: messages.count)
+                // Prepend Apple AI context to the first user message
+                if let lastIdx = messages.indices.last {
+                    if let existingText = messages[lastIdx]["content"] as? String {
+                        messages[lastIdx]["content"] = contextAnnotation.content + "\n\n" + existingText
+                    } else if var blocks = messages[lastIdx]["content"] as? [[String: Any]] {
+                        // Image message — prepend context as a text block
+                        blocks.insert(["type": "text", "text": contextAnnotation.content], at: 0)
+                        messages[lastIdx]["content"] = blocks
+                    }
+                }
                 appendLog(contextAnnotation.formatted)
                 flushLog()
                 if agentReplyHandle != nil {
