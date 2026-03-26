@@ -96,7 +96,7 @@ enum AgentError: Error, LocalizedError {
 }
 
 /// Unified timeout for all LLM API requests (Claude, OpenAI-compatible, Ollama).
-let llmAPITimeout: TimeInterval = 90
+let llmAPITimeout: TimeInterval = 10800
 
 /// Timeout for an internal tool call to start executing (seconds).
 let toolStartTimeout: TimeInterval = 15
