@@ -6,3 +6,4 @@ AgentMCP/build/
 AgentXcode/build/
 **/build/
 Agent!.app
+*.dmg
