@@ -151,17 +151,21 @@ final class OllamaService {
             }
         }
 
-        let body: [String: Any] = [
+        var body: [String: Any] = [
             "model": model,
             "messages": chatMessages,
             "tools": tools(activeGroups: activeGroups),
-            "stream": false,
-            "options": [
+            "stream": false
+        ]
+
+        // Only send options for local Ollama; cloud providers manage their own context limits
+        if provider == .localOllama {
+            body["options"] = [
                 "temperature": temperature,
                 "num_predict": 2048,
                 "num_ctx": 16384
             ] as [String: Any]
-        ]
+        }
 
         let bodyData = try JSONSerialization.data(withJSONObject: body)
         return try await Self.performRequest(
@@ -258,17 +262,21 @@ final class OllamaService {
             }
         }
 
-        let body: [String: Any] = [
+        var body: [String: Any] = [
             "model": model,
             "messages": chatMessages,
             "tools": tools(activeGroups: activeGroups),
-            "stream": true,
-            "options": [
+            "stream": true
+        ]
+
+        // Only send options for local Ollama; cloud providers manage their own context limits
+        if provider == .localOllama {
+            body["options"] = [
                 "temperature": temperature,
                 "num_predict": 2048,
                 "num_ctx": 16384
             ] as [String: Any]
-        ]
+        }
 
         let bodyData = try JSONSerialization.data(withJSONObject: body)
         return try await Self.performStreamingRequest(
