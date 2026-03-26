@@ -86,7 +86,7 @@ extension AgentViewModel {
                 isComplete: false
             )
 
-        case "execute_agent_command", "execute_daemon_command":
+        case "execute_agent_command", "execute_daemon_command", "run_shell_script":
             let tabFolder = Self.resolvedWorkingDirectory(tab.projectFolder.isEmpty ? projectFolder : tab.projectFolder)
             let command = Self.prependWorkingDirectory(
                 input["command"] as? String ?? "", projectFolder: tabFolder)
@@ -109,9 +109,12 @@ extension AgentViewModel {
             } else if Self.needsTCCPermissions(command) {
                 // TCC commands → Agent process (inherits TCC permissions)
                 result = await Self.executeTCC(command: command)
-            } else {
-                // Non-TCC, non-root commands → User LaunchAgent via XPC
+            } else if userService.userReady {
+                // User LaunchAgent via XPC
                 result = await executeForTab(command: command)
+            } else {
+                // Fallback: in-process when User Agent is off
+                result = await Self.executeTCC(command: command)
             }
 
             guard !Task.isCancelled else { return TabToolResult(toolResult: nil, isComplete: false) }

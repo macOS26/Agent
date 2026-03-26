@@ -42,6 +42,7 @@ enum AgentTools {
         static let executeDaemonCommand = "execute_daemon_command"
         static let batchCommands = "batch_commands"
         static let batchTools = "batch_tools"
+        static let runShellScript = "run_shell_script"
         // Task
         static let taskComplete = "task_complete"
         // Accessibility (consolidated)
@@ -169,7 +170,8 @@ enum AgentTools {
         NEVER output code as text — use write_file/edit_file for files, agent (action: create/update) for scripts.
         For conversation (greetings, questions, thanks, explanations) reply with plain text AND call task_complete. Every response MUST end with task_complete — no exceptions.
 
-        DIRECT TOOLS (no action parameter): read_file, write_file, edit_file, list_files, search_files, read_dir, task_complete, execute_agent_command, execute_daemon_command, batch_commands, batch_tools, apple_event_query.
+        DIRECT TOOLS (no action parameter): read_file, write_file, edit_file, list_files, search_files, read_dir, task_complete, execute_agent_command, execute_daemon_command, run_shell_script, batch_commands, batch_tools, apple_event_query.
+        - run_shell_script: alias for execute_agent_command with automatic fallback to in-process when User Agent is off.
         - BATCH COMMANDS: Use batch_commands to run multiple shell commands in one call (newline-separated). Avoids round-trips. Ideal for gathering info (ls, cat, grep, find, git).
         - BATCH TOOLS: Use batch_tools to run multiple tool calls in one batch. Provide a description and an array of {tool, input} tasks. Each task runs sequentially with progress tracking. Avoids LLM round-trips for multi-step operations like reading several files or combining file reads with searches.
         ACTION TOOLS (require "action" parameter):
@@ -247,6 +249,7 @@ enum AgentTools {
         Name.executeDaemonCommand: #"execute_daemon_command {"command": "whoami"}"#,
         Name.batchCommands:        #"batch_commands {"commands": "ls -la\ncat README.md\ngit status"}"#,
         Name.batchTools:           #"batch_tools {"description": "Read project files", "tasks": [{"tool": "read_file", "input": {"file_path": "/path/a.swift"}}, {"tool": "search_files", "input": {"pattern": "TODO", "path": "/path"}}]}"#,
+        Name.runShellScript:       #"run_shell_script {"command": "ls -la"}"#,
         Name.runApplescript:       #"run_applescript {"source": "tell application \"Finder\" to get name of home"}"#,
         Name.runOsascript:         #"run_osascript {"script": "display dialog \"Hello\""}"#,
         Name.executeJavascript:    #"execute_javascript {"source": "var app = Application.currentApplication(); app.includeStandardAdditions = true; app.displayDialog('Hello')"}"#,
@@ -476,6 +479,14 @@ enum AgentTools {
             description: "Execute a shell command with ROOT privileges via the privileged daemon. NO TCC. Only use when root is required: system packages, /System or /Library modifications, disk operations.",
             properties: [
                 "command": ["type": "string", "description": "The bash command to execute as root"],
+            ],
+            required: ["command"]
+        ),
+        ToolDef(
+            name: Name.runShellScript,
+            description: "Run a shell command or script. Uses the User Agent XPC when available, falls back to in-process execution. Alias for execute_agent_command with automatic fallback.",
+            properties: [
+                "command": ["type": "string", "description": "The bash command or shell script to execute"],
             ],
             required: ["command"]
         ),

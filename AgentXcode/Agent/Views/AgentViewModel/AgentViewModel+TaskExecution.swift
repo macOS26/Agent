@@ -658,7 +658,7 @@ extension AgentViewModel {
 
                         // MARK: Shell execution tools
 
-                        if name == "execute_daemon_command" || name == "execute_agent_command" {
+                        if name == "execute_daemon_command" || name == "execute_agent_command" || name == "run_shell_script" {
                             let rawCommand = input["command"] as? String ?? ""
                             let command = Self.prependWorkingDirectory(
                                 rawCommand, projectFolder: projectFolder)
@@ -688,9 +688,12 @@ extension AgentViewModel {
                             } else if Self.needsTCCPermissions(command) {
                                 // TCC commands run in Agent process to inherit TCC permissions
                                 result = await Self.executeTCC(command: command)
-                            } else {
-                                // Non-TCC, non-root commands → User LaunchAgent via XPC
+                            } else if userService.userReady {
+                                // User LaunchAgent via XPC
                                 result = await executeViaUserAgent(command: command)
+                            } else {
+                                // Fallback: in-process when User Agent is off
+                                result = await Self.executeTCC(command: command)
                             }
                             flushLog()
 

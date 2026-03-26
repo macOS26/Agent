@@ -30,7 +30,7 @@ extension AgentViewModel {
              "delete_agent", "combine_agents", "run_agent":
             return await handleTabAgentScriptTool(tab: tab, name: name, input: input, toolId: toolId)
         // Shell
-        case "execute_agent_command", "execute_daemon_command", "batch_commands", "batch_tools":
+        case "execute_agent_command", "execute_daemon_command", "run_shell_script", "batch_commands", "batch_tools":
             return await handleTabShellTool(tab: tab, name: name, input: input, toolId: toolId)
         // Automation
         case "run_applescript", "run_osascript", "apple_event_query", "lookup_sdef":
