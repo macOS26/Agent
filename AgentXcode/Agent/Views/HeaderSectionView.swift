@@ -62,7 +62,7 @@ struct HeaderStatusView: View {
                     HStack(spacing: 4) {
                         ProgressView().controlSize(.mini)
                         if viewModel.mainTaskQueue.isEmpty {
-                            ShimmerText(viewModel.rootServiceActive ? "Root..." : viewModel.userServiceActive ? "Executing..." : "Running...", color: .green)
+                            ShimmerText(viewModel.rootServiceActive ? "Root..." : viewModel.userServiceActive ? "Executing..." : "Running...", color: viewModel.userServiceActive ? .red : .green)
                         } else {
                             ShimmerText("Running... +\(viewModel.mainTaskQueue.count) queued", color: .orange)
                         }
@@ -204,7 +204,7 @@ struct HeaderToolbarButtons: View {
 
         Button { showClearConfirm = true } label: {
             Image(systemName: "trash")
-                .foregroundStyle(.red)
+                .foregroundStyle(.primary)
         }
         .alert("Clear Log", isPresented: $showClearConfirm) {
             Button("Clear", role: .destructive) { viewModel.clearSelectedLog() }
