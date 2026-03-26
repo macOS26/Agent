@@ -286,7 +286,15 @@ struct AccessibilitySettingsView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Button("Open Settings") {
+                    Button("Test") {
+                        // Triggers Automation permission prompt for Finder
+                        let script = NSAppleScript(source: "tell application \"Finder\" to activate")
+                        var err: NSDictionary?
+                        script?.executeAndReturnError(&err)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    Button("Settings") {
                         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation") {
                             NSWorkspace.shared.open(url)
                         }
