@@ -1801,6 +1801,15 @@ extension AgentViewModel {
                     // Truncate large tool results to save tokens
                     let truncatedResults = Self.truncateToolResults(toolResults)
                     messages.append(["role": "user", "content": truncatedResults])
+                } else if !hasToolUse {
+                    // LLM responded with text and no tool calls — task is complete
+                    // The LLM should have called task_complete but didn't; treat text-only response as done
+                    let responseText = response.content.compactMap { $0["text"] as? String }.joined()
+                    if !responseText.isEmpty {
+                        appendLog(responseText)
+                        flushLog()
+                    }
+                    break
                 }
 
             } catch {
