@@ -181,7 +181,9 @@ extension AgentViewModel {
         """
 
         // Use tab's project folder if set, otherwise fall back to main project folder
-        let projectFolder = tab.projectFolder.isEmpty ? self.projectFolder : tab.projectFolder
+        // Resolve to directory (strip filename if path points to a file like .xcodeproj)
+        let rawFolder = tab.projectFolder.isEmpty ? self.projectFolder : tab.projectFolder
+        let projectFolder = Self.resolvedWorkingDirectory(rawFolder)
 
         let (provider, modelId) = resolvedLLMConfig(for: tab)
         tabTaskLog.info("[\(tab.displayTitle)] resolved LLM: \(provider.displayName) / \(modelId)")
@@ -583,7 +585,9 @@ extension AgentViewModel {
     // MARK: - Tab Command Execution
 
     /// Execute a command via UserService without affecting the main ViewModel's streaming state.
-    func executeForTab(command: String) async -> (status: Int32, output: String) {
-        await userService.execute(command: command)
+    /// When a `projectFolder` is provided, the working directory is prepended to the command.
+    func executeForTab(command: String, projectFolder: String = "") async -> (status: Int32, output: String) {
+        let cmd = projectFolder.isEmpty ? command : Self.prependWorkingDirectory(command, projectFolder: projectFolder)
+        return await userService.execute(command: cmd)
     }
 }

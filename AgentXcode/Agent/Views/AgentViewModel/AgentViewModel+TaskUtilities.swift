@@ -187,6 +187,15 @@ extension AgentViewModel {
     func executeDirectCommand(_ cmd: AppleIntelligenceMediator.DirectCommand, tab: ScriptTab? = nil) async -> String {
         let name = scriptService.resolveScriptName(cmd.argument)
 
+        // Resolve effective project folder: tab's folder > main folder (always resolve to directory)
+        let rawFolder: String
+        if let tab, !tab.projectFolder.isEmpty {
+            rawFolder = tab.projectFolder
+        } else {
+            rawFolder = projectFolder
+        }
+        let effectiveFolder = Self.resolvedWorkingDirectory(rawFolder)
+
         // Local helpers to route logging to the correct destination
         func log(_ message: String) {
             if let tab { tab.appendLog(message) } else { appendLog(message) }
@@ -227,7 +236,8 @@ extension AgentViewModel {
             }
             log("🦾 Compiling: \(name)")
             flush()
-            let compileResult = await userService.execute(command: compileCmd)
+            let compileCmd2 = Self.prependWorkingDirectory(compileCmd, projectFolder: effectiveFolder)
+            let compileResult = await userService.execute(command: compileCmd2)
             if compileResult.status != 0 {
                 log("Compile error:\n\(compileResult.output)")
                 return compileResult.output

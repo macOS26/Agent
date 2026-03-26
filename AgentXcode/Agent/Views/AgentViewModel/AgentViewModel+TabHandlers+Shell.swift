@@ -13,8 +13,9 @@ extension AgentViewModel {
 
         switch name {
         case "execute_agent_command", "execute_daemon_command":
+            let tabFolder = Self.resolvedWorkingDirectory(tab.projectFolder.isEmpty ? projectFolder : tab.projectFolder)
             let command = Self.prependWorkingDirectory(
-                input["command"] as? String ?? "", projectFolder: projectFolder)
+                input["command"] as? String ?? "", projectFolder: tabFolder)
             if let pathErr = Self.preflightCommand(command) {
                 tab.appendLog(pathErr)
                 tab.flush()

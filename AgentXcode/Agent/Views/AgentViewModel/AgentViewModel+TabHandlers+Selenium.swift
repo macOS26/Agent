@@ -12,7 +12,8 @@ extension AgentViewModel {
         guard let compileCmd = scriptService.compileCommand(name: "Selenium") else {
             return tabResult("Error: Selenium script not found", toolId: toolId)
         }
-        let compileResult = await executeForTab(command: compileCmd)
+        let tabFolder = Self.resolvedWorkingDirectory(tab.projectFolder.isEmpty ? projectFolder : tab.projectFolder)
+        let compileResult = await executeForTab(command: compileCmd, projectFolder: tabFolder)
         if compileResult.status != 0 {
             tab.appendLog("Compile failed: \(compileResult.output)")
             return tabResult(compileResult.output, toolId: toolId)

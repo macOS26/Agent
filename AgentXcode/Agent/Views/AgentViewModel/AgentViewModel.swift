@@ -755,8 +755,8 @@ final class AgentViewModel {
            let parent = scriptTabs.first(where: { $0.id == selId && $0.isMainTab }) {
             tab.parentTabId = parent.id
         }
-        // Inherit project folder from current context
-        tab.projectFolder = self.projectFolder
+        // Inherit project folder from current context (resolve to directory, not file)
+        tab.projectFolder = Self.resolvedWorkingDirectory(self.projectFolder)
         scriptTabs.append(tab)
         selectedTabId = tab.id
         persistScriptTabs()
@@ -774,8 +774,8 @@ final class AgentViewModel {
             numberedConfig.displayName = "\(baseName) \(existingCount + 1)"
         }
         let tab = ScriptTab(llmConfig: numberedConfig)
-        // Inherit project folder from main tab
-        tab.projectFolder = self.projectFolder
+        // Inherit project folder from main tab (resolve to directory, not file)
+        tab.projectFolder = Self.resolvedWorkingDirectory(self.projectFolder)
         scriptTabs.append(tab)
         selectedTabId = tab.id
         persistScriptTabs()

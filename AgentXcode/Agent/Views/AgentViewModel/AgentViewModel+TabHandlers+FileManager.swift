@@ -138,8 +138,9 @@ extension AgentViewModel {
             let path = input["path"] as? String
             tab.appendLog("🔍 $ find \(path ?? "~") -name '\(pattern)'")
             tab.flush()
+            let tabFolder = Self.resolvedWorkingDirectory(tab.projectFolder.isEmpty ? projectFolder : tab.projectFolder)
             let cmd = CodingService.buildListFilesCommand(pattern: pattern, path: path)
-            let result = await executeForTab(command: cmd)
+            let result = await executeForTab(command: cmd, projectFolder: tabFolder)
             guard !Task.isCancelled else { return TabToolResult(toolResult: nil, isComplete: false) }
             let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 ? "No files matching '\(pattern)'" : result.output
@@ -154,8 +155,9 @@ extension AgentViewModel {
             let include = input["include"] as? String
             tab.appendLog("🔍 $ grep -rn '\(pattern)' \(path ?? "~")")
             tab.flush()
+            let tabFolder = Self.resolvedWorkingDirectory(tab.projectFolder.isEmpty ? projectFolder : tab.projectFolder)
             let cmd = CodingService.buildSearchFilesCommand(pattern: pattern, path: path, include: include)
-            let result = await executeForTab(command: cmd)
+            let result = await executeForTab(command: cmd, projectFolder: tabFolder)
             guard !Task.isCancelled else { return TabToolResult(toolResult: nil, isComplete: false) }
             let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 ? "No matches for '\(pattern)'" : result.output

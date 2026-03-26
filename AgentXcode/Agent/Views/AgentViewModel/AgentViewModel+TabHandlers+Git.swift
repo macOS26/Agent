@@ -11,13 +11,15 @@ extension AgentViewModel {
         tab: ScriptTab, name: String, input: [String: Any], toolId: String
     ) async -> TabToolResult {
 
+        let tabFolder = Self.resolvedWorkingDirectory(tab.projectFolder.isEmpty ? projectFolder : tab.projectFolder)
+
         switch name {
         case "git_status":
             let path = input["path"] as? String
             tab.appendLog("🔀 $ git status")
             tab.flush()
             let cmd = CodingService.buildGitStatusCommand(path: path)
-            let result = await executeForTab(command: cmd)
+            let result = await executeForTab(command: cmd, projectFolder: tabFolder)
             guard !Task.isCancelled else { return TabToolResult(toolResult: nil, isComplete: false) }
             let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 ? "(no output, exit code: \(result.status))" : result.output
@@ -33,7 +35,7 @@ extension AgentViewModel {
             tab.appendLog("🔀 $ git diff\(staged ? " --cached" : "")")
             tab.flush()
             let cmd = CodingService.buildGitDiffCommand(path: path, staged: staged, target: target)
-            let result = await executeForTab(command: cmd)
+            let result = await executeForTab(command: cmd, projectFolder: tabFolder)
             guard !Task.isCancelled else { return TabToolResult(toolResult: nil, isComplete: false) }
             let output: String
             if result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -54,7 +56,7 @@ extension AgentViewModel {
             tab.appendLog("🔀 $ git log")
             tab.flush()
             let cmd = CodingService.buildGitLogCommand(path: path, count: count)
-            let result = await executeForTab(command: cmd)
+            let result = await executeForTab(command: cmd, projectFolder: tabFolder)
             guard !Task.isCancelled else { return TabToolResult(toolResult: nil, isComplete: false) }
             let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 ? "Error: empty log" : result.output
@@ -70,7 +72,7 @@ extension AgentViewModel {
             tab.appendLog("🔀 Git commit: \(message)")
             tab.flush()
             let cmd = CodingService.buildGitCommitCommand(path: path, message: message, files: files)
-            let result = await executeForTab(command: cmd)
+            let result = await executeForTab(command: cmd, projectFolder: tabFolder)
             guard !Task.isCancelled else { return TabToolResult(toolResult: nil, isComplete: false) }
             let output = result.output.isEmpty
                 ? "(no output, exit code: \(result.status))" : result.output

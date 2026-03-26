@@ -110,7 +110,8 @@ extension AgentViewModel {
             tab.appendLog("🦾 Compiling: \(scriptName)")
             tab.flush()
 
-            let compileResult = await executeForTab(command: compileCmd)
+            let tabFolder = Self.resolvedWorkingDirectory(tab.projectFolder.isEmpty ? projectFolder : tab.projectFolder)
+            let compileResult = await executeForTab(command: compileCmd, projectFolder: tabFolder)
             guard !Task.isCancelled else {
                 return TabToolResult(
                     toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": "Script cancelled"],
