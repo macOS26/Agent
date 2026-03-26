@@ -269,9 +269,13 @@ struct ContentView: View {
                    event.charactersIgnoringModifiers == "." {
                     if let selId = viewModel.selectedTabId,
                        let tab = viewModel.scriptTabs.first(where: { $0.id == selId }),
-                       tab.isLLMRunning {
-                        viewModel.stopTabTask(tab: tab)
-                    } else if viewModel.isRunning {
+                       tab.isLLMRunning || tab.isLLMThinking || tab.isRunning {
+                        if tab.isLLMRunning {
+                            viewModel.stopTabTask(tab: tab)
+                        } else if tab.isRunning {
+                            viewModel.cancelScriptTab(id: tab.id)
+                        }
+                    } else if viewModel.isRunning || viewModel.isThinking {
                         viewModel.stop()
                     }
                     return nil
@@ -320,10 +324,14 @@ struct ContentView: View {
                 if event.keyCode == 53 {
                     if let selId = viewModel.selectedTabId,
                        let tab = viewModel.scriptTabs.first(where: { $0.id == selId }),
-                       tab.isLLMRunning {
-                        viewModel.stopTabTask(tab: tab)
+                       tab.isLLMRunning || tab.isLLMThinking || tab.isRunning {
+                        if tab.isLLMRunning {
+                            viewModel.stopTabTask(tab: tab)
+                        } else if tab.isRunning {
+                            viewModel.cancelScriptTab(id: tab.id)
+                        }
                         return nil
-                    } else if viewModel.isRunning {
+                    } else if viewModel.isRunning || viewModel.isThinking {
                         viewModel.stop()
                         return nil
                     }

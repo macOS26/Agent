@@ -39,7 +39,13 @@ struct InputSectionView: View {
                     }
 
                 VStack(spacing: 4) {
-                    Button { viewModel.stopTabTask(tab: tab) } label: {
+                    Button {
+                        if tab.isLLMRunning {
+                            viewModel.stopTabTask(tab: tab)
+                        } else if tab.isRunning {
+                            viewModel.cancelScriptTab(id: tab.id)
+                        }
+                    } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(.red)
                             .frame(width: 36)
@@ -48,8 +54,8 @@ struct InputSectionView: View {
                     .clipShape(Capsule())
                     .controlSize(.small)
                     .help("Cancel tab task")
-                    .opacity(tab.isLLMRunning ? 1 : 0)
-                    .disabled(!tab.isLLMRunning)
+                    .opacity(tab.isLLMRunning || tab.isLLMThinking || tab.isRunning ? 1 : 0)
+                    .disabled(!tab.isLLMRunning && !tab.isLLMThinking && !tab.isRunning)
 
                     Button { viewModel.runTabTask(tab: tab) } label: {
                         Image(systemName: "play.fill")
