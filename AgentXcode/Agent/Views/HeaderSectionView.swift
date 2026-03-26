@@ -40,31 +40,36 @@ struct HeaderStatusView: View {
                 if tab.isLLMThinking {
                     HStack(spacing: 4) {
                         ProgressView().controlSize(.mini)
-                        Text("Thinking...")
-                            .font(.caption).foregroundStyle(color)
+                        ShimmerText("Thinking...", color: color)
                     }
                 } else if tab.isLLMRunning {
                     HStack(spacing: 4) {
                         ProgressView().controlSize(.mini)
-                        Text(tab.taskQueue.isEmpty ? "Running..." : "Running... +\(tab.taskQueue.count) queued")
-                            .font(.caption).foregroundStyle(color)
+                        if tab.taskQueue.isEmpty {
+                            Text("Running...")
+                                .font(.caption).foregroundStyle(.green)
+                        } else {
+                            Text("Running... +\(tab.taskQueue.count) queued")
+                                .font(.caption).foregroundStyle(.orange)
+                        }
                     }
                 }
             } else {
                 if viewModel.isThinking {
                     HStack(spacing: 4) {
                         ProgressView().controlSize(.mini)
-                        Text("Thinking...")
-                            .font(.caption).foregroundStyle(.blue)
+                        ShimmerText("Thinking...", color: .blue)
                     }
                 } else if viewModel.isRunning {
                     HStack(spacing: 4) {
                         ProgressView().controlSize(.mini)
-                        Text(viewModel.mainTaskQueue.isEmpty
-                             ? (viewModel.rootServiceActive ? "Root..." : viewModel.userServiceActive ? "Executing..." : "Running...")
-                             : "Running... +\(viewModel.mainTaskQueue.count) queued")
-                            .font(.caption)
-                            .foregroundStyle(viewModel.rootServiceActive ? .orange : .secondary)
+                        if viewModel.mainTaskQueue.isEmpty {
+                            Text(viewModel.rootServiceActive ? "Root..." : viewModel.userServiceActive ? "Executing..." : "Running...")
+                                .font(.caption).foregroundStyle(.green)
+                        } else {
+                            Text("Running... +\(viewModel.mainTaskQueue.count) queued")
+                                .font(.caption).foregroundStyle(.orange)
+                        }
                     }
                 }
             }
