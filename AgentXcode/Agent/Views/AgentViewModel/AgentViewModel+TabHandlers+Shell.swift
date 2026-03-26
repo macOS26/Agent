@@ -18,6 +18,7 @@ extension AgentViewModel {
             let commands = rawCommands.components(separatedBy: "\n").filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
             var batchOutput = ""
             for (idx, rawCmd) in commands.enumerated() {
+                guard !Task.isCancelled else { return TabToolResult(toolResult: nil, isComplete: false) }
                 let cmd = Self.prependWorkingDirectory(rawCmd, projectFolder: tabFolder)
                 if let pathErr = Self.preflightCommand(cmd) {
                     batchOutput += "[\(idx + 1)] $ \(rawCmd)\n\(pathErr)\n\n"
@@ -25,16 +26,29 @@ extension AgentViewModel {
                 }
                 tab.appendLog("🔧 [\(idx + 1)/\(commands.count)] $ \(Self.collapseHeredocs(cmd))")
                 tab.flush()
-                let result = await executeForTab(command: cmd)
-                guard !Task.isCancelled else { return TabToolResult(toolResult: nil, isComplete: false) }
+
+                // Route through same logic as execute_agent_command
+                let result: (status: Int32, output: String)
+                if Self.needsTCCPermissions(cmd) {
+                    result = await Self.executeTCC(command: cmd)
+                } else if userService.userReady {
+                    result = await executeForTab(command: cmd)
+                } else {
+                    result = await Self.executeTCC(command: cmd)
+                }
+
                 let output = result.output.isEmpty ? "(no output)" : result.output
                 batchOutput += "[\(idx + 1)] $ \(rawCmd)\n"
                 if result.status != 0 { batchOutput += "exit code: \(result.status)\n" }
                 batchOutput += output + "\n\n"
             }
+            // Truncate if batch output is too large
+            let truncated = batchOutput.count > 50_000
+                ? String(batchOutput.prefix(50_000)) + "\n...(batch output truncated)"
+                : batchOutput
             tab.flush()
             return TabToolResult(
-                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": batchOutput],
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": truncated],
                 isComplete: false
             )
 
@@ -81,8 +95,11 @@ extension AgentViewModel {
 
             tab.appendLog("● \(completed)/\(tasks.count) tasks completed")
             tab.flush()
+            let truncatedBatch = batchOutput.count > 50_000
+                ? String(batchOutput.prefix(50_000)) + "\n...(batch output truncated)"
+                : batchOutput
             return TabToolResult(
-                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": batchOutput],
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": truncatedBatch],
                 isComplete: false
             )
 

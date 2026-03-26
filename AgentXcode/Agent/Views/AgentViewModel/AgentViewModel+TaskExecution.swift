@@ -757,7 +757,10 @@ extension AgentViewModel {
                                 if result.status != 0 { batchOutput += "exit code: \(result.status)\n" }
                                 batchOutput += output + "\n\n"
                             }
-                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": batchOutput])
+                            let truncatedBatch = batchOutput.count > 50_000
+                                ? String(batchOutput.prefix(50_000)) + "\n...(batch output truncated)"
+                                : batchOutput
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": truncatedBatch])
                         }
 
                         // Batch tools — run multiple tool calls in one batch
@@ -799,7 +802,10 @@ extension AgentViewModel {
 
                             appendLog("● \(completed)/\(tasks.count) tasks completed")
                             flushLog()
-                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": batchOutput])
+                            let truncatedBatch2 = batchOutput.count > 50_000
+                                ? String(batchOutput.prefix(50_000)) + "\n...(batch output truncated)"
+                                : batchOutput
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": truncatedBatch2])
                         }
 
                         // Tool discovery
