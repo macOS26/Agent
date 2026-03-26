@@ -97,17 +97,6 @@ struct ProjectFolderField: View {
             }
     }
 
-    /// Check if a directory has any subdirectories (without listing all).
-    static func hasSubdirs(_ path: String) -> Bool {
-        let fm = FileManager.default
-        guard let items = try? fm.contentsOfDirectory(atPath: path) else { return false }
-        return items.contains { name in
-            guard !name.hasPrefix("."), !name.hasSuffix(".app") else { return false }
-            var isDir: ObjCBool = false
-            let full = (path as NSString).appendingPathComponent(name)
-            return fm.fileExists(atPath: full, isDirectory: &isDir) && isDir.boolValue
-        }
-    }
 
     private func selectFolder(_ path: String) {
         projectFolder = path
@@ -134,8 +123,12 @@ struct ProjectFolderField: View {
                     Divider()
                 }
 
-                // Home directory tree
-                FolderSubmenu(path: FileManager.default.homeDirectoryForCurrentUser.path, label: "Home", selectFolder: selectFolder)
+                // Home directory — only common project locations
+                let homePath = FileManager.default.homeDirectoryForCurrentUser.path
+                let knownDirs = ["Documents", "Desktop", "Developer", "Downloads", "Projects"]
+                ForEach(knownDirs.filter { FileManager.default.fileExists(atPath: (homePath as NSString).appendingPathComponent($0)) }, id: \.self) { name in
+                    FolderSubmenu(path: (homePath as NSString).appendingPathComponent(name), label: name, selectFolder: selectFolder)
+                }
             } label: {
                 Image(systemName: "folder")
                     .frame(width: 36)
@@ -200,7 +193,8 @@ struct ProjectFolderField: View {
     }
 }
 
-/// Recursive folder submenu — only loads children when the user hovers/clicks the arrow.
+/// Folder submenu — always shows as a Menu with an arrow.
+/// Children are listed inside; SwiftUI only evaluates the Menu body when opened.
 private struct FolderSubmenu: View {
     let path: String
     let label: String
@@ -216,17 +210,14 @@ private struct FolderSubmenu: View {
 
             Divider()
 
+            // This only runs when the user opens this submenu
             let children = ProjectFolderField.subdirs(of: path)
-            ForEach(children, id: \.self) { child in
-                let name = (child as NSString).lastPathComponent
-                if ProjectFolderField.hasSubdirs(child) {
+            if children.isEmpty {
+                Text("(empty)").foregroundStyle(.secondary)
+            } else {
+                ForEach(children, id: \.self) { child in
+                    let name = (child as NSString).lastPathComponent
                     FolderSubmenu(path: child, label: name, selectFolder: selectFolder)
-                } else {
-                    Button {
-                        selectFolder(child)
-                    } label: {
-                        Label(name, systemImage: "folder")
-                    }
                 }
             }
         } label: {
