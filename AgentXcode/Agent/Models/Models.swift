@@ -105,7 +105,7 @@ let toolStartTimeout: TimeInterval = 90
 let toolFinishTimeout: TimeInterval = 43200
 
 /// Timeout for automation calls (Accessibility, Selenium, AppleScript, JavaScript) to start (seconds).
-let automationStartTimeout: TimeInterval = 30000
+let automationStartTimeout: TimeInterval = 9000
 
 /// Timeout for automation calls to finish once started (seconds).
 let automationFinishTimeout: TimeInterval = 18000
