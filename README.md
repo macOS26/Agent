@@ -48,10 +48,11 @@ Annotations are tagged with `[AI]` prefixes to distinguish them from LLM resp
 Enable Apple Intelligence Mediator in Settings to enhance communication clarity. Requires Apple Intelligence-capable Mac running macOS 26+.
 
 **Recent Enhancements:**
-- **Autonomous Task Loop**: Task loop runs until task_complete or user cancel — no iteration caps, no nudges, no artificial limits
+- **Autonomous Task Loop**: The task loop is unstoppable — it runs until the LLM calls task_complete or the user hits cancel/escape. No iteration caps, no nudges, no artificial limits. The LLM drives; Agent! never interrupts. Errors continue the loop instead of breaking it. Text-only responses (no tool calls) are treated as task completion, preventing infinite loops when the LLM forgets to call task_complete.
+- **Safari JavaScript Web Automation**: Built-in web automation via Safari's JavaScript bridge — open URLs, scan pages for CSS selectors, click elements, type into fields, read page content, execute JavaScript, and navigate tabs. No WebDriver installation required. Selenium WebDriver also available for Chrome/Firefox when needed.
 - **Shimmer Thinking Animation**: "Thinking..." text pulses with shimmer effect matching the LLM icon throb
 - **Status Colors**: "Running..." in green, "Running... +N queued" in orange for multi-task visibility
-- **task_complete Enforcement**: System prompt requires every LLM response to end with task_complete; text-only replies treated as done
+- **task_complete Enforcement**: System prompt requires every LLM response to end with task_complete; if the LLM needs user input it puts the question in the summary and calls task_complete
 - **Timeout Protection**: 10-second timeout prevents LLM tabs from hanging when Apple Intelligence is slow to respond
 - **OS Log Diagnostics**: Built-in os.log diagnostics for debugging mediator behavior
 - **Brain Button Integration**: Toggle Apple Intelligence mediator directly from the brain button in the toolbar
