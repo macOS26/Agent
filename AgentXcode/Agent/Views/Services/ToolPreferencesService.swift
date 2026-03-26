@@ -35,8 +35,8 @@ final class ToolPreferencesService {
         // accessibility is in Automation
         "Core": Set(["task_complete", "list_tools", "web_search",
                     "write_text", "transform_text", "about_self", "fix_text"]),
-        "Workflow": Set(["agent", "plan_mode", "git", "send_message"]),
-        "User Agent": Set(["execute_agent_command", "batch_commands", "batch_tools"]),
+        "Workflow": Set(["agent", "plan_mode", "git", "send_message", "batch_commands", "batch_tools"]),
+        "User Agent": Set(["execute_agent_command"]),
         "Launch Daemon": Set(["execute_daemon_command"]),
         "Web": Set(["web"]),
     ]
