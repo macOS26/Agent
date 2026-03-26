@@ -342,15 +342,27 @@ extension AgentViewModel {
 
     // MARK: - Plan Mode
 
-    /// Directory for all plan files.
-    private static func planDir(_ projectFolder: String) -> String {
+    /// Directory for all plan files — always stored at the git repo root's `plans/` folder.
+    /// Returns nil if the project folder is not inside a git repository.
+    private static func planDir(_ projectFolder: String) -> String? {
         let base = projectFolder.isEmpty ? NSHomeDirectory() : resolvedWorkingDirectory(projectFolder)
-        return (base as NSString).appendingPathComponent("plans")
+        // Walk up to find the git repo root
+        var dir = base
+        let fm = FileManager.default
+        while dir != "/" && !dir.isEmpty {
+            let gitDir = (dir as NSString).appendingPathComponent(".git")
+            if fm.fileExists(atPath: gitDir) {
+                return (dir as NSString).appendingPathComponent("plans")
+            }
+            dir = (dir as NSString).deletingLastPathComponent
+        }
+        return nil
     }
 
-    /// Resolve the plan file path for a given plan_id.
-    private static func planFilePath(_ planId: String, projectFolder: String) -> String {
-        return (planDir(projectFolder) as NSString).appendingPathComponent("plan_\(planId).md")
+    /// Resolve the plan file path for a given plan_id. Returns nil if not in a git repo.
+    private static func planFilePath(_ planId: String, projectFolder: String) -> String? {
+        guard let dir = planDir(projectFolder) else { return nil }
+        return (dir as NSString).appendingPathComponent("plan_\(planId).md")
     }
 
     /// Sanitize a tab name into a safe filename slug.
@@ -364,7 +376,7 @@ extension AgentViewModel {
 
     /// Find the most recent plan file in the plans directory.
     private static func mostRecentPlan(_ projectFolder: String) -> (id: String, path: String)? {
-        let dir = planDir(projectFolder)
+        guard let dir = planDir(projectFolder) else { return nil }
         let fm = FileManager.default
         guard let files = try? fm.contentsOfDirectory(atPath: dir) else { return nil }
         let plans = files.filter { $0.hasPrefix("plan_") && $0.hasSuffix(".md") }
@@ -386,7 +398,9 @@ extension AgentViewModel {
     /// tabName is used as the plan ID — "main" for the main tab, or the tab's display title.
     static func handlePlanMode(action: String, input: [String: Any], projectFolder: String, tabName: String = "main") -> String {
         let fm = FileManager.default
-        let dir = planDir(projectFolder)
+        guard let dir = planDir(projectFolder) else {
+            return "Error: plan_mode requires a git repository. Set the project folder to a directory inside a git repo."
+        }
 
         switch action.lowercased() {
         case "create":
@@ -405,7 +419,9 @@ extension AgentViewModel {
             md += "\n---\n*Status: \(steps.count) steps pending*\n"
             do {
                 try fm.createDirectory(atPath: dir, withIntermediateDirectories: true)
-                let path = planFilePath(planId, projectFolder: projectFolder)
+                guard let path = planFilePath(planId, projectFolder: projectFolder) else {
+                    return "Error: could not resolve plan file path."
+                }
                 try md.write(toFile: path, atomically: true, encoding: .utf8)
                 return "Plan created: \(title) (\(steps.count) steps)\nplan_id: \(planId)\nFile: \(path)"
             } catch {
@@ -429,7 +445,10 @@ extension AgentViewModel {
             let path: String
             if let id = input["plan_id"] as? String, !id.isEmpty {
                 planId = id
-                path = planFilePath(id, projectFolder: projectFolder)
+                guard let p = planFilePath(id, projectFolder: projectFolder) else {
+                    return "Error: could not resolve plan file path."
+                }
+                path = p
             } else if let recent = mostRecentPlan(projectFolder) {
                 planId = recent.id
                 path = recent.path
@@ -492,7 +511,10 @@ extension AgentViewModel {
             let planId: String
             if let id = input["plan_id"] as? String, !id.isEmpty {
                 planId = id
-                path = planFilePath(id, projectFolder: projectFolder)
+                guard let p = planFilePath(id, projectFolder: projectFolder) else {
+                    return "Error: could not resolve plan file path."
+                }
+                path = p
             } else if let recent = mostRecentPlan(projectFolder) {
                 planId = recent.id
                 path = recent.path
@@ -532,7 +554,9 @@ extension AgentViewModel {
             guard let id = input["plan_id"] as? String, !id.isEmpty else {
                 return "Error: plan_id is required for plan_mode delete"
             }
-            let path = planFilePath(id, projectFolder: projectFolder)
+            guard let path = planFilePath(id, projectFolder: projectFolder) else {
+                return "Error: could not resolve plan file path."
+            }
             guard fm.fileExists(atPath: path) else {
                 return "Error: plan '\(id)' not found."
             }
