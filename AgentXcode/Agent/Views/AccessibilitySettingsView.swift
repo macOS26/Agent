@@ -228,9 +228,35 @@ struct AccessibilitySettingsView: View {
         GridItem(.flexible(), spacing: 16)
     ]
 
+    @State private var hasAccessibility = AccessibilityService.hasAccessibilityPermission()
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
+                // Accessibility Permission
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(hasAccessibility ? Color.green : Color.red.opacity(0.6))
+                        .frame(width: 8, height: 8)
+                    Text("Accessibility: \(hasAccessibility ? "Granted" : "Not Granted")")
+                        .font(.caption)
+                        .foregroundStyle(hasAccessibility ? .green : .red)
+                    Spacer()
+                    if !hasAccessibility {
+                        Button("Request Access") {
+                            _ = AccessibilityService.requestAccessibilityPermission()
+                            // Recheck after a delay
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                                hasAccessibility = AccessibilityService.hasAccessibilityPermission()
+                            }
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.small)
+                    }
+                }
+
+                Divider()
+
                 Text("Accessibility Actions")
                     .font(.headline)
 
@@ -247,6 +273,26 @@ struct AccessibilitySettingsView: View {
                     axSection(title: "AX Scroll Actions", items: AccessibilityEnabledIDs.axScrollActions)
                     axSection(title: "AX Focus Actions", items: AccessibilityEnabledIDs.axFocusActions)
                     axSection(title: "AX Protected Roles", items: AccessibilityEnabledIDs.axRoles)
+                }
+
+                Divider()
+
+                // Apple Events Permission
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(Color.green.opacity(0.6))
+                        .frame(width: 8, height: 8)
+                    Text("Apple Events: Granted on first use")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Open Settings") {
+                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
                 }
 
                 Divider()
