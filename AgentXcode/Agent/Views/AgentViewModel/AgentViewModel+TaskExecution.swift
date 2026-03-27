@@ -942,34 +942,36 @@ extension AgentViewModel {
                             appendLog("Running \(scriptName)... (see tab)")
                             flushLog()
 
-                            // Step 1: Compile the script dylib via User LaunchAgent (no TCC required)
-                            tab.appendLog("🦾 Compiling: \(scriptName)")
-                            tab.flush()
-
-                            let compileResult = await executeViaUserAgent(command: compileCmd)
-
-                            guard !Task.isCancelled && !tab.isCancelled else {
-                                tab.isRunning = false
-                                tab.appendLog("Cancelled.")
+                            // Step 1: Compile if needed (skip if dylib is up to date)
+                            if !scriptService.isDylibCurrent(name: scriptName) {
+                                tab.appendLog("🦾 Compiling: \(scriptName)")
                                 tab.flush()
-                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Script cancelled by user"])
-                                break
-                            }
 
-                            if compileResult.status != 0 {
-                                tab.appendLog("Compile failed (exit code: \(compileResult.status))")
-                                tab.appendOutput(compileResult.output)
-                                tab.flush()
-                                tab.isRunning = false
-                                let toolOutput = compileResult.output.isEmpty
-                                    ? "(compile failed, exit code: \(compileResult.status))"
-                                    : compileResult.output
-                                let truncated2 = toolOutput.count > 10000
-                                    ? String(toolOutput.prefix(10000)) + "\n...(truncated)"
-                                    : toolOutput
-                                commandsRun.append("run_agent_script: \(scriptName) (compile failed)")
-                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": truncated2])
-                                continue
+                                let compileResult = await executeViaUserAgent(command: compileCmd)
+
+                                guard !Task.isCancelled && !tab.isCancelled else {
+                                    tab.isRunning = false
+                                    tab.appendLog("Cancelled.")
+                                    tab.flush()
+                                    toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Script cancelled by user"])
+                                    break
+                                }
+
+                                if compileResult.status != 0 {
+                                    tab.appendLog("Compile failed (exit code: \(compileResult.status))")
+                                    tab.appendOutput(compileResult.output)
+                                    tab.flush()
+                                    tab.isRunning = false
+                                    let toolOutput = compileResult.output.isEmpty
+                                        ? "(compile failed, exit code: \(compileResult.status))"
+                                        : compileResult.output
+                                    let truncated2 = toolOutput.count > 10000
+                                        ? String(toolOutput.prefix(10000)) + "\n...(truncated)"
+                                        : toolOutput
+                                    commandsRun.append("run_agent_script: \(scriptName) (compile failed)")
+                                    toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": truncated2])
+                                    continue
+                                }
                             }
 
                             // Step 2: Load and run dylib in Agent!'s process

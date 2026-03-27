@@ -107,29 +107,32 @@ extension AgentViewModel {
                 )
             }
 
-            tab.appendLog("🦾 Compiling: \(scriptName)")
-            tab.flush()
-
-            let tabFolder = Self.resolvedWorkingDirectory(tab.projectFolder.isEmpty ? projectFolder : tab.projectFolder)
-            let compileResult = await executeForTab(command: compileCmd, projectFolder: tabFolder)
-            guard !Task.isCancelled else {
-                return TabToolResult(
-                    toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": "Script cancelled"],
-                    isComplete: false
-                )
-            }
-
-            if compileResult.status != 0 {
-                tab.appendLog("Compile failed (exit code: \(compileResult.status))")
-                tab.appendOutput(compileResult.output)
+            // Skip compilation if dylib is up to date
+            if !scriptService.isDylibCurrent(name: scriptName) {
+                tab.appendLog("🦾 Compiling: \(scriptName)")
                 tab.flush()
-                let toolOutput = compileResult.output.isEmpty
-                    ? "(compile failed, exit code: \(compileResult.status))"
-                    : compileResult.output
-                return TabToolResult(
-                    toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": String(toolOutput.prefix(10000))],
-                    isComplete: false
-                )
+
+                let tabFolder = Self.resolvedWorkingDirectory(tab.projectFolder.isEmpty ? projectFolder : tab.projectFolder)
+                let compileResult = await executeForTab(command: compileCmd, projectFolder: tabFolder)
+                guard !Task.isCancelled else {
+                    return TabToolResult(
+                        toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": "Script cancelled"],
+                        isComplete: false
+                    )
+                }
+
+                if compileResult.status != 0 {
+                    tab.appendLog("Compile failed (exit code: \(compileResult.status))")
+                    tab.appendOutput(compileResult.output)
+                    tab.flush()
+                    let toolOutput = compileResult.output.isEmpty
+                        ? "(compile failed, exit code: \(compileResult.status))"
+                        : compileResult.output
+                    return TabToolResult(
+                        toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": String(toolOutput.prefix(10000))],
+                        isComplete: false
+                    )
+                }
             }
 
             tab.appendLog("🦾 Running: \(scriptName)")

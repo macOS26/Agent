@@ -627,6 +627,22 @@ final class ScriptService {
         return Self.agentsDir.appendingPathComponent(".build/debug/lib\(scriptName).dylib").path
     }
 
+    /// Check if the compiled dylib is up to date (newer than source file).
+    func isDylibCurrent(name: String) -> Bool {
+        let scriptName = name.replacingOccurrences(of: ".swift", with: "")
+        let sourceFile = scriptsDir.appendingPathComponent("\(scriptName).swift")
+        let dylib = dylibPath(name: scriptName)
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: dylib),
+              let sourceAttrs = try? fm.attributesOfItem(atPath: sourceFile.path),
+              let dylibAttrs = try? fm.attributesOfItem(atPath: dylib),
+              let sourceDate = sourceAttrs[.modificationDate] as? Date,
+              let dylibDate = dylibAttrs[.modificationDate] as? Date else {
+            return false
+        }
+        return dylibDate > sourceDate
+    }
+
     /// Load and run a compiled script dylib in-process via dlopen/dlsym.
     /// Captures stdout (and optionally stderr) and returns the output + exit status.
     /// Runs on a background thread to avoid blocking the main thread.

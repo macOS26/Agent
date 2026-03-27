@@ -234,13 +234,16 @@ extension AgentViewModel {
                 log(err)
                 return err
             }
-            log("🦾 Compiling: \(name)")
-            flush()
-            let compileCmd2 = Self.prependWorkingDirectory(compileCmd, projectFolder: effectiveFolder)
-            let compileResult = await userService.execute(command: compileCmd2)
-            if compileResult.status != 0 {
-                log("Compile error:\n\(compileResult.output)")
-                return compileResult.output
+            // Skip compilation if dylib is up to date
+            if !scriptService.isDylibCurrent(name: name) {
+                log("🦾 Compiling: \(name)")
+                flush()
+                let compileCmd2 = Self.prependWorkingDirectory(compileCmd, projectFolder: effectiveFolder)
+                let compileResult = await userService.execute(command: compileCmd2)
+                if compileResult.status != 0 {
+                    log("Compile error:\n\(compileResult.output)")
+                    return compileResult.output
+                }
             }
             log("🦾 Running: \(name)")
             flush()
