@@ -414,9 +414,10 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.undoEdit,
-            description: "Undo the last edit_file, apply_diff, or diff_and_apply change to a file. Use when a change was wrong or broke something.",
+            description: "Undo a diff by diff_id (preferred) or restore file from edit history by file_path. Uses D1F library's reverse diff with SHA verification when diff_id is provided.",
             properties: [
                 "file_path": ["type": "string", "description": "Path to the file to undo"],
+                "diff_id": ["type": "string", "description": "UUID of the diff to reverse (from create_diff or apply_diff). Preferred over file_path."],
             ],
             required: ["file_path"]
         ),

@@ -152,8 +152,13 @@ extension AgentViewModel {
                     toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
                     return true
                 }
-                DiffStore.shared.recordEdit(filePath: expandedPath, originalContent: source)
                 try patched.write(to: URL(fileURLWithPath: expandedPath), atomically: true, encoding: .utf8)
+                // Track the apply for UUID-based undo
+                if let uuid = UUID(uuidString: diffIdStr) {
+                    DiffStore.shared.recordApply(diffId: uuid, filePath: expandedPath, originalContent: source)
+                } else {
+                    DiffStore.shared.recordEdit(filePath: expandedPath, originalContent: source)
+                }
                 // Use the library's verification
                 let verifyDiff = MultiLineDiff.createDiff(source: source, destination: patched, includeMetadata: true)
                 let verified = MultiLineDiff.verifyDiff(verifyDiff)
@@ -170,10 +175,42 @@ extension AgentViewModel {
             return true
         }
 
-        // MARK: undo_edit — uses D1F library's undo support
+        // MARK: undo_edit — uses diff_id UUID or falls back to file path
         if name == "undo_edit" {
             let filePath = input["file_path"] as? String ?? ""
+            let diffIdStr = input["diff_id"] as? String
             let expandedUndo = (filePath as NSString).expandingTildeInPath
+
+            // Try UUID-based undo first (uses D1F library's createUndoDiff)
+            if let idStr = diffIdStr, let uuid = UUID(uuidString: idStr),
+               let stored = DiffStore.shared.retrieve(uuid) {
+                // Use D1F's built-in undo: create reverse diff from metadata
+                if let undoDiff = MultiLineDiff.createUndoDiff(from: stored.diff) {
+                    let currentPath = (filePath.isEmpty ? DiffStore.shared.lastAppliedDiffId(for: expandedUndo).flatMap { DiffStore.shared.retrieve($0) }.map { _ in expandedUndo } ?? expandedUndo : expandedUndo)
+                    guard let data = FileManager.default.contents(atPath: currentPath),
+                          let current = String(data: data, encoding: .utf8) else {
+                        let err = "Error: cannot read \(filePath)"
+                        appendLog(err)
+                        toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
+                        return true
+                    }
+                    do {
+                        let restored = try MultiLineDiff.applyDiff(to: current, diff: undoDiff)
+                        try restored.write(to: URL(fileURLWithPath: currentPath), atomically: true, encoding: .utf8)
+                        DiffStore.shared.popLastApplied(for: currentPath)
+                        let display = MultiLineDiff.displayDiff(diff: undoDiff, source: current, format: .ai)
+                        appendRawOutput(display + "\n")
+                        appendLog("↩️ Undo applied (diff_id: \(idStr))")
+                        commandsRun.append("undo_edit: \(filePath)")
+                        toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Undo applied for diff_id \(idStr)\n\n\(display)"])
+                        return true
+                    } catch {
+                        appendLog("D1F undo failed: \(error.localizedDescription), falling back to edit history")
+                    }
+                }
+            }
+
+            // Fallback: file-path-based undo from edit history
             guard let original = DiffStore.shared.lastEdit(for: expandedUndo) else {
                 let err = "Error: no edit history for \(filePath)"
                 appendLog(err)
