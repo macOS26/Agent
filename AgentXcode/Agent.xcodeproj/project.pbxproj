@@ -126,6 +126,7 @@
 		F123A9EA71C5383EFFFF1A8A /* ActivityLogView+Rendering.swift in Sources */ = {isa = PBXBuildFile; fileRef = C428D9A5859B0E1BB0D2FB6B /* ActivityLogView+Rendering.swift */; };
 		FF10000000000000000011 /* AgentViewModel+Speech.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000010 /* AgentViewModel+Speech.swift */; };
 		FF20000000000000000002 /* SafariWebAutomationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF20000000000000000001 /* SafariWebAutomationTests.swift */; };
+		FF20000000000000000004 /* DiffToolsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF20000000000000000003 /* DiffToolsTests.swift */; };
 		WEB1000000000000000001 /* WebAutomationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = WEB1000000000000000002 /* WebAutomationService.swift */; };
 /* End PBXBuildFile section */
 
@@ -322,6 +323,7 @@
 		FEA10A5913CDA508518F6EDA /* HeaderSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeaderSectionView.swift; sourceTree = "<group>"; };
 		FF10000000000000000010 /* AgentViewModel+Speech.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+Speech.swift"; sourceTree = "<group>"; };
 		FF20000000000000000001 /* SafariWebAutomationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafariWebAutomationTests.swift; sourceTree = "<group>"; };
+		FF20000000000000000003 /* DiffToolsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffToolsTests.swift; sourceTree = "<group>"; };
 		WEB1000000000000000002 /* WebAutomationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebAutomationService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -450,6 +452,7 @@
 			isa = PBXGroup;
 			children = (
 				FF20000000000000000001 /* SafariWebAutomationTests.swift */,
+				FF20000000000000000003 /* DiffToolsTests.swift */,
 			);
 			path = AgentTests;
 			sourceTree = "<group>";
@@ -947,6 +950,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				FF20000000000000000002 /* SafariWebAutomationTests.swift in Sources */,
+				FF20000000000000000004 /* DiffToolsTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

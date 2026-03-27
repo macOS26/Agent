@@ -4,7 +4,7 @@ import Foundation
 import MultiLineDiff
 
 @Suite("DiffTools")
-struct DiffToolsTests {
+@MainActor struct DiffToolsTests {
 
     private func makeTempDir() -> String {
         let dir = NSTemporaryDirectory() + "agent_diff_tests_\(UUID().uuidString)"
