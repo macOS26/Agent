@@ -76,19 +76,24 @@ extension AgentViewModel {
                     diffLog += " (of \(total) lines)"
                 }
             }
-            appendRawOutput(diffLog + "\n")
+            appendLog(diffLog)
             appendLog(output)
             commandsRun.append("edit_file: \(filePath)")
             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
             return true
         }
 
-        // MARK: create_diff — reads file from disk, AI only sends line range + destination
+        // MARK: create_diff — reads file from disk, requires line range
         if name == "create_diff" {
             let filePath = input["file_path"] as? String ?? ""
             let destination = input["destination"] as? String ?? ""
-            let startLine = input["start_line"] as? Int
-            let endLine = input["end_line"] as? Int
+            guard let startLine = input["start_line"] as? Int,
+                  let endLine = input["end_line"] as? Int else {
+                let err = "Error: start_line and end_line are required. Use read_file first to find the line numbers, then specify the range to edit."
+                appendLog(err)
+                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
+                return true
+            }
 
             let expanded = (filePath as NSString).expandingTildeInPath
             guard let data = FileManager.default.contents(atPath: expanded),
@@ -99,24 +104,18 @@ extension AgentViewModel {
                 return true
             }
 
-            // Extract section from file if line range specified
-            let source: String
-            if let sl = startLine, let el = endLine {
-                let lines = fullText.components(separatedBy: "\n")
-                let s = max(sl - 1, 0)
-                let e = min(el, lines.count)
-                source = lines[s..<e].joined(separator: "\n")
-            } else {
-                source = fullText
-            }
+            let lines = fullText.components(separatedBy: "\n")
+            let s = max(startLine - 1, 0)
+            let e = min(endLine, lines.count)
+            let source = lines[s..<e].joined(separator: "\n")
 
             let algorithm = CodingService.selectDiffAlgorithm(source: source, destination: destination)
-            let diff = MultiLineDiff.createDiff(source: source, destination: destination, algorithm: algorithm, includeMetadata: true, sourceStartLine: startLine.map { $0 - 1 })
+            let diff = MultiLineDiff.createDiff(source: source, destination: destination, algorithm: algorithm, includeMetadata: true, sourceStartLine: startLine - 1)
             let d1f = MultiLineDiff.displayDiff(diff: diff, source: source, format: .ai)
             let diffId = DiffStore.shared.store(diff: diff, source: source)
-            appendRawOutput(d1f + "\n")
-            let rangeNote = (startLine != nil && endLine != nil) ? " (lines \(startLine!)-\(endLine!))" : ""
-            appendLog("📝 Created diff for \(filePath)\(rangeNote)")
+            resetStreamCounters()
+            appendLog(d1f)
+            appendLog("📝 Created diff for \(filePath) (lines \(startLine)-\(endLine))")
             commandsRun.append("create_diff: \(filePath)")
             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "diff_id: \(diffId.uuidString)\n\n\(d1f)"])
             return true
@@ -163,7 +162,7 @@ extension AgentViewModel {
                 let verifyDiff = MultiLineDiff.createDiff(source: source, destination: patched, includeMetadata: true)
                 let verified = MultiLineDiff.verifyDiff(verifyDiff)
                 let display = MultiLineDiff.displayDiff(diff: verifyDiff, source: source, format: .ai)
-                appendRawOutput(display + "\n")
+                appendLog(display)
                 appendLog("📝 Applied diff to \(filePath) [verified: \(verified)]")
                 commandsRun.append("apply_diff: \(filePath)")
                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Applied diff to \(filePath) [verified: \(verified)]\n\n\(display)"])
@@ -199,7 +198,7 @@ extension AgentViewModel {
                         try restored.write(to: URL(fileURLWithPath: currentPath), atomically: true, encoding: .utf8)
                         DiffStore.shared.popLastApplied(for: currentPath)
                         let display = MultiLineDiff.displayDiff(diff: undoDiff, source: current, format: .ai)
-                        appendRawOutput(display + "\n")
+                        appendLog(display)
                         appendLog("↩️ Undo applied (diff_id: \(idStr))")
                         commandsRun.append("undo_edit: \(filePath)")
                         toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Undo applied for diff_id \(idStr)\n\n\(display)"])
@@ -299,7 +298,7 @@ extension AgentViewModel {
                 let verifyDiff = MultiLineDiff.createDiff(source: source, destination: patched, includeMetadata: true)
                 let verified = MultiLineDiff.verifyDiff(verifyDiff)
                 let display = MultiLineDiff.displayDiff(diff: verifyDiff, source: source, format: .ai)
-                appendRawOutput(display + "\n")
+                appendLog(display)
                 appendLog("📝 Diff+Apply: \(filePath)\(rangeNote) [verified: \(verified)]")
                 commandsRun.append("diff_and_apply: \(filePath)")
                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Applied diff to \(filePath)\(rangeNote) [verified: \(verified)] diff_id: \(diffId.uuidString)\n\n\(display)"])

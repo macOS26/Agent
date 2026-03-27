@@ -382,14 +382,14 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.createDiff,
-            description: "Create a diff for review before applying. Reads file from disk. Use start_line/end_line to target a section — only send the replacement text. Returns a diff_id UUID for apply_diff.",
+            description: "Create a diff for review before applying. Reads file from disk. Requires start_line/end_line — only send replacement text for those lines. Returns diff_id UUID for apply_diff.",
             properties: [
                 "file_path": ["type": "string", "description": "Path to file to read from disk"],
+                "start_line": ["type": "integer", "description": "First line to edit (1-based). Required."],
+                "end_line": ["type": "integer", "description": "Last line to edit (inclusive). Required."],
                 "destination": ["type": "string", "description": "The new text for the targeted lines"],
-                "start_line": ["type": "integer", "description": "First line to diff (1-based)"],
-                "end_line": ["type": "integer", "description": "Last line to diff (inclusive)"],
             ],
-            required: ["file_path", "destination"]
+            required: ["file_path", "start_line", "end_line", "destination"]
         ),
         ToolDef(
             name: Name.applyDiff,
@@ -403,14 +403,14 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.diffAndApply,
-            description: "Edit a file on disk in one step. Reads the file, replaces the target lines with your destination text, shows D1F preview, and writes. Use start_line/end_line to edit a section — only send the replacement text for those lines.",
+            description: "Edit a file on disk in one step. Reads the file, replaces the target lines with your destination text, shows D1F preview, and writes. Requires start_line/end_line — only send the replacement text for those lines.",
             properties: [
                 "file_path": ["type": "string", "description": "Path to the file to modify (read from disk)"],
+                "start_line": ["type": "integer", "description": "First line to replace (1-based). Required."],
+                "end_line": ["type": "integer", "description": "Last line to replace (inclusive). Required."],
                 "destination": ["type": "string", "description": "The new content for the target lines"],
-                "start_line": ["type": "integer", "description": "First line to replace (1-based)"],
-                "end_line": ["type": "integer", "description": "Last line to replace (inclusive)"],
             ],
-            required: ["file_path", "destination"]
+            required: ["file_path", "start_line", "end_line", "destination"]
         ),
         ToolDef(
             name: Name.undoEdit,

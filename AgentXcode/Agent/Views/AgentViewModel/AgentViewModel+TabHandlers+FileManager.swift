@@ -70,7 +70,7 @@ extension AgentViewModel {
                     diffLog += " (of \(total) lines)"
                 }
             }
-            tab.appendOutput(diffLog + "\n")
+            tab.appendLog(diffLog)
             tab.appendLog(output)
             tab.flush()
             return TabToolResult(
@@ -101,7 +101,7 @@ extension AgentViewModel {
             let diff = MultiLineDiff.createDiff(source: source, destination: destination, algorithm: algorithm, includeMetadata: true, sourceStartLine: startLine.map { $0 - 1 })
             let d1f = MultiLineDiff.displayDiff(diff: diff, source: source, format: .ai)
             let diffId = DiffStore.shared.store(diff: diff, source: source)
-            tab.appendOutput(d1f + "\n")
+            tab.appendLog(d1f)
             tab.flush()
             return TabToolResult(
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": "diff_id: \(diffId.uuidString)\n\n\(d1f)"],
@@ -139,7 +139,7 @@ extension AgentViewModel {
                 let verifyResult = MultiLineDiff.createDiff(source: source, destination: patched, includeMetadata: true)
                 let verified = MultiLineDiff.verifyDiff(verifyResult)
                 let verifyDiff = MultiLineDiff.displayDiff(diff: verifyResult, source: source, format: .ai)
-                tab.appendOutput(verifyDiff + "\n")
+                tab.appendLog(verifyDiff)
                 let output = "Applied diff to \(filePath) [verified: \(verified)]"
                 tab.appendLog(output)
                 tab.flush()
@@ -235,7 +235,7 @@ extension AgentViewModel {
                 let verifyDiff = MultiLineDiff.createDiff(source: source, destination: patched, includeMetadata: true)
                 let verified = MultiLineDiff.verifyDiff(verifyDiff)
                 let display = MultiLineDiff.displayDiff(diff: verifyDiff, source: source, format: .ai)
-                tab.appendOutput(display + "\n")
+                tab.appendLog(display)
                 tab.appendLog("📝 Diff+Apply: \(filePath)\(rangeNote) [verified: \(verified)]")
                 tab.flush()
                 return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": "Applied diff to \(filePath)\(rangeNote) [verified: \(verified)] diff_id: \(diffId.uuidString)\n\n\(display)"], isComplete: false)
