@@ -38,7 +38,7 @@ struct DependencyOverlay: View {
                                 endPoint: .bottom
                             )
                         )
-                        .shadow(color: .blue, radius: colorScheme == .dark ? 6 : 2)
+                        .shadow(color: .blue, radius: colorScheme == .dark ? 6 : 0)
                         .opacity(showIcon ? 1 : 0)
 
                     Text("Agentic AI for your \u{F8FF} Mac Desktop")
