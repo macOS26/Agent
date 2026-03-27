@@ -81,8 +81,8 @@ struct ContentView: View {
                 )
             }
 
-            // Thinking indicator in log area (Ctrl+O to toggle)
-            if isActiveThinking && viewModel.showThinkingIndicator {
+            // Thinking indicator in log area — always visible while LLM is active
+            if isActiveRunning && viewModel.showThinkingIndicator {
                 if let selId = viewModel.selectedTabId,
                    let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
                     ThinkingIndicatorView(viewModel: viewModel, tab: tab)
@@ -398,6 +398,15 @@ struct ContentView: View {
             return tab.isLLMThinking
         }
         return viewModel.isThinking
+    }
+
+    /// Whether the active context is doing anything — thinking, running, or executing.
+    private var isActiveRunning: Bool {
+        if let selId = viewModel.selectedTabId,
+           let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+            return tab.isLLMRunning || tab.isLLMThinking || tab.isRunning
+        }
+        return viewModel.isRunning || viewModel.isThinking
     }
 
     /// The prompt of the currently running task (main or selected tab).
