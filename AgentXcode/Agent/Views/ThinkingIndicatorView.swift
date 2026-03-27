@@ -156,14 +156,37 @@ struct ThinkingIndicatorView: View {
     }
 }
 
-/// Resizable LLM output box — neo-retro terminal look with green text on dark background.
+/// Resizable LLM output box — neo-retro terminal look, adapts to dark/light mode.
 private struct LLMOutputBox: View {
+    @Environment(\.colorScheme) private var colorScheme
     let text: String
     @Binding var height: CGFloat
 
-    private let termBg = Color(red: 0.05, green: 0.08, blue: 0.05)
-    private let termGreen = Color(red: 0.2, green: 0.9, blue: 0.3)
-    private let termDimGreen = Color(red: 0.15, green: 0.4, blue: 0.2)
+    private var termBg: Color {
+        colorScheme == .dark
+            ? Color(red: 0.05, green: 0.08, blue: 0.05)
+            : Color(red: 0.93, green: 0.97, blue: 0.93)
+    }
+    private var termText: Color {
+        colorScheme == .dark
+            ? Color(red: 0.2, green: 0.9, blue: 0.3)
+            : Color(red: 0.05, green: 0.35, blue: 0.1)
+    }
+    private var termDim: Color {
+        colorScheme == .dark
+            ? Color(red: 0.15, green: 0.4, blue: 0.2)
+            : Color(red: 0.3, green: 0.6, blue: 0.35)
+    }
+    private var termBorder: Color {
+        colorScheme == .dark
+            ? Color(red: 0.15, green: 0.4, blue: 0.2).opacity(0.5)
+            : Color(red: 0.3, green: 0.6, blue: 0.35).opacity(0.4)
+    }
+    private var handleBg: Color {
+        colorScheme == .dark
+            ? Color(red: 0.15, green: 0.2, blue: 0.15)
+            : Color(red: 0.85, green: 0.92, blue: 0.85)
+    }
 
     var body: some View {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -172,7 +195,7 @@ private struct LLMOutputBox: View {
                 ScrollView(.vertical, showsIndicators: true) {
                     Text(trimmed)
                         .font(.system(size: 11, design: .monospaced))
-                        .foregroundColor(termGreen)
+                        .foregroundColor(termText)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .textSelection(.enabled)
                         .padding(10)
@@ -183,10 +206,10 @@ private struct LLMOutputBox: View {
                 HStack(spacing: 0) {
                     Text("> ")
                         .font(.system(size: 11, design: .monospaced))
-                        .foregroundColor(termGreen)
+                        .foregroundColor(termText)
                     Text("awaiting output...")
                         .font(.system(size: 11, design: .monospaced))
-                        .foregroundColor(termDimGreen)
+                        .foregroundColor(termDim)
                     Spacer()
                 }
                 .padding(10)
@@ -196,11 +219,11 @@ private struct LLMOutputBox: View {
 
             // Drag handle
             Rectangle()
-                .fill(Color(red: 0.15, green: 0.2, blue: 0.15))
+                .fill(handleBg)
                 .frame(height: 6)
                 .overlay(
                     RoundedRectangle(cornerRadius: 2)
-                        .fill(termDimGreen)
+                        .fill(termDim)
                         .frame(width: 40, height: 3)
                 )
                 .onHover { inside in
@@ -215,6 +238,6 @@ private struct LLMOutputBox: View {
         }
         .background(termBg)
         .cornerRadius(6)
-        .overlay(RoundedRectangle(cornerRadius: 6).stroke(termDimGreen.opacity(0.5), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 6).stroke(termBorder, lineWidth: 1))
     }
 }
