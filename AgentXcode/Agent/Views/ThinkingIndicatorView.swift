@@ -153,40 +153,51 @@ struct ThinkingIndicatorView: View {
     }
 }
 
-/// Resizable LLM output box with drag handle at bottom.
+/// Resizable LLM output box — neo-retro terminal look with green text on dark background.
 private struct LLMOutputBox: View {
     let text: String
     @Binding var height: CGFloat
+
+    private let termBg = Color(red: 0.05, green: 0.08, blue: 0.05)
+    private let termGreen = Color(red: 0.2, green: 0.9, blue: 0.3)
+    private let termDimGreen = Color(red: 0.15, green: 0.4, blue: 0.2)
 
     var body: some View {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         VStack(spacing: 0) {
             if !trimmed.isEmpty {
-                ScrollView {
+                ScrollView(.vertical, showsIndicators: true) {
                     Text(trimmed)
                         .font(.system(size: 11, design: .monospaced))
-                        .foregroundColor(.primary)
+                        .foregroundColor(termGreen)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .textSelection(.enabled)
-                        .padding(8)
+                        .padding(10)
                 }
                 .frame(height: height)
+                .scrollIndicators(.visible)
             } else {
-                Text("No output yet...")
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundStyle(.tertiary)
-                    .padding(8)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .frame(height: height)
+                HStack(spacing: 0) {
+                    Text("> ")
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundColor(termGreen)
+                    Text("awaiting output...")
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundColor(termDimGreen)
+                    Spacer()
+                }
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(height: height)
             }
 
             // Drag handle
             Rectangle()
-                .fill(Color.gray.opacity(0.3))
+                .fill(Color(red: 0.15, green: 0.2, blue: 0.15))
                 .frame(height: 6)
                 .overlay(
                     RoundedRectangle(cornerRadius: 2)
-                        .fill(Color.gray.opacity(0.6))
+                        .fill(termDimGreen)
                         .frame(width: 40, height: 3)
                 )
                 .onHover { inside in
@@ -199,8 +210,8 @@ private struct LLMOutputBox: View {
                         }
                 )
         }
-        .background(Color(nsColor: .systemGray).opacity(0.2))
+        .background(termBg)
         .cornerRadius(6)
-        .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.gray.opacity(0.3), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 6).stroke(termDimGreen.opacity(0.5), lineWidth: 1))
     }
 }
