@@ -130,11 +130,17 @@ Agent! implements a comprehensive security model based on Apple's recommended pa
 
 ### Dual Privilege Model
 
+### Dual Privilege Model
+
+<details>
+<summary>Privilege Model Details (Click to expand)</summary>
+
 | Service | Identifier | Runs As | Purpose |
 |---------|------------|---------|---------|
 | **User Agent** | `Agent.app.toddbruss.user` | User account | File editing, git, builds, scripts |
 | **Privileged Daemon** | `Agent.app.toddbruss.helper` | Root (via LaunchDaemon) | System packages, /Library, launchd, disk operations |
 
+</details>
 The AI defaults to **user-level execution** and only uses the privileged daemon when explicitly required for system-level operations.
 
 
@@ -226,11 +232,16 @@ Examples:
 
 The filter picker controls which messages are monitored:
 
+<details>
+<summary>Filter Options (Click to expand)</summary>
+
 | Filter | Description |
 |--------|-------------|
 | **From Others** | Only incoming messages from other people (default) |
 | **From Me** | Only your own sent messages (useful for self-testing between your devices) |
 | **Both** | All messages regardless of sender |
+
+</details>
 
 ### Recipient Approval
 
@@ -255,12 +266,17 @@ Agent! supports **MCP (Model Context Protocol)** servers for extended functional
 
 ### Available MCP Servers
 
+<details>
+<summary>MCP Server List (Click to expand)</summary>
+
 | Server | Description | Link |
 |--------|-------------|------|
 | **internet-names-mcp** | Domain and social handle availability | https://github.com/drewster99/InternetNamesMCP |
 | **xcode-mcp-server** | Xcode project building, running, screenshots | https://github.com/drewster99/xcode-mcp-server |
 | **appstore-mcp-server** | App Store search, rankings, keywords | https://github.com/drewster99/appstore-mcp-server |
 | **XCF** | External MCP server | https://xcf.ai |
+
+</details>
 
 ### Configuration
 
@@ -295,6 +311,9 @@ Execution contexts:
 
 ### App Automation Priority
 
+<details>
+<summary>Tool Priority Table (Click to expand)</summary>
+
 | Priority | Tool | Best For |
 |----------|------|----------|
 | 1 | `run_agent_script` | Complex automation (full TCC) |
@@ -302,8 +321,13 @@ Execution contexts:
 | 3 | `execute_shell_command` (TCC) | Quick one-off AppleScript commands |
 | 4 | Accessibility tools | UI inspection and interaction |
 
+</details>
+
 
 ### Coding Tools Priority
+
+<details>
+<summary>Coding Tools Priority (Click to expand)</summary>
 
 | Priority | Tool Type | Examples |
 |-----------|-----------|----------|
@@ -311,9 +335,14 @@ Execution contexts:
 | 2 | MCP server tools | `mcp_xcf_*` |
 | 3 | Shell commands | Last resort only |
 
+</details>
+
 ### Xcode Build Priority
 
 For Xcode project builds, the AI follows this priority:
+
+<details>
+<summary>Xcode Build Priority (Click to expand)</summary>
 
 | Priority | Tool | When to Use |
 |-----------|------|-------------|
@@ -322,15 +351,22 @@ For Xcode project builds, the AI follows this priority:
 | 3 | xcode-mcp-server (`mcp_xcode-mcp-server_*`) | Third choice if XCF unavailable |
 | 4 | `xcodebuild` via shell | LAST RESORT only if no other options |
 
+</details>
+
 ### System Prompt Version Management
 
 Agent! manages system prompts with automatic version tracking:
+
+<details>
+<summary>Version Headers Table (Click to expand)</summary>
 
 | Header | Behavior |
 |--------|----------|
 | `// Agent! v{version}` | Default prompt — auto-updates when app version changes |
 | `// Agent! custom v{version}` | User-edited prompt — auto-updates on version change (preserves custom edits) |
 | `// Agent! READ ONLY v{version}` | Locked prompt — never auto-overwritten, even on version changes |
+
+</details>
 
 **To lock a prompt:** Add `READ ONLY` or `// READ ONLY` at the top of your custom prompt. This prevents automatic updates even when a new Agent! version is released.
 
