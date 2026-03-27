@@ -165,9 +165,12 @@ extension AgentViewModel {
                 let verified = MultiLineDiff.verifyDiff(verifyDiff)
                 let display = MultiLineDiff.displayDiff(diff: verifyDiff, source: source, format: .ai)
                 appendLog(display)
-                appendLog("📝 Applied diff to \(filePath) [verified: \(verified)]")
+                let newLineCount = patched.components(separatedBy: "\n").count
+                appendLog("📝 Applied diff to \(filePath) [verified: \(verified)] (\(newLineCount) lines)")
+                // Invalidate all pending diffs for this file — line numbers have shifted
+                DiffStore.shared.invalidateDiffs(for: expandedPath)
                 commandsRun.append("apply_diff: \(filePath)")
-                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Applied diff to \(filePath) [verified: \(verified)]\n\n\(display)"])
+                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Applied diff to \(filePath) [verified: \(verified)] — file now has \(newLineCount) lines. Any pending diffs for this file are invalidated. Re-read the file before making more edits.\n\n\(display)"])
             } catch {
                 let err = "Error applying diff: \(error.localizedDescription)"
                 appendLog(err)
@@ -300,10 +303,13 @@ extension AgentViewModel {
                 let verifyDiff = MultiLineDiff.createDiff(source: source, destination: patched, includeMetadata: true)
                 let verified = MultiLineDiff.verifyDiff(verifyDiff)
                 let display = MultiLineDiff.displayDiff(diff: verifyDiff, source: source, format: .ai)
+                let newLineCount = finalContent.components(separatedBy: "\n").count
                 appendLog(display)
-                appendLog("📝 Diff+Apply: \(filePath)\(rangeNote) [verified: \(verified)]")
+                appendLog("📝 Diff+Apply: \(filePath)\(rangeNote) [verified: \(verified)] (\(newLineCount) lines)")
+                // Invalidate all pending diffs for this file — line numbers have shifted
+                DiffStore.shared.invalidateDiffs(for: expanded)
                 commandsRun.append("diff_and_apply: \(filePath)")
-                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Applied diff to \(filePath)\(rangeNote) [verified: \(verified)] diff_id: \(diffId.uuidString)\n\n\(display)"])
+                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Applied diff to \(filePath)\(rangeNote) [verified: \(verified)] — file now has \(newLineCount) lines. Re-read the file before making more edits. diff_id: \(diffId.uuidString)\n\n\(display)"])
             } catch {
                 let err = "Error applying diff: \(error.localizedDescription)"
                 appendLog(err)

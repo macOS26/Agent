@@ -140,11 +140,13 @@ extension AgentViewModel {
                 let verified = MultiLineDiff.verifyDiff(verifyResult)
                 let verifyDiff = MultiLineDiff.displayDiff(diff: verifyResult, source: source, format: .ai)
                 tab.appendLog(verifyDiff)
-                let output = "Applied diff to \(filePath) [verified: \(verified)]"
+                let newLineCount = patched.components(separatedBy: "\n").count
+                let output = "Applied diff to \(filePath) [verified: \(verified)] — file now has \(newLineCount) lines. Re-read the file before making more edits."
+                DiffStore.shared.invalidateDiffs(for: expandedPath)
                 tab.appendLog(output)
                 tab.flush()
                 return TabToolResult(
-                    toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                    toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": "\(output)\n\n\(verifyDiff)"],
                     isComplete: false
                 )
             } catch {
@@ -235,10 +237,12 @@ extension AgentViewModel {
                 let verifyDiff = MultiLineDiff.createDiff(source: source, destination: patched, includeMetadata: true)
                 let verified = MultiLineDiff.verifyDiff(verifyDiff)
                 let display = MultiLineDiff.displayDiff(diff: verifyDiff, source: source, format: .ai)
+                let newLineCount = finalContent.components(separatedBy: "\n").count
                 tab.appendLog(display)
-                tab.appendLog("📝 Diff+Apply: \(filePath)\(rangeNote) [verified: \(verified)]")
+                tab.appendLog("📝 Diff+Apply: \(filePath)\(rangeNote) [verified: \(verified)] (\(newLineCount) lines)")
+                DiffStore.shared.invalidateDiffs(for: expanded)
                 tab.flush()
-                return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": "Applied diff to \(filePath)\(rangeNote) [verified: \(verified)] diff_id: \(diffId.uuidString)\n\n\(display)"], isComplete: false)
+                return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": "Applied diff to \(filePath)\(rangeNote) [verified: \(verified)] — file now has \(newLineCount) lines. Re-read the file before making more edits. diff_id: \(diffId.uuidString)\n\n\(display)"], isComplete: false)
             } catch {
                 let err = "Error applying diff: \(error.localizedDescription)"
                 tab.appendLog(err); tab.flush()

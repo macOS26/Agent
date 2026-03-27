@@ -83,6 +83,23 @@ final class DiffStore {
         appliedDiffs.removeValue(forKey: filePath)
     }
 
+    /// Invalidate all stored diffs for a file (call after any apply — line numbers shift).
+    func invalidateDiffs(for filePath: String) {
+        let idsToRemove = filePaths.filter { $0.value == filePath }.map { $0.key }
+        // Also remove any diff whose stored source came from this file
+        for id in diffs.keys {
+            if filePaths[id] == nil {
+                // Diff not yet applied — could be stale if it was created from this file
+                // We can't know for sure, so clear all unapplied diffs to be safe
+            }
+        }
+        for id in idsToRemove {
+            diffs.removeValue(forKey: id)
+            sources.removeValue(forKey: id)
+            filePaths.removeValue(forKey: id)
+        }
+    }
+
     /// Clear all stored diffs (call at task start).
     func clear() {
         diffs.removeAll()

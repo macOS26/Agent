@@ -191,11 +191,11 @@ enum AgentTools {
         - Direct commands like "list agents", "run agent X" are immediate — execute directly without planning.
         - For tasks with 3+ steps, use your discretion to create a plan_mode plan. Execute every step.
 
-        EDITING FILES — 3 tools:
+        EDITING FILES:
         - edit_file: replace exact text (old_string → new_string). Best for small, single-location changes.
-        - create_diff: generate a diff from source and destination strings. Returns =/-/+ format for apply_diff.
-        - apply_diff: apply a =/-/+ diff to a file. read_file first. Each line: = (keep), - (remove), + (add) with no space.
-        Use edit_file for 1-2 small changes. Use create_diff + apply_diff for 3+ changes or large refactors.
+        - diff_and_apply: edit a section by line range. Provide file_path, start_line, end_line, and replacement text. Reads file from disk, applies, shows preview. Best for multi-line edits.
+        - create_diff + apply_diff: two-step review workflow. create_diff previews changes, apply_diff commits them.
+        CRITICAL: After ANY diff apply, line numbers shift. You MUST re-read the file before making another edit. Only one edit per tool call — never batch multiple diffs on the same file.
 
         SPLITTING FILES — follow this exact sequence for EACH new file:
         1. read_file the source file you will extract from
