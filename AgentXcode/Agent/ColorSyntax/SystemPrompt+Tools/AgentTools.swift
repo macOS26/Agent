@@ -256,8 +256,9 @@ enum AgentTools {
         Name.readFile:             #"read_file {"file_path": "/Users/toddbruss/Documents/example.txt"}"#,
         Name.writeFile:            #"write_file {"file_path": "/Users/toddbruss/Documents/out.txt", "content": "hello"}"#,
         Name.editFile:             #"edit_file {"file_path": "/path/file.txt", "old_string": "old", "new_string": "new"}"#,
-        Name.createDiff:           #"create_diff {"file_path": "/path/file.txt", "destination": "line1\nnew line\nline3"}"#,
+        Name.createDiff:           #"create_diff {"file_path": "/path/file.txt", "start_line": 10, "end_line": 15, "destination": "replacement\nlines\nhere"}"#,
         Name.applyDiff:            #"apply_diff {"file_path": "/path/file.txt", "diff_id": "<UUID from create_diff>"}"#,
+        Name.diffAndApply:         #"diff_and_apply {"file_path": "/path/file.txt", "start_line": 10, "end_line": 15, "destination": "replacement\nlines\nhere"}"#,
         Name.listFiles:            #"list_files {"pattern": "*.swift", "path": "/Users/toddbruss/Documents"}"#,
         Name.searchFiles:          #"search_files {"pattern": "TODO", "path": "/Users/toddbruss/Documents"}"#,
         Name.readDir:              #"read_dir {"path": "/Users/toddbruss/Documents"}"#,
@@ -381,11 +382,13 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.createDiff,
-            description: "Create a diff for review before applying. Best for 3+ changes or large refactors where you want to preview changes first. Returns a diff_id UUID — pass it to apply_diff to commit the changes.",
+            description: "Create a diff for review before applying. Use file_path with start_line/end_line to diff only the changed section — no need to send the whole file. Returns a diff_id UUID for apply_diff.",
             properties: [
-                "source": ["type": "string", "description": "Original text (ignored if file_path is provided)"],
-                "destination": ["type": "string", "description": "New text to diff against source"],
-                "file_path": ["type": "string", "description": "Path to file to use as source (optional — overrides source parameter)"],
+                "file_path": ["type": "string", "description": "Path to file (reads as source). Use with start_line/end_line to target a section."],
+                "source": ["type": "string", "description": "Original text (only if no file_path)"],
+                "destination": ["type": "string", "description": "The new text for the section being changed"],
+                "start_line": ["type": "integer", "description": "First line number to diff (1-based). Only send destination for this range."],
+                "end_line": ["type": "integer", "description": "Last line number to diff (inclusive)."],
             ],
             required: ["destination"]
         ),
@@ -401,10 +404,12 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.diffAndApply,
-            description: "Create and apply a diff in one step — best for full file rewrites or when review isn't needed. Reads the file, diffs against your destination text, and writes the result immediately.",
+            description: "Edit a file on disk in one step. Use start_line/end_line to edit a section — only send the new content for those lines. The tool reads the file, diffs the section, splices the result back in, and writes. Best for multi-line edits without sending the whole file.",
             properties: [
                 "file_path": ["type": "string", "description": "Path to the file to modify"],
-                "destination": ["type": "string", "description": "The desired new content of the file"],
+                "destination": ["type": "string", "description": "The new content for the target lines (or full file if no line range)"],
+                "start_line": ["type": "integer", "description": "First line to replace (1-based). Only send destination for this range."],
+                "end_line": ["type": "integer", "description": "Last line to replace (inclusive). Tool splices result back into the full file."],
                 "source": ["type": "string", "description": "Original text (optional — reads from file if omitted)"],
             ],
             required: ["file_path", "destination"]

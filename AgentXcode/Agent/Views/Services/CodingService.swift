@@ -271,29 +271,55 @@ enum CodingService {
     // MARK: - Diff + Apply (single call)
 
     /// Create a diff and apply it to a file in one call.
-    static func diffAndApply(path: String, source: String?, destination: String) -> (output: String, display: String) {
+    static func diffAndApply(path: String, source: String?, destination: String, startLine: Int? = nil, endLine: Int? = nil) -> (output: String, display: String) {
         let url = URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
+
+        // Read the full file
+        guard let data = FileManager.default.contents(atPath: url.path),
+              let fullText = String(data: data, encoding: .utf8) else {
+            return ("Error: cannot read \(path)", "")
+        }
+
         let actualSource: String
-        if let source = source, !source.isEmpty {
-            actualSource = source
-        } else {
-            guard let data = FileManager.default.contents(atPath: url.path),
-                  let text = String(data: data, encoding: .utf8) else {
-                return ("Error: cannot read \(path)", "")
+        let finalContent: String
+
+        if let sl = startLine, let el = endLine {
+            // Line-range mode: LLM only sends the changed section
+            let allLines = fullText.components(separatedBy: "\n")
+            let s = max(sl - 1, 0)
+            let e = min(el, allLines.count)
+            actualSource = allLines[s..<e].joined(separator: "\n")
+
+            guard actualSource != destination else {
+                return ("Error: source and destination are identical", "")
             }
-            actualSource = text
+
+            // Splice destination back into the full file
+            var newLines = allLines
+            newLines.replaceSubrange(s..<e, with: destination.components(separatedBy: "\n"))
+            finalContent = newLines.joined(separator: "\n")
+        } else if let source = source, !source.isEmpty {
+            actualSource = source
+            guard actualSource != destination else {
+                return ("Error: source and destination are identical", "")
+            }
+            finalContent = destination
+        } else {
+            actualSource = fullText
+            guard actualSource != destination else {
+                return ("Error: source and destination are identical", "")
+            }
+            finalContent = destination
         }
-        guard actualSource != destination else {
-            return ("Error: source and destination are identical", "")
-        }
+
         let algorithm = selectDiffAlgorithm(source: actualSource, destination: destination)
-        let diff = MultiLineDiff.createDiff(source: actualSource, destination: destination, algorithm: algorithm, includeMetadata: true)
+        let diff = MultiLineDiff.createDiff(source: actualSource, destination: destination, algorithm: algorithm, includeMetadata: true, sourceStartLine: startLine.map { $0 - 1 })
         let display = MultiLineDiff.displayDiff(diff: diff, source: actualSource, format: .ai)
         let verified = MultiLineDiff.verifyDiff(diff)
         do {
-            try destination.write(to: url, atomically: true, encoding: .utf8)
-            let lines = destination.components(separatedBy: "\n").count
-            return ("Applied diff to \(url.path) (\(lines) lines, algorithm: \(algorithm.displayName), verified: \(verified))", display)
+            try finalContent.write(to: url, atomically: true, encoding: .utf8)
+            let rangeNote = (startLine != nil && endLine != nil) ? " (lines \(startLine!)-\(endLine!))" : ""
+            return ("Applied diff to \(url.path)\(rangeNote), algorithm: \(algorithm.displayName), verified: \(verified)", display)
         } catch {
             return ("Error: \(error.localizedDescription)", "")
         }

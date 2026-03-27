@@ -175,14 +175,17 @@ extension AgentViewModel {
             let filePath = input["file_path"] as? String ?? ""
             let source = input["source"] as? String
             let destination = input["destination"] as? String ?? ""
-            tab.appendLog("📝 Diff+Apply: \(filePath)")
+            let startLine = input["start_line"] as? Int
+            let endLine = input["end_line"] as? Int
+            let rangeNote = (startLine != nil && endLine != nil) ? " (lines \(startLine!)-\(endLine!))" : ""
+            tab.appendLog("📝 Diff+Apply: \(filePath)\(rangeNote)")
             let expandedDA = (filePath as NSString).expandingTildeInPath
             let originalDA: String? = await Self.offMain {
                 guard let data = FileManager.default.contents(atPath: expandedDA),
                       let text = String(data: data, encoding: .utf8) else { return nil }
                 return text
             }
-            let result = await Self.offMain { CodingService.diffAndApply(path: filePath, source: source, destination: destination) }
+            let result = await Self.offMain { CodingService.diffAndApply(path: filePath, source: source, destination: destination, startLine: startLine, endLine: endLine) }
             if !result.output.hasPrefix("Error"), let orig = originalDA {
                 DiffStore.shared.recordEdit(filePath: expandedDA, originalContent: orig)
             }
