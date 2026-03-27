@@ -226,28 +226,88 @@ extension AgentViewModel {
             return true
         }
 
-        // MARK: diff_and_apply — reads file from disk, AI sends line range + replacement
+        // MARK: diff_and_apply — same as create_diff + apply_diff in one call, no shortcuts
         if name == "diff_and_apply" {
             let filePath = input["file_path"] as? String ?? ""
             let destination = input["destination"] as? String ?? ""
             let startLine = input["start_line"] as? Int
             let endLine = input["end_line"] as? Int
             let rangeNote = (startLine != nil && endLine != nil) ? " (lines \(startLine!)-\(endLine!))" : ""
-            appendLog("📝 Diff+Apply: \(filePath)\(rangeNote)")
-            let expandedDA = (filePath as NSString).expandingTildeInPath
-            let originalDA: String? = await Self.offMain {
-                guard let data = FileManager.default.contents(atPath: expandedDA),
-                      let text = String(data: data, encoding: .utf8) else { return nil }
-                return text
+
+            let expanded = (filePath as NSString).expandingTildeInPath
+            guard let data = FileManager.default.contents(atPath: expanded),
+                  let fullText = String(data: data, encoding: .utf8) else {
+                let err = "Error: cannot read \(filePath)"
+                appendLog(err)
+                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
+                return true
             }
-            let result = await Self.offMain { CodingService.diffAndApply(path: filePath, source: nil, destination: destination, startLine: startLine, endLine: endLine) }
-            if !result.output.hasPrefix("Error"), let orig = originalDA {
-                DiffStore.shared.recordEdit(filePath: expandedDA, originalContent: orig)
+
+            // Step 1: Extract source section (same as create_diff)
+            let source: String
+            if let sl = startLine, let el = endLine {
+                let lines = fullText.components(separatedBy: "\n")
+                let s = max(sl - 1, 0)
+                let e = min(el, lines.count)
+                source = lines[s..<e].joined(separator: "\n")
+            } else {
+                source = fullText
             }
-            if !result.display.isEmpty { appendRawOutput(result.display + "\n") }
-            appendLog(result.output)
-            commandsRun.append("diff_and_apply: \(filePath)")
-            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "\(result.output)\n\n\(result.display)"])
+
+            if source == destination {
+                let err = "Error: source and destination are identical"
+                appendLog(err)
+                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
+                return true
+            }
+
+            // Step 2: Create diff with full metadata (same as create_diff)
+            let algorithm = CodingService.selectDiffAlgorithm(source: source, destination: destination)
+            let diff = MultiLineDiff.createDiff(source: source, destination: destination, algorithm: algorithm, includeMetadata: true, sourceStartLine: startLine.map { $0 - 1 })
+            let diffId = DiffStore.shared.store(diff: diff, source: source)
+
+            // Step 3: Apply diff (same as apply_diff)
+            do {
+                let patched = try MultiLineDiff.applyDiff(to: source, diff: diff)
+
+                // Safety check
+                if fullText.count > 200 && patched.count < source.count / 2 {
+                    let err = "Error: diff rejected — would shrink section from \(source.count) to \(patched.count) chars. Likely truncated."
+                    appendLog(err)
+                    toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
+                    return true
+                }
+
+                // Splice back into full file if line range was used
+                let finalContent: String
+                if let sl = startLine, let el = endLine {
+                    var allLines = fullText.components(separatedBy: "\n")
+                    let s = max(sl - 1, 0)
+                    let e = min(el, allLines.count)
+                    allLines.replaceSubrange(s..<e, with: patched.components(separatedBy: "\n"))
+                    finalContent = allLines.joined(separator: "\n")
+                } else {
+                    finalContent = patched
+                }
+
+                try finalContent.write(to: URL(fileURLWithPath: expanded), atomically: true, encoding: .utf8)
+
+                // Record for UUID-based undo
+                DiffStore.shared.recordApply(diffId: diffId, filePath: expanded, originalContent: fullText)
+
+                // Verify (same as apply_diff)
+                let verifyDiff = MultiLineDiff.createDiff(source: source, destination: patched, includeMetadata: true)
+                let verified = MultiLineDiff.verifyDiff(verifyDiff)
+                let display = MultiLineDiff.displayDiff(diff: verifyDiff, source: source, format: .ai)
+                appendRawOutput(display + "\n")
+                appendLog("📝 Diff+Apply: \(filePath)\(rangeNote) [verified: \(verified)]")
+                commandsRun.append("diff_and_apply: \(filePath)")
+                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Applied diff to \(filePath)\(rangeNote) [verified: \(verified)] diff_id: \(diffId.uuidString)\n\n\(display)"])
+            } catch {
+                let err = "Error applying diff: \(error.localizedDescription)"
+                appendLog(err)
+                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
+            }
             return true
         }
 
