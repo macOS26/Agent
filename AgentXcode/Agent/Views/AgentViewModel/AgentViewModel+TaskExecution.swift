@@ -975,6 +975,7 @@ extension AgentViewModel {
                             // Step 2: Load and run dylib in Agent!'s process
                             tab.appendLog("🦾 Running: \(scriptName) (in-process)")
                             tab.flush()
+                            RecentAgentsService.shared.recordRun(agentName: scriptName, arguments: arguments, prompt: arguments.isEmpty ? "run \(scriptName)" : "run \(scriptName) \(arguments)")
 
                             let cancelFlag = tab._cancelFlag
                             let runResult = await scriptService.loadAndRunScript(

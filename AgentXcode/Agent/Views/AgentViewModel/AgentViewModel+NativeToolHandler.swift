@@ -71,13 +71,15 @@ extension AgentViewModel {
         }
         if name == "run_agent" {
             let scriptName = input["name"] as? String ?? ""
+            let arguments = input["arguments"] as? String ?? ""
             guard let cmd = scriptService.compileCommand(name: scriptName) else {
                 return "Error: script '\(scriptName)' not found"
             }
             var fullCmd = cmd
-            if let args = input["arguments"] as? String {
-                fullCmd = "AGENT_SCRIPT_ARGS='\(args)' \(cmd)"
+            if !arguments.isEmpty {
+                fullCmd = "AGENT_SCRIPT_ARGS='\(arguments)' \(cmd)"
             }
+            RecentAgentsService.shared.recordRun(agentName: scriptName, arguments: arguments, prompt: arguments.isEmpty ? "run \(scriptName)" : "run \(scriptName) \(arguments)")
             let result = await Self.executeTCC(command: fullCmd)
             return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
         }
