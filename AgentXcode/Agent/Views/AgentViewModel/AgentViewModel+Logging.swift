@@ -257,20 +257,6 @@ extension AgentViewModel {
 
     func appendRawOutput(_ text: String) {
         guard !text.isEmpty else { return }
-        // Count newlines in this chunk
-        let newlines = text.reduce(0) { $0 + ($1 == "\n" ? 1 : 0) }
-        streamLineCount += max(newlines, 1)  // at least 1 line per chunk
-        // Cap streaming display to prevent UI from choking
-        if streamLineCount > maxOutputLines {
-            if !streamTruncated {
-                streamTruncated = true
-                let truncatedMsg = "...(output truncated at \(maxOutputLines) lines)..."
-                ChatHistoryStore.shared.appendMessage(truncatedMsg)
-                logBuffer += truncatedMsg + "\n"
-                scheduleLogFlush()
-            }
-            return
-        }
         let cached = snapshotImages(in: text)
         ChatHistoryStore.shared.appendMessage(cached)
         logBuffer += cached
