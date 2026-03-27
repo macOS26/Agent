@@ -121,20 +121,25 @@ struct ThinkingIndicatorView: View {
                         if !text.isEmpty {
                             ScrollView {
                                 Text(text)
-                                    .font(.system(size: 10, design: .monospaced))
-                                    .foregroundStyle(.secondary)
+                                    .font(.system(size: 11, design: .monospaced))
+                                    .foregroundColor(.primary)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .textSelection(.enabled)
+                                    .padding(8)
                             }
-                            .frame(maxHeight: 150)
-                            .padding(6)
-                            .background(Color(nsColor: .textBackgroundColor).opacity(0.3))
-                            .cornerRadius(4)
+                            .frame(maxHeight: 200)
+                            .background(Color(nsColor: .systemGray).opacity(0.2))
+                            .cornerRadius(6)
+                            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.gray.opacity(0.3), lineWidth: 1))
                             .transition(.move(edge: .top).combined(with: .opacity))
                         } else {
                             Text("No output yet...")
-                                .font(.system(size: 10, design: .monospaced))
+                                .font(.system(size: 11, design: .monospaced))
                                 .foregroundStyle(.tertiary)
+                                .padding(8)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(Color(nsColor: .systemGray).opacity(0.2))
+                                .cornerRadius(6)
                                 .transition(.opacity)
                         }
                     }
