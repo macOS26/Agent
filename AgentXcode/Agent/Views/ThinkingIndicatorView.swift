@@ -141,8 +141,6 @@ struct ThinkingIndicatorView: View {
             }
         }
         .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
-        .cornerRadius(6)
-        .padding(.horizontal, 8)
         .onReceive(timer) { _ in
             elapsed += 0.5
             switch dots.count {
