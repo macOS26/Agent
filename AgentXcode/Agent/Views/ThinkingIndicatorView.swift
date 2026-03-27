@@ -7,9 +7,18 @@ struct ThinkingIndicatorView: View {
     var tab: ScriptTab?
 
     @State private var isExpanded = false
+    @State private var showStreamText = false
     @State private var dots = ""
     @State private var elapsed: TimeInterval = 0
     private let timer = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
+
+    private var streamText: String {
+        if let tab {
+            let text = tab.logBuffer + tab.activityLog.suffix(2000)
+            return String(text.suffix(1000))
+        }
+        return String(viewModel.streamBuffer.suffix(1000))
+    }
 
     private var modelName: String {
         if let tab, let config = tab.llmConfig {
@@ -88,6 +97,47 @@ struct ThinkingIndicatorView: View {
                         Label("Waiting for LLM response", systemImage: "ellipsis.circle")
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                    }
+
+                    // Stream text disclosure
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            showStreamText.toggle()
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 8, weight: .bold))
+                                .foregroundStyle(.secondary)
+                                .rotationEffect(.degrees(showStreamText ? 90 : 0))
+                            Label("LLM Output", systemImage: "text.bubble")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .buttonStyle(.plain)
+
+                    if showStreamText {
+                        let text = streamText.trimmingCharacters(in: .whitespacesAndNewlines)
+                        if !text.isEmpty {
+                            ScrollView {
+                                Text(text)
+                                    .font(.system(size: 10, design: .monospaced))
+                                    .foregroundStyle(.secondary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .textSelection(.enabled)
+                            }
+                            .frame(maxHeight: 150)
+                            .padding(6)
+                            .background(Color(nsColor: .textBackgroundColor).opacity(0.3))
+                            .cornerRadius(4)
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                        } else {
+                            Text("No output yet...")
+                                .font(.system(size: 10, design: .monospaced))
+                                .foregroundStyle(.tertiary)
+                                .transition(.opacity)
+                        }
                     }
                 }
                 .padding(.horizontal, 32)
