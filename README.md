@@ -31,44 +31,13 @@ Enable Apple Intelligence Mediator in Settings to enhance communication clarity.
 
 
 
-### App Automation (50 apps via ScriptingBridge)
+### Key Capabilities
 
-| Category | Apps |
-|----------|------|
-| **Apple** | Mail, Messages, Music, Photos, Calendar, Contacts, Notes, Reminders, Finder, Safari, Terminal, System Events, System Settings |
-| **Productivity** | Pages, Numbers, Keynote, Xcode |
-| **Media** | Music, TV, QuickTime Player, Preview |
-| **Browsers** | Safari, Chrome, Firefox, Edge |
-| **Development** | Xcode, Simulator, Console |
-
-### Accessibility
-
-Full macOS Accessibility API for apps without AppleScript support:
-- UI inspection (windows, elements, properties)
-- Input simulation (typing, clicking, scrolling, key presses)
-- Screenshot capture
-- Works with any Mac app
-
-### MCP Servers
-
-| Server | Capability |
-|--------|------------|
-| **internet-names-mcp** | Domain availability, social handle checks — https://github.com/drewster99/InternetNamesMCP |
-| **xcode-mcp-server** | Xcode building, running, screenshots, tests — https://github.com/drewster99/xcode-mcp-server |
-| **appstore-mcp-server** | App Store search, rankings, keyword analysis — https://github.com/drewster99/appstore-mcp-server |
-| **XCF** | External MCP server — https://xcf.ai |
-
-### AgentScripts
-
-29 bundled Swift scripts for common tasks:
-- Email: `CheckMail`, `EmailAccounts`, `OrganizeEmails`
-- Media: `NowPlaying`, `PlayPlaylist`, `ExtractAlbumArt`
-- Messaging: `SendMessage`, `SendGroupMessage`
-- System: `RunningApps`, `QuitApps`, `SystemInfo`
-- Web: `Selenium`, `WebForm`, `WebNavigate`, `WebScrape`
-- More: `CreateDMG`, `CapturePhoto`, `ListNotes`, `ListReminders`
-
-
+- **50+ App Automation** via ScriptingBridge (Mail, Messages, Music, Safari, Xcode, etc.)
+	- **86 Tools** for file ops, git, web, accessibility, Xcode, MCP integration
+	- **AgentScripts** — Swift Package-based automation scripts
+	- **Apple Messages Monitor** — Remote control via iMessage
+	- **MCP Support** — Model Context Protocol for extended functionality
 
 ---
 
@@ -77,13 +46,10 @@ Full macOS Accessibility API for apps without AppleScript support:
 - [Getting Started](#getting-started)
 - [Security Hardening](#security-hardening)
 - [Messages Monitor](#messages-monitor)
-- [Accessibility Integration](#accessibility-integration)
 - [MCP Servers](#mcp-servers)
 - [Architecture](#architecture)
 - [Available Tools](#available-tools)
 - [AgentScripts](#agentscripts)
-
-- [What Agent! Can Automate](#what-agent-can-automate)
 - [Agent! vs. OpenClaw on Mac](#agent-vs-openclaw-on-mac)
 - [License](#license)
 
@@ -93,10 +59,9 @@ Full macOS Accessibility API for apps without AppleScript support:
 
 ### 1. Prerequisites
 
-- macOS 26 (Tahoe) or later
 - **macOS 26+** (Tahoe)
 - **Xcode Command Line Tools** (Agent will prompt to install if missing)
-- **Apple Silicon recommended** for local LLMs (minimum 32GB RAM, recommended 64-128GB for local models)
+- **Apple Silicon recommended** for local LLMs (minimum 32GB RAM, recommended 64-128GB)
 - An API key for your preferred provider
 
 ### 2. Build and Run
@@ -125,51 +90,25 @@ The privileged daemon requires explicit approval because it runs with root privi
 
 ### 5. Configure Your Provider
 
-Click the **gear icon** (⚙️) to open Settings:
+Click the **gear icon** (⚙️) to open Settings and configure one of the 8 supported providers:
 
-#### Claude API
-1. Select **Claude** from the provider picker
-2. Enter your Anthropic API key (starts with `sk-ant-...`)
-3. Select a model (Sonnet 4, Opus 4, or Haiku 3.5)
+<details>
+<summary>Supported Providers (Click to expand)</summary>
 
-#### OpenAI API
-1. Select **OpenAI** from the provider picker
-2. Enter your OpenAI API key (starts with `sk-proj-...`)
-3. Select a model (GPT-4o, GPT-4 Turbo, or GPT-3.5)
+| Provider | Models | Notes |
+|----------|--------|-------|
+| **Claude** | Sonnet 4, Opus 4, Haiku 3.5 | Recommended for complex tasks |
+| **OpenAI** | GPT-4o, GPT-4 Turbo, GPT-3.5 | General-purpose option |
+| **DeepSeek** | DeepSeek V2, DeepSeek Coder | Cost-effective |
+| **Hugging Face** | Any model ID | Direct model access |
+| **Ollama Cloud** | Various | Ollama Pro API |
+| **Local Ollama** | Local models | Requires 32GB+ RAM |
+| **vLLM** | OpenAI-compatible | Self-hosted |
+| **LM Studio** | OpenAI/Anthropic | Local hosting |
 
-#### DeepSeek API
-1. Select **DeepSeek** from the provider picker
-2. Enter your DeepSeek API key
-3. Select a model (DeepSeek V2 or DeepSeek Coder)
+</details>
 
-#### Hugging Face API
-1. Select **Hugging Face** from the provider picker
-2. Enter your Hugging Face API key
-3. Enter the model ID (e.g., `mistralai/Mistral-7B-Instruct-v0.3`)
-
-#### Ollama Pro Cloud
-1. Select **Ollama Cloud** from the provider picker
-2. Enter your Ollama Pro API key
-3. Select or type a model name
-4. Click the refresh button to fetch available models
-
-#### Local Ollama
-1. Select **Local Ollama** from the provider picker
-2. Enter your Ollama endpoint (default: `http://localhost:11434/api/chat`)
-3. Ensure you have a local Ollama instance running with at least one model pulled
-4. Click the refresh button to fetch available models
-
-> **Note:** Local Ollama requires significant RAM (minimum 32GB, recommended 64-128GB). For Mac minis or devices with limited RAM, cloud-based LLMs are strongly recommended.
-
-#### vLLM
-1. Select **vLLM** from the provider picker
-2. Enter your vLLM server endpoint (e.g., `http://localhost:8000/v1`)
-3. Tools work via OpenAI-compatible API; OpenAI mode recommended
-
-#### LM Studio
-1. Select **LM Studio** from the provider picker
-2. Enter your LM Studio server endpoint (e.g., `http://localhost:1234/v1`)
-3. Supports both OpenAI and Anthropic API modes; OpenAI mode recommended
+> **Note:** Local models require significant RAM (minimum 32GB, recommended 64-128GB). For Mac minis or devices with limited RAM, cloud-based LLMs are strongly recommended.
 
 ### 6. Set a Project Folder (optional)
 
@@ -191,58 +130,35 @@ Agent! implements a comprehensive security model based on Apple's recommended pa
 
 ### Dual Privilege Model
 
-Agent runs two XPC services registered through Apple's SMAppService:
-
 | Service | Identifier | Runs As | Purpose |
 |---------|------------|---------|---------|
 | **User Agent** | `Agent.app.toddbruss.user` | User account | File editing, git, builds, scripts |
 | **Privileged Daemon** | `Agent.app.toddbruss.helper` | Root (via LaunchDaemon) | System packages, /Library, launchd, disk operations |
 
-The AI defaults to **user-level execution** and only uses the privileged daemon when explicitly required for system-level operations. This follows the principle of least privilege.
+The AI defaults to **user-level execution** and only uses the privileged daemon when explicitly required for system-level operations.
 
-### Managing Background Services
 
-Both services can be toggled on/off from the Agent UI:
 
-| Service | UI Control | Behavior When Disabled |
-|---------|------------|------------------------|
-| **User Agent** | "User" toggle in header | Agent process killed, LaunchAgent unregistered from SMAppService |
-| **Privileged Daemon** | "Daemon" toggle in header | Daemon process killed, LaunchDaemon unregistered from SMAppService |
+<details>
+<summary>Full Entitlements & Security Details (Click to expand)</summary>
 
-**To re-enable a disabled service:**
-1. Toggle it back on in the UI
-2. Click **Connect** to test connectivity
-3. Click **Register** to re-register with SMAppService
-4. Approve in System Settings if prompted
+#### TCC Permissions
 
-**Use cases for disabling:**
-- Troubleshooting XPC communication issues
-- Temporarily preventing background operations
-- Security hardening (disable daemon when not needed)
-- Development/testing without background services
+| Component | TCC Grants |
+|-----------|------------|
+| `run_agent_script`, `apple_event_query`, TCC shell commands | **ALL** (Accessibility, Screen Recording, Automation) |
+| `execute_user_command` (LaunchAgent) | **None** |
+| `execute_command` (root) | **Separate context** |
 
-The toggle state persists across app launches via UserDefaults.
+**Rule:** Use `run_agent_script` or `apple_event_query` for Accessibility/Automation tasks, not shell commands.
 
-### XPC Sandboxing
+#### Write Protection
 
-All privileged operations go through XPC (Inter-Process Communication):
+- `apple_event_query` blocks destructive operations (`delete`, `close`, `move`, `quit`) by default
+- The AI must explicitly set `allow_writes: true` to permit them
+- This prevents accidental data loss from misinterpreted commands
 
-```
-Agent.app (SwiftUI)
-    |
-    |-- UserService (XPC) → Agent.app.toddbruss.user    (LaunchAgent, runs as user)
-    |-- HelperService (XPC) → Agent.app.toddbruss.helper  (LaunchDaemon, runs as root)
-```
-
-The XPC boundary ensures:
-- The main app runs with minimal privileges
-- Root operations are isolated to the daemon
-- Each XPC call is a discrete, auditable transaction
-- File permissions are restored to the user after root operations
-
-### Entitlements
-
-Agent's entitlements (`Agent.entitlements`):
+#### Full Entitlements List
 
 | Entitlement | Purpose |
 |-------------|---------|
@@ -264,26 +180,9 @@ Agent's entitlements (`Agent.entitlements`):
 | `personal-information.photos-library` | Photos access via PhotosBridge |
 | `keychain-access-groups` | Secure API key storage |
 
-### TCC Permissions (Accessibility, Screen Recording, Automation)
+See [SECURITY.md](SECURITY.md) for complete XPC architecture details.
 
-Protected macOS APIs require user approval. Agent handles this correctly:
-
-| Component | How it inherits TCC permissions |
-|-----------|--------------------------------|
-| `run_agent_script` (dylib) | Loaded into Agent app process — inherits ALL TCC grants |
-| `apple_event_query` | Runs in Agent app process — inherits Automation permissions |
-| `execute_shell_command` (TCC) | osascript/screencapture run in Agent app process — inherits ALL TCC grants |
-| `execute_shell_command` (non-TCC) | Routes through UserService LaunchAgent — does NOT inherit TCC grants |
-| `execute_user_command` | LaunchAgent process — does NOT inherit TCC grants |
-| `execute_command` (root) | LaunchDaemon process — has separate TCC context |
-
-**Rule:** For Accessibility, Screen Recording, or Automation tasks, always use `run_agent_script` or `apple_event_query`. Do NOT use shell commands for these operations.
-
-### Write Protection
-
-- `apple_event_query` blocks destructive operations (`delete`, `close`, `move`, `quit`) by default
-- The AI must explicitly set `allow_writes: true` to permit them
-- This prevents accidental data loss from misinterpreted commands
+</details>
 
 
 
@@ -350,118 +249,25 @@ No external dependencies. No network requests. Everything runs locally on your M
 
 ---
 
-## Accessibility Integration
-
-Agent! includes a full macOS Accessibility API integration that gives the AI the ability to see, inspect, and interact with any application's UI. This enables automation of apps that don't support AppleScript or ScriptingBridge.
-
-### Permissions
-
-Accessibility requires explicit user approval in **System Settings > Privacy & Security > Accessibility**. Agent provides tools to manage this:
-
-- `ax_check_permission` — Check if Accessibility access is granted
-- `ax_request_permission` — Trigger the macOS permission prompt
-
-### Available Tools (22 tools)
-
-#### Read-Only Inspection
-
-| Tool | Description |
-|------|-------------|
-| `ax_list_windows` | List all visible windows with positions, sizes, and owner apps |
-| `ax_inspect_element` | Inspect the accessibility element at a screen coordinate (role, title, value, children) |
-| `ax_get_properties` | Get all properties of an element found by role, title, value, app bundle ID, or position. Use SAME role/title/value from ax_wait_for_element to locate. |
-| `ax_get_children` | Get all children of an accessibility element. Use SAME role/title/value from ax_wait_for_element or ax_find_element to locate the parent. |
-| `ax_get_focused_element` | Get the currently focused accessibility element |
-| `ax_screenshot` | Capture a screenshot of a region or specific window |
-| `ax_get_audit_log` | View recent accessibility operations (all actions are audit-logged) |
-
-#### Input Simulation
-
-| Tool | Description |
-|------|-------------|
-| `ax_type_text` | Simulate keyboard typing at the current cursor or specific coordinates |
-| `ax_click` | Simulate mouse clicks (left/right/middle, single/double) at screen coordinates |
-| `ax_scroll` | Simulate scroll wheel at screen coordinates |
-| `ax_press_key` | Simulate key presses with modifiers (Cmd+C, Option+Tab, etc.) |
-| `ax_drag` | Perform a drag operation from one point to another |
-
-#### UI Interaction
-
-| Tool | Description |
-|------|-------------|
-| `ax_perform_action` | Perform an accessibility action (AXPress, AXConfirm, etc.) on a UI element. Use SAME role/title/value from ax_wait_for_element or ax_find_element to locate the element. |
-| `ax_set_properties` | Set accessibility property values on an element (e.g., text fields, sliders, selections) |
-| `ax_show_menu` | Show context menu for an element (simulates right-click at element center) |
-
-#### Smart Automation
-
-| Tool | Description |
-|------|-------------|
-| `ax_find_element` | Find an accessibility element by role, title, or value with optional timeout |
-| `ax_wait_for_element` | Wait for an accessibility element to appear (polling until found or timeout) |
-| `ax_wait_adaptive` | Wait for an element with exponential backoff polling (efficient for slow-loading content) |
-| `ax_click_element` | Click an element by finding it semantically (role/title) and clicking its center |
-| `ax_type_into_element` | Type text into an element found by role/title (tries AXValue set first, falls back to CGEvent typing) |
-
-### Security Safeguards
-
-- **Protected roles/actions can be disabled by user** — Password fields (`AXSecureTextField`, `AXPasswordField`) and interactive actions (`AXPress`, `AXConfirm`, etc.) are in a protected list. All default to ENABLED. User can disable per-item in Accessibility Settings. When disabled, password fields are always blocked; actions are blocked entirely.
-- **Interactive actions default to enabled** — `ax_perform_action` defaults to `allowWrites=true`. Set `allowWrites=false` only when you need to disable actions that are enabled in Accessibility Settings.
-- **Audit logging** — Every accessibility operation is logged with timestamps to `~/Documents/Agent/accessibility_audit.log`
-- **TCC boundary** — Accessibility tools only work when run in the Agent app process (via `run_agent_script` or directly). Shell commands via `execute_user_command` do NOT inherit Accessibility permissions.
-
-### Implementation
-
-Built on Apple's native AXUIElement C API and CGEvent framework:
-
-- `AXUIElementCopyElementAtPosition` for coordinate-based element discovery
-- `AXUIElementCopyAttributeValue` for reading element properties (role, title, value, children, position, size)
-- `AXUIElementPerformAction` for triggering UI actions
-- `CGEvent` for keyboard and mouse simulation
-- `CGWindowListCopyWindowInfo` for window enumeration
-
-All code lives in `AccessibilityService.swift` as a self-contained service with no external dependencies.
-
----
-
 ## MCP Servers
 
 Agent! supports **MCP (Model Context Protocol)** servers for extended functionality.
 
 ### Available MCP Servers
 
-- **internet-names-mcp** — Domain and social handle availability — https://github.com/drewster99/InternetNamesMCP
-- **xcode-mcp-server** — Xcode project building, running, screenshots — https://github.com/drewster99/xcode-mcp-server
-- **appstore-mcp-server** — App Store search, rankings, keywords — https://github.com/drewster99/appstore-mcp-server
-- **XCF** — External MCP server — https://xcf.ai
+| Server | Description | Link |
+|--------|-------------|------|
+| **internet-names-mcp** | Domain and social handle availability | https://github.com/drewster99/InternetNamesMCP |
+| **xcode-mcp-server** | Xcode project building, running, screenshots | https://github.com/drewster99/xcode-mcp-server |
+| **appstore-mcp-server** | App Store search, rankings, keywords | https://github.com/drewster99/appstore-mcp-server |
+| **XCF** | External MCP server | https://xcf.ai |
 
-### Adding MCP Servers
+### Configuration
 
 1. Click the **server icon** in toolbar → **+** to add
 2. Configure: Name, Command, Arguments, Environment, Transport (stdio/HTTP/SSE)
 3. Enable **Auto-start** to connect on launch
-
----
-
-### How MCP Tools Work
-
-When connected to an MCP server, Agent:
-
-1. Discovers available tools from the server
-2. Adds tools to its tool registry
-3. Uses them autonomously based on user requests
-4. Returns results through the same MCP protocol
-
-### Transport
-
-- **stdio** — Standard input/output pipes (most common)
-- **HTTP/SSE** — Streamable HTTP and Server-Sent Events
-
-### Tool Management
-
-- Enable/disable individual tools per server
-- View tool descriptions and input schemas
-- See connection status and errors in real-time
+4. Enable/disable individual tools per server as needed
 
 ---
 
@@ -469,61 +275,41 @@ When connected to an MCP server, Agent:
 
 ```
 Agent.app (SwiftUI)
-  |
-  |-- AgentViewModel         Orchestrates task loop, screenshots, clipboard, project folder
-  |-- ClaudeService          Anthropic Messages API (streaming), project folder in system prompt
-  |-- OllamaService          Ollama native API (OpenAI-compatible), project folder in system prompt
-  |-- ChatHistoryStore       SwiftData-backed task memory with summaries for older tasks
-  |-- CodingService          File read/write/edit/search operations for LLM tools
-  |-- MCPService             MCP client for external tool servers
-  |-- ScriptService          Swift Package manager for agent scripts
-  |-- XcodeService           ScriptingBridge automation for Xcode
-  |-- AppleEventService      Dynamic Apple Event queries (zero compilation)
-  |-- AccessibilityService   AXUIElement API for UI automation
-  |-- Messages Monitor       Polls chat.db for iMessage remote control
-  |-- DependencyChecker      Xcode CLT detection + install trigger
-  |
-  |-- [In-Process]           TCC commands run directly in the app (inherits ALL TCC grants)
-  |-- UserService (XPC) --> Agent.app.toddbruss.user    (LaunchAgent, runs as user)
-  |-- HelperService (XPC) --> Agent.app.toddbruss.helper (LaunchDaemon, runs as root)
+  |-- AgentViewModel         Task loop, screenshots, clipboard, project folder
+  |-- ClaudeService          Anthropic Messages API (streaming)
+  |-- OllamaService          Ollama native API
+  |-- ChatHistoryStore       SwiftData task memory
+  |-- CodingService          File operations
+  |-- MCPService             MCP client for external tools
+  |-- ScriptService          Swift Package for agent scripts
+  |-- XcodeService           Xcode ScriptingBridge
+  |-- AppleEventService      Dynamic Apple Events
+  |-- AccessibilityService   AXUIElement API
+  |-- Messages Monitor       iMessage remote control
 
-~/Documents/Agent/agents/   (Swift Package — scripts + bridges)
-  |
-  |-- Package.swift          Declares all bridge and script targets
-  |-- Sources/Scripts/       One .swift file per executable script
-  |-- Sources/XCFScriptingBridges/  One .swift file per app bridge + Common
+Execution contexts:
+  |-- [In-Process]           TCC commands (ALL grants)
+  |-- UserService XPC        LaunchAgent (user)
+  |-- HelperService XPC      LaunchDaemon (root)
 ```
-
-| Path | Service | Runs As | TCC | Used For |
-|------|---------|---------|-----|----------|
-| **In-Process** | Agent.app directly | User | ALL (Automation, Accessibility, Screen Recording) | osascript, screencapture, TCC-dependent commands |
-| **UserService XPC** | `Agent.app.toddbruss.user` (LaunchAgent) | User | None | git, find, grep, builds, file ops, homebrew |
-| **HelperService XPC** | `Agent.app.toddbruss.helper` (LaunchDaemon) | Root | None | System packages, /System, /Library, disk operations |
 
 ### App Automation Priority
 
-The AI follows this priority order when automating Mac applications:
-
-| Priority | Tool | When to Use |
-|----------|------|-------------|
-| 1 | `run_agent_script` | ScriptingBridge Swift dylib for complex/persistent automation (full TCC) |
-| 2 | NSAppleScript inside `run_agent_script` | Fallback when ScriptingBridge has issues with an app |
-| 3 | `execute_shell_command` | applescript, javascript osascript with TCC — quick one-off AppleScript commands |
-| 4 | Accessibility tools (`ax_*`) | AXUIElement API for UI inspection and interaction |
-| 5 | `apple_event_query` | First choice for reading app data — instant ObjC dispatch, zero compilation |
+| Priority | Tool | Best For |
+|----------|------|----------|
+| 1 | `run_agent_script` | Complex automation (full TCC) |
+| 2 | `apple_event_query` | Reading app data (instant, zero compilation) |
+| 3 | `execute_shell_command` (TCC) | Quick one-off AppleScript commands |
+| 4 | Accessibility tools | UI inspection and interaction |
 
 
 ### Coding Tools Priority
 
-For ALL coding operations (file edits, git, Xcode builds), the AI uses tools in this order:
-
 | Priority | Tool Type | Examples |
 |-----------|-----------|----------|
-| 1 | **Native internal tools** | `read_file`, `write_file`, `edit_file`, `git_*`, `xcode_build` |
-| 2 | **MCP server tools** | `mcp_xcf_*`, `mcp_xcode-mcp-server_*` |
-| 3 | **Shell commands** | `execute_agent_command`, `execute_daemon_command` (last resort only) |
-
-**Why this matters:** Native tools are faster, safer, and provide structured output with error handling. Shell commands should only be used when no native/MCP alternative exists.
+| 1 | Native tools | `read_file`, `write_file`, `edit_file`, `git`, `xcode` |
+| 2 | MCP server tools | `mcp_xcf_*` |
+| 3 | Shell commands | Last resort only |
 
 ### Xcode Build Priority
 
@@ -554,9 +340,20 @@ Prompts are stored in `~/Documents/AgentScript/system/` as `{provider}.txt` file
 
 ## Available Tools
 
-Agent! provides **60+ tools** across multiple categories for autonomous task execution.
+Agent! provides **86 tools** across multiple categories for autonomous task execution.
 
-### Core Tools (32 tools)
+### Quick Reference
+
+| Category | Tools | Description |
+|----------|-------|-------------|
+| Core | 28 | File ops, git, web, text generation |
+| Agent Scripts | 7 | Create, run, manage Swift scripts |
+| AppleScript/JS | 11 | AppleScript and JXA automation |
+| Accessibility | 12 | UI automation via AXUIElement API |
+| Xcode | 7 | Build, run, manage Xcode projects |
+| MCP — XCF | 21 | Xcode project automation via MCP |
+
+### Core Tools (28 tools)
 
 | Tool | Description |
 |------|-------------|
@@ -589,7 +386,7 @@ Agent! provides **60+ tools** across multiple categories for autonomous task exe
 | `lookup_sdef` | Look up an app's AppleScript scripting dictionary |
 | `list_tools` | List all enabled tools (built-in and MCP) |
 
-### Agent Scripts (6 tools)
+### Agent Scripts (7 tools)
 
 | Tool | Description |
 |------|-------------|
@@ -601,7 +398,7 @@ Agent! provides **60+ tools** across multiple categories for autonomous task exe
 | `agent` (delete) | Delete a script |
 | `agent` (combine) | Merge two scripts together |
 
-### AppleScript & JavaScript (12 tools)
+### AppleScript & JavaScript (11 tools)
 
 | Tool | Description |
 |------|-------------|
@@ -617,7 +414,7 @@ Agent! provides **60+ tools** across multiple categories for autonomous task exe
 | `javascript_tool` (save) | Save JXA for reuse |
 | `javascript_tool` (delete) | Delete saved JXA |
 
-### Accessibility API (15 tools)
+### Accessibility API (12 tools)
 
 | Tool | Description |
 |------|-------------|
@@ -634,7 +431,7 @@ Agent! provides **60+ tools** across multiple categories for autonomous task exe
 | `accessibility` (check_permission) | Check if Accessibility access is granted |
 | `accessibility` (request_permission) | Request Accessibility permission |
 
-### Xcode Automation (6 tools)
+### Xcode Automation (7 tools)
 
 | Tool | Description |
 |------|-------------|
@@ -646,7 +443,7 @@ Agent! provides **60+ tools** across multiple categories for autonomous task exe
 | `xcode` (remove_file) | Remove a file from pbxproj |
 | `xcode` (grant_permission) | Grant macOS Automation permission for Xcode |
 
-### MCP Tools — XCF (22 tools)
+### MCP Tools — XCF (21 tools)
 
 | Tool | Description |
 |------|-------------|
@@ -671,15 +468,6 @@ Agent! provides **60+ tools** across multiple categories for autonomous task exe
 | `mcp_xcf_list_projects` | List all open Xcode projects |
 | `mcp_xcf_select_project` | Select an Xcode project by number |
 | `mcp_xcf_analyze_swift_code` | Analyze Swift code for potential issues |
-
-### Additional MCP Servers
-
-Agent! supports MCP (Model Context Protocol) servers for extended functionality:
-
-- **internet-names-mcp** — Domain and social handle availability — https://github.com/drewster99/InternetNamesMCP
-- **xcode-mcp-server** — Xcode project building, running, screenshots — https://github.com/drewster99/xcode-mcp-server
-- **appstore-mcp-server** — App Store search, rankings, keywords — https://github.com/drewster99/appstore-mcp-server
-- **XCF** — External MCP server — https://xcf.ai
 
 ---
 
