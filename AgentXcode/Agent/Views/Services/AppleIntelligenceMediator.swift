@@ -157,30 +157,8 @@ final class AppleIntelligenceMediator: ObservableObject {
     }
 
     /// Build context string for the session instructions (fits within ~4096 token window)
-    /// Each part is kept brief to avoid blowing the context limit
+    /// System instructions for Apple AI. Only sees the current user prompt — no history.
     private func buildContextInstructions() -> String {
-        var contextParts: [String] = []
-
-        // Previous conversation context (keep each part brief)
-        if let prompt = lastUserPrompt, !prompt.isEmpty {
-            // Truncate to ~100 chars for context (already stored as 500 max)
-            contextParts.append("Previous user prompt: \"\(String(prompt.prefix(100)))\"")
-        }
-        if let aiMsg = lastAppleAIMessage, !aiMsg.isEmpty {
-            // Already stored as 200 max, show as-is
-            contextParts.append("Your previous annotation: \"\(aiMsg)\"")
-        }
-        if let llm = lastLLMResponse, !llm.isEmpty {
-            // Already stored as 1000 max, show first 200 chars in context
-            contextParts.append("Previous LLM response: \"\(String(llm.prefix(200)))\"")
-        }
-        if let summary = conversationSummary, !summary.isEmpty {
-            // Already stored compact, show as-is
-            contextParts.append("Conversation summary: \"\(summary)\"")
-        }
-
-        let contextBlock = contextParts.isEmpty ? "" : "\n\n--- Conversation Context ---\n" + contextParts.joined(separator: "\n") + "\n---\n"
-
         return """
 You rephrase user requests to help an AI assistant understand them better. You are a middleman, NOT a gatekeeper.
 
@@ -190,9 +168,9 @@ Rules:
 - Rephrase or add brief context to clarify the user's intent for the AI.
 - If the request is already clear, reply with nothing.
 - Never include tags, labels, or prefixes like [AI], LLM:, User:, CLEAR, etc.
+- NEVER change agent names, tool names, script names, or identifiers.
 - Just give the plain helpful text. Nothing else.
-\(contextBlock)\
-\(trainingEnabled ? "Training mode is active. Give high-quality, clear annotations for LoRA fine-tuning." : "")
+\(trainingEnabled ? "\nTraining mode is active. Give high-quality, clear annotations for LoRA fine-tuning." : "")
 """
     }
 
