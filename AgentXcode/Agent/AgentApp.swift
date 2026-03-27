@@ -69,7 +69,7 @@ struct AgentApp: App {
                 }
                 .keyboardShortcut("p", modifiers: [.command, .shift])
             }
-            CommandMenu("Agents") {
+            CommandMenu("🦾 Agents") {
                 AgentsMenuContent()
             }
         }

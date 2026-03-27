@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Menu content for the Agents menu bar item.
-/// Groups by agent name, each agent has a submenu showing its prompts with arguments.
+/// Each agent shows ▶ (play = run immediately) and ⏸ (pause = fill prompt to edit).
 /// Version numbers are auto-bumped (1.0.45 → 1.0.46) when selected.
 struct AgentsMenuContent: View {
     @ObservedObject private var recentAgents = RecentAgentsService.shared
@@ -27,25 +27,11 @@ struct AgentsMenuContent: View {
         } else {
             ForEach(grouped, id: \.name) { group in
                 if group.entries.count == 1, let entry = group.entries.first {
-                    // Single entry — show inline with argument hint
-                    Button {
-                        populateInput(entry.populatedPrompt)
-                    } label: {
-                        Text(entry.menuLabel)
-                    }
+                    agentRow(entry)
                 } else {
-                    // Multiple entries — submenu per agent
                     Menu(group.name) {
                         ForEach(group.entries) { entry in
-                            Button {
-                                populateInput(entry.populatedPrompt)
-                            } label: {
-                                if entry.arguments.isEmpty {
-                                    Text("run \(entry.agentName)")
-                                } else {
-                                    Text(entry.arguments)
-                                }
-                            }
+                            agentRow(entry)
                         }
                     }
                 }
@@ -59,6 +45,31 @@ struct AgentsMenuContent: View {
         }
     }
 
+    @ViewBuilder
+    private func agentRow(_ entry: RecentAgentsService.AgentEntry) -> some View {
+        // ▶ Play — run immediately
+        Button {
+            runImmediately(entry.populatedPrompt)
+        } label: {
+            Label(entry.menuLabel, systemImage: "play.fill")
+        }
+
+        // ⏸ Pause — fill prompt for editing
+        Button {
+            populateInput(entry.populatedPrompt)
+        } label: {
+            Label("Edit: \(entry.menuLabel)", systemImage: "pause.fill")
+        }
+    }
+
+    private func runImmediately(_ prompt: String) {
+        NotificationCenter.default.post(
+            name: .runTaskImmediately,
+            object: nil,
+            userInfo: ["prompt": prompt]
+        )
+    }
+
     private func populateInput(_ prompt: String) {
         NotificationCenter.default.post(
             name: .populateTaskInput,
@@ -70,4 +81,5 @@ struct AgentsMenuContent: View {
 
 extension Notification.Name {
     static let populateTaskInput = Notification.Name("populateTaskInput")
+    static let runTaskImmediately = Notification.Name("runTaskImmediately")
 }

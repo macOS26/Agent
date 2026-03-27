@@ -200,6 +200,18 @@ struct ContentView: View {
                 }
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .runTaskImmediately)) { notification in
+            if let prompt = notification.userInfo?["prompt"] as? String {
+                if let selId = viewModel.selectedTabId,
+                   let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+                    tab.taskInput = prompt
+                    viewModel.runTabTask(tab: tab)
+                } else {
+                    viewModel.taskInput = prompt
+                    viewModel.run()
+                }
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .appWillQuit)) { _ in
             viewModel.stopAll()
             viewModel.stopMessagesMonitor()
