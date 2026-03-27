@@ -72,6 +72,7 @@ final class ScriptTab: Identifiable {
 
     // LLM streaming state
     var llmStreamBuffer: String = ""
+    var rawLLMOutput: String = ""
     var llmStreamFlushTask: Task<Void, Never>?
     var llmStreamingStarted: Bool = false
 
@@ -175,8 +176,10 @@ final class ScriptTab: Identifiable {
         if !llmStreamingStarted {
             llmStreamingStarted = true
             llmStreamBuffer = ""
+            rawLLMOutput = ""
         }
         llmStreamBuffer += delta
+        rawLLMOutput += delta
         scheduleLLMStreamFlush()
     }
 

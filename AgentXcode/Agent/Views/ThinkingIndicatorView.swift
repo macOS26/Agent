@@ -11,11 +11,15 @@ struct ThinkingIndicatorView: View {
         nonmutating set { viewModel.thinkingExpanded = newValue }
     }
     @State private var showStreamText = false
+    @State private var outputHeight: CGFloat = 100
     @State private var dots = ""
     @State private var elapsed: TimeInterval = 0
     private let timer = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
 
     private var streamText: String {
+        if let tab {
+            return tab.rawLLMOutput
+        }
         return viewModel.rawLLMOutput
     }
 
@@ -31,6 +35,17 @@ struct ThinkingIndicatorView: View {
             return tab.llmMessages.count
         }
         return 0
+    }
+
+    static func formatElapsed(_ t: TimeInterval) -> String {
+        let s = Int(t)
+        if s < 60 { return "\(s)s" }
+        let m = s / 60
+        let sec = s % 60
+        if m < 60 { return "\(m)m \(sec)s" }
+        let h = m / 60
+        let min = m % 60
+        return "\(h)h \(min)m \(sec)s"
     }
 
     private var inputTokens: Int { viewModel.taskInputTokens }
@@ -52,11 +67,11 @@ struct ThinkingIndicatorView: View {
                     ProgressView()
                         .controlSize(.mini)
 
-                    ShimmerText("Thinking\(dots)", color: .blue)
-
-                    Text("(\(String(format: "%.0f", elapsed))s)")
+                    Text("(\(Self.formatElapsed(elapsed)))")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+
+                    ShimmerText("Thinking\(dots)", color: .blue)
 
                     Spacer()
                 }
@@ -117,31 +132,7 @@ struct ThinkingIndicatorView: View {
                     .buttonStyle(.plain)
 
                     if showStreamText {
-                        let text = streamText.trimmingCharacters(in: .whitespacesAndNewlines)
-                        if !text.isEmpty {
-                            ScrollView {
-                                Text(text)
-                                    .font(.system(size: 11, design: .monospaced))
-                                    .foregroundColor(.primary)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .textSelection(.enabled)
-                                    .padding(8)
-                            }
-                            .frame(maxHeight: 200)
-                            .background(Color(nsColor: .systemGray).opacity(0.2))
-                            .cornerRadius(6)
-                            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.gray.opacity(0.3), lineWidth: 1))
-                            .transition(.move(edge: .top).combined(with: .opacity))
-                        } else {
-                            Text("No output yet...")
-                                .font(.system(size: 11, design: .monospaced))
-                                .foregroundStyle(.tertiary)
-                                .padding(8)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(Color(nsColor: .systemGray).opacity(0.2))
-                                .cornerRadius(6)
-                                .transition(.opacity)
-                        }
+                        LLMOutputBox(text: streamText, height: $outputHeight)
                     }
                 }
                 .padding(.horizontal, 32)
@@ -161,5 +152,57 @@ struct ThinkingIndicatorView: View {
             default: dots = ""
             }
         }
+    }
+}
+
+/// Resizable LLM output box with drag handle at bottom.
+private struct LLMOutputBox: View {
+    let text: String
+    @Binding var height: CGFloat
+
+    var body: some View {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        VStack(spacing: 0) {
+            if !trimmed.isEmpty {
+                ScrollView {
+                    Text(trimmed)
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundColor(.primary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .textSelection(.enabled)
+                        .padding(8)
+                }
+                .frame(height: height)
+            } else {
+                Text("No output yet...")
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(.tertiary)
+                    .padding(8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .frame(height: height)
+            }
+
+            // Drag handle
+            Rectangle()
+                .fill(Color.gray.opacity(0.3))
+                .frame(height: 6)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(Color.gray.opacity(0.6))
+                        .frame(width: 40, height: 3)
+                )
+                .onHover { inside in
+                    if inside { NSCursor.resizeUpDown.push() } else { NSCursor.pop() }
+                }
+                .gesture(
+                    DragGesture()
+                        .onChanged { value in
+                            height = max(50, height + value.translation.height)
+                        }
+                )
+        }
+        .background(Color(nsColor: .systemGray).opacity(0.2))
+        .cornerRadius(6)
+        .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.gray.opacity(0.3), lineWidth: 1))
     }
 }
