@@ -26,6 +26,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Initialize accessibility enabled defaults on startup
         // This ensures the UserDefaults keys exist before any isRestricted() checks
         _ = AccessibilityEnabled.shared
+
+        // Insert 🦾 Agents menu before File (position 1, after app menu)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            self.insertAgentsMenu()
+        }
+    }
+
+    @MainActor private func insertAgentsMenu() {
+        guard let mainMenu = NSApplication.shared.mainMenu else { return }
+        // Remove the SwiftUI-added "🦾 Agents" menu if it exists
+        if let idx = mainMenu.items.firstIndex(where: { $0.title.contains("Agents") }) {
+            mainMenu.removeItem(at: idx)
+        }
+        // Create NSMenu version and insert at position 1 (after app menu, before File)
+        let agentsMenu = NSMenu(title: "🦾 Agents")
+        let agentsItem = NSMenuItem(title: "🦾 Agents", action: nil, keyEquivalent: "")
+        agentsItem.submenu = agentsMenu
+        agentsMenu.delegate = AgentsMenuDelegate.shared
+        let insertIdx = min(1, mainMenu.items.count)
+        mainMenu.insertItem(agentsItem, at: insertIdx)
     }
     
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
@@ -68,9 +88,6 @@ struct AgentApp: App {
                     SystemPromptWindow.shared.show()
                 }
                 .keyboardShortcut("p", modifiers: [.command, .shift])
-            }
-            CommandMenu("🦾 Agents") {
-                AgentsMenuContent()
             }
         }
     }
