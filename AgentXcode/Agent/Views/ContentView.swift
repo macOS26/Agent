@@ -307,7 +307,7 @@ struct ContentView: View {
                     return nil
                 }
 
-                // Ctrl+O: Toggle thinking indicator
+                // Ctrl+O: Toggle thinking indicator visibility (arrows stay where user left them)
                 if event.modifierFlags.contains(.control),
                    event.charactersIgnoringModifiers == "o" {
                     viewModel.showThinkingIndicator.toggle()

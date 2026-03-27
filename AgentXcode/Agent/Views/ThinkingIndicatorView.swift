@@ -6,7 +6,10 @@ struct ThinkingIndicatorView: View {
     @Bindable var viewModel: AgentViewModel
     var tab: ScriptTab?
 
-    @State private var isExpanded = false
+    private var isExpanded: Bool {
+        get { viewModel.thinkingExpanded }
+        nonmutating set { viewModel.thinkingExpanded = newValue }
+    }
     @State private var showStreamText = false
     @State private var dots = ""
     @State private var elapsed: TimeInterval = 0
