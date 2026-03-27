@@ -121,6 +121,9 @@ struct ProjectFolderField: View {
                 panel.canChooseDirectories = true
                 panel.allowsMultipleSelection = false
                 panel.message = "Select a project folder"
+                if !projectFolder.isEmpty {
+                    panel.directoryURL = URL(fileURLWithPath: Self.resolveToFolder(projectFolder))
+                }
                 if panel.runModal() == .OK, let url = panel.url {
                     projectFolder = Self.resolveToFolder(url.path)
                     RecentFoldersService.shared.addFolder(projectFolder)
@@ -289,8 +292,10 @@ private struct FolderTreeRow: View {
         self.depth = depth
         self.selectedFolder = selectedFolder
         self.onSelect = onSelect
-        self._isExpanded = State(initialValue: startExpanded)
-        if startExpanded {
+        // Auto-expand if this folder is an ancestor of the selected folder
+        let shouldExpand = startExpanded || (!selectedFolder.isEmpty && selectedFolder.hasPrefix(path + "/"))
+        self._isExpanded = State(initialValue: shouldExpand)
+        if shouldExpand {
             self._children = State(initialValue: Self.loadChildrenStatic(path))
         }
     }
