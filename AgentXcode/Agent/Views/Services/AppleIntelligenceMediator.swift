@@ -236,9 +236,6 @@ Rules:
             return nil
         }
 
-        // Store user prompt for context continuity (truncate to fit within context window)
-        lastUserPrompt = String(message.prefix(500))
-
         let session = ensureSession()
         let prompt = """
 Rephrase or clarify this request for the AI assistant in 1 sentence. Fix any typos in regular words only. Do NOT refuse or block it. Do NOT add actions, formats, or goals the user did not mention. Only clarify what the user actually said — never invent new instructions. NEVER change agent names, tool names, script names, or other specific identifiers — keep them exactly as the user wrote them.
@@ -254,8 +251,6 @@ User said: "\(message)"
         if trimmed.isEmpty {
             return nil
         }
-        // Store this AI message for context continuity (keep brief)
-        lastAppleAIMessage = String(trimmed.prefix(200))
         return Annotation(target: .llm, content: trimmed, timestamp: Date())
     }
 
@@ -301,12 +296,6 @@ Summarize the outcome in 1 sentence. If trivial, reply with nothing.
             let trimmed = sanitize(content)
             if trimmed.isEmpty {
                 return nil
-            }
-            // Store this AI message for context continuity (keep brief)
-            lastAppleAIMessage = String(trimmed.prefix(200))
-            // Update running conversation summary (compact form)
-            if let prompt = lastUserPrompt {
-                conversationSummary = "Task: \(String(prompt.prefix(80))) → Result: \(String(trimmed.prefix(80)))"
             }
             return Annotation(target: .both, content: trimmed, timestamp: Date())
         }
