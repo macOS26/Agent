@@ -34,7 +34,7 @@ private struct PathTextField: NSViewRepresentable {
         return tf
     }
 
-    func updateNSView(_ tf: FocusAwareTextField, context: Context) {
+    @MainActor func updateNSView(_ tf: FocusAwareTextField, context: Context) {
         if tf.stringValue != text {
             tf.stringValue = text
         }
