@@ -46,7 +46,7 @@ extension AgentViewModel {
             return true
         }
 
-        // MARK: edit_file
+        // MARK: edit_file — uses CodingService for replacement logic, D1F for preview
         if name == "edit_file" {
             let filePath = input["file_path"] as? String ?? ""
             let oldString = input["old_string"] as? String ?? ""
@@ -55,28 +55,30 @@ extension AgentViewModel {
             let context = input["context"] as? String
             appendLog("📝 Edit: \(filePath)")
             let expandedEdit = (filePath as NSString).expandingTildeInPath
-            let originalEdit: String? = await Self.offMain {
-                guard let data = FileManager.default.contents(atPath: expandedEdit),
-                      let text = String(data: data, encoding: .utf8) else { return nil }
-                return text
+
+            // Single read from disk
+            guard let data = FileManager.default.contents(atPath: expandedEdit),
+                  let originalContent = String(data: data, encoding: .utf8) else {
+                let err = "Error: cannot read \(filePath)"
+                appendLog(err)
+                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
+                return true
             }
+
+            // Use CodingService for the replacement (handles fuzzy match, context, etc.)
             let output = await Self.offMain { CodingService.editFile(path: filePath, oldString: oldString, newString: newString, replaceAll: replaceAll, context: context) }
-            if !output.hasPrefix("Error"), let orig = originalEdit {
-                DiffStore.shared.recordEdit(filePath: expandedEdit, originalContent: orig)
-            }
-            let diff = MultiLineDiff.createDiff(source: oldString, destination: newString, includeMetadata: true)
-            var d1f = MultiLineDiff.displayDiff(diff: diff, source: oldString, format: .ai)
-            if d1f.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                d1f = "❌" + oldString + "\n" + "✅" + newString
-            }
-            var diffLog = d1f
-            if let meta = diff.metadata, let startLine = meta.sourceStartLine {
-                diffLog += "\n📍 Changes start at line \(startLine + 1)"
-                if let total = meta.sourceTotalLines {
-                    diffLog += " (of \(total) lines)"
+
+            if !output.hasPrefix("Error") {
+                DiffStore.shared.recordEdit(filePath: expandedEdit, originalContent: originalContent)
+
+                // D1F preview from old → new (fast, no extra file read)
+                let diff = MultiLineDiff.createDiff(source: oldString, destination: newString, includeMetadata: true)
+                var d1f = MultiLineDiff.displayDiff(diff: diff, source: oldString, format: .ai)
+                if d1f.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    d1f = "❌ " + oldString + "\n" + "✅ " + newString
                 }
+                appendLog(d1f)
             }
-            appendLog(diffLog)
             appendLog(output)
             commandsRun.append("edit_file: \(filePath)")
             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
