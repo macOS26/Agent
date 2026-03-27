@@ -244,7 +244,18 @@ extension AgentViewModel {
             }
             log("🦾 Running: \(name)")
             flush()
-            let runResult = await scriptService.loadAndRunScriptViaProcess(name: name)
+            let runResult = await scriptService.loadAndRunScriptViaProcess(
+                name: name,
+                onOutput: { [weak self] chunk in
+                    Task { @MainActor in
+                        if let tab {
+                            tab.appendOutput(chunk)
+                        } else {
+                            self?.appendRawOutput(chunk)
+                        }
+                    }
+                }
+            )
             log(runResult.output)
             return runResult.output
 
