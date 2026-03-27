@@ -190,6 +190,16 @@ struct ContentView: View {
         .sheet(isPresented: $showNewTabSheet) {
             NewMainTabSheet(viewModel: viewModel)
         }
+        .onReceive(NotificationCenter.default.publisher(for: .populateTaskInput)) { notification in
+            if let prompt = notification.userInfo?["prompt"] as? String {
+                if let selId = viewModel.selectedTabId,
+                   let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+                    tab.taskInput = prompt
+                } else {
+                    viewModel.taskInput = prompt
+                }
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .appWillQuit)) { _ in
             viewModel.stopAll()
             viewModel.stopMessagesMonitor()

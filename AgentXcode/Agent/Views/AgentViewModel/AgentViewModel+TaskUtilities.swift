@@ -244,6 +244,7 @@ extension AgentViewModel {
             }
             log("🦾 Running: \(name)")
             flush()
+            RecentAgentsService.shared.recordRun(agentName: name, prompt: cmd.argument.isEmpty ? "run \(name)" : "run \(cmd.argument)")
             let runResult = await scriptService.loadAndRunScriptViaProcess(
                 name: name,
                 onOutput: { [weak self] chunk in
