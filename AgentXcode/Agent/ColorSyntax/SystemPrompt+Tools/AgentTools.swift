@@ -369,7 +369,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.editFile,
-            description: "Replace exact text in a file. You MUST read_file first. The old_string must be unique unless replace_all is true. Use context to disambiguate multiple matches.",
+            description: "Replace exact text in a file. Best for 1-2 small, targeted changes. You MUST read_file first. The old_string must be unique unless replace_all is true.",
             properties: [
                 "file_path": ["type": "string", "description": "Absolute path to the file to edit"],
                 "old_string": ["type": "string", "description": "The exact text to find and replace"],
@@ -381,7 +381,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.createDiff,
-            description: "Create a diff between source text and destination text. If file_path is provided, reads the file as source. Returns a diff_id UUID for use with apply_diff.",
+            description: "Create a diff for review before applying. Best for 3+ changes or large refactors where you want to preview changes first. Returns a diff_id UUID — pass it to apply_diff to commit the changes.",
             properties: [
                 "source": ["type": "string", "description": "Original text (ignored if file_path is provided)"],
                 "destination": ["type": "string", "description": "New text to diff against source"],
@@ -391,7 +391,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.applyDiff,
-            description: "Apply a diff to a file. Use diff_id from create_diff, or provide a diff string in =/-/+ format (= keep, - remove, + add).",
+            description: "Apply a previously created diff to a file. Use diff_id from create_diff to apply a reviewed diff, or provide a diff string directly in =/-/+ format (= keep, - remove, + add).",
             properties: [
                 "file_path": ["type": "string", "description": "Path to the file to patch"],
                 "diff_id": ["type": "string", "description": "UUID from create_diff (preferred)"],
@@ -401,7 +401,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.diffAndApply,
-            description: "Create and apply a diff in one step. Provide file_path and destination text. Reads the file, diffs it against destination, and writes the result.",
+            description: "Create and apply a diff in one step — best for full file rewrites or when review isn't needed. Reads the file, diffs against your destination text, and writes the result immediately.",
             properties: [
                 "file_path": ["type": "string", "description": "Path to the file to modify"],
                 "destination": ["type": "string", "description": "The desired new content of the file"],
@@ -411,7 +411,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.undoEdit,
-            description: "Undo the last edit_file or apply_diff change to a file. Restores the file to its state before the most recent edit.",
+            description: "Undo the last edit_file, apply_diff, or diff_and_apply change to a file. Use when a change was wrong or broke something.",
             properties: [
                 "file_path": ["type": "string", "description": "Path to the file to undo"],
             ],
