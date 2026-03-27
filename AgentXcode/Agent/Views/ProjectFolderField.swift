@@ -337,22 +337,27 @@ private struct FolderTreeRow: View {
                 }
                 .buttonStyle(.plain)
 
-                // Folder icon + name (click to select)
-                Button {
-                    onSelect(path)
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: path == selectedFolder ? "folder.fill" : "folder")
-                            .foregroundStyle(path == selectedFolder ? .green : .blue)
-                            .frame(width: 16)
-                        Text(name)
-                            .lineLimit(1)
-                            .foregroundStyle(path == selectedFolder ? .primary : .primary)
-                        Spacer()
-                    }
-                    .contentShape(Rectangle())
+                // Folder icon + name: single click toggles, double click selects
+                HStack(spacing: 4) {
+                    Image(systemName: path == selectedFolder ? "folder.fill" : "folder")
+                        .foregroundStyle(path == selectedFolder ? .green : .blue)
+                        .frame(width: 16)
+                    Text(name)
+                        .lineLimit(1)
+                    Spacer()
                 }
-                .buttonStyle(.plain)
+                .contentShape(Rectangle())
+                .onTapGesture(count: 2) {
+                    onSelect(path)
+                }
+                .onTapGesture(count: 1) {
+                    if children == nil {
+                        children = Self.loadChildrenStatic(path)
+                    }
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isExpanded.toggle()
+                    }
+                }
             }
             .padding(.vertical, 2)
             .padding(.horizontal, 4)
