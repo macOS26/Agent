@@ -285,7 +285,7 @@ private struct FolderTreePopover: View {
                     FolderTreeRow(path: home, name: "Home", depth: 0, selectedFolder: highlighted.isEmpty ? selectedFolder : highlighted, onSelect: { path in
                         highlighted = path
                         onSelect(path)
-                    }, startExpanded: true)
+                    }, onDone: { dismiss() }, startExpanded: true)
                 }
                 .padding(6)
             }
@@ -302,16 +302,18 @@ private struct FolderTreeRow: View {
     let depth: Int
     let selectedFolder: String
     let onSelect: (String) -> Void
+    var onDone: (() -> Void)?
 
     @State private var isExpanded: Bool
     @State private var children: [String]?
 
-    init(path: String, name: String, depth: Int, selectedFolder: String, onSelect: @escaping (String) -> Void, startExpanded: Bool = false) {
+    init(path: String, name: String, depth: Int, selectedFolder: String, onSelect: @escaping (String) -> Void, onDone: (() -> Void)? = nil, startExpanded: Bool = false) {
         self.path = path
         self.name = name
         self.depth = depth
         self.selectedFolder = selectedFolder
         self.onSelect = onSelect
+        self.onDone = onDone
         // Auto-expand if this folder is an ancestor of the selected folder
         let shouldExpand = startExpanded || (!selectedFolder.isEmpty && selectedFolder.hasPrefix(path + "/"))
         self._isExpanded = State(initialValue: shouldExpand)
@@ -368,12 +370,8 @@ private struct FolderTreeRow: View {
                 }
                 .contentShape(Rectangle())
                 .onTapGesture(count: 2) {
-                    if children == nil {
-                        children = Self.loadChildrenStatic(path)
-                    }
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        isExpanded.toggle()
-                    }
+                    onSelect(path)
+                    onDone?()
                 }
                 .onTapGesture(count: 1) {
                     onSelect(path)
@@ -392,7 +390,8 @@ private struct FolderTreeRow: View {
                         name: (child as NSString).lastPathComponent,
                         depth: depth + 1,
                         selectedFolder: selectedFolder,
-                        onSelect: onSelect
+                        onSelect: onSelect,
+                        onDone: onDone
                     )
                     .transition(.move(edge: .top).combined(with: .opacity))
                 }
