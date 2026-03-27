@@ -554,149 +554,127 @@ Prompts are stored in `~/Documents/AgentScript/system/` as `{provider}.txt` file
 
 ## Available Tools
 
-Agent! provides **100+ tools** across multiple categories for autonomous task execution.
+Agent! provides **60+ tools** across multiple categories for autonomous task execution.
 
-### Diff Tools (2 tools)
-
-| Tool | Description |
-|------|-------------|
-| `create_diff` | Compare two text strings and return a pretty D1F diff with emoji markers (📎 retain, ❌ delete, ✅ insert) |
-| `apply_diff` | Apply a D1F ASCII diff to a file for precise multi-line edits |
-
-### File Operations (7 tools)
+### Core Tools (32 tools)
 
 | Tool | Description |
 |------|-------------|
+| `about_self` | Describe Agent's capabilities, features, and usage |
 | `read_file` | Read file contents with line numbers |
 | `write_file` | Create or overwrite a file |
-| `edit_file` | Replace exact text in a file (shows D1F diff preview) |
-| `create_diff` | Compare two text strings and return a pretty D1F diff |
-| `apply_diff` | Apply a D1F ASCII diff to a file |
+| `edit_file` | Replace exact text in a file |
 | `list_files` | Find files matching a glob pattern |
 | `search_files` | Search file contents by regex pattern |
-
-### Git Operations (6 tools)
-
-| Tool | Description |
-|------|-------------|
-| `git_status` | Show current branch, staged/unstaged changes |
-| `git_diff` | Show file changes as unified diff |
-| `git_log` | Show recent commit history |
-| `git_commit` | Stage files and create a commit |
-| `git_diff_patch` | Apply a unified diff patch |
-| `git_branch` | Create a new git branch |
-
-### Command Execution (3 tools)
-
-| Tool | Description |
-|------|-------------|
-| `execute_agent_command` | Execute as current user (no TCC) — for git, builds, file ops, CLI tools |
-| `execute_daemon_command` | Execute as ROOT via LaunchDaemon (no TCC) — for system packages, /Library |
-| `execute_shell_command` | Smart routing: TCC commands in-process, others via UserService |
-
-### Apple Event Query (1 tool)
-
-| Tool | Description |
-|------|-------------|
-| `apple_event_query` | Query scriptable apps dynamically (zero compilation) |
-| `lookup_sdef` | Read app scripting dictionary before writing AppleScript |
-
-### Accessibility Tools (22 tools)
-
-| Tool | Description |
-|------|-------------|
-| `ax_list_windows` | List visible windows |
-| `ax_inspect_element` | Inspect element at coordinates |
-| `ax_get_properties` | Get element properties |
-| `ax_get_children` | Get element children |
-| `ax_get_focused_element` | Get focused element |
-| `ax_find_element` | Find element by role/title/value |
-| `ax_wait_for_element` | Wait for element to appear |
-| `ax_wait_adaptive` | Wait with exponential backoff |
-| `ax_type_text` | Simulate typing |
-| `ax_click` | Simulate mouse click |
-| `ax_scroll` | Simulate scroll wheel |
-| `ax_press_key` | Simulate key press with modifiers |
-| `ax_drag` | Perform drag operation |
-| `ax_perform_action` | Perform accessibility action |
-| `ax_set_properties` | Set element properties |
-| `ax_click_element` | Click element by role/title |
-| `ax_type_into_element` | Type into element by role/title |
-| `ax_show_menu` | Show context menu |
-| `ax_screenshot` | Capture screenshot |
-| `ax_check_permission` | Check Accessibility permission |
-| `ax_request_permission` | Request Accessibility permission |
-| `ax_get_audit_log` | View accessibility audit log |
-
-### Saved Scripts (8 tools)
-
-| Tool | Description |
-|------|-------------|
-| `list_apple_scripts` | List saved AppleScripts |
-| `run_apple_script` | Run saved AppleScript |
-| `save_apple_script` | Save AppleScript for reuse |
-| `delete_apple_script` | Delete saved AppleScript |
-| `list_javascript` | List saved JXA scripts |
-| `run_javascript` | Run saved JXA script |
-| `save_javascript` | Save JXA for reuse |
-| `delete_javascript` | Delete saved JXA |
-
-### AgentScripts (6 tools)
-
-| Tool | Description |
-|------|-------------|
-| `list_agent_scripts` | List all Swift automation scripts |
-| `read_agent_script` | Read source code of a script |
-| `create_agent_script` | Create a new Swift script |
-| `update_agent_script` | Update an existing script |
-| `run_agent_script` | Compile and run a Swift dylib script |
-| `delete_agent_script` | Delete a script |
-
-### Xcode Automation (5 tools)
-
-| Tool | Description |
-|------|-------------|
-| `xcode_build` | Build an Xcode project/workspace |
-| `xcode_run` | Build and run an Xcode project |
-| `xcode_list_projects` | List all open Xcode projects |
-| `xcode_select_project` | Select a project by number |
-| `xcode_grant_permission` | Grant macOS Automation permission for Xcode |
-
-### Web Automation (7 tools)
-
-| Tool | Description |
-|------|-------------|
-| `web_open` | Open a URL in Safari, Chrome, Firefox, or Edge |
-| `web_find` | Find element on page (auto-selects: AX → JS → Selenium) |
-| `web_click` | Click element by selector |
-| `web_type` | Type text into input field |
-| `web_execute_js` | Execute JavaScript in browser |
-| `web_get_url` | Get current URL from browser |
-| `web_get_title` | Get page title from browser |
-
-### Selenium WebDriver (8 tools)
-
-| Tool | Description |
-|------|-------------|
-| `selenium_start` | Start WebDriver session (Safari built-in, Chrome/Firefox need drivers) |
-| `selenium_stop` | End WebDriver session |
-| `selenium_navigate` | Navigate to URL |
-| `selenium_find` | Find element by CSS/XPath/id/name |
-| `selenium_click` | Click element |
-| `selenium_type` | Type text into element |
-| `selenium_execute` | Execute JavaScript |
-| `selenium_screenshot` | Take screenshot |
-| `selenium_wait` | Wait for element to appear |
-
-### Task Management (1 tool)
-
-| Tool | Description |
-|------|-------------|
+| `read_dir` | List directory contents |
+| `create_diff` | Compare two text strings and return a pretty D1F diff with emoji markers |
+| `apply_diff` | Apply a D1F ASCII diff to a file for precise multi-line edits |
+| `diff_and_apply` | Edit a file by line range in one step |
+| `undo_edit` | Undo a previous diff edit |
+| `file_manager` | Unified file operations (read, write, edit, list, search, read_dir, if_to_switch, extract_function) |
+| `git` | Git operations (status, diff, log, commit, diff_patch, branch) |
+| `execute_agent_command` | Execute shell command as current user (no TCC) |
+| `execute_daemon_command` | Execute shell command as ROOT via LaunchDaemon (no TCC) |
+| `run_shell_script` | Run shell command or script (alias for execute_agent_command) |
+| `batch_commands` | Run multiple shell commands sequentially in one call |
+| `batch_tools` | Run multiple tool calls sequentially in one batch |
+| `plan_mode` | Manage step-by-step plans (create, update, read, list, delete) |
 | `task_complete` | Signal that a task has been completed |
+| `write_text` | Generate well-structured prose on any topic |
+| `transform_text` | Convert text into different formats (lists, outlines, summaries, tables) |
+| `fix_text` | Correct spelling and grammar errors |
+| `send_message` | Send message via iMessage, email, or other channels |
+| `web` | Web browser automation (open, scan, click, type, execute_js, etc.) |
+| `web_search` | Search the web for current information |
+| `lookup_sdef` | Look up an app's AppleScript scripting dictionary |
+| `list_tools` | List all enabled tools (built-in and MCP) |
 
-### MCP Tools
+### Agent Scripts (6 tools)
 
-Agent! supports MCP (Model Context Protocol) servers. Currently configured servers include:
+| Tool | Description |
+|------|-------------|
+| `agent` (list) | List all Swift automation scripts |
+| `agent` (read) | Read source code of a script |
+| `agent` (create) | Create a new Swift script |
+| `agent` (update) | Update an existing script |
+| `agent` (run) | Compile and run a Swift dylib script |
+| `agent` (delete) | Delete a script |
+| `agent` (combine) | Merge two scripts together |
+
+### AppleScript & JavaScript (12 tools)
+
+| Tool | Description |
+|------|-------------|
+| `applescript_tool` (execute) | Run inline AppleScript source with full TCC |
+| `applescript_tool` (list) | List saved AppleScripts |
+| `applescript_tool` (run) | Run saved AppleScript by name |
+| `applescript_tool` (save) | Save AppleScript for reuse |
+| `applescript_tool` (delete) | Delete saved AppleScript |
+| `applescript_tool` (lookup_sdef) | Read app's scripting dictionary |
+| `javascript_tool` (execute) | Run inline JXA source |
+| `javascript_tool` (list) | List saved JXA scripts |
+| `javascript_tool` (run) | Run saved JXA script |
+| `javascript_tool` (save) | Save JXA for reuse |
+| `javascript_tool` (delete) | Delete saved JXA |
+
+### Accessibility API (15 tools)
+
+| Tool | Description |
+|------|-------------|
+| `accessibility` (list_windows) | List all visible windows with positions and owner apps |
+| `accessibility` (get_properties) | Get all properties of an accessibility element |
+| `accessibility` (perform_action) | Perform an accessibility action (AXPress, AXConfirm, etc.) |
+| `accessibility` (type_text) | Simulate keyboard typing |
+| `accessibility` (click) | Simulate mouse clicks at coordinates |
+| `accessibility` (press_key) | Simulate key presses with modifiers |
+| `accessibility` (screenshot) | Capture screenshot of region or window |
+| `accessibility` (set_properties) | Set accessibility property values |
+| `accessibility` (find_element) | Find element by role/title/value with timeout |
+| `accessibility` (get_children) | Get children of an accessibility element |
+| `accessibility` (check_permission) | Check if Accessibility access is granted |
+| `accessibility` (request_permission) | Request Accessibility permission |
+
+### Xcode Automation (6 tools)
+
+| Tool | Description |
+|------|-------------|
+| `xcode` (build) | Build an Xcode project/workspace (auto-detects) |
+| `xcode` (run) | Build and run an Xcode project |
+| `xcode` (list_projects) | List all open Xcode projects |
+| `xcode` (select_project) | Select a project by number |
+| `xcode` (add_file) | Add a file to pbxproj |
+| `xcode` (remove_file) | Remove a file from pbxproj |
+| `xcode` (grant_permission) | Grant macOS Automation permission for Xcode |
+
+### MCP Tools — XCF (22 tools)
+
+| Tool | Description |
+|------|-------------|
+| `mcp_xcf_xcf` | Execute an xcf action or command |
+| `mcp_xcf_list` | List all available tools on this server |
+| `mcp_xcf_xcf_help` | Help for xcf actions only |
+| `mcp_xcf_help` | Regular help with common examples |
+| `mcp_xcf_snippet` | Extract code snippets from files |
+| `mcp_xcf_analyzer` | Analyze Swift code for potential issues |
+| `mcp_xcf_read_dir` | List contents of a directory |
+| `mcp_xcf_read_file` | Read content from a file |
+| `mcp_xcf_cd_dir` | Change current directory |
+| `mcp_xcf_use_xcf` | Activate XCF mode |
+| `mcp_xcf_tools` | Show detailed reference for all tools |
+| `mcp_xcf_show_help` | Display help information |
+| `mcp_xcf_grant_permission` | Grant Xcode automation permissions |
+| `mcp_xcf_run_project` | Run the current Xcode project |
+| `mcp_xcf_build_project` | Build the current Xcode project |
+| `mcp_xcf_show_current_project` | Show information about the current project |
+| `mcp_xcf_show_env` | Display all environment variables |
+| `mcp_xcf_show_folder` | Display the current working folder |
+| `mcp_xcf_list_projects` | List all open Xcode projects |
+| `mcp_xcf_select_project` | Select an Xcode project by number |
+| `mcp_xcf_analyze_swift_code` | Analyze Swift code for potential issues |
+
+### Additional MCP Servers
+
+Agent! supports MCP (Model Context Protocol) servers for extended functionality:
 
 - **internet-names-mcp** — Domain and social handle availability — https://github.com/drewster99/InternetNamesMCP
 - **xcode-mcp-server** — Xcode project building, running, screenshots — https://github.com/drewster99/xcode-mcp-server
