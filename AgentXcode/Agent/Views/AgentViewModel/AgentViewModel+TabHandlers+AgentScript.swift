@@ -134,7 +134,7 @@ extension AgentViewModel {
 
             tab.appendLog("🦾 Running: \(scriptName)")
             tab.flush()
-            RecentAgentsService.shared.recordRun(agentName: scriptName, prompt: arguments.isEmpty ? "run \(scriptName)" : "run \(scriptName) \(arguments)")
+            RecentAgentsService.shared.recordRun(agentName: scriptName, arguments: arguments, prompt: arguments.isEmpty ? "run \(scriptName)" : "run \(scriptName) \(arguments)")
 
             tab.resetLLMStreamCounters()
             let cancelFlag = tab._cancelFlag

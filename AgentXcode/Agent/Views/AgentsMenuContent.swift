@@ -1,12 +1,13 @@
 import SwiftUI
 
 /// Menu content for the Agents menu bar item.
-/// Groups by agent name, each agent has a submenu showing its prompts.
+/// Groups by agent name, each agent has a submenu showing its prompts with arguments.
+/// Version numbers are auto-bumped (1.0.45 → 1.0.46) when selected.
 struct AgentsMenuContent: View {
     @ObservedObject private var recentAgents = RecentAgentsService.shared
 
     /// Group entries by agent name, preserving most-recent order.
-    private var grouped: [(name: String, prompts: [RecentAgentsService.AgentEntry])] {
+    private var grouped: [(name: String, entries: [RecentAgentsService.AgentEntry])] {
         var seen: [String: [RecentAgentsService.AgentEntry]] = [:]
         var order: [String] = []
         for entry in recentAgents.entries {
@@ -16,7 +17,7 @@ struct AgentsMenuContent: View {
             }
             seen[entry.agentName]?.append(entry)
         }
-        return order.map { (name: $0, prompts: seen[$0] ?? []) }
+        return order.map { (name: $0, entries: seen[$0] ?? []) }
     }
 
     var body: some View {
@@ -25,17 +26,25 @@ struct AgentsMenuContent: View {
                 .foregroundStyle(.secondary)
         } else {
             ForEach(grouped, id: \.name) { group in
-                if group.prompts.count == 1, let entry = group.prompts.first {
+                if group.entries.count == 1, let entry = group.entries.first {
+                    // Single entry — show inline with argument hint
                     Button {
-                        populateInput(entry.prompt)
+                        populateInput(entry.populatedPrompt)
                     } label: {
-                        Text("\(group.name) — \(entry.prompt)")
+                        Text(entry.menuLabel)
                     }
                 } else {
+                    // Multiple entries — submenu per agent
                     Menu(group.name) {
-                        ForEach(group.prompts) { entry in
-                            Button(entry.prompt) {
-                                populateInput(entry.prompt)
+                        ForEach(group.entries) { entry in
+                            Button {
+                                populateInput(entry.populatedPrompt)
+                            } label: {
+                                if entry.arguments.isEmpty {
+                                    Text("run \(entry.agentName)")
+                                } else {
+                                    Text(entry.arguments)
+                                }
                             }
                         }
                     }
