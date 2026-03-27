@@ -83,42 +83,50 @@ extension AgentViewModel {
             return true
         }
 
-        // MARK: create_diff
+        // MARK: create_diff — reads file from disk, AI only sends line range + destination
         if name == "create_diff" {
-            var source = input["source"] as? String ?? ""
+            let filePath = input["file_path"] as? String ?? ""
             let destination = input["destination"] as? String ?? ""
             let startLine = input["start_line"] as? Int
             let endLine = input["end_line"] as? Int
-            if let fp = input["file_path"] as? String, !fp.isEmpty {
-                let expanded = (fp as NSString).expandingTildeInPath
-                if let data = FileManager.default.contents(atPath: expanded),
-                   let text = String(data: data, encoding: .utf8) {
-                    if let sl = startLine, let el = endLine {
-                        let lines = text.components(separatedBy: "\n")
-                        let s = max(sl - 1, 0)
-                        let e = min(el, lines.count)
-                        source = lines[s..<e].joined(separator: "\n")
-                    } else {
-                        source = text
-                    }
-                }
+
+            let expanded = (filePath as NSString).expandingTildeInPath
+            guard let data = FileManager.default.contents(atPath: expanded),
+                  let fullText = String(data: data, encoding: .utf8) else {
+                let err = "Error: cannot read \(filePath)"
+                appendLog(err)
+                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
+                return true
             }
+
+            // Extract section from file if line range specified
+            let source: String
+            if let sl = startLine, let el = endLine {
+                let lines = fullText.components(separatedBy: "\n")
+                let s = max(sl - 1, 0)
+                let e = min(el, lines.count)
+                source = lines[s..<e].joined(separator: "\n")
+            } else {
+                source = fullText
+            }
+
             let algorithm = CodingService.selectDiffAlgorithm(source: source, destination: destination)
             let diff = MultiLineDiff.createDiff(source: source, destination: destination, algorithm: algorithm, includeMetadata: true, sourceStartLine: startLine.map { $0 - 1 })
             let d1f = MultiLineDiff.displayDiff(diff: diff, source: source, format: .ai)
             let diffId = DiffStore.shared.store(diff: diff, source: source)
             appendRawOutput(d1f + "\n")
-            commandsRun.append("create_diff")
+            let rangeNote = (startLine != nil && endLine != nil) ? " (lines \(startLine!)-\(endLine!))" : ""
+            appendLog("📝 Created diff for \(filePath)\(rangeNote)")
+            commandsRun.append("create_diff: \(filePath)")
             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "diff_id: \(diffId.uuidString)\n\n\(d1f)"])
             return true
         }
 
-        // MARK: apply_diff
+        // MARK: apply_diff — reads file from disk, applies stored diff
         if name == "apply_diff" {
             let filePath = input["file_path"] as? String ?? ""
             let diffIdStr = input["diff_id"] as? String ?? ""
             let asciiDiff = input["diff"] as? String ?? ""
-            appendLog("📝 Apply diff: \(filePath)")
             let expandedPath = (filePath as NSString).expandingTildeInPath
             guard let data = FileManager.default.contents(atPath: expandedPath),
                   let source = String(data: data, encoding: .utf8) else {
@@ -137,16 +145,23 @@ extension AgentViewModel {
                 } else {
                     throw DiffError.invalidDiff
                 }
-                try patched.write(to: URL(fileURLWithPath: expandedPath), atomically: true, encoding: .utf8)
+                // Safety: reject diffs that would dramatically shrink the file
+                if source.count > 200 && patched.count < source.count / 2 {
+                    let err = "Error: diff rejected — would shrink file from \(source.count) to \(patched.count) chars. Likely truncated. Use start_line/end_line with diff_and_apply instead."
+                    appendLog(err)
+                    toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
+                    return true
+                }
                 DiffStore.shared.recordEdit(filePath: expandedPath, originalContent: source)
-                let verifyResult = MultiLineDiff.createDiff(source: source, destination: patched, includeMetadata: true)
-                let verified = MultiLineDiff.verifyDiff(verifyResult)
-                let verifyDiff = MultiLineDiff.displayDiff(diff: verifyResult, source: source, format: .ai)
-                appendRawOutput(verifyDiff + "\n")
-                let output = "Applied diff to \(filePath) [verified: \(verified)]"
-                appendLog(output)
+                try patched.write(to: URL(fileURLWithPath: expandedPath), atomically: true, encoding: .utf8)
+                // Use the library's verification
+                let verifyDiff = MultiLineDiff.createDiff(source: source, destination: patched, includeMetadata: true)
+                let verified = MultiLineDiff.verifyDiff(verifyDiff)
+                let display = MultiLineDiff.displayDiff(diff: verifyDiff, source: source, format: .ai)
+                appendRawOutput(display + "\n")
+                appendLog("📝 Applied diff to \(filePath) [verified: \(verified)]")
                 commandsRun.append("apply_diff: \(filePath)")
-                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Applied diff to \(filePath) [verified: \(verified)]\n\n\(display)"])
             } catch {
                 let err = "Error applying diff: \(error.localizedDescription)"
                 appendLog(err)
@@ -155,7 +170,7 @@ extension AgentViewModel {
             return true
         }
 
-        // MARK: undo_edit
+        // MARK: undo_edit — uses D1F library's undo support
         if name == "undo_edit" {
             let filePath = input["file_path"] as? String ?? ""
             let expandedUndo = (filePath as NSString).expandingTildeInPath
@@ -174,10 +189,9 @@ extension AgentViewModel {
             return true
         }
 
-        // MARK: diff_and_apply
+        // MARK: diff_and_apply — reads file from disk, AI sends line range + replacement
         if name == "diff_and_apply" {
             let filePath = input["file_path"] as? String ?? ""
-            let source = input["source"] as? String
             let destination = input["destination"] as? String ?? ""
             let startLine = input["start_line"] as? Int
             let endLine = input["end_line"] as? Int
@@ -189,14 +203,14 @@ extension AgentViewModel {
                       let text = String(data: data, encoding: .utf8) else { return nil }
                 return text
             }
-            let result = await Self.offMain { CodingService.diffAndApply(path: filePath, source: source, destination: destination, startLine: startLine, endLine: endLine) }
+            let result = await Self.offMain { CodingService.diffAndApply(path: filePath, source: nil, destination: destination, startLine: startLine, endLine: endLine) }
             if !result.output.hasPrefix("Error"), let orig = originalDA {
                 DiffStore.shared.recordEdit(filePath: expandedDA, originalContent: orig)
             }
             if !result.display.isEmpty { appendRawOutput(result.display + "\n") }
             appendLog(result.output)
             commandsRun.append("diff_and_apply: \(filePath)")
-            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": result.output])
+            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "\(result.output)\n\n\(result.display)"])
             return true
         }
 

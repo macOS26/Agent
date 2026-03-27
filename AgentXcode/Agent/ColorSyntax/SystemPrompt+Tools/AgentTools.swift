@@ -382,15 +382,14 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.createDiff,
-            description: "Create a diff for review before applying. Use file_path with start_line/end_line to diff only the changed section — no need to send the whole file. Returns a diff_id UUID for apply_diff.",
+            description: "Create a diff for review before applying. Reads file from disk. Use start_line/end_line to target a section — only send the replacement text. Returns a diff_id UUID for apply_diff.",
             properties: [
-                "file_path": ["type": "string", "description": "Path to file (reads as source). Use with start_line/end_line to target a section."],
-                "source": ["type": "string", "description": "Original text (only if no file_path)"],
-                "destination": ["type": "string", "description": "The new text for the section being changed"],
-                "start_line": ["type": "integer", "description": "First line number to diff (1-based). Only send destination for this range."],
-                "end_line": ["type": "integer", "description": "Last line number to diff (inclusive)."],
+                "file_path": ["type": "string", "description": "Path to file to read from disk"],
+                "destination": ["type": "string", "description": "The new text for the targeted lines"],
+                "start_line": ["type": "integer", "description": "First line to diff (1-based)"],
+                "end_line": ["type": "integer", "description": "Last line to diff (inclusive)"],
             ],
-            required: ["destination"]
+            required: ["file_path", "destination"]
         ),
         ToolDef(
             name: Name.applyDiff,
@@ -404,13 +403,12 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.diffAndApply,
-            description: "Edit a file on disk in one step. Use start_line/end_line to edit a section — only send the new content for those lines. The tool reads the file, diffs the section, splices the result back in, and writes. Best for multi-line edits without sending the whole file.",
+            description: "Edit a file on disk in one step. Reads the file, replaces the target lines with your destination text, shows D1F preview, and writes. Use start_line/end_line to edit a section — only send the replacement text for those lines.",
             properties: [
-                "file_path": ["type": "string", "description": "Path to the file to modify"],
-                "destination": ["type": "string", "description": "The new content for the target lines (or full file if no line range)"],
-                "start_line": ["type": "integer", "description": "First line to replace (1-based). Only send destination for this range."],
-                "end_line": ["type": "integer", "description": "Last line to replace (inclusive). Tool splices result back into the full file."],
-                "source": ["type": "string", "description": "Original text (optional — reads from file if omitted)"],
+                "file_path": ["type": "string", "description": "Path to the file to modify (read from disk)"],
+                "destination": ["type": "string", "description": "The new content for the target lines"],
+                "start_line": ["type": "integer", "description": "First line to replace (1-based)"],
+                "end_line": ["type": "integer", "description": "Last line to replace (inclusive)"],
             ],
             required: ["file_path", "destination"]
         ),
