@@ -115,6 +115,26 @@ struct ProjectFolderField: View {
                 )
             }
 
+            Button {
+                let panel = NSOpenPanel()
+                panel.canChooseFiles = false
+                panel.canChooseDirectories = true
+                panel.allowsMultipleSelection = false
+                panel.message = "Select a project folder"
+                if panel.runModal() == .OK, let url = panel.url {
+                    projectFolder = Self.resolveToFolder(url.path)
+                    RecentFoldersService.shared.addFolder(projectFolder)
+                    onFolderSelected?()
+                }
+            } label: {
+                Image(systemName: "folder.badge.plus")
+                    .frame(width: 36)
+            }
+            .buttonStyle(.bordered)
+            .clipShape(Capsule())
+            .controlSize(.regular)
+            .help("Browse for folder")
+
             PathTextField(
                 text: $projectFolder,
                 placeholder: "Project folder...",

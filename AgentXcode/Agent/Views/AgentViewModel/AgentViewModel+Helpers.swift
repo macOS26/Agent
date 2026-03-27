@@ -284,7 +284,7 @@ extension AgentViewModel {
         guard !dir.isEmpty, dir != "/" else { return command }
         if command.hasPrefix("cd ") { return command }
         let escaped = dir.replacingOccurrences(of: "'", with: "'\\''")
-        return "export PWD='\(escaped)'; \(command)"
+        return "cd '\(escaped)' && \(command)"
     }
     
     /// Extract the target directory from a command starting with `cd `.
