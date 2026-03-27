@@ -89,7 +89,6 @@ struct ProjectFolderField: View {
     private func selectFolder(_ path: String) {
         projectFolder = path
         RecentFoldersService.shared.addFolder(path)
-        showTree = false
         onFolderSelected?()
     }
 
@@ -262,16 +261,37 @@ struct ProjectFolderField: View {
 private struct FolderTreePopover: View {
     let selectedFolder: String
     let onSelect: (String) -> Void
+    @State private var highlighted: String = ""
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                let home = FileManager.default.homeDirectoryForCurrentUser.path
-                FolderTreeRow(path: home, name: "Home", depth: 0, selectedFolder: selectedFolder, onSelect: onSelect, startExpanded: true)
+        VStack(spacing: 0) {
+            HStack {
+                Text("Select Folder")
+                    .font(.system(size: 12, weight: .semibold))
+                Spacer()
+                Button("Done") { dismiss() }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
             }
-            .padding(6)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+
+            Divider()
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    let home = FileManager.default.homeDirectoryForCurrentUser.path
+                    FolderTreeRow(path: home, name: "Home", depth: 0, selectedFolder: highlighted.isEmpty ? selectedFolder : highlighted, onSelect: { path in
+                        highlighted = path
+                        onSelect(path)
+                    }, startExpanded: true)
+                }
+                .padding(6)
+            }
         }
         .frame(width: 420, height: 600)
+        .onAppear { highlighted = selectedFolder }
     }
 }
 
@@ -337,7 +357,7 @@ private struct FolderTreeRow: View {
                 }
                 .buttonStyle(.plain)
 
-                // Folder icon + name: single click toggles, double click selects
+                // Folder icon + name: single click selects, double click toggles expand
                 HStack(spacing: 4) {
                     Image(systemName: path == selectedFolder ? "folder.fill" : "folder")
                         .foregroundStyle(path == selectedFolder ? .green : .blue)
@@ -348,15 +368,15 @@ private struct FolderTreeRow: View {
                 }
                 .contentShape(Rectangle())
                 .onTapGesture(count: 2) {
-                    onSelect(path)
-                }
-                .onTapGesture(count: 1) {
                     if children == nil {
                         children = Self.loadChildrenStatic(path)
                     }
                     withAnimation(.easeInOut(duration: 0.2)) {
                         isExpanded.toggle()
                     }
+                }
+                .onTapGesture(count: 1) {
+                    onSelect(path)
                 }
             }
             .padding(.vertical, 2)
