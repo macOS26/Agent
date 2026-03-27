@@ -95,6 +95,9 @@ final class AgentViewModel {
     var thinkingExpanded: Bool = UserDefaults.standard.object(forKey: "thinkingExpanded") as? Bool ?? false {
         didSet { UserDefaults.standard.set(thinkingExpanded, forKey: "thinkingExpanded") }
     }
+    var thinkingOutputExpanded: Bool = UserDefaults.standard.object(forKey: "thinkingOutputExpanded") as? Bool ?? false {
+        didSet { UserDefaults.standard.set(thinkingOutputExpanded, forKey: "thinkingOutputExpanded") }
+    }
     var isListening = false
 
     // Token tracking

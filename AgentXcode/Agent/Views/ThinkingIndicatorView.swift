@@ -10,7 +10,10 @@ struct ThinkingIndicatorView: View {
         get { viewModel.thinkingExpanded }
         nonmutating set { viewModel.thinkingExpanded = newValue }
     }
-    @State private var showStreamText = false
+    private var showStreamText: Bool {
+        get { viewModel.thinkingOutputExpanded }
+        nonmutating set { viewModel.thinkingOutputExpanded = newValue }
+    }
     @State private var outputHeight: CGFloat = 100
     @State private var dots = ""
     @State private var elapsed: TimeInterval = 0
