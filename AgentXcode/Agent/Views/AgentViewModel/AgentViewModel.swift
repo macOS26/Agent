@@ -89,6 +89,9 @@ final class AgentViewModel {
     var activityLog = ChatHistoryStore.shared.buildActivityLogText(maxTasks: 3)
     var isRunning = false
     var isThinking = false
+    var showThinkingIndicator: Bool = UserDefaults.standard.object(forKey: "showThinkingIndicator") as? Bool ?? true {
+        didSet { UserDefaults.standard.set(showThinkingIndicator, forKey: "showThinkingIndicator") }
+    }
     var isListening = false
 
     // Token tracking

@@ -81,9 +81,14 @@ struct ContentView: View {
                 )
             }
 
-            // Thinking indicator in log area
-            if isActiveThinking {
-                ThinkingIndicatorView()
+            // Thinking indicator in log area (Ctrl+O to toggle)
+            if isActiveThinking && viewModel.showThinkingIndicator {
+                if let selId = viewModel.selectedTabId,
+                   let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+                    ThinkingIndicatorView(viewModel: viewModel, tab: tab)
+                } else {
+                    ThinkingIndicatorView(viewModel: viewModel)
+                }
             }
 
             // Activity Log — switches between main and script tab
@@ -299,6 +304,13 @@ struct ContentView: View {
                 if event.modifierFlags.contains([.command, .shift]),
                    event.charactersIgnoringModifiers == "m" {
                     viewModel.messagesMonitorEnabled.toggle()
+                    return nil
+                }
+
+                // Ctrl+O: Toggle thinking indicator
+                if event.modifierFlags.contains(.control),
+                   event.charactersIgnoringModifiers == "o" {
+                    viewModel.showThinkingIndicator.toggle()
                     return nil
                 }
                 
