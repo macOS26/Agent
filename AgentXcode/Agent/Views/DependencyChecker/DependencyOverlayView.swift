@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct DependencyOverlay: View {
+    @Environment(\.colorScheme) private var colorScheme
     let status: DependencyStatus?
     @Binding var isVisible: Bool
     @State private var showIcon = false
@@ -32,12 +33,12 @@ struct DependencyOverlay: View {
                         .font(.system(size: 22, weight: .black, design: .monospaced))
                         .foregroundStyle(
                             LinearGradient(
-                                colors: [.white, .blue],
+                                colors: colorScheme == .dark ? [.white, .blue] : [.black, .blue],
                                 startPoint: .top,
                                 endPoint: .bottom
                             )
                         )
-                        .shadow(color: .blue, radius: 6)
+                        .shadow(color: .blue, radius: colorScheme == .dark ? 6 : 2)
                         .opacity(showIcon ? 1 : 0)
 
                     Text("Agentic AI for your \u{F8FF} Mac Desktop")
