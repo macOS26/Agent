@@ -445,9 +445,21 @@ extension AgentViewModel {
                             continue
                         }
 
-                        // MARK: Pure file I/O tools (CodingService — no processes)
+                        // MARK: Pure file I/O tools (routed through handleFileTool)
+                        if await handleFileTool(
+                            name: name,
+                            input: input,
+                            toolId: toolId,
+                            appendLog: { [weak self] msg in Task { @MainActor in self?.appendLog(msg) } },
+                            appendRawOutput: { [weak self] msg in Task { @MainActor in self?.appendLog(msg) } },
+                            commandsRun: &commandsRun,
+                            toolResults: &toolResults
+                        ) {
+                            continue
+                        }
 
-                        if name == "read_file" {
+                        // MARK: Legacy file tools (kept for backwards compat — handleFileTool above handles these now)
+                        if false && name == "read_file" {
                             let filePath = input["file_path"] as? String ?? ""
                             let offset = input["offset"] as? Int
                             let limit = input["limit"] as? Int
