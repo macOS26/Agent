@@ -81,6 +81,11 @@ struct ContentView: View {
                 )
             }
 
+            // Thinking indicator in log area
+            if isActiveThinking {
+                ThinkingIndicatorView()
+            }
+
             // Activity Log — switches between main and script tab
             if let selectedId = viewModel.selectedTabId,
                let tab = viewModel.scriptTabs.first(where: { $0.id == selectedId }) {
@@ -372,6 +377,15 @@ struct ContentView: View {
     static func tabColor(for tabId: UUID, in tabs: [ScriptTab]) -> Color {
         guard let idx = tabs.firstIndex(where: { $0.id == tabId }) else { return .orange }
         return tabColors[idx % tabColors.count]
+    }
+
+    /// Whether the active context (selected tab or main) is in thinking state.
+    private var isActiveThinking: Bool {
+        if let selId = viewModel.selectedTabId,
+           let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+            return tab.isLLMThinking
+        }
+        return viewModel.isThinking
     }
 
     /// The prompt of the currently running task (main or selected tab).

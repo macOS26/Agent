@@ -89,6 +89,7 @@
 		AA10000000000000000103 /* RecentFoldersService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000102 /* RecentFoldersService.swift */; };
 		AA10000000000000000104 /* TokenBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000105 /* TokenBadge.swift */; };
 		AA10000000000000000E01 /* ShimmerText.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000E00 /* ShimmerText.swift */; };
+		AA10000000000000000F01 /* ThinkingIndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000F00 /* ThinkingIndicatorView.swift */; };
 		AD0E84FCAA3A3D6AF61ECD16 /* AgentViewModel+TaskExecution+SavedScripts.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4709078FC05AA3587261B14 /* AgentViewModel+TaskExecution+SavedScripts.swift */; };
 		AEB0000000000000000003 /* AppleEventBridges in Frameworks */ = {isa = PBXBuildFile; productRef = AEB0000000000000000002 /* AppleEventBridges */; };
 		BB10000000000000000015 /* AgentViewModel+Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB10000000000000000005 /* AgentViewModel+Helpers.swift */; };
@@ -282,6 +283,7 @@
 		AA10000000000000000102 /* RecentFoldersService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentFoldersService.swift; sourceTree = "<group>"; };
 		AA10000000000000000105 /* TokenBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenBadge.swift; sourceTree = "<group>"; };
 		AA10000000000000000E00 /* ShimmerText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShimmerText.swift; sourceTree = "<group>"; };
+		AA10000000000000000F00 /* ThinkingIndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThinkingIndicatorView.swift; sourceTree = "<group>"; };
 		B4128E21FF13BC4029D6548B /* TaskBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskBannerView.swift; sourceTree = "<group>"; };
 		B4709078FC05AA3587261B14 /* AgentViewModel+TaskExecution+SavedScripts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TaskExecution+SavedScripts.swift"; sourceTree = "<group>"; };
 		BB10000000000000000005 /* AgentViewModel+Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+Helpers.swift"; sourceTree = "<group>"; };
@@ -517,6 +519,7 @@
 				AA1000000000000000001B /* ContentView.swift */,
 				AA1000000000000000005F /* PulseRingView.swift */,
 				AA10000000000000000E00 /* ShimmerText.swift */,
+				AA10000000000000000F00 /* ThinkingIndicatorView.swift */,
 				AA10000000000000000061 /* ActivityLogView.swift */,
 				AA10000000000000000068 /* StatusDotView.swift */,
 				AA100000000000000000B6 /* ToolsView.swift */,
@@ -889,6 +892,7 @@
 				AA10000000000000000063 /* HistoryView.swift in Sources */,
 				AA10000000000000000064 /* PulseRingView.swift in Sources */,
 				AA10000000000000000E01 /* ShimmerText.swift in Sources */,
+				AA10000000000000000F01 /* ThinkingIndicatorView.swift in Sources */,
 				AA10000000000000000065 /* StatusDotView.swift in Sources */,
 				AA10000000000000000101 /* ProjectFolderField.swift in Sources */,
 				AA10000000000000000066 /* ActivityLogView.swift in Sources */,
@@ -1109,7 +1113,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 52;
+				CURRENT_PROJECT_VERSION = 53;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 469UCUB275;
 				ENABLE_APP_SANDBOX = NO;
@@ -1152,7 +1156,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0.51;
+				MARKETING_VERSION = 1.0.52;
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1178,7 +1182,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 52;
+				CURRENT_PROJECT_VERSION = 53;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 469UCUB275;
 				ENABLE_APP_SANDBOX = NO;
@@ -1221,7 +1225,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0.51;
+				MARKETING_VERSION = 1.0.52;
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
