@@ -16,11 +16,7 @@ struct ThinkingIndicatorView: View {
     private let timer = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
 
     private var streamText: String {
-        if let tab {
-            let text = tab.logBuffer + tab.activityLog.suffix(2000)
-            return String(text.suffix(1000))
-        }
-        return String(viewModel.streamBuffer.suffix(1000))
+        return viewModel.rawLLMOutput
     }
 
     private var modelName: String {

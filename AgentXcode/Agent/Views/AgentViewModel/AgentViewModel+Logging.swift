@@ -334,8 +334,12 @@ extension AgentViewModel {
     // MARK: - LLM Streaming
 
     func appendStreamDelta(_ delta: String) {
+        if !streamingTextStarted {
+            rawLLMOutput = ""  // Reset at start of each new stream
+        }
         streamingTextStarted = true
         streamBuffer += delta
+        rawLLMOutput += delta
         scheduleStreamFlush()
     }
 

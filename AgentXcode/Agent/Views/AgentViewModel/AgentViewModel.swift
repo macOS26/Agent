@@ -1027,6 +1027,7 @@ final class AgentViewModel {
 
     // LLM streaming state
     var streamBuffer = ""
+    var rawLLMOutput = ""
     var streamFlushTask: Task<Void, Never>?
     var streamingTextStarted = false
     static let maxLogSize = 60_000
