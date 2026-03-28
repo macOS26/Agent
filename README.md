@@ -10,7 +10,7 @@
 ![Swift](https://img.shields.io/badge/Swift-6.2-orange?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
-**Agentic AI-powered coding and desktop automation.**
+**Agentic AI-powered coding and desktop powered automation.**
 
 [Features](#features) • [Installation](#installation) • [Comparison](#comparison) • [Architecture](#architecture) • [Security](#security)
 
