@@ -89,6 +89,12 @@ final class RecentAgentsService: ObservableObject {
         save()
     }
 
+    /// Remove ALL entries for an agent by name.
+    func removeAgent(name: String) {
+        entries.removeAll { $0.agentName == name }
+        save()
+    }
+
     /// Clear all entries.
     func clearAll() {
         entries.removeAll()

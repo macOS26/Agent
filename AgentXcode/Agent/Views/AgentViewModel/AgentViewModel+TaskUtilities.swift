@@ -601,10 +601,10 @@ extension AgentViewModel {
         tab.isRunning = false
 
         // Only record successful runs to Agents menu
+        let wasCancelled = runResult.status == 15 || runResult.status == 9 || Task.isCancelled
         if success {
             RecentAgentsService.shared.recordRun(agentName: resolved, arguments: arguments, prompt: arguments.isEmpty ? "run \(resolved)" : "run \(resolved) \(arguments)")
-        } else {
-            // Ask user if they want to remove from Agents menu
+        } else if !wasCancelled {
             notifyAgentFailed(name: resolved, arguments: arguments)
         }
         return success

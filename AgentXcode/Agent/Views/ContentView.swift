@@ -184,7 +184,7 @@ struct ContentView: View {
             NewMainTabSheet(viewModel: viewModel)
         }
         .alert("Agent Failed", isPresented: $viewModel.showFailedAgentAlert) {
-            Button("Remove") { RecentAgentsService.shared.removeRun(agentName: viewModel.failedAgentName, arguments: viewModel.failedAgentArgs) }
+            Button("Remove") { RecentAgentsService.shared.removeAgent(name: viewModel.failedAgentName) }
             Button("Keep", role: .cancel) { }
         } message: {
             Text("'\(viewModel.failedAgentName)' failed. Remove from 🦾 Agents menu?")

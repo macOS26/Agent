@@ -1022,9 +1022,10 @@ extension AgentViewModel {
                             flushLog()
 
                             // Only record successful runs to Agents menu
+                            let wasCancelled = runResult.status == 15 || runResult.status == 9 || Task.isCancelled
                             if runResult.status == 0 {
                                 RecentAgentsService.shared.recordRun(agentName: scriptName, arguments: arguments, prompt: arguments.isEmpty ? "run \(scriptName)" : "run \(scriptName) \(arguments)")
-                            } else {
+                            } else if !wasCancelled {
                                 notifyAgentFailed(name: scriptName, arguments: arguments)
                             }
 
