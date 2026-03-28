@@ -81,9 +81,10 @@ extension AgentViewModel {
             }
             let result = await Self.executeTCC(command: fullCmd)
             let wasCancelled = result.status == 15 || result.status == 9
-            if result.status == 0 {
-                RecentAgentsService.shared.recordRun(agentName: scriptName, arguments: arguments, prompt: arguments.isEmpty ? "run \(scriptName)" : "run \(scriptName) \(arguments)")
-            } else if !wasCancelled {
+            let noArgsUsage = arguments.isEmpty && result.status != 0
+            if result.status == 0 && !arguments.isEmpty {
+                RecentAgentsService.shared.recordRun(agentName: scriptName, arguments: arguments, prompt: "run \(scriptName) \(arguments)")
+            } else if result.status != 0 && !wasCancelled && !noArgsUsage {
                 notifyAgentFailed(name: scriptName, arguments: arguments)
             }
             return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
