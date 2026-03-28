@@ -4,7 +4,7 @@
 
 ![Agent!](https://img.shields.io/badge/Agent!-v1.0-blue?style=for-the-badge)
 ![Platform](https://img.shields.io/badge/Platform-macOS%2026%2B-cyan?style=for-the-badge)
-![Swift](https://img.shields.io/badge/Swift-6.0-orange?style=for-the-badge)
+![Swift](https://img.shields.io/badge/Swift-6.2-orange?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 **Your AI-powered coding partner that actually understands macOS.**
@@ -744,7 +744,7 @@ sudo launchctl load /Library/LaunchDaemons/agent.app.toddbruss.helper.plist
 
 **Solutions**:
 1. Ensure Xcode is installed: `xcode-select --install`
-2. Check Swift version: `swift --version` (requires 6.0+)
+2. Check Swift version: `swift --version` (requires 6.2+)
 3. Verify Package.swift syntax
 4. Check for missing imports
 
