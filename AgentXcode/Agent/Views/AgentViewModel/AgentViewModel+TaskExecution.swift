@@ -168,6 +168,12 @@ extension AgentViewModel {
                 if scriptService.compileCommand(name: agentName) != nil {
                     let success = await runAgentDirect(name: agentName, arguments: args)
                     if success {
+                        completionSummary = "Ran \(agentName)"
+                        history.add(TaskRecord(prompt: prompt, summary: completionSummary, commandsRun: ["run_agent: \(agentName)"]), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
+                        ChatHistoryStore.shared.endCurrentTask(summary: completionSummary)
+                        stopProgressUpdates()
+                        flushLog()
+                        persistLogNow()
                         isRunning = false
                         isThinking = false
                         return

@@ -556,6 +556,10 @@ extension AgentViewModel {
             tab = openScriptTab(scriptName: resolved)
         }
 
+        // Mark tab as running (not LLM — direct execution)
+        tab.isRunning = true
+        tab.isLLMRunning = false
+        tab.isLLMThinking = false
         tab.appendLog("--- Direct Run ---")
 
         // Compile only if needed
@@ -566,6 +570,7 @@ extension AgentViewModel {
             if compileResult.status != 0 {
                 tab.appendLog("Compile error:\n\(compileResult.output)")
                 tab.flush()
+                tab.isRunning = false
                 return false
             }
         }
@@ -589,6 +594,7 @@ extension AgentViewModel {
         let statusNote = runResult.status == 0 ? "completed" : "exit code: \(runResult.status)"
         tab.appendLog("\(resolved) \(statusNote)")
         tab.flush()
+        tab.isRunning = false
         return runResult.status == 0
     }
 }
