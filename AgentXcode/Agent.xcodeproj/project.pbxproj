@@ -92,7 +92,6 @@
 		AA10000000000000000F01 /* ThinkingIndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000F00 /* ThinkingIndicatorView.swift */; };
 		AA10000000000000001001 /* RecentAgentsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000001000 /* RecentAgentsService.swift */; };
 		AA10000000000000001201 /* AgentsMenuDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000001200 /* AgentsMenuDelegate.swift */; };
-		AA10000000000000001301 /* ContentView+Notifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000001300 /* ContentView+Notifications.swift */; };
 		AD0E84FCAA3A3D6AF61ECD16 /* AgentViewModel+TaskExecution+SavedScripts.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4709078FC05AA3587261B14 /* AgentViewModel+TaskExecution+SavedScripts.swift */; };
 		AEB0000000000000000003 /* AppleEventBridges in Frameworks */ = {isa = PBXBuildFile; productRef = AEB0000000000000000002 /* AppleEventBridges */; };
 		BB10000000000000000015 /* AgentViewModel+Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB10000000000000000005 /* AgentViewModel+Helpers.swift */; };
@@ -1122,7 +1121,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 56;
+				CURRENT_PROJECT_VERSION = 57;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 469UCUB275;
 				ENABLE_APP_SANDBOX = NO;
@@ -1165,7 +1164,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0.55;
+				MARKETING_VERSION = 1.0.56;
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1191,7 +1190,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 56;
+				CURRENT_PROJECT_VERSION = 57;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 469UCUB275;
 				ENABLE_APP_SANDBOX = NO;
@@ -1234,7 +1233,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0.55;
+				MARKETING_VERSION = 1.0.56;
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

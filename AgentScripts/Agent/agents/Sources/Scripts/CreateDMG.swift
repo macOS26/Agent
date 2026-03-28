@@ -2,8 +2,34 @@ import Foundation
 
 @_cdecl("script_main")
 public func scriptMain() -> Int32 {
-    let args = ProcessInfo.processInfo.arguments
     let fileManager = FileManager.default
+    
+    // Get arguments from AGENT_SCRIPT_ARGS env var or command line
+    let envArgs = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""
+    var args: [String]
+    if envArgs.isEmpty {
+        args = ProcessInfo.processInfo.arguments
+    } else {
+        // Parse the env var string into individual arguments (handle quoted strings)
+        args = ["CreateDmg"] // Add script name as first arg
+        var currentArg = ""
+        var inQuotes = false
+        for char in envArgs {
+            if char == "\"" {
+                inQuotes.toggle()
+            } else if char == " " && !inQuotes {
+                if !currentArg.isEmpty {
+                    args.append(currentArg)
+                    currentArg = ""
+                }
+            } else {
+                currentArg.append(char)
+            }
+        }
+        if !currentArg.isEmpty {
+            args.append(currentArg)
+        }
+    }
     
     // Parse arguments: --app <path> --output <path> [--name <volume-name>] [--size <mb>] [--compress]
     var appPath: String?
