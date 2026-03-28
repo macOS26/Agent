@@ -138,7 +138,6 @@ extension AgentViewModel {
             tab.appendLog("🦾 Running: \(scriptName)")
             tab.isRunning = true
             tab.flush()
-            RecentAgentsService.shared.recordRun(agentName: scriptName, arguments: arguments, prompt: arguments.isEmpty ? "run \(scriptName)" : "run \(scriptName) \(arguments)")
 
             tab.resetLLMStreamCounters()
             let cancelFlag = tab._cancelFlag
@@ -158,6 +157,12 @@ extension AgentViewModel {
             let statusNote = runResult.status == 0 ? "completed" : "exit code: \(runResult.status)"
             tab.appendLog("\(scriptName) \(statusNote)")
             tab.flush()
+
+            if runResult.status == 0 {
+                RecentAgentsService.shared.recordRun(agentName: scriptName, arguments: arguments, prompt: arguments.isEmpty ? "run \(scriptName)" : "run \(scriptName) \(arguments)")
+            } else {
+                RecentAgentsService.shared.removeRun(agentName: scriptName, arguments: arguments)
+            }
 
             let toolOutput = runResult.output.isEmpty
                 ? "(no output, exit code: \(runResult.status))"

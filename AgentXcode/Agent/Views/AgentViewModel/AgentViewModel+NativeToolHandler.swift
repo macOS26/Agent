@@ -79,8 +79,12 @@ extension AgentViewModel {
             if !arguments.isEmpty {
                 fullCmd = "AGENT_SCRIPT_ARGS='\(arguments)' \(cmd)"
             }
-            RecentAgentsService.shared.recordRun(agentName: scriptName, arguments: arguments, prompt: arguments.isEmpty ? "run \(scriptName)" : "run \(scriptName) \(arguments)")
             let result = await Self.executeTCC(command: fullCmd)
+            if result.status == 0 {
+                RecentAgentsService.shared.recordRun(agentName: scriptName, arguments: arguments, prompt: arguments.isEmpty ? "run \(scriptName)" : "run \(scriptName) \(arguments)")
+            } else {
+                RecentAgentsService.shared.removeRun(agentName: scriptName, arguments: arguments)
+            }
             return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
         }
         if name == "read_agent" {

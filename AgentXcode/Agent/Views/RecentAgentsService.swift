@@ -82,6 +82,12 @@ final class RecentAgentsService: ObservableObject {
         save()
     }
 
+    /// Remove a failed agent run from the menu.
+    func removeRun(agentName: String, arguments: String) {
+        entries.removeAll { $0.agentName == agentName && $0.arguments == arguments }
+        save()
+    }
+
     /// Clear all entries.
     func clearAll() {
         entries.removeAll()

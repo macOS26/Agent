@@ -581,7 +581,6 @@ extension AgentViewModel {
 
         tab.appendLog("🦾 Running: \(resolved)")
         tab.flush()
-        RecentAgentsService.shared.recordRun(agentName: resolved, arguments: arguments, prompt: arguments.isEmpty ? "run \(resolved)" : "run \(resolved) \(arguments)")
 
         let cancelFlag = tab._cancelFlag
         let runResult = await scriptService.loadAndRunScriptViaProcess(
@@ -595,11 +594,20 @@ extension AgentViewModel {
         }
 
         tab.flush()
-        let statusNote = runResult.status == 0 ? "completed" : "exit code: \(runResult.status)"
+        let success = runResult.status == 0
+        let statusNote = success ? "completed" : "exit code: \(runResult.status)"
         tab.appendLog("\(resolved) \(statusNote)")
         tab.flush()
         tab.isRunning = false
-        return runResult.status == 0
+
+        // Only record successful runs to Agents menu
+        if success {
+            RecentAgentsService.shared.recordRun(agentName: resolved, arguments: arguments, prompt: arguments.isEmpty ? "run \(resolved)" : "run \(resolved) \(arguments)")
+        } else {
+            // Remove from menu if it was previously recorded
+            RecentAgentsService.shared.removeRun(agentName: resolved, arguments: arguments)
+        }
+        return success
     }
 }
 
