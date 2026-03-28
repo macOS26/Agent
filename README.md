@@ -1,12 +1,14 @@
-# Agent! — The Autonomous macOS 26 AI Assistant
+
 
 <div align="center">
 
-![Agent!](https://img.shields.io/badge/Agent!-v1.0-blue?style=for-the-badge)
+# 🦾 Agent! for macOS
+# 🕵🏻‍♂️ Autonomous AI Assistant 
+
+![Agent!](https://img.shields.io/badge/Agent!-v1.0.RC2-blue?style=for-the-badge)
 ![Platform](https://img.shields.io/badge/Platform-macOS%2026%2B-cyan?style=for-the-badge)
 ![Swift](https://img.shields.io/badge/Swift-6.2-orange?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
-
 **Your AI-powered coding partner that actually understands macOS.**
 
 [Features](#features) • [Installation](#installation) • [Comparison](#comparison) • [Architecture](#architecture) • [Security](#security)
