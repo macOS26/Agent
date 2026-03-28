@@ -107,7 +107,8 @@ final class AgentViewModel {
 
     /// Call when an agent fails — triggers the remove-from-menu alert
     func notifyAgentFailed(name: String, arguments: String) {
-        if RecentAgentsService.shared.entries.contains(where: { $0.agentName == name && $0.arguments == arguments }) {
+        // Check if ANY entry for this agent exists in the menu
+        if RecentAgentsService.shared.entries.contains(where: { $0.agentName == name }) {
             failedAgentName = name
             failedAgentArgs = arguments
             showFailedAgentAlert = true
