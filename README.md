@@ -1,5 +1,5 @@
 # 🦾 Agent! 1.0.64 for macOS
-# 🕵🏻‍♂️ the Autonomous AI Assistant 
+## 🕵🏻‍♂️ the Autonomous AI Assistant 
 
 <div align="center">
 
