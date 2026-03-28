@@ -83,7 +83,7 @@ extension AgentViewModel {
             if result.status == 0 {
                 RecentAgentsService.shared.recordRun(agentName: scriptName, arguments: arguments, prompt: arguments.isEmpty ? "run \(scriptName)" : "run \(scriptName) \(arguments)")
             } else {
-                NotificationCenter.default.post(name: .confirmRemoveAgent, object: nil, userInfo: ["agentName": scriptName, "arguments": arguments])
+                RecentAgentsService.shared.removeRun(agentName: scriptName, arguments: arguments)
             }
             return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
         }
