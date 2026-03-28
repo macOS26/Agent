@@ -8,6 +8,9 @@
 [![GitHub downloads](https://img.shields.io/github/downloads/macOS26/Agent/total.svg)](https://github.com/macOS26/Agent/releases)
 [![GitHub stars](https://img.shields.io/github/stars/macOS26/Agent.svg?style=social)](https://github.com/macOS26/Agent/stargazers)
 
+## Latest source code of Agent! running
+<video src="AgentScriptDarkLight.mp4" width="100%" controls autoplay loop muted playsinline></video> 
+
 ## Agent! running inside a virtual machine
 <img width="1460" height="1031" alt="Screenshot 2026-03-26 at 5 22 43 PM" src="https://github.com/user-attachments/assets/05e25a70-f101-4118-bb07-dbce897ea007" />
 
