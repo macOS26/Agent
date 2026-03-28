@@ -560,6 +560,10 @@ extension AgentViewModel {
         appendLog("Running \(resolved)... (see tab)")
         flushLog()
 
+        // Add to tab's prompt history for up-arrow recall
+        let prompt = arguments.isEmpty ? "run \(resolved)" : "run \(resolved) \(arguments)"
+        tab.addToHistory(prompt)
+
         // Mark tab as running (not LLM — direct execution)
         tab.isRunning = true
         tab.isLLMRunning = false
