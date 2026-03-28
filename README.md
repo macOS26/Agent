@@ -456,38 +456,38 @@ For local LLM support:
 ### Data Flow
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     User Input                               │
-│                           │                                   │
-│                           ▼                                   │
-│                    AgentViewModel                             │
-│                           │                                   │
-│         ┌─────────────────┼─────────────────┐                 │
-│         │                 │                 │                 │
-│         ▼                 ▼                 ▼                 │
-│   Parse Tools        LLM API Call     Tool Responses          │
-│         │                 │                 │                 │
-│         ▼                 ▼                 ▼                 │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐        │
-│  │ Direct Tools │  │ Claude       │  │ Formatted    │        │
-│  │ ──────────── │  │ OpenAI       │  │ Output       │        │
-│  │ CodingService│  │ Ollama       │  │ ActivityLog  │        │
-│  │ XcodeService │  │ Apple Intel. │  │              │        │
-│  │ ScriptService│  └──────────────┘  └──────────────┘        │
-│  │ WebAutomation│                                           │
-│  └──────────────┘                                           │
-│         │                                                    │
-│         ├─────────────┬─────────────┐                        │
-│         ▼             ▼             ▼                        │
-│   Shell Cmds    Root Cmds    Execute Tools                    │
-│         │             │                                        │
-│         ▼             ▼                                        │
-│  ┌──────────────┐  ┌──────────────┐                          │
-│  │ UserService  │  │HelperService │                          │
-│  │ (User XPC)   │  │(Root XPC)    │                          │
-│  └──────────────┘  └──────────────┘                          │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                          User Input                              │
+│                              │                                   │
+│                              ▼                                   │
+│                       AgentViewModel                             │
+│                              │                                   │
+│          ┌───────────────────┼───────────────────┐               │
+│          │                   │                   │               │
+│          ▼                   ▼                   ▼               │
+│    Parse Tools         LLM API Call       Tool Responses         │
+│          │                   │                   │               │
+│          ▼                   ▼                   ▼               │
+│   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐        │
+│   │ Direct Tools │   │ Claude       │   │ Formatted    │        │
+│   │ ──────────── │   │ OpenAI       │   │ Output       │        │
+│   │ CodingService│   │ Ollama       │   │ ActivityLog  │        │
+│   │ XcodeService │   │ Apple Intel. │   │              │        │
+│   │ ScriptService│   └──────────────┘   └──────────────┘        │
+│   │ WebAutomation│                                            │
+│   └──────────────┘                                            │
+│          │                                                     │
+│          ├──────────────┬──────────────┐                       │
+│          ▼              ▼              ▼                       │
+│    Shell Cmds      Root Cmds    Execute Tools                   │
+│          │              │                                     │
+│          ▼              ▼                                     │
+│   ┌──────────────┐  ┌──────────────┐                         │
+│   │ UserService  │  │HelperService │                          │
+│   │ (User XPC)   │  │(Root XPC)    │                          │
+│   └──────────────┘  └──────────────┘                          │
+│                                                                │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 ---
