@@ -34,6 +34,8 @@ Agent! is a **native macOS SwiftUI application** designed from the ground up for
 
 ### What Makes Agent! Different
 
+### What Makes Agent! Different
+
 | Capability | Agent! | Claude Code | Cursor | Cline | OpenClaw |
 |------------|:-------|:------------|:------|:-----|:---------|
 | **Native macOS App** | ✅ SwiftUI | ❌ Terminal CLI | ❌ Electron | ❌ VS Code Ext | ✅ Electron |
@@ -47,14 +49,15 @@ Agent! is a **native macOS SwiftUI application** designed from the ground up for
 | **Apple Intelligence** | ✅ LoRA training | ❌ | ❌ | ❌ | ❌ |
 | **iMessage Remote** | ✅ Built-in | ✅ Via Channels* | ❌ | ❌ | ✅ Via MoltBot* |
 | **Root Operations** | ✅ XPC daemon | ❌ | ❌ | ❌ | ✅ Docker sandbox |
-| **Open Source** | ✅ MIT | ❌ | ❌ | ✅ Apache 2.0 | ❌ |
+| **Open Source** | ✅ MIT License | ⚠️ Partial* | ❌ | ✅ Apache 2.0 | ✅ Open Source* |
 
 **Key Accuracy Notes:**
 - *Claude Code AppleScript: Available via community MCP servers, not built-in
 - *Claude Code Channels: Telegram/Discord messaging added Jan 2026, iMessage via Dispatch
+- *Claude Code Open Source: Some components open source (MCP SDK, CLI tools), core proprietary
 - *Cursor Local: Via OpenRouter or API passthrough, not direct local model support
 - *Cline: Open-source VS Code extension with local model support
-- *OpenClaw: Docker sandbox for isolation, MoltBot for multi-platform messaging
+- *OpenClaw: Open source with permissive license, Docker sandbox for isolation, MoltBot for multi-platform messaging
 ---
 
 ## Features
@@ -350,7 +353,7 @@ For local LLM support:
 | **Scripting** | Swift, AppleScript, JXA | None native |
 | **MCP** | Stdio + HTTP/SSE transports | HTTP/SSE + Stdio |
 | **Remote Control** | Built-in iMessage | Claude Dispatch (separate app) |
-| **Open Source** | ✅ MIT License | ❌ Proprietary |
+| **Open Source** | ✅ MIT License | ⚠️ Partial (MCP SDK, tools open; core proprietary) |
 
 **Verdict**: Claude Code is excellent for terminal-based cross-platform development. Agent! is superior for macOS-specific workflows, Xcode projects, and deep system automation.
 
@@ -403,7 +406,7 @@ For local LLM support:
 | **Messages** | Built-in iMessage remote | Via MoltBot (WhatsApp, Telegram, Discord, Slack, iMessage) |
 | **System Access** | Full access with TCC | Sandboxed Docker containers |
 | **Privacy** | Local processing available | Local-first design |
-| **Open Source** | ✅ MIT License | ❌ Proprietary |
+| **Open Source** | ✅ MIT License | ✅ Open Source (permissive license) |
 
 **Verdict**: OpenClaw excels at privacy-focused automation with local LLM support and sandboxed security. Agent! provides deeper macOS integration with native ScriptingBridge, Xcode project management, and Accessibility API control. Choose OpenClaw for privacy-first workflows; choose Agent! for deep macOS automation and Xcode development.
 
