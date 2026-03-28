@@ -338,9 +338,9 @@ extension AgentViewModel {
             rawLLMOutput = ""
         }
         streamingTextStarted = true
-        // LLM streamed text goes ONLY to rawLLMOutput (thinking indicator)
-        // Activity log only gets tool output and task_complete via appendLog
         rawLLMOutput += delta
+        // Also write to activity log for live rendering via NSTextView
+        activityLog += delta
     }
 
     /// Collapse runs of 3+ newlines to 2 (one blank line max) to prevent huge gaps from chatty models.

@@ -177,9 +177,9 @@ final class ScriptTab: Identifiable {
             llmStreamBuffer = ""
             rawLLMOutput = ""
         }
-        // LLM streamed text goes ONLY to rawLLMOutput (thinking indicator)
-        // Activity log only gets tool output and task_complete via appendLog
         rawLLMOutput += delta
+        // Also write to activity log for live rendering
+        activityLog += delta
     }
 
     func flushStreamBuffer() {
