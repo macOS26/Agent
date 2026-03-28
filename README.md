@@ -419,26 +419,26 @@ For local LLM support:
 ├──────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │   ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────────────┐    │
-│   │  ContentView    │   │  AgentViewModel │   │  ActivityLogView         │    │
+│   │  ContentView    │   │  AgentViewModel │   │  ActivityLogView        │    │
 │   │  (SwiftUI)      │   │  (Main Logic)   │   │  (Output Display)       │    │
 │   └────────┬────────┘   └────────┬────────┘   └─────────────────────────┘    │
 │            │                     │                                           │
-│   ┌────────▼────────┐  ┌─────────▼────────┐   ┌─────────────────────────┐    │
-│   │  InputSection   │   │  LLM Services    │   │  Tool Handlers          │    │
-│   │  (Task Entry)   │   │  (Claude, etc.)  │   │  (60+ tools)            │    │
-│   └─────────────────┘   └──────────────────┘   └─────────────────────────┘    │
+│   ┌────────▼────────┐   ┌────────▼─────────┐   ┌─────────────────────────┐   │
+│   │  InputSection   │   │  LLM Services    │   │  Tool Handlers          │   │
+│   │  (Task Entry)   │   │  (Claude, etc.)  │   │  (60+ tools)            │   │
+│   └─────────────────┘   └──────────────────┘   └─────────────────────────┘   │
 │                                                                              │
 ├──────────────────────────────────────────────────────────────────────────────┤
 │                              Services Layer                                  │
 │                                                                              │
 │   ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ ┌──────────┐   │
-│   │  ScriptService   │ │  CodingService   │ │  XcodeService    │ │ WebAuto  │   │
-│   │  (AgentScript)   │ │  (File Ops)      │ │  (Build/Run)     │ │ (Safari) │   │
+│   │  ScriptService  │ │  CodingService  │ │  XcodeService   │ │ WebAuto  │   │
+│   │  (AgentScript)  │ │  (File Ops)     │ │  (Build/Run)    │ │ (Safari) │   │
 │   └─────────────────┘ └─────────────────┘ └─────────────────┘ └──────────┘   │
 │                                                                              │
 │   ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ ┌──────────┐   │
-│   │ AppleEventSvc    │ │ AccessibilitySvc │ │  MCPService      │ │UserService│   │
-│   │ (ScriptingBr)    │ │ (UI Control)     │ │ (MCP Protocol)   │ │ (XPC)    │   │
+│   │ AppleEventSvc   │ │ AccessibilitySvc│ │  MCPService     │ │UserServic│   │
+│   │ (ScriptingBr)   │ │ (UI Control)    │ │ (MCP Protocol)  │ │ (XPC)    │   │
 │   └─────────────────┘ └─────────────────┘ └─────────────────┘ └──────────┘   │
 │                                                                              │
 ├──────────────────────────────────────────────────────────────────────────────┤
@@ -446,8 +446,8 @@ For local LLM support:
 │                                                                              │
 │   ┌────────────────────────────┐   ┌────────────────────────────────────┐    │
 │   │  UserService (LaunchAgent) │   │  HelperService (LaunchDaemon)      │    │
-│   │  agent.app.toddbruss.user   │   │  agent.app.toddbruss.helper        │    │
-│   │      (User Context)         │   │        (Root Context)              │    │
+│   │  agent.app.toddbruss.user  │   │  agent.app.toddbruss.helper        │    │
+│   │      (User Context)        │   │        (Root Context)              │    │
 │   └────────────────────────────┘   └────────────────────────────────────┘    │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
@@ -468,25 +468,25 @@ For local LLM support:
 │    Parse Tools         LLM API Call       Tool Responses         │
 │          │                   │                   │               │
 │          ▼                   ▼                   ▼               │
-│   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐        │
-│   │ Direct Tools │   │ Claude       │   │ Formatted    │        │
-│   │ ──────────── │   │ OpenAI       │   │ Output       │        │
-│   │ CodingService│   │ Ollama       │   │ ActivityLog  │        │
-│   │ XcodeService │   │ Apple Intel. │   │              │        │
-│   │ ScriptService│   └──────────────┘   └──────────────┘        │
-│   │ WebAutomation│                                            │
-│   └──────────────┘                                            │
-│          │                                                     │
-│          ├──────────────┬──────────────┐                       │
-│          ▼              ▼              ▼                       │
-│    Shell Cmds      Root Cmds    Execute Tools                   │
-│          │              │                                     │
-│          ▼              ▼                                     │
-│   ┌──────────────┐  ┌──────────────┐                         │
-│   │ UserService  │  │HelperService │                          │
-│   │ (User XPC)   │  │(Root XPC)    │                          │
-│   └──────────────┘  └──────────────┘                          │
-│                                                                │
+│   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐         │
+│   │ Direct Tools │   │ Claude       │   │ Formatted    │         │
+│   │ ──────────── │   │ OpenAI       │   │ Output       │         │
+│   │ CodingService│   │ Ollama       │   │ ActivityLog  │         │
+│   │ XcodeService │   │ Apple Intel. │   │              │         │
+│   │ ScriptService│   └──────────────┘   └──────────────┘         │
+│   │ WebAutomation│                                               │
+│   └──────────────┘                                               │
+│          │                                                       │
+│          ├──────────────┬──────────────┐                         │
+│          ▼              ▼              ▼                         │
+│    Shell Cmds      Root Cmds    Execute Tools                    │
+│          │              │                                        │
+│          ▼              ▼                                        │
+│   ┌──────────────┐  ┌──────────────┐                             │
+│   │ UserService  │  │HelperService │                             │
+│   │ (User XPC)   │  │(Root XPC)    │                             │
+│   └──────────────┘  └──────────────┘                             │
+│                                                                  │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
