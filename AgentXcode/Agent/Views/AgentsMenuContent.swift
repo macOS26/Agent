@@ -82,4 +82,5 @@ struct AgentsMenuContent: View {
 extension Notification.Name {
     static let populateTaskInput = Notification.Name("populateTaskInput")
     static let runTaskImmediately = Notification.Name("runTaskImmediately")
+    static let runAgentDirect = Notification.Name("runAgentDirect")
 }

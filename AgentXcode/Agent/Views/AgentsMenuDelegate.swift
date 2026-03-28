@@ -98,7 +98,8 @@ final class AgentsMenuDelegate: NSObject, NSMenuDelegate {
 
     @objc private func playAgent(_ sender: NSMenuItem) {
         guard let prompt = sender.representedObject as? String else { return }
-        NotificationCenter.default.post(name: .runTaskImmediately, object: nil, userInfo: ["prompt": prompt])
+        // Run agent directly — skip the LLM, just compile and execute
+        NotificationCenter.default.post(name: .runAgentDirect, object: nil, userInfo: ["prompt": prompt])
     }
 
     @objc private func editAgent(_ sender: NSMenuItem) {

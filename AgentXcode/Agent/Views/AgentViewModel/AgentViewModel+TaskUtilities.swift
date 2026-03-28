@@ -533,5 +533,60 @@ extension AgentViewModel {
             return false
         }
     }
+
+    // MARK: - Direct Agent Execution (no LLM)
+
+    /// Run an agent script directly — skips the LLM entirely.
+    /// Compiles only if the dylib is out of date, then executes.
+    func runAgentDirect(name: String, arguments: String = "") async {
+        let resolved = scriptService.resolveScriptName(name)
+        guard let compileCmd = scriptService.compileCommand(name: resolved) else {
+            appendLog("Error: agent '\(resolved)' not found.")
+            return
+        }
+
+        // Open or reuse a tab for this agent
+        let tab: ScriptTab
+        if let existing = scriptTabs.first(where: { $0.scriptName == resolved }) {
+            tab = existing
+            selectedTabId = tab.id
+        } else {
+            tab = openScriptTab(scriptName: resolved)
+        }
+
+        tab.appendLog("--- Direct Run ---")
+
+        // Compile only if needed
+        if !scriptService.isDylibCurrent(name: resolved) {
+            tab.appendLog("🦾 Compiling: \(resolved)")
+            tab.flush()
+            let compileResult = await userService.execute(command: compileCmd)
+            if compileResult.status != 0 {
+                tab.appendLog("Compile error:\n\(compileResult.output)")
+                tab.flush()
+                return
+            }
+        }
+
+        tab.appendLog("🦾 Running: \(resolved)")
+        tab.flush()
+        RecentAgentsService.shared.recordRun(agentName: resolved, arguments: arguments, prompt: arguments.isEmpty ? "run \(resolved)" : "run \(resolved) \(arguments)")
+
+        let cancelFlag = tab._cancelFlag
+        let runResult = await scriptService.loadAndRunScriptViaProcess(
+            name: resolved,
+            arguments: arguments,
+            isCancelled: { cancelFlag.value }
+        ) { [weak tab] chunk in
+            Task { @MainActor in
+                tab?.appendOutput(chunk)
+            }
+        }
+
+        tab.flush()
+        let statusNote = runResult.status == 0 ? "completed" : "exit code: \(runResult.status)"
+        tab.appendLog("\(resolved) \(statusNote)")
+        tab.flush()
+    }
 }
 

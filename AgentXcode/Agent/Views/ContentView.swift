@@ -212,6 +212,17 @@ struct ContentView: View {
                 }
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .runAgentDirect)) { notification in
+            if let prompt = notification.userInfo?["prompt"] as? String {
+                // Parse "run AgentName args" → extract name and args
+                let parts = prompt.components(separatedBy: " ")
+                let name = parts.count > 1 ? parts[1] : prompt
+                let args = parts.count > 2 ? parts.dropFirst(2).joined(separator: " ") : ""
+                Task {
+                    await viewModel.runAgentDirect(name: name, arguments: args)
+                }
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .appWillQuit)) { _ in
             viewModel.stopAll()
             viewModel.stopMessagesMonitor()
