@@ -117,23 +117,23 @@ struct ThinkingIndicatorView: View {
                             .foregroundStyle(.secondary)
                     }
 
-                    // Stream text disclosure
-                    Button {
+                    // Stream text disclosure — entire row is clickable
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundStyle(.secondary)
+                            .rotationEffect(.degrees(showStreamText ? 90 : 0))
+                        Label("LLM Output", systemImage: "text.bubble")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                    }
+                    .contentShape(Rectangle())
+                    .onTapGesture {
                         withAnimation(.easeInOut(duration: 0.2)) {
                             showStreamText.toggle()
                         }
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 8, weight: .bold))
-                                .foregroundStyle(.secondary)
-                                .rotationEffect(.degrees(showStreamText ? 90 : 0))
-                            Label("LLM Output", systemImage: "text.bubble")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
                     }
-                    .buttonStyle(.plain)
 
                     if showStreamText {
                         LLMOutputBox(text: streamText, height: $outputHeight)
