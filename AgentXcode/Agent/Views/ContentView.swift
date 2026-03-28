@@ -24,9 +24,6 @@ struct ContentView: View {
     @State private var showAccessibility = false
     @State private var showQuitConfirm = false
     @State private var showClearConfirm = false
-    @State private var showRemoveAgentConfirm = false
-    @State private var removeAgentName = ""
-    @State private var removeAgentArgs = ""
     @State private var showNewTabSheet = false
     @State private var showServices = false
     @State private var showAppleAIBanner = false
@@ -85,14 +82,7 @@ struct ContentView: View {
             }
 
             // Thinking indicator in log area — always visible while LLM is active
-            if isActiveRunning && viewModel.showThinkingIndicator {
-                if let selId = viewModel.selectedTabId,
-                   let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
-                    ThinkingIndicatorView(viewModel: viewModel, tab: tab)
-                } else {
-                    ThinkingIndicatorView(viewModel: viewModel)
-                }
-            }
+            thinkingIndicator
 
             // Activity Log — switches between main and script tab
             if let selectedId = viewModel.selectedTabId,
@@ -193,58 +183,7 @@ struct ContentView: View {
         .sheet(isPresented: $showNewTabSheet) {
             NewMainTabSheet(viewModel: viewModel)
         }
-        .onReceive(NotificationCenter.default.publisher(for: .populateTaskInput)) { notification in
-            if let prompt = notification.userInfo?["prompt"] as? String {
-                if let selId = viewModel.selectedTabId,
-                   let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
-                    tab.taskInput = prompt
-                } else {
-                    viewModel.taskInput = prompt
-                }
-            }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .runTaskImmediately)) { notification in
-            if let prompt = notification.userInfo?["prompt"] as? String {
-                if let selId = viewModel.selectedTabId,
-                   let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
-                    tab.taskInput = prompt
-                    viewModel.runTabTask(tab: tab)
-                } else {
-                    viewModel.taskInput = prompt
-                    viewModel.run()
-                }
-            }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .runAgentDirect)) { notification in
-            if let prompt = notification.userInfo?["prompt"] as? String {
-                // Parse "run AgentName args" → extract name and args
-                let parts = prompt.components(separatedBy: " ")
-                let name = parts.count > 1 ? parts[1] : prompt
-                let args = parts.count > 2 ? parts.dropFirst(2).joined(separator: " ") : ""
-                Task {
-                    await viewModel.runAgentDirect(name: name, arguments: args)
-                }
-            }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .confirmRemoveAgent)) { notification in
-            if let name = notification.userInfo?["agentName"] as? String,
-               let args = notification.userInfo?["arguments"] as? String {
-                // Only ask if this agent is actually in the menu
-                if RecentAgentsService.shared.entries.contains(where: { $0.agentName == name && $0.arguments == args }) {
-                    removeAgentName = name
-                    removeAgentArgs = args
-                    showRemoveAgentConfirm = true
-                }
-            }
-        }
-        .alert("Agent Failed", isPresented: $showRemoveAgentConfirm) {
-            Button("Remove", role: .destructive) {
-                RecentAgentsService.shared.removeRun(agentName: removeAgentName, arguments: removeAgentArgs)
-            }
-            Button("Keep", role: .cancel) { }
-        } message: {
-            Text("'\(removeAgentName)' failed. Remove from Agents menu?")
-        }
+        .background { NotificationLayer(viewModel: viewModel) }
         .onReceive(NotificationCenter.default.publisher(for: .appWillQuit)) { _ in
             viewModel.stopAll()
             viewModel.stopMessagesMonitor()
@@ -444,6 +383,18 @@ struct ContentView: View {
     static func tabColor(for tabId: UUID, in tabs: [ScriptTab]) -> Color {
         guard let idx = tabs.firstIndex(where: { $0.id == tabId }) else { return .orange }
         return tabColors[idx % tabColors.count]
+    }
+
+    @ViewBuilder
+    private var thinkingIndicator: some View {
+        if isActiveRunning && viewModel.showThinkingIndicator {
+            if let selId = viewModel.selectedTabId,
+               let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+                ThinkingIndicatorView(viewModel: viewModel, tab: tab)
+            } else {
+                ThinkingIndicatorView(viewModel: viewModel)
+            }
+        }
     }
 
     /// Whether the active context (selected tab or main) is in thinking state.

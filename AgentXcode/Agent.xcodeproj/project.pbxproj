@@ -93,6 +93,7 @@
 		AA10000000000000001001 /* RecentAgentsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000001000 /* RecentAgentsService.swift */; };
 		AA10000000000000001101 /* AgentsMenuContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000001100 /* AgentsMenuContent.swift */; };
 		AA10000000000000001201 /* AgentsMenuDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000001200 /* AgentsMenuDelegate.swift */; };
+		AA10000000000000001301 /* ContentView+Notifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000001300 /* ContentView+Notifications.swift */; };
 		AD0E84FCAA3A3D6AF61ECD16 /* AgentViewModel+TaskExecution+SavedScripts.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4709078FC05AA3587261B14 /* AgentViewModel+TaskExecution+SavedScripts.swift */; };
 		AEB0000000000000000003 /* AppleEventBridges in Frameworks */ = {isa = PBXBuildFile; productRef = AEB0000000000000000002 /* AppleEventBridges */; };
 		BB10000000000000000015 /* AgentViewModel+Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB10000000000000000005 /* AgentViewModel+Helpers.swift */; };
