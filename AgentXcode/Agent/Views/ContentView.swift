@@ -24,6 +24,9 @@ struct ContentView: View {
     @State private var showAccessibility = false
     @State private var showQuitConfirm = false
     @State private var showClearConfirm = false
+    @State private var showRemoveAgentConfirm = false
+    @State private var removeAgentName = ""
+    @State private var removeAgentArgs = ""
     @State private var showNewTabSheet = false
     @State private var showServices = false
     @State private var showAppleAIBanner = false
@@ -222,6 +225,25 @@ struct ContentView: View {
                     await viewModel.runAgentDirect(name: name, arguments: args)
                 }
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .confirmRemoveAgent)) { notification in
+            if let name = notification.userInfo?["agentName"] as? String,
+               let args = notification.userInfo?["arguments"] as? String {
+                // Only ask if this agent is actually in the menu
+                if RecentAgentsService.shared.entries.contains(where: { $0.agentName == name && $0.arguments == args }) {
+                    removeAgentName = name
+                    removeAgentArgs = args
+                    showRemoveAgentConfirm = true
+                }
+            }
+        }
+        .alert("Agent Failed", isPresented: $showRemoveAgentConfirm) {
+            Button("Remove", role: .destructive) {
+                RecentAgentsService.shared.removeRun(agentName: removeAgentName, arguments: removeAgentArgs)
+            }
+            Button("Keep", role: .cancel) { }
+        } message: {
+            Text("'\(removeAgentName)' failed. Remove from Agents menu?")
         }
         .onReceive(NotificationCenter.default.publisher(for: .appWillQuit)) { _ in
             viewModel.stopAll()

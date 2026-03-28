@@ -604,8 +604,8 @@ extension AgentViewModel {
         if success {
             RecentAgentsService.shared.recordRun(agentName: resolved, arguments: arguments, prompt: arguments.isEmpty ? "run \(resolved)" : "run \(resolved) \(arguments)")
         } else {
-            // Remove from menu if it was previously recorded
-            RecentAgentsService.shared.removeRun(agentName: resolved, arguments: arguments)
+            // Ask user if they want to remove from Agents menu
+            NotificationCenter.default.post(name: .confirmRemoveAgent, object: nil, userInfo: ["agentName": resolved, "arguments": arguments])
         }
         return success
     }
