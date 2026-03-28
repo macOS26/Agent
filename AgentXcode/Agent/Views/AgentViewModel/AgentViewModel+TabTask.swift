@@ -84,7 +84,7 @@ extension AgentViewModel {
         var directCommandContext: String?
 
         tab.appendLog("--- Tab Task ---")
-        tab.appendLog("User: \(prompt)")
+        tab.appendLog("🧑 \(prompt)")
         tab.flush()
 
         // Triage: direct commands and Apple AI conversation (same as main task)
@@ -202,7 +202,7 @@ extension AgentViewModel {
 
         let (provider, modelId) = resolvedLLMConfig(for: tab)
         tabTaskLog.info("[\(tab.displayTitle)] resolved LLM: \(provider.displayName) / \(modelId)")
-        tab.appendLog("Model: \(provider.displayName) / \(modelId)")
+        tab.appendLog("🧠 \(provider.displayName) / \(modelId)")
         tab.flush()
 
         let mt = maxTokens

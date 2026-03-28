@@ -33,7 +33,7 @@ extension AgentViewModel {
         // All tool groups available — user controls via UI toggles
         let activeGroups: Set<String>? = nil
         appendLog("--- New Task ---")
-        appendLog("User: \(prompt)")
+        appendLog("🧑 \(prompt)")
 
         // Use ChatHistoryStore for LLM context (summaries for older tasks, full messages for recent)
         let historyContext = ChatHistoryStore.shared.buildLLMContext()
@@ -69,7 +69,7 @@ extension AgentViewModel {
             modelName = "Apple Intelligence"
             isVision = false
         }
-        appendLog("Model: \(provider.displayName) / \(modelName)\(isVision ? " (vision)" : "")")
+        appendLog("🧠 \(provider.displayName) / \(modelName)\(isVision ? " (vision)" : "")")
 
         // Start training data capture for Apple AI LoRA fine-tuning (only when toggle is on)
         if AppleIntelligenceMediator.shared.trainingEnabled {
