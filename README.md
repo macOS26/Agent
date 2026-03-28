@@ -456,26 +456,38 @@ For local LLM support:
 ### Data Flow
 
 ```
-User Input → AgentViewModel
-                 │
-                 ├── Parse for tool calls
-                 │         │
-                 │         ├── Direct tools → Execute in-app
-                 │         │         ├── CodingService (file ops)
-                 │         │         ├── XcodeService (build/run)
-                 │         │         ├── ScriptService (AgentScript)
-                 │         │         └── WebAutomationService
-                 │         │
-                 │         ├── Shell commands → UserService XPC
-                 │         └── Root commands → HelperService XPC
-                 │
-                 ├── LLM API call
-                 │         ├── ClaudeService
-                 │         ├── OpenAICompatibleService
-                 │         ├── OllamaService
-                 │         └── FoundationModelService (Apple Intelligence)
-                 │
-                 └── Tool responses → Formatted output → ActivityLogView
+┌─────────────────────────────────────────────────────────────┐
+│                     User Input                               │
+│                           │                                   │
+│                           ▼                                   │
+│                    AgentViewModel                             │
+│                           │                                   │
+│         ┌─────────────────┼─────────────────┐                 │
+│         │                 │                 │                 │
+│         ▼                 ▼                 ▼                 │
+│   Parse Tools        LLM API Call     Tool Responses          │
+│         │                 │                 │                 │
+│         ▼                 ▼                 ▼                 │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐        │
+│  │ Direct Tools │  │ Claude       │  │ Formatted    │        │
+│  │ ──────────── │  │ OpenAI       │  │ Output       │        │
+│  │ CodingService│  │ Ollama       │  │ ActivityLog  │        │
+│  │ XcodeService │  │ Apple Intel. │  │              │        │
+│  │ ScriptService│  └──────────────┘  └──────────────┘        │
+│  │ WebAutomation│                                           │
+│  └──────────────┘                                           │
+│         │                                                    │
+│         ├─────────────┬─────────────┐                        │
+│         ▼             ▼             ▼                        │
+│   Shell Cmds    Root Cmds    Execute Tools                    │
+│         │             │                                        │
+│         ▼             ▼                                        │
+│  ┌──────────────┐  ┌──────────────┐                          │
+│  │ UserService  │  │HelperService │                          │
+│  │ (User XPC)   │  │(Root XPC)    │                          │
+│  └──────────────┘  └──────────────┘                          │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
