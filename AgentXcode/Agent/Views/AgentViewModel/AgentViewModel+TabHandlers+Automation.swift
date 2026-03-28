@@ -27,7 +27,7 @@ extension AgentViewModel {
 
             guard !Task.isCancelled else { return TabToolResult(toolResult: nil, isComplete: false) }
 
-            if result.status != 0 {
+            if result.status > 0 {
                 tab.appendLog("exit code: \(result.status)")
             }
 

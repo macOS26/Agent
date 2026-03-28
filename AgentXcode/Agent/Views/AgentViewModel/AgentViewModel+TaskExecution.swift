@@ -728,7 +728,7 @@ extension AgentViewModel {
                             // Don't log results if task was cancelled
                             guard !Task.isCancelled else { break }
 
-                            if result.status != 0 {
+                            if result.status > 0 {
                                 appendLog("exit code: \(result.status)")
                             }
 
@@ -782,7 +782,7 @@ extension AgentViewModel {
                                 guard !Task.isCancelled else { break }
                                 let output = result.output.isEmpty ? "(no output)" : result.output
                                 batchOutput += "[\(idx + 1)] $ \(rawCmd)\n"
-                                if result.status != 0 { batchOutput += "exit code: \(result.status)\n" }
+                                if result.status > 0 { batchOutput += "exit code: \(result.status)\n" }
                                 batchOutput += output + "\n\n"
                             }
                             let truncatedBatch = batchOutput.count > 50_000

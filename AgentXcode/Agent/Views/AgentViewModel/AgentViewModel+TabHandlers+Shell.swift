@@ -39,7 +39,7 @@ extension AgentViewModel {
 
                 let output = result.output.isEmpty ? "(no output)" : result.output
                 batchOutput += "[\(idx + 1)] $ \(rawCmd)\n"
-                if result.status != 0 { batchOutput += "exit code: \(result.status)\n" }
+                if result.status > 0 { batchOutput += "exit code: \(result.status)\n" }
                 batchOutput += output + "\n\n"
             }
             // Truncate if batch output is too large
@@ -136,7 +136,7 @@ extension AgentViewModel {
 
             guard !Task.isCancelled else { return TabToolResult(toolResult: nil, isComplete: false) }
 
-            if result.status != 0 {
+            if result.status > 0 {
                 tab.appendLog("exit code: \(result.status)")
             }
 
