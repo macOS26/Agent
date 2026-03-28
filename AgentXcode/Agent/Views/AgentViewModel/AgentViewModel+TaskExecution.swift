@@ -954,6 +954,9 @@ extension AgentViewModel {
                                 tab = openScriptTab(scriptName: scriptName)
                             }
 
+                            // Add to tab history for up-arrow recall
+                            tab.addToHistory(prompt)
+
                             // Brief note in main log
                             appendLog("Running \(scriptName)... (see tab)")
                             flushLog()
@@ -1054,6 +1057,7 @@ extension AgentViewModel {
                             } else {
                                 tab = openScriptTab(scriptName: "osascript")
                             }
+                            tab.addToHistory(prompt)
                             appendLog("🍏 osascript (see tab)")
                             flushLog()
                             tab.appendLog("🍏 \(script)")
@@ -1104,6 +1108,7 @@ extension AgentViewModel {
                             } else {
                                 tab = openScriptTab(scriptName: "javascript")
                             }
+                            tab.addToHistory(prompt)
                             appendLog("🟨 JXA (see tab)")
                             flushLog()
                             tab.appendLog("🟨 \(script.prefix(80))...")
@@ -1181,6 +1186,7 @@ extension AgentViewModel {
                             } else {
                                 tab = openScriptTab(scriptName: "applescript")
                             }
+                            tab.addToHistory(prompt)
                             appendLog("🍎 AppleScript (see tab)")
                             flushLog()
                             tab.appendLog("🍎 AppleScript:\n\(source)")
@@ -1249,6 +1255,7 @@ extension AgentViewModel {
                             } else {
                                 tab = openScriptTab(scriptName: "applescript")
                             }
+                            tab.addToHistory(prompt)
                             appendLog("🍎 Running saved: \(scriptName) (see tab)")
                             flushLog()
                             tab.appendLog("🍎 \(scriptName)")
@@ -1313,6 +1320,7 @@ extension AgentViewModel {
                             } else {
                                 tab = openScriptTab(scriptName: "javascript")
                             }
+                            tab.addToHistory(prompt)
                             appendLog("🟨 Running saved: \(scriptName) (see tab)")
                             flushLog()
                             tab.appendLog("🟨 \(scriptName)")
