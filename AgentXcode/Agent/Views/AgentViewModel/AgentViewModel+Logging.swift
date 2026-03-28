@@ -335,12 +335,12 @@ extension AgentViewModel {
 
     func appendStreamDelta(_ delta: String) {
         if !streamingTextStarted {
-            rawLLMOutput = ""  // Reset at start of each new stream
+            rawLLMOutput = ""
         }
         streamingTextStarted = true
-        streamBuffer += delta
+        // LLM streamed text goes ONLY to rawLLMOutput (thinking indicator)
+        // Activity log only gets tool output and task_complete via appendLog
         rawLLMOutput += delta
-        scheduleStreamFlush()
     }
 
     /// Collapse runs of 3+ newlines to 2 (one blank line max) to prevent huge gaps from chatty models.
@@ -362,8 +362,8 @@ extension AgentViewModel {
     private func scheduleStreamFlush() {
         guard streamFlushTask == nil else { return }
         streamFlushTask = Task {
-            // Use 150ms debounce for smoother streaming - balances responsiveness with UI performance
-            try? await Task.sleep(for: .milliseconds(150))
+            // Use 50ms debounce for near-instant streaming
+            try? await Task.sleep(for: .milliseconds(50))
             self.streamFlushTask = nil
             if !self.streamBuffer.isEmpty {
                 let collapsed = Self.collapseNewlines(self.streamBuffer)
