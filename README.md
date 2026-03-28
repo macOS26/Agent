@@ -432,7 +432,8 @@ Agent! implements a **defense-in-depth security model**:
 ### Prerequisites
 
 - macOS 26.0 or later
-- Xcode 16.0 or later (for AgentScript compilation)
+- Xcode Command Line Tools, only dependency, Swift 6.2
+- Appls Intelligence optional, Moderator
 - API key for your preferred LLM provider
 
 ### Setup
