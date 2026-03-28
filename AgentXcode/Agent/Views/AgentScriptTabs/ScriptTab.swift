@@ -146,7 +146,7 @@ final class ScriptTab: Identifiable {
     private func scheduleFlush() {
         guard logFlushTask == nil else { return }
         logFlushTask = Task {
-            try? await Task.sleep(for: .milliseconds(200))
+            try? await Task.sleep(for: .milliseconds(16))
             flush()
         }
     }
@@ -201,7 +201,7 @@ final class ScriptTab: Identifiable {
     private func scheduleLLMStreamFlush() {
         guard llmStreamFlushTask == nil else { return }
         llmStreamFlushTask = Task {
-            try? await Task.sleep(for: .milliseconds(100))
+            try? await Task.sleep(for: .milliseconds(16))
             flushStreamBuffer()
         }
     }

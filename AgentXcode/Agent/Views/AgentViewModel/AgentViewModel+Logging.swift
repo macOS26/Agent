@@ -362,8 +362,8 @@ extension AgentViewModel {
     private func scheduleStreamFlush() {
         guard streamFlushTask == nil else { return }
         streamFlushTask = Task {
-            // Use 50ms debounce for near-instant streaming
-            try? await Task.sleep(for: .milliseconds(50))
+            // Minimal debounce — one frame
+            try? await Task.sleep(for: .milliseconds(16))
             self.streamFlushTask = nil
             if !self.streamBuffer.isEmpty {
                 let collapsed = Self.collapseNewlines(self.streamBuffer)
@@ -393,8 +393,8 @@ extension AgentViewModel {
     private func scheduleLogFlush() {
         guard logFlushTask == nil else { return }
         logFlushTask = Task {
-            // Use 200ms debounce for log entries - less frequent updates
-            try? await Task.sleep(for: .milliseconds(200))
+            // Minimal debounce — just yield to coalesce rapid-fire updates
+            try? await Task.sleep(for: .milliseconds(16))
             flushLog()
         }
     }
