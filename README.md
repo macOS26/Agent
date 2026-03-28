@@ -1,4 +1,4 @@
-# Agent! — The Autonomous macOS 26 AI Assistant
+# 🦾 Agent! 1.0.64 for macOS — The Autonomous macOS AI Assistant
 
 <div align="center">
 
