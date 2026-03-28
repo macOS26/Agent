@@ -33,7 +33,7 @@ extension AgentViewModel {
         // All tool groups available — user controls via UI toggles
         let activeGroups: Set<String>? = nil
         appendLog("--- New Task ---")
-        appendLog("🧑 \(prompt)")
+        appendLog("👤 \(prompt)")
 
         // Use ChatHistoryStore for LLM context (summaries for older tasks, full messages for recent)
         let historyContext = ChatHistoryStore.shared.buildLLMContext()

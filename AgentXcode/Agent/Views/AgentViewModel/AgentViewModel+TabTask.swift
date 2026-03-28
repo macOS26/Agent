@@ -84,7 +84,7 @@ extension AgentViewModel {
         var directCommandContext: String?
 
         tab.appendLog("--- Tab Task ---")
-        tab.appendLog("🧑 \(prompt)")
+        tab.appendLog("👤 \(prompt)")
         tab.flush()
 
         // Triage: direct commands and Apple AI conversation (same as main task)
