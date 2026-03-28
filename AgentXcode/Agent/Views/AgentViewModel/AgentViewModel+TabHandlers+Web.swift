@@ -24,13 +24,13 @@ extension AgentViewModel {
             }
             let browserStr = input["browser"] as? String ?? "safari"
             let browser = WebAutomationService.BrowserType(rawValue: browserStr) ?? .safari
-            tab.appendLog("Opening \(urlString) in \(browser.rawValue)...")
+            tab.appendLog("🌐 \(urlString) in \(browser.rawValue)...")
             tab.flush()
             do {
                 let output = try await WebAutomationService.shared.open(url: url, browser: browser)
                 tab.appendLog(output)
             } catch {
-                tab.appendLog("Error: \(error.localizedDescription)")
+                tab.appendLog("❌ \(error.localizedDescription)")
             }
             tab.flush()
             return TabToolResult(
@@ -44,7 +44,7 @@ extension AgentViewModel {
             let timeout = input["timeout"] as? Double ?? 10.0
             let fuzzyThreshold = input["fuzzyThreshold"] as? Double ?? 0.6
             let appBundleId = input["appBundleId"] as? String
-            tab.appendLog("Finding: \(selector)...")
+            tab.appendLog("🔍 \(selector)...")
             tab.flush()
             // If it looks like plain text (not CSS selector), search for clickable elements containing that text
             let isPlainText = !selector.contains(".") && !selector.contains("#") && !selector.contains("[") && !selector.contains(":") && !selector.contains("/") && !selector.contains(">")
@@ -112,7 +112,7 @@ extension AgentViewModel {
             let strategyStr = input["strategy"] as? String ?? "auto"
             let strategy = SelectorStrategy(rawValue: strategyStr) ?? .auto
             let appBundleId = input["appBundleId"] as? String
-            tab.appendLog("Clicking element: \(selector)...")
+            tab.appendLog("👆 \(selector)...")
             tab.flush()
             do {
                 let output = try await WebAutomationService.shared.click(
@@ -120,7 +120,7 @@ extension AgentViewModel {
                 )
                 tab.appendLog(output)
             } catch {
-                tab.appendLog("Error: \(error.localizedDescription)")
+                tab.appendLog("❌ \(error.localizedDescription)")
             }
             tab.flush()
             return TabToolResult(
@@ -135,7 +135,7 @@ extension AgentViewModel {
             let strategy = SelectorStrategy(rawValue: strategyStr) ?? .auto
             let verify = input["verify"] as? Bool ?? true
             let appBundleId = input["appBundleId"] as? String
-            tab.appendLog("Typing \(text.count) chars into: \(selector)...")
+            tab.appendLog("⌨️ \(text.count) chars into: \(selector)...")
             tab.flush()
             do {
                 let output = try await WebAutomationService.shared.type(
@@ -143,7 +143,7 @@ extension AgentViewModel {
                 )
                 tab.appendLog(output)
             } catch {
-                tab.appendLog("Error: \(error.localizedDescription)")
+                tab.appendLog("❌ \(error.localizedDescription)")
             }
             tab.flush()
             return TabToolResult(
@@ -154,7 +154,7 @@ extension AgentViewModel {
         case "web_execute_js":
             let script = input["script"] as? String ?? input["query"] as? String ?? ""
             let browser = input["browser"] as? String
-            tab.appendLog("Executing JavaScript...")
+            tab.appendLog("📜 JavaScript...")
             tab.flush()
             // Wrap script to ensure result is captured as JSON string
             // Safari's do JavaScript returns the last expression value, not return statements
@@ -187,7 +187,7 @@ extension AgentViewModel {
 
         case "web_get_url":
             let browser = input["browser"] as? String
-            tab.appendLog("Getting page URL...")
+            tab.appendLog("🔗 page URL...")
             tab.flush()
             let url = await WebAutomationService.shared.getPageURL(browser: browser)
             tab.appendLog(url)
@@ -196,7 +196,7 @@ extension AgentViewModel {
 
         case "web_get_title":
             let browser = input["browser"] as? String
-            tab.appendLog("Getting page title...")
+            tab.appendLog("📝 page title...")
             tab.flush()
             let title = await WebAutomationService.shared.getPageTitle(browser: browser)
             tab.appendLog(title)
@@ -206,7 +206,7 @@ extension AgentViewModel {
         case "web_read_content":
             let browser = input["browser"] as? String
             let maxLength = input["max_length"] as? Int ?? 10000
-            tab.appendLog("Reading page content...")
+            tab.appendLog("📖 page content...")
             tab.flush()
             let content = await WebAutomationService.shared.readPageContent(browser: browser, maxLength: maxLength)
             tab.appendLog(String(content.prefix(500)) + (content.count > 500 ? "... (\(content.count) chars)" : ""))
@@ -217,7 +217,7 @@ extension AgentViewModel {
             let browser = input["browser"] as? String
             let index = input["index"] as? Int
             let title = input["title"] as? String
-            tab.appendLog("Switching tab...")
+            tab.appendLog("🔄 switch tab...")
             tab.flush()
             let output = await WebAutomationService.shared.switchTab(browser: browser, index: index, titleContains: title)
             tab.appendLog(output)
@@ -226,7 +226,7 @@ extension AgentViewModel {
 
         case "web_list_tabs":
             let browser = input["browser"] as? String
-            tab.appendLog("Listing tabs...")
+            tab.appendLog("📋 tabs...")
             tab.flush()
             let output = await WebAutomationService.shared.listTabs(browser: browser)
             tab.appendLog(output)
@@ -237,7 +237,7 @@ extension AgentViewModel {
             let selector = input["selector"] as? String ?? input["query"] as? String ?? ""
             let browser = input["browser"] as? String
             let timeout = input["timeout"] as? Double ?? 10.0
-            tab.appendLog("Waiting for: \(selector)...")
+            tab.appendLog("⏳ \(selector)...")
             tab.flush()
             let output = await WebAutomationService.shared.waitForElement(selector: selector, browser: browser, timeout: timeout)
             tab.appendLog(output)
@@ -247,7 +247,7 @@ extension AgentViewModel {
         case "web_scroll_to":
             let selector = input["selector"] as? String ?? input["query"] as? String ?? ""
             let browser = input["browser"] as? String
-            tab.appendLog("Scrolling to: \(selector)...")
+            tab.appendLog("📜 \(selector)...")
             tab.flush()
             let output = await WebAutomationService.shared.scrollToElement(selector: selector, browser: browser)
             tab.appendLog(output)
@@ -260,7 +260,7 @@ extension AgentViewModel {
             let text = input["text"] as? String
             let index = input["index"] as? Int
             let browser = input["browser"] as? String
-            tab.appendLog("Selecting option in: \(selector)...")
+            tab.appendLog("☑️ \(selector)...")
             tab.flush()
             let output = await WebAutomationService.shared.selectOption(selector: selector, value: value, text: text, index: index, browser: browser)
             tab.appendLog(output)
@@ -270,7 +270,7 @@ extension AgentViewModel {
         case "web_upload":
             let selector = input["selector"] as? String ?? input["query"] as? String ?? ""
             let browser = input["browser"] as? String
-            tab.appendLog("Triggering file upload: \(selector)...")
+            tab.appendLog("📤 upload: \(selector)...")
             tab.flush()
             let output = await WebAutomationService.shared.triggerFileUpload(selector: selector, browser: browser)
             tab.appendLog(output)
@@ -281,7 +281,7 @@ extension AgentViewModel {
             let storageType = input["storage_type"] as? String ?? "cookies"
             let key = input["key"] as? String
             let browser = input["browser"] as? String
-            tab.appendLog("Reading \(storageType)...")
+            tab.appendLog("📖 \(storageType)...")
             tab.flush()
             let output = await WebAutomationService.shared.readStorage(type: storageType, key: key, browser: browser)
             tab.appendLog(output)
@@ -291,7 +291,7 @@ extension AgentViewModel {
         case "web_submit":
             let selector = input["selector"] as? String
             let browser = input["browser"] as? String
-            tab.appendLog("Submitting form...")
+            tab.appendLog("📤 form...")
             tab.flush()
             let output = await WebAutomationService.shared.submitForm(selector: selector, browser: browser)
             tab.appendLog(output)
@@ -301,7 +301,7 @@ extension AgentViewModel {
         case "web_navigate":
             let action = input["action"] as? String ?? "back"
             let browser = input["browser"] as? String
-            tab.appendLog("Navigate: \(action)...")
+            tab.appendLog("🧭 \(action)...")
             tab.flush()
             let output = await WebAutomationService.shared.navigate(action: action, browser: browser)
             tab.appendLog(output)
@@ -310,7 +310,7 @@ extension AgentViewModel {
 
         case "web_list_windows":
             let browser = input["browser"] as? String
-            tab.appendLog("Listing windows...")
+            tab.appendLog("📋 windows...")
             tab.flush()
             let output = await WebAutomationService.shared.listWindows(browser: browser)
             tab.appendLog(output)
@@ -320,7 +320,7 @@ extension AgentViewModel {
         case "web_switch_window":
             let browser = input["browser"] as? String
             let index = input["index"] as? Int ?? 1
-            tab.appendLog("Switching to window \(index)...")
+            tab.appendLog("🔄 window \(index)...")
             tab.flush()
             let output = await WebAutomationService.shared.switchWindow(browser: browser, index: index)
             tab.appendLog(output)
@@ -330,7 +330,7 @@ extension AgentViewModel {
         case "web_new_window":
             let browser = input["browser"] as? String
             let url = input["url"] as? String
-            tab.appendLog("Opening new window...")
+            tab.appendLog("🌐 new window...")
             tab.flush()
             let output = await WebAutomationService.shared.newWindow(browser: browser, url: url)
             tab.appendLog(output)
@@ -340,7 +340,7 @@ extension AgentViewModel {
         case "web_close_window":
             let browser = input["browser"] as? String
             let index = input["index"] as? Int ?? 1
-            tab.appendLog("Closing window \(index)...")
+            tab.appendLog("🗑️ window \(index)...")
             tab.flush()
             let output = await WebAutomationService.shared.closeWindow(browser: browser, index: index)
             tab.appendLog(output)
@@ -363,7 +363,7 @@ extension AgentViewModel {
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
 
         case "web_scan":
-            tab.appendLog("Scanning page for interactive elements...")
+            tab.appendLog("🔍 scanning interactive elements...")
             tab.flush()
             let elements = await WebAutomationService.shared.scanInteractiveElements()
             tab.appendLog(String(elements.prefix(2000)))

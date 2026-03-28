@@ -200,7 +200,7 @@ extension AgentViewModel {
             }
 
             if source == destination {
-                tab.appendLog("Error: source and destination are identical"); tab.flush()
+                tab.appendLog("❌ source and destination are identical"); tab.flush()
                 return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": "Error: source and destination are identical"], isComplete: false)
             }
 

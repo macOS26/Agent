@@ -69,7 +69,7 @@ extension AgentViewModel {
             let sourceA = scriptService.resolveScriptName(input["source_a"] as? String ?? "")
             let sourceB = scriptService.resolveScriptName(input["source_b"] as? String ?? "")
             let target = input["target"] as? String ?? ""
-            tab.appendLog("Combining: \(sourceA) + \(sourceB) → \(target)")
+            tab.appendLog("🔗 \(sourceA) + \(sourceB) → \(target)")
 
             guard let contentA = scriptService.readScript(name: sourceA) else {
                 let err = "Error: script '\(sourceA)' not found."
@@ -122,7 +122,7 @@ extension AgentViewModel {
                 }
 
                 if compileResult.status != 0 {
-                    tab.appendLog("Compile failed (exit code: \(compileResult.status))")
+                    tab.appendLog("❌ Compile failed (exit code: \(compileResult.status))")
                     tab.appendOutput(compileResult.output)
                     tab.flush()
                     let toolOutput = compileResult.output.isEmpty

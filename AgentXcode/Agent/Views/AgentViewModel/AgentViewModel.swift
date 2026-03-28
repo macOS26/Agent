@@ -133,7 +133,7 @@ final class AgentViewModel {
             if !userEnabled {
                 userService.shutdownAgent()
                 userPingOK = false
-                appendLog("User Agent: shut down. To re-enable: click Connect, then click Register.")
+                appendLog("⚙️ User Agent shut down. Re-enable: Connect → Register.")
             }
             syncServicesGroup()
         }
@@ -144,7 +144,7 @@ final class AgentViewModel {
             if !rootEnabled {
                 helperService.shutdownDaemon()
                 daemonPingOK = false
-                appendLog("Launch Daemon: shut down. To re-enable: click Connect, then click Register.")
+                appendLog("⚙️ Launch Daemon shut down. Re-enable: Connect → Register.")
             }
             syncServicesGroup()
         }
@@ -508,7 +508,7 @@ final class AgentViewModel {
             UserDefaults.standard.set(ollamaModel, forKey: "ollamaModel")
             if !ollamaModel.isEmpty && oldValue != ollamaModel {
                 let vision = selectedOllamaSupportsVision ? " (vision)" : ""
-                appendLog("Switched to: \(ollamaModel)\(vision)")
+                appendLog("🔄\(ollamaModel)\(vision)")
                 flushLog()
             }
         }
@@ -602,7 +602,7 @@ final class AgentViewModel {
             UserDefaults.standard.set(localOllamaModel, forKey: "localOllamaModel")
             if !localOllamaModel.isEmpty && oldValue != localOllamaModel {
                 let vision = selectedLocalOllamaSupportsVision ? " (vision)" : ""
-                appendLog("Switched to: \(localOllamaModel)\(vision)")
+                appendLog("🔄\(localOllamaModel)\(vision)")
                 flushLog()
             }
         }
@@ -1163,37 +1163,37 @@ final class AgentViewModel {
         // Test daemon connectivity on startup — auto-fix if not responding
         Task {
             try? await Task.sleep(nanoseconds: 500_000_000)
-            appendLog("Warming up the engines...")
+            appendLog("🔥 Warming up...")
             var userOK = await userService.ping()
             userPingOK = userOK
-            appendLog("User agent: \(userOK ? "ping OK" : "no response")")
+            appendLog("⚙️ User agent: \(userOK ? "ping OK" : "no response")")
             var daemonOK = false
             if rootEnabled {
                 daemonOK = await helperService.ping()
                 daemonPingOK = daemonOK
-                appendLog("Launch Daemon: \(daemonOK ? "ping OK" : "no response")")
+                appendLog("⚙️ Launch Daemon: \(daemonOK ? "ping OK" : "no response")")
             } else {
                 daemonPingOK = false
-                appendLog("Launch Daemon: disabled")
+                appendLog("⚙️ Launch Daemon: disabled")
             }
             if !userOK {
-                appendLog("User agent: mending...")
+                appendLog("🔄 User agent: mending...")
                 _ = userService.restartAgent()
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
                 userOK = await userService.ping()
                 userPingOK = userOK
-                appendLog("User agent: \(userOK ? "mended — ping OK" : "still NOT responding")")
+                appendLog("⚙️ User agent: \(userOK ? "mended — ping OK" : "still NOT responding")")
             }
             if rootEnabled && !daemonOK {
-                appendLog("Launch Daemon: mending...")
+                appendLog("🔄 Launch Daemon: mending...")
                 _ = helperService.restartDaemon()
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
                 daemonOK = await helperService.ping()
                 daemonPingOK = daemonOK
-                appendLog("Launch Daemon: \(daemonOK ? "mended — ping OK" : "still NOT responding")")
+                appendLog("⚙️ Launch Daemon: \(daemonOK ? "mended — ping OK" : "still NOT responding")")
             }
             if !userOK || (rootEnabled && !daemonOK) {
-                appendLog("Click Register to restart services")
+                appendLog("⚠️ Click Register to restart services")
             }
         }
     }
@@ -1213,42 +1213,42 @@ final class AgentViewModel {
     func unregisterDaemon() {
         helperService.shutdownDaemon()
         daemonPingOK = false
-        appendLog("Helper daemon unregistered.")
+        appendLog("⚙️ Helper daemon unregistered.")
     }
 
     func unregisterAgent() {
         userService.shutdownAgent()
         userPingOK = false
-        appendLog("User agent unregistered.")
+        appendLog("⚙️ User agent unregistered.")
     }
 
     func testConnection() {
-        appendLog("Testing connections...")
+        appendLog("🔌 Testing connections...")
         Task {
             var userOK = await userService.ping()
             userPingOK = userOK
-            appendLog("User agent: \(userOK ? "ping OK" : "no response")")
+            appendLog("⚙️ User agent: \(userOK ? "ping OK" : "no response")")
             var daemonOK = await helperService.ping()
             daemonPingOK = daemonOK
-            appendLog("Launch Daemon: \(daemonOK ? "ping OK" : "no response")")
+            appendLog("⚙️ Launch Daemon: \(daemonOK ? "ping OK" : "no response")")
             if !userOK {
-                appendLog("User agent: mending...")
+                appendLog("🔄 User agent: mending...")
                 _ = userService.restartAgent()
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
                 userOK = await userService.ping()
                 userPingOK = userOK
-                appendLog("User agent: \(userOK ? "mended — ping OK" : "still NOT responding")")
+                appendLog("⚙️ User agent: \(userOK ? "mended — ping OK" : "still NOT responding")")
             }
             if !daemonOK {
-                appendLog("Launch Daemon: mending...")
+                appendLog("🔄 Launch Daemon: mending...")
                 _ = helperService.restartDaemon()
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
                 daemonOK = await helperService.ping()
                 daemonPingOK = daemonOK
-                appendLog("Launch Daemon: \(daemonOK ? "mended — ping OK" : "still NOT responding")")
+                appendLog("⚙️ Launch Daemon: \(daemonOK ? "mended — ping OK" : "still NOT responding")")
             }
             if !userOK || !daemonOK {
-                appendLog("Click Register to restart services")
+                appendLog("⚠️ Click Register to restart services")
             }
         }
     }
@@ -1358,9 +1358,9 @@ final class AgentViewModel {
         stopProgressUpdates()
         if !silent {
             if queueCount > 0 {
-                appendLog("Cancelled by user. \(queueCount) queued task(s) cleared.")
+                appendLog("🚫 Cancelled. \(queueCount) queued task(s) cleared.")
             } else {
-                appendLog("Cancelled by user.")
+                appendLog("🚫 Cancelled.")
             }
         }
         flushLog()
@@ -1395,7 +1395,7 @@ final class AgentViewModel {
     func startMessagesMonitor() {
         stopMessagesMonitor()
         refreshMessageRecipients()
-        appendLog("Messages monitor: ON")
+        appendLog("💬 Messages: ON")
         flushLog()
 
         messagesMonitorTask = Task { [weak self] in
@@ -1573,9 +1573,9 @@ final class AgentViewModel {
             let result = await Self.executeTCC(command: "osascript -e '\(script.replacingOccurrences(of: "'", with: "'\\''"))'")
 
             if result.status == 0 {
-                appendLog("Progress update sent: \(message)")
+                appendLog("📤 Progress: \(message)")
             } else {
-                appendLog("Progress update failed: \(result.output.prefix(50))")
+                appendLog("❌ Progress failed: \(result.output.prefix(50))")
             }
             flushLog()
         }
@@ -1717,7 +1717,7 @@ final class AgentViewModel {
         for attempt in 1...3 {
             if let rowid = await Self.offMain({ Self.maxMessageROWID() }) {
                 lastSeenMessageROWID = rowid
-                appendLog("Messages monitor: seeded at ROWID \(rowid)")
+                appendLog("💬 Messages: seeded at ROWID \(rowid)")
                 flushLog()
                 return
             }
@@ -1727,7 +1727,7 @@ final class AgentViewModel {
         }
         // Cannot read chat.db — open Full Disk Access settings for the user
         lastSeenMessageROWID = Int.max
-        appendLog("Messages monitor: Full Disk Access required to read iMessages. Opening System Settings…")
+        appendLog("💬 Messages: Full Disk Access required to read iMessages. Opening System Settings…")
         flushLog()
         NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")!)
     }
@@ -1771,9 +1771,9 @@ final class AgentViewModel {
 
             let msgTab = scriptTabs.first(where: { $0.isMessagesTab })
             if result.status == 0 {
-                msgTab?.appendLog("Reply sent to \(handle)")
+                msgTab?.appendLog("💬 Reply sent to \(handle)")
             } else {
-                msgTab?.appendLog("Reply failed: \(result.output.prefix(100))")
+                msgTab?.appendLog("❌ Reply failed: \(result.output.prefix(100))")
             }
             msgTab?.flush()
         }
@@ -1796,9 +1796,9 @@ final class AgentViewModel {
 
             let msgTab = scriptTabs.first(where: { $0.isMessagesTab })
             if result.status == 0 {
-                msgTab?.appendLog("Ack sent to \(handle)")
+                msgTab?.appendLog("💬 Ack sent to \(handle)")
             } else {
-                msgTab?.appendLog("Ack failed: \(result.output.prefix(100))")
+                msgTab?.appendLog("❌ Ack failed: \(result.output.prefix(100))")
             }
             msgTab?.flush()
         }
@@ -1811,7 +1811,7 @@ final class AgentViewModel {
         if lastSeenMessageROWID == Int.max {
             if let rowid = await Self.offMain({ Self.maxMessageROWID() }) {
                 lastSeenMessageROWID = rowid
-                appendLog("Messages monitor: reseeded at ROWID \(rowid)")
+                appendLog("💬 Messages: reseeded at ROWID \(rowid)")
                 flushLog()
             }
             return

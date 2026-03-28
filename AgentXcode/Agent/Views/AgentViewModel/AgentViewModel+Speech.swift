@@ -22,9 +22,9 @@ extension AgentViewModel {
                 case .authorized:
                     self.beginAudioSession()
                 case .denied, .restricted:
-                    self.appendLog("Speech recognition not authorized. Enable in System Settings > Privacy > Speech Recognition.")
+                    self.appendLog("⚠️ Speech recognition not authorized. Enable in System Settings > Privacy > Speech Recognition.")
                 case .notDetermined:
-                    self.appendLog("Speech recognition authorization not determined.")
+                    self.appendLog("⚠️ Speech recognition authorization not determined.")
                 @unknown default:
                     break
                 }
@@ -76,7 +76,7 @@ extension AgentViewModel {
         stopDictation()
 
         guard let recognizer = SFSpeechRecognizer(), recognizer.isAvailable else {
-            appendLog("Speech recognizer not available for current locale.")
+            appendLog("⚠️ Speech recognizer not available for current locale.")
             return
         }
 
@@ -97,7 +97,7 @@ extension AgentViewModel {
         do {
             try engine.start()
         } catch {
-            appendLog("Audio engine failed to start: \(error.localizedDescription)")
+            appendLog("❌ Audio engine failed: \(error.localizedDescription)")
             return
         }
 

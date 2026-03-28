@@ -543,7 +543,7 @@ extension AgentViewModel {
     func runAgentDirect(name: String, arguments: String = "") async -> Bool {
         let resolved = scriptService.resolveScriptName(name)
         guard let compileCmd = scriptService.compileCommand(name: resolved) else {
-            appendLog("Error: agent '\(resolved)' not found.")
+            appendLog("❌ agent '\(resolved)' not found.")
             return false
         }
 
@@ -557,7 +557,7 @@ extension AgentViewModel {
         }
 
         // Log on main tab so user sees something
-        appendLog("Running \(resolved)... (see tab)")
+        appendLog("🏃 \(resolved)... (see tab)")
         flushLog()
 
         // Add to tab's prompt history for up-arrow recall
@@ -576,7 +576,7 @@ extension AgentViewModel {
             tab.flush()
             let compileResult = await userService.execute(command: compileCmd)
             if compileResult.status != 0 {
-                tab.appendLog("Compile error:\n\(compileResult.output)")
+                tab.appendLog("❌ Compile error:\n\(compileResult.output)")
                 tab.flush()
                 tab.isRunning = false
                 return false

@@ -43,7 +43,7 @@ extension AgentViewModel {
 
         case "ax_list_windows":
             let limit = input["limit"] as? Int ?? 50
-            tab.appendLog("Listing windows (limit: \(limit))...")
+            tab.appendLog("📋 windows (limit: \(limit))...")
             tab.flush()
             let output = await Self.offMain { AccessibilityService.shared.listWindows(limit: limit) }
             tab.appendLog(Self.preview(output, lines: 20))
@@ -81,7 +81,7 @@ extension AgentViewModel {
             let appBundleId = input["appBundleId"] as? String
             let x = (input["x"] as? Double).map { CGFloat($0) }
             let y = (input["y"] as? Double).map { CGFloat($0) }
-            tab.appendLog("Getting element properties...")
+            tab.appendLog("📋 element properties...")
             tab.flush()
             let output = await Self.offMain {
                 AccessibilityService.shared.getElementProperties(
@@ -103,7 +103,7 @@ extension AgentViewModel {
             let appBundleId = input["appBundleId"] as? String
             let x = (input["x"] as? Double).map { CGFloat($0) }
             let y = (input["y"] as? Double).map { CGFloat($0) }
-            tab.appendLog("Performing action: \(action)...")
+            tab.appendLog("⚡ \(action)...")
             tab.flush()
             let output = await Self.offMain {
                 AccessibilityService.shared.performAction(
@@ -122,7 +122,7 @@ extension AgentViewModel {
             let text = input["text"] as? String ?? ""
             let x = (input["x"] as? Double).map { CGFloat($0) }
             let y = (input["y"] as? Double).map { CGFloat($0) }
-            tab.appendLog("Typing: \(text.count) characters...")
+            tab.appendLog("⌨️ \(text.count) characters...")
             tab.flush()
             let output = await Self.offMain {
                 AccessibilityService.shared.typeText(text, at: x, y: y)
@@ -210,7 +210,7 @@ extension AgentViewModel {
             let height = (input["height"] as? Double).map { CGFloat($0) }
             let windowId = input["windowId"] as? Int
 
-            tab.appendLog("Capturing screenshot...")
+            tab.appendLog("📸 screenshot...")
             tab.flush()
 
             let output: String
@@ -241,7 +241,7 @@ extension AgentViewModel {
 
         case "ax_get_audit_log":
             let limit = input["limit"] as? Int ?? 50
-            tab.appendLog("Getting accessibility audit log...")
+            tab.appendLog("📋 audit log...")
             tab.flush()
             let output = await Self.offMain {
                 AccessibilityService.shared.getAuditLog(limit: limit)
@@ -266,7 +266,7 @@ extension AgentViewModel {
             let appBundleId = input["appBundleId"] as? String
             let x = (input["x"] as? Double).map { CGFloat($0) }
             let y = (input["y"] as? Double).map { CGFloat($0) }
-            tab.appendLog("Setting element properties...")
+            tab.appendLog("⚙️ element properties...")
             tab.flush()
             // Serialize and deserialize to avoid Sendable issues
             let propertiesData = try? JSONSerialization.data(withJSONObject: propertiesInput)
@@ -293,7 +293,7 @@ extension AgentViewModel {
             let value = input["value"] as? String
             let appBundleId = input["appBundleId"] as? String
             let timeout = input["timeout"] as? Double ?? 5.0
-            tab.appendLog("Finding element...")
+            tab.appendLog("🔍 Finding element...")
             tab.flush()
             let output = await Self.offMain {
                 AccessibilityService.shared.findElement(
@@ -309,7 +309,7 @@ extension AgentViewModel {
 
         case "ax_get_focused_element":
             let appBundleId = input["appBundleId"] as? String
-            tab.appendLog("Getting focused element...")
+            tab.appendLog("🎯 focused element...")
             tab.flush()
             let output = await Self.offMain {
                 AccessibilityService.shared.getFocusedElement(appBundleId: appBundleId)
@@ -329,7 +329,7 @@ extension AgentViewModel {
             let x = (input["x"] as? Double).map { CGFloat($0) }
             let y = (input["y"] as? Double).map { CGFloat($0) }
             let depth = input["depth"] as? Int ?? 3
-            tab.appendLog("Getting element children...")
+            tab.appendLog("📋 element children...")
             tab.flush()
             let output = await Self.offMain {
                 AccessibilityService.shared.getChildren(
@@ -358,7 +358,7 @@ extension AgentViewModel {
             let toX = CGFloat(toXVal)
             let toY = CGFloat(toYVal)
             let button = input["button"] as? String ?? "left"
-            tab.appendLog("Dragging from (\(fromX), \(fromY)) to (\(toX), \(toY))...")
+            tab.appendLog("🖱️ drag (\(fromX), \(fromY)) → (\(toX), \(toY))...")
             tab.flush()
             let output = await Self.offMain {
                 AccessibilityService.shared.drag(fromX: fromX, fromY: fromY, toX: toX, toY: toY, button: button)
@@ -377,7 +377,7 @@ extension AgentViewModel {
             let appBundleId = input["appBundleId"] as? String
             let timeout = input["timeout"] as? Double ?? 10.0
             let pollInterval = input["pollInterval"] as? Double ?? 0.5
-            tab.appendLog("Waiting for element (timeout: \(timeout)s)...")
+            tab.appendLog("⏳ element (timeout: \(timeout)s)...")
             tab.flush()
             let output = await Self.offMain {
                 AccessibilityService.shared.waitForElement(
@@ -398,7 +398,7 @@ extension AgentViewModel {
             let appBundleId = input["appBundleId"] as? String
             let timeout = input["timeout"] as? Double ?? 5.0
             let verify = input["verify"] as? Bool ?? false
-            tab.appendLog("Clicking element (role: \(role ?? "any"), title: \(title ?? "any"))...")
+            tab.appendLog("👆 element (role: \(role ?? "any"), title: \(title ?? "any"))...")
             tab.flush()
             let output = await Self.offMain {
                 AccessibilityService.shared.clickElement(
@@ -420,7 +420,7 @@ extension AgentViewModel {
             let timeout = input["timeout"] as? Double ?? 10.0
             let initialDelay = input["initialDelay"] as? Double ?? 0.1
             let maxDelay = input["maxDelay"] as? Double ?? 1.0
-            tab.appendLog("Waiting for element (adaptive, timeout: \(timeout)s)...")
+            tab.appendLog("⏳ element (adaptive, timeout: \(timeout)s)...")
             tab.flush()
             let output = await Self.offMain {
                 AccessibilityService.shared.waitForElementAdaptive(
@@ -441,7 +441,7 @@ extension AgentViewModel {
             let text = input["text"] as? String ?? ""
             let appBundleId = input["appBundleId"] as? String
             let verify = input["verify"] as? Bool ?? true
-            tab.appendLog("Typing \(text.count) chars into element...")
+            tab.appendLog("⌨️ \(text.count) chars into element...")
             tab.flush()
             let output = await Self.offMain {
                 AccessibilityService.shared.typeTextIntoElement(
@@ -464,7 +464,7 @@ extension AgentViewModel {
             let y = (input["y"] as? Double).map { CGFloat($0) }
             let duration = input["duration"] as? Double ?? 2.0
             let color = input["color"] as? String ?? "green"
-            tab.appendLog("Highlighting element (duration: \(duration)s, color: \(color))...")
+            tab.appendLog("✨ element (duration: \(duration)s, color: \(color))...")
             tab.flush()
             let output = await Self.offMain {
                 AccessibilityService.shared.highlightElement(
@@ -481,7 +481,7 @@ extension AgentViewModel {
 
         case "ax_get_window_frame":
             let windowId = input["windowId"] as? Int ?? 0
-            tab.appendLog("Getting frame for window \(windowId)...")
+            tab.appendLog("📐 window \(windowId) frame...")
             tab.flush()
             let output = await Self.offMain {
                 AccessibilityService.shared.getWindowFrame(windowId: windowId)
@@ -500,7 +500,7 @@ extension AgentViewModel {
             let appBundleId = input["appBundleId"] as? String
             let x = (input["x"] as? Double).map { CGFloat($0) }
             let y = (input["y"] as? Double).map { CGFloat($0) }
-            tab.appendLog("Showing context menu...")
+            tab.appendLog("📋 context menu...")
             tab.flush()
             let output = await Self.offMain {
                 AccessibilityService.shared.showMenu(
@@ -517,7 +517,7 @@ extension AgentViewModel {
         case "ax_click_menu_item":
             let app = input["app"] as? String
             let menuPath = input["menu_path"] as? [String] ?? []
-            tab.appendLog("Clicking menu: \(menuPath.joined(separator: " > "))...")
+            tab.appendLog("👆 menu: \(menuPath.joined(separator: " > "))...")
             tab.flush()
             let output = await Self.offMain {
                 AccessibilityService.shared.clickMenuItem(appBundleId: app, menuPath: menuPath)
@@ -532,7 +532,7 @@ extension AgentViewModel {
             let y = (input["y"] as? Double).map { CGFloat($0) }
             let width = (input["width"] as? Double).map { CGFloat($0) }
             let height = (input["height"] as? Double).map { CGFloat($0) }
-            tab.appendLog("Setting window frame...")
+            tab.appendLog("⚙️ window frame...")
             tab.flush()
             let output = await Self.offMain {
                 AccessibilityService.shared.setWindowFrame(appBundleId: app, x: x, y: y, width: width, height: height)
@@ -545,7 +545,7 @@ extension AgentViewModel {
             let action = input["action"] as? String ?? "list"
             let bundleId = input["bundleId"] as? String
             let appName = input["name"] as? String
-            tab.appendLog("App \(action)...")
+            tab.appendLog("📱 \(action)...")
             tab.flush()
             let output = await Self.offMain {
                 AccessibilityService.shared.manageApp(action: action, bundleId: bundleId, name: appName)
@@ -558,7 +558,7 @@ extension AgentViewModel {
             let role = input["role"] as? String
             let title = input["title"] as? String
             let app = input["app"] as? String ?? input["appBundleId"] as? String
-            tab.appendLog("Scrolling to element...")
+            tab.appendLog("📜 scroll to element...")
             tab.flush()
             let output = await Self.offMain {
                 AccessibilityService.shared.scrollToElement(role: role, title: title, appBundleId: app)
@@ -569,7 +569,7 @@ extension AgentViewModel {
 
         case "ax_read_focused":
             let app = input["app"] as? String ?? input["appBundleId"] as? String
-            tab.appendLog("Reading focused element...")
+            tab.appendLog("🎯 reading focused element...")
             tab.flush()
             let output = await Self.offMain {
                 AccessibilityService.shared.readFocusedElement(appBundleId: app)

@@ -15,7 +15,7 @@ extension AgentViewModel {
         let tabFolder = Self.resolvedWorkingDirectory(tab.projectFolder.isEmpty ? projectFolder : tab.projectFolder)
         let compileResult = await executeForTab(command: compileCmd, projectFolder: tabFolder)
         if compileResult.status != 0 {
-            tab.appendLog("Compile failed: \(compileResult.output)")
+            tab.appendLog("❌ Compile failed: \(compileResult.output)")
             return tabResult(compileResult.output, toolId: toolId)
         }
         let cancelFlag = tab._cancelFlag

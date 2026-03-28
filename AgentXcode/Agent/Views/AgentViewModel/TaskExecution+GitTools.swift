@@ -125,7 +125,7 @@ extension AgentViewModel {
         if name == "git_diff_patch" {
             let path = input["path"] as? String
             let patch = input["patch"] as? String ?? ""
-            appendLog("Git apply patch")
+            appendLog("🔧 git apply patch")
             flushLog()
             // Write patch to temp file, apply, clean up
             let tempName = "agent_patch_\(UUID().uuidString).patch"
@@ -157,7 +157,7 @@ extension AgentViewModel {
                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": pathErr])
                 return true
             }
-            appendLog("Git branch: \(branchName)")
+            appendLog("🔧 git branch: \(branchName)")
             flushLog()
             let cmd = CodingService.buildGitBranchCommand(path: path, name: branchName, checkout: checkout)
             let result = await executeViaUserAgent(command: cmd)

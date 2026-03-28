@@ -398,7 +398,7 @@ extension AgentViewModel {
                                 return "  \(title)\n    \(url)"
                             }
                             if !results.isEmpty {
-                                appendLog("Results:\n" + results.prefix(5).joined(separator: "\n"))
+                                appendLog("📊\n" + results.prefix(5).joined(separator: "\n"))
                             }
                         }
                         flushLog()
@@ -958,7 +958,7 @@ extension AgentViewModel {
                             tab.addToHistory(prompt)
 
                             // Brief note in main log
-                            appendLog("Running \(scriptName)... (see tab)")
+                            appendLog("🏃 \(scriptName)... (see tab)")
                             flushLog()
 
                             // Step 1: Compile if needed (skip if dylib is up to date)
@@ -1361,7 +1361,7 @@ extension AgentViewModel {
                                 if let predicate = input["predicate"] as? String { op["predicate"] = predicate }
                                 operations = [op]
                             } else {
-                                appendLog("Error: action is required")
+                                appendLog("❌ action is required")
                                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Error: action is required"])
                                 continue
                             }
@@ -1534,7 +1534,7 @@ extension AgentViewModel {
                             let text = input["text"] as? String ?? ""
                             let x = (input["x"] as? Double).map { CGFloat($0) }
                             let y = (input["y"] as? Double).map { CGFloat($0) }
-                            appendLog("Typing: \(text.count) characters...")
+                            appendLog("⌨️ \(text.count) characters...")
                             flushLog()
                             let output = await Self.offMain {
                                 // Ensure text is non-nil and handle empty string gracefully
@@ -1689,7 +1689,7 @@ extension AgentViewModel {
                             let value = input["value"] as? String
                             let appBundleId = input["appBundleId"] as? String
                             let timeout = input["timeout"] as? Double ?? 5.0
-                            appendLog("Finding element...")
+                            appendLog("🔍 Finding element...")
                             flushLog()
                             let output = await Self.offMain {
                                 AccessibilityService.shared.findElement(
@@ -1787,7 +1787,7 @@ extension AgentViewModel {
                             let appBundleId = input["appBundleId"] as? String
                             let timeout = input["timeout"] as? Double ?? 5.0
                             let verify = input["verify"] as? Bool ?? false
-                            appendLog("Clicking element (role: \(role ?? "any"), title: \(title ?? "any"))...")
+                            appendLog("👆 element (role: \(role ?? "any"), title: \(title ?? "any"))...")
                             flushLog()
                             let output = await Self.offMain {
                                 AccessibilityService.shared.clickElement(
@@ -1828,7 +1828,7 @@ extension AgentViewModel {
                             let text = input["text"] as? String ?? ""
                             let appBundleId = input["appBundleId"] as? String
                             let verify = input["verify"] as? Bool ?? true
-                            appendLog("Typing \(text.count) chars into element...")
+                            appendLog("⌨️ \(text.count) chars into element...")
                             flushLog()
                             let output = await Self.offMain {
                                 AccessibilityService.shared.typeTextIntoElement(

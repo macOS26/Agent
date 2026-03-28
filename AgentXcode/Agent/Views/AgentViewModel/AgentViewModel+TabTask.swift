@@ -65,9 +65,9 @@ extension AgentViewModel {
         tab.currentTaskPrompt = ""
         tab.currentAppleAIPrompt = ""
         if queueCount > 0 {
-            tab.appendLog("Cancelled by user. \(queueCount) queued task(s) cleared.")
+            tab.appendLog("🚫 Cancelled. \(queueCount) queued task(s) cleared.")
         } else {
-            tab.appendLog("Cancelled by user.")
+            tab.appendLog("🚫 Cancelled.")
         }
         tab.flush()
     }
@@ -106,7 +106,7 @@ extension AgentViewModel {
                         return
                     }
                     // Failed — fall through to LLM to handle
-                    tab.appendLog("Direct run failed — passing to LLM")
+                    tab.appendLog("❌ Direct run failed — passing to LLM")
                     tab.flush()
                     break
                 }
@@ -373,7 +373,7 @@ extension AgentViewModel {
                 let streamElapsed = CFAbsoluteTimeGetCurrent() - streamStart
                 tabTaskLog.info("[\(tab.displayTitle)] stream completed in \(String(format: "%.2f", streamElapsed))s, stopReason=\(response.stopReason), tokens: \(response.inputTokens)in/\(response.outputTokens)out")
                 // Show timing in activity log so user can see what's slow
-                tab.appendLog("[⏱ LLM \(String(format: "%.1f", streamElapsed))s | stop: \(response.stopReason) | iter \(iterations)]")
+                tab.appendLog("⏱ LLM \(String(format: "%.1f", streamElapsed))s | stop: \(response.stopReason) | iter \(iterations)")
                 tab.flush()
                 tab.isLLMThinking = false
                 timeoutRetryCount = 0 // Reset on successful response
@@ -406,7 +406,7 @@ extension AgentViewModel {
                         )
                         let toolElapsed = CFAbsoluteTimeGetCurrent() - toolStart
                         if toolElapsed > 0.5 {
-                            tab.appendLog("[⏱ \(name) \(String(format: "%.1f", toolElapsed))s]")
+                            tab.appendLog("⏱ \(name) \(String(format: "%.1f", toolElapsed))s")
                             tab.flush()
                         }
                         if result.isComplete {
@@ -532,7 +532,7 @@ extension AgentViewModel {
                                 
                                 // Restart Ollama via UserService XPC
                                 _ = await userService.execute(command: "pkill -f 'ollama serve' && sleep 3 && open /Applications/Ollama.app && sleep 10")
-                                tab.appendLog("Ollama restart attempted. Please check Ollama application status.")
+                                tab.appendLog("🔄 Ollama restart attempted. Check Ollama status.")
                             }
                             
                             let timeoutMessage = "\(errorSource) timeout after \(maxTimeoutRetries) retries. Please check your network connection or try a different LLM provider."

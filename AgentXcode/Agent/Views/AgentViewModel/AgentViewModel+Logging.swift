@@ -92,7 +92,7 @@ extension AgentViewModel {
                   let bitmap = NSBitmapImageRep(data: tiffData),
                   let pngData = bitmap.representation(using: .png, properties: [:]) else {
                 if status != 0 && status != -1 {
-                    appendLog("Screenshot failed (exit \(status))")
+                    appendLog("❌ Screenshot failed (exit \(status))")
                 }
                 return
             }
