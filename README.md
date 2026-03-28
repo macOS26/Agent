@@ -3,7 +3,7 @@
 <div align="center">
 
 # 🦾 Agent! 1.0.64 for macOS
-# 🕵🏻‍♂️ A+ Autonomous AI Assistant 
+# 🕵🏻‍♂️ Autonomous AI Assistant 
 
 ![Agent!](https://img.shields.io/badge/Agent!-v1.0-blue?style=for-the-badge)
 ![Platform](https://img.shields.io/badge/Platform-macOS%2026%2B-cyan?style=for-the-badge)
