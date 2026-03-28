@@ -82,15 +82,10 @@ final class RecentAgentsService: ObservableObject {
         save()
     }
 
-    /// Remove a failed agent run from the menu.
-    /// Removes the specific args match, or all entries for that agent if no exact match found.
+    /// Remove a specific failed agent run from the menu.
+    /// Only removes the exact agentName + arguments match. Good entries stay.
     func removeRun(agentName: String, arguments: String) {
-        let before = entries.count
         entries.removeAll { $0.agentName == agentName && $0.arguments == arguments }
-        // If nothing was removed (args didn't match), remove all entries for this agent
-        if entries.count == before {
-            entries.removeAll { $0.agentName == agentName }
-        }
         save()
     }
 
