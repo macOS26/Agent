@@ -68,7 +68,7 @@ Agent! supports **8 LLM providers** out of the box:
 
 | Provider | Cloud/Local | Notes |
 |----------|-------------|-------|
-| **Anthropic Claude** | Cloud | Primary recommendation |
+| **Anthropic Claude** | Cloud | Works best, but pricey |
 | **OpenAI GPT** | Cloud | GPT-4, GPT-4o |
 | **DeepSeek** | Cloud | Cost-effective alternative |
 | **Hugging Face** | Cloud | Open models |
