@@ -608,13 +608,11 @@ extension AgentViewModel {
         tab.flush()
         tab.isRunning = false
 
-        // Only record successful runs with args to Agents menu
-        let wasCancelled = runResult.status == 15 || runResult.status == 9 || Task.isCancelled
+        // Only record successful runs with real args to Agents menu
         if success && !arguments.isEmpty {
             RecentAgentsService.shared.recordRun(agentName: resolved, arguments: arguments, prompt: "run \(resolved) \(arguments)")
-        } else if !success && !wasCancelled && !isUsageOutput {
-            notifyAgentFailed(name: resolved, arguments: arguments)
         }
+        // User-initiated run — output is visible in tab, no alert needed
         return success || isUsageOutput
     }
 }
