@@ -335,11 +335,10 @@ extension AgentViewModel {
         for match in matches {
             var path = nsCmd.substring(with: match.range(at: 1))
                 .trimmingCharacters(in: CharacterSet(charactersIn: "'\""))
-            // Strip trailing wildcards/globs for directory validation (e.g. /path/to/*)
-            while path.hasSuffix("*") || path.hasSuffix("?") {
-                path = String(path.dropLast())
-            }
-            if path.hasSuffix("/") { path = String(path.dropLast()) }
+            // Skip paths with glob characters — shell will expand them
+            if path.contains("*") || path.contains("?") || path.contains("[") { continue }
+            // Strip trailing slash
+            while path.hasSuffix("/") { path = String(path.dropLast()) }
             guard !path.isEmpty else { continue }
             let expanded = (path as NSString).expandingTildeInPath
             if !FileManager.default.fileExists(atPath: expanded) {
