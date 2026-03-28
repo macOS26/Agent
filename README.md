@@ -9,7 +9,8 @@
 ![Platform](https://img.shields.io/badge/Platform-macOS%2026%2B-cyan?style=for-the-badge)
 ![Swift](https://img.shields.io/badge/Swift-6.2-orange?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
-**Your AI-powered coding partner that actually understands macOS.**
+
+**AI-powered coding partner that actually understands macOS.**
 
 [Features](#features) • [Installation](#installation) • [Comparison](#comparison) • [Architecture](#architecture) • [Security](#security)
 
