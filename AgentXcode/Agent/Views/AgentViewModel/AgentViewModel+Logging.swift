@@ -387,7 +387,11 @@ extension AgentViewModel {
     }
 
     private func scheduleLogFlush() {
-        flushLog()
+        guard logFlushTask == nil else { return }
+        logFlushTask = Task {
+            try? await Task.sleep(for: .milliseconds(50))
+            flushLog()
+        }
     }
 
     func flushLog() {

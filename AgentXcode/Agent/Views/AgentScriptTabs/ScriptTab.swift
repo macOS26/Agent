@@ -144,7 +144,11 @@ final class ScriptTab: Identifiable {
     }
 
     private func scheduleFlush() {
-        flush()
+        guard logFlushTask == nil else { return }
+        logFlushTask = Task {
+            try? await Task.sleep(for: .milliseconds(50))
+            flush()
+        }
     }
 
     /// Max chars to keep in activityLog to prevent UI beach ball.
