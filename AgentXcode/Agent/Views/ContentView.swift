@@ -312,7 +312,7 @@ struct ContentView: View {
                    event.charactersIgnoringModifiers == "." {
                     if let selId = viewModel.selectedTabId,
                        let tab = viewModel.scriptTabs.first(where: { $0.id == selId }),
-                       tab.isLLMRunning || tab.isLLMThinking || tab.isRunning {
+                       tab.isBusy {
                         if tab.isLLMRunning {
                             viewModel.stopTabTask(tab: tab)
                         } else if tab.isRunning {
@@ -374,7 +374,7 @@ struct ContentView: View {
                 if event.keyCode == 53 {
                     if let selId = viewModel.selectedTabId,
                        let tab = viewModel.scriptTabs.first(where: { $0.id == selId }),
-                       tab.isLLMRunning || tab.isLLMThinking || tab.isRunning {
+                       tab.isBusy {
                         if tab.isLLMRunning {
                             viewModel.stopTabTask(tab: tab)
                         } else if tab.isRunning {

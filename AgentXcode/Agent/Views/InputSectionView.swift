@@ -54,8 +54,8 @@ struct InputSectionView: View {
                     .clipShape(Capsule())
                     .controlSize(.small)
                     .help("Cancel tab task")
-                    .opacity(tab.isLLMRunning || tab.isLLMThinking || tab.isRunning ? 1 : 0)
-                    .disabled(!tab.isLLMRunning && !tab.isLLMThinking && !tab.isRunning)
+                    .opacity(tab.isBusy ? 1 : 0)
+                    .disabled(!tab.isBusy)
 
                     Button { viewModel.runTabTask(tab: tab) } label: {
                         Image(systemName: "play.fill")

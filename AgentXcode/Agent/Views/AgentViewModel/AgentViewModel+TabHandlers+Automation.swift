@@ -17,11 +17,13 @@ extension AgentViewModel {
             let escaped = script.replacingOccurrences(of: "'", with: "'\\''")
             let command = "osascript -e '\(escaped)'"
             tab.appendLog("🍎 \(script)")
+            tab.isRunning = true
             tab.flush()
 
             let result = await Self.executeTCCStreaming(command: command) { [weak tab] chunk in
                 Task { @MainActor in tab?.appendOutput(chunk) }
             }
+            tab.isRunning = false
 
             guard !Task.isCancelled else { return TabToolResult(toolResult: nil, isComplete: false) }
 
@@ -72,10 +74,12 @@ extension AgentViewModel {
         case "run_applescript":
             let source = input["source"] as? String ?? ""
             tab.appendLog("🍎 AppleScript:\n\(source)")
+            tab.isRunning = true
             tab.flush()
             let result = await Self.offMain {
                 NSAppleScriptService.shared.execute(source: source)
             }
+            tab.isRunning = false
             if !result.success {
                 tab.appendLog(result.output)
             } else {

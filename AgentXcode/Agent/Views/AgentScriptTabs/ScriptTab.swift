@@ -48,6 +48,9 @@ final class ScriptTab: Identifiable {
     var taskInput: String = ""
     var isLLMRunning: Bool = false
     var isLLMThinking: Bool = false
+
+    /// Unified busy check — true when the tab is doing anything (running, LLM, thinking).
+    var isBusy: Bool { isRunning || isLLMRunning || isLLMThinking }
     var runningLLMTask: Task<Void, Never>?
     var llmMessages: [[String: Any]] = []
     var taskQueue: [String] = []

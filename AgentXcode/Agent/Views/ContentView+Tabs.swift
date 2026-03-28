@@ -106,7 +106,7 @@ extension ContentView {
     
     func isTabRunning(id: UUID) -> Bool {
         guard let tab = viewModel.scriptTabs.first(where: { $0.id == id }) else { return false }
-        return tab.isRunning || tab.isLLMRunning
+        return tab.isBusy
     }
     
     func getTabStatus(id: UUID) -> TabStatus {

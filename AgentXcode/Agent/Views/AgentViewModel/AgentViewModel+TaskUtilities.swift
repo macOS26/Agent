@@ -556,6 +556,10 @@ extension AgentViewModel {
             tab = openScriptTab(scriptName: resolved)
         }
 
+        // Log on main tab so user sees something
+        appendLog("Running \(resolved)... (see tab)")
+        flushLog()
+
         // Mark tab as running (not LLM — direct execution)
         tab.isRunning = true
         tab.isLLMRunning = false

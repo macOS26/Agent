@@ -136,6 +136,7 @@ extension AgentViewModel {
             }
 
             tab.appendLog("🦾 Running: \(scriptName)")
+            tab.isRunning = true
             tab.flush()
             RecentAgentsService.shared.recordRun(agentName: scriptName, arguments: arguments, prompt: arguments.isEmpty ? "run \(scriptName)" : "run \(scriptName) \(arguments)")
 
@@ -152,6 +153,7 @@ extension AgentViewModel {
                 }
             }
 
+            tab.isRunning = false
             tab.flush()
             let statusNote = runResult.status == 0 ? "completed" : "exit code: \(runResult.status)"
             tab.appendLog("\(scriptName) \(statusNote)")
