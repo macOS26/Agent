@@ -60,6 +60,8 @@ Agent! is a **native macOS SwiftUI application** designed from the ground up for
 - *OpenClaw: Open source with permissive license, Docker sandbox for isolation, MoltBot for multi-platform messaging
 ---
 
+<img width="1460" height="1031" alt="imagelink" src="https://github.com/user-attachments/assets/6fe745a4-bba5-43c3-9489-957945eeb6da" />
+
 ## Features
 
 ### 🤖 Multi-LLM Support
