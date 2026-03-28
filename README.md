@@ -353,7 +353,7 @@ For local LLM support:
 | **Scripting** | Swift, AppleScript, JXA | None native |
 | **MCP** | Stdio + HTTP/SSE transports | HTTP/SSE + Stdio |
 | **Remote Control** | Built-in iMessage | Claude Dispatch (separate app) |
-| **Open Source** | ✅ MIT License | ⚠️ Partial (MCP SDK, tools open; core proprietary) |
+| **Open Source** | ✅ MIT License | ❌ Proprietary (Commercial Terms of Service) |
 
 **Verdict**: Claude Code is excellent for terminal-based cross-platform development. Agent! is superior for macOS-specific workflows, Xcode projects, and deep system automation.
 
@@ -406,7 +406,7 @@ For local LLM support:
 | **Messages** | Built-in iMessage remote | Via MoltBot (WhatsApp, Telegram, Discord, Slack, iMessage) |
 | **System Access** | Full access with TCC | Sandboxed Docker containers |
 | **Privacy** | Local processing available | Local-first design |
-| **Open Source** | ✅ MIT License | ✅ Open Source (permissive license) |
+| **Open Source** | ✅ MIT License | ✅ MIT License |
 
 **Verdict**: OpenClaw excels at privacy-focused automation with local LLM support and sandboxed security. Agent! provides deeper macOS integration with native ScriptingBridge, Xcode project management, and Accessibility API control. Choose OpenClaw for privacy-first workflows; choose Agent! for deep macOS automation and Xcode development.
 
