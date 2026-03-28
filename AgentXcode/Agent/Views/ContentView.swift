@@ -183,7 +183,12 @@ struct ContentView: View {
         .sheet(isPresented: $showNewTabSheet) {
             NewMainTabSheet(viewModel: viewModel)
         }
-        .background { NotificationLayer(viewModel: viewModel) }
+        .onReceive(NotificationCenter.default.publisher(for: .populateTaskInput)) { n in
+            handlePopulate(n)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .runAgentDirect)) { n in
+            handleRunDirect(n)
+        }
         .onReceive(NotificationCenter.default.publisher(for: .appWillQuit)) { _ in
             viewModel.stopAll()
             viewModel.stopMessagesMonitor()
@@ -383,6 +388,24 @@ struct ContentView: View {
     static func tabColor(for tabId: UUID, in tabs: [ScriptTab]) -> Color {
         guard let idx = tabs.firstIndex(where: { $0.id == tabId }) else { return .orange }
         return tabColors[idx % tabColors.count]
+    }
+
+    private func handlePopulate(_ n: NotificationCenter.Publisher.Output) {
+        guard let prompt = n.userInfo?["prompt"] as? String else { return }
+        if let selId = viewModel.selectedTabId,
+           let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+            tab.taskInput = prompt
+        } else {
+            viewModel.taskInput = prompt
+        }
+    }
+
+    private func handleRunDirect(_ n: NotificationCenter.Publisher.Output) {
+        guard let prompt = n.userInfo?["prompt"] as? String else { return }
+        let parts = prompt.components(separatedBy: " ")
+        let name = parts.count > 1 ? parts[1] : prompt
+        let args = parts.count > 2 ? parts.dropFirst(2).joined(separator: " ") : ""
+        Task { await viewModel.runAgentDirect(name: name, arguments: args) }
     }
 
     @ViewBuilder
