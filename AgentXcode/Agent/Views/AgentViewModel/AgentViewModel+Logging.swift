@@ -422,7 +422,7 @@ extension AgentViewModel {
     private func schedulePersist() {
         guard logPersistTask == nil else { return }
         logPersistTask = Task {
-            try? await Task.sleep(for: .seconds(2))
+            try? await Task.sleep(for: .seconds(5))
             guard !Task.isCancelled else { return }
             logPersistTask = nil
             ChatHistoryStore.shared.save()
