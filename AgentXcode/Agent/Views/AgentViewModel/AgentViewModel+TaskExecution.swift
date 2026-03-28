@@ -166,10 +166,16 @@ extension AgentViewModel {
                 let agentName = scriptService.resolveScriptName(parts.first ?? "")
                 let args = parts.count > 1 ? parts.dropFirst().joined(separator: " ") : ""
                 if scriptService.compileCommand(name: agentName) != nil {
-                    await runAgentDirect(name: agentName, arguments: args)
-                    isRunning = false
-                    isThinking = false
-                    return
+                    let success = await runAgentDirect(name: agentName, arguments: args)
+                    if success {
+                        isRunning = false
+                        isThinking = false
+                        return
+                    }
+                    // Failed — fall through to LLM to handle
+                    appendLog("Direct run failed — passing to LLM")
+                    flushLog()
+                    break
                 }
             }
             // Execute known commands instantly without the LLM

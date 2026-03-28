@@ -99,10 +99,16 @@ extension AgentViewModel {
                 let args = parts.count > 1 ? parts.dropFirst().joined(separator: " ") : ""
                 // Always run directly — skip LLM. Args provided by user.
                 if scriptService.compileCommand(name: agentName) != nil {
-                    await runAgentDirect(name: agentName, arguments: args)
-                    tab.isLLMRunning = false
-                    tab.isLLMThinking = false
-                    return
+                    let success = await runAgentDirect(name: agentName, arguments: args)
+                    if success {
+                        tab.isLLMRunning = false
+                        tab.isLLMThinking = false
+                        return
+                    }
+                    // Failed — fall through to LLM to handle
+                    tab.appendLog("Direct run failed — passing to LLM")
+                    tab.flush()
+                    break
                 }
             }
             tabTaskLog.info("[\(tab.displayTitle)] Direct command: \(cmd.name)")
