@@ -538,11 +538,13 @@ extension AgentViewModel {
 
     /// Run an agent script directly — skips the LLM entirely.
     /// Compiles only if the dylib is out of date, then executes.
-    func runAgentDirect(name: String, arguments: String = "") async {
+    /// Returns true on success, false on error (caller should fall through to LLM).
+    @discardableResult
+    func runAgentDirect(name: String, arguments: String = "") async -> Bool {
         let resolved = scriptService.resolveScriptName(name)
         guard let compileCmd = scriptService.compileCommand(name: resolved) else {
             appendLog("Error: agent '\(resolved)' not found.")
-            return
+            return false
         }
 
         // Open or reuse a tab for this agent
@@ -564,7 +566,7 @@ extension AgentViewModel {
             if compileResult.status != 0 {
                 tab.appendLog("Compile error:\n\(compileResult.output)")
                 tab.flush()
-                return
+                return false
             }
         }
 
@@ -587,6 +589,7 @@ extension AgentViewModel {
         let statusNote = runResult.status == 0 ? "completed" : "exit code: \(runResult.status)"
         tab.appendLog("\(resolved) \(statusNote)")
         tab.flush()
+        return runResult.status == 0
     }
 }
 

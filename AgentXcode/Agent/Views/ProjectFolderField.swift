@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-/// NSTextField subclass that notifies on focus (click/tab into field).
+/// NSTextField subclass that notifies on focus and blocks system path autocomplete.
 private class FocusAwareTextField: NSTextField {
     var onFocus: (() -> Void)?
 
@@ -9,6 +9,16 @@ private class FocusAwareTextField: NSTextField {
         let result = super.becomeFirstResponder()
         if result { onFocus?() }
         return result
+    }
+
+    // Block system completion popup entirely
+    override func complete(_ sender: Any?) {
+        // Do nothing — suppress macOS path autocomplete
+    }
+
+    override var isAutomaticTextCompletionEnabled: Bool {
+        get { false }
+        set { }
     }
 }
 
@@ -23,6 +33,7 @@ private struct PathTextField: NSViewRepresentable {
         let tf = FocusAwareTextField()
         tf.placeholderString = placeholder
         tf.isAutomaticTextCompletionEnabled = false
+        tf.contentType = .none
         tf.isBordered = false
         tf.drawsBackground = false
         tf.font = .systemFont(ofSize: NSFont.systemFontSize)

@@ -1,22 +1,12 @@
 import AppKit
 
-private struct UncheckedSendable<T>: @unchecked Sendable {
-    let value: T
-    init(_ value: T) { self.value = value }
-}
-
 /// NSMenu delegate that builds the 🦾 Agents menu dynamically from RecentAgentsService.
 @MainActor
 final class AgentsMenuDelegate: NSObject, NSMenuDelegate {
     static let shared = AgentsMenuDelegate()
 
-    nonisolated func menuNeedsUpdate(_ menu: NSMenu) {
-        let m = UncheckedSendable(menu)
-        DispatchQueue.main.async {
-            MainActor.assumeIsolated {
-                Self.shared.buildMenu(m.value)
-            }
-        }
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        buildMenu(menu)
     }
 
     private func buildMenu(_ menu: NSMenu) {
