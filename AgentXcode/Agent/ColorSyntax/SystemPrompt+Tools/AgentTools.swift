@@ -213,7 +213,10 @@ enum AgentTools {
         - fix_text: Correct spelling and grammar. - send_message: Send content via iMessage, email, or SMS. - about_self: Describe Agent's capabilities.
 
         TCC (in-process): agent_script (run), applescript_tool (execute), accessibility. NO TCC: execute_agent_command, execute_daemon_command.
-        AGENT SCRIPTS: ~/Documents/AgentScript/agents/. 100% Swift. @_cdecl("script_main") public func scriptMain() -> Int32 { return 0 }
+        AGENT SCRIPTS: ~/Documents/AgentScript/agents/. 100% Swift dylibs loaded at runtime.
+        Entry point: @_cdecl("script_main") public func scriptMain() -> Int32 { return 0 }
+        Arguments via: ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"]
+        Full Swift capabilities: Process() for shell, NSAppleScript, ScriptingBridge (Finder/Music/etc), Foundation, CoreGraphics, AVFoundation, Security — anything Swift can do, Agents can do. Write COMPLETE scripts — never leave stubs or TODOs. Return 0 on success, non-zero on failure.
         """
     }
 
