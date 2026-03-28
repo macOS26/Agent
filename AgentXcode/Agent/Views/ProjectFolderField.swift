@@ -1,8 +1,38 @@
 import SwiftUI
 import AppKit
 
+/// Field editor that suppresses all system completion popups.
+private class NoCompletionFieldEditor: NSTextView {
+    override func complete(_ sender: Any?) {}
+    override var rangeForUserCompletion: NSRange {
+        NSRange(location: NSNotFound, length: 0)
+    }
+    override func completions(forPartialWordRange charRange: NSRange,
+                              indexOfSelectedItem index: UnsafeMutablePointer<Int>) -> [String]? {
+        index.pointee = -1
+        return nil
+    }
+}
+
+/// Cell that provides a custom field editor to suppress autocomplete.
+private class NoCompletionTextFieldCell: NSTextFieldCell {
+    private var customFieldEditor: NoCompletionFieldEditor?
+    override func fieldEditor(for controlView: NSView) -> NSTextView? {
+        if customFieldEditor == nil {
+            customFieldEditor = NoCompletionFieldEditor()
+            customFieldEditor!.isFieldEditor = true
+        }
+        return customFieldEditor
+    }
+}
+
 /// NSTextField subclass that notifies on focus and blocks system path autocomplete.
 private class FocusAwareTextField: NSTextField {
+    override class var cellClass: AnyClass? {
+        get { NoCompletionTextFieldCell.self }
+        set { }
+    }
+
     var onFocus: (() -> Void)?
 
     override func becomeFirstResponder() -> Bool {
@@ -11,10 +41,7 @@ private class FocusAwareTextField: NSTextField {
         return result
     }
 
-    // Block system completion popup entirely
-    override func complete(_ sender: Any?) {
-        // Do nothing — suppress macOS path autocomplete
-    }
+    override func complete(_ sender: Any?) {}
 
     override var isAutomaticTextCompletionEnabled: Bool {
         get { false }
@@ -66,6 +93,13 @@ private struct PathTextField: NSViewRepresentable {
         func controlTextDidEndEditing(_ obj: Notification) {
             parent.onSubmit()
             parent.onFocusChange(false)
+        }
+
+        func control(_ control: NSControl, textView: NSTextView, completions words: [String],
+                     forPartialWordRange charRange: NSRange,
+                     indexOfSelectedItem index: UnsafeMutablePointer<Int>) -> [String] {
+            index.pointee = -1
+            return []
         }
 
         func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
