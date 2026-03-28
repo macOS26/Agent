@@ -100,6 +100,20 @@ final class AgentViewModel {
     }
     var isListening = false
 
+    // Failed agent alert
+    var showFailedAgentAlert = false
+    var failedAgentName = ""
+    var failedAgentArgs = ""
+
+    /// Call when an agent fails — triggers the remove-from-menu alert
+    func notifyAgentFailed(name: String, arguments: String) {
+        if RecentAgentsService.shared.entries.contains(where: { $0.agentName == name && $0.arguments == arguments }) {
+            failedAgentName = name
+            failedAgentArgs = arguments
+            showFailedAgentAlert = true
+        }
+    }
+
     // Token tracking
     var taskInputTokens: Int = 0
     var taskOutputTokens: Int = 0

@@ -183,6 +183,12 @@ struct ContentView: View {
         .sheet(isPresented: $showNewTabSheet) {
             NewMainTabSheet(viewModel: viewModel)
         }
+        .alert("Agent Failed", isPresented: $viewModel.showFailedAgentAlert) {
+            Button("Remove") { RecentAgentsService.shared.removeRun(agentName: viewModel.failedAgentName, arguments: viewModel.failedAgentArgs) }
+            Button("Keep", role: .cancel) { }
+        } message: {
+            Text("'\(viewModel.failedAgentName)' failed. Remove from 🦾 Agents menu?")
+        }
         .onReceive(NotificationCenter.default.publisher(for: .appWillQuit)) { _ in
             viewModel.stopAll()
             viewModel.stopMessagesMonitor()

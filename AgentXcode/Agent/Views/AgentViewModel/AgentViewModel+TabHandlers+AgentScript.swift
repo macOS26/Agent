@@ -161,7 +161,7 @@ extension AgentViewModel {
             if runResult.status == 0 {
                 RecentAgentsService.shared.recordRun(agentName: scriptName, arguments: arguments, prompt: arguments.isEmpty ? "run \(scriptName)" : "run \(scriptName) \(arguments)")
             } else {
-                RecentAgentsService.shared.removeRun(agentName: scriptName, arguments: arguments)
+                notifyAgentFailed(name: scriptName, arguments: arguments)
             }
 
             let toolOutput = runResult.output.isEmpty
