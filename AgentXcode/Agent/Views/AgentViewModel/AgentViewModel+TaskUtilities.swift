@@ -599,20 +599,20 @@ extension AgentViewModel {
 
         tab.flush()
         let success = runResult.status == 0
-        let statusNote = success ? "completed" : "exit code: \(runResult.status)"
+        let isUsageOutput = runResult.output.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("Usage:")
+        let statusNote = success ? "completed" : (isUsageOutput ? "usage" : "exit code: \(runResult.status)")
         tab.appendLog("\(resolved) \(statusNote)")
         tab.flush()
         tab.isRunning = false
 
         // Only record successful runs with args to Agents menu
         let wasCancelled = runResult.status == 15 || runResult.status == 9 || Task.isCancelled
-        let noArgsUsage = arguments.isEmpty && !success  // No args = usage/help, not a real failure
         if success && !arguments.isEmpty {
             RecentAgentsService.shared.recordRun(agentName: resolved, arguments: arguments, prompt: "run \(resolved) \(arguments)")
-        } else if !success && !wasCancelled && !noArgsUsage {
+        } else if !success && !wasCancelled && !isUsageOutput {
             notifyAgentFailed(name: resolved, arguments: arguments)
         }
-        return success
+        return success || isUsageOutput
     }
 }
 
