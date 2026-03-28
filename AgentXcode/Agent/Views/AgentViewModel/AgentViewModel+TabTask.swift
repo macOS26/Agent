@@ -93,8 +93,17 @@ extension AgentViewModel {
         switch triageResult {
         case .directCommand(let cmd):
             if cmd.name == "run_agent" {
-                let resolved = scriptService.resolveScriptName(cmd.argument)
-                if !scriptService.canRunDirectly(name: resolved) { break }
+                // Parse "AgentName args" from cmd.argument
+                let parts = cmd.argument.components(separatedBy: " ")
+                let agentName = scriptService.resolveScriptName(parts.first ?? "")
+                let args = parts.count > 1 ? parts.dropFirst().joined(separator: " ") : ""
+                // Always run directly — skip LLM. Args provided by user.
+                if scriptService.compileCommand(name: agentName) != nil {
+                    await runAgentDirect(name: agentName, arguments: args)
+                    tab.isLLMRunning = false
+                    tab.isLLMThinking = false
+                    return
+                }
             }
             tabTaskLog.info("[\(tab.displayTitle)] Direct command: \(cmd.name)")
             let output = await executeDirectCommand(cmd, tab: tab)

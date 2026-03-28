@@ -160,12 +160,16 @@ extension AgentViewModel {
         let triageResult = await mediator.triagePrompt(prompt)
         switch triageResult {
         case .directCommand(let cmd):
-            // For run_agent, check metadata — only run directly if no args needed
             if cmd.name == "run_agent" {
-                let resolved = scriptService.resolveScriptName(cmd.argument)
-                if !scriptService.canRunDirectly(name: resolved) {
-                    taskLog.info("[main] run_agent '\(resolved)' requires args — passing to LLM")
-                    break  // Fall through to LLM
+                // Parse "AgentName args" and always run directly — skip LLM
+                let parts = cmd.argument.components(separatedBy: " ")
+                let agentName = scriptService.resolveScriptName(parts.first ?? "")
+                let args = parts.count > 1 ? parts.dropFirst().joined(separator: " ") : ""
+                if scriptService.compileCommand(name: agentName) != nil {
+                    await runAgentDirect(name: agentName, arguments: args)
+                    isRunning = false
+                    isThinking = false
+                    return
                 }
             }
             // Execute known commands instantly without the LLM
