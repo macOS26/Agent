@@ -1049,7 +1049,7 @@
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 6.0;
+				SWIFT_VERSION = 6.2;
 			};
 			name = Debug;
 		};
@@ -1107,7 +1107,7 @@
 				SDKROOT = macosx;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_VERSION = 6.0;
+				SWIFT_VERSION = 6.2;
 			};
 			name = Release;
 		};
@@ -1176,7 +1176,7 @@
 				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "Agent/ObjC/Agent-Bridging-Header.h";
-				SWIFT_VERSION = 6.0;
+				SWIFT_VERSION = 6.2;
 			};
 			name = Debug;
 		};
@@ -1245,7 +1245,7 @@
 				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "Agent/ObjC/Agent-Bridging-Header.h";
-				SWIFT_VERSION = 6.0;
+				SWIFT_VERSION = 6.2;
 			};
 			name = Release;
 		};
@@ -1262,7 +1262,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss.helper;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 6.0;
+				SWIFT_VERSION = 6.2;
 			};
 			name = Debug;
 		};
@@ -1279,7 +1279,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss.helper;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 6.0;
+				SWIFT_VERSION = 6.2;
 			};
 			name = Release;
 		};
@@ -1296,7 +1296,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss.user;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 6.0;
+				SWIFT_VERSION = 6.2;
 			};
 			name = Debug;
 		};
@@ -1313,7 +1313,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss.user;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 6.0;
+				SWIFT_VERSION = 6.2;
 			};
 			name = Release;
 		};
@@ -1328,7 +1328,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 6.0;
+				SWIFT_VERSION = 6.2;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Agent!.app/Contents/MacOS/Agent!";
 			};
 			name = Debug;
@@ -1344,7 +1344,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 6.0;
+				SWIFT_VERSION = 6.2;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Agent!.app/Contents/MacOS/Agent!";
 			};
 			name = Release;

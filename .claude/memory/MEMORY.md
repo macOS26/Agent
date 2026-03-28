@@ -12,7 +12,7 @@
 ## Key Conventions
 - Build with XCF (ensure correct project is selected)
 - Development Team: 469UCUB275
-- macOS 26.0 deployment target, Swift 6.0
+- macOS 26.0 deployment target, Swift 6.2
 - @Observable pattern with stored properties + didSet (not computed)
 - UserDefaults for API key and model persistence
 
