@@ -100,11 +100,11 @@ final class AppleIntelligenceMediator: ObservableObject {
         var formatted: String {
             let arrow: String
             switch target {
-            case .user: arrow = "\u{F8FF}AI → User"
-            case .llm:  arrow = "\u{F8FF}AI → LLM"
-            case .both: arrow = "\u{F8FF}AI → Both"
+            case .user: arrow = "🍏→🧑"
+            case .llm:  arrow = "🍏→🧠"
+            case .both: arrow = "🍏→🧑🧠"
             }
-            return "[\(arrow)] \(content)"
+            return "\(arrow) \(content)"
         }
     }
 
