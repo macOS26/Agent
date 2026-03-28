@@ -4,6 +4,7 @@ import AppKit
 @MainActor
 final class AgentsMenuDelegate: NSObject, NSMenuDelegate {
     static let shared = AgentsMenuDelegate()
+    weak var viewModel: AgentViewModel?
 
     func menuNeedsUpdate(_ menu: NSMenu) {
         buildMenu(menu)
@@ -87,14 +88,23 @@ final class AgentsMenuDelegate: NSObject, NSMenuDelegate {
     }
 
     @objc private func playAgent(_ sender: NSMenuItem) {
-        guard let prompt = sender.representedObject as? String else { return }
-        // Run agent directly — skip the LLM, just compile and execute
-        NotificationCenter.default.post(name: .runAgentDirect, object: nil, userInfo: ["prompt": prompt])
+        guard let prompt = sender.representedObject as? String,
+              let vm = viewModel else { return }
+        let parts = prompt.components(separatedBy: " ")
+        let name = parts.count > 1 ? parts[1] : prompt
+        let args = parts.count > 2 ? parts.dropFirst(2).joined(separator: " ") : ""
+        Task { await vm.runAgentDirect(name: name, arguments: args) }
     }
 
     @objc private func editAgent(_ sender: NSMenuItem) {
-        guard let prompt = sender.representedObject as? String else { return }
-        NotificationCenter.default.post(name: .populateTaskInput, object: nil, userInfo: ["prompt": prompt])
+        guard let prompt = sender.representedObject as? String,
+              let vm = viewModel else { return }
+        if let selId = vm.selectedTabId,
+           let tab = vm.scriptTabs.first(where: { $0.id == selId }) {
+            tab.taskInput = prompt
+        } else {
+            vm.taskInput = prompt
+        }
     }
 
     @objc private func clearAgents() {
