@@ -3,7 +3,7 @@
 <div align="center">
 
 ![Agent!](https://img.shields.io/badge/Agent!-v1.0-blue?style=for-the-badge)
-![Platform](https://img.shields.io/badge/Platform-macOS%2015%2B-cyan?style=for-the-badge)
+![Platform](https://img.shields.io/badge/Platform-macOS%2026%2B-cyan?style=for-the-badge)
 ![Swift](https://img.shields.io/badge/Swift-6.0-orange?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
@@ -288,7 +288,7 @@ Agent! implements a **defense-in-depth security model**:
 
 ### Prerequisites
 
-- macOS 15.0 or later
+- macOS 26.0 or later
 - Xcode 16.0 or later (for AgentScript compilation)
 - API key for your preferred LLM provider
 
@@ -678,7 +678,7 @@ Agent! Create a git commit with message "Fix bug"
 
 ## Apple Intelligence Integration
 
-Agent! integrates with Apple Intelligence (macOS 15.2+) for:
+Agent! integrates with Apple Intelligence (macOS 26+) for:
 
 1. **Context Mediation** — Apple AI rephrases user requests to help the primary LLM understand intent
 2. **LoRA Training** — Capture training data for fine-tuning models
