@@ -254,20 +254,20 @@ extension AgentViewModel {
 
         // List/search files (via User LaunchAgent - no TCC required)
         if name == "list_files" {
-            let pat = input["pattern"] as? String ?? "*"
-            let dir = input["path"] as? String ?? pf
-            let result = await executeViaUserAgent(command: "find '\(dir)' -name '\(pat)' ! -path '*/.build/*' ! -path '*/.git/*' 2>/dev/null | sort | head -100")
+            let pat = CodingService.shellEscape(input["pattern"] as? String ?? "*")
+            let dir = CodingService.shellEscape(input["path"] as? String ?? pf)
+            let result = await executeViaUserAgent(command: "find \(dir) -name \(pat) ! -path '*/.build/*' ! -path '*/.git/*' 2>/dev/null | sort | head -100")
             return result.output.isEmpty ? "No files found" : result.output
         }
         if name == "search_files" {
-            let pat = input["pattern"] as? String ?? ""
-            let dir = input["path"] as? String ?? pf
-            let result = await executeViaUserAgent(command: "grep -rn '\(pat)' '\(dir)' 2>/dev/null | head -50")
+            let pat = CodingService.shellEscape(input["pattern"] as? String ?? "")
+            let dir = CodingService.shellEscape(input["path"] as? String ?? pf)
+            let result = await executeViaUserAgent(command: "grep -rn \(pat) \(dir) 2>/dev/null | head -50")
             return result.output.isEmpty ? "No matches" : result.output
         }
         if name == "read_dir" {
-            let dir = input["path"] as? String ?? pf
-            let result = await executeViaUserAgent(command: "ls -la '\(dir)' 2>/dev/null")
+            let dir = CodingService.shellEscape(input["path"] as? String ?? pf)
+            let result = await executeViaUserAgent(command: "ls -la \(dir) 2>/dev/null")
             return result.output.isEmpty ? "Directory not found or empty" : result.output
         }
         if name == "if_to_switch" {

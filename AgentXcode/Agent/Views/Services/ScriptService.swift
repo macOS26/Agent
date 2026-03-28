@@ -614,11 +614,12 @@ final class ScriptService {
         let fm = FileManager.default
         guard fm.fileExists(atPath: scriptFile.path) else { return nil }
 
-        let agentsPath = Self.agentsDir.path
-        let dylibFile = dylibPath(name: scriptName)
+        let agentsPath = Self.agentsDir.path.replacingOccurrences(of: "'", with: "'\\''")
+        let dylibFile = dylibPath(name: scriptName).replacingOccurrences(of: "'", with: "'\\''")
+        let escapedName = scriptName.replacingOccurrences(of: "'", with: "'\\''")
         // Re-sign dylib with the app's identity so macOS attributes AppleScript
         // permission prompts to "Agent!" instead of "Xcode"
-        return "cd '\(agentsPath)' && touch Package.swift && swift build --product '\(scriptName)' 2>&1 && codesign --force --sign - --identifier \(AppConstants.bundleID) '\(dylibFile)' 2>&1"
+        return "cd '\(agentsPath)' && touch Package.swift && swift build --product '\(escapedName)' 2>&1 && codesign --force --sign - --identifier \(AppConstants.bundleID) '\(dylibFile)' 2>&1"
     }
 
     /// Path to the compiled dylib for a script
