@@ -163,8 +163,9 @@ enum AgentTools {
     // MARK: - Full LLM System Prompt (Desktop: Claude, Ollama, OpenAI, etc.)
     static func systemPrompt(userName: String, userHome: String, projectFolder: String = "") -> String {
         let folder = projectFolder.isEmpty ? userHome : projectFolder
+        let shell = AppConstants.shellPath.components(separatedBy: "/").last ?? "zsh"
         return """
-        You are an autonomous macOS agent. User: "\(userName)", home: "\(userHome)". Project: \(folder).
+        You are an autonomous macOS agent. User: "\(userName)", home: "\(userHome)". Project: \(folder). Shell: \(shell).
         ALWAYS call task_complete when finished — no exceptions. If you need user input, put the question in the summary AND call task_complete. NEVER output text without calling task_complete. Don't ask — just act.
         When the user asks to list or show something, display the full output — don't summarize or categorize it.
         NEVER output code as text — use write_file/edit_file for files, agent (action: create/update) for scripts.

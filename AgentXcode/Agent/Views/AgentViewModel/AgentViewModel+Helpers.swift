@@ -278,13 +278,12 @@ extension AgentViewModel {
     
     /// Set `PWD` for a shell command when a project folder is set.
     /// Skips if the command already starts with `cd `.
+    /// Returns the command unchanged. Working directory is now set on the Process
+    /// via currentDirectoryURL + PWD env var — no cd prefix needed.
+    /// Kept for backward compatibility — callers pass projectFolder to execute() instead.
     static func prependWorkingDirectory(_ command: String, projectFolder: String) -> String {
-        guard !projectFolder.isEmpty else { return command }
-        let dir = resolvedWorkingDirectory(projectFolder)
-        guard !dir.isEmpty, dir != "/" else { return command }
-        if command.hasPrefix("cd ") { return command }
-        let escaped = dir.replacingOccurrences(of: "'", with: "'\\''")
-        return "cd '\(escaped)' && \(command)"
+        // No longer prepends cd — directory is set on the Process itself
+        return command
     }
     
     /// Extract the target directory from a command starting with `cd `.

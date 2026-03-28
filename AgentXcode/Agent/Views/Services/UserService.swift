@@ -176,7 +176,7 @@ final class UserService {
         return registerUser()
     }
 
-    func execute(command: String) async -> (status: Int32, output: String) {
+    func execute(command: String, workingDirectory: String = "") async -> (status: Int32, output: String) {
         if !userReady {
             let msg = restartAgent()
             if !userReady {
@@ -190,7 +190,7 @@ final class UserService {
             }
         }
 
-        return await executeViaXPC(script: command, outputHandler: handler)
+        return await executeViaXPC(script: command, workingDirectory: workingDirectory, outputHandler: handler)
     }
 
     /// Quick connectivity test with 5-second timeout. Returns true if XPC responds.
@@ -258,7 +258,7 @@ final class UserService {
         return connection
     }
 
-    nonisolated private func executeViaXPC(script: String, outputHandler: UserOutputHandler) async -> (status: Int32, output: String) {
+    nonisolated private func executeViaXPC(script: String, workingDirectory: String = "", outputHandler: UserOutputHandler) async -> (status: Int32, output: String) {
         await withCheckedContinuation { continuation in
             var didResume = false
             let resumeLock = NSLock()
@@ -301,7 +301,7 @@ final class UserService {
             }
             DispatchQueue.global().asyncAfter(deadline: .now() + toolFinishTimeout, execute: finishTimer)
 
-            proxy.execute(script: script, instanceID: self.instanceID) { status, output in
+            proxy.execute(script: script, instanceID: self.instanceID, workingDirectory: workingDirectory) { status, output in
                 startedLock.lock()
                 started = true
                 startedLock.unlock()

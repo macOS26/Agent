@@ -16,6 +16,10 @@ final class UserCommandHandler: NSObject, UserToolProtocol, @unchecked Sendable 
     weak var connection: NSXPCConnection?
 
     func execute(script: String, instanceID: String, withReply reply: @escaping (Int32, String) -> Void) {
+        execute(script: script, instanceID: instanceID, workingDirectory: "", withReply: reply)
+    }
+
+    func execute(script: String, instanceID: String, workingDirectory: String, withReply reply: @escaping (Int32, String) -> Void) {
         let lock = UserCommandHandler.lock
 
         lock.lock()
@@ -30,10 +34,18 @@ final class UserCommandHandler: NSObject, UserToolProtocol, @unchecked Sendable 
         process.executableURL = URL(fileURLWithPath: "/bin/zsh")
         process.arguments = ["-c", script]
 
-        // Force color output from CLI tools (ls, grep, git, etc.)
+        // Set working directory on the process — shell starts in this dir
+        if !workingDirectory.isEmpty {
+            process.currentDirectoryURL = URL(fileURLWithPath: workingDirectory)
+        }
+
+        // Force color output, set PWD to match working directory
         var env = ProcessInfo.processInfo.environment
         env["CLICOLOR_FORCE"] = "1"
         env["TERM"] = env["TERM"] ?? "xterm-256color"
+        if !workingDirectory.isEmpty {
+            env["PWD"] = workingDirectory
+        }
         process.environment = env
 
         let pipe = Pipe()

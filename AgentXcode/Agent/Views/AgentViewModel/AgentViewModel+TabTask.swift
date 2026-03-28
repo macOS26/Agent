@@ -608,9 +608,9 @@ extension AgentViewModel {
     // MARK: - Tab Command Execution
 
     /// Execute a command via UserService without affecting the main ViewModel's streaming state.
-    /// When a `projectFolder` is provided, the working directory is prepended to the command.
+    /// Working directory is set on the Process via XPC — no cd prefix needed.
     func executeForTab(command: String, projectFolder: String = "") async -> (status: Int32, output: String) {
-        let cmd = projectFolder.isEmpty ? command : Self.prependWorkingDirectory(command, projectFolder: projectFolder)
-        return await userService.execute(command: cmd)
+        let dir = projectFolder.isEmpty ? "" : Self.resolvedWorkingDirectory(projectFolder)
+        return await userService.execute(command: command, workingDirectory: dir)
     }
 }
