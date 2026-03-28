@@ -369,7 +369,7 @@ For local LLM support:
 | **Scripting** | Swift, AppleScript, JXA | None |
 | **System Automation** | Accessibility, root operations | None |
 | **Privacy** | Local processing options | Cloud-only by default |
-| **MCP Support** | Stdio + HTTP/SSE | Stdio + SSE + HTTP |
+| **MCP Support** | Stdio + HTTP/SSE | Stdio + HTTP/SSE |
 | **Open Source** | ✅ MIT License | ❌ Proprietary |
 
 **Verdict**: Cursor is a VS Code fork with AI features and multi-LLM support. Agent! is a purpose-built macOS app that deeply integrates with the system. Choose Cursor if you need VS Code; choose Agent! if you need macOS automation and Xcode integration.
