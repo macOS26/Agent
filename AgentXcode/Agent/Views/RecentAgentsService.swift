@@ -89,6 +89,12 @@ final class RecentAgentsService: ObservableObject {
         save()
     }
 
+    /// Remove a specific entry by UUID.
+    func removeById(_ id: UUID) {
+        entries.removeAll { $0.id == id }
+        save()
+    }
+
     /// Remove ALL entries for an agent by name.
     func removeAgent(name: String) {
         entries.removeAll { $0.agentName == name }

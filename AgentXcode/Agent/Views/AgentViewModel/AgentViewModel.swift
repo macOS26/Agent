@@ -103,14 +103,15 @@ final class AgentViewModel {
     // Failed agent alert
     var showFailedAgentAlert = false
     var failedAgentName = ""
-    var failedAgentArgs = ""
+    var failedAgentId: UUID?
 
-    /// Call when an agent fails — triggers the remove-from-menu alert
+    /// Call when an agent fails — triggers the remove-from-menu alert.
+    /// Finds the most recent matching entry by name and stores its UUID for exact removal.
     func notifyAgentFailed(name: String, arguments: String) {
-        // Check if ANY entry for this agent exists in the menu
-        if RecentAgentsService.shared.entries.contains(where: { $0.agentName == name }) {
+        if let entry = RecentAgentsService.shared.entries.first(where: { $0.agentName == name && $0.arguments == arguments })
+            ?? RecentAgentsService.shared.entries.first(where: { $0.agentName == name }) {
             failedAgentName = name
-            failedAgentArgs = arguments
+            failedAgentId = entry.id
             showFailedAgentAlert = true
         }
     }
