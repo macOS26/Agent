@@ -7,3 +7,4 @@ AgentXcode/build/
 **/build/
 Agent!.app
 *.dmg
+.claude
