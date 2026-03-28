@@ -1097,6 +1097,9 @@ final class AgentViewModel {
         scriptService.rebuildAllMetadata()
         SystemPromptService.shared.ensureDefaults()
 
+        // Sync known agent names for direct command matching
+        AppleIntelligenceMediator.knownAgentNames = Set(scriptService.listScripts().map { $0.name.lowercased() })
+
         // Cancel any orphaned processes from a previous app session
         let defaults = UserDefaults.standard
         if let oldHelperID = defaults.string(forKey: "lastHelperInstanceID") {

@@ -66,6 +66,10 @@ final class AppleIntelligenceMediator: ObservableObject {
 
     // MARK: - Conversation Context (for Apple AI session)
 
+    /// Known agent script names (lowercase) for direct command matching.
+    /// Updated by the ViewModel when scripts are loaded/changed.
+    static var knownAgentNames: Set<String> = []
+
     /// Last task prompt from the user
     private var lastUserPrompt: String?
 
@@ -395,12 +399,18 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
             return DirectCommand(name: "google_search", argument: query)
         }
 
-        // "run X", "run agent X" — direct only if script needs no arguments
+        // "run X", "run agent X" — only match if the first word after "run" is an actual agent name
         let runPatterns = ["run agent ", "run script ", "run ", "execute "]
         for prefix in runPatterns {
             if lower.hasPrefix(prefix) {
                 let arg = String(trimmed.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)
-                if !arg.isEmpty { return DirectCommand(name: "run_agent", argument: arg) }
+                if arg.isEmpty { continue }
+                // Extract the first word as potential agent name
+                let firstWord = arg.components(separatedBy: " ").first ?? arg
+                // Only treat as direct command if we can resolve a known agent name
+                if Self.knownAgentNames.contains(firstWord.lowercased()) {
+                    return DirectCommand(name: "run_agent", argument: arg)
+                }
             }
         }
 
