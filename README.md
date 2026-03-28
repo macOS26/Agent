@@ -991,38 +991,38 @@ Agent! can autonomously create, modify, and execute automation scripts:
 │                     Agent! Self-Writing Workflow                            │
 │                                                                             │
 │   ┌─────────────┐     ┌─────────────────┐     ┌─────────────────────────┐   │
-│   │  User       │ ──▶ │  Agent! LLM      │ ──▶ │  Analyzes Request      │   │
-│   │  Request    │     │  (Claude/GPT/etc)│     │  • What needs to       │   │
-│   └─────────────┘     └─────────────────┘     │    automate?           │   │
+│   │  User       │ ──▶ │  Agent! LLM     │ ──▶ │  Analyzes Request       │   │
+│   │  Request    │     │  (Claude/GPT)   │     │  • What needs to        │   │
+│   └─────────────┘     └─────────────────┘     │    automate?            │   │
 │                                               │  • Which apps?          │   │
 │                                               │  • What APIs?           │   │
 │                                               └───────────┬─────────────┘   │
-│                                                           │                  │
+│                                                           │                 │
 │   ┌───────────────────────────────────────────────────────▼──────────────┐  │
-│   │                    Agent! Generates Code                               │  │
-│   │                                                                       │  │
-│   │   ┌─────────────┐   ┌─────────────┐   ┌─────────────────────────┐   │  │
-│   │   │ Swift Agent │   │ AppleScript │   │ JavaScript (JXA)       │   │  │
-│   │   │ Script      │   │ Script      │   │ Script                  │   │  │
-│   │   │             │   │             │   │                         │   │  │
-│   │   │ • Full      │   │ • Native    │   │ • Web automation        │   │  │
-│   │   │   Swift     │   │   macOS     │   │ • Safari control       │   │  │
-│   │   │ • Scripting │   │   scripting  │   │ • Chrome/Firefox       │   │  │
-│   │   │   Bridge    │   │ • GUI apps   │   │ • Complex workflows    │   │  │
-│   │   │ • Compiled  │   │ • Automator  │   │                         │   │  │
-│   │   │   dylib     │   │   actions    │   │                         │   │  │
-│   │   └─────────────┘   └─────────────┘   └─────────────────────────┘   │  │
-│   └───────────────────────────────────────────────────────────────────────┘  │
+│   │                    Agent! Generates Code                             │  │
+│   │                                                                      │  │
+│   │   ┌─────────────┐   ┌─────────────┐   ┌────────────────────────┐     │  │
+│   │   │ Swift Agent │   │ AppleScript │   │ JavaScript (JXA)       │     │  │
+│   │   │ Script      │   │ Script      │   │ Script                 │     │  │
+│   │   │             │   │             │   │                        │     │  │
+│   │   │ • Full      │   │ • Native    │   │ • Web automatio        │     │  │
+│   │   │   Swift     │   │   macOS     │   │ • Safari control       │     │  │
+│   │   │ • Scripting │   │   scripting │   │ • Chrome/Firefox       │     │  │
+│   │   │   Bridge    │   │ • GUI apps  │   │ • Complex workflow     │     │  │
+│   │   │ • Compiled  │   │ • Automator │   │                        │     │  │
+│   │   │   dylib     │   │   actions   │   │                        │     │  │
+│   │   └─────────────┘   └─────────────┘   └────────────────────────┘     │  │
+│   └──────────────────────────────────────────────────────────────────────┘  │
 │                                   │                                         │
 │   ┌───────────────────────────────▼───────────────────────────────────────┐ │
-│   │                         Execution                                      │ │
-│   │                                                                        │ │
-│   │   ┌─────────────────┐   ┌─────────────────┐   ┌───────────────────┐  │ │
-│   │   │ AgentScript     │   │ AppleScript     │   │ JavaScript        │  │ │
-│   │   │ Runtime         │   │ via NSApple     │   │ via JXA Framework  │  │ │
-│   │   │ (dlopen dylib)  │   │ Script          │   │                    │  │ │
-│   │   └─────────────────┘   └─────────────────┘   └───────────────────┘  │ │
-│   └────────────────────────────────────────────────────────────────────────┘ │
+│   │                         Execution                                     │ │
+│   │                                                                       │ │
+│   │   ┌─────────────────┐   ┌─────────────────┐   ┌───────────────────┐   │ │
+│   │   │ AgentScript     │   │ AppleScript     │   │ JavaScript        │   │ │
+│   │   │ Runtime         │   │ via NSApple     │   │ via JXA Framework │   │ │
+│   │   │ (dlopen dylib)  │   │ Script          │   │                   │   │ │
+│   │   └─────────────────┘   └─────────────────┘   └───────────────────┘   │ │
+│   └───────────────────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -1317,40 +1317,40 @@ end tell
 │   └─────────────────────────────────────────────────────────────────┘     │
 │                              │                                            │
 │   ┌──────────────────────────▼──────────────────────────────────────┐     │
-│   │ Step 2: Agent! Generates Swift Code                              │     │
-│   │                                                                  │     │
-│   │   import Foundation                                              │     │
-│   │   import MailBridge                                              │     │
-│   │                                                                  │     │
-│   │   @_cdecl("script_main")                                         │     │
-│   │   public func scriptMain() -> Int32 {                            │     │
-│   │       let mail = SBApplication(                                  │     │
+│   │ Step 2: Agent! Generates Swift Code                             │     │
+│   │                                                                 │     │
+│   │   import Foundation                                             │     │
+│   │   import MailBridge                                             │     │
+│   │                                                                 │     │
+│   │   @_cdecl("script_main")                                        │     │
+│   │   public func scriptMain() -> Int32 {                           │     │
+│   │       let mail = SBApplication(                                 │     │
 │   │           bundleIdentifier: "com.apple.Mail")!                  │     │
 │   │       // Check for John's emails                                │     │
-│   │       // Save attachments                                         │     │
-│   │       return 0                                                   │     │
-│   │   }                                                              │     │
-│   └──────────────────────────────────────────────────────────────────┘     │
+│   │       // Save attachments                                       │     │
+│   │       return 0                                                  │     │
+│   │   }                                                             │     │
+│   └─────────────────────────────────────────────────────────────────┘     │
 │                              │                                            │
 │   ┌──────────────────────────▼──────────────────────────────────────┐     │
-│   │ Step 3: Save & Compile                                           │     │
-│   │         agent(action: "create", name: "JohnMailMonitor",         │     │
-│   │               content: "generated Swift code")                   │     │
-│   │                                                                  │     │
+│   │ Step 3: Save & Compile                                          │     │
+│   │         agent(action: "create", name: "JohnMailMonitor",        │     │
+│   │               content: "generated Swift code")                  │     │
+│   │                                                                 │     │
 │   │         → ~/Documents/AgentScript/agents/Sources/Scripts/       │     │
-│   │           JohnMailMonitor.swift                                  │     │
+│   │           JohnMailMonitor.swift                                 │     │
 │   │         → swift build → JohnMailMonitor.dylib                   │     │
-│   └──────────────────────────────────────────────────────────────────┘     │
+│   └─────────────────────────────────────────────────────────────────┘     │
 │                              │                                            │
 │   ┌──────────────────────────▼──────────────────────────────────────┐     │
-│   │ Step 4: Run On Demand or Schedule                                │     │
-│   │         agent(action: "run", name: "JohnMailMonitor")            │     │
-│   │                                                                  │     │
-│   │         The agent is now available for:                          │     │
-│   │         • Manual execution                                       │     │
-│   │         • Integration with other workflows                       │     │
-│   │         • Remote execution via iMessage                           │     │
-│   └──────────────────────────────────────────────────────────────────┘     │
+│   │ Step 4: Run On Demand or Schedule                               │     │
+│   │         agent(action: "run", name: "JohnMailMonitor")           │     │
+│   │                                                                 │     │
+│   │         The agent is now available for:                         │     │
+│   │         • Manual execution                                      │     │
+│   │         • Integration with other workflows                      │     │
+│   │         • Remote execution via iMessage                         │     │
+│   └─────────────────────────────────────────────────────────────────┘     │
 │                                                                           │
 └───────────────────────────────────────────────────────────────────────────┘
 ```
