@@ -373,7 +373,7 @@ extension AgentViewModel {
                 let streamElapsed = CFAbsoluteTimeGetCurrent() - streamStart
                 tabTaskLog.info("[\(tab.displayTitle)] stream completed in \(String(format: "%.2f", streamElapsed))s, stopReason=\(response.stopReason), tokens: \(response.inputTokens)in/\(response.outputTokens)out")
                 // Show timing in activity log so user can see what's slow
-                tab.appendLog("⏱️ LLM \(String(format: "%.1f", streamElapsed))s | stop: \(response.stopReason) | iter \(iterations)")
+                tab.appendLog("🕐 LLM \(String(format: "%.1f", streamElapsed))s | stop: \(response.stopReason) | iter \(iterations)")
                 tab.flush()
                 tab.isLLMThinking = false
                 timeoutRetryCount = 0 // Reset on successful response
@@ -406,7 +406,7 @@ extension AgentViewModel {
                         )
                         let toolElapsed = CFAbsoluteTimeGetCurrent() - toolStart
                         if toolElapsed > 0.5 {
-                            tab.appendLog("⏱️ \(name) \(String(format: "%.1f", toolElapsed))s")
+                            tab.appendLog("🕐 \(name) \(String(format: "%.1f", toolElapsed))s")
                             tab.flush()
                         }
                         if result.isComplete {
