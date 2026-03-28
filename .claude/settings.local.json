@@ -233,7 +233,10 @@
       "WebFetch(domain:coryrylan.com)",
       "WebFetch(domain:medium.com)",
       "Bash(mode\", \"create a plan\", etc. LLM cannot spontaneously enter plan mode.:*)",
-      "Bash(defaults domains:*)"
+      "Bash(defaults domains:*)",
+      "WebFetch(domain:forums.macrumors.com)",
+      "WebFetch(domain:therealtradewindsblog.wordpress.com)",
+      "WebFetch(domain:cocoadev.github.io)"
     ]
   }
 }

@@ -81,6 +81,56 @@ Agent! supports **8 LLM providers** out of the box:
 
 **Plus**: Apple Intelligence integration for LoRA fine-tuning and context mediation.
 
+#### 🌟 Recommended: GLM-5
+
+**GLM-5** is highly recommended for use with Agent! This open-source model has been extensively tested and provides:
+
+- ✅ Excellent vision capabilities for image analysis
+- ✅ Strong reasoning and coding abilities
+- ✅ Efficient local deployment
+- ✅ Full compatibility with Agent!'s tool use format
+- ✅ Cost-effective alternative to cloud providers
+
+Download GLM-5 from [Hugging Face](https://huggingface.co/models?search=glm-5) and configure it as a Local Ollama or LM Studio model in Settings.
+
+### 🎤 Voice Control
+
+Control Agent! using your voice with speech recognition:
+
+- **Voice Commands**: Speak naturally to interact with Agent!
+- **Real-time Transcription**: Your voice is transcribed and sent to the LLM
+- **Accessibility**: Perfect for hands-free operation
+- **Multi-language Support**: Works with your system language settings
+
+To use voice control:
+1. Click the microphone icon in the toolbar
+2. Speak your command clearly
+3. Agent! will transcribe and process your request
+
+### 📨 iMessage Control
+
+In addition to the Messages Monitor, you can send commands directly through iMessage:
+
+- Send messages and commands via iMessage from within Agent!
+- Use the `send_message` tool to communicate with other iMessage users
+- Supports sending to phone numbers, email addresses, or contact names
+- Fully integrated with your Mac's Messages app
+
+### 👁️ Vision Support for Vision-Capable LLMs
+
+Agent! supports vision-capable LLMs that can analyze images:
+
+- **Image Analysis**: Send screenshots or images to vision-capable models
+- **Screenshot Integration**: Take screenshots and have the LLM analyze them
+- **Supported Models**: GPT-4o, Claude 3.5 Sonnet, GLM-5, and other vision-capable models
+- **Use Cases**: 
+  - Debug UI issues by sharing screenshots
+  - Analyze charts and graphs
+  - Describe image content
+  - Extract text from images (OCR)
+
+To use vision features, simply include images in your conversation with a vision-capable model.
+
 ### 🦾 AgentScript — Swift at Runtime
 
 Write **100% Swift scripts** that compile at runtime and run with full system access:
@@ -143,6 +193,89 @@ Agent! includes a comprehensive toolset:
 | `batch_tools` | Multiple tool calls in one request |
 
 </details>
+
+### 📝 D1F MultiLineDiff Capability
+
+Agent! uses the **D1F MultiLineDiff library** for powerful and safe file editing operations. This advanced diff engine provides:
+
+#### How It Works
+
+D1F (Delta-1-Format) uses a specialized format for representing file changes:
+
+```
+=  Keep line unchanged
+-  Remove line
++  Add new line
+```
+
+This format allows for precise, multi-line edits with built-in verification:
+
+```
+=== Original File ===
+1: func calculate() {
+2:     let x = 10
+3:     return x * 2
+4: }
+
+=== D1F Diff ===
+= func calculate() {
+-     let x = 10
++     let x = 20
+=     return x * 2
+= }
+
+=== Result ===
+1: func calculate() {
+2:     let x = 20
+3:     return x * 2
+4: }
+```
+
+#### Key Features
+
+| Feature | Description |
+|---------|-------------|
+| **SHA Verification** | Every diff includes SHA hash for change verification |
+| **Line-Number Tracking** | Automatic line number adjustment after edits |
+| **Undo Support** | Diffs are reversible — undo any change |
+| **Preview Mode** | See changes before applying with `create_diff` |
+| **Multi-Line Edits** | Replace entire blocks of code safely |
+| **Context Preservation** | Maintains surrounding code structure |
+
+#### Available Diff Tools
+
+| Tool | Use Case |
+|------|----------|
+| `edit_file` | Simple string replacement (old_string → new_string) |
+| `diff_and_apply` | Line-range editing with preview (one-shot) |
+| `create_diff` | Preview changes before committing |
+| `apply_diff` | Apply a created or inline D1F diff |
+| `undo_edit` | Reverse a previous diff by ID |
+
+#### Example Workflow
+
+```swift
+// Step 1: Create a preview diff
+create_diff(file_path: "/src/Main.swift", start_line: 10, end_line: 15, 
+            destination: "new code here")
+// Returns: diff_id for review
+
+// Step 2: Review the preview
+// D1F shows exactly what changes with =/-/+ markers
+
+// Step 3: Apply if correct
+apply_diff(file_path: "/src/Main.swift", diff_id: "uuid-here")
+
+// Step 4: Need to undo? 
+undo_edit(file_path: "/src/Main.swift", diff_id: "uuid-here")
+```
+
+#### Safety Benefits
+
+- **No accidental overwrites** — SHA verification ensures changes match expectations
+- **Atomic operations** — Each edit is self-contained
+- **Full audit trail** — Every change is logged with its diff
+- **Reversible** — Any edit can be undone with the diff_id
 
 <details>
 <summary><strong>Action-Based Tools</strong></summary>
@@ -700,20 +833,57 @@ Agent! Create a git commit with message "Fix bug"
 
 ---
 
-## Apple Intelligence Integration
+## Apple Intelligence Integration — C3PO Moderator/Translator
 
-Agent! integrates with Apple Intelligence (macOS 26+) for:
+Agent! integrates with **Apple Intelligence (macOS 26+)** as a **C3PO Moderator/Translator** — named after the Star Wars protocol droid known for translation and etiquette. Like C-3PO, Apple Intelligence serves as an intermediary that:
 
-1. **Context Mediation** — Apple AI rephrases user requests to help the primary LLM understand intent
-2. **LoRA Training** — Capture training data for fine-tuning models
+1. **Moderates** — Acts as a smart intermediary between the user and the primary LLM
+2. **Translates** — Rephrases and clarifies user requests to improve LLM understanding
+3. **Mediates Context** — Helps translate user intent into well-structured prompts
+4. **LoRA Training** — Optionally captures training data for fine-tuning models
 
-### Enabling Apple Intelligence
+### Why C3PO?
+
+Just as C-3PO was fluent in over 6 million forms of communication, Apple Intelligence helps bridge the gap between human intent and machine understanding:
+
+| C-3PO Role | Apple Intelligence Role |
+|------------|------------------------|
+| Translator | Rephrases user requests for clarity |
+| Protocol Droid | Ensures proper communication format |
+| Mediator | Bridges user intent and LLM understanding |
+| Advisor | Provides context-aware suggestions |
+
+### How It Works
+
+```
+┌─────────────┐      ┌─────────────────┐      ┌─────────────┐
+│   User      │ ───▶ │ C3PO (Apple     │ ───▶ │  Primary    │
+│   Request   │      │ Intelligence)   │      │  LLM        │
+└─────────────┘      └─────────────────┘      └─────────────┘
+                            │
+                            ▼
+                     ┌─────────────────┐
+                     │ • Clarifies     │
+                     │ • Rephrases     │
+                     │ • Adds Context  │
+                     │ • Translates    │
+                     └─────────────────┘
+```
+
+### Enabling C3PO (Apple Intelligence)
 
 1. Open **System Settings → Apple Intelligence & Siri**
 2. Enable Apple Intelligence
 3. In Agent!, open Settings → Apple Intelligence
-4. Toggle **Enable Mediator**
+4. Toggle **Enable Mediator (C3PO)**
 5. Optionally enable **Training Mode** to capture LoRA data
+
+### Benefits of C3PO Mode
+
+- **Better Understanding** — Apple Intelligence rephrases ambiguous requests
+- **Context Preservation** — Maintains conversation context across messages
+- **Intent Clarification** — Helps when user requests are unclear
+- **Privacy-First** — All processing happens on-device with Apple Silicon
 
 ---
 
@@ -728,9 +898,464 @@ Agent! integrates with Apple Intelligence (macOS 26+) for:
 | ⌘+Shift+P | System Prompts window |
 | ⌘+T | New tab |
 | ⌘+W | Close tab |
+| /clear | Clear conversation history |
 
 ---
 
+## Voice Control
+
+Agent! supports voice input for hands-free operation. Use your voice to:
+
+- **Dictate tasks** — Speak naturally to enter prompts
+- **Execute commands** — Voice-activated tool execution
+- **Control the app** — Start, stop, and manage tasks with voice
+
+Voice Control leverages macOS's built-in speech recognition for accurate transcription and command processing. Enable Voice Control in Settings to start using voice commands.
+
+---
+
+## iMessage Control
+
+In addition to the Messages Monitor for remote control, Agent! now features **direct iMessage control** for seamless integration with your messaging workflow:
+
+- **Send messages** — Agent! can compose and send iMessages via the `send_message` tool
+- **Receive commands** — Messages Monitor receives and processes commands from approved contacts
+- **Channel support** — iMessage (default), email, SMS, or clipboard output
+
+```
+# Example: Send a message
+send_message(content: "Build completed successfully!", recipient: "me", channel: "imessage")
+```
+
+### Supported Channels
+
+| Channel | Description |
+|---------|-------------|
+| `imessage` | Send via iMessage (default) |
+| `email` | Send via email |
+| `sms` | Send via SMS |
+| `clipboard` | Copy to clipboard |
+
+---
+
+## Vision Support
+
+Agent! supports **Vision-capable LLMs** for image understanding and analysis. This enables Agent! to:
+
+- **Analyze screenshots** — Understand screen contents for UI automation
+- **Process images** — Extract text, describe visual content, and answer questions about images
+- **Visual debugging** — Identify UI issues from screenshots
+- **Document analysis** — Read and extract information from image-based documents
+
+### Vision-Capable Models
+
+Agent! supports vision models from multiple providers:
+
+| Provider | Vision Models |
+|----------|---------------|
+| **Anthropic** | Claude 3.5 Sonnet, Claude 3 Opus |
+| **OpenAI** | GPT-4o, GPT-4 Turbo Vision |
+| **DeepSeek** | DeepSeek Vision |
+| **Hugging Face** | Various vision models |
+| **Local Ollama** | LLaVA, BakLLaVA, Moondream |
+| **LM Studio** | OpenAI-compatible vision models |
+
+### Recommended: GLM-5
+
+**GLM-5** is highly recommended for use with Agent! This open-source model has been extensively tested and provides:
+
+- ✅ Excellent vision capabilities
+- ✅ Strong reasoning and coding abilities
+- ✅ Efficient local deployment
+- ✅ Compatible with Agent!'s tool use format
+
+To use GLM-5 with Agent!:
+1. Download from [Hugging Face](https://huggingface.co/models?search=glm-5)
+2. Configure as a Local Ollama or LM Studio model
+3. Enable vision features in Settings
+
+---
+
+## Advanced UI — Self-Writing Agents
+
+Agent! features an advanced native SwiftUI interface that enables the AI to **write its own automation agents**. This is a groundbreaking capability that no other AI tool offers.
+
+### The Self-Writing Agent Concept
+
+Agent! can autonomously create, modify, and execute automation scripts:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                     Agent! Self-Writing Workflow                            │
+│                                                                             │
+│   ┌─────────────┐     ┌─────────────────┐     ┌─────────────────────────┐   │
+│   │  User       │ ──▶ │  Agent! LLM      │ ──▶ │  Analyzes Request      │   │
+│   │  Request    │     │  (Claude/GPT/etc)│     │  • What needs to       │   │
+│   └─────────────┘     └─────────────────┘     │    automate?           │   │
+│                                               │  • Which apps?          │   │
+│                                               │  • What APIs?           │   │
+│                                               └───────────┬─────────────┘   │
+│                                                           │                  │
+│   ┌───────────────────────────────────────────────────────▼──────────────┐  │
+│   │                    Agent! Generates Code                               │  │
+│   │                                                                       │  │
+│   │   ┌─────────────┐   ┌─────────────┐   ┌─────────────────────────┐   │  │
+│   │   │ Swift Agent │   │ AppleScript │   │ JavaScript (JXA)       │   │  │
+│   │   │ Script      │   │ Script      │   │ Script                  │   │  │
+│   │   │             │   │             │   │                         │   │  │
+│   │   │ • Full      │   │ • Native    │   │ • Web automation        │   │  │
+│   │   │   Swift     │   │   macOS     │   │ • Safari control       │   │  │
+│   │   │ • Scripting │   │   scripting  │   │ • Chrome/Firefox       │   │  │
+│   │   │   Bridge    │   │ • GUI apps   │   │ • Complex workflows    │   │  │
+│   │   │ • Compiled  │   │ • Automator  │   │                         │   │  │
+│   │   │   dylib     │   │   actions    │   │                         │   │  │
+│   │   └─────────────┘   └─────────────┘   └─────────────────────────┘   │  │
+│   └───────────────────────────────────────────────────────────────────────┘  │
+│                                   │                                         │
+│   ┌───────────────────────────────▼───────────────────────────────────────┐ │
+│   │                         Execution                                      │ │
+│   │                                                                        │ │
+│   │   ┌─────────────────┐   ┌─────────────────┐   ┌───────────────────┐  │ │
+│   │   │ AgentScript     │   │ AppleScript     │   │ JavaScript        │  │ │
+│   │   │ Runtime         │   │ via NSApple     │   │ via JXA Framework  │  │ │
+│   │   │ (dlopen dylib)  │   │ Script          │   │                    │  │ │
+│   │   └─────────────────┘   └─────────────────┘   └───────────────────┘  │ │
+│   └────────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Writing Swift Agents with ScriptingBridge
+
+Agent! can create **compiled Swift agents** that control macOS apps via ScriptingBridge:
+
+#### How It Works
+
+1. **Agent! analyzes your request** — "Control Music to play my workout playlist"
+2. **Generates Swift code** using the appropriate bridge modules
+3. **Compiles to dylib** at runtime
+4. **Executes with full TCC permissions**
+
+#### Example: Music Control Agent
+
+```swift
+// Agent! generates this automatically
+import Foundation
+import MusicBridge
+
+@_cdecl("script_main")
+public func scriptMain() -> Int32 {
+    guard let music = SBApplication(bundleIdentifier: "com.apple.Music") else {
+        print("Music not available")
+        return 1
+    }
+    
+    // Find and play playlist
+    let playlists = music.sources?[0].playlists ?? []
+    for playlist in playlists {
+        if playlist.name == "Workout" {
+            playlist.play?()
+            return 0
+        }
+    }
+    
+    return 0
+}
+```
+
+#### Supported ScriptingBridge Bridges
+
+| Bridge | App | Capabilities |
+|--------|-----|--------------|
+| **MusicBridge** | Apple Music | Play, pause, skip, playlists, tracks |
+| **FinderBridge** | Finder | File operations, windows, selections |
+| **MailBridge** | Mail | Send, read, organize emails |
+| **CalendarBridge** | Calendar | Events, reminders, calendars |
+| **ContactsBridge** | Contacts | Read, create, update contacts |
+| **SafariBridge** | Safari | Tabs, URLs, JavaScript execution |
+| **ChromeBridge** | Chrome | Tabs, URLs (limited scripting) |
+| **FirefoxBridge** | Firefox | Tabs, URLs (limited scripting) |
+| **MessagesBridge** | Messages | Send, read iMessages |
+| **NotesBridge** | Notes | Create, read, modify notes |
+| **XcodeScriptingBridge** | Xcode | Build, run, schemes |
+| **TerminalBridge** | Terminal | Execute commands, tabs |
+| **SystemEventsBridge** | System Events | UI scripting, processes |
+
+**Plus 40+ more bridges** for macOS apps.
+
+### Writing AppleScript Agents
+
+For apps without ScriptingBridge support or for GUI automation, Agent! generates **AppleScript**:
+
+```applescript
+-- Agent! generates this automatically
+tell application "Finder"
+    set theFiles to every file of folder "Documents"
+    repeat with aFile in theFiles
+        if name extension of aFile is "pdf" then
+            move aFile to folder "PDFs"
+        end if
+    end repeat
+end tell
+```
+
+#### AppleScript Tool Actions
+
+| Action | Description |
+|--------|-------------|
+| `execute` | Run inline AppleScript source code |
+| `lookup_sdef` | Read an app's scripting dictionary |
+| `list` | List saved AppleScripts |
+| `run` | Run a saved script by name |
+| `save` | Save a script for reuse |
+| `delete` | Remove a saved script |
+
+#### Example: GUI Automation with AppleScript
+
+```applescript
+-- Agent! generates this for UI automation
+tell application "System Events"
+    tell process "Safari"
+        click menu item "New Window" of menu "File" of menu bar 1
+        delay 1
+        keystroke "t" using {command down}
+    end tell
+end tell
+```
+
+### Writing JavaScript (JXA) Agents
+
+Agent! supports **JavaScript for Automation (JXA)** for JavaScript-native automation:
+
+```javascript
+// Agent! generates this automatically
+const safari = Application('Safari');
+safari.activate();
+
+const tab = safari.Document().make();
+safari.windows[0].currentTab.url = 'https://github.com';
+```
+
+#### JavaScript Tool Actions
+
+| Action | Description |
+|--------|-------------|
+| `execute` | Run inline JXA source code |
+| `list` | List saved JXA scripts |
+| `run` | Run a saved script by name |
+| `save` | Save a script for reuse |
+| `delete` | Remove a saved script |
+
+### Web Automation — HTML Page Control
+
+Agent! can automate **most HTML webpages** including Google Search, GitHub, and more. The `web` tool provides comprehensive browser control:
+
+#### Web Tool Actions
+
+| Action | Description | Example |
+|--------|-------------|---------|
+| `open` | Open a URL | `web(action: "open", url: "https://google.com")` |
+| `google_search` | Search Google | `web(action: "google_search", query: "Swift tutorials")` |
+| `click` | Click an element | `web(action: "click", selector: "#submit-button")` |
+| `type` | Type text into input | `web(action: "type", selector: "input[name='q']", text: "hello")` |
+| `read_content` | Extract page content | `web(action: "read_content")` |
+| `execute_js` | Run JavaScript | `web(action: "execute_js", script: "document.title")` |
+| `get_url` | Get current URL | `web(action: "get_url")` |
+| `get_title` | Get page title | `web(action: "get_title")` |
+| `find` | Find elements | `web(action: "find", selector: ".result")` |
+| `scroll_to` | Scroll to element | `web(action: "scroll_to", selector: "#footer")` |
+| `select` | Select dropdown option | `web(action: "select", selector: "select", value: "option1")` |
+| `submit` | Submit a form | `web(action: "submit", selector: "form")` |
+| `navigate` | Navigate back/forward | `web(action: "navigate", direction: "back")` |
+| `list_tabs` | List open tabs | `web(action: "list_tabs")` |
+| `switch_tab` | Switch to tab | `web(action: "switch_tab", index: 2)` |
+| `list_windows` | List browser windows | `web(action: "list_windows")` |
+| `new_window` | Open new window | `web(action: "new_window")` |
+| `close_window` | Close window | `web(action: "close_window")` |
+
+#### Example: Google Search and Data Extraction
+
+Agent! can autonomously:
+1. Open Google Search
+2. Enter a search query
+3. Navigate results
+4. Extract data from result pages
+
+```swift
+// Step 1: Open Google
+web(action: "open", url: "https://google.com")
+
+// Step 2: Type search query
+web(action: "type", selector: "input[name='q']", text: "best Swift UI tutorials")
+
+// Step 3: Submit search
+web(action: "submit", selector: "form")
+
+// Step 4: Wait and read results
+web(action: "read_content")  // Returns page content
+
+// Step 5: Extract specific data
+web(action: "execute_js", script: """
+    Array.from(document.querySelectorAll('.g a'))
+         .map(a => ({ title: a.innerText, url: a.href }))
+""")
+```
+
+#### Example: GitHub Repository Analysis
+
+```swift
+// Open a repository
+web(action: "open", url: "https://github.com/toddbruss/Agent")
+
+// Get repository stats
+web(action: "execute_js", script: """
+    ({
+        stars: document.querySelector('[href="/toddbruss/Agent/stargazers"]').innerText,
+        forks: document.querySelector('[href="/toddbruss/Agent/forks"]').innerText,
+        watchers: document.querySelector('[href="/toddbruss/Agent/watchers"]').innerText
+    })
+""")
+
+// Navigate to issues
+web(action: "click", selector: 'a[href="/toddbruss/Agent/issues"]')
+
+// List all open issues
+web(action: "read_content")
+```
+
+#### Safari Deep Integration
+
+Safari has the deepest integration because it supports **AppleScript JavaScript execution**:
+
+```applescript
+-- Execute JavaScript in Safari via AppleScript
+tell application "Safari"
+    tell front document
+        do JavaScript "document.querySelectorAll('.price').map(e => e.innerText)"
+    end tell
+end tell
+```
+
+This enables:
+- **Form filling** — Auto-fill complex forms
+- **Data scraping** — Extract structured data from pages
+- **UI testing** — Click, type, verify page state
+- **Content extraction** — Pull article text, prices, tables
+- **Navigation automation** — Complex multi-page workflows
+
+#### Workflow Example: Research Assistant
+
+```
+User: "Research the top 5 Swift UI libraries and summarize them"
+
+Agent!:
+1. Opens Google Search
+2. Searches "Swift UI libraries"
+3. Reads result titles and snippets
+4. Opens top 5 results
+5. Extracts key information from each page
+6. Compiles a summary
+
+All automated — no manual browsing required.
+```
+
+### Combining Self-Writing Agents with Web Automation
+
+Agent! can combine all three automation types:
+
+```swift
+// Agent! generates a complete workflow:
+
+// 1. Swift AgentScript for file operations
+@_cdecl("script_main")
+public func scriptMain() -> Int32 {
+    // Create directory for scraped data
+    try! FileManager.default.createDirectory(
+        at: URL(fileURLWithPath: "/tmp/scraped"),
+        withIntermediateDirectories: true
+    )
+    return 0
+}
+
+// 2. Web automation for data collection
+// Opens URLs, extracts data, saves results
+
+// 3. AppleScript to organize results
+tell application "Finder"
+    set theFolder to folder "/tmp/scraped"
+    sort files of theFolder by name
+end tell
+```
+
+### Why This Matters
+
+| Feature | Agent! | Other AI Tools |
+|---------|--------|----------------|
+| **Write Swift scripts** | ✅ Compiles dylibs at runtime | ❌ Terminal only |
+| **ScriptingBridge support** | ✅ 50+ app bridges | ❌ None |
+| **AppleScript generation** | ✅ Native execution | ⚠️ Via MCP (add-on) |
+| **JXA support** | ✅ Built-in | ❌ None |
+| **Web automation** | ✅ Safari + partial Chrome/Firefox | ⚠️ Via Playwright add-on |
+| **Self-writing agents** | ✅ Full autonomy | ❌ No agent system |
+| **TCC permissions** | ✅ Full access | ❌ Sandboxed |
+
+### Agent Creation Workflow
+
+```
+┌───────────────────────────────────────────────────────────────────────────┐
+│                     Creating an Agent in Agent!                           │
+│                                                                           │
+│   User: "Create an agent that monitors my email for messages from         │
+│          John and saves the attachments to a folder"                      │
+│                                                                           │
+│   ┌─────────────────────────────────────────────────────────────────┐     │
+│   │ Step 1: Agent! Analyzes Request                                 │     │
+│   │         • Needs Mail access → MailBridge                        │     │
+│   │         • Needs file operations → Foundation                    │     │
+│   │         • Needs persistence → Run periodically                  │     │
+│   └─────────────────────────────────────────────────────────────────┘     │
+│                              │                                            │
+│   ┌──────────────────────────▼──────────────────────────────────────┐     │
+│   │ Step 2: Agent! Generates Swift Code                              │     │
+│   │                                                                  │     │
+│   │   import Foundation                                              │     │
+│   │   import MailBridge                                              │     │
+│   │                                                                  │     │
+│   │   @_cdecl("script_main")                                         │     │
+│   │   public func scriptMain() -> Int32 {                            │     │
+│   │       let mail = SBApplication(                                  │     │
+│   │           bundleIdentifier: "com.apple.Mail")!                  │     │
+│   │       // Check for John's emails                                │     │
+│   │       // Save attachments                                         │     │
+│   │       return 0                                                   │     │
+│   │   }                                                              │     │
+│   └──────────────────────────────────────────────────────────────────┘     │
+│                              │                                            │
+│   ┌──────────────────────────▼──────────────────────────────────────┐     │
+│   │ Step 3: Save & Compile                                           │     │
+│   │         agent(action: "create", name: "JohnMailMonitor",         │     │
+│   │               content: "generated Swift code")                   │     │
+│   │                                                                  │     │
+│   │         → ~/Documents/AgentScript/agents/Sources/Scripts/       │     │
+│   │           JohnMailMonitor.swift                                  │     │
+│   │         → swift build → JohnMailMonitor.dylib                   │     │
+│   └──────────────────────────────────────────────────────────────────┘     │
+│                              │                                            │
+│   ┌──────────────────────────▼──────────────────────────────────────┐     │
+│   │ Step 4: Run On Demand or Schedule                                │     │
+│   │         agent(action: "run", name: "JohnMailMonitor")            │     │
+│   │                                                                  │     │
+│   │         The agent is now available for:                          │     │
+│   │         • Manual execution                                       │     │
+│   │         • Integration with other workflows                       │     │
+│   │         • Remote execution via iMessage                           │     │
+│   └──────────────────────────────────────────────────────────────────┘     │
+│                                                                           │
+└───────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Troubleshooting
 ## Troubleshooting
 
 ### Common Issues
