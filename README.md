@@ -43,7 +43,7 @@ Agent! is a **native macOS SwiftUI application** designed from the ground up for
 | **AgentScript (Swift)** | ✅ Compiled dylibs | ❌ | ❌ | ❌ | ❌ |
 | **AppleScript/JXA** | ✅ Built-in | ⚠️ Via MCP* | ❌ | ❌ | ❌ |
 | **Accessibility API** | ✅ Full control | ❌ | ❌ | ❌ | ❌ |
-| **MCP Protocol** | ✅ Stdio + SSE | ✅ ✅ Stdio + SSE | ✅ Stdio + SSE | ✅ Stdio | ⚠️ Sandbox* |
+| **MCP Protocol** | ✅ Stdio + SSE | ✅ Stdio + SSE | ✅ Stdio + SSE | ✅ Stdio | ⚠️ Sandbox* |
 | **Multi-LLM** | ✅ 8+ providers | ❌ Claude only | ✅ Multiple | ✅ Multiple | ✅ Claude + Local |
 | **Local Models** | ✅ Ollama, vLLM, LM Studio | ❌ | ⚠️ Via OpenRouter* | ✅ Ollama, LM Studio | ✅ Ollama, LM Studio |
 | **Apple Intelligence** | ✅ LoRA training | ❌ | ❌ | ❌ | ❌ |
