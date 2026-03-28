@@ -41,7 +41,7 @@ Agent! is a **native macOS SwiftUI application** designed from the ground up for
 
 | Capability | Agent! | Claude Code | Cursor | Cline | OpenClaw |
 |------------|:-------|:------------|:------|:-----|:---------|
-| **Native macOS App** | ✅ SwiftUI | ❌ Terminal | ❌ Electron | ❌ VS Code Ext |  E❌lectron |
+| **Native macOS App** | ✅ SwiftUI | ❌ Terminal | ❌ VS Code | ❌ VS Code | ❌ Electron |
 | **Xcode Build/Run** | ✅ Full project | ❌ File edits | ⚠️ Via Sweetpad | ❌ | ❌ |
 | **AgentScript (Swift)** | ✅ Compiled dylibs | ❌ | ❌ | ❌ | ❌ |
 | **AppleScript/JXA** | ✅ Built-in | ⚠️ Via MCP* | ❌ | ❌ | ❌ |
