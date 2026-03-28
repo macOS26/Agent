@@ -17,7 +17,8 @@ struct ThinkingIndicatorView: View {
     @State private var outputHeight: CGFloat = 100
     @State private var dots = ""
     @State private var elapsed: TimeInterval = 0
-    private let timer = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
+    @State private var tick = 0
+    private let refreshTimer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
 
     private var streamText: String {
         if let tab {
@@ -144,13 +145,16 @@ struct ThinkingIndicatorView: View {
             }
         }
         .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
-        .onReceive(timer) { _ in
-            elapsed += 0.5
-            switch dots.count {
-            case 0: dots = "."
-            case 1: dots = ".."
-            case 2: dots = "..."
-            default: dots = ""
+        .onReceive(refreshTimer) { _ in
+            elapsed += 0.1
+            tick += 1
+            if tick % 5 == 0 {
+                switch dots.count {
+                case 0: dots = "."
+                case 1: dots = ".."
+                case 2: dots = "..."
+                default: dots = ""
+                }
             }
         }
     }
