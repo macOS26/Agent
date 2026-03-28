@@ -13,6 +13,8 @@
 
 </div>
 
+<img width="1322" height="773" alt="Screenshot 2026-03-28 at 1 30 40 AM" src="https://github.com/user-attachments/assets/d81da01a-fa22-4cae-8cc5-6a67b5b49778" />
+
 ---
 
 ## The Problem
@@ -31,8 +33,6 @@ You're a developer on macOS. You want AI assistance that:
 ## The Solution: Agent!
 
 Agent! is a **native macOS SwiftUI application** designed from the ground up for Apple's ecosystem. It's not a terminal wrapper. It's not an Electron app. It's a first-class macOS citizen.
-
-### What Makes Agent! Different
 
 ### What Makes Agent! Different
 
