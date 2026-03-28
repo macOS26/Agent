@@ -178,8 +178,6 @@ final class ScriptTab: Identifiable {
             rawLLMOutput = ""
         }
         rawLLMOutput += delta
-        // Also write to activity log for live rendering
-        activityLog += delta
     }
 
     func flushStreamBuffer() {
