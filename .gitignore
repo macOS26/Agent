@@ -1,0 +1,10 @@
+*.xcuserstate
+.build/
+.swiftpm/
+agents/build/
+AgentMCP/build/
+AgentXcode/build/
+**/build/
+Agent!.app
+*.dmg
+.claude

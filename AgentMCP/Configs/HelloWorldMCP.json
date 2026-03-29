@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "HelloWorld": {
+      "transport": "stdio",
+      "command": "/Users/toddbruss/bin/mcp-server-hello",
+      "args": [],
+      "env": {}
+    }
+  }
+}
