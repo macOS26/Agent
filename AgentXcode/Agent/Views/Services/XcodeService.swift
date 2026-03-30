@@ -489,8 +489,8 @@ final class XcodeService: @unchecked Sendable {
         let fullRange = NSRange(location: 0, length: nsContent.length)
 
         // Bump version
-        let vPattern = try! NSRegularExpression(pattern: #"MARKETING_VERSION\s*=\s*(\d+[\.\d]*)"#)
-        guard let vMatch = vPattern.firstMatch(in: content, range: fullRange) else {
+        guard let vPattern = try? NSRegularExpression(pattern: #"MARKETING_VERSION\s*=\s*(\d+[\.\d]*)"#),
+              let vMatch = vPattern.firstMatch(in: content, range: fullRange) else {
             return "Error: MARKETING_VERSION not found in pbxproj."
         }
         let oldVersion = nsContent.substring(with: vMatch.range(at: 1))
@@ -501,7 +501,9 @@ final class XcodeService: @unchecked Sendable {
         content = content.replacingOccurrences(of: "MARKETING_VERSION = \(oldVersion)", with: "MARKETING_VERSION = \(newVersion)")
 
         // Also bump build
-        let bPattern = try! NSRegularExpression(pattern: #"CURRENT_PROJECT_VERSION\s*=\s*(\d+)"#)
+        guard let bPattern = try? NSRegularExpression(pattern: #"CURRENT_PROJECT_VERSION\s*=\s*(\d+)"#) else {
+            return "Error: failed to create build pattern regex"
+        }
         var newBuild = ""
         var oldBuild = ""
         let nsContent2 = content as NSString
@@ -532,7 +534,9 @@ final class XcodeService: @unchecked Sendable {
             return "Error: could not read \(pbxPath)"
         }
 
-        let pattern = try! NSRegularExpression(pattern: #"CURRENT_PROJECT_VERSION\s*=\s*(\d+)"#)
+        guard let pattern = try? NSRegularExpression(pattern: #"CURRENT_PROJECT_VERSION\s*=\s*(\d+)"#) else {
+            return "Error: failed to create build pattern regex"
+        }
         let nsContent = content as NSString
         guard let match = pattern.firstMatch(in: content, range: NSRange(location: 0, length: nsContent.length)) else {
             return "Error: CURRENT_PROJECT_VERSION not found in pbxproj."

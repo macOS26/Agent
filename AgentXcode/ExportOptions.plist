@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
     <key>method</key>
-    <string>mac-application</string>
+    <string>developer-id</string>
     <key>teamID</key>
     <string>469UCUB275</string>
     <key>signingStyle</key>

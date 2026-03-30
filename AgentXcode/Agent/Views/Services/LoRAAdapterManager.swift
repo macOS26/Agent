@@ -28,7 +28,9 @@ final class LoRAAdapterManager {
     private(set) var adapter: SystemLanguageModel.Adapter?
 
     private static let adapterDir: URL = {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        guard let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            return FileManager.default.temporaryDirectory.appendingPathComponent("Agent/Adapters")
+        }
         let dir = appSupport.appendingPathComponent("Agent/Adapters")
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
@@ -117,19 +119,25 @@ final class LoRAAdapterManager {
     // MARK: - Directories
 
     static var jsonlDir: URL {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        guard let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            return FileManager.default.temporaryDirectory.appendingPathComponent("Agent/LoRAJsonL")
+        }
         let dir = appSupport.appendingPathComponent("Agent/LoRAJsonL")
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
     }
 
     static var trainingEnvDir: URL {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        guard let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            return FileManager.default.temporaryDirectory.appendingPathComponent("Agent/TrainingEnv")
+        }
         return appSupport.appendingPathComponent("Agent/TrainingEnv")
     }
 
     static var baseDir: URL {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        guard let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            return FileManager.default.temporaryDirectory.appendingPathComponent("Agent")
+        }
         let dir = appSupport.appendingPathComponent("Agent")
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir

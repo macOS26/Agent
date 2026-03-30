@@ -16,7 +16,8 @@ final class TokenUsageStore {
     private let fileURL: URL
 
     private init() {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let urls = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
+        let appSupport = urls.first ?? FileManager.default.temporaryDirectory
         let dir = appSupport.appendingPathComponent("Agent")
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         fileURL = dir.appendingPathComponent("token_usage.json")
