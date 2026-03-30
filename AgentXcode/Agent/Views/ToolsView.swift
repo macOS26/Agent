@@ -1,4 +1,5 @@
 import SwiftUI
+import AgentTools
 
 struct ToolsView: View {
     @Binding var selectedProvider: APIProvider

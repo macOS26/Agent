@@ -1,4 +1,5 @@
 import Foundation
+import AgentTools
 
 // MARK: - Task Mode (auto tool subsetting)
 

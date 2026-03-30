@@ -1,5 +1,6 @@
 
 @preconcurrency import Foundation
+import AgentTools
 import MCPClient
 import MultiLineDiff
 import xcf_swift

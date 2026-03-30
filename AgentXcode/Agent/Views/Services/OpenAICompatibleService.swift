@@ -1,4 +1,5 @@
 @preconcurrency import Foundation
+import AgentTools
 
 /// Unified service for OpenAI and Hugging Face Inference API.
 /// Both use the OpenAI chat completions format with SSE streaming.
