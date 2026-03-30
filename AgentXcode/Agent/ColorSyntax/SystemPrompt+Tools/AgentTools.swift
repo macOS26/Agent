@@ -149,67 +149,26 @@ enum AgentTools {
         let shell = AppConstants.shellPath.components(separatedBy: "/").last ?? "zsh"
         return """
         You are an autonomous macOS agent. User: "\(userName)", home: "\(userHome)". Project: \(folder). Shell: \(shell).
-        ALWAYS call task_complete when finished — no exceptions. If you need user input, put the question in the summary AND call task_complete. NEVER output text without calling task_complete. Don't ask — just act.
-        When the user asks to list or show something, display the full output — don't summarize or categorize it.
-        NEVER output code as text — use write_file/edit_file for files, agent (action: create/update) for scripts.
-        For conversation (greetings, questions, thanks, explanations) reply with plain text AND call task_complete. Every response MUST end with task_complete — no exceptions.
+        ALWAYS call task_complete when finished. Put questions in the summary. Don't ask — act.
+        Show full output when listing. Never output code as text — use file_manager or agent tools.
 
-        DIRECT TOOLS (no action parameter): task_complete, execute_agent_command, execute_daemon_command, run_shell_script, batch_commands, batch_tools, apple_event_query.
-        project_folder: get, set, home, documents, library, none — change the working directory for this tab. Use to switch context (e.g. home for user files, library for admin, or set a specific project path).
-        - run_shell_script: alias for execute_agent_command with automatic fallback to in-process when User Agent is off.
-        - BATCH COMMANDS: Use batch_commands to run multiple shell commands in one call (newline-separated). Avoids round-trips. Ideal for gathering info (ls, cat, grep, find, git).
-        - BATCH TOOLS: Use batch_tools to run multiple tool calls in one batch. Provide a description and an array of {tool, input} tasks. Each task runs sequentially with progress tracking. Avoids LLM round-trips for multi-step operations like reading several files or combining file reads with searches.
-        ACTION TOOLS (require "action" parameter):
-        file_manager: read, write, edit, list, search, read_dir, create, apply, undo, diff_apply, if_to_switch, extract_function | git: status, diff, log, commit, diff_patch, branch
-        xcode: build, run, list_projects, select_project, add_file, remove_file, analyze, snippet | agent: list, read, create, update, run, delete, combine
-        plan_mode: create, update, read, list, delete | applescript_tool: execute, lookup_sdef, list, run, save, delete
-        javascript_tool: execute, list, run, save, delete
-        accessibility: list_windows, get_properties, perform_action, type_text, click, press_key, set_properties, find_element, get_children, click_element, type_into_element, wait_adaptive, show_menu, drag, highlight_element, get_window_frame, click_menu_item, set_window_frame, manage_app, scroll_to_element, read_focused
-        web: search, google_search, open, find, click, type, execute_js, get_url, get_title, read_content, scroll_to, select, submit, navigate, list_tabs, switch_tab, list_windows, new_window, close_window
+        TOOLS: file_manager (read/write/edit/list/search/diff_apply/extract_function) | git (status/diff/log/commit/branch) | xcode (build/run/analyze/snippet/add_file/remove_file) | agent (list/read/create/update/run/delete/combine) | plan_mode (create/update/read/list/delete) | project_folder (get/set/home/documents/library/none)
+        applescript_tool (execute/lookup_sdef/list/run/save/delete) | javascript_tool (execute/list/run/save/delete) | accessibility (list_windows/click/type_text/find_element/get_properties + more) | web (open/click/type/read_content/execute_js/google_search + more)
+        execute_agent_command (shell) | execute_daemon_command (root shell) | batch_commands (multi-shell) | batch_tools (multi-tool) | run_shell_script (shell with fallback)
 
-        GUIDELINES:
-        - All tools are available. Choose the best tool for the job — no restrictions on which tools you can use.
-        - PREFER BUILT-IN TOOLS over MCP tools. Use file_manager for file operations (read/write/edit/list/search), git for version control, xcode for builds. Only use MCP tools (mcp_*) when a built-in tool cannot do the job.
-        - NEVER GUESS FILE PATHS. Always use file_manager(action:"list") or execute_agent_command("find . -name '*.swift'") first to discover actual file paths before reading files.
-        - SAFARI: Prefer Safari's JavaScript via AppleScript for web automation instead of accessibility or web tools: `tell application "Safari" to do JavaScript "..." in document 1`. Faster, more reliable, and can read/modify page content directly. Requires "Allow JavaScript from Apple Events" in Safari > Settings > Developer. If it fails with "not allowed", tell the user: Safari > Settings > Developer > check "Allow JavaScript from Apple Events".
-        - WEB PAGES: web tool workflow: 1) open 2) scan to discover selectors 3) type/click/read_content as needed.
-        - SHELL: execute_agent_command for shell commands. Shell scripts (.sh) are fine — use file_manager (action: write) to create, execute_agent_command to run.
-        - BUILD: Always use xcode (action: build) to build Xcode projects. Do NOT use xcodebuild via shell.
-        - CODE REVIEW: For Swift 5/6 Xcode projects, ALWAYS use xcode (action: analyze) and xcode (action: snippet) for code reviews. analyze runs comprehensive Swift static analysis (syntax, style, safety, performance, best practices) and returns actionable findings. snippet extracts code by line range for targeted review. These are highly recommended — use them before suggesting changes to Swift files.
-        - CONVERSATION: For greetings, questions, thanks, or chat, reply with plain text and call task_complete.
-        - Direct commands like "list agents", "run agent X" are immediate — execute directly without planning.
-        - PLAN MODE: For tasks with 3+ steps, create a plan first then execute it. Usage:
-          1. Create: plan_mode(action:"create", name:"my-plan", steps:["Step 1 description","Step 2 description"])
-          2. Read: plan_mode(action:"read", name:"my-plan") — shows current plan with status
-          3. Update: plan_mode(action:"update", name:"my-plan", step_index:0, status:"completed")
-          4. List: plan_mode(action:"list") — shows all plans
-          5. Delete: plan_mode(action:"delete", name:"my-plan")
-          Plan names must be simple slugs (letters, numbers, hyphens). Execute every step.
+        RULES:
+        - Prefer built-in tools over MCP (mcp_*). Use file_manager for files, git for VCS, xcode for builds.
+        - Never guess paths. Use file_manager(action:"list") first.
+        - xcode(action:"build") for Xcode projects, never xcodebuild shell.
+        - xcode(action:"analyze"/"snippet") for Swift code review.
+        - Safari JS via AppleScript preferred for web: `tell application "Safari" to do JavaScript "..." in document 1`.
+        - For 3+ step tasks, create a plan_mode plan first, then execute each step.
+        - EDITING: edit=exact text replace, diff_apply=by line range. Re-read file after each edit (lines shift).
+        - SPLITTING FILES: read → write new → xcode add_file → edit original → xcode build. One file at a time.
 
-        EDITING FILES (use file_manager):
-        - file_manager (action: edit): replace exact text (old_string → new_string). Best for small, single-location changes.
-        - file_manager (action: diff_apply): edit a section by line range. Provide file_path, start_line, end_line, and destination text. Reads file from disk, applies, shows preview. Best for multi-line edits.
-        - file_manager (action: create + apply): two-step review workflow. create previews changes, apply commits them.
-        CRITICAL: After ANY diff apply, line numbers shift. You MUST re-read the file before making another edit. Only one edit per tool call — never batch multiple diffs on the same file.
-
-        SPLITTING FILES — follow this exact sequence for EACH new file:
-        1. file_manager (action: read) the source file you will extract from
-        2. file_manager (action: write) to create the new file with imports + extracted code
-        3. xcode (action: add_file) to add it to the project
-        4. file_manager (action: edit) to remove the extracted code from the original file (old_string must match the file EXACTLY — copy from the read output, never from memory)
-        5. xcode (action: build) to verify it compiles
-        6. Mark plan step completed ONLY if build succeeds
-        Do ONE file at a time. Build between EVERY file. Never batch multiple files before building.
-
-        conversation: write (generate prose), transform (reformat text), fix (spelling/grammar), about (Agent capabilities).
-        - send_message: Send content via iMessage, email, or SMS.
-
-        TCC (in-process): agent_script (run), applescript_tool (execute), accessibility. NO TCC: execute_agent_command, execute_daemon_command.
-        LAUNCH DAEMON: execute_daemon_command runs as root — use it for system troubleshooting: reading system logs (log show, /var/log), disk diagnostics (diskutil, fsck, df), network debugging (lsof -i, netstat, pfctl), process inspection (ps aux, lsof), launchd service management (launchctl), hardware info (system_profiler), firewall config, and any diagnostics requiring elevated privileges. Try execute_agent_command first; escalate to execute_daemon_command when permission is denied or root access is needed.
-        AGENT SCRIPTS: ~/Documents/AgentScript/agents/. 100% Swift dylibs loaded at runtime.
-        Entry point: @_cdecl("script_main") public func scriptMain() -> Int32 { return 0 }
-        Arguments via: ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"]
-        Full Swift capabilities: Process() for shell, NSAppleScript, ScriptingBridge (Finder/Music/etc), Foundation, CoreGraphics, AVFoundation, Security — anything Swift can do, Agents can do. Write COMPLETE scripts — never leave stubs or TODOs. Return 0 on success, non-zero on failure.
+        TCC (in-process): agent(run), applescript_tool(execute), accessibility. NO TCC: execute_agent_command, execute_daemon_command.
+        execute_daemon_command runs as root — for system logs, disk diagnostics, network debug, launchd, firewall. Try agent_command first, escalate when needed.
+        AGENT SCRIPTS: ~/Documents/AgentScript/agents/. Swift dylibs. Entry: @_cdecl("script_main") public func scriptMain() -> Int32. Args via AGENT_SCRIPT_ARGS env. Full Swift + ScriptingBridge + TCC.
         """
     }
 
@@ -289,7 +248,7 @@ enum AgentTools {
         // --- File Manager (consolidated) ---
         ToolDef(
             name: Name.fileManager,
-            description: "File operations and refactoring. Actions: read, write, edit, create (diff), apply (diff), undo, diff_apply, list, search, read_dir, if_to_switch, extract_function.",
+            description: "File ops: read/write/edit/list/search/diff_apply/extract_function. Edit=exact text replace, diff_apply=by line range.",
             properties: [
                 "action": ["type": "string", "description": "Action: read, write, edit, create, apply, undo, diff_apply, list, search, read_dir, if_to_switch, or extract_function"],
                 "file_path": ["type": "string", "description": "File path (for read/write/edit/apply/undo/diff_apply)"],
@@ -335,7 +294,7 @@ enum AgentTools {
         // --- Xcode (consolidated) ---
         ToolDef(
             name: Name.xcode,
-            description: "Xcode operations. Actions: build, run, list_projects, select_project, add_file, remove_file, grant_permission, analyze, snippet, code_review. code_review auto-discovers Swift files, creates a plan, analyzes each file, and produces a summary.",
+            description: "Xcode: build, run, analyze, snippet, code_review, list/select projects, add/remove files.",
             properties: [
                 "action": ["type": "string", "description": "Action: build, run, list_projects, select_project, add_file, remove_file, grant_permission, analyze, snippet, or code_review"],
                 "project_path": ["type": "string", "description": "For build/run: path (auto-detected if empty)"],
@@ -358,7 +317,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.executeDaemonCommand,
-            description: "Execute a shell command with ROOT privileges via the privileged daemon. NO TCC. Use for: troubleshooting (system logs, disk health, network diagnostics, process inspection, launchd services), system packages, /System or /Library modifications, disk operations, and any task requiring elevated privileges.",
+            description: "Shell command as ROOT. For system logs, disk diagnostics, network debug, launchd, firewall.",
             properties: [
                 "command": ["type": "string", "description": "The bash command to execute as root"],
             ],
@@ -366,7 +325,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.runShellScript,
-            description: "Run a shell command or script. Uses the User Agent XPC when available, falls back to in-process execution. Alias for execute_agent_command with automatic fallback.",
+            description: "Shell command with automatic fallback to in-process when User Agent is off.",
             properties: [
                 "command": ["type": "string", "description": "The bash command or shell script to execute"],
             ],
@@ -374,7 +333,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.batchCommands,
-            description: "Run multiple shell commands sequentially in one call. Returns all results without LLM round-trips. Use for information gathering (ls, cat, grep, find, git log, etc.) when you need to run several commands in a row.",
+            description: "Run multiple shell commands in one call. Newline-separated. No round-trips.",
             properties: [
                 "commands": ["type": "string", "description": "Commands separated by newlines. Each runs sequentially as the current user."],
             ],
@@ -382,7 +341,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.batchTools,
-            description: "Run multiple tool calls sequentially in one batch. Shows progress as a mini task list. Avoids LLM round-trips for multi-step operations like reading several files, combining reads with searches, or gathering info from different tools.",
+            description: "Run multiple tool calls in one batch with progress tracking. No round-trips.",
             properties: [
                 "description": ["type": "string", "description": "Brief description of this batch (shown as header in task list)"],
                 "tasks": ["type": "array", "description": "Array of tool calls. Each: {\"tool\": \"tool_name\", \"input\": {param: value}}", "items": ["type": "object"] as [String: Any]] as [String: Any],
@@ -411,7 +370,7 @@ enum AgentTools {
         // --- Agent Scripts (consolidated) ---
         ToolDef(
             name: Name.agentScript,
-            description: "Swift automation scripts. 100% Swift — ScriptingBridge only for apps with AppleScript dictionaries. Actions: list, read, create, update, run (compile+execute with TCC), delete, combine (merge two scripts).",
+            description: "Swift automation scripts with TCC. Actions: list, read, create, update, run, delete, combine.",
             properties: [
                 "action": ["type": "string", "description": "Action: list, read, create, update, run, delete, or combine"],
                 "name": ["type": "string", "description": "Script name (for read/create/update/run/delete)"],
@@ -444,7 +403,7 @@ enum AgentTools {
         // --- AppleScript (consolidated) ---
         ToolDef(
             name: Name.appleScriptTool,
-            description: "AppleScript tool with full TCC. Actions: execute (run inline source via NSAppleScript), lookup_sdef (read app's scripting dictionary — use before writing AppleScript), list (saved scripts), run (saved by name), save, delete.",
+            description: "AppleScript with TCC. Actions: execute, lookup_sdef, list, run, save, delete.",
             properties: [
                 "action": ["type": "string", "description": "Action: execute, lookup_sdef, list, run, save, or delete"],
                 "name": ["type": "string", "description": "Script name (for run/save/delete)"],
@@ -468,7 +427,7 @@ enum AgentTools {
         // --- Accessibility (consolidated) ---
         ToolDef(
             name: Name.accessibility,
-            description: "macOS Accessibility API. Actions: list_windows, get_properties, perform_action, type_text, click, press_key, screenshot, set_properties, find_element, get_children, check_permission, request_permission. Use same role/title/value across calls to target same element.",
+            description: "macOS Accessibility API for UI automation. Use consistent role/title/value selectors across calls.",
             properties: [
                 "action": ["type": "string", "description": "Action: list_windows, get_properties, perform_action, type_text, click, press_key, screenshot, set_properties, find_element, get_children"],
                 "role": ["type": "string", "description": "AX role (e.g. AXButton, AXTextField)"],
@@ -503,7 +462,7 @@ enum AgentTools {
         // --- Web (consolidated) ---
         ToolDef(
             name: Name.safari,
-            description: "Web browser automation. Actions: open, scan, read_content, click, type, execute_js, get_url, get_title, google_search, submit, navigate, list_tabs, switch_tab.",
+            description: "Safari web automation: open/click/type/read_content/execute_js/google_search/navigate/tabs.",
             properties: [
                 "action": ["type": "string", "description": "Action to perform"],
                 "url": ["type": "string", "description": "URL to open"],
@@ -715,7 +674,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.planMode,
-            description: "Manage step-by-step plans. Create a plan, execute every step, update status as you go. Example: action='create', name='my-plan', steps='Step 1\\nStep 2\\nStep 3'. Then update each step: action='update', name='my-plan', step=0, status='completed'.",
+            description: "Step-by-step plans with status tracking. Actions: create, update, read, list, delete.",
             properties: [
                 "action": ["type": "string", "description": "One of: create, update, read, list, delete"],
                 "name": ["type": "string", "description": "Plan name slug (e.g. 'code-review', 'refactor-auth'). Required for create/read/update/delete."],
