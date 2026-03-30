@@ -338,8 +338,8 @@ enum CodingService {
     static func buildListFilesCommand(pattern: String, path: String?) -> String {
         let dir = shellEscape(path ?? defaultDir)
         let pat = shellEscape(pattern)
-        // Exclude large non-project dirs that cause XPC timeouts when searching ~/
-        return "find \(dir) -maxdepth 8 -name \(pat)"
+        // cd into dir so find outputs relative paths (saves tokens)
+        return "cd \(dir) && find . -maxdepth 8 -name \(pat)"
             + " -not -path '*/.*'"
             + " -not -path '*/.build/*'"
             + " -not -path '*/Library/*'"
@@ -347,7 +347,7 @@ enum CodingService {
             + " -not -path '*/Music/*'"
             + " -not -path '*/Pictures/*'"
             + " -not -path '*/DerivedData/*'"
-            + " 2>/dev/null | head -200 | sort"
+            + " 2>/dev/null | sed 's|^\\./||' | sort | head -200"
     }
 
     static func buildSearchFilesCommand(pattern: String, path: String?, include: String?) -> String {

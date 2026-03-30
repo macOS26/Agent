@@ -258,7 +258,7 @@ extension AgentViewModel {
         if name == "list_files" {
             let pat = CodingService.shellEscape(input["pattern"] as? String ?? "*")
             let dir = CodingService.shellEscape(input["path"] as? String ?? pf)
-            let result = await executeViaUserAgent(command: "find \(dir) -name \(pat) ! -path '*/.build/*' ! -path '*/.git/*' 2>/dev/null | sort | head -100")
+            let result = await executeViaUserAgent(command: "cd \(dir) && find . -name \(pat) ! -path '*/.build/*' ! -path '*/.git/*' 2>/dev/null | sed 's|^\\./||' | sort | head -100")
             return result.output.isEmpty ? "No files found" : result.output
         }
         if name == "search_files" {
