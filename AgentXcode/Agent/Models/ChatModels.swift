@@ -110,7 +110,7 @@ final class ChatHistoryStore {
     
     /// Dedicated store file — avoids sharing default.store with TrainingDataStore
     private static var storeURL: URL {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        (FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first ?? FileManager.default.temporaryDirectory)
             .appendingPathComponent("chat2.store")
     }
 

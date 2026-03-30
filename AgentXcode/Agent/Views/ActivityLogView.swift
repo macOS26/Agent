@@ -322,7 +322,11 @@ struct ActivityLogView: NSViewRepresentable {
                 return
             }
             // Ensure layout is complete before calculating target
-            textView.layoutManager?.ensureLayout(for: textView.textContainer!)
+            guard let textContainer = textView.textContainer else {
+                textView.scrollToEndOfDocument(nil)
+                return
+            }
+            textView.layoutManager?.ensureLayout(for: textContainer)
             let contentHeight = textView.frame.height
             let clipHeight = scrollView.contentView.bounds.height
             let targetY = max(0, contentHeight - clipHeight)

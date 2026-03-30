@@ -28,8 +28,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         _ = AccessibilityEnabled.shared
 
         // Insert 🦾 Agents menu before File (position 1, after app menu)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            self.insertAgentsMenu()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            self?.insertAgentsMenu()
         }
     }
 

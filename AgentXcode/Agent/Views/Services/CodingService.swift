@@ -967,7 +967,7 @@ enum CodingService {
                 // Extract all tool names from the line
                 var names = [String]()
                 let searchLine = line as NSString
-                let namePattern = try! NSRegularExpression(pattern: #"name == "([^"]+)""#)
+                guard let namePattern = try? NSRegularExpression(pattern: #"name == "([^"]+)""#) else { continue }
                 let matches = namePattern.matches(in: line, range: NSRange(location: 0, length: searchLine.length))
                 for m in matches {
                     if m.numberOfRanges >= 2 {
