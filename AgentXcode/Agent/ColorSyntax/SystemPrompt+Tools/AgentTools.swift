@@ -174,7 +174,7 @@ enum AgentTools {
         - SPLITTING FILES: read → write new → xcode add_file → edit original → xcode build. One file at a time.
 
         TCC (in-process): agent(run), applescript_tool(execute), accessibility. NO TCC: execute_agent_command, execute_daemon_command.
-        execute_daemon_command runs as root — for system logs, disk diagnostics, network debug, launchd, firewall. Try agent_command first, escalate when needed.
+        SHELL: execute_agent_command runs as current user. execute_daemon_command runs as ROOT — no sudo needed, it uses a privileged Launch Daemon. Use execute_daemon_command for: system logs, disk diagnostics, network debug, launchd, firewall, /System or /Library access, and any command that would normally require sudo. NEVER use sudo — use execute_daemon_command instead.
         AGENT SCRIPTS: ~/Documents/AgentScript/agents/. Swift dylibs. Entry: @_cdecl("script_main") public func scriptMain() -> Int32. Args via AGENT_SCRIPT_ARGS env. Full Swift + ScriptingBridge + TCC.
         """
     }
@@ -331,7 +331,7 @@ enum AgentTools {
         ),
         ToolDef(
             name: Name.executeDaemonCommand,
-            description: "Shell command as ROOT. For system logs, disk diagnostics, network debug, launchd, firewall.",
+            description: "Shell command as ROOT via Launch Daemon — no sudo needed. Use instead of sudo for: system logs, disk ops, network debug, launchd, firewall, /System, /Library.",
             properties: [
                 "command": ["type": "string", "description": "The bash command to execute as root"],
             ],
