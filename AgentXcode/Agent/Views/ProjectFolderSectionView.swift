@@ -11,7 +11,7 @@ struct ProjectFolderSectionView: View {
             HStack(spacing: 4) {
                 ProjectFolderField(
                     projectFolder: Binding(
-                        get: { tab.projectFolder },
+                        get: { tab.projectFolder.isEmpty ? viewModel.projectFolder : tab.projectFolder },
                         set: { tab.projectFolder = $0; viewModel.persistScriptTabs() }
                     )
                 )
@@ -24,6 +24,7 @@ struct ProjectFolderSectionView: View {
                     modelName: viewModel.globalModelForProvider(viewModel.selectedProvider)
                 )
             }
+            .id(tab.id)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
         } else {
