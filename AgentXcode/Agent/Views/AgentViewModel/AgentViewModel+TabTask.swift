@@ -124,6 +124,10 @@ extension AgentViewModel {
                 if scriptService.compileCommand(name: agentName) != nil {
                     let success = await runAgentDirect(name: agentName, arguments: args, switchToTab: false)
                     if success {
+                        if tab.isMessagesTab, let handle = tab.replyHandle {
+                            tab.replyHandle = nil
+                            sendMessagesTabReply("Ran \(agentName)", handle: handle)
+                        }
                         tab.isLLMRunning = false
                         tab.isLLMThinking = false
                         return
@@ -173,6 +177,10 @@ extension AgentViewModel {
             tab.tabTaskSummaries.append("[\(time)] \(prompt) → \(completionSummary)")
             history.add(TaskRecord(prompt: prompt, summary: completionSummary, commandsRun: [cmd.name]), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
             tab.flush()
+            if tab.isMessagesTab, let handle = tab.replyHandle {
+                tab.replyHandle = nil
+                sendMessagesTabReply(completionSummary, handle: handle)
+            }
             tab.isLLMRunning = false
             tab.isLLMThinking = false
             return
@@ -183,6 +191,10 @@ extension AgentViewModel {
             completionSummary = String(reply.prefix(200))
             history.add(TaskRecord(prompt: prompt, summary: completionSummary, commandsRun: []), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
             tab.flush()
+            if tab.isMessagesTab, let handle = tab.replyHandle {
+                tab.replyHandle = nil
+                sendMessagesTabReply(completionSummary, handle: handle)
+            }
             tab.isLLMRunning = false
             tab.isLLMThinking = false
             return
@@ -636,8 +648,11 @@ extension AgentViewModel {
         // If Messages tab task ended without task_complete, still send a reply
         if tab.isMessagesTab, let handle = tab.replyHandle {
             tab.replyHandle = nil
-            let reason = Task.isCancelled ? "(cancelled)" : "(incomplete)"
-            sendMessagesTabReply(reason, handle: handle)
+            // Send the last LLM text response, not a generic label
+            let lastText = tab.activityLog.components(separatedBy: "\n")
+                .filter { !$0.isEmpty && !$0.hasPrefix("[") && !$0.hasPrefix("---") && !$0.hasPrefix("👤") && !$0.hasPrefix("🧠") && !$0.hasPrefix("🍎") && !$0.hasPrefix("💬") && !$0.hasPrefix("🕐") }
+                .last ?? (Task.isCancelled ? "(cancelled)" : "Done")
+            sendMessagesTabReply(lastText, handle: handle)
         }
 
         tab.flush()

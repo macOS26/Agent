@@ -593,7 +593,7 @@ extension AgentViewModel {
                 } else {
                     title = id
                 }
-                return "\(id): \(title)"
+                return "plan_id: \(id) — \(title)"
             }.joined(separator: "\n")
 
         case "delete":
