@@ -1201,12 +1201,10 @@ final class AgentViewModel {
     /// Call this before compressMessages for best results.
     static func summarizeOldMessages(_ messages: inout [[String: Any]], keepRecent: Int = 4) async {
         guard messages.count > keepRecent + 1, FoundationModelService.isAvailable else {
-            print("🧠 [AppleAI Summary] skipped: msgs=\(messages.count) available=\(FoundationModelService.isAvailable)")
             return
         }
 
         let middleEnd = messages.count - keepRecent
-        print("🧠 [AppleAI Summary] processing \(middleEnd - 1) old messages")
         let session = LanguageModelSession(model: .default, instructions: Instructions("Summarize in 1-2 concise sentences. Keep file paths, function names, errors, and key results."))
 
         for i in 1..<middleEnd {
