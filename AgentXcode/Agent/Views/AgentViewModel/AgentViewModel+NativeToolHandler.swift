@@ -794,6 +794,13 @@ extension AgentViewModel {
             return handleProjectFolder(tab: nil, input: input)
         }
 
+        // coding_mode
+        if name == "coding_mode" {
+            let enabled = input["enabled"] as? Bool ?? true
+            codingModeEnabled = enabled
+            return enabled ? "Coding mode ON — only Core+Workflow+Coding+UserAgent tools active." : "Coding mode OFF — all tools restored."
+        }
+
         // MARK: - Xcode Tools
         if name == "xcode_build" {
             let projectPath = input["project_path"] as? String ?? ""

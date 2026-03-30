@@ -33,7 +33,7 @@ extension AgentViewModel {
         taskInputTokens = 0
         taskOutputTokens = 0
         // All tool groups available — user controls via UI toggles
-        let activeGroups: Set<String>? = nil
+        var activeGroups: Set<String>? = codingModeEnabled ? Self.codingModeGroups : nil
         appendLog("--- New Task ---")
         appendLog("👤 \(prompt)")
 
@@ -267,6 +267,14 @@ extension AgentViewModel {
 
         while !Task.isCancelled {
             iterations += 1
+
+            // Auto-enable coding mode after iteration 1 if tool calls were made
+            if iterations == 2 && !codingModeEnabled && !commandsRun.isEmpty {
+                codingModeEnabled = true
+                activeGroups = Self.codingModeGroups
+                appendLog("⚡ Coding mode auto-enabled")
+                flushLog()
+            }
 
             // Prune old messages every 4 iterations to save tokens
             if iterations > 1 && iterations % 4 == 0 && messages.count > 10 {

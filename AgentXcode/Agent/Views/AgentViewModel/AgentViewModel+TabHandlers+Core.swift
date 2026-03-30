@@ -58,6 +58,17 @@ extension AgentViewModel {
                 isComplete: false
             )
 
+        case "coding_mode":
+            let enabled = input["enabled"] as? Bool ?? true
+            codingModeEnabled = enabled
+            let output = enabled ? "Coding mode ON — only Core+Workflow+Coding+UserAgent tools active." : "Coding mode OFF — all tools restored."
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+
         default:
         let output = await executeNativeTool(name, input: input)
         tab.appendLog(output); tab.flush()
