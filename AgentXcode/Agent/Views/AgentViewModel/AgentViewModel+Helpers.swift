@@ -504,7 +504,11 @@ extension AgentViewModel {
             guard fm.fileExists(atPath: path),
                   let data = fm.contents(atPath: path),
                   let content = String(data: data, encoding: .utf8) else {
-                return "Error: plan '\(planId)' not found."
+                let available = (try? fm.contentsOfDirectory(atPath: dir))?
+                    .filter { $0.hasPrefix("plan_") && $0.hasSuffix(".md") }
+                    .map { "plan_id: " + String($0.dropFirst(5).dropLast(3)) }
+                    .joined(separator: ", ") ?? "none"
+                return "Error: plan '\(planId)' not found. Available plans: \(available)"
             }
 
             let marker: String
@@ -570,7 +574,12 @@ extension AgentViewModel {
             guard fm.fileExists(atPath: path),
                   let data = fm.contents(atPath: path),
                   let content = String(data: data, encoding: .utf8) else {
-                return "Error: plan '\(planId)' not found."
+                // Include available plans in error so LLM can self-correct
+                let available = (try? fm.contentsOfDirectory(atPath: dir))?
+                    .filter { $0.hasPrefix("plan_") && $0.hasSuffix(".md") }
+                    .map { "plan_id: " + String($0.dropFirst(5).dropLast(3)) }
+                    .joined(separator: ", ") ?? "none"
+                return "Error: plan '\(planId)' not found. Available plans: \(available)"
             }
             return "plan_id: \(planId) (use this ID for read/update/delete)\n\(content)"
 
