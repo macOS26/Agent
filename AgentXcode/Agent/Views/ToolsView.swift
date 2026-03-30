@@ -11,14 +11,15 @@ struct ToolsView: View {
         "Coding": ({ ["read_file", "write_file", "edit_file", "create_diff", "apply_diff", "diff_and_apply", "undo_edit", "list_files", "search_files", "read_dir", "file_manager", "xcode", "project_folder"].contains($0.name) }, "chevron.left.forwardslash.chevron.right"),
         "Automation": ({ ["applescript_tool", "accessibility", "javascript_tool", "lookup_sdef"].contains($0.name) }, "gearshape.2"),
         "Experimental": ({ ["apple_event_query", "ax_screenshot", "selenium"].contains($0.name) }, "flask"),
-        "Core": ({ ["task_complete", "list_tools", "web_search", "write_text", "transform_text", "about_self", "fix_text"].contains($0.name) }, "checkmark.circle"),
+        "Core": ({ ["task_complete", "list_tools", "web_search"].contains($0.name) }, "checkmark.circle"),
+        "Conversation": ({ $0.name == "conversation" }, "text.bubble"),
         "Workflow": ({ ["agent", "plan_mode", "git", "send_message", "batch_commands", "batch_tools"].contains($0.name) }, "flowchart"),
         "User Agent": ({ $0.name == "execute_agent_command" }, "person"),
         "Launch Daemon": ({ $0.name == "execute_daemon_command" }, "lock.shield"),
         "Web": ({ $0.name == "web" }, "globe"),
     ]
 
-    static let groupOrder: [String] = ["Core", "Workflow", "Coding", "Automation", "User Agent", "Launch Daemon", "Web", "Experimental"]
+    static let groupOrder: [String] = ["Core", "Conversation", "Workflow", "Coding", "Automation", "User Agent", "Launch Daemon", "Web", "Experimental"]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
