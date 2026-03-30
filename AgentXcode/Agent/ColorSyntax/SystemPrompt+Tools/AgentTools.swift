@@ -248,7 +248,7 @@ enum AgentTools {
         // --- File Manager (consolidated) ---
         ToolDef(
             name: Name.fileManager,
-            description: "File ops: read/write/edit/list/search/diff_apply/extract_function. Edit=exact text replace, diff_apply=by line range.",
+            description: "File ops: read/write/edit/list/search/diff_apply/extract_function. Use read for viewing, edit for small changes, diff_apply for multi-line edits by line range. Use search to find text across files. Use offset/limit for large files.",
             properties: [
                 "action": ["type": "string", "description": "Action: read, write, edit, create, apply, undo, diff_apply, list, search, read_dir, if_to_switch, or extract_function"],
                 "file_path": ["type": "string", "description": "File path (for read/write/edit/apply/undo/diff_apply)"],
@@ -294,7 +294,7 @@ enum AgentTools {
         // --- Xcode (consolidated) ---
         ToolDef(
             name: Name.xcode,
-            description: "Xcode: build, run, analyze, snippet, code_review, bump_version, bump_build, list/select projects, add/remove files.",
+            description: "Xcode: build/run projects, analyze/snippet for code review, bump_version/bump_build, add/remove files. Use analyze before suggesting Swift changes.",
             properties: [
                 "action": ["type": "string", "description": "Action: build, run, list_projects, select_project, add_file, remove_file, grant_permission, analyze, snippet, or code_review"],
                 "project_path": ["type": "string", "description": "For build/run: path (auto-detected if empty)"],
@@ -309,7 +309,7 @@ enum AgentTools {
         // --- Coding: Shell ---
         ToolDef(
             name: Name.executeAgentCommand,
-            description: "Execute a shell command as the current user (no root). NO TCC permissions. Use for git, builds, file ops, homebrew, etc.",
+            description: "Shell command as current user. Use for git, ls, grep, find, homebrew, scripts. No TCC.",
             properties: [
                 "command": ["type": "string", "description": "The bash command to execute as the current user"],
             ],
