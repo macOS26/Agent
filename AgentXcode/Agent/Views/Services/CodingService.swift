@@ -335,6 +335,16 @@ enum CodingService {
         "'" + s.replacingOccurrences(of: "'", with: "'\\''") + "'"
     }
 
+    /// Trim the home directory prefix from a path for cleaner output.
+    static func trimHome(_ path: String) -> String {
+        let home = defaultDir
+        if path.hasPrefix(home) {
+            let trimmed = String(path.dropFirst(home.count))
+            return trimmed.hasPrefix("/") ? "~" + trimmed : "~/" + trimmed
+        }
+        return path
+    }
+
     static func buildListFilesCommand(pattern: String, path: String?) -> String {
         let dir = shellEscape(path ?? defaultDir)
         let pat = shellEscape(pattern)
@@ -358,8 +368,8 @@ enum CodingService {
             cmd += " --include=\(shellEscape(include))"
         }
         cmd += " --exclude-dir=.git --exclude-dir=.build --exclude-dir=node_modules --exclude-dir=DerivedData --exclude-dir=Library --exclude-dir=Movies --exclude-dir=Music --exclude-dir=Pictures"
-        cmd += " \(pat) . 2>/dev/null | head -100"
-        return "cd \(dir) && \(cmd)"
+        cmd += " \(pat) \(dir) 2>/dev/null | head -100"
+        return cmd
     }
 
     static func buildGitStatusCommand(path: String?) -> String {

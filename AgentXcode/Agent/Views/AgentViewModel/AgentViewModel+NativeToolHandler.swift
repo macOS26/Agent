@@ -259,8 +259,9 @@ extension AgentViewModel {
             let pat = CodingService.shellEscape(input["pattern"] as? String ?? "*")
             let rawDir = input["path"] as? String ?? pf
             let dir = CodingService.shellEscape(rawDir)
+            let displayDir = CodingService.trimHome(rawDir)
             let result = await executeViaUserAgent(command: "cd \(dir) && find . -name \(pat) ! -path '*/.build/*' ! -path '*/.git/*' 2>/dev/null | sed 's|^\\./||' | sort | head -100")
-            return result.output.isEmpty ? "No files found" : "[cwd: \(rawDir)]\n\(result.output)"
+            return result.output.isEmpty ? "No files found" : "[project folder: \(displayDir)] paths are relative to project folder\n\(result.output)"
         }
         if name == "search_files" {
             let pat = CodingService.shellEscape(input["pattern"] as? String ?? "")
