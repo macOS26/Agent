@@ -5,6 +5,83 @@ import MCPClient
 
 extension AgentViewModel {
 
+    // MARK: - Project Folder Tool
+
+    /// Handle project_folder tool: get, set, home, documents, library, none.
+    /// When tab is nil, operates on the main projectFolder.
+    func handleProjectFolder(tab: ScriptTab?, input: [String: Any]) -> String {
+        let action = (input["action"] as? String ?? "get").lowercased()
+        let home = NSHomeDirectory()
+
+        switch action {
+        case "get":
+            if let tab {
+                let folder = tab.projectFolder.isEmpty ? projectFolder : tab.projectFolder
+                return folder.isEmpty ? "No project folder set." : "Project folder: \(folder)"
+            }
+            return projectFolder.isEmpty ? "No project folder set." : "Project folder: \(projectFolder)"
+
+        case "set":
+            guard let path = input["path"] as? String, !path.isEmpty else {
+                return "Error: path is required for project_folder set"
+            }
+            let expanded = (path as NSString).expandingTildeInPath
+            let fm = FileManager.default
+            var isDir: ObjCBool = false
+            guard fm.fileExists(atPath: expanded, isDirectory: &isDir), isDir.boolValue else {
+                return "Error: '\(expanded)' is not a valid directory."
+            }
+            if let tab {
+                tab.projectFolder = expanded
+                persistScriptTabs()
+            } else {
+                projectFolder = expanded
+            }
+            return "Project folder set to: \(expanded)"
+
+        case "home":
+            if let tab {
+                tab.projectFolder = home
+                persistScriptTabs()
+            } else {
+                projectFolder = home
+            }
+            return "Project folder set to: \(home)"
+
+        case "documents":
+            let docs = home + "/Documents"
+            if let tab {
+                tab.projectFolder = docs
+                persistScriptTabs()
+            } else {
+                projectFolder = docs
+            }
+            return "Project folder set to: \(docs)"
+
+        case "library":
+            let lib = home + "/Library"
+            if let tab {
+                tab.projectFolder = lib
+                persistScriptTabs()
+            } else {
+                projectFolder = lib
+            }
+            return "Project folder set to: \(lib)"
+
+        case "none":
+            if let tab {
+                tab.projectFolder = ""
+                persistScriptTabs()
+            } else {
+                projectFolder = ""
+            }
+            return "Project folder cleared."
+
+        default:
+            return "Error: invalid action '\(action)'. Use get, set, home, documents, library, or none."
+        }
+    }
+
     // MARK: - Consolidated Tool Expansion
 
     /// Expands consolidated CRUDL tool names (git, agent, applescript_tool, javascript_tool)
