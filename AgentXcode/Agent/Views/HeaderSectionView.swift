@@ -46,7 +46,7 @@ struct HeaderStatusView: View {
                         if tab.taskQueue.isEmpty {
                             ShimmerText("Thinking...", color: .green)
                         } else {
-                            ShimmerText("Thinking... +\(tab.taskQueue.count) queued", color: .cyan)
+                            ShimmerText("Thinking... +\(tab.taskQueue.count) queued", color: .teal)
                         }
                     }
                 } else if tab.isLLMRunning {
@@ -55,7 +55,7 @@ struct HeaderStatusView: View {
                         if tab.taskQueue.isEmpty {
                             ShimmerText("Running...", color: runningColor)
                         } else {
-                            ShimmerText("Running... +\(tab.taskQueue.count) queued", color: .cyan)
+                            ShimmerText("Running... +\(tab.taskQueue.count) queued", color: .teal)
                         }
                     }
                 }
@@ -66,7 +66,7 @@ struct HeaderStatusView: View {
                         if viewModel.mainTaskQueue.isEmpty {
                             ShimmerText("Thinking...", color: .green)
                         } else {
-                            ShimmerText("Thinking... +\(viewModel.mainTaskQueue.count) queued", color: .cyan)
+                            ShimmerText("Thinking... +\(viewModel.mainTaskQueue.count) queued", color: .teal)
                         }
                     }
                 } else if viewModel.isRunning {
@@ -76,7 +76,7 @@ struct HeaderStatusView: View {
                             ShimmerText(viewModel.rootServiceActive ? "Root..." : viewModel.userServiceActive ? "Executing..." : "Running...",
                                         color: viewModel.rootServiceActive ? .red : viewModel.userServiceActive ? .orange : runningColor)
                         } else {
-                            ShimmerText("Running... +\(viewModel.mainTaskQueue.count) queued", color: .cyan)
+                            ShimmerText("Running... +\(viewModel.mainTaskQueue.count) queued", color: .teal)
                         }
                     }
                 }
