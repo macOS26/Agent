@@ -49,6 +49,15 @@ extension AgentViewModel {
                 isComplete: false
             )
 
+        case "project_folder":
+            let output = handleProjectFolder(tab: tab, input: input)
+            tab.appendLog(output)
+            tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+
         default:
         let output = await executeNativeTool(name, input: input)
         tab.appendLog(output); tab.flush()

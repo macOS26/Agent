@@ -143,6 +143,7 @@ enum AgentTools {
         static let aboutSelf = "about_self"
         static let fixText = "fix_text"
         static let planMode = "plan_mode"
+        static let projectFolderTool = "project_folder"
     }
 
     // MARK: - Full LLM System Prompt (Desktop: Claude, Ollama, OpenAI, etc.)
@@ -157,6 +158,7 @@ enum AgentTools {
         For conversation (greetings, questions, thanks, explanations) reply with plain text AND call task_complete. Every response MUST end with task_complete — no exceptions.
 
         DIRECT TOOLS (no action parameter): task_complete, execute_agent_command, execute_daemon_command, run_shell_script, batch_commands, batch_tools, apple_event_query.
+        project_folder: get, set, home, documents, library, none — change the working directory for this tab. Use to switch context (e.g. home for user files, library for admin, or set a specific project path).
         - run_shell_script: alias for execute_agent_command with automatic fallback to in-process when User Agent is off.
         - BATCH COMMANDS: Use batch_commands to run multiple shell commands in one call (newline-separated). Avoids round-trips. Ideal for gathering info (ls, cat, grep, find, git).
         - BATCH TOOLS: Use batch_tools to run multiple tool calls in one batch. Provide a description and an array of {tool, input} tasks. Each task runs sequentially with progress tracking. Avoids LLM round-trips for multi-step operations like reading several files or combining file reads with searches.
@@ -264,6 +266,7 @@ enum AgentTools {
         Name.safari:               #"web {"action": "open", "url": "https://example.com"}"#,
         Name.appleScriptTool:      #"applescript_tool {"action": "execute", "source": "display dialog \"Hello\""}"#,
         Name.javascriptTool:       #"javascript_tool {"action": "execute", "source": "var app = Application.currentApplication(); app.displayDialog('Hello')"}"#,
+        Name.projectFolderTool:    #"project_folder {"action": "set", "path": "/Users/me/Projects/MyApp"}"#,
         Name.webSearch:            #"web_search {"query": "latest Swift news"}"#,
         // Conversation Tools
         Name.writeText:            #"write_text {"subject": "machine learning", "style": "informative", "length": "medium"}"#,
@@ -748,6 +751,15 @@ enum AgentTools {
                 "steps": ["type": "string", "description": "For create: newline-separated list of steps (e.g. 'Step 1\\nStep 2\\nStep 3')"],
                 "step": ["type": "integer", "description": "For update: zero-based step index (0 = first step)"],
                 "status": ["type": "string", "description": "For update: 'in_progress', 'completed', or 'failed'"],
+            ],
+            required: ["action"]
+        ),
+        ToolDef(
+            name: Name.projectFolderTool,
+            description: "Get or change the working directory for this tab. Actions: get (show current), set (change to path), home (~), documents (~/Documents), library (~/Library), none (clear).",
+            properties: [
+                "action": ["type": "string", "description": "One of: get, set, home, documents, library, none"],
+                "path": ["type": "string", "description": "For set: absolute path to new project folder"],
             ],
             required: ["action"]
         ),

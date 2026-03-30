@@ -798,6 +798,11 @@ extension AgentViewModel {
             return Self.handlePlanMode(action: action, input: input, projectFolder: pf, tabName: "main")
         }
 
+        // project_folder
+        if name == "project_folder" {
+            return handleProjectFolder(tab: nil, input: input)
+        }
+
         // batch_tools — run multiple tool calls in one batch
         if name == "batch_tools" {
             let desc = input["description"] as? String ?? "Batch Tasks"
