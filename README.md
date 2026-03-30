@@ -3,14 +3,8 @@
 <div align="center">
 <img width="256" height="256" alt="agent_icon_256" src="https://github.com/user-attachments/assets/7a452184-6b31-49fa-9b24-d450d2889f66" />
 
-<<<<<<< HEAD
-# 🦾 Agent! for macOS
-# Autonomous  AI Assistant 
-=======
-# 🦾 Agent! for  macOS 26
+# 🦾 Agent! for Apple macOS 26
 # Autonomous Agentic AI Assistant
-[![Agent!](https://img.shields.io/badge/Agent!-v1.0.GM-blue?style=for-the-badge)](https://github.com/macos26/Agent) [![Website](https://img.shields.io/badge/Website-agent.macos26.com-purple?style=for-the-badge)](https://agent.macos26.com) ![Platform](https://img.shields.io/badge/Platform-macOS%2026%2B-cyan?style=for-the-badge) ![Swift](https://img.shields.io/badge/Swift-6.2-orange?style=for-the-badge)
->>>>>>> 3ec2dcb4166ed181483b621e4a556af14683aa46
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE) [![Stars](https://img.shields.io/github/stars/macos26/Agent?style=for-the-badge&color=yellow)](https://github.com/macos26/Agent/stargazers) [![Downloads](https://img.shields.io/github/downloads/macos26/Agent/total?style=for-the-badge&color=brightgreen)](https://github.com/macos26/Agent/releases)
 [![Agent!](https://img.shields.io/badge/Agent!-v1.0.GM-blue?style=for-the-badge)](https://github.com/macos26/Agent) [![Website](https://img.shields.io/badge/Website-agent.macos26.com-purple?style=for-the-badge)](https://agent.macos26.com) ![Platform](https://img.shields.io/badge/Platform-macOS%2026%2B-cyan?style=for-the-badge) ![Swift](https://img.shields.io/badge/Swift-6.2-orange?style=for-the-badge)
 
@@ -18,7 +12,7 @@
 
 [Features](#features) • [Installation](#installation) • [Comparison](#comparison) • [Architecture](#architecture) • [Security](#security)
 
-<img width="1084" height="1073" alt="Agent! Screenshot" src="https://raw.githubusercontent.com/macos26/Agent/main/agent_screenshot_optimized.jpg" />
+<img width="1280" height="724" alt="image" src="https://github.com/user-attachments/assets/365054b9-b0da-46d7-9a4c-d623306f8986" />
 
 </div>
 
@@ -87,7 +81,7 @@ Agent! supports **8 LLM providers** out of the box:
 
 **Plus**: Apple Intelligence integration for LoRA fine-tuning and context mediation.
 
-#### 🌟 Recommended: GLM-5
+#### 🌟 Recommended: GLM-5 or GLM-5.1
 
 **GLM-5** is highly recommended for use with Agent! This open-source model has been extensively tested and provides:
 
