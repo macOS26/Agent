@@ -765,7 +765,7 @@ import AppKit
     private static let actGrepFileRx: NSRegularExpression? = try? NSRegularExpression(
         pattern: #"^([^\s:]+):(\d+):"#, options: .anchorsMatchLines)
     private static let actAbsPathRx: NSRegularExpression? = try? NSRegularExpression(
-        pattern: #"(?:^|\s)(\.?/?(?:[\w.@+\-]+/)+[\w.@+\-]+/?)"#, options: .anchorsMatchLines)
+        pattern: #"(?:^|\s)(~?\.?/?(?:[\w.@+\-]+/)+[\w.@+\-]+/?)"#, options: .anchorsMatchLines)
     private static let actFlagRx: NSRegularExpression? = try? NSRegularExpression(
         pattern: #"(?<=\s)-{1,2}[\w][\w\-]*"#)
 
