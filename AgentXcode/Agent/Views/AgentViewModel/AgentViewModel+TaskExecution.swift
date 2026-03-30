@@ -641,13 +641,14 @@ extension AgentViewModel {
                                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": pathErr])
                                 continue
                             }
-                            appendLog("🔍 $ find \(path ?? "~") -name '\(pattern)'")
+                            let resolvedPath = path ?? projectFolder
+                            appendLog("🔍 $ find \(resolvedPath) -name '\(pattern)'")
                             flushLog()
                             let cmd = CodingService.buildListFilesCommand(pattern: pattern, path: path)
                             let result = await executeViaUserAgent(command: cmd)
                             guard !Task.isCancelled else { break }
                             let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                                ? "No files matching '\(pattern)'" : result.output
+                                ? "No files matching '\(pattern)'" : "[cwd: \(resolvedPath)]\n\(result.output)"
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
@@ -660,13 +661,14 @@ extension AgentViewModel {
                                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": pathErr])
                                 continue
                             }
-                            appendLog("🔍 $ grep -rn '\(pattern)' \(path ?? "~")\(include.map { " --include=\($0)" } ?? "")")
+                            let resolvedSearch = path ?? projectFolder
+                            appendLog("🔍 $ grep -rn '\(pattern)' \(resolvedSearch)\(include.map { " --include=\($0)" } ?? "")")
                             flushLog()
                             let cmd = CodingService.buildSearchFilesCommand(pattern: pattern, path: path, include: include)
                             let result = await executeViaUserAgent(command: cmd)
                             guard !Task.isCancelled else { break }
                             let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                                ? "No matches for '\(pattern)'" : result.output
+                                ? "No matches for '\(pattern)'" : "[cwd: \(resolvedSearch)]\n\(result.output)"
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
@@ -679,10 +681,10 @@ extension AgentViewModel {
                             }
                             appendLog("📂 $ ls -la \(path)")
                             flushLog()
-                            let result = await executeViaUserAgent(command: "cd '\(path)' && ls -la . 2>/dev/null")
+                            let result = await executeViaUserAgent(command: "ls -la '\(path)' 2>/dev/null")
                             guard !Task.isCancelled else { break }
                             let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                                ? "Directory not found or empty" : result.output
+                                ? "Directory not found or empty" : "[cwd: \(path)]\n\(result.output)"
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
@@ -1578,7 +1580,7 @@ extension AgentViewModel {
 
                             // Find Swift files in project folder
                             let reviewDir = projectFolder.isEmpty ? FileManager.default.homeDirectoryForCurrentUser.path : projectFolder
-                            let findResult = await executeViaUserAgent(command: "cd '\(reviewDir)' && find . -name '*.swift' -not -path '*/.build/*' -not -path '*/build/*' -type f | sed 's|^\\./||'")
+                            let findResult = await executeViaUserAgent(command: "find \(reviewDir) -name '*.swift' -not -path '*/.build/*' -not -path '*/build/*' -type f")
                             let swiftFiles = findResult.output.components(separatedBy: "\n").filter { !$0.isEmpty && $0.hasSuffix(".swift") }
 
                             guard !swiftFiles.isEmpty else {

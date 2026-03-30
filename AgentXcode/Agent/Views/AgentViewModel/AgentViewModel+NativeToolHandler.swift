@@ -257,20 +257,23 @@ extension AgentViewModel {
         // List/search files (via User LaunchAgent - no TCC required)
         if name == "list_files" {
             let pat = CodingService.shellEscape(input["pattern"] as? String ?? "*")
-            let dir = CodingService.shellEscape(input["path"] as? String ?? pf)
+            let rawDir = input["path"] as? String ?? pf
+            let dir = CodingService.shellEscape(rawDir)
             let result = await executeViaUserAgent(command: "cd \(dir) && find . -name \(pat) ! -path '*/.build/*' ! -path '*/.git/*' 2>/dev/null | sed 's|^\\./||' | sort | head -100")
-            return result.output.isEmpty ? "No files found" : result.output
+            return result.output.isEmpty ? "No files found" : "[cwd: \(rawDir)]\n\(result.output)"
         }
         if name == "search_files" {
             let pat = CodingService.shellEscape(input["pattern"] as? String ?? "")
-            let dir = CodingService.shellEscape(input["path"] as? String ?? pf)
-            let result = await executeViaUserAgent(command: "cd \(dir) && grep -rn \(pat) . 2>/dev/null | head -50")
-            return result.output.isEmpty ? "No matches" : result.output
+            let rawDir = input["path"] as? String ?? pf
+            let dir = CodingService.shellEscape(rawDir)
+            let result = await executeViaUserAgent(command: "grep -rn \(pat) \(dir) 2>/dev/null | head -50")
+            return result.output.isEmpty ? "No matches" : "[cwd: \(rawDir)]\n\(result.output)"
         }
         if name == "read_dir" {
-            let dir = CodingService.shellEscape(input["path"] as? String ?? pf)
-            let result = await executeViaUserAgent(command: "cd \(dir) && ls -la . 2>/dev/null")
-            return result.output.isEmpty ? "Directory not found or empty" : result.output
+            let rawDir = input["path"] as? String ?? pf
+            let dir = CodingService.shellEscape(rawDir)
+            let result = await executeViaUserAgent(command: "ls -la \(dir) 2>/dev/null")
+            return result.output.isEmpty ? "Directory not found or empty" : "[cwd: \(rawDir)]\n\(result.output)"
         }
         if name == "if_to_switch" {
             let filePath = input["file_path"] as? String ?? ""
