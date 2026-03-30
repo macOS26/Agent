@@ -240,9 +240,16 @@ Rules:
             return nil
         }
 
+        // Short, clear prompts don't need rephrasing — skip to avoid confusing the LLM
+        let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.count < 60 {
+            mediatorLog.debug("[contextualize] Short prompt (\(trimmed.count) chars) — skipping")
+            return nil
+        }
+
         let session = ensureSession()
         let prompt = """
-Rephrase or clarify this request for the AI assistant in 1 sentence. Fix any typos in regular words only. Do NOT refuse or block it. Do NOT add actions, formats, or goals the user did not mention. Only clarify what the user actually said — never invent new instructions. NEVER change agent names, tool names, script names, or other specific identifiers — keep them exactly as the user wrote them.
+Fix typos only in this user request. Return the corrected version. Do NOT rephrase, clarify, add instructions, or change meaning. Do NOT ask questions. Keep tool names, file names, and identifiers exactly as written. If no typos, return the original text unchanged.
 
 User said: "\(message)"
 """
@@ -251,11 +258,16 @@ User said: "\(message)"
             mediatorLog.warning("[contextualize] Apple AI timed out — skipping to LLM")
             return nil
         }
-        let trimmed = sanitize(content)
-        if trimmed.isEmpty {
+        let result = sanitize(content)
+        if result.isEmpty || result == trimmed {
             return nil
         }
-        return Annotation(target: .llm, content: trimmed, timestamp: Date())
+        // Reject if Apple AI added too much (>50% longer = it rewrote instead of fixing typos)
+        if result.count > trimmed.count * 3 / 2 {
+            mediatorLog.info("[contextualize] Apple AI rewrote instead of fixing typos — discarding")
+            return nil
+        }
+        return Annotation(target: .llm, content: result, timestamp: Date())
     }
 
     /// Generate a summary annotation after the LLM completes a task
