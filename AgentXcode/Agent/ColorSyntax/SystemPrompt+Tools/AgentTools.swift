@@ -405,6 +405,16 @@ enum AgentTools {
             ],
             required: ["summary"]
         ),
+        // --- Project Folder ---
+        ToolDef(
+            name: Name.projectFolderTool,
+            description: "Get or change the working directory for this tab. Actions: get (show current), set (change to path), home (~), documents (~/Documents), library (~/Library), none (clear).",
+            properties: [
+                "action": ["type": "string", "description": "One of: get, set, home, documents, library, none"],
+                "path": ["type": "string", "description": "For set: absolute path to new project folder"],
+            ],
+            required: ["action"]
+        ),
         // --- Agent Scripts (reusable Swift scripts) ---
         // --- Agent Scripts (consolidated) ---
         ToolDef(
@@ -751,15 +761,6 @@ enum AgentTools {
                 "steps": ["type": "string", "description": "For create: newline-separated list of steps (e.g. 'Step 1\\nStep 2\\nStep 3')"],
                 "step": ["type": "integer", "description": "For update: zero-based step index (0 = first step)"],
                 "status": ["type": "string", "description": "For update: 'in_progress', 'completed', or 'failed'"],
-            ],
-            required: ["action"]
-        ),
-        ToolDef(
-            name: Name.projectFolderTool,
-            description: "Get or change the working directory for this tab. Actions: get (show current), set (change to path), home (~), documents (~/Documents), library (~/Library), none (clear).",
-            properties: [
-                "action": ["type": "string", "description": "One of: get, set, home, documents, library, none"],
-                "path": ["type": "string", "description": "For set: absolute path to new project folder"],
             ],
             required: ["action"]
         ),
