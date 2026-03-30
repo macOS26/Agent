@@ -527,8 +527,9 @@ struct ActivityLogView: NSViewRepresentable {
             return result
         }
 
-        /// Maximum characters to render — truncate from the front to keep the tail visible
-        private static let maxRenderChars = 15_000
+        /// Maximum characters to render — truncate from the front to keep the tail visible.
+        /// High limit so live sessions aren't clipped; restoration trims to 15K on app restart.
+        private static let maxRenderChars = 500_000
 
         /// Build attributed string from text. Converts image/HTML paths to clickable links.
         func buildAttributedString(from text: String) -> NSAttributedString {
