@@ -4,9 +4,23 @@ import XcodeScriptingBridge
 
 /// Xcode automation via ScriptingBridge — build, run, list/select projects, grant permission.
 /// Modeled after xcf's best patterns: file:line:col error format, code snippets, build-before-run.
+/// Silences ScriptingBridge "invalid reuse" errors instead of crashing.
+private class SBApplicationDelegateIgnore: NSObject, SBApplicationDelegate {
+    func eventDidFail(_ event: UnsafePointer<AppleEvent>, withError error: any Error) -> Any? {
+        return nil // Suppress error, return nil to caller
+    }
+}
+
 final class XcodeService: @unchecked Sendable {
     static let shared = XcodeService()
     private static let xcodeBundleID = "com.apple.dt.Xcode"
+
+    /// Create a fresh Xcode SBApplication connection with error suppression.
+    private nonisolated func xcodeApp() -> XcodeApplication? {
+        guard let app = xcodeApp() else { return nil }
+        app.delegate = SBApplicationDelegateIgnore()
+        return app
+    }
 
     // MARK: - Grant Permission
 
@@ -67,7 +81,7 @@ final class XcodeService: @unchecked Sendable {
             return "Error: Invalid project path '\(resolvedPath)'. Use xcode (action: list_projects) to find the correct project. Must be .xcodeproj or .xcworkspace."
         }
 
-        guard let xcode: XcodeApplication = SBApplication(bundleIdentifier: Self.xcodeBundleID) else {
+        guard let xcode = xcodeApp() else {
             return "Error: Failed to connect to Xcode"
         }
 
@@ -118,7 +132,7 @@ final class XcodeService: @unchecked Sendable {
             return buildOutput
         }
 
-        guard let xcode: XcodeApplication = SBApplication(bundleIdentifier: Self.xcodeBundleID) else {
+        guard let xcode = xcodeApp() else {
             return "Error: Failed to connect to Xcode"
         }
 
@@ -137,7 +151,7 @@ final class XcodeService: @unchecked Sendable {
 
     /// List all open Xcode projects and workspaces.
     nonisolated func listProjects() -> String {
-        guard let xcode: XcodeApplication = SBApplication(bundleIdentifier: Self.xcodeBundleID) else {
+        guard let xcode = xcodeApp() else {
             return "Error: Failed to connect to Xcode"
         }
 
@@ -168,7 +182,7 @@ final class XcodeService: @unchecked Sendable {
 
     /// Select a project by number from the open projects list.
     nonisolated func selectProject(number: Int) -> String {
-        guard let xcode: XcodeApplication = SBApplication(bundleIdentifier: Self.xcodeBundleID) else {
+        guard let xcode = xcodeApp() else {
             return "Error: Failed to connect to Xcode"
         }
 
@@ -203,7 +217,7 @@ final class XcodeService: @unchecked Sendable {
 
     /// Auto-select the first open .xcodeproj project (not .xcworkspace wrappers).
     private nonisolated func autoSelectProject() -> String? {
-        guard let xcode: XcodeApplication = SBApplication(bundleIdentifier: Self.xcodeBundleID) else { return nil }
+        guard let xcode = xcodeApp() else { return nil }
         guard let documents = xcode.documents?() else { return nil }
 
         var projects: [String] = []
@@ -229,7 +243,7 @@ final class XcodeService: @unchecked Sendable {
     nonisolated func listSchemes(projectPath: String) -> [String] {
         guard isValidProjectPath(projectPath) else { return [] }
 
-        guard let xcode: XcodeApplication = SBApplication(bundleIdentifier: Self.xcodeBundleID) else {
+        guard let xcode = xcodeApp() else {
             return []
         }
 
@@ -539,7 +553,7 @@ final class XcodeService: @unchecked Sendable {
 
     /// Resolve the pbxproj path for the currently selected project.
     private nonisolated func selectedPbxprojPath() -> String? {
-        guard let app: XcodeApplication = SBApplication(bundleIdentifier: Self.xcodeBundleID) else { return nil }
+        guard let app = xcodeApp() else { return nil }
         guard let docs = app.documents?() as? [XcodeDocument], !docs.isEmpty else { return nil }
         let selectedIdx = UserDefaults.standard.integer(forKey: "xcodeSelectedProject")
         let idx = (selectedIdx > 0 && selectedIdx <= docs.count) ? selectedIdx - 1 : 0
