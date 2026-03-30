@@ -12,7 +12,7 @@ final class AgentsMenuDelegate: NSObject, NSMenuDelegate {
 
     private func buildMenu(_ menu: NSMenu) {
         menu.removeAllItems()
-        let entries = RecentAgentsService.shared.entries
+        let entries = RecentAgentsService.shared.entries.filter { !$0.agentName.trimmingCharacters(in: .whitespaces).isEmpty }
 
         if entries.isEmpty {
             let item = NSMenuItem(title: "No recent agents", action: nil, keyEquivalent: "")

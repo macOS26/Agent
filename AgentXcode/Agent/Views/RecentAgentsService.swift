@@ -82,6 +82,7 @@ final class RecentAgentsService: ObservableObject {
 
     /// Record that an agent was run with given arguments and prompt.
     func recordRun(agentName: String, arguments: String = "", prompt: String) {
+        guard !agentName.trimmingCharacters(in: .whitespaces).isEmpty else { return }
         // Remove duplicates of same agent + arguments combo
         entries.removeAll { $0.agentName == agentName && $0.arguments == arguments }
         entries.insert(AgentEntry(agentName: agentName, arguments: arguments, prompt: prompt), at: 0)
