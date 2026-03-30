@@ -29,7 +29,11 @@ final class ClaudeService {
         self.projectFolder = projectFolder
     }
 
+    /// When set, overrides the full system prompt (used for coding mode iterations 2+)
+    var overrideSystemPrompt: String?
+
     var systemPrompt: String {
+        if let override = overrideSystemPrompt { return override }
         if isLocalEndpoint {
             return AgentTools.compactSystemPrompt(userName: userName, userHome: userHome, projectFolder: projectFolder)
         }
