@@ -450,7 +450,7 @@ extension AgentViewModel {
             guard let stepsRaw = input["steps"] as? String, !stepsRaw.isEmpty else {
                 return "Error: steps is required for plan_mode create"
             }
-            let planId = planIdFromInput ?? sanitizeTabName(tabName)
+            let planId = sanitizeTabName(tabName)
 
             // Only 1 plan per tab — delete existing plan for this tab first
             let existingFiles = (try? fm.contentsOfDirectory(atPath: dir)) ?? []
