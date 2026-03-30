@@ -663,13 +663,14 @@ extension AgentViewModel {
                                 continue
                             }
                             let resolvedSearch = path ?? projectFolder
-                            appendLog("🔍 $ grep -rn '\(pattern)' \(resolvedSearch)\(include.map { " --include=\($0)" } ?? "")")
+                            let displaySearch = CodingService.trimHome(resolvedSearch)
+                            appendLog("🔍 $ grep -rn '\(pattern)' \(displaySearch)\(include.map { " --include=\($0)" } ?? "")")
                             flushLog()
                             let cmd = CodingService.buildSearchFilesCommand(pattern: pattern, path: path, include: include)
                             let result = await executeViaUserAgent(command: cmd)
                             guard !Task.isCancelled else { break }
                             let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                                ? "No matches for '\(pattern)'" : "[cwd: \(resolvedSearch)]\n\(result.output)"
+                                ? "No matches for '\(pattern)'" : "[project folder: \(displaySearch)] paths are relative to project folder\n\(result.output)"
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
@@ -680,12 +681,13 @@ extension AgentViewModel {
                                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": pathErr])
                                 continue
                             }
-                            appendLog("📂 $ ls -la \(path)")
+                            let displayPath = CodingService.trimHome(path)
+                            appendLog("📂 $ ls -la \(displayPath)")
                             flushLog()
                             let result = await executeViaUserAgent(command: "ls -la '\(path)' 2>/dev/null")
                             guard !Task.isCancelled else { break }
                             let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                                ? "Directory not found or empty" : "[cwd: \(path)]\n\(result.output)"
+                                ? "Directory not found or empty" : "[project folder: \(displayPath)] paths are relative to project folder\n\(result.output)"
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 

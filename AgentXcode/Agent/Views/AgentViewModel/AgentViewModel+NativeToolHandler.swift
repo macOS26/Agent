@@ -267,14 +267,16 @@ extension AgentViewModel {
             let pat = CodingService.shellEscape(input["pattern"] as? String ?? "")
             let rawDir = input["path"] as? String ?? pf
             let dir = CodingService.shellEscape(rawDir)
+            let displayDir = CodingService.trimHome(rawDir)
             let result = await executeViaUserAgent(command: "grep -rn \(pat) \(dir) 2>/dev/null | head -50")
-            return result.output.isEmpty ? "No matches" : "[cwd: \(rawDir)]\n\(result.output)"
+            return result.output.isEmpty ? "No matches" : "[project folder: \(displayDir)] paths are relative to project folder\n\(result.output)"
         }
         if name == "read_dir" {
             let rawDir = input["path"] as? String ?? pf
             let dir = CodingService.shellEscape(rawDir)
+            let displayDir = CodingService.trimHome(rawDir)
             let result = await executeViaUserAgent(command: "ls -la \(dir) 2>/dev/null")
-            return result.output.isEmpty ? "Directory not found or empty" : "[cwd: \(rawDir)]\n\(result.output)"
+            return result.output.isEmpty ? "Directory not found or empty" : "[project folder: \(displayDir)] paths are relative to project folder\n\(result.output)"
         }
         if name == "if_to_switch" {
             let filePath = input["file_path"] as? String ?? ""

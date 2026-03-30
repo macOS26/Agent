@@ -273,13 +273,14 @@ extension AgentViewModel {
             let include = input["include"] as? String
             let tabFolder = Self.resolvedWorkingDirectory(tab.projectFolder.isEmpty ? projectFolder : tab.projectFolder)
             let resolvedSearch = path ?? tabFolder
-            tab.appendLog("🔍 $ grep -rn '\(pattern)' \(resolvedSearch)")
+            let displaySearch = CodingService.trimHome(resolvedSearch)
+            tab.appendLog("🔍 $ grep -rn '\(pattern)' \(displaySearch)")
             tab.flush()
             let cmd = CodingService.buildSearchFilesCommand(pattern: pattern, path: path, include: include)
             let result = await executeForTab(command: cmd, projectFolder: tabFolder)
             guard !Task.isCancelled else { return TabToolResult(toolResult: nil, isComplete: false) }
             let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                ? "No matches for '\(pattern)'" : "[cwd: \(resolvedSearch)]\n\(result.output)"
+                ? "No matches for '\(pattern)'" : "[project folder: \(displaySearch)] paths are relative to project folder\n\(result.output)"
             return TabToolResult(
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
