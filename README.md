@@ -5,8 +5,6 @@
 
 # 🦾 Agent! for  macOS 26
 # Autonomous Agentic AI Assistant
-[![Agent!](https://img.shields.io/badge/Agent!-v1.0.GM-blue?style=for-the-badge)](https://github.com/macos26/Agent) [![Website](https://img.shields.io/badge/Website-agent.macos26.com-purple?style=for-the-badge)](https://agent.macos26.com) ![Platform](https://img.shields.io/badge/Platform-macOS%2026%2B-cyan?style=for-the-badge) ![Swift](https://img.shields.io/badge/Swift-6.2-orange?style=for-the-badge)
->>>>>>> 3ec2dcb4166ed181483b621e4a556af14683aa46
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE) [![Stars](https://img.shields.io/github/stars/macos26/Agent?style=for-the-badge&color=yellow)](https://github.com/macos26/Agent/stargazers) [![Downloads](https://img.shields.io/github/downloads/macos26/Agent/total?style=for-the-badge&color=brightgreen)](https://github.com/macos26/Agent/releases)
 [![Agent!](https://img.shields.io/badge/Agent!-v1.0.GM-blue?style=for-the-badge)](https://github.com/macos26/Agent) [![Website](https://img.shields.io/badge/Website-agent.macos26.com-purple?style=for-the-badge)](https://agent.macos26.com) ![Platform](https://img.shields.io/badge/Platform-macOS%2026%2B-cyan?style=for-the-badge) ![Swift](https://img.shields.io/badge/Swift-6.2-orange?style=for-the-badge)
 
