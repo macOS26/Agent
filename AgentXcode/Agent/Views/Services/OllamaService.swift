@@ -8,6 +8,7 @@ final class OllamaService {
     let supportsVision: Bool
     let provider: APIProvider
     var temperature: Double = 0.2
+    var compactTools: Bool = false
     /// Context window size for local Ollama. 0 = let model decide.
     let contextSize: Int
 
@@ -50,7 +51,7 @@ final class OllamaService {
         return prompt
     }
 
-    func tools(activeGroups: Set<String>? = nil) -> [[String: Any]] { AgentTools.ollamaTools(for: provider, activeGroups: activeGroups) }
+    func tools(activeGroups: Set<String>? = nil, compact: Bool = false) -> [[String: Any]] { AgentTools.ollamaTools(for: provider, activeGroups: activeGroups, compact: compact) }
 
     /// Prepend project folder to the last user message so it's always visible in context.
     private func withFolderPrefix(_ messages: [[String: Any]]) -> [[String: Any]] {
@@ -166,7 +167,7 @@ final class OllamaService {
         var body: [String: Any] = [
             "model": model,
             "messages": chatMessages,
-            "tools": tools(activeGroups: activeGroups),
+            "tools": tools(activeGroups: activeGroups, compact: compactTools),
             "stream": false
         ]
 
@@ -283,7 +284,7 @@ final class OllamaService {
         var body: [String: Any] = [
             "model": model,
             "messages": chatMessages,
-            "tools": tools(activeGroups: activeGroups),
+            "tools": tools(activeGroups: activeGroups, compact: compactTools),
             "stream": true
         ]
 

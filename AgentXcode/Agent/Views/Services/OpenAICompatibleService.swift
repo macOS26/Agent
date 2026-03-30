@@ -10,6 +10,7 @@ final class OpenAICompatibleService {
     let supportsVision: Bool
     let provider: APIProvider
     var temperature: Double = 0.2
+    var compactTools: Bool = false
     /// Key name for the messages array in the request body.
     /// OpenAI uses "messages", LM Studio Native uses "input".
     let messagesKey: String
@@ -59,9 +60,9 @@ final class OpenAICompatibleService {
         return prompt
     }
 
-    func tools(activeGroups: Set<String>? = nil) -> [[String: Any]] {
+    func tools(activeGroups: Set<String>? = nil, compact: Bool = false) -> [[String: Any]] {
         let groups = isLMStudio ? Set(["Core", "User Agent", "Coding", "Workflow"]) : activeGroups
-        return AgentTools.ollamaTools(for: provider, activeGroups: groups)
+        return AgentTools.ollamaTools(for: provider, activeGroups: groups, compact: compact)
     }
 
     /// Prepend project folder to the last user message (only on first message).
@@ -95,9 +96,9 @@ final class OpenAICompatibleService {
         return prompt
     }
 
-    /// All tools every iteration — full descriptions, full properties, including MCP.
+    /// All tools every iteration — compact descriptions in coding mode.
     func toolsForIteration(_ messages: [[String: Any]], activeGroups: Set<String>? = nil) -> [[String: Any]] {
-        return tools(activeGroups: activeGroups)
+        return tools(activeGroups: activeGroups, compact: compactTools)
     }
 
     /// Convert Claude-format messages to OpenAI chat messages.
