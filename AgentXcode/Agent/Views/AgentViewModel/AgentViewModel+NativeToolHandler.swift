@@ -818,7 +818,7 @@ extension AgentViewModel {
             return batchOutput
         }
 
-        // Silently skip tools not available to Apple AI
-        return "(skipped)"
+        // Log unhandled tool so we can debug
+        return "⚠️ Tool '\(rawName)' (expanded: '\(name)') not handled — no matching handler found."
     }
 }
