@@ -399,18 +399,11 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
             return DirectCommand(name: "google_search", argument: query)
         }
 
-        // "agent run X" — direct agent execution only with explicit "agent run" prefix
-        let runPatterns = ["agent run "]
-        for prefix in runPatterns {
-            if lower.hasPrefix(prefix) {
-                let arg = String(trimmed.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)
-                if arg.isEmpty { continue }
-                // Extract the first word as potential agent name
-                let firstWord = arg.components(separatedBy: " ").first ?? arg
-                // Only treat as direct command if we can resolve a known agent name
-                if Self.knownAgentNames.contains(firstWord.lowercased()) {
-                    return DirectCommand(name: "run_agent", argument: arg)
-                }
+        // "agent run X" — direct agent execution with explicit "agent run" prefix
+        if lower.hasPrefix("agent run ") {
+            let arg = String(trimmed.dropFirst("agent run ".count)).trimmingCharacters(in: .whitespaces)
+            if !arg.isEmpty {
+                return DirectCommand(name: "run_agent", argument: arg)
             }
         }
 
