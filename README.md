@@ -12,7 +12,7 @@
 
 [Features](#features) • [Installation](#installation) • [Comparison](#comparison) • [Architecture](#architecture) • [Security](#security)
 
-<img width="1084" height="1073" alt="Agent! Screenshot" src="https://raw.githubusercontent.com/macos26/Agent/main/agent_screenshot_optimized.jpg" />
+<img width="1280" height="724" alt="image" src="https://github.com/user-attachments/assets/365054b9-b0da-46d7-9a4c-d623306f8986" />
 
 </div>
 
