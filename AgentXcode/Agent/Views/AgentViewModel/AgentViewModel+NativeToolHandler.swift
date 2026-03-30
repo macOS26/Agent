@@ -794,6 +794,79 @@ extension AgentViewModel {
             return handleProjectFolder(tab: nil, input: input)
         }
 
+        // MARK: - Xcode Tools
+        if name == "xcode_build" {
+            let projectPath = input["project_path"] as? String ?? ""
+            return await Self.offMain { XcodeService.shared.buildProject(projectPath: projectPath) }
+        }
+        if name == "xcode_run" {
+            let projectPath = input["project_path"] as? String ?? ""
+            return await Self.offMain { XcodeService.shared.runProject(projectPath: projectPath) }
+        }
+        if name == "xcode_list_projects" {
+            return await Self.offMain { XcodeService.shared.listProjects() }
+        }
+        if name == "xcode_select_project" {
+            let number = input["number"] as? Int ?? 0
+            return await Self.offMain { XcodeService.shared.selectProject(number: number) }
+        }
+        if name == "xcode_grant_permission" {
+            return await Self.offMain { XcodeService.shared.grantPermission() }
+        }
+        if name == "xcode_add_file" {
+            let fp = input["file_path"] as? String ?? ""
+            return await Self.offMain { XcodeService.shared.addFileToProject(filePath: fp) }
+        }
+        if name == "xcode_remove_file" {
+            let fp = input["file_path"] as? String ?? ""
+            return await Self.offMain { XcodeService.shared.removeFileFromProject(filePath: fp) }
+        }
+        if name == "xcode_bump_version" {
+            return await Self.offMain { XcodeService.shared.bumpVersion() }
+        }
+        if name == "xcode_bump_build" {
+            return await Self.offMain { XcodeService.shared.bumpBuild() }
+        }
+        if name == "xcode_get_version" {
+            return await Self.offMain { XcodeService.shared.getVersionInfo() }
+        }
+        if name == "xcode_analyze" {
+            let fp = input["file_path"] as? String ?? ""
+            guard !fp.isEmpty else { return "Error: file_path is required for analyze" }
+            guard let data = FileManager.default.contents(atPath: fp),
+                  let content = String(data: data, encoding: .utf8) else {
+                return "Error: could not read \(fp)"
+            }
+            // Basic Swift analysis — check for common issues
+            let lines = content.components(separatedBy: "\n")
+            var issues: [String] = []
+            for (i, line) in lines.enumerated() {
+                let trimmed = line.trimmingCharacters(in: .whitespaces)
+                if trimmed.contains("force_cast") || trimmed.contains("as!") { issues.append("[Warning] Line \(i+1): Force cast (as!)") }
+                if trimmed.contains("try!") { issues.append("[Warning] Line \(i+1): Force try (try!)") }
+                if trimmed.contains("implicitly unwrapped") || (trimmed.contains("!") && trimmed.contains("var ") && trimmed.contains(": ")) { }
+                if trimmed.count > 200 { issues.append("[Style] Line \(i+1): Line too long (\(trimmed.count) chars)") }
+            }
+            return issues.isEmpty ? "No issues found in \(fp) (\(lines.count) lines)" : issues.joined(separator: "\n")
+        }
+        if name == "xcode_snippet" {
+            let fp = input["file_path"] as? String ?? ""
+            guard !fp.isEmpty else { return "Error: file_path is required for snippet" }
+            guard let data = FileManager.default.contents(atPath: fp),
+                  let content = String(data: data, encoding: .utf8) else {
+                return "Error: could not read \(fp)"
+            }
+            let lines = content.components(separatedBy: "\n")
+            let s = (input["start_line"] as? Int ?? 1)
+            let e = (input["end_line"] as? Int ?? lines.count)
+            let start = max(s - 1, 0)
+            let end = min(e, lines.count)
+            guard start < end else { return "Error: invalid line range \(s)-\(e)" }
+            let ext = (fp as NSString).pathExtension
+            let snippet = lines[start..<end].enumerated().map { "\(start + $0 + 1)\t\($1)" }.joined(separator: "\n")
+            return "```\(ext)\n\(snippet)\n```"
+        }
+
         // batch_tools — run multiple tool calls in one batch
         if name == "batch_tools" {
             let desc = input["description"] as? String ?? "Batch Tasks"

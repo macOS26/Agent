@@ -308,7 +308,7 @@ extension AgentViewModel {
         }
 
         // Apple Intelligence context injection removed — was confusing LLMs
-        var promptPrefix = ""
+        let promptPrefix = ""
 
         // Inject direct command context if set
         if let context = directCommandContext {
