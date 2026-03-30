@@ -113,7 +113,18 @@ final class ScriptTab: Identifiable {
     init(record: ScriptTabRecord) {
         self.id = record.tabId
         self.scriptName = record.scriptName
-        self.activityLog = record.activityLog
+        // Truncate restored log to last 15K chars so app restart stays snappy
+        let restored = record.activityLog
+        if restored.count > 15_000 {
+            let drop = restored.count - 15_000
+            var trimmed = String(restored.dropFirst(drop))
+            if let nl = trimmed.firstIndex(of: "\n") {
+                trimmed = String(trimmed[trimmed.index(after: nl)...])
+            }
+            self.activityLog = "--- Log truncated (showing last 15K characters) ---\n\n" + trimmed
+        } else {
+            self.activityLog = restored
+        }
         self.exitCode = record.exitCode == -999 ? nil : Int32(record.exitCode)
         self.isRunning = false
         self.isMessagesTab = record.isMessagesTab
