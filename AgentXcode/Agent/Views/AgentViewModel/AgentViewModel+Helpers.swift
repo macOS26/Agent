@@ -572,7 +572,7 @@ extension AgentViewModel {
                   let content = String(data: data, encoding: .utf8) else {
                 return "Error: plan '\(planId)' not found."
             }
-            return "plan_id: \(planId)\n\(content)"
+            return "plan_id: \(planId) (use this ID for read/update/delete)\n\(content)"
 
         case "list":
             guard let files = try? fm.contentsOfDirectory(atPath: dir) else {
