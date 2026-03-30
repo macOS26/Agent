@@ -1540,21 +1540,6 @@ final class AgentViewModel {
         }
         historyIndex = -1
         savedInput = ""
-
-        // Clean up prompt via Apple AI in the background (for autocomplete suggestions)
-        Task { @MainActor [weak self] in
-            let cleaned = await FoundationModelService.cleanUpPrompt(task)
-            guard let self, cleaned != task else { return }
-            if let idx = self.promptHistory.lastIndex(of: task) {
-                self.promptHistory[idx] = cleaned
-                UserDefaults.standard.set(self.promptHistory, forKey: "agentPromptHistory")
-            }
-            if let selectedId = self.selectedTabId,
-               let tab = self.scriptTabs.first(where: { $0.id == selectedId }),
-               let tabIdx = tab.promptHistory.lastIndex(of: task) {
-                tab.promptHistory[tabIdx] = cleaned
-            }
-        }
         taskInput = ""
 
         // Queue if already running
