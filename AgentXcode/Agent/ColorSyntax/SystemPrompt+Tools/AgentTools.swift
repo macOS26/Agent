@@ -99,8 +99,7 @@ enum AgentTools {
         static let deleteJavascript = "delete_javascript"
         // Tool Discovery
         static let listNativeTools = "list_tools"
-        static let listMcpTools = "list_mcp_tools"
-        // Safari (consolidated web automation)
+// Safari (consolidated web automation)
         static let safari = "web"
         // Legacy web_ names (handlers still work)
         static let safariOpen = "web_open"
