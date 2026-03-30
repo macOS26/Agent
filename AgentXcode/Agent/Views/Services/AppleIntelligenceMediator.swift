@@ -399,8 +399,8 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
             return DirectCommand(name: "google_search", argument: query)
         }
 
-        // "run X", "run agent X" — only match if the first word after "run" is an actual agent name
-        let runPatterns = ["run agent ", "run script ", "run ", "execute "]
+        // "agent run X" — direct agent execution only with explicit "agent run" prefix
+        let runPatterns = ["agent run "]
         for prefix in runPatterns {
             if lower.hasPrefix(prefix) {
                 let arg = String(trimmed.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)
