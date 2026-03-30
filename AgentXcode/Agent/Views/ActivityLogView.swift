@@ -140,30 +140,18 @@ struct ActivityLogView: NSViewRepresentable {
                 return
             }
 
-            // No cache hit — show tail immediately, defer full render
-            coord.lastLength = 0
-            coord.lastRenderedText = ""
+            // No cache hit — show plain text immediately, skip expensive markdown render
+            coord.lastLength = (text as NSString).length
+            coord.lastRenderedText = text
             let renderText = text
-            // Show last 3000 chars as plain text so tab switch feels instant
-            let tail = String(renderText.suffix(3000))
             textView.textStorage?.beginEditing()
             textView.textStorage?.setAttributedString(
-                NSAttributedString(string: tail,
+                NSAttributedString(string: renderText,
                                    attributes: [.font: coord.font, .foregroundColor: NSColor.labelColor])
             )
             textView.textStorage?.endEditing()
+            coord.showingPlaceholder = false
             textView.scrollToEndOfDocument(nil)
-            // Deferred full render on next run loop
-            DispatchQueue.main.async {
-                let attributed = coord.buildAttributedString(from: renderText)
-                textView.textStorage?.beginEditing()
-                textView.textStorage?.setAttributedString(attributed)
-                textView.textStorage?.endEditing()
-                coord.lastLength = (renderText as NSString).length
-                coord.lastRenderedText = renderText
-                coord.showingPlaceholder = false
-                textView.scrollToEndOfDocument(nil)
-            }
             coord.lastSearch = searchText
             coord.lastMatchIndex = currentMatchIndex
             return
