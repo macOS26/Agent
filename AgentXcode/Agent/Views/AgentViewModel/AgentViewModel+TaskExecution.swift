@@ -1500,6 +1500,22 @@ extension AgentViewModel {
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
+                        if name == "xcode_bump_version" {
+                            appendLog("📦 Bumping version...")
+                            flushLog()
+                            let output = await Self.offMain { XcodeService.shared.bumpVersion() }
+                            appendLog(output)
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
+                        if name == "xcode_bump_build" {
+                            appendLog("📦 Bumping build number...")
+                            flushLog()
+                            let output = await Self.offMain { XcodeService.shared.bumpBuild() }
+                            appendLog(output)
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
                         // Analyze Swift code (native via xcf-swift package)
                         if name == "xcode_analyze" {
                             let fp = input["file_path"] as? String ?? ""
