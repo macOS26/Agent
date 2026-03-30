@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import AgentColorSyntax
 
 /// NSTextView-backed activity log — avoids SwiftUI Text layout storms on large/streaming content.
 /// Detects image/HTML file paths in log output and shows clickable links that open in Preview/Browser.

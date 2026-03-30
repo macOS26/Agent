@@ -1,4 +1,5 @@
 @preconcurrency import Foundation
+import AgentTools
 
 @MainActor
 final class OllamaService {

@@ -1,4 +1,5 @@
 @preconcurrency import Foundation
+import AgentTools
 import AppKit
 import SwiftUI
 import SQLite3
@@ -11,43 +12,6 @@ struct LLMConfig: Codable {
     var provider: APIProvider
     var model: String
     var displayName: String
-}
-
-enum APIProvider: String, CaseIterable, Codable {
-    case claude = "claude"
-    case openAI = "openAI"
-    case deepSeek = "deepSeek"
-    case huggingFace = "huggingFace"
-    case zAI = "zAI"
-    case ollama = "ollama"
-    case localOllama = "localOllama"
-    case vLLM = "vLLM"
-    case lmStudio = "lmStudio"
-    case foundationModel = "foundationModel"  // runs in the
-        // background, Used for LoRA training & mediator tasks,
-        //not selectable in UI
-
-    var displayName: String {
-        switch self {
-        case .claude: "Claude"
-        case .openAI: "OpenAI"
-        case .deepSeek: "DeepSeek"
-        case .huggingFace: "Hugging Face"
-        case .ollama: "Ollama"
-        case .localOllama: "Local Ollama"
-        case .vLLM: "vLLM"
-        case .lmStudio: "LM Studio"
-        case .zAI: "Z.ai"
-        case .foundationModel: "Apple Intelligence"
-        }
-    }
-
-    /// Providers selectable in the UI for task execution
-    /// Note: foundationModel (Apple Intelligence) is NOT selectable - it's for LoRA training only.
-    /// Apple Intelligence is an assistant to LLMs and users, not a direct LLM provider.
-    static var selectableProviders: [APIProvider] {
-        [.claude, .openAI, .deepSeek, .huggingFace, .zAI, .ollama, .localOllama, .vLLM, .lmStudio]
-    }
 }
 
 enum LMStudioProtocol: String, CaseIterable, Codable {

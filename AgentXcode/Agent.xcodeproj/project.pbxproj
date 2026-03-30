@@ -55,6 +55,7 @@
 		AA10000000000000000049 /* AgentViewModel+Logging.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000048 /* AgentViewModel+Logging.swift */; };
 		AA1000000000000000004B /* AgentViewModel+TaskExecution.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000004A /* AgentViewModel+TaskExecution.swift */; };
 		AA1000000000000000004D /* AgentTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000004C /* AgentTools.swift */; };
+		ABC7EAA6F77F494989A1A61F /* AgentTools+AppBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC627819110EDB4BE4A30406 /* AgentTools+AppBridge.swift */; };
 		AA1000000000000000004F /* CodingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000004E /* CodingService.swift */; };
 		AA10000000000000000056 /* CodeBlockSyntax.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000055 /* CodeBlockSyntax.swift */; };
 		AA10000000000000000057 /* MCPConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000058 /* MCPConfig.swift */; };
@@ -114,6 +115,8 @@
 		EA50MCP0000000003 /* MCPClient in Frameworks */ = {isa = PBXBuildFile; productRef = EA50MCP0000000002 /* MCPClient */; };
 		EA60000000000000000001 /* SDEFs in Resources */ = {isa = PBXBuildFile; fileRef = EA60000000000000000002 /* SDEFs */; };
 		EA6736842F7A11AD000A9D3E /* XcodeScriptingBridge in Frameworks */ = {isa = PBXBuildFile; productRef = EA6736832F7A11AD000A9D3E /* XcodeScriptingBridge */; };
+		ACS0000000000000000003 /* AgentColorSyntax in Frameworks */ = {isa = PBXBuildFile; productRef = ACS0000000000000000002 /* AgentColorSyntax */; };
+		ATL0000000000000000003 /* AgentTools in Frameworks */ = {isa = PBXBuildFile; productRef = ATL0000000000000000002 /* AgentTools */; };
 		EA6EA3842F6E35CF003FDB6C /* send_image_output.json in Resources */ = {isa = PBXBuildFile; fileRef = EA6EA3812F6E35CF003FDB6C /* send_image_output.json */; };
 		EA6EA3852F6E35CF003FDB6C /* send_message_output.json in Resources */ = {isa = PBXBuildFile; fileRef = EA6EA3832F6E35CF003FDB6C /* send_message_output.json */; };
 		EA6EA3862F6E35CF003FDB6C /* send_image_input.json in Resources */ = {isa = PBXBuildFile; fileRef = EA6EA3802F6E35CF003FDB6C /* send_image_input.json */; };
@@ -254,6 +257,7 @@
 		AA1000000000000000004A /* AgentViewModel+TaskExecution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TaskExecution.swift"; sourceTree = "<group>"; };
 		AA1000000000000000004C /* AgentTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentTools.swift; sourceTree = "<group>"; };
 		AA1000000000000000004E /* CodingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodingService.swift; sourceTree = "<group>"; };
+		AC627819110EDB4BE4A30406 /* AgentTools+AppBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentTools+AppBridge.swift"; sourceTree = "<group>"; };
 		AA10000000000000000055 /* CodeBlockSyntax.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeBlockSyntax.swift; sourceTree = "<group>"; };
 		AA10000000000000000058 /* MCPConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPConfig.swift; sourceTree = "<group>"; };
 		AA1000000000000000005A /* MCPServersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPServersView.swift; sourceTree = "<group>"; };
@@ -348,6 +352,8 @@
 				EA6736842F7A11AD000A9D3E /* XcodeScriptingBridge in Frameworks */,
 				D1F0000000000000000003 /* MultiLineDiff in Frameworks */,
 				EA50MCP0000000003 /* MCPClient in Frameworks */,
+				ACS0000000000000000003 /* AgentColorSyntax in Frameworks */,
+				ATL0000000000000000003 /* AgentTools in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -485,6 +491,7 @@
 			children = (
 				EADF39C82F68BF4800CD01E5 /* MCP */,
 				AA1000000000000000004E /* CodingService.swift */,
+				AC627819110EDB4BE4A30406 /* AgentTools+AppBridge.swift */,
 				AA1000000000000000001D /* HelperService.swift */,
 				AA10000000000000000025 /* UserService.swift */,
 				AA1000000000000000001E /* ClaudeService.swift */,
@@ -712,6 +719,8 @@
 				XCF0000000000000000002 /* xcf-swift */,
 				EA0100A62F7A04C000AB5230 /* MCPClient */,
 				EA6736832F7A11AD000A9D3E /* XcodeScriptingBridge */,
+				ACS0000000000000000002 /* AgentColorSyntax */,
+				ATL0000000000000000002 /* AgentTools */,
 			);
 			productName = Agent;
 			productReference = AA10000000000000000024 /* Agent!.app */;
@@ -790,6 +799,8 @@
 				EA0100A42F7A025E00AB5230 /* XCRemoteSwiftPackageReference "D1F-swift-multi-line-diff" */,
 				EA0100A52F7A04C000AB5230 /* XCRemoteSwiftPackageReference "AgentMCP" */,
 				EA6736822F7A11AD000A9D3E /* XCRemoteSwiftPackageReference "AgentEventBridges" */,
+				ACS0000000000000000001 /* XCLocalSwiftPackageReference "AgentColorSyntax" */,
+				ATL0000000000000000001 /* XCLocalSwiftPackageReference "AgentTools" */,
 			);
 			productRefGroup = AA10000000000000000042 /* Products */;
 			projectDirPath = "";
@@ -900,9 +911,8 @@
 				AA1000000000000000007F /* AgentViewModel+TabTask.swift in Sources */,
 				BB10000000000000000015 /* AgentViewModel+Helpers.swift in Sources */,
 				FF10000000000000000011 /* AgentViewModel+Speech.swift in Sources */,
-				AA1000000000000000004D /* AgentTools.swift in Sources */,
 				AA1000000000000000004F /* CodingService.swift in Sources */,
-				AA10000000000000000056 /* CodeBlockSyntax.swift in Sources */,
+				ABC7EAA6F77F494989A1A61F /* AgentTools+AppBridge.swift in Sources */,
 				AA10000000000000000057 /* MCPConfig.swift in Sources */,
 				AA10000000000000000059 /* MCPServersView.swift in Sources */,
 				AA1000000000000000005B /* MCPService.swift in Sources */,
@@ -932,11 +942,6 @@
 				02706156F0F8E91DF8FB4E70 /* TaskExecution+Selenium.swift in Sources */,
 				78EBD1F124AB2D7D38E70E8E /* AgentViewModel+TaskExecution+AboutSelf.swift in Sources */,
 				F123A9EA71C5383EFFFF1A8A /* ActivityLogView+Rendering.swift in Sources */,
-				6F27D38FD0C618AF98D0CA49 /* CodeBlockSyntax+PathColor.swift in Sources */,
-				245D4088366A574C0B6D4A47 /* CodeBlockTheme.swift in Sources */,
-				0B360504CFC943FA58CF4E5D /* CodeBlockLangDef.swift in Sources */,
-				DC2A6AB4367F3BCBC249663B /* CodeBlockSyntax+LanguageResolution.swift in Sources */,
-				A34E0C76DC7DABD4CCA06D4B /* CodeBlockSyntax+Diff.swift in Sources */,
 				209FA1D0E1B571ED04CF5EDC /* AgentViewModel+MessageTypes.swift in Sources */,
 				238B40E2A7DFCFB745101269 /* HeaderSectionView.swift in Sources */,
 				E6A8395D5098ED44E0118609 /* InputSectionView.swift in Sources */,
@@ -1445,6 +1450,17 @@
 		};
 /* End XCRemoteSwiftPackageReference section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		ACS0000000000000000001 /* XCLocalSwiftPackageReference "AgentColorSyntax" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../AgentColorSyntax;
+		};
+		ATL0000000000000000001 /* XCLocalSwiftPackageReference "AgentTools" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../AgentTools;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		D1F0000000000000000002 /* MultiLineDiff */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -1468,6 +1484,14 @@
 			isa = XCSwiftPackageProductDependency;
 			package = XCF0000000000000000001 /* XCRemoteSwiftPackageReference "xcf-swift" */;
 			productName = "xcf-swift";
+		};
+		ACS0000000000000000002 /* AgentColorSyntax */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AgentColorSyntax;
+		};
+		ATL0000000000000000002 /* AgentTools */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AgentTools;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

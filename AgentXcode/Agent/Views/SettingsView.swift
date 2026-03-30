@@ -1,4 +1,5 @@
 import SwiftUI
+import AgentTools
 
 struct SettingsView: View {
     @Bindable var viewModel: AgentViewModel

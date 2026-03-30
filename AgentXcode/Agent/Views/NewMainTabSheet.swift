@@ -1,4 +1,5 @@
 import SwiftUI
+import AgentTools
 
 /// Sheet for creating a new main tab with a specific LLM provider and model.
 struct NewMainTabSheet: View {

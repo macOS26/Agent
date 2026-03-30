@@ -1,5 +1,6 @@
 import Testing
 import AppKit
+import AgentColorSyntax
 @testable import Agent_
 
 @Suite("CodeBlockHighlighter")

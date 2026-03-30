@@ -1,4 +1,5 @@
 import Foundation
+import AgentTools
 
 /// Manages editable system prompt files stored at ~/Documents/AgentScript/system/.
 /// On first access, copies the default prompts from AgentTools to disk.
