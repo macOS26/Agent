@@ -48,10 +48,10 @@ final class ClaudeService {
         return prompt
     }
 
-    func tools(activeGroups: Set<String>? = nil) -> [[String: Any]] {
+    func tools(activeGroups: Set<String>? = nil, compact: Bool = false) -> [[String: Any]] {
         // Local endpoints (LM Studio etc.) get essential groups only to fit small context windows
         let groups = isLocalEndpoint ? Set(["Core", "User Agent", "Coding", "Workflow"]) : activeGroups
-        var t = AgentTools.claudeFormat(activeGroups: groups)
+        var t = AgentTools.claudeFormat(activeGroups: groups, compact: compact)
         // Only add web_search for real Anthropic API — local endpoints can't handle it
         if !isLocalEndpoint {
             t.append([
@@ -83,6 +83,7 @@ final class ClaudeService {
     }
 
     var temperature: Double = 0.2
+    var compactTools: Bool = false
 
     func send(messages: [[String: Any]], activeGroups: Set<String>? = nil) async throws -> (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int) {
         guard isLocalEndpoint || !apiKey.isEmpty else { throw AgentError.noAPIKey }
@@ -101,7 +102,7 @@ final class ClaudeService {
         ]
         // Only include tools for real Anthropic API
         if !isLocalEndpoint {
-            var toolDefs = tools(activeGroups: activeGroups)
+            var toolDefs = tools(activeGroups: activeGroups, compact: compactTools)
             // Mark last tool with cache_control for prompt caching
             if !toolDefs.isEmpty {
                 toolDefs[toolDefs.count - 1]["cache_control"] = ["type": "ephemeral"]
@@ -177,7 +178,7 @@ final class ClaudeService {
             "stream": true
         ]
         if !isLocalEndpoint {
-            var toolDefs = tools(activeGroups: activeGroups)
+            var toolDefs = tools(activeGroups: activeGroups, compact: compactTools)
             if !toolDefs.isEmpty {
                 toolDefs[toolDefs.count - 1]["cache_control"] = ["type": "ephemeral"]
             }

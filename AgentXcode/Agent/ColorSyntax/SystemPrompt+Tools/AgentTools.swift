@@ -608,15 +608,36 @@ enum AgentTools {
         return value
     }
 
+    /// Strip property descriptions to just type for compact mode.
+    private static func compactProperties(_ properties: [String: Any]) -> [String: Any] {
+        var result: [String: Any] = [:]
+        for (key, value) in properties {
+            if var dict = value as? [String: Any] {
+                // Keep type, remove verbose description
+                if let desc = dict["description"] as? String {
+                    // Shorten to first phrase only
+                    let short = desc.components(separatedBy: ".").first ?? desc
+                    dict["description"] = String(short.prefix(40))
+                }
+                result[key] = dict
+            } else {
+                result[key] = value
+            }
+        }
+        return result
+    }
+
     /// All common tools + MCP tools in Claude/Anthropic format.
     /// When activeGroups is set, only tools in those groups are included.
-    @MainActor static func claudeFormat(activeGroups: Set<String>? = nil) -> [[String: Any]] {
+    /// When compact is true, property descriptions are shortened for coding mode.
+    @MainActor static func claudeFormat(activeGroups: Set<String>? = nil, compact: Bool = false) -> [[String: Any]] {
         let prefs = ToolPreferencesService.shared
         var tools = (commonTools + webSearchTools + conversationTools)
             .filter { prefs.isEnabled(.claude, $0.name, activeGroups: activeGroups) }
             .map { tool in
-                claudeTool(name: tool.name, description: tool.description,
-                           properties: tool.properties, required: tool.required)
+                let props = compact ? compactProperties(tool.properties) : tool.properties
+                return claudeTool(name: tool.name, description: compact ? String(tool.description.prefix(60)) : tool.description,
+                           properties: props, required: tool.required)
             }
         let mcpService = MCPService.shared
         for tool in mcpService.discoveredTools where mcpService.isToolEnabled(serverName: tool.serverName, toolName: tool.name) {
@@ -720,14 +741,15 @@ enum AgentTools {
 
     /// Provider-aware Ollama/OpenAI format — filters tools by per-provider preferences.
     /// When activeGroups is set, only tools in those groups are included.
-    @MainActor static func ollamaTools(for provider: APIProvider, activeGroups: Set<String>? = nil) -> [[String: Any]] {
+    @MainActor static func ollamaTools(for provider: APIProvider, activeGroups: Set<String>? = nil, compact: Bool = false) -> [[String: Any]] {
         let prefs = ToolPreferencesService.shared
         // All providers get web_search and conversation tools
         var tools = (commonTools + webSearchTools + conversationTools)
             .filter { prefs.isEnabled(provider, $0.name, activeGroups: activeGroups) }
             .map { tool in
-                ollamaTool(name: tool.name, description: tool.description,
-                           properties: tool.properties, required: tool.required)
+                let props = compact ? compactProperties(tool.properties) : tool.properties
+                return ollamaTool(name: tool.name, description: compact ? String(tool.description.prefix(60)) : tool.description,
+                           properties: props, required: tool.required)
             }
         let mcpService = MCPService.shared
         for tool in mcpService.discoveredTools where mcpService.isToolEnabled(serverName: tool.serverName, toolName: tool.name) {

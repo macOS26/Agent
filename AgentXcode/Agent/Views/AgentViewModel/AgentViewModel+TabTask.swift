@@ -354,8 +354,11 @@ extension AgentViewModel {
                 activeGroups = Self.codingModeGroups
                 let minPrompt = AgentTools.codingModePrompt(projectFolder: rawFolder)
                 claude?.overrideSystemPrompt = minPrompt
+                claude?.compactTools = true
                 ollama?.overrideSystemPrompt = minPrompt
+                ollama?.compactTools = true
                 openAICompatible?.overrideSystemPrompt = minPrompt
+                openAICompatible?.compactTools = true
                 tab.appendLog("⚡ Coding mode auto-enabled")
                 tab.flush()
             }
