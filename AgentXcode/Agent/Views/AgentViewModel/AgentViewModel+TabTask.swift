@@ -504,6 +504,7 @@ extension AgentViewModel {
                     // The LLM should have called task_complete but didn't; treat text-only response as done
                     let responseText = response.content.compactMap { $0["text"] as? String }.joined()
                     if !responseText.isEmpty {
+                        completionSummary = String(responseText.prefix(500))
                         tab.appendLog(responseText)
                         tab.flush()
                     }
@@ -648,11 +649,10 @@ extension AgentViewModel {
         // If Messages tab task ended without task_complete, still send a reply
         if tab.isMessagesTab, let handle = tab.replyHandle {
             tab.replyHandle = nil
-            // Send the last LLM text response, not a generic label
-            let lastText = tab.activityLog.components(separatedBy: "\n")
-                .filter { !$0.isEmpty && !$0.hasPrefix("[") && !$0.hasPrefix("---") && !$0.hasPrefix("👤") && !$0.hasPrefix("🧠") && !$0.hasPrefix("🍎") && !$0.hasPrefix("💬") && !$0.hasPrefix("🕐") }
-                .last ?? (Task.isCancelled ? "(cancelled)" : "Done")
-            sendMessagesTabReply(lastText, handle: handle)
+            let reply = completionSummary.isEmpty
+                ? (Task.isCancelled ? "(cancelled)" : "Done")
+                : completionSummary
+            sendMessagesTabReply(reply, handle: handle)
         }
 
         tab.flush()

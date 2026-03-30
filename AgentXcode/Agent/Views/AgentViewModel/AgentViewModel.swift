@@ -2148,9 +2148,6 @@ final class AgentViewModel {
             msgTab.appendLog("iMessage from \(row.handleId): \(prompt)")
             msgTab.flush()
 
-            // Send immediate ack
-            sendMessagesTabAck(handle: row.handleId)
-
             // Select the Messages tab so the user sees it
             selectedTabId = msgTab.id
 
