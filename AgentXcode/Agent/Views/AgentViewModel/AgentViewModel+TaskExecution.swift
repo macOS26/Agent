@@ -1516,6 +1516,12 @@ extension AgentViewModel {
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
+                        if name == "xcode_get_version" {
+                            let output = await Self.offMain { XcodeService.shared.getVersionInfo() }
+                            appendLog(output)
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
                         // Analyze Swift code (native via xcf-swift package)
                         if name == "xcode_analyze" {
                             let fp = input["file_path"] as? String ?? ""

@@ -20,9 +20,9 @@ final class AppleIntelligenceMediator: ObservableObject {
     static let shared = AppleIntelligenceMediator()
 
     /// Timeout for Apple Intelligence to start responding (seconds).
-    private static let startTimeout: TimeInterval = 3
+    private static let startTimeout: TimeInterval = 1
     /// Timeout for Apple Intelligence to finish once started (seconds).
-    private static let finishTimeout: TimeInterval = 6
+    private static let finishTimeout: TimeInterval = 2
 
     /// Maximum context window size (approximate token limit for context)
     private static let maxContextTokens: Int = 4096
@@ -188,7 +188,7 @@ Rules:
         return s
     }
 
-    /// Wraps a session.respond call with two-phase timeout: 3s to start, 6s to finish.
+    /// Wraps a session.respond call with timeout.
     /// Returns nil on timeout so the request goes straight to the LLM.
     private func respondWithTimeout(_ session: LanguageModelSession, prompt: String, label: String) async -> String? {
         mediatorLog.info("[\(label)] Apple AI request starting")

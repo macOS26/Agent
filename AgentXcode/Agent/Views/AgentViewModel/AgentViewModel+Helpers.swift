@@ -166,6 +166,7 @@ extension AgentViewModel {
             case "code_review":     return ("xcode_code_review", newInput)
             case "bump_version":    return ("xcode_bump_version", newInput)
             case "bump_build":      return ("xcode_bump_build", newInput)
+            case "get_version":     return ("xcode_get_version", newInput)
             default:                return ("xcode_build", newInput)
             }
 

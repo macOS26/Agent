@@ -294,7 +294,7 @@ enum AgentTools {
         // --- Xcode (consolidated) ---
         ToolDef(
             name: Name.xcode,
-            description: "Xcode: build/run projects, analyze/snippet for code review, bump_version/bump_build, add/remove files. Use analyze before suggesting Swift changes.",
+            description: "Xcode: build/run, analyze/snippet for code review, get_version/bump_version/bump_build, add/remove files. bump_version also bumps build.",
             properties: [
                 "action": ["type": "string", "description": "Action: build, run, list_projects, select_project, add_file, remove_file, grant_permission, analyze, snippet, or code_review"],
                 "project_path": ["type": "string", "description": "For build/run: path (auto-detected if empty)"],
