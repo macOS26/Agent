@@ -141,6 +141,7 @@ enum AgentTools {
         static let sendMessage = "send_message"
         static let planMode = "plan_mode"
         static let projectFolderTool = "project_folder"
+        static let codingMode = "coding_mode"
     }
 
     // MARK: - Full LLM System Prompt (Desktop: Claude, Ollama, OpenAI, etc.)
@@ -152,7 +153,7 @@ enum AgentTools {
         ALWAYS call task_complete when finished. Put questions in the summary. Don't ask — act.
         Show full output when listing. Never output code as text — use file_manager or agent tools.
 
-        TOOLS: file_manager (read/write/edit/list/search/diff_apply/extract_function) | git (status/diff/log/commit/branch) | xcode (build/run/analyze/snippet/add_file/remove_file) | agent (list/read/create/update/run/delete/combine) | plan_mode (create/update/read/list/delete) | project_folder (get/set/home/documents/library/none)
+        TOOLS: file_manager (read/write/edit/list/search/diff_apply/extract_function) | git (status/diff/log/commit/branch) | xcode (build/run/analyze/snippet/add_file/remove_file) | agent (list/read/create/update/run/delete/combine) | plan_mode (create/update/read/list/delete) | project_folder (get/set/home/documents/library/none) | coding_mode (enabled:true/false)
         applescript_tool (execute/lookup_sdef/list/run/save/delete) | javascript_tool (execute/list/run/save/delete) | accessibility (list_windows/click/type_text/find_element/get_properties + more) | web (open/click/type/read_content/execute_js/google_search + more)
         execute_agent_command (shell) | execute_daemon_command (root shell) | batch_commands (multi-shell) | batch_tools (multi-tool) | run_shell_script (shell with fallback)
 
@@ -163,7 +164,13 @@ enum AgentTools {
         - xcode(action:"analyze"/"snippet") for Swift code review.
         - Safari JS via AppleScript preferred for web: `tell application "Safari" to do JavaScript "..." in document 1`.
         - For 3+ step tasks, create a plan_mode plan first, then execute each step.
-        - EDITING FILES: Use diff_apply for multi-line edits (provide file_path, start_line, end_line, destination). Use edit only for single-line or exact string replacements. ALWAYS re-read file after any edit — line numbers shift.
+        - EDITING FILES (file_manager actions):
+          edit: exact string replace (old_string → new_string). Best for single-line changes.
+          diff_apply: replace a line range (file_path, start_line, end_line, destination). Best for multi-line edits. PREFERRED for code changes.
+          create: preview a diff without applying (returns diff_id). Use with apply to review before committing.
+          apply: commit a previewed diff by diff_id from create.
+          undo: revert the last edit on a file.
+          ALWAYS re-read file after any edit — line numbers shift. One edit per call.
         - SPLITTING FILES: read → write new → xcode add_file → edit original → xcode build. One file at a time.
 
         TCC (in-process): agent(run), applescript_tool(execute), accessibility. NO TCC: execute_agent_command, execute_daemon_command.
@@ -248,7 +255,7 @@ enum AgentTools {
         // --- File Manager (consolidated) ---
         ToolDef(
             name: Name.fileManager,
-            description: "File ops. PREFER diff_apply for multi-line edits (start_line/end_line/destination). Use edit only for single exact string replacements. read/write/list/search/extract_function also available. Use offset/limit for large files.",
+            description: "File ops. edit=exact string replace. diff_apply=replace line range (PREFERRED for code). create=preview diff (returns diff_id). apply=commit diff by id. undo=revert last edit. Also: read/write/list/search/extract_function.",
             properties: [
                 "action": ["type": "string", "description": "Action: read, write, edit, create, apply, undo, diff_apply, list, search, read_dir, if_to_switch, or extract_function"],
                 "file_path": ["type": "string", "description": "File path (for read/write/edit/apply/undo/diff_apply)"],
@@ -365,6 +372,15 @@ enum AgentTools {
                 "path": ["type": "string", "description": "For set: absolute path to new project folder"],
             ],
             required: ["action"]
+        ),
+        // --- Coding Mode ---
+        ToolDef(
+            name: Name.codingMode,
+            description: "Toggle coding mode on/off. When ON, only Core+Workflow+Coding+UserAgent tools are sent to the LLM — removes conversation, accessibility, automation, web, daemon tools for faster responses. Auto-enables after iteration 1 for coding tasks.",
+            properties: [
+                "enabled": ["type": "boolean", "description": "true to enable coding mode, false to disable and restore all tools"],
+            ],
+            required: ["enabled"]
         ),
         // --- Agent Scripts (reusable Swift scripts) ---
         // --- Agent Scripts (consolidated) ---
