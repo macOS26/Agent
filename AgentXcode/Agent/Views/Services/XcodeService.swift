@@ -433,4 +433,81 @@ final class XcodeService: @unchecked Sendable {
             return "Error writing project file: \(error.localizedDescription)"
         }
     }
+
+    // MARK: - Version & Build Bumping
+
+    /// Bump MARKETING_VERSION (e.g. 1.0.1 → 1.0.2) in the selected project's pbxproj.
+    nonisolated func bumpVersion() -> String {
+        guard let pbxPath = selectedPbxprojPath() else {
+            return "Error: no Xcode project selected or pbxproj not found."
+        }
+        guard let data = FileManager.default.contents(atPath: pbxPath),
+              var content = String(data: data, encoding: .utf8) else {
+            return "Error: could not read \(pbxPath)"
+        }
+
+        let pattern = try! NSRegularExpression(pattern: #"MARKETING_VERSION\s*=\s*(\d+\.\d+\.\d+)"#)
+        let nsContent = content as NSString
+        let matches = pattern.matches(in: content, range: NSRange(location: 0, length: nsContent.length))
+        guard let match = matches.first else {
+            return "Error: MARKETING_VERSION not found in pbxproj."
+        }
+
+        let oldVersion = nsContent.substring(with: match.range(at: 1))
+        var parts = oldVersion.components(separatedBy: ".").compactMap { Int($0) }
+        guard parts.count == 3 else { return "Error: unexpected version format '\(oldVersion)'" }
+        parts[2] += 1
+        let newVersion = parts.map(String.init).joined(separator: ".")
+
+        content = content.replacingOccurrences(of: "MARKETING_VERSION = \(oldVersion)", with: "MARKETING_VERSION = \(newVersion)")
+
+        do {
+            try content.write(toFile: pbxPath, atomically: true, encoding: .utf8)
+            return "Version bumped: \(oldVersion) → \(newVersion)"
+        } catch {
+            return "Error writing pbxproj: \(error.localizedDescription)"
+        }
+    }
+
+    /// Bump CURRENT_PROJECT_VERSION (e.g. 80 → 81) in the selected project's pbxproj.
+    nonisolated func bumpBuild() -> String {
+        guard let pbxPath = selectedPbxprojPath() else {
+            return "Error: no Xcode project selected or pbxproj not found."
+        }
+        guard let data = FileManager.default.contents(atPath: pbxPath),
+              var content = String(data: data, encoding: .utf8) else {
+            return "Error: could not read \(pbxPath)"
+        }
+
+        let pattern = try! NSRegularExpression(pattern: #"CURRENT_PROJECT_VERSION\s*=\s*(\d+)"#)
+        let nsContent = content as NSString
+        let matches = pattern.matches(in: content, range: NSRange(location: 0, length: nsContent.length))
+        guard let match = matches.first else {
+            return "Error: CURRENT_PROJECT_VERSION not found in pbxproj."
+        }
+
+        let oldBuild = nsContent.substring(with: match.range(at: 1))
+        guard let buildNum = Int(oldBuild) else { return "Error: unexpected build format '\(oldBuild)'" }
+        let newBuild = String(buildNum + 1)
+
+        content = content.replacingOccurrences(of: "CURRENT_PROJECT_VERSION = \(oldBuild)", with: "CURRENT_PROJECT_VERSION = \(newBuild)")
+
+        do {
+            try content.write(toFile: pbxPath, atomically: true, encoding: .utf8)
+            return "Build bumped: \(oldBuild) → \(newBuild)"
+        } catch {
+            return "Error writing pbxproj: \(error.localizedDescription)"
+        }
+    }
+
+    /// Resolve the pbxproj path for the currently selected project.
+    private nonisolated func selectedPbxprojPath() -> String? {
+        guard let app: XcodeApplication = SBApplication(bundleIdentifier: Self.xcodeBundleID) else { return nil }
+        guard let docs = app.documents?() as? [XcodeDocument], !docs.isEmpty else { return nil }
+        let selectedIdx = UserDefaults.standard.integer(forKey: "xcodeSelectedProject")
+        let idx = (selectedIdx > 0 && selectedIdx <= docs.count) ? selectedIdx - 1 : 0
+        guard let path = docs[idx].path, !path.isEmpty else { return nil }
+        // path is the .xcodeproj directory
+        return (path as NSString).appendingPathComponent("project.pbxproj")
+    }
 }
