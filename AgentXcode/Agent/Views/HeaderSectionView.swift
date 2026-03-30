@@ -43,7 +43,11 @@ struct HeaderStatusView: View {
                 if tab.isLLMThinking {
                     HStack(spacing: 4) {
                         ProgressView().controlSize(.mini)
-                        ShimmerText("Thinking...", color: .green)
+                        if tab.taskQueue.isEmpty {
+                            ShimmerText("Thinking...", color: .green)
+                        } else {
+                            ShimmerText("Thinking... +\(tab.taskQueue.count) queued", color: .cyan)
+                        }
                     }
                 } else if tab.isLLMRunning {
                     HStack(spacing: 4) {
@@ -59,7 +63,11 @@ struct HeaderStatusView: View {
                 if viewModel.isThinking {
                     HStack(spacing: 4) {
                         ProgressView().controlSize(.mini)
-                        ShimmerText("Thinking...", color: .green)
+                        if viewModel.mainTaskQueue.isEmpty {
+                            ShimmerText("Thinking...", color: .green)
+                        } else {
+                            ShimmerText("Thinking... +\(viewModel.mainTaskQueue.count) queued", color: .cyan)
+                        }
                     }
                 } else if viewModel.isRunning {
                     HStack(spacing: 4) {
