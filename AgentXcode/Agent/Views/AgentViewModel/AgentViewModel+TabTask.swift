@@ -307,16 +307,8 @@ extension AgentViewModel {
             messages.removeLast()
         }
 
-        // Apple Intelligence context — prepend to user prompt (not separate message)
+        // Apple Intelligence context injection removed — was confusing LLMs
         var promptPrefix = ""
-        if directCommandContext == nil && mediator.isEnabled && mediator.injectContextToLLM {
-            if let contextAnnotation = await mediator.contextualizeUserMessage(prompt) {
-                tab.currentAppleAIPrompt = contextAnnotation.content
-                promptPrefix = contextAnnotation.content + "\n\n"
-                tab.appendLog(contextAnnotation.formatted)
-                tab.flush()
-            }
-        }
 
         // Inject direct command context if set
         if let context = directCommandContext {
