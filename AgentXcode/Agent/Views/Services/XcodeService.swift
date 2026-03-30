@@ -17,7 +17,7 @@ final class XcodeService: @unchecked Sendable {
 
     /// Create a fresh Xcode SBApplication connection with error suppression.
     private nonisolated func xcodeApp() -> XcodeApplication? {
-        guard let app = xcodeApp() else { return nil }
+        guard let app: XcodeApplication = SBApplication(bundleIdentifier: Self.xcodeBundleID) else { return nil }
         app.delegate = SBApplicationDelegateIgnore()
         return app
     }
