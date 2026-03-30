@@ -53,8 +53,9 @@ extension AgentViewModel {
             - apple_event_query: Query scriptable apps via Apple Events
             - plan_mode (action: create, update, read, list, delete): Task planning
 
-            CONVERSATION TOOLS:
-            - write_text, transform_text, fix_text, send_message, about_self
+            CONVERSATION (action-based):
+            - conversation (action: write, transform, fix, about): Text generation, formatting, corrections, self-description
+            - send_message: Send content via iMessage, email, or SMS
 
             Use list_tools to see all available tools.
             """

@@ -138,12 +138,7 @@ enum AgentTools {
         static let webSearch = "web_search"
         // Conversation (consolidated CRUDL)
         static let conversation = "conversation"
-        // Legacy conversation names (handlers still work)
-        static let writeText = "write_text"
-        static let transformText = "transform_text"
         static let sendMessage = "send_message"
-        static let aboutSelf = "about_self"
-        static let fixText = "fix_text"
         static let planMode = "plan_mode"
         static let projectFolderTool = "project_folder"
     }
