@@ -79,11 +79,16 @@ enum AgentError: Error, LocalizedError {
             return true
         case .serviceUnavailable, .xpcError:
             return true
-        case .apiError(let code, _) where code == 429 || code >= 500:
+        case .apiError(let code, _) where code >= 500:
             return true
         default:
             return false
         }
+    }
+
+    var isRateLimited: Bool {
+        if case .apiError(429, _) = self { return true }
+        return false
     }
     
     /// Create AgentError from any Error

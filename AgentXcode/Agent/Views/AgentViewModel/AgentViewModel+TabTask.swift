@@ -606,6 +606,20 @@ extension AgentViewModel {
                             tab.appendLog(timeoutMessage)
                             break
                         }
+                    } else if let agentErr = error as? AgentError, agentErr.isRateLimited {
+                        // Rate limit — retry once after 30s, then stop
+                        if timeoutRetryCount < 1 {
+                            timeoutRetryCount += 1
+                            tab.appendLog("\(errorSource) rate limited — waiting 30s before retry...")
+                            tab.flush()
+                            try? await Task.sleep(for: .seconds(30))
+                            if Task.isCancelled { break }
+                            continue
+                        } else {
+                            tab.appendLog("\(errorSource) rate limited. Wait a minute and try again.")
+                            tab.flush()
+                            break
+                        }
                     } else if let agentErr = error as? AgentError, agentErr.isRecoverable, timeoutRetryCount < maxTimeoutRetries {
                         // Server/network error — retry every 10 seconds
                         timeoutRetryCount += 1
