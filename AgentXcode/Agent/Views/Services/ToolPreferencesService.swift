@@ -33,7 +33,7 @@ final class ToolPreferencesService {
         "Experimental": Set(["apple_event_query", "selenium", "ax_screenshot"]),
         "Core": Set(["task_complete", "list_tools", "web_search",
                     "write_text", "transform_text", "about_self", "fix_text"]),
-        "Workflow": Set(["agent", "plan_mode", "git", "send_message", "batch_commands", "batch_tools"]),
+        "Workflow": Set(["agent", "plan_mode", "git", "send_message", "batch_commands", "batch_tools", "project_folder"]),
         "User Agent": Set(["execute_agent_command"]),
         "Launch Daemon": Set(["execute_daemon_command"]),
         "Web": Set(["web"]),
