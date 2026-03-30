@@ -325,13 +325,119 @@ private struct LLMOutputBox: View {
         return result
     }
 
+    // MARK: - Terminal Table Rendering
+
+    /// Build an AttributedString that renders markdown tables as box-drawn terminal tables.
+    private static func richText(_ text: String, color: Color, dimColor: Color, headerColor: Color) -> AttributedString {
+        let lines = text.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        var result = AttributedString()
+        var i = 0
+        while i < lines.count {
+            // Detect table block: header | sep | 1+ data rows
+            if i + 2 < lines.count,
+               lines[i].trimmingCharacters(in: .whitespaces).hasPrefix("|"),
+               TableRendering.isTableSeparator(lines[i + 1]) {
+                let tableStart = i
+                var tableEnd = i + 2
+                while tableEnd < lines.count,
+                      lines[tableEnd].trimmingCharacters(in: .whitespaces).hasPrefix("|"),
+                      !TableRendering.isTableSeparator(lines[tableEnd]) {
+                    tableEnd += 1
+                }
+                // Parse all rows
+                let headerCells = TableRendering.parseTableRow(lines[tableStart])
+                var dataRows: [[String]] = []
+                for r in (tableStart + 2)..<tableEnd {
+                    dataRows.append(TableRendering.parseTableRow(lines[r]))
+                }
+                let colCount = headerCells.count
+                // Compute column widths
+                var widths = headerCells.map(\.count)
+                for row in dataRows {
+                    for (c, cell) in row.enumerated() where c < colCount {
+                        widths[c] = max(widths[c], cell.count)
+                    }
+                }
+                // Ensure minimum width of 3
+                widths = widths.map { max($0, 3) }
+
+                // Build box-drawing lines
+                let topLine = "┌" + widths.map { String(repeating: "─", count: $0 + 2) }.joined(separator: "┬") + "┐"
+                let midLine = "├" + widths.map { String(repeating: "─", count: $0 + 2) }.joined(separator: "┼") + "┤"
+                let botLine = "└" + widths.map { String(repeating: "─", count: $0 + 2) }.joined(separator: "┴") + "┘"
+
+                func padCell(_ s: String, width: Int) -> String {
+                    s + String(repeating: " ", count: max(0, width - s.count))
+                }
+
+                func rowLine(_ cells: [String]) -> String {
+                    var parts: [String] = []
+                    for (c, cell) in cells.enumerated() where c < colCount {
+                        parts.append(" " + padCell(cell, width: widths[c]) + " ")
+                    }
+                    // Fill missing columns
+                    for c in cells.count..<colCount {
+                        parts.append(" " + String(repeating: " ", count: widths[c]) + " ")
+                    }
+                    return "│" + parts.joined(separator: "│") + "│"
+                }
+
+                // Add newline before table if not at start
+                if !result.characters.isEmpty {
+                    result.append(AttributedString("\n"))
+                }
+
+                // Top border (dim)
+                var border = AttributedString(topLine + "\n")
+                border.foregroundColor = dimColor
+                result.append(border)
+
+                // Header row (bright/bold)
+                var hdr = AttributedString(rowLine(headerCells) + "\n")
+                hdr.foregroundColor = headerColor
+                result.append(hdr)
+
+                // Mid border (dim)
+                var mid = AttributedString(midLine + "\n")
+                mid.foregroundColor = dimColor
+                result.append(mid)
+
+                // Data rows
+                for row in dataRows {
+                    var r = AttributedString(rowLine(row) + "\n")
+                    r.foregroundColor = color
+                    result.append(r)
+                }
+
+                // Bottom border (dim)
+                var bot = AttributedString(botLine)
+                bot.foregroundColor = dimColor
+                result.append(bot)
+
+                // Add newline after table unless at end
+                if tableEnd < lines.count {
+                    result.append(AttributedString("\n"))
+                }
+
+                i = tableEnd
+                continue
+            }
+
+            // Regular line — linkify it
+            if i > 0 { result.append(AttributedString("\n")) }
+            result.append(linkify(lines[i], color: color))
+            i += 1
+        }
+        return result
+    }
+
     var body: some View {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         VStack(spacing: 0) {
             ZStack(alignment: .bottomTrailing) {
                 if !trimmed.isEmpty {
                     ScrollView(.vertical, showsIndicators: true) {
-                        Text(Self.linkify(trimmed, color: termText))
+                        Text(Self.richText(trimmed, color: termText, dimColor: termDim, headerColor: termText))
                             .font(.system(size: 11, design: .monospaced))
                             .environment(\.openURL, OpenURLAction { url in
                                 NSWorkspace.shared.open(url)
