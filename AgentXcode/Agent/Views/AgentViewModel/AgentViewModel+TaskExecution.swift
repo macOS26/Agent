@@ -2107,10 +2107,8 @@ extension AgentViewModel {
                         // Prevents dangling tool_calls without responses (API error for OpenAI-compatible)
                         if !toolResults.contains(where: { ($0["tool_use_id"] as? String) == toolId }) {
                             let output = await executeNativeTool(name, input: input)
-                            if output != "(skipped)" {
-                                appendLog(output)
-                                flushLog()
-                            }
+                            appendLog(output)
+                            flushLog()
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
                     }
