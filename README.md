@@ -12,7 +12,7 @@
 
 [Features](#features) • [Installation](#installation) • [Comparison](#comparison) • [Architecture](#architecture) • [Security](#security)
 
-<img width="1280" height="724" alt="image" src="https://github.com/user-attachments/assets/365054b9-b0da-46d7-9a4c-d623306f8986" />
+<img width="989" height="1236" alt="image" src="https://github.com/user-attachments/assets/fb801e8e-8cf5-4f84-85e4-a9e4e406bc1d" />
 
 </div>
 
