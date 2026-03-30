@@ -642,13 +642,14 @@ extension AgentViewModel {
                                 continue
                             }
                             let resolvedPath = path ?? projectFolder
-                            appendLog("🔍 $ find \(resolvedPath) -name '\(pattern)'")
+                            let displayPath = CodingService.trimHome(resolvedPath)
+                            appendLog("🔍 $ find \(displayPath) -name '\(pattern)'")
                             flushLog()
                             let cmd = CodingService.buildListFilesCommand(pattern: pattern, path: path)
                             let result = await executeViaUserAgent(command: cmd)
                             guard !Task.isCancelled else { break }
                             let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                                ? "No files matching '\(pattern)'" : "[cwd: \(resolvedPath)]\n\(result.output)"
+                                ? "No files matching '\(pattern)'" : "[project folder: \(displayPath)] paths are relative to project folder\n\(result.output)"
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
