@@ -356,8 +356,8 @@ extension AgentViewModel {
         while !Task.isCancelled {
             iterations += 1
 
-            // Prune old messages every 8 iterations to save tokens (same as main task)
-            if iterations > 1 && iterations % 8 == 0 && messages.count > 14 {
+            // Prune old messages every 4 iterations to save tokens
+            if iterations > 1 && iterations % 4 == 0 && messages.count > 10 {
                 let beforeCount = messages.count
                 Self.pruneMessages(&messages)
                 tabTaskLog.info("[\(tab.displayTitle)] pruned messages: \(beforeCount) → \(messages.count)")

@@ -11,7 +11,7 @@ private let taskLog = Logger(subsystem: AppConstants.subsystem, category: "TaskE
 
 // MARK: - Task Utilities
 
-private let maxToolResultChars = 8_000
+private let maxToolResultChars = 4_000
 
 extension AgentViewModel {
 
