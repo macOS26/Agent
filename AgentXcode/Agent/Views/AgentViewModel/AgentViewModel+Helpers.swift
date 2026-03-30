@@ -226,6 +226,15 @@ extension AgentViewModel {
             default:                  return ("ax_list_windows", mapped)
             }
 
+        case "conversation":
+            switch action {
+            case "write":     return ("write_text", newInput)
+            case "transform": return ("transform_text", newInput)
+            case "fix":       return ("fix_text", newInput)
+            case "about":     return ("about_self", newInput)
+            default:          return ("about_self", newInput)
+            }
+
         default:
             return (name, input)
         }

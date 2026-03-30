@@ -136,7 +136,9 @@ enum AgentTools {
         static let seleniumWait = "selenium_wait"
         // Ollama-only
         static let webSearch = "web_search"
-        // Conversation Tools
+        // Conversation (consolidated CRUDL)
+        static let conversation = "conversation"
+        // Legacy conversation names (handlers still work)
         static let writeText = "write_text"
         static let transformText = "transform_text"
         static let sendMessage = "send_message"
@@ -204,10 +206,8 @@ enum AgentTools {
         6. Mark plan step completed ONLY if build succeeds
         Do ONE file at a time. Build between EVERY file. Never batch multiple files before building.
 
-        CONVERSATION TOOLS (no action parameter):
-        - write_text: Generate prose on any subject. Params: subject (required), style (default: informative), length (short/medium/long or word count), context (optional).
-        - transform_text: Restructure text into a formatted output. Params: text (required), transform (required: grocery_list, todo_list, outline, summary, bullet_points, numbered_list, table, qa), options (optional).
-        - fix_text: Correct spelling and grammar. - send_message: Send content via iMessage, email, or SMS. - about_self: Describe Agent's capabilities.
+        conversation: write (generate prose), transform (reformat text), fix (spelling/grammar), about (Agent capabilities).
+        - send_message: Send content via iMessage, email, or SMS.
 
         TCC (in-process): agent_script (run), applescript_tool (execute), accessibility. NO TCC: execute_agent_command, execute_daemon_command.
         LAUNCH DAEMON: execute_daemon_command runs as root — use it for system troubleshooting: reading system logs (log show, /var/log), disk diagnostics (diskutil, fsck, df), network debugging (lsof -i, netstat, pfctl), process inspection (ps aux, lsof), launchd service management (launchctl), hardware info (system_profiler), firewall config, and any diagnostics requiring elevated privileges. Try execute_agent_command first; escalate to execute_daemon_command when permission is denied or root access is needed.
@@ -268,12 +268,9 @@ enum AgentTools {
         Name.javascriptTool:       #"javascript_tool {"action": "execute", "source": "var app = Application.currentApplication(); app.displayDialog('Hello')"}"#,
         Name.projectFolderTool:    #"project_folder {"action": "set", "path": "/Users/me/Projects/MyApp"}"#,
         Name.webSearch:            #"web_search {"query": "latest Swift news"}"#,
-        // Conversation Tools
-        Name.writeText:            #"write_text {"subject": "machine learning", "style": "informative", "length": "medium"}"#,
-        Name.transformText:        #"transform_text {"text": "buy milk, eggs, bread", "transform": "grocery_list"}"#,
+        // Conversation (consolidated)
+        Name.conversation:         #"conversation {"action": "write", "subject": "machine learning", "style": "informative", "length": "medium"}"#,
         Name.sendMessage:          #"send_message {"content": "Hello!", "recipient": "me", "channel": "imessage"}"#,
-        Name.aboutSelf:            "about_self",
-        Name.fixText:              #"fix_text {"text": "this has spellng erors", "fixes": "all"}"#,
     ]
 
     @MainActor private static func enabledAppleAIToolLines() -> String {
@@ -701,56 +698,25 @@ enum AgentTools {
 
     /// Conversation tool definitions for writing, text transformation, self-description, and corrections.
     nonisolated(unsafe) static let conversationTools: [ToolDef] = [
+        // --- Conversation (consolidated) ---
         ToolDef(
-            name: Name.writeText,
-            description: "Write text about a given subject. Creates well-structured prose on any topic without emojis. Use for generating content, articles, descriptions, explanations, or creative writing.",
+            name: Name.conversation,
+            description: "Conversation tools. Actions: write (generate prose), transform (reformat text), fix (correct spelling/grammar), about (describe Agent capabilities).",
             properties: [
-                "subject": ["type": "string", "description": "The subject or topic to write about"],
-                "style": ["type": "string", "description": "Writing style: 'informative', 'creative', 'technical', 'casual', or 'formal' (default: 'informative')"],
-                "length": ["type": "string", "description": "Desired length: 'short' (~100 words), 'medium' (~300 words), 'long' (~600 words), or specify exact word count as number"],
-                "context": ["type": "string", "description": "Optional additional context or requirements for the writing"],
+                "action": ["type": "string", "description": "Action: write, transform, fix, or about"],
+                "subject": ["type": "string", "description": "For write: topic to write about"],
+                "style": ["type": "string", "description": "For write: 'informative', 'creative', 'technical', 'casual', or 'formal' (default: 'informative')"],
+                "length": ["type": "string", "description": "For write: 'short' (~100 words), 'medium' (~300 words), 'long' (~600 words), or exact word count"],
+                "context": ["type": "string", "description": "For write: additional context or requirements"],
+                "text": ["type": "string", "description": "For transform/fix: the text to process"],
+                "transform": ["type": "string", "description": "For transform: 'grocery_list', 'todo_list', 'outline', 'summary', 'bullet_points', 'numbered_list', 'table', or 'qa'"],
+                "options": ["type": "string", "description": "For transform: additional options"],
+                "fixes": ["type": "string", "description": "For fix: 'all' (default), 'spelling', 'grammar', 'punctuation', or 'capitalization'"],
+                "preserve_style": ["type": "boolean", "description": "For fix: keep original tone (default: true)"],
+                "topic": ["type": "string", "description": "For about: 'tools', 'features', 'scripting', 'automation', 'coding', or 'all' (default: 'all')"],
+                "detail": ["type": "string", "description": "For about: 'brief', 'standard', or 'detailed' (default: 'standard')"],
             ],
-            required: ["subject"]
-        ),
-        ToolDef(
-            name: Name.transformText,
-            description: "Transform text into different formats. Convert prose to lists, outlines, summaries, or restructured content. No emojis in output. Use for creating grocery lists, todo lists, bullet points, or reformatting text.",
-            properties: [
-                "text": ["type": "string", "description": "The text to transform"],
-                "transform": ["type": "string", "description": "Transformation type: 'grocery_list', 'todo_list', 'outline', 'summary', 'bullet_points', 'numbered_list', 'table', or 'qa'"],
-                "options": ["type": "string", "description": "Optional additional options for the transformation"],
-            ],
-            required: ["text", "transform"]
-        ),
-        ToolDef(
-            name: Name.sendMessage,
-            description: "Send a message to the user via iMessage, email, or other channels. Formats and delivers text content to specified recipients. No emojis in message content.",
-            properties: [
-                "content": ["type": "string", "description": "The message content to send"],
-                "recipient": ["type": "string", "description": "Recipient: 'me' (self), phone number, email address, or contact name"],
-                "channel": ["type": "string", "description": "Delivery channel: 'imessage' (default), 'email', 'sms', or 'clipboard'"],
-                "subject": ["type": "string", "description": "Subject line for email messages"],
-            ],
-            required: ["content", "recipient"]
-        ),
-        ToolDef(
-            name: Name.aboutSelf,
-            description: "Describe Agent's capabilities, features, and how to use it. Returns information about available tools, current configuration, and example usage patterns. No emojis.",
-            properties: [
-                "topic": ["type": "string", "description": "Optional specific topic: 'tools', 'features', 'scripting', 'automation', 'coding', or 'all' (default: 'all')"],
-                "detail": ["type": "string", "description": "Level of detail: 'brief', 'standard', or 'detailed' (default: 'standard')"],
-            ],
-            required: []
-        ),
-        ToolDef(
-            name: Name.fixText,
-            description: "Fix spelling and grammar errors in text without adding emojis. Corrects typos, punctuation, capitalization, and grammar while preserving the original meaning and tone.",
-            properties: [
-                "text": ["type": "string", "description": "The text to fix"],
-                "fixes": ["type": "string", "description": "Types of fixes: 'all' (default), 'spelling', 'grammar', 'punctuation', or 'capitalization'"],
-                "preserve_style": ["type": "boolean", "description": "Keep original writing style and tone (default: true)"],
-            ],
-            required: ["text"]
+            required: ["action"]
         ),
         ToolDef(
             name: Name.planMode,
