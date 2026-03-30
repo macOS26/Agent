@@ -305,7 +305,7 @@ private struct LLMOutputBox: View {
             : Color(red: 0.85, green: 0.92, blue: 0.85)
     }
 
-    private let maxHeight: CGFloat = 300
+    private let minHeight: CGFloat = 40
 
     /// Convert URLs in text to clickable underlined links, keeping the rest in termText color.
     private static func linkify(_ text: String, color: Color) -> AttributedString {
@@ -436,34 +436,11 @@ private struct LLMOutputBox: View {
         VStack(spacing: 0) {
             ZStack(alignment: .bottomTrailing) {
                 if !trimmed.isEmpty {
-                    ScrollView(.vertical, showsIndicators: true) {
-                        Text(Self.richText(trimmed, color: termText, dimColor: termDim, headerColor: termText))
-                            .font(.system(size: 11, design: .monospaced))
-                            .environment(\.openURL, OpenURLAction { url in
-                                NSWorkspace.shared.open(url)
-                                return .handled
-                            })
-                            .onHover { hovering in
-                                if hovering {
-                                    NSCursor.pointingHand.push()
-                                } else {
-                                    NSCursor.pop()
-                                }
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .textSelection(.enabled)
-                            .padding(10)
-                            .background(GeometryReader { geo in
-                                Color.clear.preference(key: ContentHeightKey.self, value: geo.size.height)
-                            })
-                    }
-                    .frame(height: min(height, maxHeight))
-                    .scrollIndicators(.visible)
-                    .onPreferenceChange(ContentHeightKey.self) { newHeight in
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            height = max(40, newHeight)
-                        }
-                    }
+                    let maxH = NSScreen.main.map { $0.visibleFrame.height * 0.9 } ?? 800
+                    LLMOutputNSTextView(text: trimmed, colorScheme: colorScheme, onContentHeight: { h in
+                        height = max(minHeight, h)
+                    })
+                    .frame(height: min(height, maxH))
                 } else {
                     HStack(spacing: 0) {
                         Text("> ")
@@ -519,6 +496,151 @@ private struct LLMOutputBox: View {
         .background(termBg)
         .cornerRadius(6)
         .overlay(RoundedRectangle(cornerRadius: 6).stroke(termBorder, lineWidth: 1))
+    }
+}
+
+// MARK: - NSTextView wrapper for LLM Output with NSTextTable + retro green
+
+private struct LLMOutputNSTextView: NSViewRepresentable {
+    let text: String
+    let colorScheme: ColorScheme
+    var onContentHeight: ((CGFloat) -> Void)?
+
+    func makeNSView(context: Context) -> NSScrollView {
+        let scrollView = NSTextView.scrollableTextView()
+        guard let textView = scrollView.documentView as? NSTextView else { return scrollView }
+        textView.isEditable = false
+        textView.isSelectable = true
+        textView.backgroundColor = .clear
+        textView.drawsBackground = false
+        textView.textContainerInset = NSSize(width: 10, height: 10)
+        textView.isAutomaticQuoteSubstitutionEnabled = false
+        textView.isAutomaticDashSubstitutionEnabled = false
+        textView.isAutomaticLinkDetectionEnabled = true
+        scrollView.hasVerticalScroller = true
+        scrollView.autohidesScrollers = true
+        scrollView.scrollerStyle = .overlay
+        scrollView.drawsBackground = false
+        return scrollView
+    }
+
+    func updateNSView(_ scrollView: NSScrollView, context: Context) {
+        guard let textView = scrollView.documentView as? NSTextView else { return }
+        let attributed = buildAttributedString(text)
+        textView.textStorage?.setAttributedString(attributed)
+        // Report content height for auto-sizing
+        textView.layoutManager?.ensureLayout(for: textView.textContainer!)
+        let contentH = textView.layoutManager?.usedRect(for: textView.textContainer!).height ?? 40
+        let totalH = contentH + textView.textContainerInset.height * 2
+        DispatchQueue.main.async {
+            onContentHeight?(totalH)
+        }
+    }
+
+    private var isDark: Bool { colorScheme == .dark }
+
+    private var font: NSFont { .monospacedSystemFont(ofSize: 11, weight: .regular) }
+    private var boldFont: NSFont { .monospacedSystemFont(ofSize: 11, weight: .bold) }
+
+    private var textColor: NSColor {
+        isDark ? NSColor(red: 0.2, green: 0.9, blue: 0.3, alpha: 1)
+               : NSColor(red: 0.05, green: 0.35, blue: 0.1, alpha: 1)
+    }
+    private var borderColor: NSColor {
+        isDark ? NSColor(red: 0.2, green: 0.45, blue: 0.2, alpha: 1)
+               : NSColor(red: 0.3, green: 0.6, blue: 0.3, alpha: 1)
+    }
+    private var headerBg: NSColor {
+        isDark ? NSColor(red: 0.05, green: 0.15, blue: 0.05, alpha: 1)
+               : NSColor(red: 0.85, green: 0.95, blue: 0.85, alpha: 1)
+    }
+    private var headerFg: NSColor {
+        isDark ? NSColor(red: 0.4, green: 0.95, blue: 0.4, alpha: 1)
+               : NSColor(red: 0.1, green: 0.5, blue: 0.1, alpha: 1)
+    }
+    private var cellFg: NSColor {
+        isDark ? NSColor(red: 0.3, green: 0.8, blue: 0.3, alpha: 1)
+               : NSColor(red: 0.15, green: 0.45, blue: 0.15, alpha: 1)
+    }
+    private var evenBg: NSColor {
+        isDark ? NSColor(red: 0.03, green: 0.08, blue: 0.03, alpha: 1)
+               : NSColor(red: 0.9, green: 0.97, blue: 0.9, alpha: 1)
+    }
+    private var oddBg: NSColor {
+        isDark ? NSColor(red: 0.05, green: 0.12, blue: 0.05, alpha: 1)
+               : NSColor(red: 0.87, green: 0.94, blue: 0.87, alpha: 1)
+    }
+
+    private func buildAttributedString(_ text: String) -> NSAttributedString {
+        let lines = text.components(separatedBy: "\n")
+        let result = NSMutableAttributedString()
+        var i = 0
+        while i < lines.count {
+            if i + 2 < lines.count,
+               lines[i].trimmingCharacters(in: .whitespaces).hasPrefix("|"),
+               TableRendering.isTableSeparator(lines[i + 1]) {
+                var tableEnd = i + 2
+                while tableEnd < lines.count,
+                      lines[tableEnd].trimmingCharacters(in: .whitespaces).hasPrefix("|"),
+                      !TableRendering.isTableSeparator(lines[tableEnd]) {
+                    tableEnd += 1
+                }
+                let headerCells = TableRendering.parseTableRow(lines[i])
+                let sepCells = TableRendering.parseTableRow(lines[i + 1])
+                let alignments: [NSTextAlignment] = sepCells.map { cell in
+                    let left = cell.hasPrefix(":")
+                    let right = cell.hasSuffix(":")
+                    if left && right { return .center }
+                    if right { return .right }
+                    return .left
+                }
+                var dataRows: [[String]] = []
+                for r in (i + 2)..<tableEnd {
+                    dataRows.append(TableRendering.parseTableRow(lines[r]))
+                }
+                let colCount = headerCells.count
+                let table = NSTextTable()
+                table.numberOfColumns = colCount
+                table.layoutAlgorithm = .automaticLayoutAlgorithm
+                table.collapsesBorders = true
+                table.hidesEmptyCells = false
+
+                for (col, cell) in headerCells.prefix(colCount).enumerated() {
+                    let align = col < alignments.count ? alignments[col] : .left
+                    result.append(makeCell(cell, table: table, row: 0, col: col,
+                                           bg: headerBg, fg: headerFg, f: boldFont, align: align))
+                }
+                for (rowIdx, row) in dataRows.enumerated() {
+                    let bg = (rowIdx % 2 == 0) ? evenBg : oddBg
+                    for col in 0..<colCount {
+                        let cellText = col < row.count ? row[col] : ""
+                        let align = col < alignments.count ? alignments[col] : .left
+                        result.append(makeCell(cellText, table: table, row: rowIdx + 1, col: col,
+                                               bg: bg, fg: cellFg, f: font, align: align))
+                    }
+                }
+                i = tableEnd
+                continue
+            }
+            // Regular line
+            if i > 0 { result.append(NSAttributedString(string: "\n", attributes: [.font: font])) }
+            result.append(NSAttributedString(string: lines[i], attributes: [.font: font, .foregroundColor: textColor]))
+            i += 1
+        }
+        return result
+    }
+
+    private func makeCell(_ text: String, table: NSTextTable, row: Int, col: Int,
+                           bg: NSColor, fg: NSColor, f: NSFont, align: NSTextAlignment) -> NSAttributedString {
+        let block = NSTextTableBlock(table: table, startingRow: row, rowSpan: 1, startingColumn: col, columnSpan: 1)
+        block.backgroundColor = bg
+        block.setBorderColor(borderColor)
+        block.setWidth(0.5, type: .absoluteValueType, for: .border)
+        block.setWidth(5.0, type: .absoluteValueType, for: .padding)
+        let style = NSMutableParagraphStyle()
+        style.textBlocks = [block]
+        style.alignment = align
+        return NSAttributedString(string: text + "\n", attributes: [.font: f, .foregroundColor: fg, .paragraphStyle: style])
     }
 }
 
