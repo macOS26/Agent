@@ -679,7 +679,7 @@ extension AgentViewModel {
                             }
                             appendLog("📂 $ ls -la \(path)")
                             flushLog()
-                            let result = await executeViaUserAgent(command: "ls -la '\(path)' 2>/dev/null")
+                            let result = await executeViaUserAgent(command: "cd '\(path)' && ls -la . 2>/dev/null")
                             guard !Task.isCancelled else { break }
                             let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                                 ? "Directory not found or empty" : result.output
@@ -1578,7 +1578,7 @@ extension AgentViewModel {
 
                             // Find Swift files in project folder
                             let reviewDir = projectFolder.isEmpty ? FileManager.default.homeDirectoryForCurrentUser.path : projectFolder
-                            let findResult = await executeViaUserAgent(command: "find \(reviewDir) -name '*.swift' -not -path '*/.build/*' -not -path '*/build/*' -type f")
+                            let findResult = await executeViaUserAgent(command: "cd '\(reviewDir)' && find . -name '*.swift' -not -path '*/.build/*' -not -path '*/build/*' -type f | sed 's|^\\./||'")
                             let swiftFiles = findResult.output.components(separatedBy: "\n").filter { !$0.isEmpty && $0.hasSuffix(".swift") }
 
                             guard !swiftFiles.isEmpty else {

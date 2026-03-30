@@ -264,12 +264,12 @@ extension AgentViewModel {
         if name == "search_files" {
             let pat = CodingService.shellEscape(input["pattern"] as? String ?? "")
             let dir = CodingService.shellEscape(input["path"] as? String ?? pf)
-            let result = await executeViaUserAgent(command: "grep -rn \(pat) \(dir) 2>/dev/null | head -50")
+            let result = await executeViaUserAgent(command: "cd \(dir) && grep -rn \(pat) . 2>/dev/null | head -50")
             return result.output.isEmpty ? "No matches" : result.output
         }
         if name == "read_dir" {
             let dir = CodingService.shellEscape(input["path"] as? String ?? pf)
-            let result = await executeViaUserAgent(command: "ls -la \(dir) 2>/dev/null")
+            let result = await executeViaUserAgent(command: "cd \(dir) && ls -la . 2>/dev/null")
             return result.output.isEmpty ? "Directory not found or empty" : result.output
         }
         if name == "if_to_switch" {

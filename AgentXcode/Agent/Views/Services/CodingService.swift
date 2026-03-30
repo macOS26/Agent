@@ -358,8 +358,8 @@ enum CodingService {
             cmd += " --include=\(shellEscape(include))"
         }
         cmd += " --exclude-dir=.git --exclude-dir=.build --exclude-dir=node_modules --exclude-dir=DerivedData --exclude-dir=Library --exclude-dir=Movies --exclude-dir=Music --exclude-dir=Pictures"
-        cmd += " \(pat) \(dir) 2>/dev/null | head -100"
-        return cmd
+        cmd += " \(pat) . 2>/dev/null | head -100"
+        return "cd \(dir) && \(cmd)"
     }
 
     static func buildGitStatusCommand(path: String?) -> String {
