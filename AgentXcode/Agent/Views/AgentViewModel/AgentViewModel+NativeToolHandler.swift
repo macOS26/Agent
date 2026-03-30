@@ -382,19 +382,18 @@ extension AgentViewModel {
             return result
         }
 
-        // MARK: - Conversation Tools (Phase 1)
-        
+        // MARK: - Conversation Tools
+
         // write_text
         if name == "write_text" {
             guard let subject = input["subject"] as? String, !subject.isEmpty else {
                 return "Error: subject is required for write_text"
             }
-            
+
             let style = input["style"] as? String ?? "informative"
             let lengthStr = input["length"] as? String ?? "medium"
             let context = input["context"] as? String ?? ""
-            
-            // Parse length
+
             let targetWords: Int
             if let exactWords = Int(lengthStr) {
                 targetWords = exactWords
@@ -406,23 +405,15 @@ extension AgentViewModel {
                 default: targetWords = 300
                 }
             }
-            
-            // Build guidance for text generation
+
             let guidance = """
             Generate \(style) text about "\(subject)" in approximately \(targetWords) words.
-            
             Style: \(style)
             \(context.isEmpty ? "" : "Context: \(context)")
-            
-            Requirements:
-            - No emojis - plain text only
-            - Well-structured paragraphs
-            - Clear and engaging writing
-            - Accurate and informative content
-            
+            Requirements: No emojis, well-structured paragraphs, clear and accurate.
             Begin your response directly with the text content.
             """
-            
+
             return guidance
         }
         
