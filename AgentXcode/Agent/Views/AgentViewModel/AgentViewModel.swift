@@ -351,7 +351,7 @@ final class AgentViewModel {
     var openAIModels: [OpenAIModelInfo] = []
     var isFetchingOpenAIModels = false
 
-    private static let defaultOpenAIModels: [OpenAIModelInfo] = [
+    nonisolated static let defaultOpenAIModels: [OpenAIModelInfo] = [
         OpenAIModelInfo(id: "gpt-4.1-nano", name: "GPT-4.1 Nano"),
         OpenAIModelInfo(id: "gpt-4.1-mini", name: "GPT-4.1 Mini"),
         OpenAIModelInfo(id: "gpt-4.1", name: "GPT-4.1"),
@@ -371,7 +371,7 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(deepSeekModel, forKey: "deepSeekModel") }
     }
 
-    private static let defaultDeepSeekModels: [OpenAIModelInfo] = [
+    nonisolated static let defaultDeepSeekModels: [OpenAIModelInfo] = [
         OpenAIModelInfo(id: "deepseek-chat", name: "DeepSeek Chat (V3)"),
         OpenAIModelInfo(id: "deepseek-reasoner", name: "DeepSeek Reasoner (R1)"),
     ]
@@ -442,7 +442,7 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(zAIModel, forKey: "zAIModel") }
     }
 
-    private static let defaultZAIModels: [OpenAIModelInfo] = [
+    nonisolated static let defaultZAIModels: [OpenAIModelInfo] = [
         // Text models
         OpenAIModelInfo(id: "glm-5.1", name: "GLM-5.1"),
         OpenAIModelInfo(id: "glm-5", name: "GLM-5"),
@@ -467,7 +467,7 @@ final class AgentViewModel {
     var zAIModels: [OpenAIModelInfo] = []
     var isFetchingZAIModels = false
 
-    private static let defaultHuggingFaceModels: [OpenAIModelInfo] = [
+    nonisolated static let defaultHuggingFaceModels: [OpenAIModelInfo] = [
         OpenAIModelInfo(id: "deepseek-ai/DeepSeek-V3-0324", name: "DeepSeek V3"),
         OpenAIModelInfo(id: "deepseek-ai/DeepSeek-R1", name: "DeepSeek R1"),
         OpenAIModelInfo(id: "Qwen/Qwen2.5-Coder-32B-Instruct", name: "Qwen 2.5 Coder 32B"),
@@ -567,7 +567,7 @@ final class AgentViewModel {
         let supportsVision: Bool
     }
 
-    private static let defaultOllamaModels: [OllamaModelInfo] = [
+    nonisolated static let defaultOllamaModels: [OllamaModelInfo] = [
         OllamaModelInfo(id: "nemotron-3-super", name: "nemotron-3-super", supportsVision: false),
         OllamaModelInfo(id: "qwen3.5:397b", name: "qwen3.5:397b", supportsVision: false),
         OllamaModelInfo(id: "minimax-m2.5", name: "minimax-m2.5", supportsVision: false),
@@ -620,7 +620,7 @@ final class AgentViewModel {
 
     var availableClaudeModels: [ClaudeModelInfo] = []
 
-    private static let defaultClaudeModels: [ClaudeModelInfo] = [
+    nonisolated static let defaultClaudeModels: [ClaudeModelInfo] = [
         ClaudeModelInfo(id: "claude-sonnet-4-6", name: "claude-sonnet-4-6", displayName: "Claude Sonnet 4.6", createdAt: "2026-02-17", description: nil),
         ClaudeModelInfo(id: "claude-opus-4-6", name: "claude-opus-4-6", displayName: "Claude Opus 4.6", createdAt: "2026-02-04", description: nil),
         ClaudeModelInfo(id: "claude-opus-4-5-20251101", name: "claude-opus-4-5-20251101", displayName: "Claude Opus 4.5", createdAt: "2025-11-24", description: nil),
@@ -2158,257 +2158,6 @@ final class AgentViewModel {
             msgTab.taskInput = prompt
             runTabTask(tab: msgTab)
         }
-    }
-
-    // MARK: - Model Fetching
-
-    func fetchClaudeModels() async {
-        guard !apiKey.isEmpty else {
-            await MainActor.run {
-                self.availableClaudeModels = Self.defaultClaudeModels
-            }
-            return
-        }
-
-        do {
-            let models = try await Self.fetchClaudeModelsFromAPI(apiKey: apiKey)
-            await MainActor.run {
-                self.availableClaudeModels = models.isEmpty ? Self.defaultClaudeModels : models
-            }
-        } catch {
-            print("Error fetching Claude models: \(error)")
-            await MainActor.run {
-                self.availableClaudeModels = Self.defaultClaudeModels
-            }
-        }
-    }
-
-    private static func fetchClaudeModelsFromAPI(apiKey: String) async throws -> [ClaudeModelInfo] {
-        guard let url = URL(string: "https://api.anthropic.com/v1/models") else {
-            throw AgentError.invalidURL
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
-        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
-        request.timeoutInterval = llmAPITimeout
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw AgentError.apiError(statusCode: (response as? HTTPURLResponse)?.statusCode ?? 0, message: "API error")
-        }
-
-        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let modelsData = json["data"] as? [[String: Any]] else {
-            return defaultClaudeModels
-        }
-
-        let models = modelsData.compactMap { modelData -> ClaudeModelInfo? in
-            guard let id = modelData["id"] as? String else { return nil }
-            let displayName = modelData["display_name"] as? String ?? id
-            let createdAt = modelData["created_at"] as? String
-            let description = modelData["description"] as? String
-
-            return ClaudeModelInfo(
-                id: id,
-                name: displayName,
-                displayName: displayName,
-                createdAt: createdAt,
-                description: description
-            )
-        }
-
-        return models.isEmpty ? defaultClaudeModels : models
-    }
-
-    func fetchOllamaModels() {
-        let endpoint = ollamaEndpoint
-        let apiKey = ollamaAPIKey
-        isFetchingModels = true
-        Task {
-            defer { isFetchingModels = false }
-            do {
-                let models = try await Self.fetchModels(endpoint: endpoint, apiKey: apiKey)
-                ollamaModels = models.isEmpty ? Self.defaultOllamaModels : models
-                // Auto-select first model if current selection is empty or not in list
-                let names = ollamaModels.map(\.name)
-                if ollamaModel.isEmpty || (!names.isEmpty && !names.contains(ollamaModel)) {
-                    ollamaModel = names.first ?? ""
-                }
-            } catch {
-                appendLog("Failed to fetch models: \(error.localizedDescription)")
-                ollamaModels = Self.defaultOllamaModels
-            }
-        }
-    }
-
-    func fetchLocalOllamaModels() {
-        let endpoint = localOllamaEndpoint
-        isFetchingLocalModels = true
-        Task {
-            defer { isFetchingLocalModels = false }
-            do {
-                let models = try await Self.fetchModels(endpoint: endpoint, apiKey: "")
-                localOllamaModels = models
-                let names = models.map(\.name)
-                if localOllamaModel.isEmpty || (!names.isEmpty && !names.contains(localOllamaModel)) {
-                    localOllamaModel = names.first ?? ""
-                }
-            } catch {
-                appendLog("Failed to fetch local models: \(error.localizedDescription)")
-            }
-        }
-    }
-
-    // MARK: - OpenAI Models
-
-    func fetchOpenAIModels() {
-        isFetchingOpenAIModels = true
-        let key = openAIAPIKey
-        Task {
-            defer { isFetchingOpenAIModels = false }
-            guard !key.isEmpty else {
-                openAIModels = Self.defaultOpenAIModels
-                return
-            }
-            do {
-                let models = try await Self.fetchOpenAIModelsFromAPI(apiKey: key)
-                openAIModels = models.isEmpty ? Self.defaultOpenAIModels : models
-                if openAIModel.isEmpty || !openAIModels.contains(where: { $0.id == openAIModel }) {
-                    openAIModel = openAIModels.first?.id ?? "gpt-4.1-nano"
-                }
-            } catch {
-                appendLog("Failed to fetch OpenAI models: \(error.localizedDescription)")
-                openAIModels = Self.defaultOpenAIModels
-            }
-        }
-    }
-
-    private nonisolated static func fetchOpenAIModelsFromAPI(apiKey: String) async throws -> [OpenAIModelInfo] {
-        guard let url = URL(string: "https://api.openai.com/v1/models") else {
-            throw AgentError.invalidURL
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.timeoutInterval = llmAPITimeout
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200,
-              let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let modelsData = json["data"] as? [[String: Any]] else {
-            return []
-        }
-
-        // Filter to chat models only
-        let chatPrefixes = ["gpt-4", "gpt-3.5", "o1", "o3", "o4"]
-        return modelsData.compactMap { model -> OpenAIModelInfo? in
-            guard let id = model["id"] as? String else { return nil }
-            guard chatPrefixes.contains(where: { id.hasPrefix($0) }) else { return nil }
-            // Skip dated snapshots if the base model is also available
-            return OpenAIModelInfo(id: id, name: id)
-        }.sorted { $0.name < $1.name }
-    }
-
-    // MARK: - DeepSeek Models
-
-    func fetchDeepSeekModels() {
-        isFetchingDeepSeekModels = true
-        let key = deepSeekAPIKey
-        Task {
-            defer { isFetchingDeepSeekModels = false }
-            guard !key.isEmpty else {
-                deepSeekModels = Self.defaultDeepSeekModels
-                return
-            }
-            do {
-                let models = try await Self.fetchDeepSeekModelsFromAPI(apiKey: key)
-                deepSeekModels = models.isEmpty ? Self.defaultDeepSeekModels : models
-                if deepSeekModel.isEmpty || !deepSeekModels.contains(where: { $0.id == deepSeekModel }) {
-                    deepSeekModel = deepSeekModels.first?.id ?? "deepseek-chat"
-                }
-            } catch {
-                appendLog("Failed to fetch DeepSeek models: \(error.localizedDescription)")
-                deepSeekModels = Self.defaultDeepSeekModels
-            }
-        }
-    }
-
-    private nonisolated static func fetchDeepSeekModelsFromAPI(apiKey: String) async throws -> [OpenAIModelInfo] {
-        guard let url = URL(string: "https://api.deepseek.com/models") else {
-            throw AgentError.invalidURL
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.timeoutInterval = llmAPITimeout
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200,
-              let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let modelsData = json["data"] as? [[String: Any]] else {
-            return []
-        }
-
-        return modelsData.compactMap { model -> OpenAIModelInfo? in
-            guard let id = model["id"] as? String else { return nil }
-            return OpenAIModelInfo(id: id, name: id)
-        }.sorted { $0.name < $1.name }
-    }
-
-    // MARK: - Hugging Face Models
-
-    func fetchHuggingFaceModels() {
-        isFetchingHuggingFaceModels = true
-        let key = huggingFaceAPIKey
-        Task {
-            defer { isFetchingHuggingFaceModels = false }
-            guard !key.isEmpty else {
-                huggingFaceModels = Self.defaultHuggingFaceModels
-                return
-            }
-            do {
-                let models = try await Self.fetchHuggingFaceModelsFromAPI(apiKey: key)
-                huggingFaceModels = models.isEmpty ? Self.defaultHuggingFaceModels : models
-                if huggingFaceModel.isEmpty || !huggingFaceModels.contains(where: { $0.id == huggingFaceModel }) {
-                    huggingFaceModel = huggingFaceModels.first?.id ?? "deepseek-ai/DeepSeek-V3-0324"
-                }
-            } catch {
-                appendLog("Failed to fetch HF models: \(error.localizedDescription)")
-                huggingFaceModels = Self.defaultHuggingFaceModels
-            }
-        }
-    }
-
-    private nonisolated static func fetchHuggingFaceModelsFromAPI(apiKey: String) async throws -> [OpenAIModelInfo] {
-        guard let url = URL(string: "https://router.huggingface.co/v1/models") else {
-            throw AgentError.invalidURL
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.timeoutInterval = llmAPITimeout
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200,
-              let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let modelsData = json["data"] as? [[String: Any]] else {
-            return []
-        }
-
-        return modelsData.compactMap { model -> OpenAIModelInfo? in
-            guard let id = model["id"] as? String else { return nil }
-            return OpenAIModelInfo(id: id, name: id)
-        }.sorted { $0.name < $1.name }
     }
 
     // MARK: - Z.ai Models
