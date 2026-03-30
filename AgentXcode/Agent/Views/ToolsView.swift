@@ -12,7 +12,7 @@ struct ToolsView: View {
         "Automation": ({ ["applescript_tool", "accessibility", "javascript_tool", "lookup_sdef"].contains($0.name) }, "gearshape.2"),
         "Experimental": ({ ["apple_event_query", "ax_screenshot", "selenium"].contains($0.name) }, "flask"),
         "Core": ({ ["task_complete", "list_tools", "web_search", "write_text", "transform_text", "about_self", "fix_text"].contains($0.name) }, "checkmark.circle"),
-        "Workflow": ({ ["agent", "plan_mode", "git", "send_message", "batch_commands", "batch_tools"].contains($0.name) }, "flowchart"),
+        "Workflow": ({ ["agent", "plan_mode", "git", "send_message", "batch_commands", "batch_tools", "project_folder"].contains($0.name) }, "flowchart"),
         "User Agent": ({ $0.name == "execute_agent_command" }, "person"),
         "Launch Daemon": ({ $0.name == "execute_daemon_command" }, "lock.shield"),
         "Web": ({ $0.name == "web" }, "globe"),
