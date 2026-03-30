@@ -38,7 +38,10 @@ final class OpenAICompatibleService {
     /// LM Studio models use compact prompt to fit small context windows
     private var isLMStudio: Bool { provider == .lmStudio }
 
+    var overrideSystemPrompt: String?
+
     var systemPrompt: String {
+        if let override = overrideSystemPrompt { return override }
         if isLMStudio {
             return AgentTools.compactSystemPrompt(userName: userName, userHome: userHome, projectFolder: projectFolder)
         }

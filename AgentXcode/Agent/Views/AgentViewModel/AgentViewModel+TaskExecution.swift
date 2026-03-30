@@ -272,6 +272,11 @@ extension AgentViewModel {
             if iterations == 2 && !codingModeEnabled && !commandsRun.isEmpty {
                 codingModeEnabled = true
                 activeGroups = Self.codingModeGroups
+                // Switch to minimal system prompt for faster iterations
+                let minPrompt = AgentTools.codingModePrompt(projectFolder: projectFolder)
+                claude?.overrideSystemPrompt = minPrompt
+                ollama?.overrideSystemPrompt = minPrompt
+                openAICompatible?.overrideSystemPrompt = minPrompt
                 appendLog("⚡ Coding mode auto-enabled")
                 flushLog()
             }

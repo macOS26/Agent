@@ -179,6 +179,13 @@ enum AgentTools {
         """
     }
 
+    /// Minimal system prompt for coding mode iterations 2+. Saves ~2K tokens per iteration.
+    static func codingModePrompt(projectFolder: String) -> String {
+        return """
+        Continue coding. Project: \(projectFolder). ALWAYS call task_complete when done. Re-read files after edits. Use diff_apply for multi-line changes. One edit per call.
+        """
+    }
+
     // MARK: - Tool List per Provider (for ToolsView)
 
     /// Returns the tools available for a given provider.
