@@ -81,7 +81,7 @@ Agent! supports **8 LLM providers** out of the box:
 
 **Plus**: Apple Intelligence integration for LoRA fine-tuning and context mediation.
 
-#### 🌟 Recommended: GLM-5
+#### 🌟 Recommended: GLM-5 or GLM-5.1
 
 **GLM-5** is highly recommended for use with Agent! This open-source model has been extensively tested and provides:
 
