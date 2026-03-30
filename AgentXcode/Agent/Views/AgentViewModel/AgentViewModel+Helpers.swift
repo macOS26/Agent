@@ -495,11 +495,18 @@ extension AgentViewModel {
                     return "Error: could not resolve plan file path."
                 }
                 path = p
-            } else if let recent = mostRecentPlan(projectFolder) {
-                planId = recent.id
-                path = recent.path
             } else {
-                return "Error: no plan found. Use plan_mode create first."
+                // Default to this tab's own plan first, then fall back to most recent
+                let tabSlug = sanitizeTabName(tabName)
+                if let p = planFilePath(tabSlug, projectFolder: projectFolder), fm.fileExists(atPath: p) {
+                    planId = tabSlug
+                    path = p
+                } else if let recent = mostRecentPlan(projectFolder) {
+                    planId = recent.id
+                    path = recent.path
+                } else {
+                    return "Error: no plan found. Use plan_mode create first."
+                }
             }
             guard fm.fileExists(atPath: path),
                   let data = fm.contents(atPath: path),
@@ -565,11 +572,18 @@ extension AgentViewModel {
                     return "Error: could not resolve plan file path."
                 }
                 path = p
-            } else if let recent = mostRecentPlan(projectFolder) {
-                planId = recent.id
-                path = recent.path
             } else {
-                return "No plans found. Use plan_mode create to start a plan."
+                // Default to this tab's own plan first, then fall back to most recent
+                let tabSlug = sanitizeTabName(tabName)
+                if let p = planFilePath(tabSlug, projectFolder: projectFolder), fm.fileExists(atPath: p) {
+                    planId = tabSlug
+                    path = p
+                } else if let recent = mostRecentPlan(projectFolder) {
+                    planId = recent.id
+                    path = recent.path
+                } else {
+                    return "No plans found. Use plan_mode create to start a plan."
+                }
             }
             guard fm.fileExists(atPath: path),
                   let data = fm.contents(atPath: path),
