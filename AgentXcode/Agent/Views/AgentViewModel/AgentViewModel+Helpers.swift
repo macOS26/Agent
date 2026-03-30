@@ -572,20 +572,22 @@ extension AgentViewModel {
             } else {
                 return "Error: step number is required for plan_mode update"
             }
-            guard stepNum > 0 else { return "Error: step number must be > 0" }
+            guard stepNum > 0 else {
+                return "Error: step number must be > 0 (steps are 1-indexed)"
+            }
             guard let status = input["status"] as? String else {
                 return "Error: status is required for plan_mode update (in_progress, completed, failed)"
             }
             let planId: String
             let path: String
-            if let id = planIdFromInput, !id.isEmpty {
+            if let id = planIdFromInput, !id.isEmpty,
+               let p = planFilePath(id, projectFolder: projectFolder),
+               fm.fileExists(atPath: p) {
+                // Explicit plan_id that exists on disk
                 planId = id
-                guard let p = planFilePath(id, projectFolder: projectFolder) else {
-                    return "Error: could not resolve plan file path."
-                }
                 path = p
             } else {
-                // Default to this tab's own plan first, then fall back to most recent
+                // Fall back to this tab's own plan, then most recent
                 let tabSlug = sanitizeTabName(tabName)
                 if let p = planFilePath(tabSlug, projectFolder: projectFolder), fm.fileExists(atPath: p) {
                     planId = tabSlug
@@ -655,14 +657,14 @@ extension AgentViewModel {
         case "read":
             let path: String
             let planId: String
-            if let id = planIdFromInput, !id.isEmpty {
+            if let id = planIdFromInput, !id.isEmpty,
+               let p = planFilePath(id, projectFolder: projectFolder),
+               fm.fileExists(atPath: p) {
+                // Explicit plan_id that exists on disk
                 planId = id
-                guard let p = planFilePath(id, projectFolder: projectFolder) else {
-                    return "Error: could not resolve plan file path."
-                }
                 path = p
             } else {
-                // Default to this tab's own plan first, then fall back to most recent
+                // Fall back to this tab's own plan, then most recent
                 let tabSlug = sanitizeTabName(tabName)
                 if let p = planFilePath(tabSlug, projectFolder: projectFolder), fm.fileExists(atPath: p) {
                     planId = tabSlug
