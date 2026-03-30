@@ -1618,6 +1618,13 @@ extension AgentViewModel {
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
+                        // project_folder
+                        if name == "project_folder" {
+                            let output = handleProjectFolder(tab: nil, input: input)
+                            appendLog(output)
+                            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                        }
+
                         // Accessibility API tools (in-process, offMain)
                         if name == "ax_check_permission" {
                             let hasPermission = AccessibilityService.hasAccessibilityPermission()

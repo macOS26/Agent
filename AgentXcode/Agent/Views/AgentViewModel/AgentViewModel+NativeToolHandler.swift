@@ -891,6 +891,58 @@ extension AgentViewModel {
             return batchOutput
         }
 
+        // web_search
+        if name == "web_search" {
+            let query = input["query"] as? String ?? ""
+            guard !query.isEmpty else { return "Error: query is required" }
+            return await Self.performWebSearchForTask(query: query, apiKey: tavilyAPIKey, provider: selectedProvider)
+        }
+
+        // lookup_sdef
+        if name == "lookup_sdef" {
+            let bundleID = input["bundle_id"] as? String ?? ""
+            let className = input["class_name"] as? String
+            if bundleID == "list" {
+                let names = SDEFService.shared.availableSDEFs()
+                return "Available SDEFs (\(names.count)):\n" + names.joined(separator: "\n")
+            } else if let cls = className {
+                let props = SDEFService.shared.properties(for: bundleID, className: cls)
+                let elems = SDEFService.shared.elements(for: bundleID, className: cls)
+                var lines = ["\(cls) properties:"]
+                for p in props {
+                    let ro = p.readonly == true ? " (readonly)" : ""
+                    lines.append("  .\(SDEFService.toCamelCase(p.name)): \(p.type ?? "any")\(ro)\(p.description.map { " — \($0)" } ?? "")")
+                }
+                if !elems.isEmpty { lines.append("elements: \(elems.joined(separator: ", "))") }
+                return lines.isEmpty ? "No class '\(cls)' found for \(bundleID)" : lines.joined(separator: "\n")
+            } else {
+                return SDEFService.shared.summary(for: bundleID)
+            }
+        }
+
+        // undo_edit
+        if name == "undo_edit" {
+            let fp = (input["file_path"] as? String ?? "")
+            let expanded = (fp as NSString).expandingTildeInPath
+            guard let original = DiffStore.shared.lastEdit(for: expanded) else {
+                return "Error: no edit history for \(fp)"
+            }
+            let result = CodingService.undoEdit(path: fp, originalContent: original)
+            if !result.hasPrefix("Error") { DiffStore.shared.clearEditHistory(for: expanded) }
+            return result
+        }
+
+        // diff_and_apply
+        if name == "diff_and_apply" {
+            let fp = input["file_path"] as? String ?? ""
+            let dest = input["destination"] as? String ?? ""
+            let source = input["source"] as? String
+            let startLine = input["start_line"] as? Int
+            let endLine = input["end_line"] as? Int
+            let result = CodingService.diffAndApply(path: fp, source: source, destination: dest, startLine: startLine, endLine: endLine)
+            return result.output
+        }
+
         // Log unhandled tool so we can debug
         return "⚠️ Tool '\(rawName)' (expanded: '\(name)') not handled — no matching handler found."
     }
