@@ -163,7 +163,7 @@ enum AgentTools {
         - xcode(action:"analyze"/"snippet") for Swift code review.
         - Safari JS via AppleScript preferred for web: `tell application "Safari" to do JavaScript "..." in document 1`.
         - For 3+ step tasks, create a plan_mode plan first, then execute each step.
-        - EDITING: edit=exact text replace, diff_apply=by line range. Re-read file after each edit (lines shift).
+        - EDITING FILES: Use diff_apply for multi-line edits (provide file_path, start_line, end_line, destination). Use edit only for single-line or exact string replacements. ALWAYS re-read file after any edit — line numbers shift.
         - SPLITTING FILES: read → write new → xcode add_file → edit original → xcode build. One file at a time.
 
         TCC (in-process): agent(run), applescript_tool(execute), accessibility. NO TCC: execute_agent_command, execute_daemon_command.
@@ -248,7 +248,7 @@ enum AgentTools {
         // --- File Manager (consolidated) ---
         ToolDef(
             name: Name.fileManager,
-            description: "File ops: read/write/edit/list/search/diff_apply/extract_function. Use read for viewing, edit for small changes, diff_apply for multi-line edits by line range. Use search to find text across files. Use offset/limit for large files.",
+            description: "File ops. PREFER diff_apply for multi-line edits (start_line/end_line/destination). Use edit only for single exact string replacements. read/write/list/search/extract_function also available. Use offset/limit for large files.",
             properties: [
                 "action": ["type": "string", "description": "Action: read, write, edit, create, apply, undo, diff_apply, list, search, read_dir, if_to_switch, or extract_function"],
                 "file_path": ["type": "string", "description": "File path (for read/write/edit/apply/undo/diff_apply)"],
