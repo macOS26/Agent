@@ -22,7 +22,9 @@ extension AgentViewModel {
         guard name.hasPrefix("git_") else { return false }
 
         // MARK: git_status
-        if name == "git_status" {
+        switch name {
+
+        case "git_status":
             let path = input["path"] as? String
             if let pathErr = Self.checkPath(path) {
                 appendLog(pathErr)
@@ -39,10 +41,9 @@ extension AgentViewModel {
             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
 
             return true
-        }
 
         // MARK: git_diff
-        if name == "git_diff" {
+        case "git_diff":
             let path = input["path"] as? String
             let staged = input["staged"] as? Bool ?? false
             let target = input["target"] as? String
@@ -67,10 +68,9 @@ extension AgentViewModel {
             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
 
             return true
-        }
 
         // MARK: git_log
-        if name == "git_log" {
+        case "git_log":
             let path = input["path"] as? String
             let count = input["count"] as? Int
             if let pathErr = Self.checkPath(path) {
@@ -94,10 +94,9 @@ extension AgentViewModel {
             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
 
             return true
-        }
 
         // MARK: git_commit
-        if name == "git_commit" {
+        case "git_commit":
             let path = input["path"] as? String
             let message = input["message"] as? String ?? ""
             let files = input["files"] as? [String]
@@ -119,10 +118,9 @@ extension AgentViewModel {
             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
 
             return true
-        }
 
         // MARK: git_diff_patch
-        if name == "git_diff_patch" {
+        case "git_diff_patch":
             let path = input["path"] as? String
             let patch = input["patch"] as? String ?? ""
             appendLog("🔧 git apply patch")
@@ -145,10 +143,9 @@ extension AgentViewModel {
             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
 
             return true
-        }
 
         // MARK: git_branch
-        if name == "git_branch" {
+        case "git_branch":
             let path = input["path"] as? String
             let branchName = input["name"] as? String ?? ""
             let checkout = input["checkout"] as? Bool ?? true
@@ -170,8 +167,9 @@ extension AgentViewModel {
             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
 
             return true
-        }
 
+        default:
         return false
+        }
     }
 }

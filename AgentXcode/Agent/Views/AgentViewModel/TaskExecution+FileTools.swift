@@ -19,7 +19,9 @@ extension AgentViewModel {
         toolResults: inout [[String: Any]]
     ) async -> Bool {
         // MARK: read_file
-        if name == "read_file" {
+        switch name {
+
+        case "read_file":
             let filePath = input["file_path"] as? String ?? ""
             if filePath.isEmpty {
                 let err = "Error: file_path is required. Use file_manager(action:\"list\", path:\".\") to find files first."
@@ -43,10 +45,9 @@ extension AgentViewModel {
             appendLog(Self.codeFence(Self.preview(output, lines: readFilePreviewLines), language: lang))
             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
             return true
-        }
 
         // MARK: write_file
-        if name == "write_file" {
+        case "write_file":
             let filePath = input["file_path"] as? String ?? ""
             let content = input["content"] as? String ?? ""
             appendLog("📝 Write: \(filePath)")
@@ -57,10 +58,9 @@ extension AgentViewModel {
             commandsRun.append("write_file: \(filePath)")
             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
             return true
-        }
 
         // MARK: edit_file — uses CodingService for replacement logic, D1F for preview
-        if name == "edit_file" {
+        case "edit_file":
             let filePath = input["file_path"] as? String ?? ""
             let oldString = input["old_string"] as? String ?? ""
             let newString = input["new_string"] as? String ?? ""
@@ -96,10 +96,9 @@ extension AgentViewModel {
             commandsRun.append("edit_file: \(filePath)")
             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
             return true
-        }
 
         // MARK: create_diff — reads file from disk, requires line range
-        if name == "create_diff" {
+        case "create_diff":
             let filePath = input["file_path"] as? String ?? ""
             let destination = input["destination"] as? String ?? ""
             guard let startLine = input["start_line"] as? Int,
@@ -134,10 +133,9 @@ extension AgentViewModel {
             commandsRun.append("create_diff: \(filePath)")
             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "diff_id: \(diffId.uuidString)\n\n\(d1f)"])
             return true
-        }
 
         // MARK: apply_diff — reads file from disk, applies stored diff
-        if name == "apply_diff" {
+        case "apply_diff":
             let filePath = input["file_path"] as? String ?? ""
             let diffIdStr = input["diff_id"] as? String ?? ""
             let asciiDiff = input["diff"] as? String ?? ""
@@ -190,10 +188,9 @@ extension AgentViewModel {
                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
             }
             return true
-        }
 
         // MARK: undo_edit — uses diff_id UUID or falls back to file path
-        if name == "undo_edit" {
+        case "undo_edit":
             let filePath = input["file_path"] as? String ?? ""
             let diffIdStr = input["diff_id"] as? String
             let expandedUndo = (filePath as NSString).expandingTildeInPath
@@ -241,10 +238,9 @@ extension AgentViewModel {
             commandsRun.append("undo_edit: \(filePath)")
             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
             return true
-        }
 
         // MARK: diff_and_apply — same as create_diff + apply_diff in one call, no shortcuts
-        if name == "diff_and_apply" {
+        case "diff_and_apply":
             let filePath = input["file_path"] as? String ?? ""
             let destination = input["destination"] as? String ?? ""
             let startLine = input["start_line"] as? Int
@@ -329,8 +325,9 @@ extension AgentViewModel {
                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
             }
             return true
-        }
 
+        default:
         return false
+        }
     }
 }
