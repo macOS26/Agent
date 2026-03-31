@@ -21,16 +21,49 @@ enum ToolHandlerResult {
     case taskComplete(String)
 }
 
+/// Tool handler function type — takes name, input, context; returns result.
+typealias ToolHandler = @MainActor (AgentViewModel, String, [String: Any], ToolContext) async -> ToolHandlerResult
+
 // MARK: - Tool Dispatch Table
 
 extension AgentViewModel {
+
+    /// The dispatch table — maps tool names to handler functions.
+    /// Built once lazily via `buildDispatchTable()`. Extensions can register additional handlers.
+    @MainActor static var toolDispatchTable: [String: ToolHandler] = buildDispatchTable()
+
+    /// Build the base dispatch table. Called once.
+    @MainActor private static func buildDispatchTable() -> [String: ToolHandler] {
+        var table: [String: ToolHandler] = [:]
+
+        // Process-based tools
+        table["list_files"] = handleListFiles
+        table["search_files"] = handleSearchFiles
+        table["read_dir"] = handleReadDir
+        table["if_to_switch"] = handleIfToSwitch
+        table["extract_function"] = handleExtractFunction
+
+        // Plan & project tools — delegate to executeNativeTool
+        for name in ["plan_mode", "project_folder", "coding_mode", "list_tools", "conversation", "send_message", "memory"] {
+            table[name] = handleNativeTool
+        }
+
+        // Web search
+        table["web_search"] = handleWebSearch
+
+        return table
+    }
+
+    /// Register a tool handler at runtime.
+    @MainActor static func registerToolHandler(_ name: String, handler: @escaping ToolHandler) {
+        toolDispatchTable[name] = handler
+    }
 
     /// Dispatch a tool call by name. Returns the handler result.
     func dispatchTool(
         name: String,
         input: [String: Any],
         ctx: ToolContext,
-        commandsRun: inout [String],
         toolResults: inout [[String: Any]]
     ) async -> ToolHandlerResult {
 
@@ -51,7 +84,6 @@ extension AgentViewModel {
             name: name, input: input, toolId: ctx.toolId,
             appendLog: { [weak self] msg in Task { @MainActor in self?.appendLog(msg) } },
             appendRawOutput: { [weak self] msg in Task { @MainActor in self?.appendLog(msg) } },
-            commandsRun: &commandsRun,
             toolResults: &toolResults
         ) {
             return .alreadyAppended
@@ -62,166 +94,107 @@ extension AgentViewModel {
             let webResult = await handleMainWebTool(name: name, input: input)
             appendLog(String(webResult.prefix(500)))
             flushLog()
-            return .handled(webResult)
+            toolResults.append(["type": "tool_result", "tool_use_id": ctx.toolId, "content": webResult])
+            return .alreadyAppended
         }
 
-        // Dispatch table lookup
-        let result = await dispatchByName(name: name, input: input, ctx: ctx, commandsRun: &commandsRun)
-
-        switch result {
-        case .handled(let output):
-            toolResults.append(["type": "tool_result", "tool_use_id": ctx.toolId, "content": output])
-        case .alreadyAppended, .taskComplete:
-            break
-        case .notHandled:
-            // Fallback: route through executeNativeTool
-            let output = await executeNativeTool(name, input: input)
-            appendLog(output)
-            flushLog()
-            toolResults.append(["type": "tool_result", "tool_use_id": ctx.toolId, "content": output])
+        // Dictionary lookup — O(1)
+        if let handler = Self.toolDispatchTable[name] {
+            let result = await handler(self, name, input, ctx)
+            switch result {
+            case .handled(let output):
+                toolResults.append(["type": "tool_result", "tool_use_id": ctx.toolId, "content": output])
+            case .alreadyAppended, .taskComplete, .notHandled:
+                break
+            }
+            return result
         }
 
-        return result
+        // Fallback: route through executeNativeTool
+        let output = await executeNativeTool(name, input: input)
+        appendLog(output)
+        flushLog()
+        toolResults.append(["type": "tool_result", "tool_use_id": ctx.toolId, "content": output])
+        return .handled(output)
     }
 
-    /// Name-based dispatch — the core lookup.
-    private func dispatchByName(
-        name: String,
-        input: [String: Any],
-        ctx: ToolContext,
-        commandsRun: inout [String]
-    ) async -> ToolHandlerResult {
-        switch name {
+    // MARK: - Handler Implementations
 
-        // NOTE: write_file, edit_file, create_diff, apply_diff, undo_edit, read_file, diff_and_apply
-        // are all handled by handleFileTool() above — no case needed here.
+    private static func handleNativeTool(_ vm: AgentViewModel, _ name: String, _ input: [String: Any], _ ctx: ToolContext) async -> ToolHandlerResult {
+        let output = await vm.executeNativeTool(name, input: input)
+        vm.appendLog(output); vm.flushLog()
+        return .handled(output)
+    }
 
-        // MARK: - Process-based tools
+    private static func handleListFiles(_ vm: AgentViewModel, _ name: String, _ input: [String: Any], _ ctx: ToolContext) async -> ToolHandlerResult {
+        let pattern = input["pattern"] as? String ?? "*"
+        let path = input["path"] as? String
+        if let pathErr = Self.checkPath(path) { vm.appendLog(pathErr); return .handled(pathErr) }
+        let resolvedPath = path ?? ctx.projectFolder
+        let displayPath = CodingService.trimHome(resolvedPath)
+        vm.appendLog("🔍 $ find \(displayPath) -name '\(pattern)'"); vm.flushLog()
+        let cmd = CodingService.buildListFilesCommand(pattern: pattern, path: path)
+        let result = await vm.executeViaUserAgent(command: cmd, silent: true)
+        guard !Task.isCancelled else { return .handled("cancelled") }
+        let raw = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
+        let formatted = raw.isEmpty ? "No files matching '\(pattern)'" : CodingService.formatFileTree(raw)
+        vm.appendLog(formatted); vm.flushLog()
+        return .handled(raw.isEmpty ? formatted : "[project folder: \(displayPath)] paths are relative to project folder\n\(formatted)")
+    }
 
-        case "list_files":
-            let pattern = input["pattern"] as? String ?? "*"
-            let path = input["path"] as? String
-            if let pathErr = Self.checkPath(path) {
-                appendLog(pathErr)
-                return .handled(pathErr)
-            }
-            let resolvedPath = path ?? ctx.projectFolder
-            let displayPath = CodingService.trimHome(resolvedPath)
-            appendLog("🔍 $ find \(displayPath) -name '\(pattern)'")
-            flushLog()
-            let cmd = CodingService.buildListFilesCommand(pattern: pattern, path: path)
-            let result = await executeViaUserAgent(command: cmd, silent: true)
-            guard !Task.isCancelled else { return .handled("cancelled") }
-            let raw = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
-            let formatted = raw.isEmpty ? "No files matching '\(pattern)'" : CodingService.formatFileTree(raw)
-            appendLog(formatted)
-            flushLog()
-            let output = raw.isEmpty ? formatted : "[project folder: \(displayPath)] paths are relative to project folder\n\(formatted)"
-            return .handled(output)
+    private static func handleSearchFiles(_ vm: AgentViewModel, _ name: String, _ input: [String: Any], _ ctx: ToolContext) async -> ToolHandlerResult {
+        let pattern = input["pattern"] as? String ?? ""
+        let path = input["path"] as? String
+        let include = input["include"] as? String
+        if let pathErr = Self.checkPath(path) { vm.appendLog(pathErr); return .handled(pathErr) }
+        let resolvedSearch = path ?? ctx.projectFolder
+        let displaySearch = CodingService.trimHome(resolvedSearch)
+        vm.appendLog("🔍 $ grep -rn '\(pattern)' \(displaySearch)\(include.map { " --include=\($0)" } ?? "")"); vm.flushLog()
+        let cmd = CodingService.buildSearchFilesCommand(pattern: pattern, path: path, include: include)
+        let result = await vm.executeViaUserAgent(command: cmd)
+        guard !Task.isCancelled else { return .handled("cancelled") }
+        let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            ? "No matches for '\(pattern)'" : "[project folder: \(displaySearch)] paths are relative to project folder\n\(result.output)"
+        return .handled(output)
+    }
 
-        case "search_files":
-            let pattern = input["pattern"] as? String ?? ""
-            let path = input["path"] as? String
-            let include = input["include"] as? String
-            if let pathErr = Self.checkPath(path) {
-                appendLog(pathErr)
-                return .handled(pathErr)
-            }
-            let resolvedSearch = path ?? ctx.projectFolder
-            let displaySearch = CodingService.trimHome(resolvedSearch)
-            appendLog("🔍 $ grep -rn '\(pattern)' \(displaySearch)\(include.map { " --include=\($0)" } ?? "")")
-            flushLog()
-            let cmd = CodingService.buildSearchFilesCommand(pattern: pattern, path: path, include: include)
-            let result = await executeViaUserAgent(command: cmd)
-            guard !Task.isCancelled else { return .handled("cancelled") }
-            let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                ? "No matches for '\(pattern)'" : "[project folder: \(displaySearch)] paths are relative to project folder\n\(result.output)"
-            return .handled(output)
+    private static func handleReadDir(_ vm: AgentViewModel, _ name: String, _ input: [String: Any], _ ctx: ToolContext) async -> ToolHandlerResult {
+        let path = input["path"] as? String ?? ctx.projectFolder
+        if let pathErr = Self.checkPath(path) { vm.appendLog(pathErr); return .handled(pathErr) }
+        let displayPath = CodingService.trimHome(path)
+        let detail = (input["detail"] as? String ?? "slim") == "more"
+        vm.appendLog("📂 \(displayPath)"); vm.flushLog()
+        let dir = CodingService.shellEscape(path)
+        let cmd = detail ? "ls -la \(dir) 2>/dev/null" : "cd \(dir) && find . -maxdepth 1 -not -name '.*' 2>/dev/null | sed 's|^\\./||' | sort"
+        let result = await vm.executeViaUserAgent(command: cmd, silent: !detail)
+        guard !Task.isCancelled else { return .handled("cancelled") }
+        let raw = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
+        return .handled(raw.isEmpty ? "Directory not found or empty" : "[project folder: \(displayPath)]\n\(raw)")
+    }
 
-        case "read_dir":
-            let path = input["path"] as? String ?? ctx.projectFolder
-            if let pathErr = Self.checkPath(path) {
-                appendLog(pathErr)
-                return .handled(pathErr)
-            }
-            let displayPath = CodingService.trimHome(path)
-            let detail = (input["detail"] as? String ?? "slim") == "more"
-            appendLog("📂 \(displayPath)")
-            flushLog()
-            let dir = CodingService.shellEscape(path)
-            let cmd = detail
-                ? "ls -la \(dir) 2>/dev/null"
-                : "cd \(dir) && find . -maxdepth 1 -not -name '.*' 2>/dev/null | sed 's|^\\./||' | sort"
-            let result = await executeViaUserAgent(command: cmd, silent: !detail)
-            guard !Task.isCancelled else { return .handled("cancelled") }
-            let raw = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
-            let output = raw.isEmpty ? "Directory not found or empty" : "[project folder: \(displayPath)]\n\(raw)"
-            return .handled(output)
+    private static func handleIfToSwitch(_ vm: AgentViewModel, _ name: String, _ input: [String: Any], _ ctx: ToolContext) async -> ToolHandlerResult {
+        let filePath = input["file_path"] as? String ?? ""
+        vm.appendLog("🔄 if→switch: \(filePath)")
+        let output = await Self.offMain { CodingService.convertIfToSwitch(path: filePath) }
+        vm.appendLog(output)
+        return .handled(output)
+    }
 
-        case "if_to_switch":
-            let filePath = input["file_path"] as? String ?? ""
-            appendLog("🔄 if→switch: \(filePath)")
-            let output = await Self.offMain { CodingService.convertIfToSwitch(path: filePath) }
-            appendLog(output)
-            return .handled(output)
+    private static func handleExtractFunction(_ vm: AgentViewModel, _ name: String, _ input: [String: Any], _ ctx: ToolContext) async -> ToolHandlerResult {
+        let filePath = input["file_path"] as? String ?? ""
+        let funcName = input["function_name"] as? String ?? ""
+        let newFile = input["new_file"] as? String ?? ""
+        vm.appendLog("📦 Extract: \(funcName) → \(newFile)")
+        let output = await Self.offMain { CodingService.extractFunctionToFile(sourcePath: filePath, functionName: funcName, newFileName: newFile) }
+        vm.appendLog(output)
+        return .handled(output)
+    }
 
-        case "extract_function":
-            let filePath = input["file_path"] as? String ?? ""
-            let funcName = input["function_name"] as? String ?? ""
-            let newFile = input["new_file"] as? String ?? ""
-            appendLog("📦 Extract: \(funcName) → \(newFile)")
-            let output = await Self.offMain { CodingService.extractFunctionToFile(sourcePath: filePath, functionName: funcName, newFileName: newFile) }
-            appendLog(output)
-            return .handled(output)
-
-        // MARK: - Plan & Project tools
-
-        case "plan_mode":
-            let output = await executeNativeTool(name, input: input)
-            appendLog(output); flushLog()
-            return .handled(output)
-
-        case "project_folder":
-            let output = await executeNativeTool(name, input: input)
-            appendLog(output); flushLog()
-            return .handled(output)
-
-        case "coding_mode":
-            let output = await executeNativeTool(name, input: input)
-            appendLog(output); flushLog()
-            return .handled(output)
-
-        case "list_tools":
-            let output = await executeNativeTool(name, input: input)
-            appendLog(output); flushLog()
-            return .handled(output)
-
-        case "web_search":
-            let query = input["query"] as? String ?? ""
-            appendLog("Web search: \(query)")
-            flushLog()
-            let output = await Self.performWebSearchForTask(query: query, apiKey: ctx.tavilyAPIKey, provider: ctx.selectedProvider)
-            appendLog(Self.preview(output, lines: 5))
-            return .handled(output)
-
-        case "conversation":
-            let output = await executeNativeTool(name, input: input)
-            appendLog(output); flushLog()
-            return .handled(output)
-
-        case "send_message":
-            let output = await executeNativeTool(name, input: input)
-            appendLog(output); flushLog()
-            return .handled(output)
-
-        case "memory":
-            let output = await executeNativeTool(name, input: input)
-            appendLog(output); flushLog()
-            return .handled(output)
-
-        default:
-            // Let the caller try executeNativeTool as fallback
-            return .notHandled
-        }
+    private static func handleWebSearch(_ vm: AgentViewModel, _ name: String, _ input: [String: Any], _ ctx: ToolContext) async -> ToolHandlerResult {
+        let query = input["query"] as? String ?? ""
+        vm.appendLog("Web search: \(query)"); vm.flushLog()
+        let output = await Self.performWebSearchForTask(query: query, apiKey: ctx.tavilyAPIKey, provider: ctx.selectedProvider)
+        vm.appendLog(Self.preview(output, lines: 5))
+        return .handled(output)
     }
 }

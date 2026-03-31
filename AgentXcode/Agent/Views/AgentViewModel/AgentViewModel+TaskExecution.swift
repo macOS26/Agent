@@ -155,7 +155,7 @@ extension AgentViewModel {
             messages.append(["role": "user", "content": effectivePrompt])
         }
 
-        var commandsRun: [String] = []
+        commandsRun = []
         var completionSummary = ""
         var timeoutRetryCount = 0
         let maxTimeoutRetries = maxRetries
@@ -493,7 +493,7 @@ extension AgentViewModel {
                         )
                         let dispatchResult = await dispatchTool(
                             name: name, input: input, ctx: ctx,
-                            commandsRun: &commandsRun, toolResults: &toolResults
+                            toolResults: &toolResults
                         )
                         switch dispatchResult {
                         case .taskComplete:
