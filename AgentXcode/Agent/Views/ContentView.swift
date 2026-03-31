@@ -84,44 +84,24 @@ struct ContentView: View {
             // Thinking indicator in log area — always visible while LLM is active
             thinkingIndicator
 
-            // Activity Log — switches between main and script tab
-            if let selectedId = viewModel.selectedTabId,
-               let tab = viewModel.tab(for: selectedId) {
-                ZStack(alignment: .topTrailing) {
-                    ActivityLogView(
-                        text: tab.activityLog,
-                        tabID: selectedId,
-                        textProvider: { [weak tab] in tab?.activityLog ?? "" },
-                        searchText: searchText,
-                        caseSensitive: caseSensitive,
-                        currentMatchIndex: currentMatchIndex,
-                        onMatchCount: { count in
-                            DispatchQueue.main.async {
-                                totalMatches = count
-                                if currentMatchIndex >= count { currentMatchIndex = max(0, count - 1) }
-                            }
-                        }
-                    )
-                    // Cancel handled by green banner above
+            // Activity Log — single view, switches text source via tab selection
+            ActivityLogView(
+                text: viewModel.selectedTab?.activityLog ?? viewModel.activityLog,
+                tabID: viewModel.selectedTabId,
+                textProvider: { [weak viewModel] in
+                    guard let vm = viewModel else { return "" }
+                    return vm.selectedTab?.activityLog ?? vm.activityLog
+                },
+                searchText: searchText,
+                caseSensitive: caseSensitive,
+                currentMatchIndex: currentMatchIndex,
+                onMatchCount: { count in
+                    DispatchQueue.main.async {
+                        totalMatches = count
+                        if currentMatchIndex >= count { currentMatchIndex = max(0, count - 1) }
+                    }
                 }
-            } else {
-                ZStack(alignment: .topTrailing) {
-                    ActivityLogView(
-                        text: viewModel.activityLog,
-                        textProvider: { [weak viewModel] in viewModel?.activityLog ?? "" },
-                        searchText: searchText,
-                        caseSensitive: caseSensitive,
-                        currentMatchIndex: currentMatchIndex,
-                        onMatchCount: { count in
-                            DispatchQueue.main.async {
-                                totalMatches = count
-                                if currentMatchIndex >= count { currentMatchIndex = max(0, count - 1) }
-                            }
-                        }
-                    )
-                    // Cancel button moved to green task banner
-                }
-            }
+            )
 
             Divider()
 
