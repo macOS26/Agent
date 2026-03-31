@@ -1,9 +1,0 @@
-{
-  "mcpServers": {
-    "DemoHttp": {
-      "transport": "http",
-      "url": "http://localhost:8085/mcp",
-      "headers": {}
-    }
-  }
-}
