@@ -119,10 +119,10 @@ extension AgentViewModel {
             if cmd.name == "run_agent" {
                 // Parse "AgentName args" from cmd.argument
                 let parts = cmd.argument.components(separatedBy: " ")
-                let agentName = scriptService.resolveScriptName(parts.first ?? "")
+                let agentName = await Self.offMain { [ss = scriptService] in ss.resolveScriptName(parts.first ?? "") }
                 let args = parts.count > 1 ? parts.dropFirst().joined(separator: " ") : ""
                 // Always run directly — skip LLM. Args provided by user.
-                if scriptService.compileCommand(name: agentName) != nil {
+                if await Self.offMain({ [ss = scriptService] in ss.compileCommand(name: agentName) }) != nil {
                     let success = await runAgentDirect(name: agentName, arguments: args, switchToTab: false)
                     if success {
                         if tab.isMessagesTab, let handle = tab.replyHandle {

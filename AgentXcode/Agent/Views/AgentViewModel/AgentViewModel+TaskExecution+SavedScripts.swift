@@ -28,7 +28,7 @@ extension AgentViewModel {
             guard let source = scriptService.readAppleScript(name: scriptName) else {
                 return "Error: AppleScript '\(scriptName)' not found. Use list_apple_scripts first."
             }
-            let result = await MainActor.run { () -> String in
+            let result = await Self.offMain { () -> String in
                 var err: NSDictionary?
                 guard let script = NSAppleScript(source: source) else { return "Error creating script" }
                 let out = script.executeAndReturnError(&err)

@@ -17,7 +17,7 @@ extension AgentViewModel {
         // Helper for Selenium operations
         func runSeleniumNative(action: String, args: String) async -> String {
             let fullArgs = args.isEmpty ? "{\"action\":\"\(action)\"}" : args
-            guard let compileCmd = scriptService.compileCommand(name: "Selenium") else {
+            guard let compileCmd = await Self.offMain({ [ss = scriptService] in ss.compileCommand(name: "Selenium") }) else {
                 return "Error: Selenium script not found"
             }
             let compileResult = await Self.executeTCC(command: compileCmd)

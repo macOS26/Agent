@@ -398,10 +398,13 @@ final class LoRAAdapterManager {
 
     /// Open Terminal at the Agent support directory.
     static func openTerminal() {
-        let script = "tell application \"Terminal\" to do script \"cd '\(baseDir.path)' && ls -la\""
-        if let appleScript = NSAppleScript(source: script) {
-            var error: NSDictionary?
-            appleScript.executeAndReturnError(&error)
+        let path = baseDir.path
+        Task.detached {
+            let script = "tell application \"Terminal\" to do script \"cd '\(path)' && ls -la\""
+            if let appleScript = NSAppleScript(source: script) {
+                var error: NSDictionary?
+                appleScript.executeAndReturnError(&error)
+            }
         }
     }
 

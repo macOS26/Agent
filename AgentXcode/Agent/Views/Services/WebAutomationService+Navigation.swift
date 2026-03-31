@@ -52,13 +52,13 @@ extension WebAutomationService {
             return "Error: specify index or titleContains"
         }
 
-        let result = await MainActor.run { () -> String in
+        let result = await Task.detached { () -> String in
             var err: NSDictionary?
             guard let appleScript = NSAppleScript(source: script) else { return "Error: script creation failed" }
             let out = appleScript.executeAndReturnError(&err)
             if let error = err { return "Error: \(error)" }
             return out.stringValue ?? "Switched tab"
-        }
+        }.value
         return result
     }
 
@@ -94,13 +94,13 @@ extension WebAutomationService {
             return "Error: tab listing not supported for this browser"
         }
 
-        let result = await MainActor.run { () -> String in
+        let result = await Task.detached { () -> String in
             var err: NSDictionary?
             guard let appleScript = NSAppleScript(source: script) else { return "Error: script creation failed" }
             let out = appleScript.executeAndReturnError(&err)
             if let error = err { return "Error: \(error)" }
             return out.stringValue ?? ""
-        }
+        }.value
         return result
     }
 
@@ -259,13 +259,13 @@ extension WebAutomationService {
 
     /// Shared AppleScript runner
     func runAppleScript(_ script: String) async -> String {
-        await MainActor.run { () -> String in
+        await Task.detached { () -> String in
             var err: NSDictionary?
             guard let appleScript = NSAppleScript(source: script) else { return "Error: script creation failed" }
             let out = appleScript.executeAndReturnError(&err)
             if let error = err { return "Error: \(error)" }
             return out.stringValue ?? "OK"
-        }
+        }.value
     }
 
     // MARK: - Wait for Element
