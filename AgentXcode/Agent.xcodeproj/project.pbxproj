@@ -62,6 +62,9 @@
 		AA10000000000000000049 /* AgentViewModel+Logging.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000048 /* AgentViewModel+Logging.swift */; };
 		AA1000000000000000004B /* AgentViewModel+TaskExecution.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000004A /* AgentViewModel+TaskExecution.swift */; };
 		AA1000000000000000004F /* CodingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000004E /* CodingService.swift */; };
+		CS110000000000000000001 /* CodingService+ShellCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = CS110000000000000000002 /* CodingService+ShellCommands.swift */; };
+		CS110000000000000000003 /* CodingService+SplitFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = CS110000000000000000004 /* CodingService+SplitFile.swift */; };
+		CS110000000000000000005 /* CodingService+Refactoring.swift in Sources */ = {isa = PBXBuildFile; fileRef = CS110000000000000000006 /* CodingService+Refactoring.swift */; };
 		AA10000000000000000057 /* MCPConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000058 /* MCPConfig.swift */; };
 		AA10000000000000000059 /* MCPServersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000005A /* MCPServersView.swift */; };
 		AA1000000000000000005B /* MCPService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000005C /* MCPService.swift */; };
@@ -266,6 +269,9 @@
 		AA10000000000000000048 /* AgentViewModel+Logging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+Logging.swift"; sourceTree = "<group>"; };
 		AA1000000000000000004A /* AgentViewModel+TaskExecution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TaskExecution.swift"; sourceTree = "<group>"; };
 		AA1000000000000000004E /* CodingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodingService.swift; sourceTree = "<group>"; };
+		CS110000000000000000002 /* CodingService+ShellCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CodingService+ShellCommands.swift"; sourceTree = "<group>"; };
+		CS110000000000000000004 /* CodingService+SplitFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CodingService+SplitFile.swift"; sourceTree = "<group>"; };
+		CS110000000000000000006 /* CodingService+Refactoring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CodingService+Refactoring.swift"; sourceTree = "<group>"; };
 		AA10000000000000000058 /* MCPConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPConfig.swift; sourceTree = "<group>"; };
 		AA1000000000000000005A /* MCPServersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPServersView.swift; sourceTree = "<group>"; };
 		AA1000000000000000005C /* MCPService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPService.swift; sourceTree = "<group>"; };
@@ -504,6 +510,9 @@
 			children = (
 				EADF39C82F68BF4800CD01E5 /* MCP */,
 				AA1000000000000000004E /* CodingService.swift */,
+				CS110000000000000000002 /* CodingService+ShellCommands.swift */,
+				CS110000000000000000004 /* CodingService+SplitFile.swift */,
+				CS110000000000000000006 /* CodingService+Refactoring.swift */,
 				AC627819110EDB4BE4A30406 /* AgentTools+AppBridge.swift */,
 				AA1000000000000000001D /* HelperService.swift */,
 				AA10000000000000000025 /* UserService.swift */,
@@ -921,6 +930,9 @@
 				BB10000000000000000015 /* AgentViewModel+Helpers.swift in Sources */,
 				FF10000000000000000011 /* AgentViewModel+Speech.swift in Sources */,
 				AA1000000000000000004F /* CodingService.swift in Sources */,
+				CS110000000000000000001 /* CodingService+ShellCommands.swift in Sources */,
+				CS110000000000000000003 /* CodingService+SplitFile.swift in Sources */,
+				CS110000000000000000005 /* CodingService+Refactoring.swift in Sources */,
 				ABC7EAA6F77F494989A1A61F /* AgentTools+AppBridge.swift in Sources */,
 				AA10000000000000000057 /* MCPConfig.swift in Sources */,
 				AA10000000000000000059 /* MCPServersView.swift in Sources */,
