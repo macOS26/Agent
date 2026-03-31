@@ -3,7 +3,7 @@
 import AgentTools
 import AppKit
 import MCPClient
-import MultiLineDiff
+import AgentD1F
 import os.log
 
 private let tabTaskLog = Logger(subsystem: AppConstants.subsystem, category: "TabTask")

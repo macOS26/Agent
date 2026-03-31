@@ -2,11 +2,11 @@
 @preconcurrency import Foundation
 import AgentTools
 import MCPClient
-import MultiLineDiff
-import xcf_swift
+import AgentD1F
+import AgentSwift
 import os.log
 import Cocoa
-import xcf_swift
+import AgentSwift
 
 private let taskLog = Logger(subsystem: AppConstants.subsystem, category: "TaskExecution")
 

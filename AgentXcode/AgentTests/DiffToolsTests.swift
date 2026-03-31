@@ -1,7 +1,7 @@
 import Testing
 import Foundation
 @testable import Agent_
-import MultiLineDiff
+import AgentD1F
 
 /// Tests that mirror exactly how the AI calls diff tools through the handler code paths.
 /// Each test simulates the exact input dict the LLM sends and the exact steps the handler runs.

@@ -1,5 +1,5 @@
 import Foundation
-import MultiLineDiff
+import AgentD1F
 
 /// Errors for diff tool operations.
 enum DiffError: LocalizedError {

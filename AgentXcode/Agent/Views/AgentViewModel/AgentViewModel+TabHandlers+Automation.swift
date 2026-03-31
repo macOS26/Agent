@@ -1,6 +1,6 @@
 @preconcurrency import Foundation
 import MCPClient
-import MultiLineDiff
+import AgentD1F
 import os.log
 import Cocoa
 
