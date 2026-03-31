@@ -11,6 +11,7 @@ struct ActivityLogView: NSViewRepresentable {
     @Environment(\.colorScheme) private var colorScheme
     let text: String
     var tabID: UUID?  // nil = main tab
+    var textProvider: (@MainActor () -> String)? = nil  // polled for live updates
     var searchText: String = ""
     var caseSensitive: Bool = false
     var currentMatchIndex: Int = 0
@@ -42,11 +43,14 @@ struct ActivityLogView: NSViewRepresentable {
         context.coordinator.startObservingScroll(scrollView)
         context.coordinator.latestTextView = textView
         context.coordinator.latestScrollView = scrollView
+        context.coordinator.textProvider = textProvider
+        context.coordinator.startPolling()
         return scrollView
     }
 
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
         let coord = context.coordinator
+        coord.textProvider = textProvider
         let len = (text as NSString).length
         let tabChanged = tabID != coord.latestTabID
         let textChanged = len != coord.lastLength
@@ -89,6 +93,9 @@ struct ActivityLogView: NSViewRepresentable {
         var lastRenderedText = ""
         /// Track which tab we last rendered — forces full rebuild on tab switch
         var lastTabID: UUID?
+        /// Polls the text source directly — bypasses SwiftUI observation
+        var textProvider: (@MainActor () -> String)?
+        private var pollTimer: DispatchSourceTimer?
 
         override init() {
             super.init()
@@ -97,6 +104,31 @@ struct ActivityLogView: NSViewRepresentable {
                 .sink { [weak self] in
                     self?.performRender()
                 }
+        }
+
+        /// Start a 250ms poll that checks the text source directly.
+        /// Cheap: just a length comparison per tick.
+        func startPolling() {
+            guard pollTimer == nil else { return }
+            let timer = DispatchSource.makeTimerSource(queue: .main)
+            timer.schedule(deadline: .now() + .milliseconds(250), repeating: .milliseconds(250))
+            timer.setEventHandler { [weak self] in
+                MainActor.assumeIsolated {
+                    self?.pollTextSource()
+                }
+            }
+            timer.resume()
+            pollTimer = timer
+        }
+
+        private func pollTextSource() {
+            guard let provider = textProvider else { return }
+            let newText = provider()
+            let newLen = (newText as NSString).length
+            guard newLen != lastLength else { return }
+            latestText = newText
+            lastLength = newLen
+            scheduleRender()
         }
 
         /// Schedule rendering AFTER SwiftUI's layout pass completes
@@ -324,6 +356,8 @@ struct ActivityLogView: NSViewRepresentable {
         }
 
         deinit {
+            pollTimer?.cancel()
+            pollTimer = nil
             if let observer = scrollObserver {
                 NotificationCenter.default.removeObserver(observer)
             }
