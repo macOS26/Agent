@@ -12,6 +12,8 @@ struct ActivityLogView: NSViewRepresentable {
     let text: String
     var tabID: UUID?  // nil = main tab
     var textProvider: (@MainActor () -> String)? = nil  // polled for live updates
+    /// Shared scroll position cache on ViewModel (survives view recreation)
+    var scrollPositions: Binding<[UUID?: CGFloat]>? = nil
     var searchText: String = ""
     var caseSensitive: Bool = false
     var currentMatchIndex: Int = 0
@@ -45,6 +47,7 @@ struct ActivityLogView: NSViewRepresentable {
         context.coordinator.latestScrollView = scrollView
         context.coordinator.textProvider = textProvider
         context.coordinator.latestTabID = tabID
+        context.coordinator.scrollPositions = scrollPositions
         context.coordinator.startPolling()
         context.coordinator.startObservingLogChanges()
         return scrollView
@@ -53,6 +56,7 @@ struct ActivityLogView: NSViewRepresentable {
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
         let coord = context.coordinator
         coord.textProvider = textProvider
+        coord.scrollPositions = scrollPositions
         let len = (text as NSString).length
         let tabChanged = tabID != coord.latestTabID
         let textChanged = len != coord.updateNSViewLastLength
@@ -96,8 +100,8 @@ struct ActivityLogView: NSViewRepresentable {
         var lastRenderedText = ""
         /// Track which tab we last rendered — forces full rebuild on tab switch
         var lastTabID: UUID?
-        /// Per-tab scroll position cache
-        private var tabScrollPositions: [UUID?: CGFloat] = [:]
+        /// Shared scroll position cache (from ViewModel, survives view recreation)
+        var scrollPositions: Binding<[UUID?: CGFloat]>?
         /// Separate length tracker for updateNSView dedup (independent of performRender's lastLength)
         var updateNSViewLastLength = 0
         /// Polls the text source directly — bypasses SwiftUI observation
@@ -232,7 +236,7 @@ struct ActivityLogView: NSViewRepresentable {
 
             if tabSwitched {
                 // Save scroll position of the tab we're leaving
-                tabScrollPositions[lastTabID] = scrollView.contentView.bounds.origin.y
+                scrollPositions?.wrappedValue[lastTabID] = scrollView.contentView.bounds.origin.y
 
                 textView.alphaValue = 0
                 NSAnimationContext.runAnimationGroup { ctx in
@@ -251,7 +255,7 @@ struct ActivityLogView: NSViewRepresentable {
                     lastRenderedText = text
                     showingPlaceholder = false
                     // Restore saved scroll position, or show bottom for main/new tabs
-                    if let savedY = tabScrollPositions[tabID] {
+                    if let savedY = scrollPositions?.wrappedValue[tabID] {
                         scrollView.contentView.scroll(to: NSPoint(x: 0, y: savedY))
                         scrollView.reflectScrolledClipView(scrollView.contentView)
                     } else {
@@ -272,7 +276,7 @@ struct ActivityLogView: NSViewRepresentable {
                 textView.textStorage?.endEditing()
                 showingPlaceholder = false
                 // Restore saved scroll position, or show bottom for main/new tabs
-                if let savedY = tabScrollPositions[tabID] {
+                if let savedY = scrollPositions?.wrappedValue[tabID] {
                     scrollView.contentView.scroll(to: NSPoint(x: 0, y: savedY))
                     scrollView.reflectScrolledClipView(scrollView.contentView)
                 } else {
