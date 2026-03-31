@@ -1,4 +1,5 @@
 import SwiftUI
+import AgentTerminalNeo
 
 /// Collapsible thinking indicator shown in the activity log area while the LLM is processing.
 /// Shows real-time model info, token counts, and message stats when expanded.
@@ -22,6 +23,7 @@ struct ThinkingIndicatorView: View {
         }
     }
     @State private var outputHeight: CGFloat = 40
+    @State private var userDragged: Bool = false
     @State private var dots = ""
     @State private var elapsed: TimeInterval = 0
     @State private var tick = 0
@@ -217,6 +219,7 @@ struct ThinkingIndicatorView: View {
                         LLMOutputBox(
                             text: streamText,
                             height: $outputHeight,
+                            userDragged: $userDragged,
                             showDismiss: true,
                             dismissEnabled: !isActive,
                             onDismiss: {
@@ -275,6 +278,7 @@ private struct LLMOutputBox: View {
     @Environment(\.colorScheme) private var colorScheme
     let text: String
     @Binding var height: CGFloat
+    @Binding var userDragged: Bool
     var showDismiss: Bool = false
     var dismissEnabled: Bool = true
     var onDismiss: (() -> Void)?
@@ -431,16 +435,25 @@ private struct LLMOutputBox: View {
         return result
     }
 
+    /// Maximum height: 50% of the window (falls back to screen).
+    private var maxHeight: CGFloat {
+        let windowH = NSApp.keyWindow?.frame.height
+            ?? NSScreen.main?.visibleFrame.height
+            ?? 800
+        return windowH * 0.5
+    }
+
     var body: some View {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         VStack(spacing: 0) {
             ZStack(alignment: .bottomTrailing) {
                 if !trimmed.isEmpty {
-                    let maxH = NSScreen.main.map { $0.visibleFrame.height * 0.9 } ?? 800
-                    LLMOutputNSTextView(text: trimmed, colorScheme: colorScheme, onContentHeight: { h in
-                        height = max(minHeight, h)
+                    TerminalNeoTextView(text: trimmed, onContentHeight: { h in
+                        if !userDragged {
+                            height = min(max(minHeight, h), maxHeight)
+                        }
                     })
-                    .frame(height: min(height, maxH))
+                    .frame(height: min(height, maxHeight))
                 } else {
                     HStack(spacing: 0) {
                         Text("> ")
@@ -489,324 +502,14 @@ private struct LLMOutputBox: View {
                 .gesture(
                     DragGesture()
                         .onChanged { value in
-                            height = max(40, height + value.translation.height)
+                            userDragged = true
+                            height = min(max(40, height + value.translation.height), maxHeight)
                         }
                 )
         }
         .background(termBg)
         .cornerRadius(6)
         .overlay(RoundedRectangle(cornerRadius: 6).stroke(termBorder, lineWidth: 1))
-    }
-}
-
-// MARK: - NSTextView wrapper for LLM Output with NSTextTable + retro green
-
-private struct LLMOutputNSTextView: NSViewRepresentable {
-    let text: String
-    let colorScheme: ColorScheme
-    var onContentHeight: ((CGFloat) -> Void)?
-
-    func makeNSView(context: Context) -> NSScrollView {
-        let scrollView = NSTextView.scrollableTextView()
-        guard let textView = scrollView.documentView as? NSTextView else { return scrollView }
-        textView.isEditable = false
-        textView.isSelectable = true
-        textView.backgroundColor = .clear
-        textView.drawsBackground = false
-        textView.textContainerInset = NSSize(width: 10, height: 10)
-        textView.isAutomaticQuoteSubstitutionEnabled = false
-        textView.isAutomaticDashSubstitutionEnabled = false
-        textView.isAutomaticLinkDetectionEnabled = true
-        scrollView.hasVerticalScroller = true
-        scrollView.autohidesScrollers = true
-        scrollView.scrollerStyle = .overlay
-        scrollView.drawsBackground = false
-        return scrollView
-    }
-
-    func updateNSView(_ scrollView: NSScrollView, context: Context) {
-        guard let textView = scrollView.documentView as? NSTextView else { return }
-        let attributed = buildAttributedString(text)
-        textView.textStorage?.setAttributedString(attributed)
-        // Report content height for auto-sizing
-        textView.layoutManager?.ensureLayout(for: textView.textContainer!)
-        let contentH = textView.layoutManager?.usedRect(for: textView.textContainer!).height ?? 40
-        let totalH = contentH + textView.textContainerInset.height * 2
-        DispatchQueue.main.async {
-            onContentHeight?(totalH)
-        }
-    }
-
-    private var isDark: Bool { colorScheme == .dark }
-
-    private var font: NSFont { .monospacedSystemFont(ofSize: 11, weight: .regular) }
-    private var boldFont: NSFont { .monospacedSystemFont(ofSize: 11, weight: .bold) }
-
-    private var textColor: NSColor {
-        isDark ? NSColor(red: 0.2, green: 0.9, blue: 0.3, alpha: 1)
-               : NSColor(red: 0.05, green: 0.35, blue: 0.1, alpha: 1)
-    }
-    private var borderColor: NSColor {
-        isDark ? NSColor(red: 0.2, green: 0.45, blue: 0.2, alpha: 1)
-               : NSColor(red: 0.3, green: 0.6, blue: 0.3, alpha: 1)
-    }
-    private var headerBg: NSColor {
-        isDark ? NSColor(red: 0.05, green: 0.15, blue: 0.05, alpha: 1)
-               : NSColor(red: 0.85, green: 0.95, blue: 0.85, alpha: 1)
-    }
-    private var headerFg: NSColor {
-        isDark ? NSColor(red: 0.4, green: 0.95, blue: 0.4, alpha: 1)
-               : NSColor(red: 0.1, green: 0.5, blue: 0.1, alpha: 1)
-    }
-    private var cellFg: NSColor {
-        isDark ? NSColor(red: 0.3, green: 0.8, blue: 0.3, alpha: 1)
-               : NSColor(red: 0.15, green: 0.45, blue: 0.15, alpha: 1)
-    }
-    private var evenBg: NSColor {
-        isDark ? NSColor(red: 0.03, green: 0.08, blue: 0.03, alpha: 1)
-               : NSColor(red: 0.9, green: 0.97, blue: 0.9, alpha: 1)
-    }
-    private var oddBg: NSColor {
-        isDark ? NSColor(red: 0.05, green: 0.12, blue: 0.05, alpha: 1)
-               : NSColor(red: 0.87, green: 0.94, blue: 0.87, alpha: 1)
-    }
-    private var brightGreen: NSColor {
-        isDark ? NSColor(red: 0.4, green: 0.95, blue: 0.4, alpha: 1)
-               : NSColor(red: 0.1, green: 0.5, blue: 0.1, alpha: 1)
-    }
-    private var dimGreen: NSColor {
-        isDark ? NSColor(red: 0.15, green: 0.4, blue: 0.2, alpha: 1)
-               : NSColor(red: 0.3, green: 0.6, blue: 0.35, alpha: 1)
-    }
-    private var codeBg: NSColor {
-        isDark ? NSColor(red: 0.08, green: 0.15, blue: 0.08, alpha: 1)
-               : NSColor(red: 0.85, green: 0.93, blue: 0.85, alpha: 1)
-    }
-
-    // Inline markdown regexes
-    private static let boldItalicRx = try? NSRegularExpression(pattern: #"\*\*\*(.+?)\*\*\*"#)
-    private static let boldRx = try? NSRegularExpression(pattern: #"\*\*(.+?)\*\*"#)
-    private static let italicRx = try? NSRegularExpression(pattern: #"(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)"#)
-    private static let codeRx = try? NSRegularExpression(pattern: #"`([^`]+)`"#)
-    private static let headerRx = try? NSRegularExpression(pattern: #"^(#{1,6})\s+(.+)$"#, options: .anchorsMatchLines)
-    private static let bulletRx = try? NSRegularExpression(pattern: #"^(\s*)[-*+]\s+(.*)"#)
-    private static let numListRx = try? NSRegularExpression(pattern: #"^(\s*)\d+\.\s+(.*)"#)
-    private static let hrRx = try? NSRegularExpression(pattern: #"^\s*([-*_]\s*){3,}$"#)
-
-    private func buildAttributedString(_ text: String) -> NSAttributedString {
-        let lines = text.components(separatedBy: "\n")
-        let result = NSMutableAttributedString()
-        var i = 0
-        var inCodeBlock = false
-        // codeBlockLang reserved for future syntax highlighting
-        var codeLines: [String] = []
-
-        while i < lines.count {
-            let line = lines[i]
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-
-            // Code block fences
-            if trimmed.hasPrefix("```") {
-                if inCodeBlock {
-                    // End code block — render accumulated code
-                    if result.length > 0 { result.append(NSAttributedString(string: "\n", attributes: [.font: font])) }
-                    let codeText = codeLines.joined(separator: "\n")
-                    let codeAttr = NSMutableAttributedString(string: codeText, attributes: [
-                        .font: font, .foregroundColor: brightGreen, .backgroundColor: codeBg
-                    ])
-                    result.append(codeAttr)
-                    codeLines = []
-                    inCodeBlock = false
-                } else {
-                    inCodeBlock = true
-                    _ = String(trimmed.dropFirst(3)).trimmingCharacters(in: .whitespaces) // lang for future use
-                }
-                i += 1
-                continue
-            }
-            if inCodeBlock {
-                codeLines.append(line)
-                i += 1
-                continue
-            }
-
-            // Table block
-            if i + 2 < lines.count,
-               trimmed.hasPrefix("|"),
-               TableRendering.isTableSeparator(lines[i + 1]) {
-                var tableEnd = i + 2
-                while tableEnd < lines.count,
-                      lines[tableEnd].trimmingCharacters(in: .whitespaces).hasPrefix("|"),
-                      !TableRendering.isTableSeparator(lines[tableEnd]) {
-                    tableEnd += 1
-                }
-                let headerCells = TableRendering.parseTableRow(lines[i])
-                let sepCells = TableRendering.parseTableRow(lines[i + 1])
-                let alignments: [NSTextAlignment] = sepCells.map { cell in
-                    let left = cell.hasPrefix(":")
-                    let right = cell.hasSuffix(":")
-                    if left && right { return .center }
-                    if right { return .right }
-                    return .left
-                }
-                var dataRows: [[String]] = []
-                for r in (i + 2)..<tableEnd {
-                    dataRows.append(TableRendering.parseTableRow(lines[r]))
-                }
-                let colCount = headerCells.count
-                let table = NSTextTable()
-                table.numberOfColumns = colCount
-                table.layoutAlgorithm = .automaticLayoutAlgorithm
-                table.collapsesBorders = true
-                table.hidesEmptyCells = false
-
-                for (col, cell) in headerCells.prefix(colCount).enumerated() {
-                    let align = col < alignments.count ? alignments[col] : .left
-                    result.append(makeCell(cell, table: table, row: 0, col: col,
-                                           bg: headerBg, fg: headerFg, f: boldFont, align: align))
-                }
-                for (rowIdx, row) in dataRows.enumerated() {
-                    let bg = (rowIdx % 2 == 0) ? evenBg : oddBg
-                    for col in 0..<colCount {
-                        let cellText = col < row.count ? row[col] : ""
-                        let align = col < alignments.count ? alignments[col] : .left
-                        result.append(makeCell(cellText, table: table, row: rowIdx + 1, col: col,
-                                               bg: bg, fg: cellFg, f: font, align: align))
-                    }
-                }
-                i = tableEnd
-                continue
-            }
-
-            // Newline between lines
-            if i > 0 { result.append(NSAttributedString(string: "\n", attributes: [.font: font])) }
-            result.append(renderLine(line))
-            i += 1
-        }
-        return result
-    }
-
-    /// Render a single line with block-level + inline markdown in terminal green.
-    private func renderLine(_ line: String) -> NSAttributedString {
-        let ns = line as NSString
-        let r = NSRange(location: 0, length: ns.length)
-
-        // Horizontal rule
-        if Self.hrRx?.firstMatch(in: line, range: r) != nil {
-            let rule = String(repeating: "─", count: 40)
-            return NSAttributedString(string: rule, attributes: [.font: font, .foregroundColor: dimGreen])
-        }
-
-        // Header (# ... ######)
-        if let m = Self.headerRx?.firstMatch(in: line, range: r) {
-            let level = ns.substring(with: m.range(at: 1)).count
-            let content = ns.substring(with: m.range(at: 2))
-            let size = max(11, 18 - CGFloat(level) * 1.5)
-            let hFont = NSFont.monospacedSystemFont(ofSize: size, weight: .bold)
-            let rendered = applyInlineMarkdown(content, baseFont: hFont, baseColor: brightGreen)
-            return rendered
-        }
-
-        // Bullet list
-        if let m = Self.bulletRx?.firstMatch(in: line, range: r) {
-            let indent = ns.substring(with: m.range(at: 1))
-            let content = ns.substring(with: m.range(at: 2))
-            let bullet = NSMutableAttributedString(string: indent + "  \u{2022} ", attributes: [.font: font, .foregroundColor: dimGreen])
-            bullet.append(applyInlineMarkdown(content, baseFont: font, baseColor: textColor))
-            return bullet
-        }
-
-        // Numbered list
-        if let m = Self.numListRx?.firstMatch(in: line, range: r) {
-            let indent = ns.substring(with: m.range(at: 1))
-            let content = ns.substring(with: m.range(at: 2))
-            // Keep the original number prefix
-            let numEnd = line.firstIndex(of: ".")!
-            let num = String(line[line.startIndex...numEnd])
-            let prefix = NSMutableAttributedString(string: indent + num + " ", attributes: [.font: font, .foregroundColor: dimGreen])
-            prefix.append(applyInlineMarkdown(content, baseFont: font, baseColor: textColor))
-            return prefix
-        }
-
-        // Regular line with inline markdown
-        return applyInlineMarkdown(line, baseFont: font, baseColor: textColor)
-    }
-
-    /// Apply inline markdown (**bold**, *italic*, `code`) to text.
-    private func applyInlineMarkdown(_ text: String, baseFont: NSFont, baseColor: NSColor) -> NSAttributedString {
-        let result = NSMutableAttributedString(string: text, attributes: [.font: baseFont, .foregroundColor: baseColor])
-        let ns = text as NSString
-        let r = NSRange(location: 0, length: ns.length)
-        let bFont = NSFont.monospacedSystemFont(ofSize: baseFont.pointSize, weight: .bold)
-        let iFont = NSFontManager.shared.convert(baseFont, toHaveTrait: .italicFontMask)
-
-        // Process from innermost to outermost to handle overlaps
-
-        // Inline code `text` — bright green on dark bg
-        Self.codeRx?.enumerateMatches(in: text, range: r) { m, _, _ in
-            guard let m else { return }
-            let contentRange = m.range(at: 1)
-            result.addAttributes([.foregroundColor: brightGreen, .backgroundColor: codeBg], range: contentRange)
-            // Hide backticks
-            result.addAttribute(.foregroundColor, value: NSColor.clear, range: NSRange(location: m.range.location, length: 1))
-            result.addAttribute(.foregroundColor, value: NSColor.clear, range: NSRange(location: m.range.location + m.range.length - 1, length: 1))
-            result.addAttribute(.font, value: NSFont.monospacedSystemFont(ofSize: 1, weight: .regular), range: NSRange(location: m.range.location, length: 1))
-            result.addAttribute(.font, value: NSFont.monospacedSystemFont(ofSize: 1, weight: .regular), range: NSRange(location: m.range.location + m.range.length - 1, length: 1))
-        }
-
-        // Bold+Italic ***text***
-        Self.boldItalicRx?.enumerateMatches(in: text, range: r) { m, _, _ in
-            guard let m else { return }
-            let contentRange = m.range(at: 1)
-            let biFont = NSFontManager.shared.convert(bFont, toHaveTrait: .italicFontMask)
-            result.addAttributes([.font: biFont, .foregroundColor: brightGreen], range: contentRange)
-            // Hide markers
-            for offset in [m.range.location, m.range.location + 1, m.range.location + 2,
-                           m.range.location + m.range.length - 3, m.range.location + m.range.length - 2, m.range.location + m.range.length - 1] {
-                result.addAttribute(.foregroundColor, value: NSColor.clear, range: NSRange(location: offset, length: 1))
-                result.addAttribute(.font, value: NSFont.monospacedSystemFont(ofSize: 1, weight: .regular), range: NSRange(location: offset, length: 1))
-            }
-        }
-
-        // Bold **text**
-        Self.boldRx?.enumerateMatches(in: text, range: r) { m, _, _ in
-            guard let m else { return }
-            let contentRange = m.range(at: 1)
-            result.addAttributes([.font: bFont, .foregroundColor: brightGreen], range: contentRange)
-            // Hide **
-            for offset in [m.range.location, m.range.location + 1,
-                           m.range.location + m.range.length - 2, m.range.location + m.range.length - 1] {
-                result.addAttribute(.foregroundColor, value: NSColor.clear, range: NSRange(location: offset, length: 1))
-                result.addAttribute(.font, value: NSFont.monospacedSystemFont(ofSize: 1, weight: .regular), range: NSRange(location: offset, length: 1))
-            }
-        }
-
-        // Italic *text*
-        Self.italicRx?.enumerateMatches(in: text, range: r) { m, _, _ in
-            guard let m else { return }
-            let contentRange = m.range(at: 1)
-            result.addAttribute(.font, value: iFont, range: contentRange)
-            // Hide *
-            result.addAttribute(.foregroundColor, value: NSColor.clear, range: NSRange(location: m.range.location, length: 1))
-            result.addAttribute(.foregroundColor, value: NSColor.clear, range: NSRange(location: m.range.location + m.range.length - 1, length: 1))
-            result.addAttribute(.font, value: NSFont.monospacedSystemFont(ofSize: 1, weight: .regular), range: NSRange(location: m.range.location, length: 1))
-            result.addAttribute(.font, value: NSFont.monospacedSystemFont(ofSize: 1, weight: .regular), range: NSRange(location: m.range.location + m.range.length - 1, length: 1))
-        }
-
-        return result
-    }
-
-    private func makeCell(_ text: String, table: NSTextTable, row: Int, col: Int,
-                           bg: NSColor, fg: NSColor, f: NSFont, align: NSTextAlignment) -> NSAttributedString {
-        let block = NSTextTableBlock(table: table, startingRow: row, rowSpan: 1, startingColumn: col, columnSpan: 1)
-        block.backgroundColor = bg
-        block.setBorderColor(borderColor)
-        block.setWidth(0.5, type: .absoluteValueType, for: .border)
-        block.setWidth(5.0, type: .absoluteValueType, for: .padding)
-        let style = NSMutableParagraphStyle()
-        style.textBlocks = [block]
-        style.alignment = align
-        return NSAttributedString(string: text + "\n", attributes: [.font: f, .foregroundColor: fg, .paragraphStyle: style])
     }
 }
 
