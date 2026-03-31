@@ -1,3 +1,4 @@
+import AgentAudit
 import Foundation
 
 /// Executes AppleScript code in-process via NSAppleScript.
@@ -9,6 +10,7 @@ final class NSAppleScriptService: @unchecked Sendable {
     /// Execute AppleScript source code and return the result.
     /// Runs synchronously on the calling thread — call from offMain.
     func execute(source: String) -> (success: Bool, output: String) {
+        AuditLog.log(.appleScript, "execute: \(source.prefix(100))")
         var errorInfo: NSDictionary?
         let script = NSAppleScript(source: source)
 

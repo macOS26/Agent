@@ -4,9 +4,7 @@ import AgentTools
 import AppKit
 import AgentMCP
 import AgentD1F
-import os.log
 
-private let tabTaskLog = Logger(subsystem: AppConstants.subsystem, category: "TabTask")
 
 // MARK: - Tab Task Execution
 
@@ -101,7 +99,6 @@ extension AgentViewModel {
     func executeTabTask(tab: ScriptTab, prompt: String) async {
         tab.isLLMRunning = true
         tab.llmMessages = []  // Fresh conversation for each task
-        tabTaskLog.info("[\(tab.displayTitle)] executeTabTask started: \(prompt.prefix(80))")
 
         var commandsRun: [String] = []
         var completionSummary = ""
@@ -139,7 +136,6 @@ extension AgentViewModel {
                     break
                 }
             }
-            tabTaskLog.info("[\(tab.displayTitle)] Direct command: \(cmd.name)")
             let output = await executeDirectCommand(cmd, tab: tab)
             tab.flush()
 
@@ -166,7 +162,6 @@ extension AgentViewModel {
             }
             // google_search with results: pass to LLM for formatting
             if cmd.name == "google_search" && output.contains("\"success\": true") {
-                tabTaskLog.info("[\(tab.displayTitle)] google_search succeeded — passing to LLM")
                 directCommandContext = "Format these Google search results for the user. Be concise — show the top results with titles, URLs, and brief descriptions:\n\n\(output)"
                 break
             }
@@ -186,7 +181,6 @@ extension AgentViewModel {
             tab.isLLMThinking = false
             return
         case .answered(let reply):
-            tabTaskLog.info("[\(tab.displayTitle)] Apple AI answered directly")
             tab.appendLog(reply)
             tab.flush()
             completionSummary = String(reply.prefix(200))
@@ -249,7 +243,6 @@ extension AgentViewModel {
         let projectFolder = Self.resolvedWorkingDirectory(rawFolder)
 
         let (provider, modelId) = resolvedLLMConfig(for: tab)
-        tabTaskLog.info("[\(tab.displayTitle)] resolved LLM: \(provider.displayName) / \(modelId)")
         tab.appendLog("🧠 \(provider.displayName) / \(modelId)")
         tab.flush()
 
@@ -368,11 +361,9 @@ extension AgentViewModel {
             if iterations > 1 && iterations % 4 == 0 && messages.count > 10 {
                 let beforeCount = messages.count
                 Self.pruneMessages(&messages)
-                tabTaskLog.info("[\(tab.displayTitle)] pruned messages: \(beforeCount) → \(messages.count)")
             }
             if iterations > 2 { Self.stripOldImages(&messages) }
 
-            tabTaskLog.info("[\(tab.displayTitle)] iteration \(iterations)")
 
             do {
                 tab.isLLMThinking = true
@@ -438,7 +429,6 @@ extension AgentViewModel {
                 tab.lastElapsed = streamElapsed
                 tab.tabInputTokens += inTok
                 tab.tabOutputTokens += outTok
-                tabTaskLog.info("[\(tab.displayTitle)] stream completed in \(String(format: "%.2f", streamElapsed))s, stopReason=\(response.stopReason), tokens: \(inTok)in/\(outTok)out")
                 // Show timing in activity log so user can see what's slow
                 tab.appendLog("🕐 LLM \(String(format: "%.1f", streamElapsed))s | stop: \(response.stopReason) | iter \(iterations)")
                 tab.flush()
@@ -526,7 +516,6 @@ extension AgentViewModel {
                     // Detect timeout errors
                     let isNetworkTimeout = errMsg.lowercased().contains("timeout") || errMsg.lowercased().contains("timed out")
                     
-                    tabTaskLog.error("[\(tab.displayTitle)] LLM error at iteration \(iterations): \(errMsg) (isTimeout: \(isNetworkTimeout))")
                     
                     // Determine error source for better logging
                     var errorSource = "Unknown"
@@ -595,7 +584,6 @@ extension AgentViewModel {
                             tab.appendLog(retryMessage)
                             
                             // Log to task log for debugging
-                            tabTaskLog.info("[\(tab.displayTitle)] \(errorSource) timeout, retry \(timeoutRetryCount)/\(maxTimeoutRetries), waiting \(retryDelay)s")
                             
                             try? await Task.sleep(for: .seconds(retryDelay))
                             if Task.isCancelled { break }
@@ -634,7 +622,6 @@ extension AgentViewModel {
                         let retryDelay: TimeInterval = 10
                         tab.appendLog("\(errorSource) recoverable error (attempt \(timeoutRetryCount)/\(maxTimeoutRetries)) — retrying in \(Int(retryDelay))s...")
                         tab.flush()
-                        tabTaskLog.info("[\(tab.displayTitle)] \(errorSource) server error, retry \(timeoutRetryCount)/\(maxTimeoutRetries), waiting \(retryDelay)s")
                         try? await Task.sleep(for: .seconds(retryDelay))
                         if Task.isCancelled { break }
                         continue
@@ -656,7 +643,6 @@ extension AgentViewModel {
             }
         }
 
-        tabTaskLog.info("[\(tab.displayTitle)] executeTabTask finished after \(iterations) iteration(s), cancelled=\(Task.isCancelled)")
 
         // Save task history if task didn't call task_complete
         if completionSummary.isEmpty {

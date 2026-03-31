@@ -1,3 +1,4 @@
+import AgentAudit
 import Foundation
 import ScriptingBridge
 import XcodeScriptingBridge
@@ -75,6 +76,7 @@ final class XcodeService: @unchecked Sendable {
     /// Build a project via ScriptingBridge. Blocks until build completes.
     /// Returns errors/warnings in file:line:col [Error] message format with code snippets.
     nonisolated func buildProject(projectPath: String) -> String {
+        AuditLog.log(.xcode, "build: \(projectPath)")
         // Always auto-detect from open Xcode projects — ignore model's guessed path
         let resolvedPath = autoSelectProject() ?? projectPath
         guard isValidProjectPath(resolvedPath) else {
@@ -125,6 +127,7 @@ final class XcodeService: @unchecked Sendable {
 
     /// Run a project via ScriptingBridge. Builds first — only runs if build is clean.
     nonisolated func runProject(projectPath: String) -> String {
+        AuditLog.log(.xcode, "run: \(projectPath)")
         let resolvedPath = autoSelectProject() ?? projectPath
         // Build first to check for errors (matching xcf's pattern)
         let buildOutput = buildProject(projectPath: resolvedPath)

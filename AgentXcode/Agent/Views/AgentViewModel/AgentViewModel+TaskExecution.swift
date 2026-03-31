@@ -4,18 +4,15 @@ import AgentTools
 import AgentMCP
 import AgentD1F
 import AgentSwift
-import os.log
 import Cocoa
 import AgentSwift
 
-private let taskLog = Logger(subsystem: AppConstants.subsystem, category: "TaskExecution")
 
 // MARK: - Task Execution Loop
 
 extension AgentViewModel {
 
     func executeTask(_ prompt: String) async {
-        taskLog.info("[main] executeTask started: \(prompt.prefix(80))")
         isRunning = true
         userWasActive = false
         rootWasActive = false
@@ -193,7 +190,6 @@ extension AgentViewModel {
                 }
             }
             // Execute known commands instantly without the LLM
-            taskLog.info("[main] Direct command: \(cmd.name) arg=\(cmd.argument)")
             let output = await executeDirectCommand(cmd)
             flushLog()
 
@@ -203,12 +199,10 @@ extension AgentViewModel {
                 flushLog()
             }
             if cmd.name == "google_search" && output.contains("\"success\": true") {
-                taskLog.info("[main] google_search succeeded — passing to LLM for formatting")
                 messages.append(["role": "user", "content": "Format these Google search results for the user. Be concise — show the top results with titles, URLs, and brief descriptions:\n\n\(output)"])
                 break  // Fall through to LLM loop
             }
             if cmd.name == "safari_read" && !output.contains("Error") {
-                taskLog.info("[main] safari_read succeeded — passing to LLM for formatting")
                 messages.append(["role": "user", "content": "Summarize this web page for the user. Show the title, URL, and key content:\n\n\(output)"])
                 break  // Fall through to LLM loop
             }
@@ -227,7 +221,6 @@ extension AgentViewModel {
                     let pageContent = await WebAutomationService.shared.readPageContent(maxLength: 3000)
                     let pageTitle = await WebAutomationService.shared.getPageTitle()
                     let pageURL = await WebAutomationService.shared.getPageURL()
-                    taskLog.info("[main] safari_open has extra instructions — passing page to LLM")
                     messages.append(["role": "user", "content": "I opened \(pageURL) (\(pageTitle)). Here is the page content:\n\n\(pageContent)\n\nNow complete this request: \(prompt)"])
                     break  // Fall through to LLM loop
                 }
@@ -244,7 +237,6 @@ extension AgentViewModel {
             isThinking = false
             return
         case .answered(let reply):
-            taskLog.info("[main] Apple AI answered directly — skipping LLM")
             appendLog(reply)
             flushLog()
             completionSummary = String(reply.prefix(200))
@@ -289,21 +281,18 @@ extension AgentViewModel {
             if iterations > 1 && iterations % 4 == 0 && messages.count > 10 {
                 let beforeCount = messages.count
                 Self.pruneMessages(&messages)
-                taskLog.info("[main] pruned messages: \(beforeCount) → \(messages.count)")
             }
             // Strip base64 images from older messages
             if iterations > 2 {
                 Self.stripOldImages(&messages)
             }
 
-            taskLog.info("[main] iteration \(iterations), messages=\(messages.count)")
 
             do {
                 isThinking = true
                 thinkingDismissed = false
 
                 // Log messages being sent to the LLM
-                taskLog.info("[main] Sending \(messages.count) messages to LLM:")
                 for (idx, msg) in messages.enumerated() {
                     let role = msg["role"] as? String ?? "?"
                     let preview: String
@@ -315,7 +304,6 @@ extension AgentViewModel {
                     } else {
                         preview = "(unknown content type)"
                     }
-                    taskLog.info("[main]   [\(idx)] \(role): \(preview)")
                 }
 
                 // Summarize old messages with Apple AI, then compress
@@ -340,9 +328,7 @@ extension AgentViewModel {
                         }
                         totalChars += msgChars
                         let role = msg["role"] as? String ?? "?"
-                        taskLog.info("[main] msg[\(idx)] \(role): \(msgChars) chars (~\(msgChars/4) tokens)")
                     }
-                    taskLog.info("[main] total send: \(totalChars) chars (~\(totalChars/4) est tokens), \(sendMessages.count) messages")
                 }
 
                 let response: (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int)
@@ -395,7 +381,6 @@ extension AgentViewModel {
                 sessionOutputTokens += outTok
                 TokenUsageStore.shared.record(inputTokens: inTok, outputTokens: outTok)
                 let streamElapsed = CFAbsoluteTimeGetCurrent() - streamStart
-                taskLog.info("[main] stream completed in \(String(format: "%.2f", streamElapsed))s, stopReason=\(response.stopReason), tokens: \(response.inputTokens)in/\(response.outputTokens)out")
                 flushStreamBuffer()
                 isThinking = false
                 timeoutRetryCount = 0 // Reset on successful response
@@ -452,7 +437,6 @@ extension AgentViewModel {
                             
                             // Apple Intelligence summary annotation
                             if mediator.isEnabled && mediator.showAnnotationsToUser && !commandsRun.isEmpty {
-                                taskLog.info("[main] Apple AI mediator: summarizing completion...")
                                 if let summaryAnnotation = await mediator.summarizeCompletion(summary: summary, commandsRun: commandsRun) {
                                     appleAIAnnotations.append(summaryAnnotation)
                                     appendLog(summaryAnnotation.formatted)
@@ -533,7 +517,6 @@ extension AgentViewModel {
                     // Detect timeout errors
                     let isNetworkTimeout = errMsg.lowercased().contains("timeout") || errMsg.lowercased().contains("timed out")
                     
-                    taskLog.error("[main] LLM error at iteration \(iterations): \(errMsg) (isTimeout: \(isNetworkTimeout))")
                     
                     // Determine error source for better logging
                     var errorSource = "Unknown"
@@ -613,7 +596,6 @@ extension AgentViewModel {
                             }
                             
                             // Log to task log for debugging
-                            taskLog.info("[main] \(errorSource) timeout, retry \(timeoutRetryCount)/\(maxTimeoutRetries), waiting \(retryDelay)s")
                             
                             try? await Task.sleep(for: .seconds(retryDelay))
                             if Task.isCancelled { break }
@@ -644,7 +626,6 @@ extension AgentViewModel {
                         let retryDelay: TimeInterval = 10
                         appendLog("\(errorSource) recoverable error (attempt \(timeoutRetryCount)/\(maxTimeoutRetries)) — retrying in \(Int(retryDelay))s...\n\(errMsg)")
                         flushLog()
-                        taskLog.info("[main] \(errorSource) server error, retry \(timeoutRetryCount)/\(maxTimeoutRetries), waiting \(retryDelay)s")
                         try? await Task.sleep(for: .seconds(retryDelay))
                         if Task.isCancelled { break }
                         continue
@@ -669,7 +650,6 @@ extension AgentViewModel {
 
         // Apple Intelligence: suggest next steps after completion (skip for pure conversation)
         if mediator.isEnabled && mediator.showAnnotationsToUser && !completionSummary.isEmpty && !commandsRun.isEmpty {
-            taskLog.info("[main] Apple AI mediator: suggesting next steps...")
             let context = "Task: \(prompt)\nResult: \(completionSummary)\nCommands: \(commandsRun.joined(separator: ", "))"
             if let nextSteps = await mediator.suggestNextSteps(context: context) {
                 appendLog(nextSteps.formatted)
@@ -692,7 +672,6 @@ extension AgentViewModel {
         // Stop progress updates
         stopProgressUpdates()
         
-        taskLog.info("[main] executeTask finished after \(iterations) iteration(s), cancelled=\(Task.isCancelled)")
         flushLog()
         persistLogNow()
         isRunning = false

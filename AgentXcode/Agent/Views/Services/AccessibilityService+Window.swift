@@ -1,3 +1,4 @@
+import AgentAudit
 import Foundation
 import AppKit
 @preconcurrency import ApplicationServices
@@ -47,7 +48,7 @@ extension AccessibilityService {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        Self.logAudit("highlightElement(role: \(role ?? "nil"), title: \(title ?? "nil"), value: \(value ?? "nil"), app: \(appBundleId ?? "nil"), duration: \(duration)s)")
+        AuditLog.log(.accessibility, "highlightElement(role: \(role ?? "nil"), title: \(title ?? "nil"), value: \(value ?? "nil"), app: \(appBundleId ?? "nil"), duration: \(duration)s)")
 
         // Find element
         var element: AXUIElement?
@@ -159,7 +160,7 @@ extension AccessibilityService {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        Self.logAudit("getWindowFrame(windowId: \(windowId))")
+        AuditLog.log(.accessibility, "getWindowFrame(windowId: \(windowId))")
 
         guard let windowList = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else {
             return errorJSON("Could not get window list")
@@ -202,7 +203,7 @@ extension AccessibilityService {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        Self.logAudit("clickMenuItem(app: \(appBundleId ?? "frontmost"), path: \(menuPath.joined(separator: " > ")))")
+        AuditLog.log(.accessibility, "clickMenuItem(app: \(appBundleId ?? "frontmost"), path: \(menuPath.joined(separator: " > ")))")
         guard !menuPath.isEmpty else { return errorJSON("Menu path cannot be empty") }
 
         let pid: pid_t
@@ -275,7 +276,7 @@ extension AccessibilityService {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        Self.logAudit("setWindowFrame(app: \(appBundleId ?? "frontmost"), x: \(x ?? -1), y: \(y ?? -1), w: \(width ?? -1), h: \(height ?? -1))")
+        AuditLog.log(.accessibility, "setWindowFrame(app: \(appBundleId ?? "frontmost"), x: \(x ?? -1), y: \(y ?? -1), w: \(width ?? -1), h: \(height ?? -1))")
 
         let pid: pid_t
         if let bundleId = appBundleId {
@@ -318,7 +319,7 @@ extension AccessibilityService {
 
     /// Launch, activate, or quit an app by bundle ID or name
     func manageApp(action: String, bundleId: String?, name: String?) -> String {
-        Self.logAudit("manageApp(action: \(action), bundleId: \(bundleId ?? "nil"), name: \(name ?? "nil"))")
+        AuditLog.log(.accessibility, "manageApp(action: \(action), bundleId: \(bundleId ?? "nil"), name: \(name ?? "nil"))")
 
         switch action {
         case "launch":
@@ -378,7 +379,7 @@ extension AccessibilityService {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        Self.logAudit("scrollToElement(role: \(role ?? "nil"), title: \(title ?? "nil"), app: \(appBundleId ?? "nil"))")
+        AuditLog.log(.accessibility, "scrollToElement(role: \(role ?? "nil"), title: \(title ?? "nil"), app: \(appBundleId ?? "nil"))")
 
         // Check if already visible
         let existing = findElement(role: role, title: title, value: nil, appBundleId: appBundleId, timeout: 0.5)
@@ -435,7 +436,7 @@ extension AccessibilityService {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        Self.logAudit("readFocusedElement(app: \(appBundleId ?? "frontmost"))")
+        AuditLog.log(.accessibility, "readFocusedElement(app: \(appBundleId ?? "frontmost"))")
 
         let pid: pid_t
         if let bundleId = appBundleId,
@@ -467,56 +468,8 @@ extension AccessibilityService {
         return successJSON(result)
     }
 
-    // MARK: - Audit Logging (Phase 5)
-
-    static nonisolated(unsafe) var auditLog: [String] = []
-    static let auditLogLock = NSLock()
-    static let auditLogFile: URL = {
-        let dir = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Documents/AgentScript/logs")
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        return dir.appendingPathComponent("accessibility_audit.log")
-    }()
-
-    static func logAudit(_ message: String) {
-        let timestamp = ISO8601DateFormatter().string(from: Date())
-        let entry = "[\(timestamp)] \(message)"
-
-        auditLogLock.lock()
-        defer { auditLogLock.unlock() }
-
-        auditLog.append(entry)
-
-        // Keep last 1000 entries in memory
-        if auditLog.count > 1000 {
-            auditLog.removeFirst(100)
-        }
-
-        // Append to file asynchronously
-        let fileURL = auditLogFile
-        DispatchQueue.global().async {
-            if let data = (entry + "\n").data(using: .utf8) {
-                if FileManager.default.fileExists(atPath: fileURL.path) {
-                    if let handle = try? FileHandle(forWritingTo: fileURL) {
-                        handle.seekToEndOfFile()
-                        handle.write(data)
-                        handle.closeFile()
-                    }
-                } else {
-                    try? FileManager.default.createDirectory(
-                        at: fileURL.deletingLastPathComponent(),
-                        withIntermediateDirectories: true)
-                    try? data.write(to: fileURL, options: .atomic)
-                }
-            }
-        }
-    }
-
-    /// Get recent audit log entries
+    /// Get recent audit log entries (now powered by AgentAudit)
     func getAuditLog(limit: Int = 50) -> String {
-        Self.auditLogLock.lock()
-        defer { Self.auditLogLock.unlock() }
-        let entries = Array(Self.auditLog.suffix(limit))
-        return entries.joined(separator: "\n")
+        AuditLog.recentEntries(limit: limit).joined(separator: "\n")
     }
 }

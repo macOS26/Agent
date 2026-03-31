@@ -1,3 +1,4 @@
+import AgentAudit
 import Foundation
 import AppKit
 @preconcurrency import ApplicationServices
@@ -12,7 +13,7 @@ extension AccessibilityService {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        Self.logAudit("inspectElementAt(x: \(x), y: \(y), depth: \(depth))")
+        AuditLog.log(.accessibility, "inspectElementAt(x: \(x), y: \(y), depth: \(depth))")
 
         let point = CGPoint(x: x, y: y)
         let systemWide = AXUIElementCreateSystemWide()
@@ -133,7 +134,7 @@ extension AccessibilityService {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        Self.logAudit("getElementProperties(role: \(role ?? "nil"), title: \(title ?? "nil"), value: \(value ?? "nil"), app: \(appBundleId ?? "nil"))")
+        AuditLog.log(.accessibility, "getElementProperties(role: \(role ?? "nil"), title: \(title ?? "nil"), value: \(value ?? "nil"), app: \(appBundleId ?? "nil"))")
 
         if let x = x, let y = y {
             return inspectElementAt(x: x, y: y, depth: 2)

@@ -1,9 +1,7 @@
 import Foundation
 import FoundationModels
 import SwiftUI
-import os.log
 
-private let mediatorLog = Logger(subsystem: AppConstants.subsystem, category: "AppleIntelligenceMediator")
 
 /// Apple Intelligence mediator that rephrases user requests to help the LLM understand them better.
 /// Acts as a middleman only — never refuses, blocks, or judges requests.
@@ -191,7 +189,6 @@ Rules:
     /// Wraps a session.respond call with timeout.
     /// Returns nil on timeout so the request goes straight to the LLM.
     private func respondWithTimeout(_ session: LanguageModelSession, prompt: String, label: String) async -> String? {
-        mediatorLog.info("[\(label)] Apple AI request starting")
         let start = CFAbsoluteTimeGetCurrent()
 
         let startLimit = Self.startTimeout
@@ -222,11 +219,9 @@ Rules:
             }
 
             let elapsed = CFAbsoluteTimeGetCurrent() - start
-            mediatorLog.info("[\(label)] Apple AI responded in \(String(format: "%.2f", elapsed))s (\(content.count) chars)")
             return content
         } catch {
             let elapsed = CFAbsoluteTimeGetCurrent() - start
-            mediatorLog.warning("[\(label)] Apple AI timed out after \(String(format: "%.1f", elapsed))s — skipping to LLM")
             self.session = nil
             return nil
         }
@@ -236,14 +231,12 @@ Rules:
     /// Also updates conversation context for future Apple AI calls
     func contextualizeUserMessage(_ message: String) async -> Annotation? {
         guard isEnabled && injectContextToLLM && Self.isAvailable else {
-            mediatorLog.debug("[contextualize] Skipped: enabled=\(self.isEnabled) inject=\(self.injectContextToLLM) available=\(Self.isAvailable)")
             return nil
         }
 
         // Short, clear prompts don't need rephrasing — skip to avoid confusing the LLM
         let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.count < 60 {
-            mediatorLog.debug("[contextualize] Short prompt (\(trimmed.count) chars) — skipping")
             return nil
         }
 
@@ -255,7 +248,6 @@ User said: "\(message)"
 """
 
         guard let content = await respondWithTimeout(session, prompt: prompt, label: "contextualize") else {
-            mediatorLog.warning("[contextualize] Apple AI timed out — skipping to LLM")
             return nil
         }
         let result = sanitize(content)
@@ -264,7 +256,6 @@ User said: "\(message)"
         }
         // Reject if Apple AI added too much (>50% longer = it rewrote instead of fixing typos)
         if result.count > trimmed.count * 3 / 2 {
-            mediatorLog.info("[contextualize] Apple AI rewrote instead of fixing typos — discarding")
             return nil
         }
         return Annotation(target: .llm, content: result, timestamp: Date())
@@ -306,7 +297,6 @@ Summarize the outcome in 1 sentence. If trivial, reply with nothing.
 
         do {
             guard let content = await respondWithTimeout(session, prompt: prompt, label: "summarize") else {
-                mediatorLog.warning("[summarize] Apple AI timed out — skipping")
                 return nil
             }
             let trimmed = sanitize(content)
@@ -329,7 +319,6 @@ Explain in 1 sentence and suggest a fix.
 """
 
         guard let content = await respondWithTimeout(session, prompt: prompt, label: "explainError") else {
-            mediatorLog.warning("[explainError] Apple AI timed out — skipping")
             return nil
         }
         let trimmed = sanitize(content)
@@ -351,7 +340,6 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
 """
 
         guard let content = await respondWithTimeout(session, prompt: prompt, label: "nextSteps") else {
-            mediatorLog.warning("[nextSteps] Apple AI timed out — skipping")
             return nil
         }
         let trimmed = sanitize(content)
@@ -579,7 +567,6 @@ User: "\(message)"
 
     /// Clear the session and conversation context to start fresh (call when switching contexts or starting a new conversation)
     func resetSession() {
-        mediatorLog.info("Session reset")
         session = nil
         lastUserPrompt = nil
         lastAppleAIMessage = nil

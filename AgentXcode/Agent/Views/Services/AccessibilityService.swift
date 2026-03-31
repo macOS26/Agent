@@ -1,3 +1,4 @@
+import AgentAudit
 import Foundation
 import AppKit
 @preconcurrency import ApplicationServices
@@ -42,7 +43,7 @@ final class AccessibilityService: @unchecked Sendable {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        Self.logAudit("listWindows(limit: \(limit))")
+        AuditLog.log(.accessibility, "listWindows(limit: \(limit))")
 
         let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
 
