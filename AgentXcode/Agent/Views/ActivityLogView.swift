@@ -229,6 +229,9 @@ struct ActivityLogView: NSViewRepresentable {
             showingPlaceholder = false
 
             if tabSwitched {
+                // Hide view while we swap content and scroll — prevents visible scroll animation
+                textView.alphaValue = 0
+
                 if let storage = textView.textStorage, lastLength > 0, !lastRenderedText.isEmpty {
                     cacheAttributedString(NSAttributedString(attributedString: storage), for: lastTabID, text: lastRenderedText)
                 }
@@ -245,9 +248,15 @@ struct ActivityLogView: NSViewRepresentable {
                 lastLength = len
                 lastRenderedText = text
                 showingPlaceholder = false
-                // Snap to bottom instantly — no animation
+
+                // Force layout + scroll while hidden — user never sees the scroll
                 textView.layoutManager?.ensureLayout(for: textView.textContainer!)
                 textView.scrollToEndOfDocument(nil)
+                scrollView.reflectScrolledClipView(scrollView.contentView)
+
+                // Show instantly — content is already at bottom
+                textView.alphaValue = 1
+
                 lastSearch = searchText
                 lastMatchIndex = currentMatchIndex
                 return
