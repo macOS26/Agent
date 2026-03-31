@@ -478,6 +478,7 @@ extension AgentViewModel {
         // Single mutation of activityLog instead of multiple
         if !combined.isEmpty {
             activityLog += combined
+            NotificationCenter.default.post(name: .activityLogDidChange, object: nil)
         }
         // Trim from front if too large — keeps main thread fast
         let maxChars = 50_000
