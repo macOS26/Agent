@@ -34,7 +34,7 @@ struct ContentView: View {
             ProjectFolderSectionView(
                 viewModel: viewModel,
                 selectedTab: viewModel.selectedTabId.flatMap { id in
-                    viewModel.scriptTabs.first(where: { $0.id == id })
+                    viewModel.tab(for: id)
                 }
             )
 
@@ -68,7 +68,7 @@ struct ContentView: View {
                     showAppleAIBanner: $showAppleAIBanner,
                     onCancel: {
                         if let selId = viewModel.selectedTabId,
-                           let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+                           let tab = viewModel.tab(for: selId) {
                             if tab.isLLMRunning {
                                 viewModel.stopTabTask(tab: tab)
                             } else if tab.isRunning {
@@ -86,7 +86,7 @@ struct ContentView: View {
 
             // Activity Log — switches between main and script tab
             if let selectedId = viewModel.selectedTabId,
-               let tab = viewModel.scriptTabs.first(where: { $0.id == selectedId }) {
+               let tab = viewModel.tab(for: selectedId) {
                 ZStack(alignment: .topTrailing) {
                     ActivityLogView(
                         text: tab.activityLog,
@@ -139,7 +139,7 @@ struct ContentView: View {
                 viewModel: viewModel,
                 isTaskFieldFocused: $isTaskFieldFocused,
                 selectedTab: viewModel.selectedTabId.flatMap { id in
-                    viewModel.scriptTabs.first(where: { $0.id == id })
+                    viewModel.tab(for: id)
                 }
             )
         }
@@ -269,7 +269,7 @@ struct ContentView: View {
                 if event.modifierFlags.contains(.command),
                    event.keyCode == 36 {
                     if let selId = viewModel.selectedTabId,
-                       let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+                       let tab = viewModel.tab(for: selId) {
                         if !tab.taskInput.isEmpty && !tab.isLLMRunning {
                             viewModel.runTabTask(tab: tab)
                         }
@@ -283,7 +283,7 @@ struct ContentView: View {
                 if event.modifierFlags.contains(.command),
                    event.charactersIgnoringModifiers == "." {
                     if let selId = viewModel.selectedTabId,
-                       let tab = viewModel.scriptTabs.first(where: { $0.id == selId }),
+                       let tab = viewModel.tab(for: selId),
                        tab.isBusy {
                         if tab.isLLMRunning {
                             viewModel.stopTabTask(tab: tab)
@@ -317,7 +317,7 @@ struct ContentView: View {
                    event.charactersIgnoringModifiers == "d" {
                     withAnimation(.easeInOut(duration: 0.25)) {
                         if let selId = viewModel.selectedTabId,
-                           let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+                           let tab = viewModel.tab(for: selId) {
                             tab.thinkingExpanded = false
                         } else {
                             viewModel.thinkingExpanded = false
@@ -331,7 +331,7 @@ struct ContentView: View {
                    event.charactersIgnoringModifiers == "o" {
                     withAnimation(.easeInOut(duration: 0.25)) {
                         if let selId = viewModel.selectedTabId,
-                           let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+                           let tab = viewModel.tab(for: selId) {
                             tab.thinkingExpanded = true
                         } else {
                             viewModel.thinkingExpanded = true
@@ -359,7 +359,7 @@ struct ContentView: View {
                 if event.modifierFlags.contains([.command, .shift]),
                    event.charactersIgnoringModifiers == "l" {
                     viewModel.rawLLMOutput = ""
-                    if let selId = viewModel.selectedTabId, let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+                    if let selId = viewModel.selectedTabId, let tab = viewModel.tab(for: selId) {
                         tab.rawLLMOutput = ""
                     }
                     return nil
@@ -370,7 +370,7 @@ struct ContentView: View {
                    event.charactersIgnoringModifiers == "h" {
                     viewModel.promptHistory.removeAll()
                     UserDefaults.standard.removeObject(forKey: "agentPromptHistory")
-                    if let selId = viewModel.selectedTabId, let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+                    if let selId = viewModel.selectedTabId, let tab = viewModel.tab(for: selId) {
                         tab.promptHistory.removeAll()
                     }
                     return nil
@@ -417,7 +417,7 @@ struct ContentView: View {
                 // Escape key to cancel active context (tab or main)
                 if event.keyCode == 53 {
                     if let selId = viewModel.selectedTabId,
-                       let tab = viewModel.scriptTabs.first(where: { $0.id == selId }),
+                       let tab = viewModel.tab(for: selId),
                        tab.isBusy {
                         if tab.isLLMRunning {
                             viewModel.stopTabTask(tab: tab)
@@ -435,7 +435,7 @@ struct ContentView: View {
                 if event.keyCode == 126 || event.keyCode == 125 {
                     let direction = event.keyCode == 126 ? -1 : 1
                     if let tabId = viewModel.selectedTabId,
-                       let tab = viewModel.scriptTabs.first(where: { $0.id == tabId }) {
+                       let tab = viewModel.tab(for: tabId) {
                         tab.navigateHistory(direction: direction)
                     } else {
                         viewModel.navigatePromptHistory(direction: direction)
@@ -471,7 +471,7 @@ struct ContentView: View {
     @ViewBuilder
     private var thinkingIndicator: some View {
         if let selId = viewModel.selectedTabId,
-           let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+           let tab = viewModel.tab(for: selId) {
             ThinkingIndicatorView(viewModel: viewModel, tab: tab)
         } else if viewModel.showThinkingIndicator && (isActiveRunning || !isActiveDismissed) {
             ThinkingIndicatorView(viewModel: viewModel)
@@ -481,7 +481,7 @@ struct ContentView: View {
     /// Whether the active context's thinking indicator has been dismissed.
     private var isActiveDismissed: Bool {
         if let selId = viewModel.selectedTabId,
-           let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+           let tab = viewModel.tab(for: selId) {
             return tab.thinkingDismissed
         }
         return viewModel.thinkingDismissed
@@ -490,7 +490,7 @@ struct ContentView: View {
     /// Whether the active context (selected tab or main) is in thinking state.
     private var isActiveThinking: Bool {
         if let selId = viewModel.selectedTabId,
-           let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+           let tab = viewModel.tab(for: selId) {
             return tab.isLLMThinking
         }
         return viewModel.isThinking
@@ -499,7 +499,7 @@ struct ContentView: View {
     /// Whether the active context is doing anything — thinking, running, or executing.
     private var isActiveRunning: Bool {
         if let selId = viewModel.selectedTabId,
-           let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+           let tab = viewModel.tab(for: selId) {
             return tab.isLLMRunning || tab.isLLMThinking || tab.isRunning
         }
         return viewModel.isRunning || viewModel.isThinking
@@ -509,7 +509,7 @@ struct ContentView: View {
     private var activeTaskPrompt: String? {
         // Check selected tab first
         if let selId = viewModel.selectedTabId,
-           let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+           let tab = viewModel.tab(for: selId) {
             if tab.isLLMRunning { return tab.currentTaskPrompt }
             if tab.isRunning { return "Running: \(tab.scriptName)" }
         }
@@ -522,7 +522,7 @@ struct ContentView: View {
     private var activeAppleAIPrompt: String? {
         // Check selected tab first
         if let selId = viewModel.selectedTabId,
-           let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+           let tab = viewModel.tab(for: selId) {
             let p = tab.currentAppleAIPrompt
             if !p.isEmpty { return p }
         }
@@ -534,7 +534,7 @@ struct ContentView: View {
     /// Color for the currently selected tab.
     private var currentTabColor: Color {
         guard let selectedId = viewModel.selectedTabId else { return .red }
-        if let tab = viewModel.scriptTabs.first(where: { $0.id == selectedId }) {
+        if let tab = viewModel.tab(for: selectedId) {
             return tab.isMainTab ? .blue : Self.tabColor(for: selectedId, in: viewModel.scriptTabs)
         }
         return .red

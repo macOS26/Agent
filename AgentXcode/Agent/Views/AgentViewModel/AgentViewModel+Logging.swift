@@ -35,7 +35,7 @@ extension AgentViewModel {
 
         // Also store per-tab error if a tab is active
         if let selectedId = selectedTabId,
-           let tab = scriptTabs.first(where: { $0.id == selectedId }) {
+           let tab = tab(for: selectedId) {
             tab.tabErrors.append("[\(timestamp)] \(String(describing: type(of: error))): \(fullMessage.truncate(to: 100))")
         }
 
@@ -319,7 +319,7 @@ extension AgentViewModel {
     /// Clear the selected tab's log, or main log if no tab selected.
     func clearSelectedLog() {
         if let selectedId = selectedTabId,
-           let tab = scriptTabs.first(where: { $0.id == selectedId }) {
+           let tab = tab(for: selectedId) {
             tab.activityLog = ""
             tab.logBuffer = ""
             tab.logFlushTask?.cancel()
@@ -367,7 +367,7 @@ extension AgentViewModel {
         sessionOutputTokens = 0
         // Clear selected tab if applicable
         if let selectedId = selectedTabId,
-           let tab = scriptTabs.first(where: { $0.id == selectedId }) {
+           let tab = tab(for: selectedId) {
             tab.rawLLMOutput = ""
             tab.llmMessages = []
             tab.promptHistory.removeAll()

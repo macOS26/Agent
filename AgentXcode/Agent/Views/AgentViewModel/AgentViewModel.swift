@@ -645,7 +645,7 @@ final class AgentViewModel {
     /// Prompt history for whichever tab is currently selected.
     var currentTabPromptHistory: [String] {
         if let selectedId = selectedTabId,
-           let tab = scriptTabs.first(where: { $0.id == selectedId }) {
+           let tab = tab(for: selectedId) {
             return tab.promptHistory
         }
         return promptHistory
@@ -654,7 +654,7 @@ final class AgentViewModel {
     /// Display name for the currently selected tab.
     var currentTabName: String {
         if let selectedId = selectedTabId,
-           let tab = scriptTabs.first(where: { $0.id == selectedId }) {
+           let tab = tab(for: selectedId) {
             return tab.displayTitle
         }
         return "Main"
@@ -663,7 +663,7 @@ final class AgentViewModel {
     /// Error history for UI display — per-tab when a tab is selected, global for main
     var errorHistory: [String] {
         if let selectedId = selectedTabId,
-           let tab = scriptTabs.first(where: { $0.id == selectedId }),
+           let tab = tab(for: selectedId),
            !tab.isMainTab {
             return tab.tabErrors
         }
@@ -679,7 +679,7 @@ final class AgentViewModel {
     /// Task summaries for UI display — per-tab when a tab is selected, global for main
     var taskSummaries: [String] {
         if let selectedId = selectedTabId,
-           let tab = scriptTabs.first(where: { $0.id == selectedId }),
+           let tab = tab(for: selectedId),
            !tab.isMainTab {
             return tab.tabTaskSummaries
         }
@@ -694,7 +694,7 @@ final class AgentViewModel {
     /// Clear prompt history for whichever tab is currently selected.
     func clearCurrentTabPromptHistory() {
         if let selectedId = selectedTabId,
-           let tab = scriptTabs.first(where: { $0.id == selectedId }) {
+           let tab = tab(for: selectedId) {
             tab.promptHistory.removeAll()
             tab.historyIndex = -1
             tab.savedInput = ""
@@ -709,7 +709,7 @@ final class AgentViewModel {
     /// Clear history by type: "Prompts", "Error History", or "Task Summaries".
     func clearHistory(type: String) {
         if let selectedId = selectedTabId,
-           let tab = scriptTabs.first(where: { $0.id == selectedId }),
+           let tab = tab(for: selectedId),
            !tab.isMainTab {
             switch type {
             case "Prompts":
@@ -794,8 +794,26 @@ final class AgentViewModel {
 
     // MARK: - Script Tabs
 
-    var scriptTabs: [ScriptTab] = []
+    var scriptTabs: [ScriptTab] = [] {
+        didSet { rebuildTabIndex() }
+    }
     var selectedTabId: UUID?   // nil = Main tab
+
+    /// O(1) tab lookup by UUID
+    private var tabsByID: [UUID: ScriptTab] = [:]
+
+    /// The currently selected ScriptTab, or nil for main — O(1)
+    var selectedTab: ScriptTab? {
+        guard let id = selectedTabId else { return nil }
+        return tabsByID[id]
+    }
+
+    /// O(1) tab lookup
+    func tab(for id: UUID) -> ScriptTab? { tabsByID[id] }
+
+    private func rebuildTabIndex() {
+        tabsByID = Dictionary(uniqueKeysWithValues: scriptTabs.map { ($0.id, $0) })
+    }
 
     // MARK: - Logging State
 

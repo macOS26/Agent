@@ -75,7 +75,7 @@ extension AgentViewModel {
                 clearAll()
             case "llm":
                 rawLLMOutput = ""
-                if let selId = selectedTabId, let tab = scriptTabs.first(where: { $0.id == selId }) {
+                if let selId = selectedTabId, let tab = tab(for: selId) {
                     tab.rawLLMOutput = ""
                 }
                 appendLog("🧹 LLM output cleared.")
@@ -83,7 +83,7 @@ extension AgentViewModel {
             case "history":
                 promptHistory.removeAll()
                 UserDefaults.standard.removeObject(forKey: "agentPromptHistory")
-                if let selId = selectedTabId, let tab = scriptTabs.first(where: { $0.id == selId }) {
+                if let selId = selectedTabId, let tab = tab(for: selId) {
                     tab.promptHistory.removeAll()
                 }
                 appendLog("🧹 Prompt history cleared.")
@@ -135,7 +135,7 @@ extension AgentViewModel {
         UserDefaults.standard.set(promptHistory, forKey: "agentPromptHistory")
         // Sync to selected tab so arrow keys work — seed from viewModel if tab is empty
         if let selectedId = selectedTabId,
-           let tab = scriptTabs.first(where: { $0.id == selectedId }) {
+           let tab = tab(for: selectedId) {
             if tab.promptHistory.isEmpty && !promptHistory.isEmpty {
                 tab.promptHistory = promptHistory
             } else {

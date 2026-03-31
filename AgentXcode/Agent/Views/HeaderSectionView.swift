@@ -39,7 +39,7 @@ struct HeaderStatusView: View {
 
             // Unified status spinner — main tab or active script tab
             if let selId = viewModel.selectedTabId,
-               let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+               let tab = viewModel.tab(for: selId) {
                 if tab.isLLMThinking {
                     HStack(spacing: 4) {
                         ProgressView().controlSize(.mini)
@@ -105,7 +105,7 @@ struct HeaderToolbarButtons: View {
 
     var currentTabColor: Color {
         guard let selectedId = viewModel.selectedTabId,
-              let tab = viewModel.scriptTabs.first(where: { $0.id == selectedId }) else {
+              let tab = viewModel.tab(for: selectedId) else {
             return .primary
         }
         return ContentView.tabColor(for: tab.id, in: viewModel.scriptTabs)
@@ -203,7 +203,7 @@ struct HeaderToolbarButtons: View {
                 onClear: { type in viewModel.clearHistory(type: type) },
                 onRerun: { prompt in
                     if let selectedId = viewModel.selectedTabId,
-                       let tab = viewModel.scriptTabs.first(where: { $0.id == selectedId }) {
+                       let tab = viewModel.tab(for: selectedId) {
                         tab.taskInput = prompt
                         viewModel.runTabTask(tab: tab)
                     } else {

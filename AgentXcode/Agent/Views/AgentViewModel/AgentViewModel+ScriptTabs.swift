@@ -8,7 +8,7 @@ extension AgentViewModel {
         let tab = ScriptTab(scriptName: scriptName)
         // Inherit LLM config from the currently selected main tab
         if let selId = selectedTabId,
-           let parent = scriptTabs.first(where: { $0.id == selId && $0.isMainTab }) {
+           let parent = self.tab(for: selId), parent.isMainTab {
             tab.parentTabId = parent.id
         }
         // Inherit project folder from current context (resolve to directory, not file)
@@ -45,7 +45,7 @@ extension AgentViewModel {
             return (config.provider, config.model)
         }
         if let parentId = tab.parentTabId,
-           let parent = scriptTabs.first(where: { $0.id == parentId }),
+           let parent = self.tab(for: parentId),
            let config = parent.llmConfig {
             return (config.provider, config.model)
         }
@@ -99,7 +99,7 @@ extension AgentViewModel {
     }
 
     func closeScriptTab(id: UUID) {
-        if let tab = scriptTabs.first(where: { $0.id == id }) {
+        if let tab = tab(for: id) {
             // Stop LLM task and clear queue
             if tab.isLLMRunning || !tab.taskQueue.isEmpty {
                 stopTabTask(tab: tab)
@@ -132,7 +132,7 @@ extension AgentViewModel {
     }
 
     func cancelScriptTab(id: UUID) {
-        guard let tab = scriptTabs.first(where: { $0.id == id }) else { return }
+        guard let tab = tab(for: id) else { return }
         tab.isCancelled = true
         tab.cancelHandler?()
         tab.isRunning = false
@@ -157,7 +157,7 @@ extension AgentViewModel {
             return
         }
 
-        guard let currentTab = scriptTabs.first(where: { $0.id == selectedTabId }) else {
+        guard let currentTab = selectedTab else {
             // Tab not found, go to main
             selectMainTab()
             return
@@ -170,7 +170,7 @@ extension AgentViewModel {
 
         // On a script tab - find its parent
         if let parentId = currentTab.parentTabId,
-           let parentTab = scriptTabs.first(where: { $0.id == parentId && $0.isMainTab }) {
+           let parentTab = self.tab(for: parentId), parentTab.isMainTab {
             // Switch to parent LLM tab
             selectedTabId = parentTab.id
             persistScriptTabs()

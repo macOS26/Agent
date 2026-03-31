@@ -63,7 +63,7 @@ extension ContentView {
         if event.modifierFlags.contains(.command),
            event.charactersIgnoringModifiers == "r" {
             if let selId = viewModel.selectedTabId,
-               let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+               let tab = viewModel.tab(for: selId) {
                 if !tab.taskInput.isEmpty && !tab.isLLMRunning {
                     viewModel.runTabTask(tab: tab)
                 }
@@ -77,7 +77,7 @@ extension ContentView {
         if event.modifierFlags.contains(.command),
            event.charactersIgnoringModifiers == "." {
             if let selId = viewModel.selectedTabId,
-               let tab = viewModel.scriptTabs.first(where: { $0.id == selId }),
+               let tab = viewModel.tab(for: selId),
                tab.isLLMRunning {
                 viewModel.stopTabTask(tab: tab)
             } else if viewModel.isRunning {
@@ -106,7 +106,7 @@ extension ContentView {
         if event.modifierFlags.contains(.command),
            event.charactersIgnoringModifiers == "d" {
             if let selId = viewModel.selectedTabId,
-               let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
+               let tab = viewModel.tab(for: selId) {
                 tab.thinkingExpanded.toggle()
             } else {
                 viewModel.thinkingExpanded.toggle()
@@ -207,7 +207,7 @@ extension ContentView {
         // Escape key to cancel active context (tab or main)
         if event.keyCode == 53 {
             if let selId = viewModel.selectedTabId,
-               let tab = viewModel.scriptTabs.first(where: { $0.id == selId }),
+               let tab = viewModel.tab(for: selId),
                tab.isLLMRunning {
                 viewModel.stopTabTask(tab: tab)
                 return nil
@@ -221,7 +221,7 @@ extension ContentView {
         if event.keyCode == 126 || event.keyCode == 125 {
             let direction = event.keyCode == 126 ? -1 : 1
             if let tabId = viewModel.selectedTabId,
-               let tab = viewModel.scriptTabs.first(where: { $0.id == tabId }) {
+               let tab = viewModel.tab(for: tabId) {
                 tab.navigateHistory(direction: direction)
             } else {
                 viewModel.navigatePromptHistory(direction: direction)
