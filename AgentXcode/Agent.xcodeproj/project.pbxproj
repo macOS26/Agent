@@ -1490,7 +1490,7 @@
 			repositoryURL = "https://github.com/macOS26/AgentMCP.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.2.0;
+				minimumVersion = 1.3.0;
 			};
 		};
 		EAE1E7102F7BF6290079432C /* XCRemoteSwiftPackageReference "AgentD1F" */ = {
