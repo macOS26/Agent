@@ -44,7 +44,9 @@ struct ActivityLogView: NSViewRepresentable {
         context.coordinator.latestTextView = textView
         context.coordinator.latestScrollView = scrollView
         context.coordinator.textProvider = textProvider
+        context.coordinator.latestTabID = tabID
         context.coordinator.startPolling()
+        context.coordinator.startObservingLogChanges()
         return scrollView
     }
 
@@ -101,6 +103,8 @@ struct ActivityLogView: NSViewRepresentable {
         /// Polls the text source directly — bypasses SwiftUI observation
         var textProvider: (@MainActor () -> String)?
         private var pollTimer: DispatchSourceTimer?
+        /// Notification observer for activityLog changes
+        nonisolated(unsafe) var logObserver: NSObjectProtocol?
 
         override init() {
             super.init()
@@ -130,17 +134,30 @@ struct ActivityLogView: NSViewRepresentable {
             pollTimer = timer
         }
 
-        private func pollTextSource() {
-            guard let provider = textProvider else {
-
-                return
+        /// Listen for activityLog changes filtered by this coordinator's tab UUID
+        func startObservingLogChanges() {
+            guard logObserver == nil else { return }
+            logObserver = NotificationCenter.default.addObserver(
+                forName: .activityLogDidChange,
+                object: nil,
+                queue: .main
+            ) { [weak self] notification in
+                let notifTabID = notification.object as? UUID
+                MainActor.assumeIsolated {
+                    guard let self, let provider = self.textProvider else { return }
+                    guard notifTabID == self.latestTabID else { return }
+                    self.latestText = provider()
+                    self.scheduleRender()
+                }
             }
+        }
+
+        private func pollTextSource() {
+            guard let provider = textProvider else { return }
             let newText = provider()
             let newLen = (newText as NSString).length
             guard newLen != lastLength else { return }
-
             latestText = newText
-            lastLength = newLen
             scheduleRender()
         }
 
@@ -391,6 +408,9 @@ struct ActivityLogView: NSViewRepresentable {
             pollTimer?.cancel()
             pollTimer = nil
             if let observer = scrollObserver {
+                NotificationCenter.default.removeObserver(observer)
+            }
+            if let observer = logObserver {
                 NotificationCenter.default.removeObserver(observer)
             }
         }

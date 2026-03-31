@@ -19,6 +19,8 @@ enum AppConstants {
 
 extension Notification.Name {
     static let appWillQuit = Notification.Name("appWillQuit")
+    /// Posted when a tab's or main activityLog changes. object = tab UUID (or nil for main)
+    static let activityLogDidChange = Notification.Name("activityLogDidChange")
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate {

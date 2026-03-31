@@ -197,6 +197,7 @@ final class ScriptTab: Identifiable {
         if !logBuffer.isEmpty {
             activityLog += logBuffer
             logBuffer = ""
+            NotificationCenter.default.post(name: .activityLogDidChange, object: id)
         }
     }
 
