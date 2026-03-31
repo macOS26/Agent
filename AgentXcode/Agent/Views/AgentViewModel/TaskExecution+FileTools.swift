@@ -16,7 +16,6 @@ extension AgentViewModel {
         toolId: String,
         appendLog: @escaping @Sendable (String) -> Void,
         appendRawOutput: @escaping @Sendable (String) -> Void,
-        commandsRun: inout [String],
         toolResults: inout [[String: Any]]
     ) async -> Bool {
         // MARK: read_file

@@ -744,6 +744,8 @@ final class AgentViewModel {
     var mainTaskQueue: [String] = []
     var currentTaskPrompt: String = ""
     var currentAppleAIPrompt: String = ""
+    /// Commands run during current task — used by history, mediator, and tool handlers.
+    var commandsRun: [String] = []
     @ObservationIgnored private var terminationObserver: Any?
 
     // MARK: - Messages Monitor
@@ -915,7 +917,9 @@ final class AgentViewModel {
             forName: NSApplication.willTerminateNotification,
             object: nil, queue: .main
         ) { [weak self] _ in
-            self?.persistScriptTabs()
+            Task { @MainActor in
+                self?.persistScriptTabs()
+            }
         }
 
         // Restore messages monitor state
