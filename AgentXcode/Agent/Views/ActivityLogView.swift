@@ -10,8 +10,6 @@ import AgentTerminalNeo
 struct ActivityLogView: NSViewRepresentable {
     @Environment(\.colorScheme) private var colorScheme
     let text: String
-    var viewModel: AgentViewModel?
-    var tab: ScriptTab?
     var tabID: UUID?  // nil = main tab
     var searchText: String = ""
     var caseSensitive: Bool = false
@@ -44,41 +42,24 @@ struct ActivityLogView: NSViewRepresentable {
         context.coordinator.startObservingScroll(scrollView)
         context.coordinator.latestTextView = textView
         context.coordinator.latestScrollView = scrollView
-        context.coordinator.latestTabID = tabID
-
-        // Register direct callback — bypasses SwiftUI layout cycle entirely
-        let coord = context.coordinator
-        if let vm = viewModel {
-            vm.onLogChanged = { [weak coord] newText in
-                guard let coord else { return }
-                coord.latestText = newText
-                coord.scheduleRender()
-            }
-        }
-        if let tab = tab {
-            // For script tabs, observe tab's activityLog via a timer or direct hook
-            // Tab logs flow through tab.activityLog which is set by flushLog
-        }
-
-        // Initial render
-        coord.latestText = text
-        coord.scheduleRender()
-
         return scrollView
     }
 
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
         let coord = context.coordinator
-        // Detect tab switch or text change — only update when content actually differs
-        if text != coord.latestText || tabID != coord.latestTabID {
-            coord.latestText = text
-            coord.latestTabID = tabID
-            coord.latestSearchText = searchText
-            coord.latestCaseSensitive = caseSensitive
-            coord.latestMatchIndex = currentMatchIndex
-            coord.latestMatchCallback = onMatchCount
-            coord.scheduleRender()
-        }
+        let len = (text as NSString).length
+        let tabChanged = tabID != coord.latestTabID
+        let textChanged = len != coord.lastLength
+        guard tabChanged || textChanged else { return }
+        coord.latestText = text
+        coord.lastLength = len
+        coord.latestTabID = tabID
+        if tabChanged { coord.lastTabID = nil } // force full rebuild on tab switch
+        coord.latestSearchText = searchText
+        coord.latestCaseSensitive = caseSensitive
+        coord.latestMatchIndex = currentMatchIndex
+        coord.latestMatchCallback = onMatchCount
+        coord.scheduleRender()
     }
 
     func makeCoordinator() -> Coordinator { Coordinator() }
@@ -120,14 +101,13 @@ struct ActivityLogView: NSViewRepresentable {
 
         /// Schedule rendering AFTER SwiftUI's layout pass completes
         func scheduleRender() {
-            // Throttle: max one render per 200ms
-            guard scheduledRenderWork == nil else { return }
+            scheduledRenderWork?.cancel()
             let work = DispatchWorkItem { [weak self] in
                 self?.scheduledRenderWork = nil
                 self?.performRender()
             }
             scheduledRenderWork = work
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: work)
+            DispatchQueue.main.async(execute: work)
         }
 
         /// All rendering logic — runs on main thread but OUTSIDE SwiftUI's layout pass

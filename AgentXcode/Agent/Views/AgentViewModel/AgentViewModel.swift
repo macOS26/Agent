@@ -55,9 +55,7 @@ final class AgentViewModel {
     var taskInput = ""
     
     // Stored property drives live UI; ChatHistoryStore persists across launches via SwiftData
-    @ObservationIgnored var activityLog = ChatHistoryStore.shared.buildActivityLogText(maxTasks: 3)
-    /// Direct callback for ActivityLogView Coordinator — bypasses SwiftUI layout
-    var onLogChanged: ((String) -> Void)?
+    var activityLog = ChatHistoryStore.shared.buildActivityLogText(maxTasks: 3)
     var isRunning = false
     var isThinking = false
     /// When true, only Core+Workflow+Coding+UserAgent tools sent to LLM

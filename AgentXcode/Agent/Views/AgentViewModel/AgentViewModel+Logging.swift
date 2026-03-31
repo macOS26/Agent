@@ -483,7 +483,6 @@ extension AgentViewModel {
                 activityLog = "··· earlier output trimmed ···\n" + String(activityLog[activityLog.index(after: nl)...])
             }
         }
-        onLogChanged?(activityLog)
     }
 
     private func schedulePersist() {
