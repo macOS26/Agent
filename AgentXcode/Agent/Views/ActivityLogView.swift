@@ -102,6 +102,8 @@ struct ActivityLogView: NSViewRepresentable {
         var lastTabID: UUID?
         /// Shared scroll position cache (from ViewModel, survives view recreation)
         var scrollPositions: Binding<[UUID?: CGFloat]>?
+        /// Prevents auto-scroll on first render when a saved position exists
+        var initialScrollRestored = false
         /// Separate length tracker for updateNSView dedup (independent of performRender's lastLength)
         var updateNSViewLastLength = 0
         /// Polls the text source directly — bypasses SwiftUI observation
@@ -366,7 +368,14 @@ struct ActivityLogView: NSViewRepresentable {
             lastMatchIndex = currentMatchIndex
 
             if textGrew {
-                throttledScrollToEnd(textView)
+                // On first render, restore saved scroll position instead of scrolling to bottom
+                if !initialScrollRestored, let savedY = scrollPositions?.wrappedValue[latestTabID] {
+                    initialScrollRestored = true
+                    scrollView.contentView.scroll(to: NSPoint(x: 0, y: savedY))
+                    scrollView.reflectScrolledClipView(scrollView.contentView)
+                } else {
+                    throttledScrollToEnd(textView)
+                }
             }
         }
         /// Throttle scrollToEnd to avoid hyper-scrolling during fast streaming
