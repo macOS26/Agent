@@ -160,12 +160,22 @@ struct ActivityLogView: NSViewRepresentable {
         }
 
         /// Schedule rendering AFTER SwiftUI's layout pass completes.
-        /// Does NOT cancel pending work — lets it run with latest state.
+        /// If already scheduled, marks dirty so a follow-up render fires.
+        private var renderDirty = false
         func scheduleRender() {
-            guard scheduledRenderWork == nil else { return }
+            if scheduledRenderWork != nil {
+                renderDirty = true
+                return
+            }
             let work = DispatchWorkItem { [weak self] in
-                self?.scheduledRenderWork = nil
-                self?.performRender()
+                guard let self else { return }
+                self.scheduledRenderWork = nil
+                self.performRender()
+                // If new data arrived during render, schedule again
+                if self.renderDirty {
+                    self.renderDirty = false
+                    self.scheduleRender()
+                }
             }
             scheduledRenderWork = work
             DispatchQueue.main.async(execute: work)
@@ -402,34 +412,18 @@ struct ActivityLogView: NSViewRepresentable {
             return (contentHeight - visibleBottom) < 300
         }
 
-        /// Smooth animated scroll to end of text view
-        private func smoothScrollToEnd(_ textView: NSTextView) {
-            guard let scrollView = textView.enclosingScrollView else {
+        /// Instant scroll to end — no animation
+        private func snapToEnd(_ textView: NSTextView) {
+            guard let scrollView = textView.enclosingScrollView,
+                  let textContainer = textView.textContainer else {
                 textView.scrollToEndOfDocument(nil)
                 return
             }
-            // Ensure layout is complete before calculating target
-            guard let textContainer = textView.textContainer else {
-                textView.scrollToEndOfDocument(nil)
-                return
-            }
-            textView.layoutManager?.ensureLayout(for: textContainer)
-            let contentHeight = textView.frame.height
-            let clipHeight = scrollView.contentView.bounds.height
-            let targetY = max(0, contentHeight - clipHeight)
             isProgrammaticScroll = true
-            NSAnimationContext.runAnimationGroup { ctx in
-                ctx.duration = 0.2
-                ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
-                scrollView.contentView.animator().setBoundsOrigin(NSPoint(x: 0, y: targetY))
-            } completionHandler: {
-                MainActor.assumeIsolated { [weak self] in
-                    // Snap to true bottom after animation in case content grew during scroll
-                    textView.scrollToEndOfDocument(nil)
-                    scrollView.reflectScrolledClipView(scrollView.contentView)
-                    self?.isProgrammaticScroll = false
-                }
-            }
+            textView.layoutManager?.ensureLayout(for: textContainer)
+            textView.scrollToEndOfDocument(nil)
+            scrollView.reflectScrolledClipView(scrollView.contentView)
+            isProgrammaticScroll = false
         }
 
         /// Throttled scroll — at most once per 0.15s, skipped if user scrolled away from bottom
@@ -440,13 +434,13 @@ struct ActivityLogView: NSViewRepresentable {
             pendingScrollWork?.cancel()
             if now - lastScrollTime >= interval {
                 lastScrollTime = now
-                smoothScrollToEnd(textView)
+                snapToEnd(textView)
             } else {
                 let work = DispatchWorkItem { [weak self, weak textView] in
                     guard let self, let textView else { return }
                     guard self.userIsAtBottom else { return }
                     self.lastScrollTime = CFAbsoluteTimeGetCurrent()
-                    self.smoothScrollToEnd(textView)
+                    self.snapToEnd(textView)
                 }
                 pendingScrollWork = work
                 DispatchQueue.main.asyncAfter(deadline: .now() + interval, execute: work)
