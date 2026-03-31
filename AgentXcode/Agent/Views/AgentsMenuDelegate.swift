@@ -147,7 +147,7 @@ final class AgentsMenuDelegate: NSObject, NSMenuDelegate {
         guard let prompt = sender.representedObject as? String,
               let vm = viewModel else { return }
         if let selId = vm.selectedTabId,
-           let tab = vm.scriptTabs.first(where: { $0.id == selId }) {
+           let tab = vm.tab(for: selId) {
             tab.taskInput = prompt
         } else {
             vm.taskInput = prompt

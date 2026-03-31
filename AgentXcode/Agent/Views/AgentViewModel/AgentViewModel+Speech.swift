@@ -107,7 +107,7 @@ extension AgentViewModel {
 
         preDictationTabId = selectedTabId
         if let tabId = selectedTabId,
-           let tab = scriptTabs.first(where: { $0.id == tabId }) {
+           let tab = tab(for: tabId) {
             preDictationText = tab.taskInput
         } else {
             preDictationText = taskInput
@@ -130,7 +130,7 @@ extension AgentViewModel {
                         let newText = prefix + separator + transcription
 
                         if let tabId = self.preDictationTabId,
-                           let tab = self.scriptTabs.first(where: { $0.id == tabId }) {
+                           let tab = self.tab(for: tabId) {
                             tab.taskInput = newText
                         } else {
                             self.taskInput = newText
@@ -190,7 +190,7 @@ extension AgentViewModel {
         let newText = prefix + separator + text
 
         if let tabId = preDictationTabId,
-           let tab = scriptTabs.first(where: { $0.id == tabId }) {
+           let tab = tab(for: tabId) {
             tab.taskInput = newText
         } else {
             taskInput = newText
@@ -223,7 +223,7 @@ extension AgentViewModel {
 
         // Submit the command
         if let tabId = preDictationTabId,
-           let tab = scriptTabs.first(where: { $0.id == tabId }) {
+           let tab = tab(for: tabId) {
             if !tab.taskInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 runTabTask(tab: tab)
             }

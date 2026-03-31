@@ -637,10 +637,14 @@ extension AgentViewModel {
                 return "Error: step \(stepNum) not found in plan '\(planId)'."
             }
 
-            let completed = lines.filter { $0.contains("- [✅]") }.count
-            let inProgress = lines.filter { $0.contains("- [⏳]") }.count
-            let failed = lines.filter { $0.contains("- [❌]") }.count
-            let total = lines.filter { $0.trimmingCharacters(in: .whitespaces).hasPrefix("- [") }.count
+            var completed = 0, inProgress = 0, failed = 0, total = 0
+            for line in lines {
+                guard line.trimmingCharacters(in: .whitespaces).hasPrefix("- [") else { continue }
+                total += 1
+                if line.contains("- [✅]") { completed += 1 }
+                else if line.contains("- [⏳]") { inProgress += 1 }
+                else if line.contains("- [❌]") { failed += 1 }
+            }
             let pending = total - completed - inProgress - failed
 
             if let statusIdx = lines.firstIndex(where: { $0.hasPrefix("*Status:") }) {
