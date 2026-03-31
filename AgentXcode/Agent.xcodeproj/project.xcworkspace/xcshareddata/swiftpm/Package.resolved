@@ -1,6 +1,15 @@
 {
-  "originHash" : "d5c769567a5a875d34c404d509327670f9f2122744925b64b912b07d348543a4",
+  "originHash" : "0f7a4ddee3acb46bf5edf9ab98a923cac7d0f5c32a72fbf116382f2638f9ed42",
   "pins" : [
+    {
+      "identity" : "agentaudit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/macOS26/AgentAudit.git",
+      "state" : {
+        "revision" : "cc777ea0867837c55586c627508cbe37c672a7e7",
+        "version" : "1.0.0"
+      }
+    },
     {
       "identity" : "agentcolorsyntax",
       "kind" : "remoteSourceControl",

@@ -826,7 +826,7 @@
 				EAE1E7102F7BF6290079432C /* XCRemoteSwiftPackageReference "AgentD1F" */,
 				EAE1E7132F7BF6880079432C /* XCRemoteSwiftPackageReference "AgentSwift" */,
 				EAE1E7162F7BF6E70079432C /* XCRemoteSwiftPackageReference "AgentEventBridges" */,
-				EAE1E7192F7BF7000079432C /* XCLocalSwiftPackageReference "../AgentAudit" */,
+				EAE1E7192F7BF7000079432C /* XCRemoteSwiftPackageReference "AgentAudit" */,
 			);
 			productRefGroup = AA10000000000000000042 /* Products */;
 			projectDirPath = "";
@@ -1517,14 +1517,15 @@
 				minimumVersion = 1.1.0;
 			};
 		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCLocalSwiftPackageReference section */
-		EAE1E7192F7BF7000079432C /* XCLocalSwiftPackageReference "../AgentAudit" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ../AgentAudit;
+		EAE1E7192F7BF7000079432C /* XCRemoteSwiftPackageReference "AgentAudit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/macOS26/AgentAudit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
 		};
-/* End XCLocalSwiftPackageReference section */
+/* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		EAE1E7022F7BF5270079432C /* AgentTerminalNeo */ = {
@@ -1564,6 +1565,7 @@
 		};
 		EAE1E71A2F7BF7000079432C /* AgentAudit */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = EAE1E7192F7BF7000079432C /* XCRemoteSwiftPackageReference "AgentAudit" */;
 			productName = AgentAudit;
 		};
 /* End XCSwiftPackageProductDependency section */
