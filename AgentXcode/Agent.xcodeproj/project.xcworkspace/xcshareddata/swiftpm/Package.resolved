@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/macOS26/AgentColorSyntax.git",
       "state" : {
-        "revision" : "265c238357dcf9a4e153fd81b5f85b8fe0e51a40",
-        "version" : "1.0.0"
+        "revision" : "8d3f253180e08077b2fe2c7e22290966e3fbdf2d",
+        "version" : "1.1.0"
       }
     },
     {
@@ -33,8 +33,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/macOS26/AgentTerminalNeo.git",
       "state" : {
-        "revision" : "e4398fd68c258a2ac456717000a4039b9119ff17",
-        "version" : "1.0.0"
+        "revision" : "99a8034ee48385eab9d0b707900771db806b5d37",
+        "version" : "1.2.0"
       }
     },
     {

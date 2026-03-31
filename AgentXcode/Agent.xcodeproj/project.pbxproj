@@ -1497,7 +1497,7 @@
 			repositoryURL = "https://github.com/macOS26/AgentColorSyntax.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.0;
+				minimumVersion = 1.1.0;
 			};
 		};
 		EAB27E1E2F7B772700284C14 /* XCRemoteSwiftPackageReference "AgentTools" */ = {
@@ -1513,7 +1513,7 @@
 			repositoryURL = "https://github.com/macOS26/AgentTerminalNeo.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.0;
+				minimumVersion = 1.2.0;
 			};
 		};
 		XCF0000000000000000001 /* XCRemoteSwiftPackageReference "xcf-swift" */ = {
