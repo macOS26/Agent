@@ -1513,7 +1513,7 @@
 			repositoryURL = "https://github.com/macOS26/AgentTerminalNeo.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.2.0;
+				minimumVersion = 1.2.1;
 			};
 		};
 		XCF0000000000000000001 /* XCRemoteSwiftPackageReference "xcf-swift" */ = {
