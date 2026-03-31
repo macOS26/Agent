@@ -7,7 +7,7 @@ import AppKit
 class HRLineCell: NSTextAttachmentCell {
     let color: NSColor
 
-    nonisolated init(color: NSColor) {
+    init(color: NSColor) {
         self.color = color
         super.init(textCell: "")
     }
@@ -32,7 +32,7 @@ class HRLineCell: NSTextAttachmentCell {
 class CopyButtonCell: NSTextAttachmentCell {
     let codeText: String
 
-    nonisolated init(codeText: String) {
+    init(codeText: String) {
         self.codeText = codeText
         super.init(textCell: "")
     }
