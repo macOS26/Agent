@@ -802,8 +802,6 @@ final class AgentViewModel {
     /// O(1) tab lookup by UUID
     private var tabsByID: [UUID: ScriptTab] = [:]
 
-    /// Per-tab scroll position cache (survives view recreation). Key nil = main tab.
-    var tabScrollPositions: [UUID?: CGFloat] = [:]
 
     /// The currently selected ScriptTab, or nil for main — O(1)
     var selectedTab: ScriptTab? {

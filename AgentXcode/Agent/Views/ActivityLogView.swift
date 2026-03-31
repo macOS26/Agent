@@ -12,8 +12,6 @@ struct ActivityLogView: NSViewRepresentable {
     let text: String
     var tabID: UUID?  // nil = main tab
     var textProvider: (@MainActor () -> String)? = nil  // polled for live updates
-    /// Shared scroll position cache on ViewModel (survives view recreation)
-    var scrollPositions: Binding<[UUID?: CGFloat]>? = nil
     var searchText: String = ""
     var caseSensitive: Bool = false
     var currentMatchIndex: Int = 0
@@ -47,7 +45,6 @@ struct ActivityLogView: NSViewRepresentable {
         context.coordinator.latestScrollView = scrollView
         context.coordinator.textProvider = textProvider
         context.coordinator.latestTabID = tabID
-        context.coordinator.scrollPositions = scrollPositions
         context.coordinator.startPolling()
         context.coordinator.startObservingLogChanges()
         return scrollView
@@ -56,7 +53,6 @@ struct ActivityLogView: NSViewRepresentable {
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
         let coord = context.coordinator
         coord.textProvider = textProvider
-        coord.scrollPositions = scrollPositions
         let len = (text as NSString).length
         let tabChanged = tabID != coord.latestTabID
         let textChanged = len != coord.updateNSViewLastLength
@@ -65,10 +61,7 @@ struct ActivityLogView: NSViewRepresentable {
         coord.latestText = text
         coord.updateNSViewLastLength = len
         coord.latestTabID = tabID
-        if tabChanged {
-            coord.lastTabID = nil // force full rebuild on tab switch
-            coord.initialScrollRestored = false // allow restore on next render
-        }
+        if tabChanged { coord.lastTabID = nil } // force full rebuild on tab switch
         coord.latestSearchText = searchText
         coord.latestCaseSensitive = caseSensitive
         coord.latestMatchIndex = currentMatchIndex
@@ -103,10 +96,6 @@ struct ActivityLogView: NSViewRepresentable {
         var lastRenderedText = ""
         /// Track which tab we last rendered — forces full rebuild on tab switch
         var lastTabID: UUID?
-        /// Shared scroll position cache (from ViewModel, survives view recreation)
-        var scrollPositions: Binding<[UUID?: CGFloat]>?
-        /// Prevents auto-scroll on first render when a saved position exists
-        var initialScrollRestored = false
         /// Separate length tracker for updateNSView dedup (independent of performRender's lastLength)
         var updateNSViewLastLength = 0
         /// Polls the text source directly — bypasses SwiftUI observation
@@ -240,14 +229,6 @@ struct ActivityLogView: NSViewRepresentable {
             showingPlaceholder = false
 
             if tabSwitched {
-                // Save scroll position of the tab we're leaving
-                scrollPositions?.wrappedValue[lastTabID] = scrollView.contentView.bounds.origin.y
-
-                textView.alphaValue = 0
-                NSAnimationContext.runAnimationGroup { ctx in
-                    ctx.duration = 0.25
-                    textView.animator().alphaValue = 1
-                }
                 if let storage = textView.textStorage, lastLength > 0, !lastRenderedText.isEmpty {
                     cacheAttributedString(NSAttributedString(attributedString: storage), for: lastTabID, text: lastRenderedText)
                 }
@@ -256,37 +237,17 @@ struct ActivityLogView: NSViewRepresentable {
 
                 if let cached = cachedAttributedString(for: tabID, text: text) {
                     textView.textStorage?.setAttributedString(cached)
-                    lastLength = len
-                    lastRenderedText = text
-                    showingPlaceholder = false
-                    // Restore saved scroll position, or show bottom for main/new tabs
-                    if let savedY = scrollPositions?.wrappedValue[tabID] {
-                        scrollView.contentView.scroll(to: NSPoint(x: 0, y: savedY))
-                        scrollView.reflectScrolledClipView(scrollView.contentView)
-                    } else {
-                        textView.scrollToEndOfDocument(nil)
-                    }
-                    if searchChanged {
-                        applySearchHighlighting(textView: textView, searchText: searchText, caseSensitive: caseSensitive, currentMatch: currentMatchIndex, onMatchCount: onMatchCount)
-                    }
-                    lastSearch = searchText
-                    lastMatchIndex = currentMatchIndex
-                    return
+                } else {
+                    textView.textStorage?.beginEditing()
+                    textView.textStorage?.setAttributedString(buildAttributedString(from: text))
+                    textView.textStorage?.endEditing()
                 }
-
                 lastLength = len
                 lastRenderedText = text
-                textView.textStorage?.beginEditing()
-                textView.textStorage?.setAttributedString(buildAttributedString(from: text))
-                textView.textStorage?.endEditing()
                 showingPlaceholder = false
-                // Restore saved scroll position, or show bottom for main/new tabs
-                if let savedY = scrollPositions?.wrappedValue[tabID] {
-                    scrollView.contentView.scroll(to: NSPoint(x: 0, y: savedY))
-                    scrollView.reflectScrolledClipView(scrollView.contentView)
-                } else {
-                    textView.scrollToEndOfDocument(nil)
-                }
+                // Snap to bottom instantly — no animation
+                textView.layoutManager?.ensureLayout(for: textView.textContainer!)
+                textView.scrollToEndOfDocument(nil)
                 lastSearch = searchText
                 lastMatchIndex = currentMatchIndex
                 return
@@ -371,14 +332,7 @@ struct ActivityLogView: NSViewRepresentable {
             lastMatchIndex = currentMatchIndex
 
             if textGrew {
-                // On first render, restore saved scroll position instead of scrolling to bottom
-                if !initialScrollRestored, let savedY = scrollPositions?.wrappedValue[latestTabID] {
-                    initialScrollRestored = true
-                    scrollView.contentView.scroll(to: NSPoint(x: 0, y: savedY))
-                    scrollView.reflectScrolledClipView(scrollView.contentView)
-                } else {
-                    throttledScrollToEnd(textView)
-                }
+                throttledScrollToEnd(textView)
             }
         }
         /// Throttle scrollToEnd to avoid hyper-scrolling during fast streaming
@@ -411,8 +365,6 @@ struct ActivityLogView: NSViewRepresentable {
                     guard !self.isProgrammaticScroll else { return }
                     guard let textView = scrollView.documentView as? NSTextView else { return }
                     self.userIsAtBottom = self.isNearBottom(textView)
-                    // Continuously save scroll position so it survives view recreation
-                    self.scrollPositions?.wrappedValue[self.latestTabID] = scrollView.contentView.bounds.origin.y
                     self.scrollThrottled = true
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
                         self?.scrollThrottled = false
