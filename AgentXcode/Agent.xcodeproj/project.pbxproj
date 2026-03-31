@@ -53,6 +53,9 @@
 		AA10000000000000000039 /* UserProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000026 /* UserProtocol.swift */; };
 		AA1000000000000000003A /* OllamaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000028 /* OllamaService.swift */; };
 		AA1000000000000000003B /* ScriptService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000029 /* ScriptService.swift */; };
+		SS110000000000000000001 /* ScriptService+Metadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = SS110000000000000000002 /* ScriptService+Metadata.swift */; };
+		SS110000000000000000003 /* ScriptService+Execution.swift in Sources */ = {isa = PBXBuildFile; fileRef = SS110000000000000000004 /* ScriptService+Execution.swift */; };
+		SS110000000000000000005 /* ScriptService+SavedScripts.swift in Sources */ = {isa = PBXBuildFile; fileRef = SS110000000000000000006 /* ScriptService+SavedScripts.swift */; };
 		AA1000000000000000003D /* XcodeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002B /* XcodeService.swift */; };
 		AA1000000000000000003E /* ScriptingBridge.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002C /* ScriptingBridge.framework */; };
 		AA1000000000000000003F /* DependencyChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002D /* DependencyChecker.swift */; };
@@ -260,6 +263,9 @@
 		AA10000000000000000027 /* Agent.app.toddbruss.user.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Agent.app.toddbruss.user.plist; sourceTree = "<group>"; };
 		AA10000000000000000028 /* OllamaService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaService.swift; sourceTree = "<group>"; };
 		AA10000000000000000029 /* ScriptService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptService.swift; sourceTree = "<group>"; };
+		SS110000000000000000002 /* ScriptService+Metadata.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ScriptService+Metadata.swift"; sourceTree = "<group>"; };
+		SS110000000000000000004 /* ScriptService+Execution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ScriptService+Execution.swift"; sourceTree = "<group>"; };
+		SS110000000000000000006 /* ScriptService+SavedScripts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ScriptService+SavedScripts.swift"; sourceTree = "<group>"; };
 		AA1000000000000000002B /* XcodeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XcodeService.swift; sourceTree = "<group>"; };
 		AA1000000000000000002C /* ScriptingBridge.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ScriptingBridge.framework; path = System/Library/Frameworks/ScriptingBridge.framework; sourceTree = SDKROOT; };
 		AA1000000000000000002D /* DependencyChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyChecker.swift; sourceTree = "<group>"; };
@@ -521,6 +527,9 @@
 				AA100000000000000000BA /* OpenAICompatibleService.swift */,
 				AA100000000000000000BC /* LoRAAdapterManager.swift */,
 				AA10000000000000000029 /* ScriptService.swift */,
+				SS110000000000000000002 /* ScriptService+Metadata.swift */,
+				SS110000000000000000004 /* ScriptService+Execution.swift */,
+				SS110000000000000000006 /* ScriptService+SavedScripts.swift */,
 				AA1000000000000000002B /* XcodeService.swift */,
 				AA10000000000000000046 /* KeychainService.swift */,
 				AA1000000000000000002F /* AppleEventService.swift */,
@@ -885,6 +894,9 @@
 				BB10000000000000000017 /* AppleIntelligencePopover.swift in Sources */,
 				AA100000000000000000C1 /* NewMainTabSheet.swift in Sources */,
 				AA1000000000000000003B /* ScriptService.swift in Sources */,
+				SS110000000000000000001 /* ScriptService+Metadata.swift in Sources */,
+				SS110000000000000000003 /* ScriptService+Execution.swift in Sources */,
+				SS110000000000000000005 /* ScriptService+SavedScripts.swift in Sources */,
 				AA1000000000000000003D /* XcodeService.swift in Sources */,
 				AA1000000000000000003F /* DependencyChecker.swift in Sources */,
 				AA10000000000000000044 /* DependencyOverlayView.swift in Sources */,
