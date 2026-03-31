@@ -90,6 +90,8 @@ struct ContentView: View {
                 ZStack(alignment: .topTrailing) {
                     ActivityLogView(
                         text: tab.activityLog,
+                        viewModel: viewModel,
+                        tab: tab,
                         tabID: selectedId,
                         searchText: searchText,
                         caseSensitive: caseSensitive,
@@ -107,6 +109,7 @@ struct ContentView: View {
                 ZStack(alignment: .topTrailing) {
                     ActivityLogView(
                         text: viewModel.activityLog,
+                        viewModel: viewModel,
                         searchText: searchText,
                         caseSensitive: caseSensitive,
                         currentMatchIndex: currentMatchIndex,

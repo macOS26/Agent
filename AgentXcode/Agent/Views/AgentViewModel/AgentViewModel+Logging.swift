@@ -474,6 +474,7 @@ extension AgentViewModel {
             logBuffer = ""
             schedulePersist()
         }
+        onLogChanged?(activityLog)
     }
 
     private func schedulePersist() {
