@@ -25,8 +25,13 @@ extension AgentViewModel {
         let pf = projectFolder
         NativeToolContext.toolCallCount += 1
 
+        // Prefix-matched tools
+        if let result = await handleWebTool(name: name, input: input) { return result }
+        if let result = await handleSeleniumTool(name: name, input: input) { return result }
+
+        switch name {
         // AppleScript (NSAppleScript in-process with TCC)
-        if name == "run_applescript" {
+        case "run_applescript":
             let source = (input["source"] as? String ?? "")
             let result = await MainActor.run { () -> (String, Bool) in
                 var err: NSDictionary?
@@ -39,10 +44,8 @@ extension AgentViewModel {
                 let _ = scriptService.saveAppleScript(name: Self.autoScriptName(from: source), source: source)
             }
             return result.0
-        }
-
         // osascript (runs osascript CLI in-process with TCC)
-        if name == "run_osascript" {
+        case "run_osascript":
             let script = input["script"] as? String ?? input["command"] as? String ?? ""
             let escaped = script.replacingOccurrences(of: "'", with: "'\\''")
             let command = "osascript -e '\(escaped)'"
@@ -51,10 +54,8 @@ extension AgentViewModel {
                 let _ = scriptService.saveAppleScript(name: Self.autoScriptName(from: script), source: script)
             }
             return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
-        }
-
         // JavaScript for Automation (JXA via osascript -l JavaScript)
-        if name == "execute_javascript" {
+        case "execute_javascript":
             let script = input["source"] as? String ?? input["script"] as? String ?? ""
             let escaped = script.replacingOccurrences(of: "'", with: "'\\''")
             let command = "osascript -l JavaScript -e '\(escaped)'"
@@ -63,14 +64,11 @@ extension AgentViewModel {
                 let _ = scriptService.saveJavaScript(name: Self.autoScriptName(from: script), source: script)
             }
             return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
-        }
-
         // Script management
-        if name == "list_agents" {
+        case "list_agents":
             let scripts = scriptService.listScripts()
             return scripts.isEmpty ? "No scripts found" : scripts.map { "\($0.name) (\($0.size) bytes)" }.joined(separator: "\n")
-        }
-        if name == "run_agent" {
+        case "run_agent":
             let scriptName = input["name"] as? String ?? ""
             let arguments = input["arguments"] as? String ?? ""
             guard let cmd = scriptService.compileCommand(name: scriptName) else {
@@ -90,17 +88,13 @@ extension AgentViewModel {
                 RecentAgentsService.shared.updateStatus(agentName: scriptName, arguments: arguments, status: .success)
             }
             return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
-        }
-        if name == "read_agent" {
+        case "read_agent":
             return scriptService.readScript(name: input["name"] as? String ?? "") ?? "Not found"
-        }
-        if name == "create_agent" || name == "update_agent" {
+        case "create_agent", "update_agent":
             return scriptService.createScript(name: input["name"] as? String ?? "", content: input["content"] as? String ?? "")
-        }
-        if name == "delete_agent" {
+        case "delete_agent":
             return scriptService.deleteScript(name: input["name"] as? String ?? "")
-        }
-        if name == "combine_agents" {
+        case "combine_agents":
             let sourceA = input["source_a"] as? String ?? ""
             let sourceB = input["source_b"] as? String ?? ""
             let target = input["target"] as? String ?? ""
@@ -112,17 +106,8 @@ extension AgentViewModel {
             } else {
                 return scriptService.createScript(name: target, content: merged)
             }
-        }
-
-        // Saved scripts - delegated to TaskExecution+ScriptTools
-        if name == "list_apple_scripts" || name == "save_apple_script" || name == "delete_apple_script" ||
-           name == "run_apple_script" || name == "list_javascript" || name == "save_javascript" ||
-           name == "delete_javascript" || name == "run_javascript" {
-            return await handleSavedScriptTool(name: name, input: input)
-        }
-
         // File operations
-        if name == "read_file" {
+        case "read_file":
             let path = input["file_path"] as? String ?? ""
             guard let data = FileManager.default.contents(atPath: path),
                   let content = String(data: data, encoding: .utf8) else { return "Error: cannot read \(path)" }
@@ -131,17 +116,15 @@ extension AgentViewModel {
                 return lines.prefix(100).joined(separator: "\n") + "\n\n--- FILE HAS \(lines.count) LINES (showing first 100) ---\nUse read_file with offset and limit for specific sections."
             }
             return content
-        }
-        if name == "write_file" {
+        case "write_file":
             let path = input["file_path"] as? String ?? ""
             let content = input["content"] as? String ?? ""
             let url = URL(fileURLWithPath: path)
             try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
             do { try content.write(to: url, atomically: true, encoding: .utf8); return "Wrote \(path)" }
             catch { return "Error: \(error.localizedDescription)" }
-        }
         // MARK: edit_file
-        if name == "edit_file" {
+        case "edit_file":
             let path = input["file_path"] as? String ?? ""
             let old = input["old_string"] as? String ?? ""
             let new = input["new_string"] as? String ?? ""
@@ -188,10 +171,8 @@ extension AgentViewModel {
             } catch {
                 return "Error: \(error.localizedDescription)"
             }
-        }
-
         // MARK: create_diff
-        if name == "create_diff" {
+        case "create_diff":
             var source = input["source"] as? String ?? ""
             let destination = input["destination"] as? String ?? ""
             if let fp = input["file_path"] as? String, !fp.isEmpty {
@@ -205,10 +186,8 @@ extension AgentViewModel {
             let d1f = MultiLineDiff.displayDiff(diff: diff, source: source, format: .ai)
             let diffId = DiffStore.shared.store(diff: diff, source: source)
             return "diff_id: \(diffId.uuidString)\n\n\(d1f)"
-        }
-
         // MARK: apply_diff
-        if name == "apply_diff" {
+        case "apply_diff":
             let path = input["file_path"] as? String ?? ""
             let diffIdStr = input["diff_id"] as? String ?? ""
             let asciiDiff = input["diff"] as? String ?? ""
@@ -231,32 +210,8 @@ extension AgentViewModel {
             } catch {
                 return "Error applying diff: \(error.localizedDescription)"
             }
-        }
-
-        // Git (via shell)
-        if name.hasPrefix("git_") {
-            let dir = (input["path"] as? String ?? pf).isEmpty ? pf : (input["path"] as? String ?? pf)
-            let esc = dir.isEmpty ? "." : "'\(dir)'"
-            var cmd = "cd \(esc) && "
-            switch name {
-            case "git_status": cmd += "git status"
-            case "git_log": cmd += "git log --oneline -\(input["count"] as? Int ?? 20)"
-            case "git_diff":
-                cmd += "git diff"
-                if input["staged"] as? Bool == true { cmd += " --staged" }
-                if let target = input["target"] as? String { cmd += " \(target)" }
-            case "git_commit": cmd += "git add -A && git commit -m '\(input["message"] as? String ?? "update")'"
-            case "git_branch": cmd += "git branch -a"
-            case "git_diff_patch": cmd += "git diff"
-            default: cmd += "git \(name.replacingOccurrences(of: "git_", with: ""))"
-            }
-            // Git tools use User LaunchAgent (no TCC required)
-            let result = await executeViaUserAgent(command: cmd)
-            return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
-        }
-
         // List/search files (via User LaunchAgent - no TCC required)
-        if name == "list_files" {
+        case "list_files":
             let pat = CodingService.shellEscape(input["pattern"] as? String ?? "*")
             let rawDir = input["path"] as? String ?? pf
             let dir = CodingService.shellEscape(rawDir)
@@ -264,16 +219,14 @@ extension AgentViewModel {
             let result = await executeViaUserAgent(command: "cd \(dir) && find . -maxdepth 8 -type f -name \(pat) ! -path '*/.*' ! -path '*/.build/*' ! -path '*/.git/*' ! -path '*/.swiftpm/*' ! -name '.DS_Store' ! -name '*.xcuserstate' 2>/dev/null | sed 's|^\\./||' | sort | head -100", silent: true)
             let raw = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
             return raw.isEmpty ? "No files found" : "[project folder: \(displayDir)] paths are relative to project folder\n\(CodingService.formatFileTree(raw))"
-        }
-        if name == "search_files" {
+        case "search_files":
             let pat = CodingService.shellEscape(input["pattern"] as? String ?? "")
             let rawDir = input["path"] as? String ?? pf
             let dir = CodingService.shellEscape(rawDir)
             let displayDir = CodingService.trimHome(rawDir)
             let result = await executeViaUserAgent(command: "grep -rn \(pat) \(dir) 2>/dev/null | head -50")
             return result.output.isEmpty ? "No matches" : "[project folder: \(displayDir)] paths are relative to project folder\n\(result.output)"
-        }
-        if name == "read_dir" {
+        case "read_dir":
             let rawDir = input["path"] as? String ?? pf
             let dir = CodingService.shellEscape(rawDir)
             let displayDir = CodingService.trimHome(rawDir)
@@ -284,19 +237,16 @@ extension AgentViewModel {
             let result = await executeViaUserAgent(command: cmd, silent: !detail)
             let raw = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
             return raw.isEmpty ? "Directory not found or empty" : "[project folder: \(displayDir)]\n\(raw)"
-        }
-        if name == "if_to_switch" {
+        case "if_to_switch":
             let filePath = input["file_path"] as? String ?? ""
             return await Self.offMain { CodingService.convertIfToSwitch(path: filePath) }
-        }
-        if name == "extract_function" {
+        case "extract_function":
             let filePath = input["file_path"] as? String ?? ""
             let funcName = input["function_name"] as? String ?? ""
             let newFile = input["new_file"] as? String ?? ""
             return await Self.offMain { CodingService.extractFunctionToFile(sourcePath: filePath, functionName: funcName, newFileName: newFile) }
-        }
         // Tool discovery
-        if name == "list_tools" {
+        case "list_tools":
             let prefs = ToolPreferencesService.shared
             let enabledTools = AgentTools.tools(for: selectedProvider)
                 .filter { prefs.isEnabled(selectedProvider, $0.name) }
@@ -320,10 +270,8 @@ extension AgentViewModel {
                 .map { "mcp_\($0.serverName)_\($0.name)" }
             let all = builtIn + (mcpTools.isEmpty ? [] : ["--- MCP Tools ---"] + mcpTools)
             return all.joined(separator: "\n")
-        }
-
         // Apple Event query — flat keys wrapped into single operation
-        if name == "apple_event_query" {
+        case "apple_event_query":
             let bundleID = input["bundle_id"] as? String ?? ""
             let operations: [[String: Any]]
             if let ops = input["operations"] as? [[String: Any]] {
@@ -351,10 +299,8 @@ extension AgentViewModel {
                 }
                 return AppleEventService.shared.execute(bundleID: bundleID, operations: ops)
             }
-        }
-
         // Memory tool — persistent user preferences the LLM reads at task start
-        if name == "memory" {
+        case "memory":
             let action = input["action"] as? String ?? "read"
             switch action {
             case "read":
@@ -374,31 +320,15 @@ extension AgentViewModel {
             default:
                 return "Unknown memory action. Use: read, write, append, clear."
             }
-        }
-
         // Task complete — signal via NativeToolContext so the task loop can detect it
-        if name == "task_complete" {
+        case "task_complete":
             let summary = input["summary"] as? String ?? "Done"
             NativeToolContext.taskCompleteSummary = summary
             return "Task complete: \(summary)"
-        }
-
-        // MARK: - Web Automation (Phase 2) for Apple AI
-        // Web automation handlers moved to TaskExecution+WebTools.swift
-        if let result = await handleWebTool(name: name, input: input) {
-            return result
-        }
-
-        // MARK: - Selenium WebDriver for Apple AI (via AgentScript)
-        // Selenium handlers moved to TaskExecution+Selenium.swift
-        if let result = await handleSeleniumTool(name: name, input: input) {
-            return result
-        }
-
         // MARK: - Conversation Tools
 
         // write_text
-        if name == "write_text" {
+        case "write_text":
             guard let subject = input["subject"] as? String, !subject.isEmpty else {
                 return "Error: subject is required for write_text"
             }
@@ -428,10 +358,8 @@ extension AgentViewModel {
             """
 
             return guidance
-        }
-        
         // transform_text
-        if name == "transform_text" {
+        case "transform_text":
             guard let text = input["text"] as? String, !text.isEmpty else {
                 return "Error: text is required for transform_text"
             }
@@ -595,10 +523,8 @@ extension AgentViewModel {
             }
             
             return guidance
-        }
-        
         // send_message
-        if name == "send_message" {
+        case "send_message":
             guard let content = input["content"] as? String, !content.isEmpty else {
                 return "Error: content is required for send_message"
             }
@@ -683,15 +609,8 @@ extension AgentViewModel {
             default:
                 return "Error: Unsupported channel '\(channel)'. Use: imessage, email, sms, or clipboard"
             }
-        }
-
-        // about_self
-        if let result = await handleAboutSelfTool(name: name, input: input) {
-            return result
-        }
-        
         // fix_text
-        if name == "fix_text" {
+        case "fix_text":
             guard let text = input["text"] as? String, !text.isEmpty else {
                 return "Error: text is required for fix_text"
             }
@@ -794,63 +713,45 @@ extension AgentViewModel {
             }
             
             return guidance
-        }
-
         // plan_mode
-        if name == "plan_mode" {
+        case "plan_mode":
             let action: String = input["action"] as? String ?? "read"
             return Self.handlePlanMode(action: action, input: input, projectFolder: pf, tabName: "main")
-        }
-
         // project_folder
-        if name == "project_folder" {
+        case "project_folder":
             return handleProjectFolder(tab: nil, input: input)
-        }
-
         // coding_mode
-        if name == "coding_mode" {
+        case "coding_mode":
             let enabled = input["enabled"] as? Bool ?? true
             codingModeEnabled = enabled
             return enabled ? "Coding mode ON — only Core+Workflow+Coding+UserAgent tools active." : "Coding mode OFF — all tools restored."
-        }
-
         // MARK: - Xcode Tools
-        if name == "xcode_build" {
+        case "xcode_build":
             let projectPath = input["project_path"] as? String ?? ""
             return await Self.offMain { XcodeService.shared.buildProject(projectPath: projectPath) }
-        }
-        if name == "xcode_run" {
+        case "xcode_run":
             let projectPath = input["project_path"] as? String ?? ""
             return await Self.offMain { XcodeService.shared.runProject(projectPath: projectPath) }
-        }
-        if name == "xcode_list_projects" {
+        case "xcode_list_projects":
             return await Self.offMain { XcodeService.shared.listProjects() }
-        }
-        if name == "xcode_select_project" {
+        case "xcode_select_project":
             let number = input["number"] as? Int ?? 0
             return await Self.offMain { XcodeService.shared.selectProject(number: number) }
-        }
-        if name == "xcode_grant_permission" {
+        case "xcode_grant_permission":
             return await Self.offMain { XcodeService.shared.grantPermission() }
-        }
-        if name == "xcode_add_file" {
+        case "xcode_add_file":
             let fp = input["file_path"] as? String ?? ""
             return await Self.offMain { XcodeService.shared.addFileToProject(filePath: fp) }
-        }
-        if name == "xcode_remove_file" {
+        case "xcode_remove_file":
             let fp = input["file_path"] as? String ?? ""
             return await Self.offMain { XcodeService.shared.removeFileFromProject(filePath: fp) }
-        }
-        if name == "xcode_bump_version" {
+        case "xcode_bump_version":
             return await Self.offMain { XcodeService.shared.bumpVersion() }
-        }
-        if name == "xcode_bump_build" {
+        case "xcode_bump_build":
             return await Self.offMain { XcodeService.shared.bumpBuild() }
-        }
-        if name == "xcode_get_version" {
+        case "xcode_get_version":
             return await Self.offMain { XcodeService.shared.getVersionInfo() }
-        }
-        if name == "xcode_analyze" {
+        case "xcode_analyze":
             let fp = input["file_path"] as? String ?? ""
             guard !fp.isEmpty else { return "Error: file_path is required for analyze" }
             guard let data = FileManager.default.contents(atPath: fp),
@@ -868,8 +769,7 @@ extension AgentViewModel {
                 if trimmed.count > 200 { issues.append("[Style] Line \(i+1): Line too long (\(trimmed.count) chars)") }
             }
             return issues.isEmpty ? "No issues found in \(fp) (\(lines.count) lines)" : issues.joined(separator: "\n")
-        }
-        if name == "xcode_snippet" {
+        case "xcode_snippet":
             let fp = input["file_path"] as? String ?? ""
             guard !fp.isEmpty else { return "Error: file_path is required for snippet" }
             guard let data = FileManager.default.contents(atPath: fp),
@@ -885,10 +785,8 @@ extension AgentViewModel {
             let ext = (fp as NSString).pathExtension
             let snippet = lines[start..<end].enumerated().map { "\(start + $0 + 1)\t\($1)" }.joined(separator: "\n")
             return "```\(ext)\n\(snippet)\n```"
-        }
-
         // batch_tools — run multiple tool calls in one batch
-        if name == "batch_tools" {
+        case "batch_tools":
             let desc = input["description"] as? String ?? "Batch Tasks"
             guard let tasks = input["tasks"] as? [[String: Any]] else {
                 return "Error: tasks must be an array of {\"tool\": \"name\", \"input\": {...}} objects"
@@ -909,17 +807,13 @@ extension AgentViewModel {
             }
             batchOutput += "● \(completed)/\(tasks.count) tasks completed"
             return batchOutput
-        }
-
         // web_search
-        if name == "web_search" {
+        case "web_search":
             let query = input["query"] as? String ?? ""
             guard !query.isEmpty else { return "Error: query is required" }
             return await Self.performWebSearchForTask(query: query, apiKey: tavilyAPIKey, provider: selectedProvider)
-        }
-
         // lookup_sdef
-        if name == "lookup_sdef" {
+        case "lookup_sdef":
             let bundleID = input["bundle_id"] as? String ?? ""
             let className = input["class_name"] as? String
             if bundleID == "list" {
@@ -938,10 +832,8 @@ extension AgentViewModel {
             } else {
                 return SDEFService.shared.summary(for: bundleID)
             }
-        }
-
         // undo_edit
-        if name == "undo_edit" {
+        case "undo_edit":
             let fp = (input["file_path"] as? String ?? "")
             let expanded = (fp as NSString).expandingTildeInPath
             guard let original = DiffStore.shared.lastEdit(for: expanded) else {
@@ -950,10 +842,8 @@ extension AgentViewModel {
             let result = CodingService.undoEdit(path: fp, originalContent: original)
             if !result.hasPrefix("Error") { DiffStore.shared.clearEditHistory(for: expanded) }
             return result
-        }
-
         // diff_and_apply
-        if name == "diff_and_apply" {
+        case "diff_and_apply":
             let fp = input["file_path"] as? String ?? ""
             let dest = input["destination"] as? String ?? ""
             let source = input["source"] as? String
@@ -961,9 +851,9 @@ extension AgentViewModel {
             let endLine = input["end_line"] as? Int
             let result = CodingService.diffAndApply(path: fp, source: source, destination: dest, startLine: startLine, endLine: endLine)
             return result.output
-        }
 
-        // Log unhandled tool so we can debug
-        return "⚠️ Tool '\(rawName)' (expanded: '\(name)') not handled — no matching handler found."
+        default:
+            return "⚠️ Tool '\(rawName)' (expanded: '\(name)') not handled — no matching handler found."
+        }
     }
 }
