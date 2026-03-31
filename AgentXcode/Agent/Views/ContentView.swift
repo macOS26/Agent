@@ -470,7 +470,6 @@ struct ContentView: View {
     private var thinkingIndicator: some View {
         if let selId = viewModel.selectedTabId,
            let tab = viewModel.scriptTabs.first(where: { $0.id == selId }) {
-            // Script tabs: always show the indicator bar
             ThinkingIndicatorView(viewModel: viewModel, tab: tab)
         } else if viewModel.showThinkingIndicator && (isActiveRunning || !isActiveDismissed) {
             ThinkingIndicatorView(viewModel: viewModel)

@@ -676,10 +676,6 @@ private struct PlainTextEditor: NSViewRepresentable {
     }
 
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
-        guard let textView = scrollView.documentView as? NSTextView else { return }
-        if textView.string != text {
-            textView.string = text
-        }
     }
 
     func makeCoordinator() -> Coordinator { Coordinator(text: $text) }
