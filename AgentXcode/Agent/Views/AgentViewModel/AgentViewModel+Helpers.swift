@@ -1,5 +1,5 @@
 @preconcurrency import Foundation
-import MCPClient
+import AgentMCP
 
 // MARK: - Helper Functions
 

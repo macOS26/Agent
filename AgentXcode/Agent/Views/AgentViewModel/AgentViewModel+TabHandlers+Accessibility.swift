@@ -1,5 +1,5 @@
 @preconcurrency import Foundation
-import MCPClient
+import AgentMCP
 import AgentD1F
 import os.log
 import Cocoa

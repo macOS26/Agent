@@ -1,7 +1,7 @@
 
 @preconcurrency import Foundation
 import AgentTools
-import MCPClient
+import AgentMCP
 import AgentD1F
 import AgentSwift
 import os.log

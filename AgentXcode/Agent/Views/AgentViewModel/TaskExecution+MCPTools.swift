@@ -1,5 +1,5 @@
 @preconcurrency import Foundation
-import MCPClient
+import AgentMCP
 import os.log
 
 private let mcpLog = Logger(subsystem: AppConstants.subsystem, category: "MCPTools")
