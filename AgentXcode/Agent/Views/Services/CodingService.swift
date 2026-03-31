@@ -30,7 +30,8 @@ enum CodingService {
         let url = URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
 
         guard FileManager.default.fileExists(atPath: url.path) else {
-            return "Error: file not found: \(path)"
+            let dir = (path as NSString).deletingLastPathComponent
+            return "Error: file not found: \(path)\nSTOP guessing paths. Call file_manager(action:\"list\", path:\"\(dir)\") to see what files exist."
         }
 
         // Check if it's a directory
@@ -345,18 +346,65 @@ enum CodingService {
         return path
     }
 
+    /// Format a flat list of file paths into a pretty directory tree.
+    static func formatFileTree(_ output: String) -> String {
+        let paths = output.components(separatedBy: "\n").filter { !$0.isEmpty }
+        guard !paths.isEmpty else { return output }
+
+        // Group by directory
+        var dirs: [String: [String]] = [:]  // dir -> [filename]
+        var rootFiles: [String] = []
+        for path in paths {
+            let comps = path.components(separatedBy: "/")
+            if comps.count == 1 {
+                rootFiles.append(comps[0])
+            } else {
+                let dir = comps.dropLast().joined(separator: "/")
+                let file = comps.last!
+                dirs[dir, default: []].append(file)
+            }
+        }
+
+        var result = ""
+        let sortedDirs = dirs.keys.sorted()
+
+        // Root files first
+        if !rootFiles.isEmpty {
+            for file in rootFiles {
+                result += "  \(file)\n"
+            }
+        }
+
+        // Then each directory group
+        for dir in sortedDirs {
+            let files = dirs[dir]!
+            result += "📁 \(dir)/\n"
+            for (i, file) in files.enumerated() {
+                let prefix = (i == files.count - 1) ? "   └─ " : "   ├─ "
+                result += "\(prefix)\(file)\n"
+            }
+        }
+
+        return result.trimmingCharacters(in: .newlines)
+    }
+
     static func buildListFilesCommand(pattern: String, path: String?) -> String {
         let dir = shellEscape(path ?? defaultDir)
         let pat = shellEscape(pattern)
         // cd into dir so find outputs relative paths (saves tokens)
-        return "cd \(dir) && find . -maxdepth 8 -name \(pat)"
+        // -type f: files only, prune dotdirs and build artifacts
+        return "cd \(dir) && find . -maxdepth 8 -type f -name \(pat)"
             + " -not -path '*/.*'"
             + " -not -path '*/.build/*'"
+            + " -not -path '*/.swiftpm/*'"
+            + " -not -path '*/.git/*'"
             + " -not -path '*/Library/*'"
             + " -not -path '*/Movies/*'"
             + " -not -path '*/Music/*'"
             + " -not -path '*/Pictures/*'"
             + " -not -path '*/DerivedData/*'"
+            + " -not -name '.DS_Store'"
+            + " -not -name '*.xcuserstate'"
             + " 2>/dev/null | sed 's|^\\./||' | sort | head -200"
     }
 

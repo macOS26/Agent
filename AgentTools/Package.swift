@@ -1,9 +1,10 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 6.2
+
 import PackageDescription
 
 let package = Package(
     name: "AgentTools",
-    platforms: [.macOS(.v15)],
+    platforms: [.macOS(.v26)],
     products: [
         .library(
             name: "AgentTools",

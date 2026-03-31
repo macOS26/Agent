@@ -17,9 +17,9 @@ extension AgentViewModel {
         case "get":
             if let tab {
                 let folder = tab.projectFolder.isEmpty ? projectFolder : tab.projectFolder
-                return folder.isEmpty ? "No project folder set." : "Project folder: \(folder)"
+                return folder.isEmpty ? "No project folder set." : "Project folder: \(CodingService.trimHome(folder))"
             }
-            return projectFolder.isEmpty ? "No project folder set." : "Project folder: \(projectFolder)"
+            return projectFolder.isEmpty ? "No project folder set." : "Project folder: \(CodingService.trimHome(projectFolder))"
 
         case "set":
             guard let path = input["path"] as? String, !path.isEmpty else {
@@ -144,7 +144,7 @@ extension AgentViewModel {
             case "apply":            return ("apply_diff", newInput)
             case "list":             return ("list_files", newInput)
             case "search":           return ("search_files", newInput)
-            case "read_dir":         return ("read_dir", newInput)
+            case "read_dir":         return ("list_files", newInput)
             case "if_to_switch":     return ("if_to_switch", newInput)
             case "extract_function": return ("extract_function", newInput)
             case "undo":             return ("undo_edit", newInput)

@@ -647,10 +647,13 @@ extension AgentViewModel {
                             appendLog("🔍 $ find \(displayPath) -name '\(pattern)'")
                             flushLog()
                             let cmd = CodingService.buildListFilesCommand(pattern: pattern, path: path)
-                            let result = await executeViaUserAgent(command: cmd)
+                            let result = await executeViaUserAgent(command: cmd, silent: true)
                             guard !Task.isCancelled else { break }
-                            let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                                ? "No files matching '\(pattern)'" : "[project folder: \(displayPath)] paths are relative to project folder\n\(result.output)"
+                            let raw = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
+                            let formatted = raw.isEmpty ? "No files matching '\(pattern)'" : CodingService.formatFileTree(raw)
+                            appendLog(formatted)
+                            flushLog()
+                            let output = raw.isEmpty ? formatted : "[project folder: \(displayPath)] paths are relative to project folder\n\(formatted)"
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 
@@ -683,12 +686,18 @@ extension AgentViewModel {
                                 continue
                             }
                             let displayPath = CodingService.trimHome(path)
-                            appendLog("📂 $ ls -la \(displayPath)")
+                            let detail = (input["detail"] as? String ?? "slim") == "more"
+                            appendLog("📂 \(displayPath)")
                             flushLog()
-                            let result = await executeViaUserAgent(command: "ls -la '\(path)' 2>/dev/null")
+                            let dir = CodingService.shellEscape(path)
+                            let cmd = detail
+                                ? "ls -la \(dir) 2>/dev/null"
+                                : "cd \(dir) && find . -maxdepth 1 -not -name '.*' 2>/dev/null | sed 's|^\\./||' | sort"
+                            let result = await executeViaUserAgent(command: cmd, silent: !detail)
                             guard !Task.isCancelled else { break }
-                            let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                                ? "Directory not found or empty" : "[project folder: \(displayPath)] paths are relative to project folder\n\(result.output)"
+                            let raw = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
+                            let output = raw.isEmpty
+                                ? "Directory not found or empty" : "[project folder: \(displayPath)]\n\(raw)"
                             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
                         }
 

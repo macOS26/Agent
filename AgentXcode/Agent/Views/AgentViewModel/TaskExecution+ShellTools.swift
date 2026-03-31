@@ -8,12 +8,14 @@ extension AgentViewModel {
 
     /// Execute a command via UserService XPC with streaming output.
     /// Used by TabTask and TaskExecution for Ollama restart commands.
-    func executeViaUserAgent(command: String, workingDirectory: String = "") async -> (status: Int32, output: String) {
+    func executeViaUserAgent(command: String, workingDirectory: String = "", silent: Bool = false) async -> (status: Int32, output: String) {
         resetStreamCounters()
         userServiceActive = true
         userWasActive = true
-        userService.onOutput = { [weak self] chunk in
-            self?.appendRawOutput(chunk)
+        if !silent {
+            userService.onOutput = { [weak self] chunk in
+                self?.appendRawOutput(chunk)
+            }
         }
         let result = await userService.execute(command: command, workingDirectory: workingDirectory)
         userService.onOutput = nil
