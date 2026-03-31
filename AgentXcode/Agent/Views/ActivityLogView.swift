@@ -192,9 +192,9 @@ struct ActivityLogView: NSViewRepresentable {
 
                 lastLength = len
                 lastRenderedText = text
-                textView.textStorage?.setAttributedString(
-                    NSAttributedString(string: text, attributes: [.font: font, .foregroundColor: NSColor.labelColor])
-                )
+                textView.textStorage?.beginEditing()
+                textView.textStorage?.setAttributedString(buildAttributedString(from: text))
+                textView.textStorage?.endEditing()
                 showingPlaceholder = false
                 textView.scrollToEndOfDocument(nil)
                 lastSearch = searchText
