@@ -5,8 +5,31 @@ import SQLite3
 extension AgentViewModel {
     // MARK: - Messages Monitor
 
+    /// Check if we have Full Disk Access by testing a read on chat.db.
+    private nonisolated static func hasFullDiskAccess() -> Bool {
+        var db: OpaquePointer?
+        let rc = sqlite3_open_v2(messagesDBPath, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, nil)
+        defer { sqlite3_close(db) }
+        guard rc == SQLITE_OK else { return false }
+        // Try a simple query to confirm we can actually read
+        var stmt: OpaquePointer?
+        let sql = "SELECT ROWID FROM message ORDER BY ROWID DESC LIMIT 1"
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return false }
+        defer { sqlite3_finalize(stmt) }
+        return sqlite3_step(stmt) == SQLITE_ROW
+    }
+
     func startMessagesMonitor() {
         stopMessagesMonitor()
+
+        // Gate on Full Disk Access — don't poll without it
+        guard Self.hasFullDiskAccess() else {
+            appendLog("⚠️ Messages: Full Disk Access required. Enable in System Settings > Privacy & Security > Full Disk Access.")
+            flushLog()
+            messagesMonitorEnabled = false
+            return
+        }
+
         refreshMessageRecipients()
         appendLog("💬 Messages: ON")
         flushLog()
