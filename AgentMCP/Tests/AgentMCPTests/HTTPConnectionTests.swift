@@ -1,5 +1,5 @@
 import XCTest
-@testable import MCPClient
+@testable import AgentMCP
 
 final class HTTPConnectionTests: XCTestCase {
 

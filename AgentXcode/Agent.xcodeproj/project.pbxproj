@@ -96,10 +96,7 @@
 		AB1100000000000000000007 /* AgentViewModel+RunStop.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1100000000000000000008 /* AgentViewModel+RunStop.swift */; };
 		AB110000000000000000000B /* AgentViewModel+ToolDispatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB110000000000000000000C /* AgentViewModel+ToolDispatch.swift */; };
 		ABC7EAA6F77F494989A1A61F /* AgentTools+AppBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC627819110EDB4BE4A30406 /* AgentTools+AppBridge.swift */; };
-		ACS0000000000000000003 /* AgentColorSyntax in Frameworks */ = {isa = PBXBuildFile; productRef = ACS0000000000000000002 /* AgentColorSyntax */; };
 		AD0E84FCAA3A3D6AF61ECD16 /* AgentViewModel+TaskExecution+SavedScripts.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4709078FC05AA3587261B14 /* AgentViewModel+TaskExecution+SavedScripts.swift */; };
-		ATL0000000000000000003 /* AgentTools in Frameworks */ = {isa = PBXBuildFile; productRef = ATL0000000000000000002 /* AgentTools */; };
-		ATN0000000000000000003 /* AgentTerminalNeo in Frameworks */ = {isa = PBXBuildFile; productRef = ATN0000000000000000002 /* AgentTerminalNeo */; };
 		BB10000000000000000015 /* AgentViewModel+Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB10000000000000000005 /* AgentViewModel+Helpers.swift */; };
 		BB10000000000000000017 /* AppleIntelligencePopover.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB10000000000000000007 /* AppleIntelligencePopover.swift */; };
 		BB10000000000000000030 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000000000000001A /* main.swift */; };
@@ -115,11 +112,9 @@
 		CS110000000000000000001 /* CodingService+ShellCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = CS110000000000000000002 /* CodingService+ShellCommands.swift */; };
 		CS110000000000000000003 /* CodingService+SplitFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = CS110000000000000000004 /* CodingService+SplitFile.swift */; };
 		CS110000000000000000005 /* CodingService+Refactoring.swift in Sources */ = {isa = PBXBuildFile; fileRef = CS110000000000000000006 /* CodingService+Refactoring.swift */; };
-		D1F0000000000000000003 /* AgentD1F in Frameworks */ = {isa = PBXBuildFile; productRef = D1F0000000000000000002 /* AgentD1F */; };
 		DE0C6B19A80C218E670D6C69 /* AgentViewModel+TabHandlers+Web.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05EEC654A3A0762D24BE1901 /* AgentViewModel+TabHandlers+Web.swift */; };
 		E3E55709254183FE587097A8 /* DiffStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E185ABB626D6FCD3D74523A /* DiffStore.swift */; };
 		E6A8395D5098ED44E0118609 /* InputSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C14A00A8D2269268767BD2D /* InputSectionView.swift */; };
-		EA50MCP0000000003 /* MCPClient in Frameworks */ = {isa = PBXBuildFile; productRef = EA50MCP0000000002 /* MCPClient */; };
 		EA60000000000000000001 /* SDEFs in Resources */ = {isa = PBXBuildFile; fileRef = EA60000000000000000002 /* SDEFs */; };
 		EA6EA3842F6E35CF003FDB6C /* send_image_output.json in Resources */ = {isa = PBXBuildFile; fileRef = EA6EA3812F6E35CF003FDB6C /* send_image_output.json */; };
 		EA6EA3852F6E35CF003FDB6C /* send_message_output.json in Resources */ = {isa = PBXBuildFile; fileRef = EA6EA3832F6E35CF003FDB6C /* send_message_output.json */; };
@@ -132,7 +127,7 @@
 		EAE1E7032F7BF5270079432C /* AgentTerminalNeo in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7022F7BF5270079432C /* AgentTerminalNeo */; };
 		EAE1E7062F7BF5470079432C /* AgentTools in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7052F7BF5470079432C /* AgentTools */; };
 		EAE1E7092F7BF5590079432C /* AgentColorSyntax in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7082F7BF5590079432C /* AgentColorSyntax */; };
-		EAE1E70C2F7BF5780079432C /* MCPClient in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E70B2F7BF5780079432C /* MCPClient */; };
+		EAE1E70C2F7BF5780079432C /* AgentMCP in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E70B2F7BF5780079432C /* AgentMCP */; };
 		EAE1E7122F7BF6290079432C /* AgentD1F in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7112F7BF6290079432C /* AgentD1F */; };
 		EAE1E7152F7BF6880079432C /* AgentSwift in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7142F7BF6880079432C /* AgentSwift */; };
 		EAE1E7182F7BF6E70079432C /* XcodeScriptingBridge in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7172F7BF6E70079432C /* XcodeScriptingBridge */; };
@@ -378,16 +373,11 @@
 				EAE1E7062F7BF5470079432C /* AgentTools in Frameworks */,
 				AA1000000000000000003E /* ScriptingBridge.framework in Frameworks */,
 				EAE1E7032F7BF5270079432C /* AgentTerminalNeo in Frameworks */,
-				D1F0000000000000000003 /* AgentD1F in Frameworks */,
 				EAE1E7182F7BF6E70079432C /* XcodeScriptingBridge in Frameworks */,
 				EAE1E7092F7BF5590079432C /* AgentColorSyntax in Frameworks */,
 				EAE1E7122F7BF6290079432C /* AgentD1F in Frameworks */,
-				EA50MCP0000000003 /* MCPClient in Frameworks */,
-				EAE1E70C2F7BF5780079432C /* MCPClient in Frameworks */,
+				EAE1E70C2F7BF5780079432C /* AgentMCP in Frameworks */,
 				EAE1E7152F7BF6880079432C /* AgentSwift in Frameworks */,
-				ACS0000000000000000003 /* AgentColorSyntax in Frameworks */,
-				ATL0000000000000000003 /* AgentTools in Frameworks */,
-				ATN0000000000000000003 /* AgentTerminalNeo in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -745,14 +735,10 @@
 			);
 			name = "Agent!";
 			packageProductDependencies = (
-				D1F0000000000000000002 /* AgentD1F */,
-				ACS0000000000000000002 /* AgentColorSyntax */,
-				ATL0000000000000000002 /* AgentTools */,
-				ATN0000000000000000002 /* AgentTerminalNeo */,
 				EAE1E7022F7BF5270079432C /* AgentTerminalNeo */,
 				EAE1E7052F7BF5470079432C /* AgentTools */,
 				EAE1E7082F7BF5590079432C /* AgentColorSyntax */,
-				EAE1E70B2F7BF5780079432C /* MCPClient */,
+				EAE1E70B2F7BF5780079432C /* AgentMCP */,
 				EAE1E7112F7BF6290079432C /* AgentD1F */,
 				EAE1E7142F7BF6880079432C /* AgentSwift */,
 				EAE1E7172F7BF6E70079432C /* XcodeScriptingBridge */,
@@ -1502,25 +1488,14 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		ACS0000000000000000002 /* AgentColorSyntax */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = AgentColorSyntax;
 		};
-		ATL0000000000000000002 /* AgentTools */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = AgentTools;
 		};
-		ATN0000000000000000002 /* AgentTerminalNeo */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = AgentTerminalNeo;
-		};
-		D1F0000000000000000002 /* AgentD1F */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = AgentD1F;
-		};
-		EA50MCP0000000002 /* MCPClient */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = MCPClient;
 		};
 		EAE1E7022F7BF5270079432C /* AgentTerminalNeo */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -1534,9 +1509,9 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = AgentColorSyntax;
 		};
-		EAE1E70B2F7BF5780079432C /* MCPClient */ = {
+		EAE1E70B2F7BF5780079432C /* AgentMCP */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = MCPClient;
+			productName = AgentMCP;
 		};
 		EAE1E7112F7BF6290079432C /* AgentD1F */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -1544,7 +1519,7 @@
 		};
 		EAE1E7142F7BF6880079432C /* AgentSwift */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = "xcf-swift";
+			productName = AgentSwift;
 		};
 		EAE1E7172F7BF6E70079432C /* XcodeScriptingBridge */ = {
 			isa = XCSwiftPackageProductDependency;

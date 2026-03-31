@@ -1,5 +1,5 @@
 import Foundation
-import MCPClient
+import AgentMCP
 
 print("=== MCP Client Connection Test ===")
 

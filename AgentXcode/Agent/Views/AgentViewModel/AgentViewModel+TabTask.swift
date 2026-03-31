@@ -2,7 +2,7 @@
 @preconcurrency import Foundation
 import AgentTools
 import AppKit
-import MCPClient
+import AgentMCP
 import AgentD1F
 import os.log
 

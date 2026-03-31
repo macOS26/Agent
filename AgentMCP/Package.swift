@@ -6,7 +6,7 @@ let package = Package(
     platforms: [.macOS(.v26)],
     products: [
         // MCP Client library - embedded in Agent app to connect TO third-party MCP servers
-        .library(name: "MCPClient", targets: ["MCPClient"]),
+        .library(name: "AgentMCP", targets: ["AgentMCP"]),
         // Test client for debugging MCP connections
         .executable(name: "TestClient", targets: ["TestClient"]),
     ],
@@ -14,15 +14,15 @@ let package = Package(
     targets: [
         // MCP Client library for embedding in apps (custom JSON-RPC, no SDK)
         .target(
-            name: "MCPClient",
+            name: "AgentMCP",
             dependencies: [],
-            path: "Sources/MCPClient"
+            path: "Sources/AgentMCP"
         ),
         // Test client for debugging MCP connections
         .executableTarget(
             name: "TestClient",
             dependencies: [
-                "MCPClient"
+                "AgentMCP"
             ],
             path: "Sources/TestClient"
         ),
@@ -30,7 +30,7 @@ let package = Package(
         .testTarget(
             name: "AgentMCPTests",
             dependencies: [
-                "MCPClient"
+                "AgentMCP"
             ],
             path: "Tests/AgentMCPTests"
         )
