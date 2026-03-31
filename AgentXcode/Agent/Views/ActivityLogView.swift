@@ -424,6 +424,7 @@ struct ActivityLogView: NSViewRepresentable {
             textView.scrollToEndOfDocument(nil)
             scrollView.reflectScrolledClipView(scrollView.contentView)
             isProgrammaticScroll = false
+            userIsAtBottom = true
         }
 
         /// Smooth animated scroll to end (used for streaming content)
