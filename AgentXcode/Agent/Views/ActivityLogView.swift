@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import Combine
 import AgentColorSyntax
 import AgentTerminalNeo
 
@@ -9,6 +10,8 @@ import AgentTerminalNeo
 struct ActivityLogView: NSViewRepresentable {
     @Environment(\.colorScheme) private var colorScheme
     let text: String
+    var viewModel: AgentViewModel?
+    var tab: ScriptTab?
     var tabID: UUID?  // nil = main tab
     var searchText: String = ""
     var caseSensitive: Bool = false
@@ -40,6 +43,28 @@ struct ActivityLogView: NSViewRepresentable {
         textView.delegate = context.coordinator
         textView.checkTextInDocument(nil)
         context.coordinator.startObservingScroll(scrollView)
+        context.coordinator.latestTextView = textView
+        context.coordinator.latestScrollView = scrollView
+        context.coordinator.latestTabID = tabID
+
+        // Register direct callback — bypasses SwiftUI layout cycle entirely
+        let coord = context.coordinator
+        if let vm = viewModel {
+            vm.onLogChanged = { [weak coord] newText in
+                guard let coord else { return }
+                coord.latestText = newText
+                coord.scheduleRender()
+            }
+        }
+        if let tab = tab {
+            // For script tabs, observe tab's activityLog via a timer or direct hook
+            // Tab logs flow through tab.activityLog which is set by flushLog
+        }
+
+        // Initial render
+        coord.latestText = text
+        coord.scheduleRender()
+
         return scrollView
     }
 
@@ -48,7 +73,9 @@ struct ActivityLogView: NSViewRepresentable {
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
-    @MainActor class Coordinator: NSObject, NSTextViewDelegate {
+    @MainActor class Coordinator: NSObject, NSTextViewDelegate, @unchecked Sendable {
+        let renderSubject = PassthroughSubject<Void, Never>()
+        var renderCancellable: AnyCancellable?
         var lastRenderTime: CFAbsoluteTime = 0
         var pendingRenderWork: DispatchWorkItem?
         var scheduledRenderWork: DispatchWorkItem?
@@ -71,6 +98,15 @@ struct ActivityLogView: NSViewRepresentable {
         var lastRenderedText = ""
         /// Track which tab we last rendered — forces full rebuild on tab switch
         var lastTabID: UUID?
+
+        override init() {
+            super.init()
+            renderCancellable = renderSubject
+                .debounce(for: .milliseconds(100), scheduler: DispatchQueue.main)
+                .sink { [weak self] in
+                    self?.performRender()
+                }
+        }
 
         /// Schedule rendering AFTER SwiftUI's layout pass completes
         func scheduleRender() {
