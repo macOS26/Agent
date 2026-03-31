@@ -474,6 +474,15 @@ extension AgentViewModel {
             logBuffer = ""
             schedulePersist()
         }
+        // Trim from front if too large — keeps main thread fast
+        let maxChars = 50_000
+        if activityLog.count > maxChars {
+            let drop = activityLog.count - maxChars
+            activityLog = String(activityLog.dropFirst(drop))
+            if let nl = activityLog.firstIndex(of: "\n") {
+                activityLog = "··· earlier output trimmed ···\n" + String(activityLog[activityLog.index(after: nl)...])
+            }
+        }
         onLogChanged?(activityLog)
     }
 

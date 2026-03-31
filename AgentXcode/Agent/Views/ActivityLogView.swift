@@ -39,9 +39,8 @@ struct ActivityLogView: NSViewRepresentable {
         textView.isRichText = true
         textView.allowsUndo = false
         // Enable link detection and clicking
-        textView.isAutomaticLinkDetectionEnabled = true
+        textView.isAutomaticLinkDetectionEnabled = false
         textView.delegate = context.coordinator
-        textView.checkTextInDocument(nil)
         context.coordinator.startObservingScroll(scrollView)
         context.coordinator.latestTextView = textView
         context.coordinator.latestScrollView = scrollView
@@ -69,6 +68,17 @@ struct ActivityLogView: NSViewRepresentable {
     }
 
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
+        let coord = context.coordinator
+        // Detect tab switch or text change — only update when content actually differs
+        if text != coord.latestText || tabID != coord.latestTabID {
+            coord.latestText = text
+            coord.latestTabID = tabID
+            coord.latestSearchText = searchText
+            coord.latestCaseSensitive = caseSensitive
+            coord.latestMatchIndex = currentMatchIndex
+            coord.latestMatchCallback = onMatchCount
+            coord.scheduleRender()
+        }
     }
 
     func makeCoordinator() -> Coordinator { Coordinator() }
@@ -310,6 +320,8 @@ struct ActivityLogView: NSViewRepresentable {
         var lastAppearanceName: NSAppearance.Name?
 
         /// Start observing scroll position changes and appearance changes
+        private var scrollThrottled = false
+
         func startObservingScroll(_ scrollView: NSScrollView) {
             scrollView.contentView.postsBoundsChangedNotifications = true
             scrollObserver = NotificationCenter.default.addObserver(
@@ -318,10 +330,14 @@ struct ActivityLogView: NSViewRepresentable {
                 queue: .main
             ) { [weak self, weak scrollView] _ in
                 MainActor.assumeIsolated {
-                    guard let self, let scrollView else { return }
+                    guard let self, !self.scrollThrottled, let scrollView else { return }
                     guard !self.isProgrammaticScroll else { return }
                     guard let textView = scrollView.documentView as? NSTextView else { return }
                     self.userIsAtBottom = self.isNearBottom(textView)
+                    self.scrollThrottled = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+                        self?.scrollThrottled = false
+                    }
                 }
             }
             lastAppearanceName = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua])

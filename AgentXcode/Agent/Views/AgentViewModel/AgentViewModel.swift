@@ -55,7 +55,7 @@ final class AgentViewModel {
     var taskInput = ""
     
     // Stored property drives live UI; ChatHistoryStore persists across launches via SwiftData
-    var activityLog = ChatHistoryStore.shared.buildActivityLogText(maxTasks: 3)
+    @ObservationIgnored var activityLog = ChatHistoryStore.shared.buildActivityLogText(maxTasks: 3)
     /// Direct callback for ActivityLogView Coordinator — bypasses SwiftUI layout
     var onLogChanged: ((String) -> Void)?
     var isRunning = false
@@ -836,7 +836,7 @@ final class AgentViewModel {
 
     // LLM streaming state
     var streamBuffer = ""
-    var rawLLMOutput: String = UserDefaults.standard.string(forKey: "mainRawLLMOutput") ?? "" {
+    @ObservationIgnored var rawLLMOutput: String = UserDefaults.standard.string(forKey: "mainRawLLMOutput") ?? "" {
         didSet { UserDefaults.standard.set(rawLLMOutput, forKey: "mainRawLLMOutput") }
     }
     var streamFlushTask: Task<Void, Never>?
