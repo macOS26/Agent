@@ -121,7 +121,7 @@ final class ScriptTab: Identifiable {
             if let nl = trimmed.firstIndex(of: "\n") {
                 trimmed = String(trimmed[trimmed.index(after: nl)...])
             }
-            self.activityLog = "--- Log truncated (showing last 15K characters) ---\n\n" + trimmed
+            self.activityLog = "--- Log truncated (showing last 15K characters) ---\n" + trimmed
         } else {
             self.activityLog = restored
         }
