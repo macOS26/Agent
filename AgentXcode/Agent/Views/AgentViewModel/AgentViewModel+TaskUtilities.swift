@@ -2,7 +2,7 @@
 @preconcurrency import Foundation
 import AgentTools
 import MCPClient
-import MultiLineDiff
+import AgentD1F
 import os.log
 import Cocoa
 

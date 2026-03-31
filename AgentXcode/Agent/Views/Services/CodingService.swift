@@ -1,5 +1,5 @@
 import Foundation
-import MultiLineDiff
+import AgentD1F
 
 /// Pure file operations for coding tools — no shell, no Process, no escaping issues.
 /// Process-based tools (list, search, git) route through UserService XPC instead.

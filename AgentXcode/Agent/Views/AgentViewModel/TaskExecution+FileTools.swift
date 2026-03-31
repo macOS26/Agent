@@ -1,5 +1,5 @@
 @preconcurrency import Foundation
-import MultiLineDiff
+import AgentD1F
 import os.log
 
 private let fileLog = Logger(subsystem: AppConstants.subsystem, category: "FileTools")
