@@ -47,209 +47,18 @@ struct ActivityLogView: NSViewRepresentable {
         guard let textView = scrollView.documentView as? NSTextView else { return }
         let coord = context.coordinator
 
-        // Store latest text for callbacks
+        // Store latest state — zero rendering work here
         coord.latestText = text
         coord.latestSearchText = searchText
         coord.latestCaseSensitive = caseSensitive
         coord.latestMatchIndex = currentMatchIndex
         coord.latestMatchCallback = onMatchCount
+        coord.latestTextView = textView
+        coord.latestScrollView = scrollView
+        coord.latestTabID = tabID
 
-        if text.isEmpty {
-            guard !coord.showingPlaceholder else { return }
-            textView.alphaValue = 0
-            NSAnimationContext.runAnimationGroup { ctx in
-                ctx.duration = 0.3
-                textView.animator().alphaValue = 1
-            }
-            textView.textStorage?.setAttributedString(
-                NSAttributedString(string: "Ready. Enter a task below to begin.",
-                                   attributes: [.font: coord.font, .foregroundColor: NSColor.secondaryLabelColor])
-            )
-            coord.showingPlaceholder = true
-            coord.lastLength = 0
-            coord.lastSearch = ""
-            coord.lastMatchIndex = -1
-            coord.clearCache()
-            coord.invalidateCache(for: tabID)
-            onMatchCount?(0)
-            return
-        }
-
-        let len = (text as NSString).length
-        let searchChanged = searchText != coord.lastSearch || currentMatchIndex != coord.lastMatchIndex
-
-        // Detect tab switch first — must not be skipped
-        let tabSwitched = tabID != coord.lastTabID
-
-        // Detect appearance change (light/dark mode) — force full re-render
-        let currentAppearance = scrollView.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua])
-        let appearanceChanged = currentAppearance != coord.lastAppearanceName
-        if appearanceChanged {
-            coord.lastAppearanceName = currentAppearance
-            coord.lastLength = 0
-            coord.lastRenderedText = ""
-            coord.clearCache()
-            coord.invalidateAllCaches()
-            CodeBlockTheme.updateAppearance()
-            TerminalNeoTheme.updateAppearance()
-        }
-
-        // Skip if nothing changed (but always process tab switches and appearance changes)
-        guard len != coord.lastLength || coord.showingPlaceholder || searchChanged || tabSwitched || appearanceChanged else { return }
-
-        let textChanged = len != coord.lastLength || coord.showingPlaceholder
-        let textGrew = len > coord.lastLength
-        let searchCleared = searchText.isEmpty && !coord.lastSearch.isEmpty
-        coord.showingPlaceholder = false
-        if tabSwitched {
-            // Fade in on tab switch
-            textView.alphaValue = 0
-            NSAnimationContext.runAnimationGroup { ctx in
-                ctx.duration = 0.25
-                textView.animator().alphaValue = 1
-            }
-
-            // Save current tab's rendered attributed string to cache before switching
-            if let storage = textView.textStorage, coord.lastLength > 0, !coord.lastRenderedText.isEmpty {
-                coord.cacheAttributedString(
-                    NSAttributedString(attributedString: storage),
-                    for: coord.lastTabID,
-                    text: coord.lastRenderedText
-                )
-            }
-
-            coord.lastTabID = tabID
-            coord.clearCache()
-
-            // Try to restore from cache for the new tab
-            if let cached = coord.cachedAttributedString(for: tabID, text: text) {
-                textView.textStorage?.beginEditing()
-                textView.textStorage?.setAttributedString(cached)
-                textView.textStorage?.endEditing()
-                coord.lastLength = (text as NSString).length
-                coord.lastRenderedText = text
-                coord.showingPlaceholder = false
-                DispatchQueue.main.async {
-                    textView.scrollToEndOfDocument(nil)
-                }
-                // Skip the full rebuild below since we restored from cache
-                if !searchText.isEmpty || !coord.lastSearch.isEmpty {
-                    if searchChanged {
-                        coord.pendingSearchWork?.cancel()
-                        coord.applySearchHighlighting(textView: textView, searchText: searchText, caseSensitive: caseSensitive, currentMatch: currentMatchIndex, onMatchCount: onMatchCount)
-                    }
-                }
-                coord.lastSearch = searchText
-                coord.lastMatchIndex = currentMatchIndex
-                return
-            }
-
-            // No cache hit — show plain text immediately, skip expensive markdown render
-            coord.lastLength = (text as NSString).length
-            coord.lastRenderedText = text
-            let renderText = text
-            textView.textStorage?.beginEditing()
-            textView.textStorage?.setAttributedString(
-                NSAttributedString(string: renderText,
-                                   attributes: [.font: coord.font, .foregroundColor: NSColor.labelColor])
-            )
-            textView.textStorage?.endEditing()
-            coord.showingPlaceholder = false
-            textView.scrollToEndOfDocument(nil)
-            coord.lastSearch = searchText
-            coord.lastMatchIndex = currentMatchIndex
-            return
-        }
-
-        if textChanged || searchCleared || tabSwitched {
-            // Use incremental update only when genuinely appending to same tab
-            let isAppending = len > coord.lastLength && coord.lastLength > 0 && !searchCleared && !tabSwitched
-
-            if isAppending {
-                // Incremental update: only render and append new text
-                // Skip ALL image/HTML processing during incremental updates to prevent jumping
-                let prevLen = coord.lastLength
-                let newText = (text as NSString).substring(from: prevLen)
-
-                // Check if new text or tail of previous text contains table rows (|)
-                // Tables need full rebuild so all rows are visible to renderMarkdownTable
-                let newLines = newText.components(separatedBy: "\n")
-                let hasTableLines = newLines.contains { $0.trimmingCharacters(in: .whitespaces).hasPrefix("|") }
-                let prevTail = (text as NSString).substring(to: prevLen).components(separatedBy: "\n").suffix(3)
-                let prevHasTableLines = prevTail.contains { $0.trimmingCharacters(in: .whitespaces).hasPrefix("|") }
-
-                if hasTableLines || prevHasTableLines {
-                    // Full rebuild for proper NSTextTable rendering
-                    let renderText = text
-                    let savedOrigin = scrollView.contentView.bounds.origin
-                    let wasAtBottom = coord.isNearBottom(textView)
-
-                    textView.textStorage?.beginEditing()
-                    let attributed = coord.buildAttributedString(from: renderText)
-                    textView.textStorage?.setAttributedString(attributed)
-                    textView.textStorage?.endEditing()
-                    coord.lastLength = len
-                    coord.lastRenderedText = text
-
-                    if !wasAtBottom {
-                        scrollView.contentView.scroll(to: savedOrigin)
-                        scrollView.reflectScrolledClipView(scrollView.contentView)
-                    }
-                } else {
-                    let newAttributed = coord.renderMarkdownOnly(newText)
-
-                    textView.textStorage?.beginEditing()
-                    textView.textStorage?.append(newAttributed)
-                    textView.textStorage?.endEditing()
-                    coord.lastLength = len
-                    coord.lastRenderedText = text
-                }
-            } else {
-                // Full rebuild needed (search change, placeholder transition, or text deletion)
-                let renderText = text
-                let savedOrigin = scrollView.contentView.bounds.origin
-                let wasAtBottom = coord.isNearBottom(textView)
-
-                textView.textStorage?.beginEditing()
-                let attributed = coord.buildAttributedString(from: renderText)
-                textView.textStorage?.setAttributedString(attributed)
-                textView.textStorage?.endEditing()
-                coord.lastLength = len
-                coord.lastRenderedText = text
-
-                // Restore scroll position if user wasn't at bottom
-                if !wasAtBottom {
-                    scrollView.contentView.scroll(to: savedOrigin)
-                    scrollView.reflectScrolledClipView(scrollView.contentView)
-                }
-            }
-        }
-
-        // Only run search highlighting when there's an active search or search was just cleared
-        if !searchText.isEmpty || !coord.lastSearch.isEmpty {
-            if searchChanged {
-                // User changed search text or match index — apply immediately
-                coord.pendingSearchWork?.cancel()
-                coord.applySearchHighlighting(textView: textView, searchText: searchText, caseSensitive: caseSensitive, currentMatch: currentMatchIndex, onMatchCount: onMatchCount)
-            } else if textChanged && !searchText.isEmpty {
-                // Text is streaming while search is active — debounce to avoid beach ball
-                coord.pendingSearchWork?.cancel()
-                let work = DispatchWorkItem { [weak coord] in
-                    guard let coord else { return }
-                    guard let tv = coord.latestTextView else { return }
-                    coord.applySearchHighlighting(textView: tv, searchText: coord.latestSearchText, caseSensitive: coord.latestCaseSensitive, currentMatch: coord.latestMatchIndex, onMatchCount: coord.latestMatchCallback)
-                }
-                coord.pendingSearchWork = work
-                coord.latestTextView = textView
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
-            }
-        }
-        coord.lastSearch = searchText
-        coord.lastMatchIndex = currentMatchIndex
-
-        if textGrew {
-            coord.throttledScrollToEnd(textView)
-        }
+        // Schedule all rendering AFTER SwiftUI's layout pass
+        coord.scheduleRender()
     }
 
     func makeCoordinator() -> Coordinator { Coordinator() }
@@ -257,6 +66,7 @@ struct ActivityLogView: NSViewRepresentable {
     @MainActor class Coordinator: NSObject, NSTextViewDelegate {
         var lastRenderTime: CFAbsoluteTime = 0
         var pendingRenderWork: DispatchWorkItem?
+        var scheduledRenderWork: DispatchWorkItem?
         var lastLength = 0
         var showingPlaceholder = true
         var lastSearch = ""
@@ -270,10 +80,181 @@ struct ActivityLogView: NSViewRepresentable {
         var latestMatchCallback: ((Int) -> Void)?
         /// Weak reference to text view for debounced search callbacks
         weak var latestTextView: NSTextView?
+        weak var latestScrollView: NSScrollView?
+        var latestTabID: UUID?
         /// Track the last fully rendered text for incremental updates
         var lastRenderedText = ""
         /// Track which tab we last rendered — forces full rebuild on tab switch
         var lastTabID: UUID?
+
+        /// Schedule rendering AFTER SwiftUI's layout pass completes
+        func scheduleRender() {
+            scheduledRenderWork?.cancel()
+            let work = DispatchWorkItem { [weak self] in
+                self?.performRender()
+            }
+            scheduledRenderWork = work
+            DispatchQueue.main.async(execute: work)
+        }
+
+        /// All rendering logic — runs on main thread but OUTSIDE SwiftUI's layout pass
+        func performRender() {
+            guard let textView = latestTextView, let scrollView = latestScrollView else { return }
+            let text = latestText
+            let searchText = latestSearchText
+            let caseSensitive = latestCaseSensitive
+            let currentMatchIndex = latestMatchIndex
+            let onMatchCount = latestMatchCallback
+            let tabID = latestTabID
+
+            if text.isEmpty {
+                guard !showingPlaceholder else { return }
+                textView.alphaValue = 0
+                NSAnimationContext.runAnimationGroup { ctx in
+                    ctx.duration = 0.3
+                    textView.animator().alphaValue = 1
+                }
+                textView.textStorage?.setAttributedString(
+                    NSAttributedString(string: "Ready. Enter a task below to begin.",
+                                       attributes: [.font: font, .foregroundColor: NSColor.secondaryLabelColor])
+                )
+                showingPlaceholder = true
+                lastLength = 0
+                lastSearch = ""
+                lastMatchIndex = -1
+                clearCache()
+                if let tabID { invalidateCache(for: tabID) }
+                onMatchCount?(0)
+                return
+            }
+
+            let len = (text as NSString).length
+            let searchChanged = searchText != lastSearch || currentMatchIndex != lastMatchIndex
+            let tabSwitched = tabID != lastTabID
+
+            let currentAppearance = scrollView.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua])
+            let appearanceChanged = currentAppearance != lastAppearanceName
+            if appearanceChanged {
+                lastAppearanceName = currentAppearance
+                lastLength = 0
+                lastRenderedText = ""
+                clearCache()
+                invalidateAllCaches()
+                CodeBlockTheme.updateAppearance()
+                TerminalNeoTheme.updateAppearance()
+            }
+
+            guard len != lastLength || showingPlaceholder || searchChanged || tabSwitched || appearanceChanged else { return }
+
+            let textChanged = len != lastLength || showingPlaceholder
+            let textGrew = len > lastLength
+            let searchCleared = searchText.isEmpty && !lastSearch.isEmpty
+            showingPlaceholder = false
+
+            if tabSwitched {
+                textView.alphaValue = 0
+                NSAnimationContext.runAnimationGroup { ctx in
+                    ctx.duration = 0.25
+                    textView.animator().alphaValue = 1
+                }
+                if let storage = textView.textStorage, lastLength > 0, !lastRenderedText.isEmpty {
+                    cacheAttributedString(NSAttributedString(attributedString: storage), for: lastTabID, text: lastRenderedText)
+                }
+                lastTabID = tabID
+                clearCache()
+
+                if let cached = cachedAttributedString(for: tabID, text: text) {
+                    textView.textStorage?.setAttributedString(cached)
+                    lastLength = len
+                    lastRenderedText = text
+                    showingPlaceholder = false
+                    textView.scrollToEndOfDocument(nil)
+                    if searchChanged {
+                        applySearchHighlighting(textView: textView, searchText: searchText, caseSensitive: caseSensitive, currentMatch: currentMatchIndex, onMatchCount: onMatchCount)
+                    }
+                    lastSearch = searchText
+                    lastMatchIndex = currentMatchIndex
+                    return
+                }
+
+                lastLength = len
+                lastRenderedText = text
+                textView.textStorage?.setAttributedString(
+                    NSAttributedString(string: text, attributes: [.font: font, .foregroundColor: NSColor.labelColor])
+                )
+                showingPlaceholder = false
+                textView.scrollToEndOfDocument(nil)
+                lastSearch = searchText
+                lastMatchIndex = currentMatchIndex
+                return
+            }
+
+            if textChanged || searchCleared {
+                let isAppending = len > lastLength && lastLength > 0 && !searchCleared
+
+                if isAppending {
+                    let prevLen = lastLength
+                    let newText = (text as NSString).substring(from: prevLen)
+                    let newLines = newText.components(separatedBy: "\n")
+                    let hasTableLines = newLines.contains { $0.trimmingCharacters(in: .whitespaces).hasPrefix("|") }
+                    let prevTail = (text as NSString).substring(to: prevLen).components(separatedBy: "\n").suffix(3)
+                    let prevHasTableLines = prevTail.contains { $0.trimmingCharacters(in: .whitespaces).hasPrefix("|") }
+
+                    if hasTableLines || prevHasTableLines {
+                        let savedOrigin = scrollView.contentView.bounds.origin
+                        let wasAtBottom = isNearBottom(textView)
+                        textView.textStorage?.beginEditing()
+                        textView.textStorage?.setAttributedString(buildAttributedString(from: text))
+                        textView.textStorage?.endEditing()
+                        lastLength = len
+                        lastRenderedText = text
+                        if !wasAtBottom {
+                            scrollView.contentView.scroll(to: savedOrigin)
+                            scrollView.reflectScrolledClipView(scrollView.contentView)
+                        }
+                    } else {
+                        textView.textStorage?.beginEditing()
+                        textView.textStorage?.append(renderMarkdownOnly(newText))
+                        textView.textStorage?.endEditing()
+                        lastLength = len
+                        lastRenderedText = text
+                    }
+                } else {
+                    let savedOrigin = scrollView.contentView.bounds.origin
+                    let wasAtBottom = isNearBottom(textView)
+                    textView.textStorage?.beginEditing()
+                    textView.textStorage?.setAttributedString(buildAttributedString(from: text))
+                    textView.textStorage?.endEditing()
+                    lastLength = len
+                    lastRenderedText = text
+                    if !wasAtBottom {
+                        scrollView.contentView.scroll(to: savedOrigin)
+                        scrollView.reflectScrolledClipView(scrollView.contentView)
+                    }
+                }
+            }
+
+            if !searchText.isEmpty || !lastSearch.isEmpty {
+                if searchChanged {
+                    pendingRenderWork?.cancel()
+                    applySearchHighlighting(textView: textView, searchText: searchText, caseSensitive: caseSensitive, currentMatch: currentMatchIndex, onMatchCount: onMatchCount)
+                } else if textChanged && !searchText.isEmpty {
+                    pendingRenderWork?.cancel()
+                    let work = DispatchWorkItem { [weak self] in
+                        guard let self, let tv = self.latestTextView else { return }
+                        self.applySearchHighlighting(textView: tv, searchText: self.latestSearchText, caseSensitive: self.latestCaseSensitive, currentMatch: self.latestMatchIndex, onMatchCount: self.latestMatchCallback)
+                    }
+                    pendingRenderWork = work
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
+                }
+            }
+            lastSearch = searchText
+            lastMatchIndex = currentMatchIndex
+
+            if textGrew {
+                throttledScrollToEnd(textView)
+            }
+        }
         /// Throttle scrollToEnd to avoid hyper-scrolling during fast streaming
         var lastScrollTime: CFAbsoluteTime = 0
         var pendingScrollWork: DispatchWorkItem?
