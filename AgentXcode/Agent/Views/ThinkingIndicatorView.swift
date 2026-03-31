@@ -27,7 +27,7 @@ struct ThinkingIndicatorView: View {
     @State private var dots = ""
     @State private var elapsed: TimeInterval = 0
     @State private var tick = 0
-    private let refreshTimer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
+    private let refreshTimer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
 
     private var isActive: Bool {
         if let tab {
@@ -259,15 +259,13 @@ struct ThinkingIndicatorView: View {
         }
         .onReceive(refreshTimer) { _ in
             guard isActive else { return }
-            elapsed += 0.1
+            elapsed += 1.0
             tick += 1
-            if tick % 5 == 0 {
-                switch dots.count {
-                case 0: dots = "."
-                case 1: dots = ".."
-                case 2: dots = "..."
-                default: dots = ""
-                }
+            switch dots.count {
+            case 0: dots = "."
+            case 1: dots = ".."
+            case 2: dots = "..."
+            default: dots = ""
             }
         }
     }
