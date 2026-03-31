@@ -19,20 +19,13 @@ Agent! is the result of 27 years of Mac automation experience — from FaceSpan 
 
 Now with Apple Intelligence supporting 8 LLM providers.
 
-
 ### Apple Intelligence Mediator
 
 Apple Intelligence serves as a **communication mediator** between the LLM and the user, not as an LLM provider. It observes conversations and adds helpful context using on-device intelligence:
 
-
-
 Annotations are tagged with `[AI]` prefixes to distinguish them from LLM responses.
 
 Enable Apple Intelligence Mediator in Settings to enhance communication clarity. Requires Apple Intelligence-capable Mac running macOS 26+.
-
-
-
-
 
 ### Key Capabilities
 

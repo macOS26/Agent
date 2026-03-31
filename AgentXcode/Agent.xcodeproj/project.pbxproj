@@ -39,6 +39,7 @@
 		AB1100000000000000000001 /* AgentViewModel+ScriptTabs.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1100000000000000000002 /* AgentViewModel+ScriptTabs.swift */; };
 		AB1100000000000000000003 /* AgentViewModel+Compression.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1100000000000000000004 /* AgentViewModel+Compression.swift */; };
 		AB1100000000000000000005 /* AgentViewModel+Messages.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1100000000000000000006 /* AgentViewModel+Messages.swift */; };
+		AB1100000000000000000007 /* AgentViewModel+RunStop.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1100000000000000000008 /* AgentViewModel+RunStop.swift */; };
 		AA10000000000000000030 /* AgentApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000001A /* AgentApp.swift */; };
 		AA10000000000000000031 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000001B /* ContentView.swift */; };
 		AA10000000000000000032 /* AgentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000001C /* AgentViewModel.swift */; };
@@ -226,6 +227,7 @@
 		AB1100000000000000000002 /* AgentViewModel+ScriptTabs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+ScriptTabs.swift"; sourceTree = "<group>"; };
 		AB1100000000000000000004 /* AgentViewModel+Compression.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+Compression.swift"; sourceTree = "<group>"; };
 		AB1100000000000000000006 /* AgentViewModel+Messages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+Messages.swift"; sourceTree = "<group>"; };
+		AB1100000000000000000008 /* AgentViewModel+RunStop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+RunStop.swift"; sourceTree = "<group>"; };
 		6CDC0CB629A59A0594ED17DA /* AgentViewModel+TabHandlers+AgentScript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+AgentScript.swift"; sourceTree = "<group>"; };
 		70B4573B1D1FB583C85DC43C /* SearchBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchBarView.swift; sourceTree = "<group>"; };
 		7452B670C7ABBF7A1884569F /* AgentViewModel+TabHandlers+Accessibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Accessibility.swift"; sourceTree = "<group>"; };
@@ -613,6 +615,7 @@
 				AB1100000000000000000002 /* AgentViewModel+ScriptTabs.swift */,
 				AB1100000000000000000004 /* AgentViewModel+Compression.swift */,
 				AB1100000000000000000006 /* AgentViewModel+Messages.swift */,
+				AB1100000000000000000008 /* AgentViewModel+RunStop.swift */,
 			);
 			path = AgentViewModel;
 			sourceTree = "<group>";
@@ -951,6 +954,7 @@
 				AB1100000000000000000001 /* AgentViewModel+ScriptTabs.swift in Sources */,
 				AB1100000000000000000003 /* AgentViewModel+Compression.swift in Sources */,
 				AB1100000000000000000005 /* AgentViewModel+Messages.swift in Sources */,
+				AB1100000000000000000007 /* AgentViewModel+RunStop.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
