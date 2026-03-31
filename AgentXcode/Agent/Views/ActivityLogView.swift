@@ -412,7 +412,7 @@ struct ActivityLogView: NSViewRepresentable {
             return (contentHeight - visibleBottom) < 300
         }
 
-        /// Instant scroll to end — no animation
+        /// Instant scroll to end — no animation (used for tab switches)
         private func snapToEnd(_ textView: NSTextView) {
             guard let scrollView = textView.enclosingScrollView,
                   let textContainer = textView.textContainer else {
@@ -426,6 +426,31 @@ struct ActivityLogView: NSViewRepresentable {
             isProgrammaticScroll = false
         }
 
+        /// Smooth animated scroll to end (used for streaming content)
+        private func smoothScrollToEnd(_ textView: NSTextView) {
+            guard let scrollView = textView.enclosingScrollView,
+                  let textContainer = textView.textContainer else {
+                textView.scrollToEndOfDocument(nil)
+                return
+            }
+            textView.layoutManager?.ensureLayout(for: textContainer)
+            let contentHeight = textView.frame.height
+            let clipHeight = scrollView.contentView.bounds.height
+            let targetY = max(0, contentHeight - clipHeight)
+            isProgrammaticScroll = true
+            NSAnimationContext.runAnimationGroup { ctx in
+                ctx.duration = 0.2
+                ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                scrollView.contentView.animator().setBoundsOrigin(NSPoint(x: 0, y: targetY))
+            } completionHandler: {
+                MainActor.assumeIsolated { [weak self] in
+                    textView.scrollToEndOfDocument(nil)
+                    scrollView.reflectScrolledClipView(scrollView.contentView)
+                    self?.isProgrammaticScroll = false
+                }
+            }
+        }
+
         /// Throttled scroll — at most once per 0.15s, skipped if user scrolled away from bottom
         func throttledScrollToEnd(_ textView: NSTextView) {
             guard userIsAtBottom else { return }
@@ -434,13 +459,13 @@ struct ActivityLogView: NSViewRepresentable {
             pendingScrollWork?.cancel()
             if now - lastScrollTime >= interval {
                 lastScrollTime = now
-                snapToEnd(textView)
+                smoothScrollToEnd(textView)
             } else {
                 let work = DispatchWorkItem { [weak self, weak textView] in
                     guard let self, let textView else { return }
                     guard self.userIsAtBottom else { return }
                     self.lastScrollTime = CFAbsoluteTimeGetCurrent()
-                    self.snapToEnd(textView)
+                    self.smoothScrollToEnd(textView)
                 }
                 pendingScrollWork = work
                 DispatchQueue.main.asyncAfter(deadline: .now() + interval, execute: work)
