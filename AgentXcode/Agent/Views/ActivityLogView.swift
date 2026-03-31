@@ -215,6 +215,22 @@ struct ActivityLogView: NSViewRepresentable {
                     } else {
                         textView.textStorage?.beginEditing()
                         textView.textStorage?.append(renderMarkdownOnly(newText))
+                        // Trim from top if textStorage exceeds cap
+                        if let storage = textView.textStorage, storage.length > Self.maxRenderChars {
+                            let trim = storage.length - Self.maxRenderChars
+                            // Snap to next newline so we don't cut mid-line
+                            let snapRange = NSRange(location: trim, length: min(200, storage.length - trim))
+                            let snippet = storage.string as NSString
+                            let nlRange = snippet.range(of: "\n", range: snapRange)
+                            let cutPoint = nlRange.location != NSNotFound ? nlRange.location + 1 : trim
+                            storage.deleteCharacters(in: NSRange(location: 0, length: cutPoint))
+                            // Insert a trim banner at top
+                            let banner = NSAttributedString(string: "··· earlier output trimmed ···\n\n", attributes: [
+                                .font: font,
+                                .foregroundColor: NSColor.secondaryLabelColor
+                            ])
+                            storage.insert(banner, at: 0)
+                        }
                         textView.textStorage?.endEditing()
                         lastLength = len
                         lastRenderedText = text
@@ -527,8 +543,7 @@ struct ActivityLogView: NSViewRepresentable {
         }
 
         /// Maximum characters to render — truncate from the front to keep the tail visible.
-        /// High limit so live sessions aren't clipped; restoration trims to 15K on app restart.
-        private static let maxRenderChars = 500_000
+        private static let maxRenderChars = 50_000
 
         /// Build attributed string from text. Converts image/HTML paths to clickable links.
         func buildAttributedString(from text: String) -> NSAttributedString {
