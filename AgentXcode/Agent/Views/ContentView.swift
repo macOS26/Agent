@@ -92,6 +92,7 @@ struct ContentView: View {
                         text: tab.activityLog,
                         tabID: selectedId,
                         textProvider: { [weak tab] in tab?.activityLog ?? "" },
+                        scrollPositions: $viewModel.tabScrollPositions,
                         searchText: searchText,
                         caseSensitive: caseSensitive,
                         currentMatchIndex: currentMatchIndex,
@@ -109,6 +110,7 @@ struct ContentView: View {
                     ActivityLogView(
                         text: viewModel.activityLog,
                         textProvider: { [weak viewModel] in viewModel?.activityLog ?? "" },
+                        scrollPositions: $viewModel.tabScrollPositions,
                         searchText: searchText,
                         caseSensitive: caseSensitive,
                         currentMatchIndex: currentMatchIndex,
