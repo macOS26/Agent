@@ -4,3 +4,12 @@
 *.dmg
 *.app
 AgentXcode/build/
+
+# Swift packages (now remote dependencies)
+AgentColorSyntax/
+AgentD1F/
+AgentEventBridges/
+AgentMCP/
+AgentSwift/
+AgentTerminalNeo/
+AgentTools/

@@ -816,13 +816,13 @@
 			);
 			mainGroup = AA10000000000000000040;
 			packageReferences = (
-				EAE1E7012F7BF5270079432C /* XCLocalSwiftPackageReference "../AgentTerminalNeo" */,
-				EAE1E7042F7BF5470079432C /* XCLocalSwiftPackageReference "../AgentTools" */,
-				EAE1E7072F7BF5590079432C /* XCLocalSwiftPackageReference "../AgentColorSyntax" */,
-				EAE1E70A2F7BF5780079432C /* XCLocalSwiftPackageReference "../AgentMCP" */,
-				EAE1E7102F7BF6290079432C /* XCLocalSwiftPackageReference "../AgentD1F" */,
-				EAE1E7132F7BF6880079432C /* XCLocalSwiftPackageReference "../AgentSwift" */,
-				EAE1E7162F7BF6E70079432C /* XCLocalSwiftPackageReference "../AgentEventBridges" */,
+				EAE1E7012F7BF5270079432C /* XCRemoteSwiftPackageReference "AgentTerminalNeo" */,
+				EAE1E7042F7BF5470079432C /* XCRemoteSwiftPackageReference "AgentTools" */,
+				EAE1E7072F7BF5590079432C /* XCRemoteSwiftPackageReference "AgentColorSyntax" */,
+				EAE1E70A2F7BF5780079432C /* XCRemoteSwiftPackageReference "AgentMCP" */,
+				EAE1E7102F7BF6290079432C /* XCRemoteSwiftPackageReference "AgentD1F" */,
+				EAE1E7132F7BF6880079432C /* XCRemoteSwiftPackageReference "AgentSwift" */,
+				EAE1E7162F7BF6E70079432C /* XCRemoteSwiftPackageReference "AgentEventBridges" */,
 			);
 			productRefGroup = AA10000000000000000042 /* Products */;
 			projectDirPath = "";
@@ -1456,73 +1456,99 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCLocalSwiftPackageReference section */
-		EAE1E7012F7BF5270079432C /* XCLocalSwiftPackageReference "../AgentTerminalNeo" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ../AgentTerminalNeo;
+/* Begin XCRemoteSwiftPackageReference section */
+		EAE1E7012F7BF5270079432C /* XCRemoteSwiftPackageReference "AgentTerminalNeo" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/macOS26/AgentTerminalNeo.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.3.0;
+			};
 		};
-		EAE1E7042F7BF5470079432C /* XCLocalSwiftPackageReference "../AgentTools" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ../AgentTools;
+		EAE1E7042F7BF5470079432C /* XCRemoteSwiftPackageReference "AgentTools" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/macOS26/AgentTools.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.0;
+			};
 		};
-		EAE1E7072F7BF5590079432C /* XCLocalSwiftPackageReference "../AgentColorSyntax" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ../AgentColorSyntax;
+		EAE1E7072F7BF5590079432C /* XCRemoteSwiftPackageReference "AgentColorSyntax" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/macOS26/AgentColorSyntax.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.2.0;
+			};
 		};
-		EAE1E70A2F7BF5780079432C /* XCLocalSwiftPackageReference "../AgentMCP" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ../AgentMCP;
+		EAE1E70A2F7BF5780079432C /* XCRemoteSwiftPackageReference "AgentMCP" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/macOS26/AgentMCP.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.2.0;
+			};
 		};
-		EAE1E7102F7BF6290079432C /* XCLocalSwiftPackageReference "../AgentD1F" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = "../AgentD1F";
+		EAE1E7102F7BF6290079432C /* XCRemoteSwiftPackageReference "AgentD1F" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/macOS26/AgentD1F.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
 		};
-		EAE1E7132F7BF6880079432C /* XCLocalSwiftPackageReference "../AgentSwift" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = "../AgentSwift";
+		EAE1E7132F7BF6880079432C /* XCRemoteSwiftPackageReference "AgentSwift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/macOS26/AgentSwift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
 		};
-		EAE1E7162F7BF6E70079432C /* XCLocalSwiftPackageReference "../AgentEventBridges" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ../AgentEventBridges;
+		EAE1E7162F7BF6E70079432C /* XCRemoteSwiftPackageReference "AgentEventBridges" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/macOS26/AgentEventBridges.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.0;
+			};
 		};
-/* End XCLocalSwiftPackageReference section */
+/* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-			isa = XCSwiftPackageProductDependency;
-			productName = AgentColorSyntax;
-		};
-			isa = XCSwiftPackageProductDependency;
-			productName = AgentTools;
-		};
-			isa = XCSwiftPackageProductDependency;
-			productName = AgentTerminalNeo;
-		};
 		EAE1E7022F7BF5270079432C /* AgentTerminalNeo */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = EAE1E7012F7BF5270079432C /* XCRemoteSwiftPackageReference "AgentTerminalNeo" */;
 			productName = AgentTerminalNeo;
 		};
 		EAE1E7052F7BF5470079432C /* AgentTools */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = EAE1E7042F7BF5470079432C /* XCRemoteSwiftPackageReference "AgentTools" */;
 			productName = AgentTools;
 		};
 		EAE1E7082F7BF5590079432C /* AgentColorSyntax */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = EAE1E7072F7BF5590079432C /* XCRemoteSwiftPackageReference "AgentColorSyntax" */;
 			productName = AgentColorSyntax;
 		};
 		EAE1E70B2F7BF5780079432C /* AgentMCP */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = EAE1E70A2F7BF5780079432C /* XCRemoteSwiftPackageReference "AgentMCP" */;
 			productName = AgentMCP;
 		};
 		EAE1E7112F7BF6290079432C /* AgentD1F */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = EAE1E7102F7BF6290079432C /* XCRemoteSwiftPackageReference "AgentD1F" */;
 			productName = AgentD1F;
 		};
 		EAE1E7142F7BF6880079432C /* AgentSwift */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = EAE1E7132F7BF6880079432C /* XCRemoteSwiftPackageReference "AgentSwift" */;
 			productName = AgentSwift;
 		};
 		EAE1E7172F7BF6E70079432C /* XcodeScriptingBridge */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = EAE1E7162F7BF6E70079432C /* XCRemoteSwiftPackageReference "AgentEventBridges" */;
 			productName = XcodeScriptingBridge;
 		};
 /* End XCSwiftPackageProductDependency section */
