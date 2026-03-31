@@ -55,7 +55,7 @@ final class AgentViewModel {
     var taskInput = ""
     
     // Stored property drives live UI; ChatHistoryStore persists across launches via SwiftData
-    var activityLog = ChatHistoryStore.shared.buildActivityLogText(maxTasks: 3)
+    var activityLog = ""
     var isRunning = false
     var isThinking = false
     /// When true, only Core+Workflow+Coding+UserAgent tools sent to LLM
@@ -898,7 +898,14 @@ final class AgentViewModel {
 
     // MARK: - Init
 
+    /// Prevents duplicate startup work when @State evaluates AgentViewModel() multiple times
+    private static var _started = false
+
     init() {
+        guard !Self._started else { return }
+        Self._started = true
+
+        activityLog = ChatHistoryStore.shared.buildActivityLogText(maxTasks: 3)
         CodeBlockTheme.updateAppearance()
         TerminalNeoTheme.updateAppearance()
         // Restore ~/Documents/AgentScript/ folder and bundled resources if missing (off main thread)
