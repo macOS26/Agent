@@ -110,6 +110,33 @@ Agent! works with **10 AI providers**. Pick one or try several:
 
 ## Key Features
 
+### Agentic Coding -- Built In
+
+Agent! replaces standalone coding tools like Claude Code, Cursor, Cline, and Windsurf. No terminal required. No IDE plugins. No monthly subscriptions.
+
+| | Claude Code | Cursor | Cline | Agent! |
+|---|---|---|---|---|
+| Read, write, and edit code | Yes | Yes | Yes | Yes |
+| Build and run Xcode projects | No | No | No | Yes |
+| Git status, diff, commit, branch | Yes | Yes | Yes | Yes |
+| Search files and grep across codebases | Yes | Yes | Yes | Yes |
+| Multi-file refactoring | Yes | Yes | Yes | Yes |
+| Coding mode (auto-focuses on code tools) | No | No | No | Yes |
+| Control Mac apps while coding | No | No | No | Yes |
+| 10 AI providers (local + cloud) | No | No | No | Yes |
+| Voice input | No | No | No | Yes |
+| Free and open source | No | No | No | Yes |
+
+Agent! reads your codebase, edits files with surgical precision, runs shell commands, builds Xcode projects via ScriptingBridge, manages git workflows, and auto-enables coding mode to keep the LLM focused on development tools. It handles everything from single-line fixes to multi-file refactors across Swift, Python, JavaScript, and any language your AI model supports.
+
+> "Build the project" -- Agent! compiles via Xcode, shows errors with file:line:col and code snippets, then fixes them automatically.
+
+> "Refactor this class into smaller files" -- Agent! splits the file, updates imports, and adds each file to the Xcode project.
+
+> "Search for all uses of this function and rename it" -- Agent! greps the codebase, edits every occurrence, and commits the change.
+
+All coding happens alongside Agent!'s other capabilities. You can build your project, check your email, play music, and browse documentation without switching tools.
+
 ### Control 50+ Mac Apps
 Open and interact with Mail, Music, Safari, Finder, Calendar, Contacts, Notes, Reminders, Messages, and dozens more -- just by asking.
 
