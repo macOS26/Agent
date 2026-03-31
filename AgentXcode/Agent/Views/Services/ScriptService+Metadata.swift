@@ -1,3 +1,4 @@
+import AgentAudit
 import Foundation
 
 extension ScriptService {
@@ -103,6 +104,7 @@ extension ScriptService {
 
     /// Create a new script as Sources/Scripts/{name}.swift and register in Package.swift
     func createScript(name: String, content: String) -> String {
+        AuditLog.log(.agentScript, "createScript: \(name)")
         // Ensure package exists first (without lock - just creates directories)
         ensurePackage()
 
@@ -171,6 +173,7 @@ extension ScriptService {
 
     /// Delete a script and remove from Package.swift (idempotent — succeeds even if file already gone)
     func deleteScript(name: String) -> String {
+        AuditLog.log(.agentScript, "deleteScript: \(name)")
         let scriptName = name.replacingOccurrences(of: ".swift", with: "")
         let scriptFile = scriptsDir.appendingPathComponent("\(scriptName).swift")
         let fm = FileManager.default

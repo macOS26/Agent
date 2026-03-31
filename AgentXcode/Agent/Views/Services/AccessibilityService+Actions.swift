@@ -1,3 +1,4 @@
+import AgentAudit
 import Foundation
 import AppKit
 @preconcurrency import ApplicationServices
@@ -12,7 +13,7 @@ extension AccessibilityService {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        Self.logAudit("performAction(\(action)) role: \(role ?? "nil"), title: \(title ?? "nil"), value: \(value ?? "nil"), app: \(appBundleId ?? "nil")")
+        AuditLog.log(.accessibility, "performAction(\(action)) role: \(role ?? "nil"), title: \(title ?? "nil"), value: \(value ?? "nil"), app: \(appBundleId ?? "nil")")
 
         // Check settings - if disabled, block
         if Self.isRestricted(action) {
@@ -61,7 +62,7 @@ extension AccessibilityService {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        Self.logAudit("typeText(\(text.count) chars) at x: \(x.map(String.init) ?? "nil"), y: \(y.map(String.init) ?? "nil")")
+        AuditLog.log(.accessibility, "typeText(\(text.count) chars) at x: \(x.map(String.init) ?? "nil"), y: \(y.map(String.init) ?? "nil")")
 
         // If coordinates provided, click first to focus
         if let x = x, let y = y {
@@ -127,7 +128,7 @@ extension AccessibilityService {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        Self.logAudit("clickAt(x: \(x), y: \(y), button: \(button), clicks: \(clicks))")
+        AuditLog.log(.accessibility, "clickAt(x: \(x), y: \(y), button: \(button), clicks: \(clicks))")
 
         let source = CGEventSource(stateID: .combinedSessionState)
 
@@ -217,7 +218,7 @@ extension AccessibilityService {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        Self.logAudit("scrollAt(x: \(x), y: \(y), deltaX: \(deltaX), deltaY: \(deltaY))")
+        AuditLog.log(.accessibility, "scrollAt(x: \(x), y: \(y), deltaX: \(deltaX), deltaY: \(deltaY))")
 
         let source = CGEventSource(stateID: .combinedSessionState)
 
@@ -246,7 +247,7 @@ extension AccessibilityService {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        Self.logAudit("pressKey(\(virtualKey), modifiers: \(modifiers))")
+        AuditLog.log(.accessibility, "pressKey(\(virtualKey), modifiers: \(modifiers))")
 
         let source = CGEventSource(stateID: .combinedSessionState)
 

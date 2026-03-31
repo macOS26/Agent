@@ -1,3 +1,4 @@
+import AgentAudit
 import AppKit
 import ServiceManagement
 
@@ -178,6 +179,7 @@ final class HelperService {
     }
 
     func execute(command: String) async -> (status: Int32, output: String) {
+        AuditLog.log(.launchDaemon, "execute: \(command.prefix(100))")
         if !helperReady {
             let msg = restartDaemon()
             if !helperReady {

@@ -1,10 +1,8 @@
 @preconcurrency import Foundation
 import AgentMCP
 import AgentD1F
-import os.log
 import Cocoa
 
-private let coreHandlerLog = Logger(subsystem: AppConstants.subsystem, category: "TabCoreHandlers")
 
 extension AgentViewModel {
 
@@ -22,7 +20,6 @@ extension AgentViewModel {
             // Apple Intelligence mediator summary (same as main task)
             let mediator = AppleIntelligenceMediator.shared
             if mediator.isEnabled && mediator.showAnnotationsToUser {
-                coreHandlerLog.info("[\(tab.displayTitle)] Apple AI mediator: summarizing completion...")
                 if let summaryAnnotation = await mediator.summarizeCompletion(summary: summary, commandsRun: []) {
                     if mediator.trainingEnabled {
                         TrainingDataStore.shared.captureAppleAIDecision(summaryAnnotation.content)

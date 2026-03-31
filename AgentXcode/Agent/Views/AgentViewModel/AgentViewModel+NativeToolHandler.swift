@@ -3,10 +3,8 @@
 import AgentTools
 import AgentMCP
 import AgentD1F
-import os.log
 import Cocoa
 
-private let taskLog = Logger(subsystem: AppConstants.subsystem, category: "TaskExecution")
 
 
 

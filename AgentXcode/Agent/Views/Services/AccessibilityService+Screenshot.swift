@@ -1,3 +1,4 @@
+import AgentAudit
 import Foundation
 import AppKit
 @preconcurrency import ApplicationServices
@@ -12,7 +13,7 @@ extension AccessibilityService {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility/Screen Recording permission required.")
         }
-        Self.logAudit("captureScreenshot(x: \(x.map(String.init) ?? "nil"), y: \(y.map(String.init) ?? "nil"), w: \(width.map(String.init) ?? "nil"), h: \(height.map(String.init) ?? "nil"), windowID: \(windowID.map(String.init) ?? "nil"))")
+        AuditLog.log(.accessibility, "captureScreenshot(x: \(x.map(String.init) ?? "nil"), y: \(y.map(String.init) ?? "nil"), w: \(width.map(String.init) ?? "nil"), h: \(height.map(String.init) ?? "nil"), windowID: \(windowID.map(String.init) ?? "nil"))")
 
         let home = FileManager.default.homeDirectoryForCurrentUser
         let fileName = "screenshot_\(UUID().uuidString).png"
@@ -71,7 +72,7 @@ extension AccessibilityService {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility/Screen Recording permission required.")
         }
-        Self.logAudit("captureAllWindows()")
+        AuditLog.log(.accessibility, "captureAllWindows()")
 
         // Try to capture just the frontmost window instead of the entire screen
         let frontWindowID = Self.frontmostWindowID()

@@ -1,3 +1,4 @@
+import AgentAudit
 import AppKit
 import ServiceManagement
 
@@ -177,6 +178,7 @@ final class UserService {
     }
 
     func execute(command: String, workingDirectory: String = "") async -> (status: Int32, output: String) {
+        AuditLog.log(.launchAgent, "execute: \(command.prefix(100))")
         if !userReady {
             let msg = restartAgent()
             if !userReady {

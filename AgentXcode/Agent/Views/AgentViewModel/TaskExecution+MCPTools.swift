@@ -1,8 +1,6 @@
 @preconcurrency import Foundation
 import AgentMCP
-import os.log
 
-private let mcpLog = Logger(subsystem: AppConstants.subsystem, category: "MCPTools")
 
 // MARK: - MCP Tool Execution
 extension AgentViewModel {

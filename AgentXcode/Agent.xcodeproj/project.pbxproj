@@ -128,6 +128,7 @@
 		EAE1E7062F7BF5470079432C /* AgentTools in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7052F7BF5470079432C /* AgentTools */; };
 		EAE1E7092F7BF5590079432C /* AgentColorSyntax in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7082F7BF5590079432C /* AgentColorSyntax */; };
 		EAE1E70C2F7BF5780079432C /* AgentMCP in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E70B2F7BF5780079432C /* AgentMCP */; };
+ttEAE1E71B2F7BF7000079432C /* AgentAudit in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E71A2F7BF7000079432C /* AgentAudit */; };
 		EAE1E7122F7BF6290079432C /* AgentD1F in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7112F7BF6290079432C /* AgentD1F */; };
 		EAE1E7152F7BF6880079432C /* AgentSwift in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7142F7BF6880079432C /* AgentSwift */; };
 		EAE1E7182F7BF6E70079432C /* XcodeScriptingBridge in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7172F7BF6E70079432C /* XcodeScriptingBridge */; };
@@ -377,6 +378,8 @@
 				EAE1E7092F7BF5590079432C /* AgentColorSyntax in Frameworks */,
 				EAE1E7122F7BF6290079432C /* AgentD1F in Frameworks */,
 				EAE1E70C2F7BF5780079432C /* AgentMCP in Frameworks */,
+				EAE1E71B2F7BF7000079432C /* AgentAudit in Frameworks */,
+ttEAE1E71B2F7BF7000079432C /* AgentAudit in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E71A2F7BF7000079432C /* AgentAudit */; };
 				EAE1E7152F7BF6880079432C /* AgentSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -739,6 +742,7 @@
 				EAE1E7052F7BF5470079432C /* AgentTools */,
 				EAE1E7082F7BF5590079432C /* AgentColorSyntax */,
 				EAE1E70B2F7BF5780079432C /* AgentMCP */,
+				EAE1E71A2F7BF7000079432C /* AgentAudit */,
 				EAE1E7112F7BF6290079432C /* AgentD1F */,
 				EAE1E7142F7BF6880079432C /* AgentSwift */,
 				EAE1E7172F7BF6E70079432C /* XcodeScriptingBridge */,
@@ -823,6 +827,7 @@
 				EAE1E7102F7BF6290079432C /* XCRemoteSwiftPackageReference "AgentD1F" */,
 				EAE1E7132F7BF6880079432C /* XCRemoteSwiftPackageReference "AgentSwift" */,
 				EAE1E7162F7BF6E70079432C /* XCRemoteSwiftPackageReference "AgentEventBridges" */,
+				EAE1E7192F7BF7000079432C /* XCLocalSwiftPackageReference "../AgentAudit" */,
 			);
 			productRefGroup = AA10000000000000000042 /* Products */;
 			projectDirPath = "";
@@ -1513,6 +1518,13 @@
 				minimumVersion = 1.1.0;
 			};
 		};
+/* Begin XCLocalSwiftPackageReference section */
+ttEAE1E7192F7BF7000079432C /* XCLocalSwiftPackageReference "../AgentAudit" */ = {
+tttisa = XCLocalSwiftPackageReference;
+tttrelativePath = ../AgentAudit;
+tt};
+/* End XCLocalSwiftPackageReference section */
+
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1551,6 +1563,10 @@
 			package = EAE1E7162F7BF6E70079432C /* XCRemoteSwiftPackageReference "AgentEventBridges" */;
 			productName = XcodeScriptingBridge;
 		};
+ttEAE1E71A2F7BF7000079432C /* AgentAudit */ = {
+tttisa = XCSwiftPackageProductDependency;
+tttproductName = AgentAudit;
+tt};
 /* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = AA10000000000000000000 /* Project object */;

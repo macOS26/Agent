@@ -1,3 +1,4 @@
+import AgentAudit
 import Foundation
 
 extension ScriptService {
@@ -71,6 +72,7 @@ extension ScriptService {
     /// Run a compiled script dylib out-of-process via a small runner executable.
     /// Each invocation gets its own process with its own stdout — fully concurrent.
     func loadAndRunScriptViaProcess(name: String, arguments: String = "", captureStderr: Bool = false, isCancelled: (@Sendable () -> Bool)? = nil, onOutput: (@Sendable (String) -> Void)? = nil) async -> (output: String, status: Int32) {
+        AuditLog.log(.agentScript, "run: \(name) args: \(arguments.prefix(80))")
         let scriptName = name.replacingOccurrences(of: ".swift", with: "")
         let dylib = dylibPath(name: scriptName)
 

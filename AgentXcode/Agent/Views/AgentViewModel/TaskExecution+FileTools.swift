@@ -1,8 +1,6 @@
 @preconcurrency import Foundation
 import AgentD1F
-import os.log
 
-private let fileLog = Logger(subsystem: AppConstants.subsystem, category: "FileTools")
 
 // MARK: - File I/O Tool Execution
 extension AgentViewModel {
