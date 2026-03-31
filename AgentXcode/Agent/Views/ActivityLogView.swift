@@ -653,7 +653,7 @@ struct ActivityLogView: NSViewRepresentable {
                     .foregroundColor: NSColor.secondaryLabelColor,
                     .backgroundColor: NSColor.systemYellow.withAlphaComponent(0.15)
                 ]
-                return NSAttributedString(string: "--- Log truncated (showing last 15K characters) ---\n\n", attributes: bannerAttrs)
+                return NSAttributedString(string: "--- Log truncated (showing last 15K characters) ---\n", attributes: bannerAttrs)
             }() : nil
 
             guard !imageMatches.isEmpty || !htmlMatches.isEmpty else {
