@@ -141,6 +141,9 @@
 		FF20000000000000000002 /* SafariWebAutomationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF20000000000000000001 /* SafariWebAutomationTests.swift */; };
 		FF20000000000000000004 /* DiffToolsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF20000000000000000003 /* DiffToolsTests.swift */; };
 		WEB1000000000000000001 /* WebAutomationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = WEB1000000000000000002 /* WebAutomationService.swift */; };
+		WEB1000000000000000003 /* WebAutomationService+Navigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = WEB1000000000000000004 /* WebAutomationService+Navigation.swift */; };
+		WEB1000000000000000005 /* WebAutomationService+Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = WEB1000000000000000006 /* WebAutomationService+Utilities.swift */; };
+		WEB1000000000000000007 /* WebAutomationService+Search.swift in Sources */ = {isa = PBXBuildFile; fileRef = WEB1000000000000000008 /* WebAutomationService+Search.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -346,6 +349,9 @@
 		FF20000000000000000001 /* SafariWebAutomationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafariWebAutomationTests.swift; sourceTree = "<group>"; };
 		FF20000000000000000003 /* DiffToolsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffToolsTests.swift; sourceTree = "<group>"; };
 		WEB1000000000000000002 /* WebAutomationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebAutomationService.swift; sourceTree = "<group>"; };
+		WEB1000000000000000004 /* WebAutomationService+Navigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WebAutomationService+Navigation.swift"; sourceTree = "<group>"; };
+		WEB1000000000000000006 /* WebAutomationService+Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WebAutomationService+Utilities.swift"; sourceTree = "<group>"; };
+		WEB1000000000000000008 /* WebAutomationService+Search.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WebAutomationService+Search.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -511,6 +517,9 @@
 				AA1000000000000000002F /* AppleEventService.swift */,
 				AA10000000000000000075 /* AccessibilityService.swift */,
 				WEB1000000000000000002 /* WebAutomationService.swift */,
+				WEB1000000000000000004 /* WebAutomationService+Navigation.swift */,
+				WEB1000000000000000006 /* WebAutomationService+Utilities.swift */,
+				WEB1000000000000000008 /* WebAutomationService+Search.swift */,
 				EA80000000000000000002 /* NSAppleScriptService.swift */,
 				EA70000000000000000002 /* SDEFService.swift */,
 				EAFA000000000000000002 /* FoundationModelService.swift */,
@@ -873,6 +882,9 @@
 				AA10000000000000000045 /* AppleEventService.swift in Sources */,
 				AA10000000000000000076 /* AccessibilityService.swift in Sources */,
 				WEB1000000000000000001 /* WebAutomationService.swift in Sources */,
+				WEB1000000000000000003 /* WebAutomationService+Navigation.swift in Sources */,
+				WEB1000000000000000005 /* WebAutomationService+Utilities.swift in Sources */,
+				WEB1000000000000000007 /* WebAutomationService+Search.swift in Sources */,
 				EA80000000000000000001 /* NSAppleScriptService.swift in Sources */,
 				EA70000000000000000001 /* SDEFService.swift in Sources */,
 				EAFA000000000000000001 /* FoundationModelService.swift in Sources */,
