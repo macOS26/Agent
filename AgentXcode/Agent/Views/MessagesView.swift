@@ -93,6 +93,23 @@ struct MessagesView: View {
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }
+
+            if !AgentViewModel.checkFullDiskAccess() {
+                Divider()
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.yellow)
+                    Text("Full Disk Access required to read Messages.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Open Settings") {
+                        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")!)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+            }
         }
         .padding(16)
         .padding(.bottom, 15)
