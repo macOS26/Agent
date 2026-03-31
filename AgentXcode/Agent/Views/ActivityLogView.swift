@@ -65,7 +65,10 @@ struct ActivityLogView: NSViewRepresentable {
         coord.latestText = text
         coord.updateNSViewLastLength = len
         coord.latestTabID = tabID
-        if tabChanged { coord.lastTabID = nil } // force full rebuild on tab switch
+        if tabChanged {
+            coord.lastTabID = nil // force full rebuild on tab switch
+            coord.initialScrollRestored = false // allow restore on next render
+        }
         coord.latestSearchText = searchText
         coord.latestCaseSensitive = caseSensitive
         coord.latestMatchIndex = currentMatchIndex
@@ -408,6 +411,8 @@ struct ActivityLogView: NSViewRepresentable {
                     guard !self.isProgrammaticScroll else { return }
                     guard let textView = scrollView.documentView as? NSTextView else { return }
                     self.userIsAtBottom = self.isNearBottom(textView)
+                    // Continuously save scroll position so it survives view recreation
+                    self.scrollPositions?.wrappedValue[self.latestTabID] = scrollView.contentView.bounds.origin.y
                     self.scrollThrottled = true
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
                         self?.scrollThrottled = false
