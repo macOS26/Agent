@@ -110,15 +110,18 @@ final class ChatHistoryStore {
     
     /// Dedicated store file — avoids sharing default.store with TrainingDataStore
     private static var storeURL: URL {
-        (FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first ?? FileManager.default.temporaryDirectory)
-            .appendingPathComponent("chat2.store")
+        let urls = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
+        guard let url = urls.first else {
+            return FileManager.default.temporaryDirectory.appendingPathComponent("chat2.store")
+        }
+        return url.appendingPathComponent("chat2.store")
     }
 
     private init() {
         let schema = Schema([ChatMessage.self, ChatTask.self, ScriptTabRecord.self])
         let url = Self.storeURL
 
-        // Migrate: if old default.store has our tables, rename it to chat.store
+        // Migrate: if old default.store has our tables, rename it to chat2.store
         Self.migrateDefaultStoreToChatStore()
 
         // Pre-validate: if store file exists but lacks required tables, delete it
@@ -148,7 +151,7 @@ final class ChatHistoryStore {
         }
     }
 
-    /// One-time migration: rename default.store → chat.store if it has our tables
+    /// One-time migration: rename default.store → chat2.store if it has our tables
     private static func migrateDefaultStoreToChatStore() {
         guard let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return }
         let oldURL = appSupport.appendingPathComponent("default.store")
@@ -162,7 +165,7 @@ final class ChatHistoryStore {
             let new = URL(fileURLWithPath: newURL.path + suffix)
             try? fm.moveItem(at: old, to: new)
         }
-        print("Migrated default.store → chat.store")
+        print("Migrated default.store → chat2.store")
     }
 
     /// Open the SQLite file read-only and verify all required tables exist.
