@@ -231,9 +231,7 @@ extension AgentViewModel {
               !ids.isEmpty else { return }
 
         let records = ChatHistoryStore.shared.fetchScriptTabs()
-        let recordMap = Dictionary(uniqueKeysWithValues: records.compactMap { r in
-            (r.tabId, r)
-        })
+        let recordMap = Dictionary(records.compactMap { r in (r.tabId, r) }, uniquingKeysWith: { first, _ in first })
 
         for idStr in ids {
             guard let uuid = UUID(uuidString: idStr),
