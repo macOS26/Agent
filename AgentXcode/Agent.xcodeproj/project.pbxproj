@@ -64,7 +64,6 @@
 		AA10000000000000000064 /* PulseRingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000005F /* PulseRingView.swift */; };
 		AA10000000000000000065 /* StatusDotView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000068 /* StatusDotView.swift */; };
 		AA10000000000000000066 /* ActivityLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000061 /* ActivityLogView.swift */; };
-		AA10000000000000000070 /* ChatModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000069 /* ChatModels.swift */; };
 		AA10000000000000000076 /* AccessibilityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000075 /* AccessibilityService.swift */; };
 		AA10000000000000000077 /* MessagesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000078 /* MessagesView.swift */; };
 		AA10000000000000000079 /* ScriptTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000007A /* ScriptTab.swift */; };
@@ -135,6 +134,7 @@
 		EAB27E1D2F7B771400284C14 /* AgentColorSyntax in Frameworks */ = {isa = PBXBuildFile; productRef = EAB27E1C2F7B771400284C14 /* AgentColorSyntax */; };
 		EAB27E202F7B772700284C14 /* AgentTools in Frameworks */ = {isa = PBXBuildFile; productRef = EAB27E1F2F7B772700284C14 /* AgentTools */; };
 		EAB27E232F7B773D00284C14 /* AgentTerminalNeo in Frameworks */ = {isa = PBXBuildFile; productRef = EAB27E222F7B773D00284C14 /* AgentTerminalNeo */; };
+		EABA0FBD2F7B78DA005CCD6E /* ChatModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = EABA0FBC2F7B78DA005CCD6E /* ChatModels.swift */; };
 		EAF3666F2F623D6A004B7E38 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = EAF3666E2F623D6A004B7E38 /* AppIcon.icon */; };
 		EAFA000000000000000001 /* FoundationModelService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAFA000000000000000002 /* FoundationModelService.swift */; };
 		EASP000000000000000001 /* SystemPromptService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EASP000000000000000002 /* SystemPromptService.swift */; };
@@ -282,7 +282,6 @@
 		AA1000000000000000005F /* PulseRingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PulseRingView.swift; sourceTree = "<group>"; };
 		AA10000000000000000061 /* ActivityLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityLogView.swift; sourceTree = "<group>"; };
 		AA10000000000000000068 /* StatusDotView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusDotView.swift; sourceTree = "<group>"; };
-		AA10000000000000000069 /* ChatModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModels.swift; sourceTree = "<group>"; };
 		AA10000000000000000075 /* AccessibilityService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityService.swift; sourceTree = "<group>"; };
 		AA10000000000000000078 /* MessagesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesView.swift; sourceTree = "<group>"; };
 		AA1000000000000000007A /* ScriptTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptTab.swift; sourceTree = "<group>"; };
@@ -345,6 +344,7 @@
 		EA70000000000000000002 /* SDEFService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDEFService.swift; sourceTree = "<group>"; };
 		EA80000000000000000002 /* NSAppleScriptService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NSAppleScriptService.swift; sourceTree = "<group>"; };
 		EAAI000000000000000002 /* AppleIntelligenceMediator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleIntelligenceMediator.swift; sourceTree = "<group>"; };
+		EABA0FBC2F7B78DA005CCD6E /* ChatModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModels.swift; sourceTree = "<group>"; };
 		EAF3666E2F623D6A004B7E38 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		EAFA000000000000000002 /* FoundationModelService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoundationModelService.swift; sourceTree = "<group>"; };
 		EASP000000000000000002 /* SystemPromptService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemPromptService.swift; sourceTree = "<group>"; };
@@ -432,7 +432,6 @@
 				EADF39CA2F68BFC400CD01E5 /* Models */,
 				EADF39C72F68BF2100CD01E5 /* Views */,
 				EE10000000000000000010 /* ObjC */,
-				AA10000000000000000069 /* ChatModels.swift */,
 				AA1000000000000000001A /* AgentApp.swift */,
 				EAE00000000000000001 /* UX */,
 				EA50J00000000000001 /* JSON */,
@@ -659,6 +658,7 @@
 		EADF39CA2F68BFC400CD01E5 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				EABA0FBC2F7B78DA005CCD6E /* ChatModels.swift */,
 				AA10000000000000000020 /* Models.swift */,
 				EATD000000000000000002 /* TrainingData.swift */,
 			);
@@ -927,6 +927,7 @@
 				AA100000000000000000B5 /* ToolPreferencesService.swift in Sources */,
 				E3E55709254183FE587097A8 /* DiffStore.swift in Sources */,
 				AA10000000000000000103 /* RecentFoldersService.swift in Sources */,
+				EABA0FBD2F7B78DA005CCD6E /* ChatModels.swift in Sources */,
 				AA100000000000000000B7 /* ToolsView.swift in Sources */,
 				AA10000000000000000104 /* TokenBadge.swift in Sources */,
 				AA100000000000000000B8 /* AgentOptionsView.swift in Sources */,
@@ -970,7 +971,6 @@
 				AA10000000000000000066 /* ActivityLogView.swift in Sources */,
 				EE10000000000000000004 /* ObjCTry.m in Sources */,
 				AA10000000000000000036 /* Models.swift in Sources */,
-				AA10000000000000000070 /* ChatModels.swift in Sources */,
 				EATD000000000000000001 /* TrainingData.swift in Sources */,
 				AA10000000000000000079 /* ScriptTab.swift in Sources */,
 				AA1000000000000000007B /* TabBarView.swift in Sources */,
@@ -1189,7 +1189,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 93;
+				CURRENT_PROJECT_VERSION = 94;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 469UCUB275;
 				ENABLE_APP_SANDBOX = NO;
@@ -1232,7 +1232,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0.9;
+				MARKETING_VERSION = 1.0.10;
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1258,7 +1258,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 93;
+				CURRENT_PROJECT_VERSION = 94;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 469UCUB275;
 				ENABLE_APP_SANDBOX = NO;
@@ -1301,7 +1301,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0.9;
+				MARKETING_VERSION = 1.0.10;
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
