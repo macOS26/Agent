@@ -1,6 +1,15 @@
 {
-  "originHash" : "a2358b36852e78116c54809ec1c5606c066d3b323ddbd825f3f20c0c5c0fed2b",
+  "originHash" : "f7e0809b22ccf69f3a2dac02a6c7d9b92b8efa89cf9f08db80559cbca837b54f",
   "pins" : [
+    {
+      "identity" : "agentcolorsyntax",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/macOS26/AgentColorSyntax.git",
+      "state" : {
+        "revision" : "265c238357dcf9a4e153fd81b5f85b8fe0e51a40",
+        "version" : "1.0.0"
+      }
+    },
     {
       "identity" : "agenteventbridges",
       "kind" : "remoteSourceControl",
@@ -20,6 +29,24 @@
       }
     },
     {
+      "identity" : "agentterminalneo",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/macOS26/AgentTerminalNeo.git",
+      "state" : {
+        "revision" : "e4398fd68c258a2ac456717000a4039b9119ff17",
+        "version" : "1.0.0"
+      }
+    },
+    {
+      "identity" : "agenttools",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/macOS26/AgentTools.git",
+      "state" : {
+        "revision" : "ce536bd4dcd9e1b0d7533bea2e205ff3c8b95c1f",
+        "version" : "1.0.0"
+      }
+    },
+    {
       "identity" : "d1f-swift-multi-line-diff",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/CodeFreezeAI/D1F-swift-multi-line-diff.git",
@@ -33,8 +60,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-syntax.git",
       "state" : {
-        "revision" : "2b59c0c741e9184ab057fd22950b491076d42e91",
-        "version" : "603.0.0"
+        "revision" : "4799286537280063c85a32f09884cfbca301b1a1",
+        "version" : "602.0.0"
       }
     },
     {
@@ -42,8 +69,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/CodeFreezeAI/xcf-swift.git",
       "state" : {
-        "revision" : "00e15e828cbb974c9555d74dac40cbd94df24463",
-        "version" : "1.0.1"
+        "revision" : "843d7db7d4c8b56c811ae5b8522ea414a6ea1276",
+        "version" : "1.0.2"
       }
     }
   ],

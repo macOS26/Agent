@@ -746,9 +746,11 @@ extension AgentViewModel {
             let fp = input["file_path"] as? String ?? ""
             return await Self.offMain { XcodeService.shared.removeFileFromProject(filePath: fp) }
         case "xcode_bump_version":
-            return await Self.offMain { XcodeService.shared.bumpVersion() }
+            let delta = input["delta"] as? Int ?? 1
+            return await Self.offMain { XcodeService.shared.bumpVersion(delta: delta) }
         case "xcode_bump_build":
-            return await Self.offMain { XcodeService.shared.bumpBuild() }
+            let delta = input["delta"] as? Int ?? 1
+            return await Self.offMain { XcodeService.shared.bumpBuild(delta: delta) }
         case "xcode_get_version":
             return await Self.offMain { XcodeService.shared.getVersionInfo() }
         case "xcode_analyze":
