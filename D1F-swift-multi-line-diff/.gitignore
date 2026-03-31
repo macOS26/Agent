@@ -1,0 +1,13 @@
+/.build
+/.build
+/.build/arm64-apple-macosx
+/.build
+/.swiftpm
+/.swiftpm
+/.swiftpm
+*.xcuserstate
+.swiftpm/xcode/xcuserdata/toddbruss.xcuserdatad/xcschemes/xcschememanagement.plist
+.swiftpm/xcode/package.xcworkspace/xcuserdata/toddbruss.xcuserdatad/UserInterfaceState.xcuserstate
+.swiftpm/xcode/package.xcworkspace/xcuserdata/toddbruss.xcuserdatad/IDEFindNavigatorScopes.plist
+.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+.swiftpm/MultiLineDiff-Package.xctestplan
