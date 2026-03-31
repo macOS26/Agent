@@ -416,6 +416,28 @@ extension AgentViewModel {
         return cleaned
     }
     
+    /// Intercept shell commands that should use built-in tools instead
+    static func suggestTool(_ command: String) -> String? {
+        let trimmed = command.trimmingCharacters(in: .whitespaces)
+        // find with wildcard * pattern → use list_files tool
+        if trimmed.contains("find ") && trimmed.contains("-name '*'") {
+            return "Error: Use the list_files tool instead of raw find. Example: list_files(pattern: \"*.swift\", path: \"/your/path\")"
+        }
+        // find without -name filter → too broad
+        if trimmed.hasPrefix("find ") && !trimmed.contains("-name") {
+            return "Error: find without -name is too broad. Use list_files(pattern: \"*.swift\") or read_dir(path: \"/your/path\") instead."
+        }
+        // ls -R → use read_dir or list_files
+        if trimmed.contains("ls -R") || trimmed.contains("ls -la -R") || trimmed.contains("ls -lR") {
+            return "Error: Recursive ls is too broad. Use list_files(pattern: \"*\") or read_dir(path: \"/your/path\") instead."
+        }
+        // cat on large/unknown files → use read_file with offset/limit
+        if trimmed.hasPrefix("cat ") && !trimmed.contains("|") && !trimmed.contains(">") {
+            return "Error: Use read_file(file_path: \"...\") instead of cat. It supports offset and limit for large files."
+        }
+        return nil
+    }
+
     static func preflightCommand(_ command: String) -> String? {
         // Match paths under /Users/ or ~/ — most common source of typos
         guard let regex = try? NSRegularExpression(

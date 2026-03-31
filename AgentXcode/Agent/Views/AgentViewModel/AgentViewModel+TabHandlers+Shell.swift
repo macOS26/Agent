@@ -19,6 +19,10 @@ extension AgentViewModel {
             for (idx, rawCmd) in commands.enumerated() {
                 guard !Task.isCancelled else { return TabToolResult(toolResult: nil, isComplete: false) }
                 let cmd = Self.prependWorkingDirectory(rawCmd, projectFolder: tabFolder)
+                if let suggestion = Self.suggestTool(cmd) {
+                    batchOutput += "[\(idx + 1)] $ \(rawCmd)\n\(suggestion)\n\n"
+                    continue
+                }
                 if let pathErr = Self.preflightCommand(cmd) {
                     batchOutput += "[\(idx + 1)] $ \(rawCmd)\n\(pathErr)\n\n"
                     continue
@@ -106,6 +110,14 @@ extension AgentViewModel {
             let tabFolder = Self.resolvedWorkingDirectory(tab.projectFolder.isEmpty ? projectFolder : tab.projectFolder)
             let command = Self.prependWorkingDirectory(
                 input["command"] as? String ?? "", projectFolder: tabFolder)
+            if let suggestion = Self.suggestTool(command) {
+                tab.appendLog(suggestion)
+                tab.flush()
+                return TabToolResult(
+                    toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": suggestion],
+                    isComplete: false
+                )
+            }
             if let pathErr = Self.preflightCommand(command) {
                 tab.appendLog(pathErr)
                 tab.flush()
