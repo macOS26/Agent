@@ -1,6 +1,7 @@
 import SwiftUI
 import AppKit
 import AgentColorSyntax
+import AgentTerminalNeo
 
 /// NSTextView-backed activity log — avoids SwiftUI Text layout storms on large/streaming content.
 /// Detects image/HTML file paths in log output and shows clickable links that open in Preview/Browser.
@@ -89,6 +90,8 @@ struct ActivityLogView: NSViewRepresentable {
             coord.lastRenderedText = ""
             coord.clearCache()
             coord.invalidateAllCaches()
+            CodeBlockTheme.updateAppearance()
+            TerminalNeoTheme.updateAppearance()
         }
 
         // Skip if nothing changed (but always process tab switches and appearance changes)
@@ -252,6 +255,8 @@ struct ActivityLogView: NSViewRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator() }
 
     @MainActor class Coordinator: NSObject, NSTextViewDelegate {
+        var lastRenderTime: CFAbsoluteTime = 0
+        var pendingRenderWork: DispatchWorkItem?
         var lastLength = 0
         var showingPlaceholder = true
         var lastSearch = ""

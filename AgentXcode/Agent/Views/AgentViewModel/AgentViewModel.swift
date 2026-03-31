@@ -1,5 +1,7 @@
 @preconcurrency import Foundation
 import AgentTools
+import AgentColorSyntax
+import AgentTerminalNeo
 import AppKit
 import SwiftUI
 import SQLite3
@@ -897,6 +899,8 @@ final class AgentViewModel {
     // MARK: - Init
 
     init() {
+        CodeBlockTheme.updateAppearance()
+        TerminalNeoTheme.updateAppearance()
         // Restore ~/Documents/AgentScript/ folder and bundled resources if missing
         scriptService.ensurePackage()
         scriptService.rebuildAllMetadata()
