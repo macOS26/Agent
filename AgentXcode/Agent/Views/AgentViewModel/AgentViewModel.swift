@@ -945,7 +945,6 @@ final class AgentViewModel {
             }
         }
 
-        print("⏱️ AgentViewModel.init sync: \(String(format: "%.1f", (CFAbsoluteTimeGetCurrent() - initT0) * 1000))ms")
         // Test daemon connectivity on startup — auto-fix if not responding
         Task {
             try? await Task.sleep(nanoseconds: 500_000_000)
