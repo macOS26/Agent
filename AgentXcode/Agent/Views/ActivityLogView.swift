@@ -250,10 +250,12 @@ struct ActivityLogView: NSViewRepresentable {
                     lastLength = len
                     lastRenderedText = text
                     showingPlaceholder = false
-                    // Restore saved scroll position
+                    // Restore saved scroll position, or show bottom for main/new tabs
                     if let savedY = tabScrollPositions[tabID] {
                         scrollView.contentView.scroll(to: NSPoint(x: 0, y: savedY))
                         scrollView.reflectScrolledClipView(scrollView.contentView)
+                    } else {
+                        textView.scrollToEndOfDocument(nil)
                     }
                     if searchChanged {
                         applySearchHighlighting(textView: textView, searchText: searchText, caseSensitive: caseSensitive, currentMatch: currentMatchIndex, onMatchCount: onMatchCount)
@@ -269,10 +271,12 @@ struct ActivityLogView: NSViewRepresentable {
                 textView.textStorage?.setAttributedString(buildAttributedString(from: text))
                 textView.textStorage?.endEditing()
                 showingPlaceholder = false
-                // Restore saved scroll position
+                // Restore saved scroll position, or show bottom for main/new tabs
                 if let savedY = tabScrollPositions[tabID] {
                     scrollView.contentView.scroll(to: NSPoint(x: 0, y: savedY))
                     scrollView.reflectScrolledClipView(scrollView.contentView)
+                } else {
+                    textView.scrollToEndOfDocument(nil)
                 }
                 lastSearch = searchText
                 lastMatchIndex = currentMatchIndex
