@@ -14,7 +14,9 @@ extension AgentViewModel {
     /// Handles web automation tool calls (web_open, web_find, web_click, web_type, etc.)
     func handleWebTool(name: String, input: [String: Any]) async -> String? {
         // web_open
-        if name == "web_open" {
+        switch name {
+
+        case "web_open":
             guard let urlString = input["url"] as? String,
                   let url = URL(string: urlString) else {
                 return "Error: Invalid or missing URL"
@@ -26,10 +28,9 @@ extension AgentViewModel {
             } catch {
                 return "Error: \(error.localizedDescription)"
             }
-        }
 
         // web_find
-        if name == "web_find" {
+        case "web_find":
             let selector = input["selector"] as? String ?? ""
             let strategyStr = input["strategy"] as? String ?? "auto"
             let strategy = SelectorStrategy(rawValue: strategyStr) ?? .auto
@@ -49,10 +50,9 @@ extension AgentViewModel {
             } catch {
                 return "Error: \(error.localizedDescription)"
             }
-        }
 
         // web_click
-        if name == "web_click" {
+        case "web_click":
             let selector = input["selector"] as? String ?? ""
             let strategyStr = input["strategy"] as? String ?? "auto"
             let strategy = SelectorStrategy(rawValue: strategyStr) ?? .auto
@@ -64,10 +64,9 @@ extension AgentViewModel {
             } catch {
                 return "Error: \(error.localizedDescription)"
             }
-        }
 
         // web_type
-        if name == "web_type" {
+        case "web_type":
             let selector = input["selector"] as? String ?? ""
             let text = input["text"] as? String ?? ""
             let strategyStr = input["strategy"] as? String ?? "auto"
@@ -81,10 +80,9 @@ extension AgentViewModel {
             } catch {
                 return "Error: \(error.localizedDescription)"
             }
-        }
 
         // web_execute_js
-        if name == "web_execute_js" {
+        case "web_execute_js":
             let script = input["script"] as? String ?? ""
             let browser = input["browser"] as? String
             do {
@@ -93,37 +91,33 @@ extension AgentViewModel {
             } catch {
                 return "Error: \(error.localizedDescription)"
             }
-        }
 
         // web_google_search
-        if name == "web_google_search" {
+        case "web_google_search":
             let query = input["query"] as? String ?? ""
             guard !query.isEmpty else { return "Error: query is required" }
             let maxResults = input["max_results"] as? Int ?? 3000
             return await WebAutomationService.shared.safariGoogleSearch(query: query, maxResults: maxResults)
-        }
 
         // web_get_url / web_get_title
-        if name == "web_get_url" {
+        case "web_get_url":
             let browser = input["browser"] as? String
             return await WebAutomationService.shared.getPageURL(browser: browser)
-        }
-        if name == "web_get_title" {
+        case "web_get_title":
             let browser = input["browser"] as? String
             return await WebAutomationService.shared.getPageTitle(browser: browser)
-        }
         // web_read_content
-        if name == "web_read_content" {
+        case "web_read_content":
             let browser = input["browser"] as? String
             let maxLength = input["max_length"] as? Int ?? 10000
             return await WebAutomationService.shared.readPageContent(browser: browser, maxLength: maxLength)
-        }
-        
-        // web_scan — discover interactive elements on the page
-        if name == "web_scan" {
-            return await WebAutomationService.shared.scanInteractiveElements()
-        }
 
+        // web_scan — discover interactive elements on the page
+        case "web_scan":
+            return await WebAutomationService.shared.scanInteractiveElements()
+
+        default:
         return nil
+        }
     }
 }
