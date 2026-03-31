@@ -74,7 +74,7 @@ struct ActivityLogView: NSViewRepresentable {
         var showingPlaceholder = true
         var lastSearch = ""
         var lastMatchIndex = -1
-        let font = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
+        nonisolated(unsafe) let font = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
         /// Latest state from updateNSView
         var latestText = ""
         var latestSearchText = ""
@@ -229,8 +229,8 @@ struct ActivityLogView: NSViewRepresentable {
                         textView.textStorage?.beginEditing()
                         textView.textStorage?.append(renderMarkdownOnly(newText))
                         // Trim from top if textStorage exceeds cap
-                        if let storage = textView.textStorage, storage.length > Self.maxRenderChars {
-                            let trim = storage.length - Self.maxRenderChars
+                        if let storage = textView.textStorage, storage.length > 50_000 {
+                            let trim = storage.length - 50_000
                             // Snap to next newline so we don't cut mid-line
                             let snapRange = NSRange(location: trim, length: min(200, storage.length - trim))
                             let snippet = storage.string as NSString
@@ -489,12 +489,12 @@ struct ActivityLogView: NSViewRepresentable {
         )
 
         /// Fast render for incremental text updates - detects image/HTML paths and creates clickable links
-        func renderMarkdownOnly(_ text: String) -> NSAttributedString {
+        nonisolated func renderMarkdownOnly(_ text: String) -> NSAttributedString {
             // Check for image or HTML file paths in this chunk
             let nsText = text as NSString
             let fullRange = NSRange(location: 0, length: nsText.length)
-            let imageMatches = Self.imagePathPattern?.matches(in: text, range: fullRange) ?? []
-            let htmlMatches = Self.htmlPathPattern?.matches(in: text, range: fullRange) ?? []
+            let imageMatches = MarkdownPatterns.imagePathPattern?.matches(in: text, range: fullRange) ?? []
+            let htmlMatches = MarkdownPatterns.htmlPathPattern?.matches(in: text, range: fullRange) ?? []
 
             guard !imageMatches.isEmpty || !htmlMatches.isEmpty else {
                 return renderMarkdown(text)
@@ -562,10 +562,10 @@ struct ActivityLogView: NSViewRepresentable {
         }
 
         /// Maximum characters to render — truncate from the front to keep the tail visible.
-        private static let maxRenderChars = 50_000
+        private nonisolated(unsafe) static let maxRenderChars = 50_000
 
         /// Build attributed string from text. Converts image/HTML paths to clickable links.
-        func buildAttributedString(from text: String) -> NSAttributedString {
+        nonisolated func buildAttributedString(from text: String) -> NSAttributedString {
             let baseAttrs: [NSAttributedString.Key: Any] = [
                 .font: font,
                 .foregroundColor: NSColor.labelColor
@@ -574,8 +574,8 @@ struct ActivityLogView: NSViewRepresentable {
             // Truncate from the front if text exceeds render cap
             var renderText = text
             var wasTruncated = false
-            if renderText.count > Self.maxRenderChars {
-                let drop = renderText.count - Self.maxRenderChars
+            if renderText.count > 50_000 {
+                let drop = renderText.count - 50_000
                 renderText = String(renderText.dropFirst(drop))
                 // Snap to next newline so we don't start mid-line
                 if let nl = renderText.firstIndex(of: "\n") {
@@ -586,7 +586,7 @@ struct ActivityLogView: NSViewRepresentable {
 
             // Strip ANSI escape codes from the text
             let cleanText: String
-            if let rx = Self.ansiEscapePattern {
+            if let rx = MarkdownPatterns.ansiEscapePattern {
                 cleanText = rx.stringByReplacingMatches(in: renderText, range: NSRange(location: 0, length: (renderText as NSString).length), withTemplate: "")
             } else {
                 cleanText = renderText
@@ -594,8 +594,8 @@ struct ActivityLogView: NSViewRepresentable {
 
             let nsText = cleanText as NSString
             let fullRange = NSRange(location: 0, length: nsText.length)
-            let imageMatches = Self.imagePathPattern?.matches(in: cleanText, range: fullRange) ?? []
-            let htmlMatches = Self.htmlPathPattern?.matches(in: cleanText, range: fullRange) ?? []
+            let imageMatches = MarkdownPatterns.imagePathPattern?.matches(in: cleanText, range: fullRange) ?? []
+            let htmlMatches = MarkdownPatterns.htmlPathPattern?.matches(in: cleanText, range: fullRange) ?? []
 
             // Build truncation banner if needed
             let truncationBanner: NSAttributedString? = wasTruncated ? {
@@ -686,7 +686,7 @@ struct ActivityLogView: NSViewRepresentable {
             return result
         }
 
-        private func renderMarkdown(_ text: String) -> NSAttributedString {
+        nonisolated private func renderMarkdown(_ text: String) -> NSAttributedString {
             let baseAttrs: [NSAttributedString.Key: Any] = [
                 .font: font,
                 .foregroundColor: NSColor.labelColor
@@ -729,7 +729,7 @@ struct ActivityLogView: NSViewRepresentable {
             }
 
             // Handle code fences (```lang\n...\n```) first
-            guard let fenceRx = Self.fencePattern else { return NSAttributedString(string: text, attributes: baseAttrs) }
+            guard let fenceRx = MarkdownPatterns.fencePattern else { return NSAttributedString(string: text, attributes: baseAttrs) }
             let nsText = text as NSString
             let fullRange = NSRange(location: 0, length: nsText.length)
             let fences = fenceRx.matches(in: text, range: fullRange)
@@ -787,7 +787,7 @@ struct ActivityLogView: NSViewRepresentable {
 
         /// Splits text into lines and renders block-level markdown (headers, lists, rules, tables)
         /// then delegates inline rendering (bold, italic, code) per line.
-        private func renderInlineMarkdown(_ text: String) -> NSAttributedString {
+        nonisolated private func renderInlineMarkdown(_ text: String) -> NSAttributedString {
             guard !text.isEmpty else { return NSAttributedString() }
 
             let result = NSMutableAttributedString()
@@ -824,7 +824,7 @@ struct ActivityLogView: NSViewRepresentable {
 
         // MARK: - Markdown Table Rendering (NSTextTable)
 
-        private func isTableSeparator(_ line: String) -> Bool {
+        nonisolated private func isTableSeparator(_ line: String) -> Bool {
             let t = line.trimmingCharacters(in: .whitespaces)
             guard t.hasPrefix("|") else { return false }
             var inner = t[t.index(after: t.startIndex)...]
@@ -837,7 +837,7 @@ struct ActivityLogView: NSViewRepresentable {
             }
         }
 
-        private func parseTableRow(_ line: String) -> [String] {
+        nonisolated private func parseTableRow(_ line: String) -> [String] {
             let t = line.trimmingCharacters(in: .whitespaces)
             guard t.hasPrefix("|") else { return [] }
             var inner = t[t.index(after: t.startIndex)...]
@@ -846,7 +846,7 @@ struct ActivityLogView: NSViewRepresentable {
                 .map { $0.trimmingCharacters(in: .whitespaces) }
         }
 
-        private func renderMarkdownTable(_ lines: [String]) -> NSAttributedString? {
+        nonisolated private func renderMarkdownTable(_ lines: [String]) -> NSAttributedString? {
             let headerCells = parseTableRow(lines[0])
             guard !headerCells.isEmpty else { return nil }
 
@@ -900,7 +900,7 @@ struct ActivityLogView: NSViewRepresentable {
             return result
         }
 
-        private func makeTableCell(
+        nonisolated private func makeTableCell(
             text: String, table: NSTextTable, row: Int, column: Int,
             bg: NSColor, cellFont: NSFont, align: NSTextAlignment, border: NSColor
         ) -> NSAttributedString {
@@ -924,12 +924,12 @@ struct ActivityLogView: NSViewRepresentable {
         }
 
         /// Renders a single line, detecting block-level elements first, then inline.
-        private func renderMarkdownLine(_ line: String) -> NSAttributedString {
+        nonisolated private func renderMarkdownLine(_ line: String) -> NSAttributedString {
             let nsLine = line as NSString
             let fullRange = NSRange(location: 0, length: nsLine.length)
 
             // Horizontal rule (check before bullet since --- could conflict)
-            if Self.hrPattern?.firstMatch(in: line, range: fullRange) != nil {
+            if MarkdownPatterns.hrPattern?.firstMatch(in: line, range: fullRange) != nil {
                 let result = NSMutableAttributedString()
                 let attachment = NSTextAttachment()
                 attachment.attachmentCell = HRLineCell(color: .separatorColor)
@@ -938,7 +938,7 @@ struct ActivityLogView: NSViewRepresentable {
             }
 
             // Header
-            if let match = Self.headerPattern?.firstMatch(in: line, range: fullRange) {
+            if let match = MarkdownPatterns.headerPattern?.firstMatch(in: line, range: fullRange) {
                 let level = nsLine.substring(with: match.range(at: 1)).count
                 let content = nsLine.substring(with: match.range(at: 2))
                 let size: CGFloat
@@ -953,7 +953,7 @@ struct ActivityLogView: NSViewRepresentable {
             }
 
             // Bullet list
-            if let match = Self.bulletPattern?.firstMatch(in: line, range: fullRange) {
+            if let match = MarkdownPatterns.bulletPattern?.firstMatch(in: line, range: fullRange) {
                 let indent = nsLine.substring(with: match.range(at: 1))
                 let content = nsLine.substring(with: match.range(at: 2))
                 let result = NSMutableAttributedString()
@@ -966,7 +966,7 @@ struct ActivityLogView: NSViewRepresentable {
             }
 
             // Blockquote
-            if let match = Self.blockquotePattern?.firstMatch(in: line, range: fullRange) {
+            if let match = MarkdownPatterns.blockquotePattern?.firstMatch(in: line, range: fullRange) {
                 let content = nsLine.substring(with: match.range(at: 1))
                 let result = NSMutableAttributedString()
                 result.append(NSAttributedString(
@@ -991,7 +991,7 @@ struct ActivityLogView: NSViewRepresentable {
         }
 
         /// Parses inline markdown (bold, italic, inline code) using Apple's AttributedString.
-        private func renderInlineElements(_ text: String, baseFont: NSFont) -> NSAttributedString {
+        nonisolated private func renderInlineElements(_ text: String, baseFont: NSFont) -> NSAttributedString {
             guard !text.isEmpty else { return NSAttributedString() }
 
             let plainAttrs: [NSAttributedString.Key: Any] = [
@@ -1059,7 +1059,7 @@ struct ActivityLogView: NSViewRepresentable {
         }
 
         /// Detect https/http URLs in attributed text and make them clickable links.
-        private func linkifyURLs(_ input: NSAttributedString) -> NSAttributedString {
+        nonisolated private func linkifyURLs(_ input: NSAttributedString) -> NSAttributedString {
             let text = input.string
             let result = NSMutableAttributedString(attributedString: input)
 
@@ -1101,7 +1101,7 @@ struct ActivityLogView: NSViewRepresentable {
         }
 
         /// Manually apply **bold** and *italic* markers that Apple's markdown parser missed.
-        private func applyManualBoldItalic(_ attrStr: NSMutableAttributedString, baseFont: NSFont) {
+        nonisolated private func applyManualBoldItalic(_ attrStr: NSMutableAttributedString, baseFont: NSFont) {
             let text = attrStr.string
             // Bold: **text**
             if let regex = try? NSRegularExpression(pattern: #"\*\*(.+?)\*\*"#) {
