@@ -326,7 +326,7 @@ final class WebAutomationService: @unchecked Sendable {
             return try await seleniumExecute(script: script)
         }
         
-        let result = await MainActor.run { () -> String? in
+        let result = await Task.detached { () -> String? in
             var err: NSDictionary?
             guard let script = NSAppleScript(source: appleScript) else { return nil }
             let out = script.executeAndReturnError(&err)
@@ -334,8 +334,8 @@ final class WebAutomationService: @unchecked Sendable {
                 return "Error: \(error)"
             }
             return out.stringValue
-        }
-        
+        }.value
+
         return result
     }
     
@@ -459,15 +459,17 @@ final class WebAutomationService: @unchecked Sendable {
             script = "tell application \"Microsoft Edge\" to open location \"\(url.absoluteString)\""
         }
         
-        let result = await MainActor.run { () -> String in
+        let urlStr = url.absoluteString
+        let browserName = browser.rawValue
+        let result = await Task.detached { () -> String in
             var err: NSDictionary?
             guard let appleScript = NSAppleScript(source: script) else { return "Error: Could not create script" }
             _ = appleScript.executeAndReturnError(&err)
             if let error = err {
                 return "Error: \(error)"
             }
-            return "Opened \(url.absoluteString) in \(browser.rawValue)"
-        }
+            return "Opened \(urlStr) in \(browserName)"
+        }.value
         
         if result.hasPrefix("Error:") {
             throw WebAutomationError.appleScriptError(result)

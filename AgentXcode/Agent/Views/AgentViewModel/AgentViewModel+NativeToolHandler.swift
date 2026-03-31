@@ -33,7 +33,7 @@ extension AgentViewModel {
         // AppleScript (NSAppleScript in-process with TCC)
         case "run_applescript":
             let source = (input["source"] as? String ?? "")
-            let result = await MainActor.run { () -> (String, Bool) in
+            let result = await Self.offMain { () -> (String, Bool) in
                 var err: NSDictionary?
                 guard let script = NSAppleScript(source: source) else { return ("Error", false) }
                 let out = script.executeAndReturnError(&err)
@@ -41,7 +41,8 @@ extension AgentViewModel {
                 return (out.stringValue ?? "(no output)", true)
             }
             if result.1 {
-                let _ = scriptService.saveAppleScript(name: Self.autoScriptName(from: source), source: source)
+                let autoName = Self.autoScriptName(from: source)
+                let _ = await Self.offMain { [ss = scriptService] in ss.saveAppleScript(name: autoName, source: source) }
             }
             return result.0
         // osascript (runs osascript CLI in-process with TCC)
@@ -66,12 +67,12 @@ extension AgentViewModel {
             return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
         // Script management
         case "list_agents":
-            let scripts = scriptService.listScripts()
+            let scripts = await Self.offMain { [ss = scriptService] in ss.listScripts() }
             return scripts.isEmpty ? "No scripts found" : scripts.map { "\($0.name) (\($0.size) bytes)" }.joined(separator: "\n")
         case "run_agent":
             let scriptName = input["name"] as? String ?? ""
             let arguments = input["arguments"] as? String ?? ""
-            guard let cmd = scriptService.compileCommand(name: scriptName) else {
+            guard let cmd = await Self.offMain({ [ss = scriptService] in ss.compileCommand(name: scriptName) }) else {
                 return "Error: script '\(scriptName)' not found"
             }
             var fullCmd = cmd
@@ -89,22 +90,26 @@ extension AgentViewModel {
             }
             return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
         case "read_agent":
-            return scriptService.readScript(name: input["name"] as? String ?? "") ?? "Not found"
+            let readName = input["name"] as? String ?? ""
+            return await Self.offMain { [ss = scriptService] in ss.readScript(name: readName) ?? "Not found" }
         case "create_agent", "update_agent":
-            return scriptService.createScript(name: input["name"] as? String ?? "", content: input["content"] as? String ?? "")
+            let createName = input["name"] as? String ?? ""
+            let createContent = input["content"] as? String ?? ""
+            return await Self.offMain { [ss = scriptService] in ss.createScript(name: createName, content: createContent) }
         case "delete_agent":
-            return scriptService.deleteScript(name: input["name"] as? String ?? "")
+            let deleteName = input["name"] as? String ?? ""
+            return await Self.offMain { [ss = scriptService] in ss.deleteScript(name: deleteName) }
         case "combine_agents":
             let sourceA = input["source_a"] as? String ?? ""
             let sourceB = input["source_b"] as? String ?? ""
             let target = input["target"] as? String ?? ""
-            guard let contentA = scriptService.readScript(name: sourceA) else { return "Error: script '\(sourceA)' not found." }
-            guard let contentB = scriptService.readScript(name: sourceB) else { return "Error: script '\(sourceB)' not found." }
+            guard let contentA = await Self.offMain({ [ss = scriptService] in ss.readScript(name: sourceA) }) else { return "Error: script '\(sourceA)' not found." }
+            guard let contentB = await Self.offMain({ [ss = scriptService] in ss.readScript(name: sourceB) }) else { return "Error: script '\(sourceB)' not found." }
             let merged = Self.combineScriptSources(contentA: contentA, contentB: contentB, sourceA: sourceA, sourceB: sourceB)
-            if scriptService.readScript(name: target) != nil {
-                return scriptService.updateScript(name: target, content: merged)
+            if await Self.offMain({ [ss = scriptService] in ss.readScript(name: target) }) != nil {
+                return await Self.offMain { [ss = scriptService] in ss.updateScript(name: target, content: merged) }
             } else {
-                return scriptService.createScript(name: target, content: merged)
+                return await Self.offMain { [ss = scriptService] in ss.createScript(name: target, content: merged) }
             }
         // File operations
         case "read_file":
@@ -561,7 +566,7 @@ extension AgentViewModel {
                 end tell
                 """
                 
-                let result = await MainActor.run { () -> String in
+                let result = await Self.offMain { () -> String in
                     var err: NSDictionary?
                     guard let applescript = NSAppleScript(source: script) else {
                         return "Error: Failed to create AppleScript"

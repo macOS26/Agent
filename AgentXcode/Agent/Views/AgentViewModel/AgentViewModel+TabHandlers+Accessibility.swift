@@ -209,14 +209,17 @@ extension AgentViewModel {
 
             let output: String
             if let wid = windowId, wid > 0 {
-                output = 
+                output = await Self.offMain {
                     AccessibilityService.shared.captureScreenshot(windowID: wid)
+                }
             } else if let x = x, let y = y, let w = width, let h = height {
-                output = 
+                output = await Self.offMain {
                     AccessibilityService.shared.captureScreenshot(x: x, y: y, width: w, height: h)
+                }
             } else {
-                output = 
+                output = await Self.offMain {
                     AccessibilityService.shared.captureAllWindows()
+                }
             }
 
             if output.contains("\"path\"") {
@@ -285,10 +288,11 @@ extension AgentViewModel {
             let timeout = input["timeout"] as? Double ?? 5.0
             tab.appendLog("🔍 Finding element...")
             tab.flush()
-            let output = 
+            let output = await Self.offMain {
                 AccessibilityService.shared.findElement(
                     role: role, title: title, value: value, appBundleId: appBundleId, timeout: timeout
                 )
+            }
             tab.appendLog(Self.preview(output, lines: 30))
             tab.flush()
             return TabToolResult(
@@ -347,8 +351,9 @@ extension AgentViewModel {
             let button = input["button"] as? String ?? "left"
             tab.appendLog("🖱️ drag (\(fromX), \(fromY)) → (\(toX), \(toY))...")
             tab.flush()
-            let output = 
+            let output = await Self.offMain {
                 AccessibilityService.shared.drag(fromX: fromX, fromY: fromY, toX: toX, toY: toY, button: button)
+            }
             tab.appendLog(output)
             tab.flush()
             return TabToolResult(
@@ -365,10 +370,11 @@ extension AgentViewModel {
             let pollInterval = input["pollInterval"] as? Double ?? 0.5
             tab.appendLog("⏳ element (timeout: \(timeout)s)...")
             tab.flush()
-            let output = 
+            let output = await Self.offMain {
                 AccessibilityService.shared.waitForElement(
                     role: role, title: title, value: value, appBundleId: appBundleId, timeout: timeout, pollInterval: pollInterval
                 )
+            }
             tab.appendLog(Self.preview(output, lines: 30))
             tab.flush()
             return TabToolResult(
@@ -385,10 +391,11 @@ extension AgentViewModel {
             let verify = input["verify"] as? Bool ?? false
             tab.appendLog("👆 element (role: \(role ?? "any"), title: \(title ?? "any"))...")
             tab.flush()
-            let output = 
+            let output = await Self.offMain {
                 AccessibilityService.shared.clickElement(
                     role: role, title: title, value: value, appBundleId: appBundleId, timeout: timeout, verify: verify
                 )
+            }
             tab.appendLog(Self.preview(output, lines: 30))
             tab.flush()
             return TabToolResult(
@@ -406,11 +413,12 @@ extension AgentViewModel {
             let maxDelay = input["maxDelay"] as? Double ?? 1.0
             tab.appendLog("⏳ element (adaptive, timeout: \(timeout)s)...")
             tab.flush()
-            let output = 
+            let output = await Self.offMain {
                 AccessibilityService.shared.waitForElementAdaptive(
                     role: role, title: title, value: value, appBundleId: appBundleId, timeout: timeout,
                     initialDelay: initialDelay, maxDelay: maxDelay
                 )
+            }
             tab.appendLog(Self.preview(output, lines: 30))
             tab.flush()
             return TabToolResult(
@@ -426,10 +434,11 @@ extension AgentViewModel {
             let verify = input["verify"] as? Bool ?? true
             tab.appendLog("⌨️ \(text.count) chars into element...")
             tab.flush()
-            let output = 
+            let output = await Self.offMain {
                 AccessibilityService.shared.typeTextIntoElement(
                     role: role, title: title, text: text, appBundleId: appBundleId, verify: verify
                 )
+            }
             tab.appendLog(Self.preview(output, lines: 30))
             tab.flush()
             return TabToolResult(
@@ -536,8 +545,9 @@ extension AgentViewModel {
             let app = input["app"] as? String ?? input["appBundleId"] as? String
             tab.appendLog("📜 scroll to element...")
             tab.flush()
-            let output = 
+            let output = await Self.offMain {
                 AccessibilityService.shared.scrollToElement(role: role, title: title, appBundleId: app)
+            }
             tab.appendLog(output)
             tab.flush()
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)

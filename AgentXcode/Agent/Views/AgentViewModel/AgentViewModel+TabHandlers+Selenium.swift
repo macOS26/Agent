@@ -9,7 +9,7 @@ extension AgentViewModel {
     /// Run a Selenium script with arguments.
     func runSeleniumHelper(tab: ScriptTab, toolId: String, args: String, logMessage: String) async -> TabToolResult {
         tab.appendLog(logMessage); tab.flush()
-        guard let compileCmd = scriptService.compileCommand(name: "Selenium") else {
+        guard let compileCmd = await Self.offMain({ [ss = scriptService] in ss.compileCommand(name: "Selenium") }) else {
             return tabResult("Error: Selenium script not found", toolId: toolId)
         }
         let tabFolder = Self.resolvedWorkingDirectory(tab.projectFolder.isEmpty ? projectFolder : tab.projectFolder)

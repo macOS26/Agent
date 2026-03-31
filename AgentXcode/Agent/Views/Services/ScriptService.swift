@@ -1,8 +1,7 @@
 import Foundation
 import Darwin
 
-@MainActor
-final class ScriptService {
+final class ScriptService: @unchecked Sendable {
     static let agentsDir: URL = {
         let home = FileManager.default.homeDirectoryForCurrentUser
         return home.appendingPathComponent("Documents/AgentScript/agents")

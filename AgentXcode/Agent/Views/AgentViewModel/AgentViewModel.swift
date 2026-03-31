@@ -901,13 +901,14 @@ final class AgentViewModel {
     init() {
         CodeBlockTheme.updateAppearance()
         TerminalNeoTheme.updateAppearance()
-        // Restore ~/Documents/AgentScript/ folder and bundled resources if missing
-        scriptService.ensurePackage()
-        scriptService.rebuildAllMetadata()
+        // Restore ~/Documents/AgentScript/ folder and bundled resources if missing (off main thread)
+        Task.detached { [scriptService = self.scriptService] in
+            scriptService.ensurePackage()
+            scriptService.rebuildAllMetadata()
+            let names = Set(scriptService.listScripts().map { $0.name.lowercased() })
+            await MainActor.run { AppleIntelligenceMediator.knownAgentNames = names }
+        }
         SystemPromptService.shared.ensureDefaults()
-
-        // Sync known agent names for direct command matching
-        AppleIntelligenceMediator.knownAgentNames = Set(scriptService.listScripts().map { $0.name.lowercased() })
 
         restoreScriptTabs()
         syncServicesGroup()

@@ -186,7 +186,7 @@ extension AgentViewModel {
     /// Execute a direct command matched by triage, without the LLM.
     /// When `tab` is provided, output is logged to that tab; otherwise to the main activity log.
     func executeDirectCommand(_ cmd: AppleIntelligenceMediator.DirectCommand, tab: ScriptTab? = nil) async -> String {
-        let name = scriptService.resolveScriptName(cmd.argument)
+        let name = await Self.offMain { [ss = scriptService] in ss.resolveScriptName(cmd.argument) }
 
         // Resolve effective project folder: tab's folder > main folder (always resolve to directory)
         let rawFolder: String
@@ -207,14 +207,15 @@ extension AgentViewModel {
 
         switch cmd.name {
         case "list_agents":
-            let list = scriptService.numberedList()
-            let count = scriptService.listScripts().count
+            let (list, count) = await Self.offMain { [ss = scriptService] in
+                (ss.numberedList(), ss.listScripts().count)
+            }
             log("🦾 Agents: \(count) found")
             log(list)
             return list
 
         case "read_agent":
-            guard let content = scriptService.readScript(name: name) else {
+            guard let content = await Self.offMain({ [ss = scriptService] in ss.readScript(name: name) }) else {
                 let err = "Error: agent '\(name)' not found."
                 log(err)
                 return err
@@ -224,19 +225,19 @@ extension AgentViewModel {
             return content
 
         case "delete_agent":
-            let output = scriptService.deleteScript(name: name)
+            let output = await Self.offMain { [ss = scriptService] in ss.deleteScript(name: name) }
             log(output)
             return output
 
         case "run_agent":
             // Only called when canRunDirectly returned true (no args needed)
-            guard let compileCmd = scriptService.compileCommand(name: name) else {
+            guard let compileCmd = await Self.offMain({ [ss = scriptService] in ss.compileCommand(name: name) }) else {
                 let err = "Error: agent '\(name)' not found."
                 log(err)
                 return err
             }
             // Skip compilation if dylib is up to date
-            if !scriptService.isDylibCurrent(name: name) {
+            if await Self.offMain({ [ss = scriptService] in !ss.isDylibCurrent(name: name) }) {
                 log("🦾 Compiling: \(name)")
                 flush()
                 let compileCmd2 = Self.prependWorkingDirectory(compileCmd, projectFolder: effectiveFolder)
@@ -549,8 +550,8 @@ extension AgentViewModel {
     /// Returns true on success, false on error (caller should fall through to LLM).
     @discardableResult
     func runAgentDirect(name: String, arguments: String = "", switchToTab: Bool = true) async -> Bool {
-        let resolved = scriptService.resolveScriptName(name)
-        guard let compileCmd = scriptService.compileCommand(name: resolved) else {
+        let resolved = await Self.offMain { [ss = scriptService] in ss.resolveScriptName(name) }
+        guard let compileCmd = await Self.offMain({ [ss = scriptService] in ss.compileCommand(name: resolved) }) else {
             appendLog("❌ agent '\(resolved)' not found.")
             return false
         }
@@ -579,7 +580,7 @@ extension AgentViewModel {
         tab.appendLog("--- Direct Run ---")
 
         // Compile only if needed
-        if !scriptService.isDylibCurrent(name: resolved) {
+        if await Self.offMain({ [ss = scriptService] in !ss.isDylibCurrent(name: resolved) }) {
             tab.appendLog("🦾 Compiling: \(resolved)")
             tab.flush()
             let compileResult = await userService.execute(command: compileCmd)

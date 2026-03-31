@@ -13,8 +13,9 @@ extension AgentViewModel {
 
         switch name {
         case "list_agents":
-            let output = scriptService.numberedList()
-            let count = scriptService.listScripts().count
+            let (output, count) = await Self.offMain { [ss = scriptService] in
+                (ss.numberedList(), ss.listScripts().count)
+            }
             tab.appendLog("🦾 Agents: \(count) found")
             tab.flush()
             return TabToolResult(
@@ -23,8 +24,11 @@ extension AgentViewModel {
             )
 
         case "read_agent":
-            let scriptName = scriptService.resolveScriptName(input["name"] as? String ?? "")
-            let output = scriptService.readScript(name: scriptName) ?? "Error: script '\(scriptName)' not found."
+            let rawName = input["name"] as? String ?? ""
+            let (scriptName, output) = await Self.offMain { [ss = scriptService] in
+                let resolved = ss.resolveScriptName(rawName)
+                return (resolved, ss.readScript(name: resolved) ?? "Error: script '\(resolved)' not found.")
+            }
             tab.appendLog("📖 Read: \(scriptName)")
             tab.appendLog(Self.codeFence(output, language: "swift"))
             tab.flush()
@@ -36,7 +40,7 @@ extension AgentViewModel {
         case "create_agent":
             let scriptName = input["name"] as? String ?? ""
             let content = input["content"] as? String ?? ""
-            let output = scriptService.createScript(name: scriptName, content: content)
+            let output = await Self.offMain { [ss = scriptService] in ss.createScript(name: scriptName, content: content) }
             tab.appendLog(output)
             tab.flush()
             return TabToolResult(
@@ -45,9 +49,10 @@ extension AgentViewModel {
             )
 
         case "update_agent":
-            let scriptName = scriptService.resolveScriptName(input["name"] as? String ?? "")
+            let rawUpdateName = input["name"] as? String ?? ""
+            let scriptName = await Self.offMain { [ss = scriptService] in ss.resolveScriptName(rawUpdateName) }
             let content = input["content"] as? String ?? ""
-            let output = scriptService.updateScript(name: scriptName, content: content)
+            let output = await Self.offMain { [ss = scriptService] in ss.updateScript(name: scriptName, content: content) }
             tab.appendLog(output)
             tab.flush()
             return TabToolResult(
@@ -56,8 +61,9 @@ extension AgentViewModel {
             )
 
         case "delete_agent":
-            let scriptName = scriptService.resolveScriptName(input["name"] as? String ?? "")
-            let output = scriptService.deleteScript(name: scriptName)
+            let rawDeleteName = input["name"] as? String ?? ""
+            let scriptName = await Self.offMain { [ss = scriptService] in ss.resolveScriptName(rawDeleteName) }
+            let output = await Self.offMain { [ss = scriptService] in ss.deleteScript(name: scriptName) }
             tab.appendLog(output)
             tab.flush()
             return TabToolResult(
@@ -66,17 +72,19 @@ extension AgentViewModel {
             )
 
         case "combine_agents":
-            let sourceA = scriptService.resolveScriptName(input["source_a"] as? String ?? "")
-            let sourceB = scriptService.resolveScriptName(input["source_b"] as? String ?? "")
+            let rawSourceA = input["source_a"] as? String ?? ""
+            let rawSourceB = input["source_b"] as? String ?? ""
+            let sourceA = await Self.offMain { [ss = scriptService] in ss.resolveScriptName(rawSourceA) }
+            let sourceB = await Self.offMain { [ss = scriptService] in ss.resolveScriptName(rawSourceB) }
             let target = input["target"] as? String ?? ""
             tab.appendLog("🔗 \(sourceA) + \(sourceB) → \(target)")
 
-            guard let contentA = scriptService.readScript(name: sourceA) else {
+            guard let contentA = await Self.offMain({ [ss = scriptService] in ss.readScript(name: sourceA) }) else {
                 let err = "Error: script '\(sourceA)' not found."
                 tab.appendLog(err)
                 return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": err], isComplete: false)
             }
-            guard let contentB = scriptService.readScript(name: sourceB) else {
+            guard let contentB = await Self.offMain({ [ss = scriptService] in ss.readScript(name: sourceB) }) else {
                 let err = "Error: script '\(sourceB)' not found."
                 tab.appendLog(err)
                 return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": err], isComplete: false)
@@ -85,19 +93,20 @@ extension AgentViewModel {
             let merged = Self.combineScriptSources(contentA: contentA, contentB: contentB, sourceA: sourceA, sourceB: sourceB)
 
             let output: String
-            if scriptService.readScript(name: target) != nil {
-                output = scriptService.updateScript(name: target, content: merged)
+            if await Self.offMain({ [ss = scriptService] in ss.readScript(name: target) }) != nil {
+                output = await Self.offMain { [ss = scriptService] in ss.updateScript(name: target, content: merged) }
             } else {
-                output = scriptService.createScript(name: target, content: merged)
+                output = await Self.offMain { [ss = scriptService] in ss.createScript(name: target, content: merged) }
             }
             tab.appendLog(output)
             tab.flush()
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
 
         case "run_agent":
-            let scriptName = scriptService.resolveScriptName(input["name"] as? String ?? "")
+            let rawRunName = input["name"] as? String ?? ""
+            let scriptName = await Self.offMain { [ss = scriptService] in ss.resolveScriptName(rawRunName) }
             let arguments = input["arguments"] as? String ?? ""
-            guard let compileCmd = scriptService.compileCommand(name: scriptName) else {
+            guard let compileCmd = await Self.offMain({ [ss = scriptService] in ss.compileCommand(name: scriptName) }) else {
                 let err = "Error: script '\(scriptName)' not found."
                 tab.appendLog(err)
                 tab.flush()
@@ -108,7 +117,7 @@ extension AgentViewModel {
             }
 
             // Skip compilation if dylib is up to date
-            if !scriptService.isDylibCurrent(name: scriptName) {
+            if await Self.offMain({ [ss = scriptService] in !ss.isDylibCurrent(name: scriptName) }) {
                 tab.appendLog("🦾 Compiling: \(scriptName)")
                 tab.flush()
 
