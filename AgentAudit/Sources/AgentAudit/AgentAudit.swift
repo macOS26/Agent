@@ -24,7 +24,7 @@ public enum AuditLog {
 
     private static let subsystem = "Agent.app.toddbruss.audit"
 
-    private static let loggers: [Category: Logger] = {
+    nonisolated(unsafe) private static let loggers: [Category: Logger] = {
         var map: [Category: Logger] = [:]
         for cat in [Category.launchAgent, .launchDaemon, .accessibility,
                     .appleScript, .agentScript, .permission, .web, .mcp, .xcode, .shell] {
@@ -36,7 +36,7 @@ public enum AuditLog {
     // MARK: - In-Memory Ring Buffer (for ax_get_audit_log tool)
 
     private static let lock = NSLock()
-    private static var ringBuffer: [String] = []
+    nonisolated(unsafe) private static var ringBuffer: [String] = []
     private static let maxEntries = 1000
 
     // MARK: - Public API

@@ -359,7 +359,6 @@ extension AgentViewModel {
 
             // Prune old messages every 4 iterations to save tokens
             if iterations > 1 && iterations % 4 == 0 && messages.count > 10 {
-                let beforeCount = messages.count
                 Self.pruneMessages(&messages)
             }
             if iterations > 2 { Self.stripOldImages(&messages) }

@@ -189,7 +189,6 @@ Rules:
     /// Wraps a session.respond call with timeout.
     /// Returns nil on timeout so the request goes straight to the LLM.
     private func respondWithTimeout(_ session: LanguageModelSession, prompt: String, label: String) async -> String? {
-        let start = CFAbsoluteTimeGetCurrent()
 
         let startLimit = Self.startTimeout
         let finishLimit = Self.finishTimeout
@@ -218,10 +217,8 @@ Rules:
                 return result
             }
 
-            let elapsed = CFAbsoluteTimeGetCurrent() - start
             return content
         } catch {
-            let elapsed = CFAbsoluteTimeGetCurrent() - start
             self.session = nil
             return nil
         }

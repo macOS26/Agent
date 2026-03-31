@@ -128,9 +128,9 @@
 		EAE1E7062F7BF5470079432C /* AgentTools in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7052F7BF5470079432C /* AgentTools */; };
 		EAE1E7092F7BF5590079432C /* AgentColorSyntax in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7082F7BF5590079432C /* AgentColorSyntax */; };
 		EAE1E70C2F7BF5780079432C /* AgentMCP in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E70B2F7BF5780079432C /* AgentMCP */; };
-ttEAE1E71B2F7BF7000079432C /* AgentAudit in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E71A2F7BF7000079432C /* AgentAudit */; };
 		EAE1E7122F7BF6290079432C /* AgentD1F in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7112F7BF6290079432C /* AgentD1F */; };
 		EAE1E7152F7BF6880079432C /* AgentSwift in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7142F7BF6880079432C /* AgentSwift */; };
+		EAE1E71B2F7BF7000079432C /* AgentAudit in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E71A2F7BF7000079432C /* AgentAudit */; };
 		EAE1E7182F7BF6E70079432C /* XcodeScriptingBridge in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7172F7BF6E70079432C /* XcodeScriptingBridge */; };
 		EAF3666F2F623D6A004B7E38 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = EAF3666E2F623D6A004B7E38 /* AppIcon.icon */; };
 		EAFA000000000000000001 /* FoundationModelService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAFA000000000000000002 /* FoundationModelService.swift */; };
@@ -379,7 +379,6 @@ ttEAE1E71B2F7BF7000079432C /* AgentAudit in Frameworks */ = {isa = PBXBuildFile;
 				EAE1E7122F7BF6290079432C /* AgentD1F in Frameworks */,
 				EAE1E70C2F7BF5780079432C /* AgentMCP in Frameworks */,
 				EAE1E71B2F7BF7000079432C /* AgentAudit in Frameworks */,
-ttEAE1E71B2F7BF7000079432C /* AgentAudit in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E71A2F7BF7000079432C /* AgentAudit */; };
 				EAE1E7152F7BF6880079432C /* AgentSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1518,14 +1517,14 @@ ttEAE1E71B2F7BF7000079432C /* AgentAudit in Frameworks */ = {isa = PBXBuildFile;
 				minimumVersion = 1.1.0;
 			};
 		};
-/* Begin XCLocalSwiftPackageReference section */
-ttEAE1E7192F7BF7000079432C /* XCLocalSwiftPackageReference "../AgentAudit" */ = {
-tttisa = XCLocalSwiftPackageReference;
-tttrelativePath = ../AgentAudit;
-tt};
-/* End XCLocalSwiftPackageReference section */
-
 /* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		EAE1E7192F7BF7000079432C /* XCLocalSwiftPackageReference "../AgentAudit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../AgentAudit;
+		};
+/* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		EAE1E7022F7BF5270079432C /* AgentTerminalNeo */ = {
@@ -1563,10 +1562,10 @@ tt};
 			package = EAE1E7162F7BF6E70079432C /* XCRemoteSwiftPackageReference "AgentEventBridges" */;
 			productName = XcodeScriptingBridge;
 		};
-ttEAE1E71A2F7BF7000079432C /* AgentAudit */ = {
-tttisa = XCSwiftPackageProductDependency;
-tttproductName = AgentAudit;
-tt};
+		EAE1E71A2F7BF7000079432C /* AgentAudit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AgentAudit;
+		};
 /* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = AA10000000000000000000 /* Project object */;

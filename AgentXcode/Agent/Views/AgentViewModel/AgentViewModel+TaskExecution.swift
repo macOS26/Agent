@@ -279,7 +279,6 @@ extension AgentViewModel {
 
             // Prune old messages every 4 iterations to save tokens
             if iterations > 1 && iterations % 4 == 0 && messages.count > 10 {
-                let beforeCount = messages.count
                 Self.pruneMessages(&messages)
             }
             // Strip base64 images from older messages
@@ -292,47 +291,13 @@ extension AgentViewModel {
                 isThinking = true
                 thinkingDismissed = false
 
-                // Log messages being sent to the LLM
-                for (idx, msg) in messages.enumerated() {
-                    let role = msg["role"] as? String ?? "?"
-                    let preview: String
-                    if let text = msg["content"] as? String {
-                        preview = String(text.prefix(120))
-                    } else if let blocks = msg["content"] as? [[String: Any]] {
-                        let types = blocks.compactMap { $0["type"] as? String }
-                        preview = "[\(blocks.count) blocks: \(types.joined(separator: ", "))]"
-                    } else {
-                        preview = "(unknown content type)"
-                    }
-                }
-
                 // Summarize old messages with Apple AI, then compress
                 if iterations > 1 {
                     await Self.summarizeOldMessages(&messages)
                 }
                 let sendMessages = iterations > 1 ? Self.compressMessages(messages) : messages
 
-                // Log token breakdown for debugging
-                if iterations > 0 {
-                    var totalChars = 0
-                    for (idx, msg) in sendMessages.enumerated() {
-                        var msgChars = 0
-                        if let text = msg["content"] as? String { msgChars = text.count }
-                        else if let blocks = msg["content"] as? [[String: Any]] {
-                            for b in blocks {
-                                if let t = b["text"] as? String { msgChars += t.count }
-                                if let t = b["content"] as? String { msgChars += t.count }
-                                if let inp = b["input"] as? [String: Any],
-                                   let d = try? JSONSerialization.data(withJSONObject: inp) { msgChars += d.count }
-                            }
-                        }
-                        totalChars += msgChars
-                        let role = msg["role"] as? String ?? "?"
-                    }
-                }
-
                 let response: (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int)
-                let streamStart = CFAbsoluteTimeGetCurrent()
                 flushLog()
                 if let claude {
                     response = try await claude.sendStreaming(messages: sendMessages, activeGroups: activeGroups) { [weak self] delta in
@@ -380,7 +345,6 @@ extension AgentViewModel {
                 sessionInputTokens += inTok
                 sessionOutputTokens += outTok
                 TokenUsageStore.shared.record(inputTokens: inTok, outputTokens: outTok)
-                let streamElapsed = CFAbsoluteTimeGetCurrent() - streamStart
                 flushStreamBuffer()
                 isThinking = false
                 timeoutRetryCount = 0 // Reset on successful response
