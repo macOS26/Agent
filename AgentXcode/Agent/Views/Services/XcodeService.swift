@@ -475,8 +475,8 @@ final class XcodeService: @unchecked Sendable {
         return "Version: \(version), Build: \(build)"
     }
 
-    /// Bump MARKETING_VERSION patch (1.0.1 → 1.0.2). Also bumps build number.
-    nonisolated func bumpVersion() -> String {
+    /// Bump MARKETING_VERSION patch by delta (+1 or -1). Also bumps build number by same delta.
+    nonisolated func bumpVersion(delta: Int = 1) -> String {
         guard let pbxPath = selectedPbxprojPath() else {
             return "Error: no Xcode project selected or pbxproj not found."
         }
@@ -488,7 +488,6 @@ final class XcodeService: @unchecked Sendable {
         let nsContent = content as NSString
         let fullRange = NSRange(location: 0, length: nsContent.length)
 
-        // Bump version
         guard let vPattern = try? NSRegularExpression(pattern: #"MARKETING_VERSION\s*=\s*(\d+[\.\d]*)"#),
               let vMatch = vPattern.firstMatch(in: content, range: fullRange) else {
             return "Error: MARKETING_VERSION not found in pbxproj."
@@ -496,11 +495,11 @@ final class XcodeService: @unchecked Sendable {
         let oldVersion = nsContent.substring(with: vMatch.range(at: 1))
         var parts = oldVersion.components(separatedBy: ".").compactMap { Int($0) }
         if parts.isEmpty { return "Error: unexpected version format '\(oldVersion)'" }
-        parts[parts.count - 1] += 1
+        parts[parts.count - 1] = max(0, parts[parts.count - 1] + delta)
         let newVersion = parts.map(String.init).joined(separator: ".")
         content = content.replacingOccurrences(of: "MARKETING_VERSION = \(oldVersion)", with: "MARKETING_VERSION = \(newVersion)")
 
-        // Also bump build
+        // Also bump build by same delta
         guard let bPattern = try? NSRegularExpression(pattern: #"CURRENT_PROJECT_VERSION\s*=\s*(\d+)"#) else {
             return "Error: failed to create build pattern regex"
         }
@@ -510,7 +509,7 @@ final class XcodeService: @unchecked Sendable {
         if let bMatch = bPattern.firstMatch(in: content, range: NSRange(location: 0, length: nsContent2.length)) {
             oldBuild = nsContent2.substring(with: bMatch.range(at: 1))
             if let n = Int(oldBuild) {
-                newBuild = String(n + 1)
+                newBuild = String(max(1, n + delta))
                 content = content.replacingOccurrences(of: "CURRENT_PROJECT_VERSION = \(oldBuild)", with: "CURRENT_PROJECT_VERSION = \(newBuild)")
             }
         }
@@ -524,8 +523,8 @@ final class XcodeService: @unchecked Sendable {
         }
     }
 
-    /// Bump CURRENT_PROJECT_VERSION only (80 → 81).
-    nonisolated func bumpBuild() -> String {
+    /// Bump CURRENT_PROJECT_VERSION by delta (+1 or -1).
+    nonisolated func bumpBuild(delta: Int = 1) -> String {
         guard let pbxPath = selectedPbxprojPath() else {
             return "Error: no Xcode project selected or pbxproj not found."
         }
@@ -544,7 +543,7 @@ final class XcodeService: @unchecked Sendable {
 
         let oldBuild = nsContent.substring(with: match.range(at: 1))
         guard let buildNum = Int(oldBuild) else { return "Error: unexpected build format '\(oldBuild)'" }
-        let newBuild = String(buildNum + 1)
+        let newBuild = String(max(1, buildNum + delta))
         content = content.replacingOccurrences(of: "CURRENT_PROJECT_VERSION = \(oldBuild)", with: "CURRENT_PROJECT_VERSION = \(newBuild)")
 
         do {
