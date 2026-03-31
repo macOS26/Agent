@@ -215,7 +215,12 @@ extension AgentViewModel {
             }
         // List/search files (via User LaunchAgent - no TCC required)
         case "list_files":
-            let pat = CodingService.shellEscape(input["pattern"] as? String ?? "*")
+            let rawPat = input["pattern"] as? String ?? "*.swift"
+            // Reject wildcard-only patterns — too broad, suggest specific extension
+            if rawPat == "*" || rawPat == "*.*" {
+                return "Error: pattern '*' is too broad. Use a file extension like '*.swift', '*.json', '*.py', or '*.txt'. Example: list_files(pattern: \"*.swift\")"
+            }
+            let pat = CodingService.shellEscape(rawPat)
             let rawDir = input["path"] as? String ?? pf
             let dir = CodingService.shellEscape(rawDir)
             let displayDir = CodingService.trimHome(rawDir)

@@ -249,7 +249,12 @@ extension AgentViewModel {
             }
 
         case "list_files":
-            let pattern = input["pattern"] as? String ?? "*"
+            let pattern = input["pattern"] as? String ?? "*.swift"
+            if pattern == "*" || pattern == "*.*" {
+                let err = "Error: pattern '*' is too broad. Use a file extension like '*.swift', '*.json', '*.py'. Example: list_files(pattern: \"*.swift\")"
+                tab.appendLog(err); tab.flush()
+                return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": err], isComplete: false)
+            }
             let path = input["path"] as? String
             let tabFolder = Self.resolvedWorkingDirectory(tab.projectFolder.isEmpty ? projectFolder : tab.projectFolder)
             let resolvedDir = path ?? tabFolder
