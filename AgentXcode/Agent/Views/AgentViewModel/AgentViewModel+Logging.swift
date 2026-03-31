@@ -453,26 +453,31 @@ extension AgentViewModel {
         logFlushTask?.cancel()
         logFlushTask = nil
         // Drain stream buffer first so streamed text precedes the log entries
+        var combined = ""
         if !streamBuffer.isEmpty {
             ChatHistoryStore.shared.appendStreamingContent(streamBuffer)
-            activityLog += streamBuffer
+            combined += streamBuffer
             streamBuffer = ""
         }
         // Ensure streamed text ends with a newline before timestamped entries
         if streamingTextStarted {
             ChatHistoryStore.shared.appendStreamingContent("\n")
-            activityLog += "\n"
+            combined += "\n"
             streamingTextStarted = false
         }
         if !logBuffer.isEmpty {
             // Ensure timestamps always start on a new line
-            if !activityLog.isEmpty && !activityLog.hasSuffix("\n") {
-                activityLog += "\n"
+            if !activityLog.isEmpty && !activityLog.hasSuffix("\n") && combined.isEmpty {
+                combined += "\n"
             }
             ChatHistoryStore.shared.save()
-            activityLog += logBuffer
+            combined += logBuffer
             logBuffer = ""
             schedulePersist()
+        }
+        // Single mutation of activityLog instead of multiple
+        if !combined.isEmpty {
+            activityLog += combined
         }
         // Trim from front if too large — keeps main thread fast
         let maxChars = 50_000
