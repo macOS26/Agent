@@ -94,6 +94,8 @@ struct ActivityLogView: NSViewRepresentable {
         var lastRenderedText = ""
         /// Track which tab we last rendered — forces full rebuild on tab switch
         var lastTabID: UUID?
+        /// Per-tab scroll position cache
+        private var tabScrollPositions: [UUID?: CGFloat] = [:]
         /// Separate length tracker for updateNSView dedup (independent of performRender's lastLength)
         var updateNSViewLastLength = 0
         /// Polls the text source directly — bypasses SwiftUI observation
@@ -212,6 +214,9 @@ struct ActivityLogView: NSViewRepresentable {
             showingPlaceholder = false
 
             if tabSwitched {
+                // Save scroll position of the tab we're leaving
+                tabScrollPositions[lastTabID] = scrollView.contentView.bounds.origin.y
+
                 textView.alphaValue = 0
                 NSAnimationContext.runAnimationGroup { ctx in
                     ctx.duration = 0.25
@@ -228,7 +233,13 @@ struct ActivityLogView: NSViewRepresentable {
                     lastLength = len
                     lastRenderedText = text
                     showingPlaceholder = false
-                    textView.scrollToEndOfDocument(nil)
+                    // Restore saved scroll position, or stay at bottom for new tabs
+                    if let savedY = tabScrollPositions[tabID] {
+                        scrollView.contentView.scroll(to: NSPoint(x: 0, y: savedY))
+                        scrollView.reflectScrolledClipView(scrollView.contentView)
+                    } else {
+                        textView.scrollToEndOfDocument(nil)
+                    }
                     if searchChanged {
                         applySearchHighlighting(textView: textView, searchText: searchText, caseSensitive: caseSensitive, currentMatch: currentMatchIndex, onMatchCount: onMatchCount)
                     }
@@ -243,7 +254,13 @@ struct ActivityLogView: NSViewRepresentable {
                 textView.textStorage?.setAttributedString(buildAttributedString(from: text))
                 textView.textStorage?.endEditing()
                 showingPlaceholder = false
-                textView.scrollToEndOfDocument(nil)
+                // Restore saved scroll position, or stay at bottom for new tabs
+                if let savedY = tabScrollPositions[tabID] {
+                    scrollView.contentView.scroll(to: NSPoint(x: 0, y: savedY))
+                    scrollView.reflectScrolledClipView(scrollView.contentView)
+                } else {
+                    textView.scrollToEndOfDocument(nil)
+                }
                 lastSearch = searchText
                 lastMatchIndex = currentMatchIndex
                 return
