@@ -91,6 +91,7 @@ struct ContentView: View {
                     ActivityLogView(
                         text: tab.activityLog,
                         tabID: selectedId,
+                        textProvider: { [weak tab] in tab?.activityLog ?? "" },
                         searchText: searchText,
                         caseSensitive: caseSensitive,
                         currentMatchIndex: currentMatchIndex,
@@ -107,6 +108,7 @@ struct ContentView: View {
                 ZStack(alignment: .topTrailing) {
                     ActivityLogView(
                         text: viewModel.activityLog,
+                        textProvider: { [weak viewModel] in viewModel?.activityLog ?? "" },
                         searchText: searchText,
                         caseSensitive: caseSensitive,
                         currentMatchIndex: currentMatchIndex,
