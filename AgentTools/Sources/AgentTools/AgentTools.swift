@@ -159,7 +159,8 @@ public enum AgentTools {
 
         RULES:
         - Prefer built-in tools over MCP (mcp_*). Use file_manager for files, git for VCS, xcode for builds.
-        - Never guess paths. Use file_manager(action:"list") first.
+        - NEVER guess file paths. ALWAYS call file_manager(action:"list") BEFORE reading files to verify they exist. Guessing paths wastes tokens on errors.
+        - ALWAYS use file_manager(action:"list") and file_manager(action:"search") instead of shell find/grep commands. These tools format output as a directory tree and save tokens.
         - xcode(action:"build") for Xcode projects, never xcodebuild shell.
         - xcode(action:"analyze"/"snippet") for Swift code review.
         - Safari JS via AppleScript preferred for web: `tell application "Safari" to do JavaScript "..." in document 1`.
@@ -288,6 +289,7 @@ public enum AgentTools {
                 "limit": ["type": "integer", "description": "For read: max lines (default 2000)"],
                 "pattern": ["type": "string", "description": "For list: glob. For search: regex"],
                 "include": ["type": "string", "description": "For search: file filter (e.g. *.swift)"],
+                "detail": ["type": "string", "description": "For read_dir: 'slim' (default, names only) or 'more' (full ls -la with sizes/dates/permissions)"],
                 "function_name": ["type": "string", "description": "For extract_function: name of function to extract"],
                 "new_file": ["type": "string", "description": "For extract_function: destination filename"],
             ],

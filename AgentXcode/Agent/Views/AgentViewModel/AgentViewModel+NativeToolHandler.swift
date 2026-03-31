@@ -261,8 +261,9 @@ extension AgentViewModel {
             let rawDir = input["path"] as? String ?? pf
             let dir = CodingService.shellEscape(rawDir)
             let displayDir = CodingService.trimHome(rawDir)
-            let result = await executeViaUserAgent(command: "cd \(dir) && find . -name \(pat) ! -path '*/.build/*' ! -path '*/.git/*' 2>/dev/null | sed 's|^\\./||' | sort | head -100")
-            return result.output.isEmpty ? "No files found" : "[project folder: \(displayDir)] paths are relative to project folder\n\(result.output)"
+            let result = await executeViaUserAgent(command: "cd \(dir) && find . -maxdepth 8 -type f -name \(pat) ! -path '*/.*' ! -path '*/.build/*' ! -path '*/.git/*' ! -path '*/.swiftpm/*' ! -name '.DS_Store' ! -name '*.xcuserstate' 2>/dev/null | sed 's|^\\./||' | sort | head -100", silent: true)
+            let raw = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
+            return raw.isEmpty ? "No files found" : "[project folder: \(displayDir)] paths are relative to project folder\n\(CodingService.formatFileTree(raw))"
         }
         if name == "search_files" {
             let pat = CodingService.shellEscape(input["pattern"] as? String ?? "")
@@ -276,8 +277,13 @@ extension AgentViewModel {
             let rawDir = input["path"] as? String ?? pf
             let dir = CodingService.shellEscape(rawDir)
             let displayDir = CodingService.trimHome(rawDir)
-            let result = await executeViaUserAgent(command: "ls -la \(dir) 2>/dev/null")
-            return result.output.isEmpty ? "Directory not found or empty" : "[project folder: \(displayDir)] paths are relative to project folder\n\(result.output)"
+            let detail = (input["detail"] as? String ?? "slim") == "more"
+            let cmd = detail
+                ? "ls -la \(dir) 2>/dev/null"
+                : "cd \(dir) && find . -maxdepth 1 -not -name '.*' 2>/dev/null | sed 's|^\\./||' | sort"
+            let result = await executeViaUserAgent(command: cmd, silent: !detail)
+            let raw = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
+            return raw.isEmpty ? "Directory not found or empty" : "[project folder: \(displayDir)]\n\(raw)"
         }
         if name == "if_to_switch" {
             let filePath = input["file_path"] as? String ?? ""

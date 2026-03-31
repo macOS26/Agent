@@ -3,18 +3,18 @@
 import PackageDescription
 
 let package = Package(
-    name: "AgentColorSyntax",
+    name: "AgentTerminalNeo",
     platforms: [.macOS(.v26)],
     products: [
         .library(
-            name: "AgentColorSyntax",
-            targets: ["AgentColorSyntax"]
+            name: "AgentTerminalNeo",
+            targets: ["AgentTerminalNeo"]
         ),
     ],
     targets: [
         .target(
-            name: "AgentColorSyntax",
-            path: "Sources/AgentColorSyntax"
+            name: "AgentTerminalNeo",
+            path: "Sources/AgentTerminalNeo"
         ),
     ]
 )

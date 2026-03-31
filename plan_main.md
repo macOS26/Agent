@@ -1,9 +1,9 @@
-# readme-overhaul
+# readme-review
 
-- [ ] 1. Step 1: Read current README.md and Technical.md
-- [ ] 2. Step 2: Explore codebase structure and key source files
-- [ ] 3. Step 3: Do a quick code review to understand features
-- [ ] 4. Step 4: Rewrite README.md to be broad and accessible for anyone
+- [⏳] 1. Step 1: Read current README.md and Technical.md files
+- [ ] 2. Step 2: Survey project structure and key source files for code review
+- [ ] 3. Step 3: Rewrite README.md to be broad, accessible, and comprehensive
+- [ ] 4. Step 4: Update Technical.md if needed
 
 ---
-*Status: 4 steps pending*
+*Status: 0 done, 1 in progress, 0 failed, 3 pending*

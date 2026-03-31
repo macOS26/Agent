@@ -339,4 +339,134 @@ extension AgentViewModel {
             return false
         }
     }
+
+    // MARK: - Z.ai Models
+
+    func fetchZAIModels() {
+        isFetchingZAIModels = true
+        let key = zAIAPIKey
+        Task {
+            defer { isFetchingZAIModels = false }
+            guard !key.isEmpty else {
+                zAIModels = Self.defaultZAIModels
+                return
+            }
+            do {
+                let models = try await Self.fetchZAIModelsFromAPI(apiKey: key)
+                zAIModels = models.isEmpty ? Self.defaultZAIModels : models
+                if zAIModel.isEmpty || !zAIModels.contains(where: { $0.id == zAIModel }) {
+                    zAIModel = zAIModels.first?.id ?? "glm-4-plus"
+                }
+            } catch {
+                appendLog("Failed to fetch Z.ai models: \(error.localizedDescription)")
+                zAIModels = Self.defaultZAIModels
+            }
+        }
+    }
+
+    private nonisolated static func fetchZAIModelsFromAPI(apiKey: String) async throws -> [OpenAIModelInfo] {
+        guard let url = URL(string: "https://api.z.ai/api/coding/paas/v4/models") else {
+            throw AgentError.invalidURL
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = llmAPITimeout
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else { return [] }
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { return [] }
+        let modelsData: [[String: Any]]
+        if let data = json["data"] as? [[String: Any]] { modelsData = data }
+        else if let models = json["models"] as? [[String: Any]] { modelsData = models }
+        else { return [] }
+        return modelsData.compactMap { model -> OpenAIModelInfo? in
+            guard let id = model["id"] as? String else { return nil }
+            return OpenAIModelInfo(id: id, name: id)
+        }.sorted { $0.name < $1.name }
+    }
+
+    // MARK: - vLLM Models
+
+    func fetchVLLMModels() {
+        isFetchingVLLMModels = true
+        let endpoint = vLLMEndpoint
+        let key = vLLMAPIKey
+        Task {
+            defer { isFetchingVLLMModels = false }
+            do {
+                let models = try await Self.fetchVLLMModelsFromAPI(endpoint: endpoint, apiKey: key)
+                vLLMModels = models
+                let ids = models.map(\.id)
+                if vLLMModel.isEmpty || (!ids.isEmpty && !ids.contains(vLLMModel)) {
+                    vLLMModel = ids.first ?? ""
+                }
+            } catch {
+                appendLog("Failed to fetch vLLM models: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private nonisolated static func fetchVLLMModelsFromAPI(endpoint: String, apiKey: String) async throws -> [OpenAIModelInfo] {
+        let modelsURL: URL
+        if let range = endpoint.range(of: "/v1/") {
+            let base = String(endpoint[endpoint.startIndex..<range.upperBound])
+            guard let url = URL(string: base + "models") else { throw AgentError.invalidURL }
+            modelsURL = url
+        } else {
+            guard let url = URL(string: endpoint) else { throw AgentError.invalidURL }
+            modelsURL = url.deletingLastPathComponent().appendingPathComponent("models")
+        }
+        var request = URLRequest(url: modelsURL)
+        request.httpMethod = "GET"
+        if !apiKey.isEmpty { request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization") }
+        request.timeoutInterval = llmAPITimeout
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200,
+              let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let modelsData = json["data"] as? [[String: Any]] else { return [] }
+        return modelsData.compactMap { model -> OpenAIModelInfo? in
+            guard let id = model["id"] as? String else { return nil }
+            return OpenAIModelInfo(id: id, name: id)
+        }.sorted { $0.name < $1.name }
+    }
+
+    // MARK: - LM Studio Models
+
+    func fetchLMStudioModels() {
+        isFetchingLMStudioModels = true
+        let proto = lmStudioProtocol
+        let modelsEndpoint: String
+        switch proto {
+        case .lmStudio: modelsEndpoint = "http://localhost:1234/api/v1/models"
+        default: modelsEndpoint = "http://localhost:1234/v1/models"
+        }
+        Task {
+            defer { isFetchingLMStudioModels = false }
+            do {
+                let models = try await Self.fetchLMStudioModelsFromAPI(modelsURL: modelsEndpoint)
+                lmStudioModels = models
+                let ids = models.map(\.id)
+                if lmStudioModel.isEmpty || (!ids.isEmpty && !ids.contains(lmStudioModel)) {
+                    lmStudioModel = ids.first ?? ""
+                }
+            } catch {
+                appendLog("Failed to fetch LM Studio models: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private nonisolated static func fetchLMStudioModelsFromAPI(modelsURL: String) async throws -> [OpenAIModelInfo] {
+        guard let url = URL(string: modelsURL) else { throw AgentError.invalidURL }
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.timeoutInterval = llmAPITimeout
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200,
+              let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let modelsData = json["data"] as? [[String: Any]] else { return [] }
+        return modelsData.compactMap { model -> OpenAIModelInfo? in
+            guard let id = model["id"] as? String else { return nil }
+            return OpenAIModelInfo(id: id, name: id)
+        }.sorted { $0.name < $1.name }
+    }
 }

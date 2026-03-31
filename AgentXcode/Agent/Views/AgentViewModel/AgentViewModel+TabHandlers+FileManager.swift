@@ -260,8 +260,11 @@ extension AgentViewModel {
             let cmd = CodingService.buildListFilesCommand(pattern: pattern, path: path)
             let result = await executeForTab(command: cmd, projectFolder: tabFolder)
             guard !Task.isCancelled else { return TabToolResult(toolResult: nil, isComplete: false) }
-            let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                ? "No files matching '\(pattern)'" : "[project folder: \(displayDir)] paths are relative to project folder\n\(result.output)"
+            let raw = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
+            let formatted = raw.isEmpty ? "No files matching '\(pattern)'" : CodingService.formatFileTree(raw)
+            tab.appendLog(formatted)
+            tab.flush()
+            let output = raw.isEmpty ? formatted : "[project folder: \(displayDir)] paths are relative to project folder\n\(formatted)"
             return TabToolResult(
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false
