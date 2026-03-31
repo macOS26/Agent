@@ -53,12 +53,7 @@ private struct PathTextField: NSViewRepresentable {
         return tf
     }
 
-    @MainActor func updateNSView(_ tf: FocusAwareTextField, context: Context) {
-        // Don't overwrite if the user is actively editing
-        guard tf.currentEditor() == nil else { return }
-        if tf.stringValue != text {
-            tf.stringValue = text
-        }
+    func updateNSView(_ tf: FocusAwareTextField, context: Context) {
     }
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }

@@ -44,21 +44,6 @@ struct ActivityLogView: NSViewRepresentable {
     }
 
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
-        guard let textView = scrollView.documentView as? NSTextView else { return }
-        let coord = context.coordinator
-
-        // Store latest state — zero rendering work here
-        coord.latestText = text
-        coord.latestSearchText = searchText
-        coord.latestCaseSensitive = caseSensitive
-        coord.latestMatchIndex = currentMatchIndex
-        coord.latestMatchCallback = onMatchCount
-        coord.latestTextView = textView
-        coord.latestScrollView = scrollView
-        coord.latestTabID = tabID
-
-        // Schedule all rendering AFTER SwiftUI's layout pass
-        coord.scheduleRender()
     }
 
     func makeCoordinator() -> Coordinator { Coordinator() }
@@ -89,12 +74,14 @@ struct ActivityLogView: NSViewRepresentable {
 
         /// Schedule rendering AFTER SwiftUI's layout pass completes
         func scheduleRender() {
-            scheduledRenderWork?.cancel()
+            // Throttle: max one render per 200ms
+            guard scheduledRenderWork == nil else { return }
             let work = DispatchWorkItem { [weak self] in
+                self?.scheduledRenderWork = nil
                 self?.performRender()
             }
             scheduledRenderWork = work
-            DispatchQueue.main.async(execute: work)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: work)
         }
 
         /// All rendering logic — runs on main thread but OUTSIDE SwiftUI's layout pass

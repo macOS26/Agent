@@ -59,20 +59,13 @@ struct PromptEditor: NSViewRepresentable {
     }
 
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
-        guard let textView = scrollView.documentView as? NSTextView else { return }
-        textView.textColor = textColor
-        textView.insertionPointColor = textColor
-        if textView.string != text {
-            let sel = textView.selectedRange()
-            textView.string = text
-            let safeSel = NSRange(location: min(sel.location, textView.string.count), length: 0)
-            textView.setSelectedRange(safeSel)
-            scrollView.verticalRulerView?.needsDisplay = true
-        }
     }
 
     class Coordinator: NSObject, NSTextViewDelegate {
         var parent: PromptEditor
+        var pendingText = ""
+        var pendingColor: NSColor = .labelColor
+        weak var pendingScrollView: NSScrollView?
         init(_ parent: PromptEditor) { self.parent = parent }
 
         func textDidChange(_ notification: Notification) {
