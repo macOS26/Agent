@@ -53,10 +53,11 @@ struct ActivityLogView: NSViewRepresentable {
         coord.textProvider = textProvider
         let len = (text as NSString).length
         let tabChanged = tabID != coord.latestTabID
-        let textChanged = len != coord.lastLength
+        let textChanged = len != coord.updateNSViewLastLength
         guard tabChanged || textChanged else { return }
+
         coord.latestText = text
-        coord.lastLength = len
+        coord.updateNSViewLastLength = len
         coord.latestTabID = tabID
         if tabChanged { coord.lastTabID = nil } // force full rebuild on tab switch
         coord.latestSearchText = searchText
@@ -93,6 +94,8 @@ struct ActivityLogView: NSViewRepresentable {
         var lastRenderedText = ""
         /// Track which tab we last rendered — forces full rebuild on tab switch
         var lastTabID: UUID?
+        /// Separate length tracker for updateNSView dedup (independent of performRender's lastLength)
+        var updateNSViewLastLength = 0
         /// Polls the text source directly — bypasses SwiftUI observation
         var textProvider: (@MainActor () -> String)?
         private var pollTimer: DispatchSourceTimer?
@@ -109,7 +112,11 @@ struct ActivityLogView: NSViewRepresentable {
         /// Start a 250ms poll that checks the text source directly.
         /// Cheap: just a length comparison per tick.
         func startPolling() {
-            guard pollTimer == nil else { return }
+            guard pollTimer == nil else {
+
+                return
+            }
+    
             let timer = DispatchSource.makeTimerSource(queue: .main)
             timer.schedule(deadline: .now() + .milliseconds(250), repeating: .milliseconds(250))
             timer.setEventHandler { [weak self] in
@@ -122,18 +129,23 @@ struct ActivityLogView: NSViewRepresentable {
         }
 
         private func pollTextSource() {
-            guard let provider = textProvider else { return }
+            guard let provider = textProvider else {
+
+                return
+            }
             let newText = provider()
             let newLen = (newText as NSString).length
             guard newLen != lastLength else { return }
+
             latestText = newText
             lastLength = newLen
             scheduleRender()
         }
 
-        /// Schedule rendering AFTER SwiftUI's layout pass completes
+        /// Schedule rendering AFTER SwiftUI's layout pass completes.
+        /// Does NOT cancel pending work — lets it run with latest state.
         func scheduleRender() {
-            scheduledRenderWork?.cancel()
+            guard scheduledRenderWork == nil else { return }
             let work = DispatchWorkItem { [weak self] in
                 self?.scheduledRenderWork = nil
                 self?.performRender()
@@ -144,7 +156,10 @@ struct ActivityLogView: NSViewRepresentable {
 
         /// All rendering logic — runs on main thread but OUTSIDE SwiftUI's layout pass
         func performRender() {
-            guard let textView = latestTextView, let scrollView = latestScrollView else { return }
+            guard let textView = latestTextView, let scrollView = latestScrollView else {
+
+                return
+            }
             let text = latestText
             let searchText = latestSearchText
             let caseSensitive = latestCaseSensitive
