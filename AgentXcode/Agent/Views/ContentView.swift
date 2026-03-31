@@ -2,8 +2,12 @@ import SwiftUI
 import AppKit
 import WebKit
 
+private enum ViewModelHolder {
+    @MainActor static let shared = AgentViewModel()
+}
+
 struct ContentView: View {
-    @State private var viewModel = AgentViewModel()
+    @State private var viewModel = ViewModelHolder.shared
     @State private var showSettings = false
     @State private var showHistory = false
     @State private var dependencyStatus: DependencyStatus?

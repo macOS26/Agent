@@ -1,60 +1,6 @@
 {
-  "originHash" : "f7e0809b22ccf69f3a2dac02a6c7d9b92b8efa89cf9f08db80559cbca837b54f",
+  "originHash" : "c386353abaffe54802186bd70bf7c81057104876328519578b99236712487136",
   "pins" : [
-    {
-      "identity" : "agentcolorsyntax",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/macOS26/AgentColorSyntax.git",
-      "state" : {
-        "revision" : "8d3f253180e08077b2fe2c7e22290966e3fbdf2d",
-        "version" : "1.1.0"
-      }
-    },
-    {
-      "identity" : "agenteventbridges",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/macOS26/AgentEventBridges.git",
-      "state" : {
-        "revision" : "324a9871e32efbecc7eb1cac28fcade76f4bee67",
-        "version" : "1.0.6"
-      }
-    },
-    {
-      "identity" : "agentmcp",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/macOS26/AgentMCP",
-      "state" : {
-        "revision" : "e839164f4396a5240de78dec4063cacc547a03ea",
-        "version" : "1.0.1"
-      }
-    },
-    {
-      "identity" : "agentterminalneo",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/macOS26/AgentTerminalNeo.git",
-      "state" : {
-        "revision" : "1747c59af317f19a0ee883946b36d109b5271dea",
-        "version" : "1.2.2"
-      }
-    },
-    {
-      "identity" : "agenttools",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/macOS26/AgentTools.git",
-      "state" : {
-        "revision" : "ce536bd4dcd9e1b0d7533bea2e205ff3c8b95c1f",
-        "version" : "1.0.0"
-      }
-    },
-    {
-      "identity" : "d1f-swift-multi-line-diff",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/CodeFreezeAI/D1F-swift-multi-line-diff.git",
-      "state" : {
-        "revision" : "696849afadd73e2fbecb64a2f2e1272d17ea298c",
-        "version" : "2.0.2"
-      }
-    },
     {
       "identity" : "swift-syntax",
       "kind" : "remoteSourceControl",
@@ -62,15 +8,6 @@
       "state" : {
         "revision" : "4799286537280063c85a32f09884cfbca301b1a1",
         "version" : "602.0.0"
-      }
-    },
-    {
-      "identity" : "xcf-swift",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/CodeFreezeAI/xcf-swift.git",
-      "state" : {
-        "revision" : "843d7db7d4c8b56c811ae5b8522ea414a6ea1276",
-        "version" : "1.0.2"
       }
     }
   ],
