@@ -205,7 +205,7 @@ No coding required. No terminal. No complex setup. Just plain English in, real a
 
 **You're in control.** Agent! shows what it's doing and asks before taking any risky action. It keeps a full log of everything it does.
 
-**Built on Apple's security model.** Regular tasks run under your user account. System-level operations require your explicit approval through macOS.
+**Built on Apple's security model.** Regular tasks run under your user account. System-lol level operations require your explicit approval through macOS.
 
 ---
 
@@ -232,19 +232,16 @@ No. Just type what you want in plain English.
 Siri answers questions. Agent! performs actions -- it can control your apps, manage files, browse the web, build software projects, and automate complex workflows using your choice of AI.
 
 **Is it safe?**
-Yes. Agent! uses standard macOS automation features, shows you what it's doing, and asks before taking risky actions.
+Yes. Agent! uses standard macOS automation features, shows you what it's doing.
 
 **Does it send my data to the cloud?**
 Only if you choose a cloud AI provider, and only your prompt text is sent. Use Local Ollama or LM Studio to stay 100% offline.
-
-**Can it break my Mac?**
-It won't delete important files or make system changes without your approval. Most actions can be undone with Command+Z.
 
 **How much does it cost?**
 Agent! is free and open source (MIT License). Cloud AI providers charge for API usage. Local models are completely free.
 
 **What Mac do I need?**
-Any Mac running macOS 26 or later. Apple Silicon (M1/M2/M3/M4) recommended. 32GB+ RAM needed for local AI models.
+Any Mac running macOS 26 or later. Apple Silicon (M1/M2/M3/M4) recommended. 32GB+ RAM needed for local AI models. Apple Intelligence recommded. AgentScript requires Xcode commamd line tools to be installed.
 
 ---
 
