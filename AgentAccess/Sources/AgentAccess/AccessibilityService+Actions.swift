@@ -37,6 +37,16 @@ extension AccessibilityService {
             return errorJSON("Cannot interact with \(elRole) — disabled in Accessibility Access")
         }
 
+        // Wait for element to become enabled before performing action
+        let maxWait: TimeInterval = 5.0
+        let start = Date()
+        while found.isEnabled() == false, Date().timeIntervalSince(start) < maxWait {
+            Thread.sleep(forTimeInterval: 0.2)
+        }
+        if found.isEnabled() == false {
+            return errorJSON("Element not enabled after \(maxWait)s — may still be loading")
+        }
+
         do {
             try found.performAction(action)
             return successJSON(["message": "Action '\(action)' performed"])
