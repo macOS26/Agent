@@ -154,7 +154,8 @@ public enum AgentTools {
         Show full output when listing. Never output code as text — use file_manager or agent tools.
 
         TOOLS: file_manager (read/write/edit/list/search/diff_apply/extract_function) | git (status/diff/log/commit/branch) | xcode (build/run/analyze/snippet/add_file/remove_file) | agent (list/read/create/update/run/delete/combine) | plan_mode (create/update/read/list/delete) | project_folder (get/set/home/documents/library/none) | coding_mode (enabled:true/false)
-        applescript_tool (execute/lookup_sdef/list/run/save/delete) | javascript_tool (execute/list/run/save/delete) | accessibility (list_windows/click/type_text/find_element/get_properties + more) | web (open/click/type/read_content/execute_js/google_search + more)
+        applescript_tool (execute/lookup_sdef/list/run/save/delete) | javascript_tool (execute/list/run/save/delete) | accessibility (click/perform_action/type_text/find_element/get_properties/manage_app + more) | web (open/click/type/read_content/execute_js/google_search + more)
+        ACCESSIBILITY: To interact with any app's UI, use accessibility(action:"click", title:"button name", appBundleId:"App Name"). This finds and clicks the element in ONE call — no need to list_windows first. The appBundleId accepts app names like "Photo Booth", "Safari", "TextEdit" (auto-resolves). Use manage_app action:"launch" to open apps. Use perform_action with ax_action:"AXPress" for custom actions.
         execute_agent_command (shell) | execute_daemon_command (root shell) | batch_commands (multi-shell) | batch_tools (multi-tool) | run_shell_script (shell with fallback)
 
         RULES:
