@@ -724,10 +724,32 @@ extension AgentViewModel {
         case "project_folder":
             return handleProjectFolder(tab: nil, input: input)
         // coding_mode
-        case "coding_mode":
+        case "coding_mode", "mode":
+            let action = input["action"] as? String
+            // New: action-based switching
+            if let action {
+                switch action {
+                case "coding":
+                    codingModeEnabled = true
+                    automationModeEnabled = false
+                    return "Coding mode ON — Core+Workflow+Coding+UserAgent tools active."
+                case "automation":
+                    automationModeEnabled = true
+                    codingModeEnabled = false
+                    return "Automation mode ON — Core+Workflow+Automation+UserAgent tools active."
+                case "standard":
+                    codingModeEnabled = false
+                    automationModeEnabled = false
+                    return "Standard mode — all user-enabled tools restored."
+                default:
+                    return "Unknown mode: \(action). Use coding, automation, or standard."
+                }
+            }
+            // Legacy: enabled bool
             let enabled = input["enabled"] as? Bool ?? true
             codingModeEnabled = enabled
-            return enabled ? "Coding mode ON — only Core+Workflow+Coding+UserAgent tools active." : "Coding mode OFF — all tools restored."
+            automationModeEnabled = false
+            return enabled ? "Coding mode ON — Core+Workflow+Coding+UserAgent tools active." : "Standard mode — all user-enabled tools restored."
         // MARK: - Xcode Tools
         case "xcode_build":
             let projectPath = input["project_path"] as? String ?? ""
