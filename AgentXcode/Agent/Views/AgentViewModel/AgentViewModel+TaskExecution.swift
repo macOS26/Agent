@@ -129,7 +129,8 @@ extension AgentViewModel {
 
         // No agent name injection — avoid message format issues with some APIs
 
-        let effectivePrompt = prompt
+        let folderPrefix = projectFolder.isEmpty ? "" : "[project folder: \(projectFolder)] "
+        let effectivePrompt = folderPrefix + prompt
 
         if !attachedImagesBase64.isEmpty {
             appendLog("(\(attachedImagesBase64.count) screenshot(s) attached)")

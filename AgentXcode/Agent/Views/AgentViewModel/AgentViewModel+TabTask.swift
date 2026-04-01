@@ -301,8 +301,8 @@ extension AgentViewModel {
             messages.removeLast()
         }
 
-        // Apple Intelligence context injection removed — was confusing LLMs
-        let promptPrefix = ""
+        // Remind LLM of current project folder on every task
+        let promptPrefix = projectFolder.isEmpty ? "" : "[project folder: \(projectFolder)] "
 
         // Inject direct command context if set
         if let context = directCommandContext {
