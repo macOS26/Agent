@@ -3,6 +3,7 @@ import AgentTools
 import AgentColorSyntax
 import AgentTerminalNeo
 import AgentLLM
+import AgentAccess
 import AppKit
 import SwiftUI
 import SQLite3

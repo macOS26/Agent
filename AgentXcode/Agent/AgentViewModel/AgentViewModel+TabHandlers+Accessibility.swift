@@ -1,3 +1,4 @@
+import AgentAccess
 @preconcurrency import Foundation
 import AgentMCP
 import AgentD1F
