@@ -6,11 +6,13 @@
 AgentXcode/build/
 
 # Swift packages (now remote dependencies)
+AgentAccess/
+AgentAudit/
 AgentColorSyntax/
 AgentD1F/
 AgentEventBridges/
+AgentLLM/
 AgentMCP/
 AgentSwift/
 AgentTerminalNeo/
 AgentTools/
-AgentAudit/
