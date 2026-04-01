@@ -45,7 +45,6 @@ struct ActivityLogView: NSViewRepresentable {
         context.coordinator.latestScrollView = scrollView
         context.coordinator.textProvider = textProvider
         context.coordinator.latestTabID = tabID
-        context.coordinator.startPolling()
         context.coordinator.startObservingLogChanges()
         return scrollView
     }
@@ -114,7 +113,6 @@ struct ActivityLogView: NSViewRepresentable {
         var updateNSViewLastLength = 0
         /// Polls the text source directly — bypasses SwiftUI observation
         var textProvider: (@MainActor () -> String)?
-        private var pollTimer: DispatchSourceTimer?
         /// Notification observer for activityLog changes
         nonisolated(unsafe) var logObserver: NSObjectProtocol?
 
@@ -127,26 +125,7 @@ struct ActivityLogView: NSViewRepresentable {
                 }
         }
 
-        /// Start a 250ms poll that checks the text source directly.
-        /// Cheap: just a length comparison per tick.
-        func startPolling() {
-            guard pollTimer == nil else {
-
-                return
-            }
-    
-            let timer = DispatchSource.makeTimerSource(queue: .main)
-            timer.schedule(deadline: .now() + .milliseconds(250), repeating: .milliseconds(250))
-            timer.setEventHandler { [weak self] in
-                MainActor.assumeIsolated {
-                    self?.pollTextSource()
-                }
-            }
-            timer.resume()
-            pollTimer = timer
-        }
-
-        /// Listen for activityLog changes filtered by this coordinator's tab UUID
+        /// React to activityLog changes — no polling, instant response
         func startObservingLogChanges() {
             guard logObserver == nil else { return }
             logObserver = NotificationCenter.default.addObserver(
@@ -159,18 +138,9 @@ struct ActivityLogView: NSViewRepresentable {
                     guard let self, let provider = self.textProvider else { return }
                     guard notifTabID == self.latestTabID else { return }
                     self.latestText = provider()
-                    self.scheduleRender()
+                    self.performRender()
                 }
             }
-        }
-
-        private func pollTextSource() {
-            guard let provider = textProvider else { return }
-            let newText = provider()
-            let newLen = (newText as NSString).length
-            guard newLen != lastLength else { return }
-            latestText = newText
-            scheduleRender()
         }
 
         /// Schedule rendering AFTER SwiftUI's layout pass completes.
@@ -388,8 +358,6 @@ struct ActivityLogView: NSViewRepresentable {
         }
 
         deinit {
-            pollTimer?.cancel()
-            pollTimer = nil
             if let observer = scrollObserver {
                 NotificationCenter.default.removeObserver(observer)
             }
