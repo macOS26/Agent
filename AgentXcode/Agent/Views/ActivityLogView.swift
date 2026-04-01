@@ -63,27 +63,23 @@ struct ActivityLogView: NSViewRepresentable {
         coord.latestTabID = tabID
         if tabChanged {
             coord.forceTabSwitch = true
-            coord.latestTextView?.alphaValue = 0
-            // Scroll passes while hidden — show after layout settles
-            for delay in [0.05, 0.15] {
-                DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak coord] in
-                    guard let coord, let tv = coord.latestTextView, let sv = coord.latestScrollView else { return }
-                    tv.layoutManager?.ensureLayout(for: tv.textContainer!)
-                    let targetY = max(0, tv.frame.height - sv.contentView.bounds.height)
-                    sv.contentView.scroll(to: NSPoint(x: 0, y: targetY))
-                    sv.reflectScrolledClipView(sv.contentView)
-                    coord.userIsAtBottom = true
-                }
-            }
-            // Final pass — show the view
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak coord] in
+            // Single smooth scroll after content is rendered
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak coord] in
                 guard let coord, let tv = coord.latestTextView, let sv = coord.latestScrollView else { return }
                 tv.layoutManager?.ensureLayout(for: tv.textContainer!)
                 let targetY = max(0, tv.frame.height - sv.contentView.bounds.height)
-                sv.contentView.scroll(to: NSPoint(x: 0, y: targetY))
-                sv.reflectScrolledClipView(sv.contentView)
-                coord.userIsAtBottom = true
-                tv.alphaValue = 1
+                coord.isProgrammaticScroll = true
+                NSAnimationContext.runAnimationGroup { ctx in
+                    ctx.duration = 0.3
+                    ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+                    sv.contentView.animator().setBoundsOrigin(NSPoint(x: 0, y: targetY))
+                } completionHandler: {
+                    MainActor.assumeIsolated {
+                        sv.reflectScrolledClipView(sv.contentView)
+                        coord.isProgrammaticScroll = false
+                        coord.userIsAtBottom = true
+                    }
+                }
             }
         }
         coord.latestSearchText = searchText
