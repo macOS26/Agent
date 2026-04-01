@@ -114,7 +114,7 @@ extension AgentViewModel {
             }
             // Quick directory listing so LLM sees what's here
             let contents = (try? fm.contentsOfDirectory(atPath: resolved)) ?? []
-            let visible = contents.filter { !$0.hasPrefix(".") }.sorted().prefix(30)
+            let visible = contents.filter { !$0.hasPrefix(".") }.sorted()
             let listing = visible.map { name -> String in
                 var d: ObjCBool = false
                 fm.fileExists(atPath: (resolved as NSString).appendingPathComponent(name), isDirectory: &d)
