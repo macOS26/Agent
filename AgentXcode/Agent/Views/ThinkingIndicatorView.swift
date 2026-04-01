@@ -257,6 +257,17 @@ struct ThinkingIndicatorView: View {
                 showStreamText = true
             }
         }
+        .onChange(of: viewModel.isRunning) { _, newValue in
+            // Auto-expand on main tab when task starts
+            guard tab == nil else { return }
+            if newValue {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isExpanded = true
+                    showStreamText = true
+                    viewModel.thinkingDismissed = false
+                }
+            }
+        }
         .onReceive(refreshTimer) { _ in
             guard isActive else { return }
             elapsed += 1.0
