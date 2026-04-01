@@ -262,13 +262,19 @@ struct ActivityLogView: NSViewRepresentable {
                 lastRenderedText = text
                 showingPlaceholder = false
 
-                // Force layout + scroll while hidden — user never sees the scroll
+                // Scroll to bottom, then show after layout settles
                 textView.layoutManager?.ensureLayout(for: textView.textContainer!)
                 textView.scrollToEndOfDocument(nil)
                 scrollView.reflectScrolledClipView(scrollView.contentView)
-
-                // Show instantly — content is already at bottom
-                textView.alphaValue = 1
+                userIsAtBottom = true
+                // Deferred second pass — ensures large text layout is complete before showing
+                DispatchQueue.main.async { [weak textView, weak scrollView] in
+                    guard let textView, let scrollView else { return }
+                    textView.layoutManager?.ensureLayout(for: textView.textContainer!)
+                    textView.scrollToEndOfDocument(nil)
+                    scrollView.reflectScrolledClipView(scrollView.contentView)
+                    textView.alphaValue = 1
+                }
 
                 lastSearch = searchText
                 lastMatchIndex = currentMatchIndex
