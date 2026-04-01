@@ -263,9 +263,12 @@ extension AgentViewModel {
             iterations += 1
 
             // Auto-enable coding mode after iteration 1 if tool calls were made
+            // Skip if user is doing automation (accessibility, applescript, javascript)
+            let automationTools: Set<String> = ["accessibility", "run_applescript", "run_osascript", "execute_javascript", "lookup_sdef"]
+            let isAutomation = commandsRun.contains(where: { cmd in cmd.hasPrefix("ax_") || automationTools.contains(where: { cmd.contains($0) }) })
             if iterations == 2 && !codingModeEnabled && !commandsRun.isEmpty {
                 codingModeEnabled = true
-                activeGroups = Self.codingModeGroups
+                activeGroups = isAutomation ? Self.automationModeGroups : Self.codingModeGroups
                 // Switch to minimal system prompt for faster iterations
                 let minPrompt = AgentTools.codingModePrompt(projectFolder: projectFolder)
                 claude?.overrideSystemPrompt = minPrompt
@@ -274,7 +277,7 @@ extension AgentViewModel {
                 ollama?.compactTools = true
                 openAICompatible?.overrideSystemPrompt = minPrompt
                 openAICompatible?.compactTools = true
-                appendLog("⚡ Coding mode auto-enabled")
+                appendLog(isAutomation ? "⚡ Automation mode auto-enabled" : "⚡ Coding mode auto-enabled")
                 flushLog()
             }
 

@@ -318,7 +318,7 @@ struct AccessibilitySettingsView: View {
             .padding(.bottom, 15)
         }
         .frame(width: 500)
-        .frame(maxHeight: 500)
+        .frame(maxHeight: 515)
     }
 
     @ViewBuilder
