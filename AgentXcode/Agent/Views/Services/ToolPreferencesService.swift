@@ -31,7 +31,7 @@ final class ToolPreferencesService {
     static let toolGroups: [String: Set<String>] = [
         "Coding": Set(["xcode", "file_manager", "project_folder", "coding_mode"]),
         "Automation": Set(["applescript_tool", "accessibility", "javascript_tool", "lookup_sdef"]),
-        "Experimental": Set(["apple_event_query", "selenium", "ax_screenshot"]),
+        "Experimental": Set(["selenium", "ax_screenshot"]),
         "Core": Set(["task_complete", "list_tools", "web_search"]),
         "Conversation": Set(["conversation"]),
         "Workflow": Set(["agent", "plan_mode", "git", "send_message", "batch_commands", "batch_tools"]),

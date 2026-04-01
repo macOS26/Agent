@@ -79,27 +79,6 @@ enum AccessibilityEnabledIDs {
     }()
 }
 
-// MARK: - Known Apple Events Enabled IDs
-
-/// All known Apple Events write selector IDs
-enum AppleEventsEnabledIDs {
-    static let writeSelectors: [(id: String, label: String)] = [
-        ("delete", "delete"),
-        ("close", "close"),
-        ("remove", "remove"),
-        ("quit", "quit"),
-        ("move", "move"),
-        ("moveTo", "moveTo"),
-        ("duplicate", "duplicate"),
-        ("save", "save"),
-        ("set", "set"),
-        ("sendMessage", "sendMessage"),
-    ]
-
-    static let allAeIds: Set<String> = {
-        Set(writeSelectors.map(\.id))
-    }()
-}
 
 /// Manages which accessibility / Apple Event actions are enabled.
 /// All actions default to ENABLED. User can disable per-item.
@@ -111,9 +90,8 @@ final class AccessibilityEnabled {
     // Expose the static lists for UI binding
     static var axActions: [(id: String, label: String)] { AccessibilityEnabledIDs.axActions }
     static var axRoles: [(id: String, label: String)] { AccessibilityEnabledIDs.axRoles }
-    static var aeWriteSelectors: [(id: String, label: String)] { AppleEventsEnabledIDs.writeSelectors }
     static var allAxIds: Set<String> { AccessibilityEnabledIDs.allAxIds }
-    static var allAeIds: Set<String> { AppleEventsEnabledIDs.allAeIds }
+    static var allAeIds: Set<String> { [] }
 
     // MARK: - State
 
@@ -295,16 +273,6 @@ struct AccessibilitySettingsView: View {
                     .controlSize(.small)
                 }
 
-                Divider()
-
-                Text("Apple Events Write Selectors")
-                    .font(.headline)
-
-                Text("Enabled selectors are allowed. Click to disable.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                aeSection(title: "Apple Event Write Selectors", items: AppleEventsEnabledIDs.writeSelectors)
             }
             .padding(16)
             .padding(.bottom, 15)

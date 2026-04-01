@@ -32,7 +32,7 @@ extension AgentViewModel {
         case "execute_agent_command", "execute_daemon_command", "run_shell_script", "batch_commands", "batch_tools":
             return await handleTabShellTool(tab: tab, name: name, input: input, toolId: toolId)
         // Automation
-        case "run_applescript", "run_osascript", "apple_event_query", "lookup_sdef":
+        case "run_applescript", "run_osascript", "lookup_sdef":
             return await handleTabAutomationTool(tab: tab, name: name, input: input, toolId: toolId)
         // Accessibility (prefix match via default + where)
         case let n where n.hasPrefix("ax_"):

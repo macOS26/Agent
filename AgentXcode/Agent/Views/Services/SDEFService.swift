@@ -270,7 +270,7 @@ final class SDEFService: @unchecked Sendable {
         return first + rest.joined()
     }
 
-    /// Lookup valid property/element keys for apple_event_query.
+    /// Lookup valid property/element keys for SDEF queries.
     /// Returns camelCase keys the AI can use with `get`, `iterate`, etc.
     func aeKeys(for bundleID: String, className: String = "application") -> (properties: [String], elements: [String]) {
         let allClasses = classes(for: bundleID)
