@@ -234,14 +234,16 @@ final class WebAutomationService: @unchecked Sendable {
         case .accessibility:
             let role = element["role"] as? String
             let title = element["title"] as? String
-            let result = AccessibilityService.shared.clickElement(
-                role: role,
-                title: title,
-                value: nil,
-                appBundleId: appBundleId,
-                timeout: automationFinishTimeout,
-                verify: false
-            )
+            let result = await MainActor.run {
+                AccessibilityService.shared.clickElement(
+                    role: role,
+                    title: title,
+                    value: nil,
+                    appBundleId: appBundleId,
+                    timeout: automationFinishTimeout,
+                    verify: false
+                )
+            }
             return result
 
         case .javascript:
@@ -278,13 +280,15 @@ final class WebAutomationService: @unchecked Sendable {
         case .accessibility:
             let role = element["role"] as? String
             let title = element["title"] as? String
-            return AccessibilityService.shared.typeTextIntoElement(
-                role: role,
-                title: title,
-                text: text,
-                appBundleId: appBundleId,
-                verify: verify
-            )
+            return await MainActor.run {
+                AccessibilityService.shared.typeTextIntoElement(
+                    role: role,
+                    title: title,
+                    text: text,
+                    appBundleId: appBundleId,
+                    verify: verify
+                )
+            }
 
         case .javascript:
             guard let bid = browserId else {
@@ -348,13 +352,15 @@ final class WebAutomationService: @unchecked Sendable {
         let hints = parseSelector(selector)
         
         // Use adaptive wait from AccessibilityService
-        let result = AccessibilityService.shared.waitForElementAdaptive(
-            role: hints.role,
-            title: hints.title,
-            value: hints.value,
-            appBundleId: appBundleId,
-            timeout: timeout
-        )
+        let result = await MainActor.run {
+            AccessibilityService.shared.waitForElementAdaptive(
+                role: hints.role,
+                title: hints.title,
+                value: hints.value,
+                appBundleId: appBundleId,
+                timeout: timeout
+            )
+        }
         
         // Check if found
         if result.contains("\"success\": true") {
@@ -607,7 +613,7 @@ final class WebAutomationService: @unchecked Sendable {
                     let toolbarH = outerH - innerH
                     let absX = screenX + x
                     let absY = screenY + toolbarH + y
-                    _ = AccessibilityService.shared.clickAt(x: CGFloat(absX), y: CGFloat(absY))
+                    _ = await MainActor.run { AccessibilityService.shared.clickAt(x: CGFloat(absX), y: CGFloat(absY)) }
                     return "Clicked element via OS click at (\(Int(absX)),\(Int(absY))): \(selector)"
                 }
             }

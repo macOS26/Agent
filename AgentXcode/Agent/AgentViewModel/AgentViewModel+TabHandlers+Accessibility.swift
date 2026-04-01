@@ -288,7 +288,7 @@ extension AgentViewModel {
             let timeout = input["timeout"] as? Double ?? 5.0
             tab.appendLog("🔍 Finding element...")
             tab.flush()
-            let output = await Self.offMain {
+            let output = await MainActor.run {
                 AccessibilityService.shared.findElement(
                     role: role, title: title, value: value, appBundleId: appBundleId, timeout: timeout
                 )
@@ -351,7 +351,7 @@ extension AgentViewModel {
             let button = input["button"] as? String ?? "left"
             tab.appendLog("🖱️ drag (\(fromX), \(fromY)) → (\(toX), \(toY))...")
             tab.flush()
-            let output = await Self.offMain {
+            let output = await MainActor.run {
                 AccessibilityService.shared.drag(fromX: fromX, fromY: fromY, toX: toX, toY: toY, button: button)
             }
             tab.appendLog(output)
@@ -370,7 +370,7 @@ extension AgentViewModel {
             let pollInterval = input["pollInterval"] as? Double ?? 0.5
             tab.appendLog("⏳ element (timeout: \(timeout)s)...")
             tab.flush()
-            let output = await Self.offMain {
+            let output = await MainActor.run {
                 AccessibilityService.shared.waitForElement(
                     role: role, title: title, value: value, appBundleId: appBundleId, timeout: timeout, pollInterval: pollInterval
                 )
@@ -391,7 +391,7 @@ extension AgentViewModel {
             let verify = input["verify"] as? Bool ?? false
             tab.appendLog("👆 element (role: \(role ?? "any"), title: \(title ?? "any"))...")
             tab.flush()
-            let output = await Self.offMain {
+            let output = await MainActor.run {
                 AccessibilityService.shared.clickElement(
                     role: role, title: title, value: value, appBundleId: appBundleId, timeout: timeout, verify: verify
                 )
@@ -413,7 +413,7 @@ extension AgentViewModel {
             let maxDelay = input["maxDelay"] as? Double ?? 1.0
             tab.appendLog("⏳ element (adaptive, timeout: \(timeout)s)...")
             tab.flush()
-            let output = await Self.offMain {
+            let output = await MainActor.run {
                 AccessibilityService.shared.waitForElementAdaptive(
                     role: role, title: title, value: value, appBundleId: appBundleId, timeout: timeout,
                     initialDelay: initialDelay, maxDelay: maxDelay
@@ -434,7 +434,7 @@ extension AgentViewModel {
             let verify = input["verify"] as? Bool ?? true
             tab.appendLog("⌨️ \(text.count) chars into element...")
             tab.flush()
-            let output = await Self.offMain {
+            let output = await MainActor.run {
                 AccessibilityService.shared.typeTextIntoElement(
                     role: role, title: title, text: text, appBundleId: appBundleId, verify: verify
                 )
@@ -545,7 +545,7 @@ extension AgentViewModel {
             let app = input["app"] as? String ?? input["appBundleId"] as? String
             tab.appendLog("📜 scroll to element...")
             tab.flush()
-            let output = await Self.offMain {
+            let output = await MainActor.run {
                 AccessibilityService.shared.scrollToElement(role: role, title: title, appBundleId: app)
             }
             tab.appendLog(output)
