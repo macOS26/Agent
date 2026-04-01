@@ -49,19 +49,7 @@ Just type (or speak) what you want. Agent! figures out how to do it and makes it
 
 ## What Makes Agent! Different
 
-For detailed comparisons with Claude Code, Cursor, Cline, and OpenClaw, see [COMPARISON.md](COMPARISON.md).
-
----
-
-## Getting Started
-
-### What You Need
-
-- A Mac running **macOS 26 (Tahoe)** or later
-- Apple Silicon recommended (M1, M2, M3, or M4)
-
-### Setup in 5 Minutes
-
+push 
 1. **Download** [Agent!](https://github.com/macOS26/Agent/releases) and move it to your Applications folder
 2. **Open Agent!** -- It sets up everything automatically
 3. **Pick your AI** -- Open Settings, choose a provider, and enter your API key
