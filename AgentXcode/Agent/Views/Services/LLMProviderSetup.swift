@@ -2,6 +2,7 @@ import AgentLLM
 
 /// All Agent! LLM provider configurations — defined in the app, not the package.
 /// To add a new LLM: add a static config here and register it in registerAllProviders().
+@MainActor
 enum LLMProviderSetup {
 
     static func registerAllProviders() {
