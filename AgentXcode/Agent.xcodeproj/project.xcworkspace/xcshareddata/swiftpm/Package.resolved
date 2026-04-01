@@ -1,5 +1,5 @@
 {
-  "originHash" : "34154889706f67938dd7e576c503a8a62e9b19f0f47237c707ad94bb2b3b50df",
+  "originHash" : "7941e806e269051b4243db736471887062f35ac3acdcaaa5dbe64f297dd94141",
   "pins" : [
     {
       "identity" : "agentaudit",
@@ -35,6 +35,15 @@
       "state" : {
         "revision" : "324a9871e32efbecc7eb1cac28fcade76f4bee67",
         "version" : "1.1.0"
+      }
+    },
+    {
+      "identity" : "agentllm",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/macOS26/AgentLLM.git",
+      "state" : {
+        "revision" : "4bcd668ae68787ee2ff373fb85023353bb497106",
+        "version" : "1.0.0"
       }
     },
     {
