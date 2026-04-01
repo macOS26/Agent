@@ -3,6 +3,7 @@
 import AgentTools
 import AgentMCP
 import AgentD1F
+import AgentAccess
 import Cocoa
 
 
@@ -26,14 +27,8 @@ extension AgentViewModel {
         // Prefix-matched tools
         if let result = await handleWebTool(name: name, input: input) { return result }
         if let result = await handleSeleniumTool(name: name, input: input) { return result }
-        // ax_ accessibility tools — route through the consolidated accessibility handler
-        if name.hasPrefix("ax_") {
-            // Convert ax_list_windows → accessibility(action: "list_windows")
-            let action = String(name.dropFirst(3)) // strip "ax_"
-            var axInput = input
-            axInput["action"] = action
-            return await executeNativeTool("accessibility", input: axInput)
-        }
+        // ax_ accessibility tools — already expanded, handle directly via the accessibility switch below
+        // (expandConsolidatedTool maps accessibility(action:X) → ax_X, so ax_ names arrive here already expanded)
 
         switch name {
         // Shell commands
@@ -867,8 +862,155 @@ extension AgentViewModel {
             let result = CodingService.diffAndApply(path: fp, source: source, destination: dest, startLine: startLine, endLine: endLine)
             return result.output
 
+        // Git tools (expanded from git(action:X) → git_X)
+        case "git_status":
+            let cmd = CodingService.buildGitStatusCommand(path: pf.isEmpty ? nil : pf)
+            let result = await executeViaUserAgent(command: cmd)
+            return result.output.isEmpty ? "(no output)" : result.output
+        case "git_diff":
+            let staged = input["staged"] as? Bool ?? false
+            let target = input["target"] as? String
+            let cmd = CodingService.buildGitDiffCommand(path: pf.isEmpty ? nil : pf, staged: staged, target: target)
+            let result = await executeViaUserAgent(command: cmd)
+            return result.output.isEmpty ? "(no changes)" : result.output
+        case "git_log":
+            let count = input["count"] as? Int
+            let cmd = CodingService.buildGitLogCommand(path: pf.isEmpty ? nil : pf, count: count)
+            let result = await executeViaUserAgent(command: cmd)
+            return result.output.isEmpty ? "(no commits)" : result.output
+        case "git_commit":
+            let message = input["message"] as? String ?? "Update"
+            let files = input["files"] as? [String]
+            let cmd = CodingService.buildGitCommitCommand(path: pf.isEmpty ? nil : pf, message: message, files: files)
+            let result = await executeViaUserAgent(command: cmd)
+            return result.output.isEmpty ? "(no output)" : result.output
+        case "git_branch":
+            let branchName = input["name"] as? String ?? ""
+            let checkout = input["checkout"] as? Bool ?? false
+            let cmd = CodingService.buildGitBranchCommand(path: pf.isEmpty ? nil : pf, name: branchName, checkout: checkout)
+            let result = await executeViaUserAgent(command: cmd)
+            return result.output.isEmpty ? "(no output)" : result.output
+        case "git_diff_patch":
+            let target = input["target"] as? String
+            let cmd = CodingService.buildGitDiffCommand(path: pf.isEmpty ? nil : pf, staged: false, target: target)
+            let result = await executeViaUserAgent(command: cmd)
+            return result.output.isEmpty ? "(no changes)" : result.output
+        // Batch commands
+        case "batch_commands":
+            let commands = (input["commands"] as? String ?? "").components(separatedBy: "\n").filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+            var output = ""
+            for (idx, cmd) in commands.enumerated() {
+                let fullCmd = Self.prependWorkingDirectory(cmd, projectFolder: pf)
+                appendLog("🔧 [\(idx+1)/\(commands.count)] $ \(cmd)")
+                flushLog()
+                let result = await executeViaUserAgent(command: fullCmd)
+                output += "[\(idx+1)] \(result.output)\n"
+            }
+            return output.isEmpty ? "(no output)" : output
+        // Wait/pause for accessibility automation
+        case "wait", "sleep", "pause":
+            let seconds = input["seconds"] as? Double ?? input["duration"] as? Double ?? 3
+            let capped = min(seconds, 30) // max 30 seconds
+            try? await Task.sleep(for: .seconds(capped))
+            return "Waited \(capped) seconds"
+
         default:
+            // Handle ax_ accessibility tools directly (avoid recursion through executeNativeTool)
+            if name.hasPrefix("ax_") {
+                let axAction = String(name.dropFirst(3))
+                var axInput = input
+                axInput["action"] = axAction
+                return handleAccessibilityAction(action: axAction, input: axInput)
+            }
             return "⚠️ Tool '\(rawName)' (expanded: '\(name)') not handled — no matching handler found."
+        }
+    }
+
+    /// Direct accessibility dispatch — no recursion through executeNativeTool
+    private func handleAccessibilityAction(action: String, input: [String: Any]) -> String {
+        let ax = AgentAccess.AccessibilityService.shared
+        let role = input["role"] as? String
+        let title = input["title"] as? String
+        let value = input["value"] as? String
+        let app = input["appBundleId"] as? String
+        let x = (input["x"] as? Double).map { CGFloat($0) }
+        let y = (input["y"] as? Double).map { CGFloat($0) }
+
+        switch action {
+        case "list_windows":
+            return ax.listWindows(limit: input["limit"] as? Int ?? 50)
+        case "inspect_element":
+            // If role/title provided, find element first then inspect at its position
+            if (role != nil || title != nil), x == nil, y == nil {
+                return ax.getElementProperties(role: role, title: title, value: value, appBundleId: app, x: nil, y: nil)
+            }
+            return ax.inspectElementAt(x: x ?? 0, y: y ?? 0, depth: input["depth"] as? Int ?? 3)
+        case "get_properties":
+            return ax.getElementProperties(role: role, title: title, value: value, appBundleId: app, x: x, y: y)
+        case "perform_action":
+            return ax.performAction(role: role, title: title, value: value, appBundleId: app, x: x, y: y, action: input["ax_action"] as? String ?? "")
+        case "type_text":
+            return ax.typeText(input["text"] as? String ?? "", at: x, y: y)
+        case "click", "click_element":
+            // If x/y provided, click at coordinates via InputDriver
+            if let x = x, let y = y {
+                return ax.clickAt(x: x, y: y, button: input["button"] as? String ?? "left", clicks: input["clicks"] as? Int ?? 1)
+            }
+            return ax.clickElement(role: role, title: title, value: value, appBundleId: app, timeout: input["timeout"] as? Double ?? 5, verify: input["verify"] as? Bool ?? false)
+        case "scroll":
+            // If role/title provided, scroll to that element instead of coordinates
+            if (role != nil || title != nil), x == nil, y == nil {
+                return ax.scrollToElement(role: role, title: title, appBundleId: app)
+            }
+            return ax.scrollAt(x: x ?? 0, y: y ?? 0, deltaX: Int(input["deltaX"] as? Double ?? 0), deltaY: Int(input["deltaY"] as? Double ?? -3))
+        case "press_key":
+            return ax.pressKey(virtualKey: UInt16(input["keyCode"] as? Int ?? 0), modifiers: input["modifiers"] as? [String] ?? [])
+        case "screenshot":
+            let w = (input["width"] as? Double).map { CGFloat($0) }
+            let h = (input["height"] as? Double).map { CGFloat($0) }
+            if let wid = input["windowId"] as? Int, wid > 0 {
+                return ax.captureScreenshot(windowID: wid)
+            } else if let x, let y, let w, let h {
+                return ax.captureScreenshot(x: x, y: y, width: w, height: h)
+            } else {
+                return ax.captureAllWindows()
+            }
+        case "find_element":
+            return ax.findElement(role: role, title: title, value: value, appBundleId: app, timeout: input["timeout"] as? Double ?? 5)
+        case "get_focused_element":
+            return ax.getFocusedElement(appBundleId: app)
+        case "get_children":
+            return ax.getChildren(role: role, title: title, value: value, appBundleId: app, x: x, y: y, depth: input["depth"] as? Int ?? 3)
+        case "get_audit_log":
+            return ax.getAuditLog(limit: input["limit"] as? Int ?? 50)
+        case "type_into_element":
+            return ax.typeTextIntoElement(role: role, title: title, text: input["text"] as? String ?? "", appBundleId: app, verify: input["verify"] as? Bool ?? true)
+        case "drag":
+            return ax.drag(fromX: CGFloat(input["fromX"] as? Double ?? 0), fromY: CGFloat(input["fromY"] as? Double ?? 0), toX: CGFloat(input["toX"] as? Double ?? 0), toY: CGFloat(input["toY"] as? Double ?? 0), button: input["button"] as? String ?? "left")
+        case "wait_for_element":
+            return ax.waitForElement(role: role, title: title, value: value, appBundleId: app, timeout: input["timeout"] as? Double ?? 10, pollInterval: input["pollInterval"] as? Double ?? 0.5)
+        case "wait_adaptive":
+            return ax.waitForElementAdaptive(role: role, title: title, value: value, appBundleId: app, timeout: input["timeout"] as? Double ?? 10)
+        case "manage_app":
+            return ax.manageApp(action: input["action"] as? String ?? "list", bundleId: input["bundleId"] as? String, name: input["name"] as? String)
+        case "set_window_frame":
+            return ax.setWindowFrame(appBundleId: app, x: x, y: y, width: (input["width"] as? Double).map { CGFloat($0) }, height: (input["height"] as? Double).map { CGFloat($0) })
+        case "click_menu_item":
+            return ax.clickMenuItem(appBundleId: app, menuPath: (input["menuPath"] as? String)?.components(separatedBy: " > ") ?? [])
+        case "get_window_frame":
+            return ax.getWindowFrame(windowId: input["windowId"] as? Int ?? 0)
+        case "highlight_element":
+            return ax.highlightElement(role: role, title: title, value: value, appBundleId: app, x: x, y: y, duration: input["duration"] as? Double ?? 2, color: input["color"] as? String ?? "green")
+        case "show_menu":
+            return ax.showMenu(role: role, title: title, value: value, appBundleId: app, x: x, y: y)
+        case "scroll_to_element":
+            return ax.scrollToElement(role: role, title: title, appBundleId: app)
+        case "read_focused":
+            return ax.readFocusedElement(appBundleId: app)
+        case "set_properties":
+            return ax.setProperties(role: role, title: title, value: value, appBundleId: app, x: x, y: y, properties: input["properties"] as? [String: Any] ?? [:])
+        default:
+            return "Unknown accessibility action: \(action)"
         }
     }
 }
