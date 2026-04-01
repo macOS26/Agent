@@ -188,8 +188,7 @@ final class AgentViewModel {
         if !AccessibilityService.hasAccessibilityPermission() { return .red }
         let prefs = ToolPreferencesService.shared
         if !prefs.isEnabled(selectedProvider, "accessibility") { return .orange }
-        let axSettings = AccessibilityEnabled.shared
-        if axSettings.axEnabled.count < AccessibilityEnabledIDs.allAxIds.count { return .yellow }
+        if !AccessibilityEnabled.shared.accessibilityGlobalEnabled { return .yellow }
         return .green
     }
 
