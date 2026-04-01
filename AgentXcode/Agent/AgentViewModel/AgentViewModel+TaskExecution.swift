@@ -31,7 +31,7 @@ extension AgentViewModel {
         taskInputTokens = 0
         taskOutputTokens = 0
         // All tool groups available — user controls via UI toggles
-        var activeGroups: Set<String>? = codingModeEnabled ? Self.codingModeGroups : nil
+        var activeGroups: Set<String>? = codingModeEnabled ? Self.codingModeGroups : automationModeEnabled ? Self.automationModeGroups : nil
         appendLog("--- New Task ---")
         appendLog("👤 \(prompt)")
 

@@ -333,7 +333,7 @@ extension AgentViewModel {
         }
 
         // All tool groups available — user controls via UI toggles
-        var activeGroups: Set<String>? = codingModeEnabled ? Self.codingModeGroups : nil
+        var activeGroups: Set<String>? = codingModeEnabled ? Self.codingModeGroups : automationModeEnabled ? Self.automationModeGroups : nil
 
         var iterations = 0
         var timeoutRetryCount = 0
