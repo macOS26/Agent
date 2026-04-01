@@ -1,3 +1,5 @@
+[< Back to README](../README.md)
+
 # Security Architecture
 
 This document details Agent!'s security model and entitlements.
@@ -32,15 +34,15 @@ Protected macOS APIs require user approval. Agent handles TCC correctly:
 
 | Component | TCC Grants |
 |-----------|------------|
-| `run_agent_script`, `apple_event_query`, TCC shell commands | **ALL** (Accessibility, Screen Recording, Automation) |
+| `run_agent_script`, `applescript_tool`, TCC shell commands | **ALL** (Accessibility, Screen Recording, Automation) |
 | `execute_user_command` (LaunchAgent) | **None** |
 | `execute_command` (root) | **Separate context** |
 
-**Rule:** Use `run_agent_script` or `apple_event_query` for Accessibility/Automation tasks, not shell commands.
+**Rule:** Use `run_agent_script` or `applescript_tool` for Accessibility/Automation tasks, not shell commands.
 
 ## Write Protection
 
-- `apple_event_query` blocks destructive operations (`delete`, `close`, `move`, `quit`) by default
+- `applescript_tool` blocks destructive operations (`delete`, `close`, `move`, `quit`) by default
 - The AI must explicitly set `allow_writes: true` to permit them
 - This prevents accidental data loss from misinterpreted commands
 
