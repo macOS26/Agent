@@ -49,20 +49,6 @@ Just type (or speak) what you want. Agent! figures out how to do it and makes it
 
 ## What Makes Agent! Different
 
-**Siri can answer questions. Agent! can do the work.**
-
-| | Siri | Agent! |
-|---|---|---|
-| Open apps | Yes | Yes |
-| Control 50+ Mac apps | No | Yes |
-| Browse and fill out web forms | No | Yes |
-| Manage your files and folders | No | Yes |
-| Send iMessages on command | Limited | Yes |
-| Control your Mac from your iPhone via text | No | Yes |
-| Use your choice of 10 AI providers | No | Yes |
-| Run completely offline with local AI | No | Yes |
-| Free and open source | No | Yes |
-
 For detailed comparisons with Claude Code, Cursor, Cline, and OpenClaw, see [COMPARISON.md](COMPARISON.md).
 
 ---
@@ -228,9 +214,6 @@ No coding required. No terminal. No complex setup. Just plain English in, real a
 **Do I need to know how to code?**
 No. Just type what you want in plain English.
 
-**How is this different from Siri?**
-Siri answers questions. Agent! performs actions -- it can control your apps, manage files, browse the web, build software projects, and automate complex workflows using your choice of AI.
-
 **Is it safe?**
 Yes. Agent! uses standard macOS automation features, shows you what it's doing.
 
@@ -242,6 +225,25 @@ Agent! is free and open source (MIT License). Cloud AI providers charge for API 
 
 **What Mac do I need?**
 Any Mac running macOS 26 or later. Apple Silicon (M1/M2/M3/M4) recommended. 32GB+ RAM needed for local AI models. Apple Intelligence recommded. AgentScript requires Xcode commamd line tools to be installed.
+
+**How is this different from Siri?**
+Siri answers questions. Agent! performs actions -- it can control your apps, manage files, browse the web, build software projects, and automate complex workflows using your choice of AI.
+
+**Siri can answer questions. Agent! can do the work.**
+
+| | Siri | Agent! |
+|---|---|---|
+| Open apps | Yes | Yes |
+| Control 50+ Mac apps | No | Yes |
+| Click buttons & UI elements in any app | No | Yes |
+| Type into text fields & menus automatically | No | Yes |
+| Browse and fill out web forms | No | Yes |
+| Manage your files and folders | No | Yes |
+| Send iMessages on command | Limited | Yes |
+| Control your Mac from your iPhone via text | No | Yes |
+| Use your choice of 10 AI providers | No | Yes |
+| Run completely offline with local AI | No | Yes |
+| Free and open source | No | Yes |
 
 ---
 
