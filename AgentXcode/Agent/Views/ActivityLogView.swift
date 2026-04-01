@@ -424,8 +424,8 @@ struct ActivityLogView: NSViewRepresentable {
             let targetY = max(0, contentHeight - clipHeight)
             isProgrammaticScroll = true
             NSAnimationContext.runAnimationGroup { ctx in
-                ctx.duration = 0.2
-                ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                ctx.duration = 0.25
+                ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
                 scrollView.contentView.animator().setBoundsOrigin(NSPoint(x: 0, y: targetY))
             } completionHandler: {
                 MainActor.assumeIsolated { [weak self] in
