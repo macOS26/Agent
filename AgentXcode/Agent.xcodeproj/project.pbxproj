@@ -132,9 +132,9 @@
 		EAE1E7152F7BF6880079432C /* AgentSwift in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7142F7BF6880079432C /* AgentSwift */; };
 		EAE1E7182F7BF6E70079432C /* XcodeScriptingBridge in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7172F7BF6E70079432C /* XcodeScriptingBridge */; };
 		EAE1E71B2F7BF7000079432C /* AgentAudit in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E71A2F7BF7000079432C /* AgentAudit */; };
-		EAE1E7262F7C02000079432C /* AgentAccess in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7252F7C02000079432C /* AgentAccess */; };
 		EAE1E7222F7C00000079432C /* AgentLLM in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7212F7C00000079432C /* AgentLLM */; };
 		EAE1E7242F7C01000079432C /* LLMProviderSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAE1E7232F7C01000079432C /* LLMProviderSetup.swift */; };
+		EAE1E7262F7C02000079432C /* AgentAccess in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7252F7C02000079432C /* AgentAccess */; };
 		EAF3666F2F623D6A004B7E38 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = EAF3666E2F623D6A004B7E38 /* AppIcon.icon */; };
 		EAFA000000000000000001 /* FoundationModelService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAFA000000000000000002 /* FoundationModelService.swift */; };
 		EASP000000000000000001 /* SystemPromptService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EASP000000000000000002 /* SystemPromptService.swift */; };
@@ -424,6 +424,11 @@
 		AA10000000000000000041 /* Agent */ = {
 			isa = PBXGroup;
 			children = (
+				EADF39D02F69018800CD01E5 /* AgentScriptTabs */,
+				EADF39C92F68BF6400CD01E5 /* AgentViewModel */,
+				EADF39CF2F69015200CD01E5 /* DependencyChecker */,
+				EADF39C62F68BEF100CD01E5 /* Services */,
+				EADF39C82F68BF4800CD01E5 /* MCP */,
 				EADF39CB2F68BFD600CD01E5 /* Protocols */,
 				EADF39CA2F68BFC400CD01E5 /* Models */,
 				EADF39C72F68BF2100CD01E5 /* Views */,
@@ -434,7 +439,6 @@
 				EA60000000000000000002 /* SDEFs */,
 				BB10000000000000000041 /* LaunchDaemons */,
 				CC10000000000000000041 /* LaunchAgents */,
-				EADF39C62F68BEF100CD01E5 /* Services */,
 			);
 			path = Agent;
 			sourceTree = "<group>";
@@ -515,7 +519,6 @@
 		EADF39C62F68BEF100CD01E5 /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				EADF39C82F68BF4800CD01E5 /* MCP */,
 				AA1000000000000000004E /* CodingService.swift */,
 				CS110000000000000000002 /* CodingService+ShellCommands.swift */,
 				CS110000000000000000004 /* CodingService+SplitFile.swift */,
@@ -563,8 +566,6 @@
 		EADF39C72F68BF2100CD01E5 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				EADF39CF2F69015200CD01E5 /* DependencyChecker */,
-				EADF39C92F68BF6400CD01E5 /* AgentViewModel */,
 				AA1000000000000000007D /* AccessibilitySettingsView.swift */,
 				AA10000000000000000078 /* MessagesView.swift */,
 				AA1000000000000000005D /* SettingsView.swift */,
@@ -586,7 +587,6 @@
 				AA10000000000000000100 /* ProjectFolderField.swift */,
 				AA100000000000000000B9 /* AgentOptionsView.swift */,
 				EASP000000000000000004 /* SystemPromptEditor.swift */,
-				EADF39D02F69018800CD01E5 /* AgentScriptTabs */,
 				C428D9A5859B0E1BB0D2FB6B /* ActivityLogView+Rendering.swift */,
 				FEA10A5913CDA508518F6EDA /* HeaderSectionView.swift */,
 				1C14A00A8D2269268767BD2D /* InputSectionView.swift */,
