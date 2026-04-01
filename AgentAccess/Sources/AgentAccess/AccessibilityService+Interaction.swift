@@ -265,20 +265,18 @@ extension AccessibilityService {
             return errorJSON("Element not enabled after \(enableTimeout)s — may still be loading")
         }
 
-        // AXorcist: prefer AXPress (works without frame), fall back to Element.click()
-        if found.isActionSupported("AXPress") {
-            do {
-                try found.performAction("AXPress")
-                return successJSON(["message": "Clicked element (AXPress)", "role": found.role() ?? "Unknown", "title": found.title() ?? "", "description": found.descriptionText() ?? ""])
-            } catch {
-                // Fall through to Element.click()
-            }
-        }
+        // AXorcist: always try AXPress first (works without frame), fall back to Element.click()
         do {
-            try found.click()
-            return successJSON(["message": "Clicked element", "role": found.role() ?? "Unknown", "title": found.title() ?? "", "description": found.descriptionText() ?? ""])
+            try found.performAction("AXPress")
+            return successJSON(["message": "Clicked element (AXPress)", "role": found.role() ?? "Unknown", "title": found.title() ?? "", "description": found.descriptionText() ?? ""])
         } catch {
-            return errorJSON("Click failed: \(error.localizedDescription)")
+            // AXPress failed, try Element.click() which needs frame
+            do {
+                try found.click()
+                return successJSON(["message": "Clicked element", "role": found.role() ?? "Unknown", "title": found.title() ?? "", "description": found.descriptionText() ?? ""])
+            } catch {
+                return errorJSON("Click failed: \(error.localizedDescription)")
+            }
         }
     }
 
