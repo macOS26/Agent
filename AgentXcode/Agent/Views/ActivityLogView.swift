@@ -260,6 +260,10 @@ struct ActivityLogView: NSViewRepresentable {
                             scrollView.reflectScrolledClipView(scrollView.contentView)
                         }
                     } else {
+                        // Freeze scroll position during text mutation to prevent tearing
+                        let wasAtBottom = userIsAtBottom
+                        let savedY = scrollView.contentView.bounds.origin.y
+
                         CATransaction.begin()
                         CATransaction.setDisableActions(true)
                         textView.textStorage?.beginEditing()
@@ -267,13 +271,11 @@ struct ActivityLogView: NSViewRepresentable {
                         // Trim from top if textStorage exceeds cap
                         if let storage = textView.textStorage, storage.length > 50_000 {
                             let trim = storage.length - 50_000
-                            // Snap to next newline so we don't cut mid-line
                             let snapRange = NSRange(location: trim, length: min(200, storage.length - trim))
                             let snippet = storage.string as NSString
                             let nlRange = snippet.range(of: "\n", range: snapRange)
                             let cutPoint = nlRange.location != NSNotFound ? nlRange.location + 1 : trim
                             storage.deleteCharacters(in: NSRange(location: 0, length: cutPoint))
-                            // Insert a trim banner at top
                             let banner = NSAttributedString(string: "··· earlier output trimmed ···\n\n", attributes: [
                                 .font: font,
                                 .foregroundColor: NSColor.secondaryLabelColor
@@ -282,6 +284,15 @@ struct ActivityLogView: NSViewRepresentable {
                         }
                         textView.textStorage?.endEditing()
                         CATransaction.commit()
+
+                        // Restore scroll position if user was NOT at bottom
+                        if !wasAtBottom {
+                            isProgrammaticScroll = true
+                            scrollView.contentView.scroll(to: NSPoint(x: 0, y: savedY))
+                            scrollView.reflectScrolledClipView(scrollView.contentView)
+                            isProgrammaticScroll = false
+                        }
+
                         lastLength = len
                         lastRenderedText = text
                     }
@@ -417,21 +428,22 @@ struct ActivityLogView: NSViewRepresentable {
             }
         }
 
-        /// Throttled scroll — at most once per 0.15s, skipped if user scrolled away from bottom
+        /// Throttled scroll — at most once per 0.1s, skipped if user scrolled away from bottom.
+        /// Uses snap (no animation) to avoid fighting with layout during streaming.
         func throttledScrollToEnd(_ textView: NSTextView) {
             guard userIsAtBottom else { return }
             let now = CFAbsoluteTimeGetCurrent()
-            let interval: CFAbsoluteTime = 0.15
+            let interval: CFAbsoluteTime = 0.1
             pendingScrollWork?.cancel()
             if now - lastScrollTime >= interval {
                 lastScrollTime = now
-                smoothScrollToEnd(textView)
+                snapToEnd(textView)
             } else {
                 let work = DispatchWorkItem { [weak self, weak textView] in
                     guard let self, let textView else { return }
                     guard self.userIsAtBottom else { return }
                     self.lastScrollTime = CFAbsoluteTimeGetCurrent()
-                    self.smoothScrollToEnd(textView)
+                    self.snapToEnd(textView)
                 }
                 pendingScrollWork = work
                 DispatchQueue.main.asyncAfter(deadline: .now() + interval, execute: work)
