@@ -241,7 +241,8 @@ extension AgentViewModel {
     }
 
     private nonisolated static func fetchHuggingFaceModelsFromAPI(apiKey: String) async throws -> [OpenAIModelInfo] {
-        guard let url = URL(string: "https://api-inference.huggingface.co/models") else {
+        // Use the router endpoint which returns inference-ready models (OpenAI-compatible)
+        guard let url = URL(string: "https://router.huggingface.co/v1/models") else {
             throw AgentError.invalidURL
         }
 
@@ -255,16 +256,28 @@ extension AgentViewModel {
             throw AgentError.apiError(statusCode: (response as? HTTPURLResponse)?.statusCode ?? 0, message: "HuggingFace API error")
         }
 
-        guard let json = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
-            return defaultHuggingFaceModels
+        // Router returns OpenAI-compatible format: {"data": [{"id": "model-id", ...}]}
+        if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let dataArray = json["data"] as? [[String: Any]] {
+            let models = dataArray.compactMap { model -> OpenAIModelInfo? in
+                guard let id = model["id"] as? String else { return nil }
+                // Use last path component as display name
+                let name = id.components(separatedBy: "/").last ?? id
+                return OpenAIModelInfo(id: id, name: name)
+            }.sorted { $0.name < $1.name }
+            return models
         }
 
-        let models = json.compactMap { model -> OpenAIModelInfo? in
-            guard let id = model["id"] as? String else { return nil }
-            return OpenAIModelInfo(id: id, name: id)
-        }.sorted { $0.name < $1.name }
+        // Fallback: old format (array of objects)
+        if let json = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
+            let models = json.compactMap { model -> OpenAIModelInfo? in
+                guard let id = model["id"] as? String else { return nil }
+                return OpenAIModelInfo(id: id, name: id)
+            }.sorted { $0.name < $1.name }
+            return models
+        }
 
-        return models
+        return defaultHuggingFaceModels
     }
 
     private nonisolated static func fetchModels(endpoint: String, apiKey: String) async throws -> [OllamaModelInfo] {
