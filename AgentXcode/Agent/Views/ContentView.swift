@@ -184,6 +184,12 @@ struct ContentView: View {
                 }
             }
         }
+        .onChange(of: viewModel.selectedTabId) { _, _ in
+            // Focus task input when switching/creating tabs
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                isTaskFieldFocused = true
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .appWillQuit)) { _ in
             viewModel.stopAll()
             viewModel.stopMessagesMonitor()
