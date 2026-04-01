@@ -240,43 +240,45 @@ extension AccessibilityService {
         }
         AuditLog.log(.accessibility, "clickElement(role: \(role ?? "nil"), title: \(title ?? "nil"), value: \(value ?? "nil"), app: \(appBundleId ?? "nil"), timeout: \(timeout))")
 
-        let startTime = Date()
-        var element: Element?
-        while Date().timeIntervalSince(startTime) < timeout {
-            element = findAXElement(role: role, title: title, value: value, appBundleId: appBundleId)
-            if element != nil { break }
-            Thread.sleep(forTimeInterval: 0.1)
+        // Use AXorcist PerformActionCommand — atomic find + press in one operation
+        var criteria: [Criterion] = []
+        if let role = role { criteria.append(Criterion(attribute: "AXRole", value: role)) }
+        if let title = title { criteria.append(Criterion(attribute: "AXTitle", value: title, matchType: .contains)) }
+        if let value = value { criteria.append(Criterion(attribute: "AXValue", value: value, matchType: .contains)) }
+
+        // If no criteria from role/title/value, try description-based search
+        if criteria.isEmpty {
+            return errorJSON("No search criteria provided")
         }
 
-        guard let found = element else {
-            return errorJSON("Element not found within \(timeout)s timeout")
-        }
-        if let elRole = found.role(), Self.isRestricted(elRole) {
-            return errorJSON("Cannot interact with \(elRole) — disabled in Accessibility Access")
-        }
+        let locator = Locator(matchAll: true, criteria: criteria)
+        let cmd = PerformActionCommand(appIdentifier: appBundleId, locator: locator, action: "AXPress", maxDepthForSearch: 100)
+        let envelope = AXCommandEnvelope(commandID: UUID().uuidString, command: .performAction(cmd))
+        let response = AXorcist.shared.runCommand(envelope)
 
-        // AXorcist: wait for enabled
-        let enableStart = Date()
-        let enableTimeout: TimeInterval = 5.0
-        while found.isEnabled() == false, Date().timeIntervalSince(enableStart) < enableTimeout {
-            Thread.sleep(forTimeInterval: 0.2)
-        }
-        if found.isEnabled() == false {
-            return errorJSON("Element not enabled after \(enableTimeout)s — may still be loading")
-        }
-
-        // AXorcist: always try AXPress first (works without frame), fall back to Element.click()
-        do {
-            try found.performAction("AXPress")
-            return successJSON(["message": "Clicked element (AXPress)", "role": found.role() ?? "Unknown", "title": found.title() ?? "", "description": found.descriptionText() ?? ""])
-        } catch {
-            // AXPress failed, try Element.click() which needs frame
-            do {
-                try found.click()
-                return successJSON(["message": "Clicked element", "role": found.role() ?? "Unknown", "title": found.title() ?? "", "description": found.descriptionText() ?? ""])
-            } catch {
-                return errorJSON("Click failed: \(error.localizedDescription)")
+        switch response {
+        case .success:
+            return successJSON(["message": "Clicked element (AXPress via AXorcist command)"])
+        case .error(let message, _, _):
+            // Fallback: find element ourselves and try click at position
+            if let found = findAXElement(role: role, title: title, value: value, appBundleId: appBundleId) {
+                // Wait for enabled
+                let enableStart = Date()
+                while found.isEnabled() == false, Date().timeIntervalSince(enableStart) < 5.0 {
+                    Thread.sleep(forTimeInterval: 0.2)
+                }
+                // Try position-based click via AXorcist InputDriver
+                if let pos = found.position(), let sz = found.size() {
+                    let center = CGPoint(x: pos.x + sz.width / 2, y: pos.y + sz.height / 2)
+                    do {
+                        try InputDriver.click(at: center)
+                        return successJSON(["message": "Clicked element at center", "x": center.x, "y": center.y])
+                    } catch {
+                        return errorJSON("Click failed: \(error.localizedDescription)")
+                    }
+                }
             }
+            return errorJSON("Click failed: \(message)")
         }
     }
 

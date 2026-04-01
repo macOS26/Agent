@@ -21,37 +21,42 @@ extension AccessibilityService {
             return errorJSON("Action '\(action)' is disabled in Accessibility Settings. Enable it in Settings to allow this action.")
         }
 
-        var element: Element?
-
+        // If coordinates given, use AXorcist Element.elementAtPoint + performAction
         if let x = x, let y = y {
-            element = Element.elementAtPoint(CGPoint(x: x, y: y))
-        } else {
-            element = findAXElement(role: role, title: title, value: value, appBundleId: appBundleId)
+            guard let found = Element.elementAtPoint(CGPoint(x: x, y: y)) else {
+                return errorJSON("No element at (\(x), \(y))")
+            }
+            if let elRole = found.role(), Self.isRestricted(elRole) {
+                return errorJSON("Cannot interact with \(elRole) — disabled in Accessibility Access")
+            }
+            do {
+                try found.performAction(action)
+                return successJSON(["message": "Action '\(action)' performed"])
+            } catch {
+                return errorJSON("Action failed: \(error.localizedDescription)")
+            }
         }
 
-        guard let found = element else {
-            return errorJSON("Element not found")
+        // Use AXorcist PerformActionCommand — atomic find + action
+        var criteria: [Criterion] = []
+        if let role = role { criteria.append(Criterion(attribute: "AXRole", value: role)) }
+        if let title = title { criteria.append(Criterion(attribute: "AXTitle", value: title, matchType: .contains)) }
+        if let value = value { criteria.append(Criterion(attribute: "AXValue", value: value, matchType: .contains)) }
+
+        if criteria.isEmpty {
+            return errorJSON("No search criteria — provide role, title, value, or coordinates")
         }
 
-        if let elRole = found.role(), Self.isRestricted(elRole) {
-            return errorJSON("Cannot interact with \(elRole) — disabled in Accessibility Access")
-        }
+        let locator = Locator(matchAll: true, criteria: criteria)
+        let cmd = PerformActionCommand(appIdentifier: appBundleId, locator: locator, action: action, maxDepthForSearch: 100)
+        let envelope = AXCommandEnvelope(commandID: UUID().uuidString, command: .performAction(cmd))
+        let response = AXorcist.shared.runCommand(envelope)
 
-        // Wait for element to become enabled before performing action
-        let maxWait: TimeInterval = 5.0
-        let start = Date()
-        while found.isEnabled() == false, Date().timeIntervalSince(start) < maxWait {
-            Thread.sleep(forTimeInterval: 0.2)
-        }
-        if found.isEnabled() == false {
-            return errorJSON("Element not enabled after \(maxWait)s — may still be loading")
-        }
-
-        do {
-            try found.performAction(action)
+        switch response {
+        case .success:
             return successJSON(["message": "Action '\(action)' performed"])
-        } catch {
-            return errorJSON("Action failed: \(error.localizedDescription)")
+        case .error(let message, _, _):
+            return errorJSON("Action failed: \(message)")
         }
     }
 
