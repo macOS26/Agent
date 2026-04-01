@@ -2,7 +2,6 @@ import AgentAudit
 import AXorcist
 import Foundation
 import AppKit
-@preconcurrency import ApplicationServices
 
 /// Accessibility automation service for interacting with UI elements via AXorcist.
 /// Provides tools for window listing, element inspection, and UI interaction.
@@ -21,8 +20,9 @@ public final class AccessibilityService: @unchecked Sendable {
         return browserBundleIDs.contains(bid)
     }
 
+    @MainActor
     public static func frontmostAppIsBrowser() -> Bool {
-        guard let bid = NSWorkspace.shared.frontmostApplication?.bundleIdentifier else { return false }
+        guard let bid = RunningApplicationHelper.frontmostApplication?.bundleIdentifier else { return false }
         return browserBundleIDs.contains(bid)
     }
 
@@ -32,25 +32,25 @@ public final class AccessibilityService: @unchecked Sendable {
 
     // MARK: - Window Listing
 
+    @MainActor
     public func listWindows(limit: Int = 50) -> String {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
         AuditLog.log(.accessibility, "listWindows(limit: \(limit))")
 
-        let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
+        let windows = WindowInfoHelper.getVisibleWindows() ?? []
 
         var results: [[String: Any]] = []
         for (index, window) in windows.enumerated() {
             guard index < limit else { break }
-            guard let windowID = window[kCGWindowNumber as String] as? Int,
-                  let ownerPID = window[kCGWindowOwnerPID as String] as? Int32,
+            guard let windowID = window[CFConstants.cgWindowNumber] as? Int,
+                  let ownerPID = window[CFConstants.cgWindowOwnerPID] as? Int32,
                   let layer = window[kCGWindowLayer as String] as? Int,
                   layer >= 0 else { continue }
 
-            let ownerName = window[kCGWindowOwnerName as String] as? String ?? "Unknown"
-            let windowName = window[kCGWindowName as String] as? String ?? ""
-            let bounds = window[kCGWindowBounds as String] as? [String: CGFloat]
+            let ownerName = window[CFConstants.cgWindowName] as? String ?? ""
+            let windowName = window[CFConstants.cgWindowName] as? String ?? ""
             let appName = getProcessName(pid: ownerPID) ?? ownerName
 
             var windowInfo: [String: Any] = [:]
@@ -61,10 +61,12 @@ public final class AccessibilityService: @unchecked Sendable {
             windowInfo["layer"] = layer
 
             var boundsInfo: [String: CGFloat] = [:]
-            boundsInfo["x"] = bounds?["X"] ?? 0
-            boundsInfo["y"] = bounds?["Y"] ?? 0
-            boundsInfo["width"] = bounds?["Width"] ?? 0
-            boundsInfo["height"] = bounds?["Height"] ?? 0
+            if let bounds = window[CFConstants.cgWindowBounds] as? [String: CGFloat] {
+                boundsInfo["x"] = bounds["X"] ?? 0
+                boundsInfo["y"] = bounds["Y"] ?? 0
+                boundsInfo["width"] = bounds["Width"] ?? 0
+                boundsInfo["height"] = bounds["Height"] ?? 0
+            }
             windowInfo["bounds"] = boundsInfo
 
             results.append(windowInfo)
@@ -102,15 +104,15 @@ public final class AccessibilityService: @unchecked Sendable {
     @MainActor
     public func findAXElement(role: String?, title: String?, value: String?, appBundleId: String?) -> Element? {
         if let bundleId = appBundleId {
-            guard let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundleId).first,
+            guard let app = RunningApplicationHelper.applications(withBundleIdentifier: bundleId).first,
                   let appElement = Element.application(for: app) else { return nil }
             return searchInElement(appElement, role: role, title: title, value: value)
-        } else if let frontApp = NSWorkspace.shared.frontmostApplication,
+        } else if let frontApp = RunningApplicationHelper.frontmostApplication,
                   let appElement = Element.application(for: frontApp) {
             return searchInElement(appElement, role: role, title: title, value: value)
         }
         // Global search across all running apps
-        for app in NSWorkspace.shared.runningApplications {
+        for app in RunningApplicationHelper.filteredApplications(options: .init(excludeProhibitedApps: true)) {
             guard app.activationPolicy == .regular,
                   let appElement = Element.application(for: app) else { continue }
             if let found = searchInElement(appElement, role: role, title: title, value: value) {
@@ -174,8 +176,9 @@ public final class AccessibilityService: @unchecked Sendable {
 
     // MARK: - Helpers
 
+    @MainActor
     public func getProcessName(pid: pid_t) -> String? {
-        guard let app = NSRunningApplication(processIdentifier: pid) else { return nil }
+        guard let app = RunningApplicationHelper.runningApplication(pid: pid) else { return nil }
         return app.localizedName ?? app.bundleIdentifier
     }
 

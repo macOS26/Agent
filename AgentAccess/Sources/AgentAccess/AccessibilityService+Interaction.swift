@@ -2,7 +2,6 @@ import AgentAudit
 import AXorcist
 import Foundation
 import AppKit
-@preconcurrency import ApplicationServices
 
 extension AccessibilityService {
     // MARK: - Set Properties
@@ -89,10 +88,10 @@ extension AccessibilityService {
         }
         AuditLog.log(.accessibility, "getFocusedElement(app: \(appBundleId ?? "nil"))")
 
-        // Use AXorcist's focusedApplication or system-wide element
+        // Use AXorcist's Element API
         let root: Element
         if let bundleId = appBundleId,
-           let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundleId).first,
+           let app = RunningApplicationHelper.applications(withBundleIdentifier: bundleId).first,
            let appEl = Element.application(for: app) {
             root = appEl
         } else {
@@ -206,10 +205,10 @@ extension AccessibilityService {
             return errorJSON("Cannot interact with \(elRole) — disabled in Accessibility Access")
         }
 
-        // AXorcist: try showMenu action
-        if found.isActionSupported("AXShowMenu") {
+        // AXorcist: try showMenu action using AXAction enum
+        if found.isActionSupported(AXAction.showMenu.rawValue) {
             do {
-                try found.performAction("AXShowMenu")
+                try found.performAction(.showMenu)
                 return successJSON(["message": "Menu shown"])
             } catch {
                 return errorJSON("AXShowMenu failed: \(error.localizedDescription)")
@@ -228,7 +227,7 @@ extension AccessibilityService {
         return errorJSON("Element does not support showing menu and could not determine position")
     }
 
-    // MARK: - Smart Element Click (AXorcist Element.click)
+    // MARK: - Smart Element Click (AXorcist command system)
 
     @MainActor
     public func clickElement(role: String?, title: String?, value: String?, appBundleId: String?, timeout: TimeInterval = automationFinishTimeout, verify: Bool = false) -> String {
@@ -241,7 +240,6 @@ extension AccessibilityService {
         AuditLog.log(.accessibility, "clickElement(role: \(role ?? "nil"), title: \(title ?? "nil"), value: \(value ?? "nil"), app: \(appBundleId ?? "nil"), timeout: \(timeout))")
 
         // Use AXorcist PerformActionCommand — atomic find + press in one operation
-        // Search AXTitle + AXDescription + AXHelp via computedNameContains
         var criteria: [Criterion] = []
         if let role = role { criteria.append(Criterion(attribute: "AXRole", value: role)) }
         if let value = value { criteria.append(Criterion(attribute: "AXValue", value: value, matchType: .contains)) }
@@ -251,7 +249,7 @@ extension AccessibilityService {
         }
 
         let locator = Locator(matchAll: true, criteria: criteria, computedNameContains: title)
-        let cmd = PerformActionCommand(appIdentifier: appBundleId, locator: locator, action: "AXPress", maxDepthForSearch: 100)
+        let cmd = PerformActionCommand(appIdentifier: appBundleId, locator: locator, action: AXAction.press.rawValue, maxDepthForSearch: 100)
         let envelope = AXCommandEnvelope(commandID: UUID().uuidString, command: .performAction(cmd))
         let response = AXorcist.shared.runCommand(envelope)
 
@@ -368,7 +366,7 @@ extension AccessibilityService {
     @MainActor
     public func findElementInApp(pid: pid_t, role: String?, title: String?, value: String?) -> AXUIElement? {
         guard let appElement = Element.application(for: pid) else { return nil }
-        return searchInElement(appElement, role: role, title: title, value: value)?.underlyingElement
+        return searchInElementLegacy(appElement, role: role, title: title, value: value)?.underlyingElement
     }
 
     @MainActor
@@ -377,7 +375,7 @@ extension AccessibilityService {
     }
 
     @MainActor
-    private func searchInElement(_ root: Element, role: String?, title: String?, value: String?) -> Element? {
+    private func searchInElementLegacy(_ root: Element, role: String?, title: String?, value: String?) -> Element? {
         let results = root.findElements(role: role, title: title, label: nil, value: value, identifier: nil, maxDepth: 100)
         if results.isEmpty, let title = title {
             var options = ElementSearchOptions()

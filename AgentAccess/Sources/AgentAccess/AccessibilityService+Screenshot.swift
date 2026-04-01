@@ -2,10 +2,9 @@ import AgentAudit
 import AXorcist
 import Foundation
 import AppKit
-@preconcurrency import ApplicationServices
 
 extension AccessibilityService {
-    // MARK: - Screenshot (Phase 4)
+    // MARK: - Screenshot
 
     /// Capture a screenshot of a region or window. Requires Screen Recording permission.
     /// Returns the path to the saved PNG file, or an error message.
@@ -69,6 +68,7 @@ extension AccessibilityService {
     }
 
     /// Capture a screenshot of all visible windows (requires Screen Recording permission)
+    @MainActor
     public func captureAllWindows() -> String {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility/Screen Recording permission required.")

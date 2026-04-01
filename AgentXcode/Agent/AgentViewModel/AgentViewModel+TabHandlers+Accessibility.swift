@@ -217,7 +217,7 @@ extension AgentViewModel {
                     AccessibilityService.shared.captureScreenshot(x: x, y: y, width: w, height: h)
                 }
             } else {
-                output = await Self.offMain {
+                output = await MainActor.run {
                     AccessibilityService.shared.captureAllWindows()
                 }
             }

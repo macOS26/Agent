@@ -2,19 +2,17 @@ import AgentAudit
 import AXorcist
 import Foundation
 import AppKit
-@preconcurrency import ApplicationServices
 
 extension AccessibilityService {
     // MARK: - Frontmost Window
 
+    @MainActor
     public static func frontmostWindowID() -> UInt32? {
-        guard let app = NSWorkspace.shared.frontmostApplication else { return nil }
+        guard let app = RunningApplicationHelper.frontmostApplication else { return nil }
         let pid = app.processIdentifier
-        guard let windowList = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else { return nil }
+        guard let windowList = WindowInfoHelper.getWindows(for: pid) else { return nil }
         for window in windowList {
-            guard let ownerPID = window[kCGWindowOwnerPID as String] as? Int32,
-                  ownerPID == pid,
-                  let windowID = window[kCGWindowNumber as String] as? UInt32,
+            guard let windowID = window[CFConstants.cgWindowNumber] as? UInt32,
                   let layer = window[kCGWindowLayer as String] as? Int,
                   layer == 0 else { continue }
             return windowID
@@ -79,31 +77,24 @@ extension AccessibilityService {
 
     // MARK: - Get Window Frame
 
+    @MainActor
     public func getWindowFrame(windowId: Int) -> String {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
         AuditLog.log(.accessibility, "getWindowFrame(windowId: \(windowId))")
 
-        guard let windowList = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else {
-            return errorJSON("Could not get window list")
-        }
+        // Use AXorcist WindowInfoHelper to get window bounds
+        if let bounds = WindowInfoHelper.getWindowBounds(windowID: CGWindowID(windowId)) {
+            let ownerPID = WindowInfoHelper.getOwnerPID(windowID: CGWindowID(windowId)) ?? 0
+            let windowName = WindowInfoHelper.getWindowName(windowID: CGWindowID(windowId)) ?? ""
+            let appName = getProcessName(pid: ownerPID) ?? "Unknown"
 
-        for window in windowList {
-            guard let wid = window[kCGWindowNumber as String] as? Int, wid == windowId else { continue }
-            let ownerPID = window[kCGWindowOwnerPID as String] as? Int32 ?? 0
-            let ownerName = window[kCGWindowOwnerName as String] as? String ?? "Unknown"
-            let windowName = window[kCGWindowName as String] as? String ?? ""
-            let layer = window[kCGWindowLayer as String] as? Int ?? 0
-
-            if let bounds = window[kCGWindowBounds as String] as? [String: CGFloat] {
-                let appName = getProcessName(pid: ownerPID) ?? ownerName
-                return successJSON([
-                    "windowId": windowId, "ownerPID": Int(ownerPID), "ownerName": appName,
-                    "windowName": windowName, "layer": layer,
-                    "frame": ["x": bounds["X"] ?? 0, "y": bounds["Y"] ?? 0, "width": bounds["Width"] ?? 0, "height": bounds["Height"] ?? 0]
-                ])
-            }
+            return successJSON([
+                "windowId": windowId, "ownerPID": Int(ownerPID), "ownerName": appName,
+                "windowName": windowName,
+                "frame": ["x": bounds.origin.x, "y": bounds.origin.y, "width": bounds.width, "height": bounds.height]
+            ])
         }
         return errorJSON("Window \(windowId) not found")
     }
@@ -120,9 +111,9 @@ extension AccessibilityService {
 
         let appElement: Element?
         if let bundleId = appBundleId,
-           let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundleId).first {
+           let app = RunningApplicationHelper.applications(withBundleIdentifier: bundleId).first {
             appElement = Element.application(for: app)
-        } else if let app = NSWorkspace.shared.frontmostApplication {
+        } else if let app = RunningApplicationHelper.frontmostApplication {
             appElement = Element.application(for: app)
         } else {
             return errorJSON("No frontmost app")
@@ -142,13 +133,13 @@ extension AccessibilityService {
                 if child.title() == menuName {
                     if i == menuPath.count - 1 {
                         do {
-                            try child.performAction("AXPress")
+                            try child.performAction(.press)
                             return successJSON(["message": "Clicked menu: \(menuPath.joined(separator: " > "))"])
                         } catch {
                             return errorJSON("Failed to press menu item: \(menuName)")
                         }
                     } else {
-                        _ = try? child.performAction("AXPress")
+                        _ = try? child.performAction(.press)
                         Thread.sleep(forTimeInterval: 0.15)
                         if let subs = child.children(), let first = subs.first {
                             current = first
@@ -178,17 +169,17 @@ extension AccessibilityService {
 
         let appElement: Element?
         if let bundleId = appBundleId,
-           let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundleId).first {
+           let app = RunningApplicationHelper.applications(withBundleIdentifier: bundleId).first {
             appElement = Element.application(for: app)
-        } else if let app = NSWorkspace.shared.frontmostApplication {
+        } else if let app = RunningApplicationHelper.frontmostApplication {
             appElement = Element.application(for: app)
         } else {
             return errorJSON("No frontmost app")
         }
 
         guard let root = appElement,
-              let children = root.children(),
-              let window = children.first(where: { $0.role() == "AXWindow" }) else {
+              let appWindows = root.windows(),
+              let window = appWindows.first(where: { $0.role() == "AXWindow" }) else {
             return errorJSON("No windows found")
         }
 
@@ -204,11 +195,13 @@ extension AccessibilityService {
 
     // MARK: - App Launch / Activate / Quit
 
+    @MainActor
     public func manageApp(action: String, bundleId: String?, name: String?) -> String {
         AuditLog.log(.accessibility, "manageApp(action: \(action), bundleId: \(bundleId ?? "nil"), name: \(name ?? "nil"))")
 
         switch action {
         case "launch":
+            // App launching requires NSWorkspace — this is expected
             if let bid = bundleId, let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bid) {
                 NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
                 return successJSON(["message": "Launched \(bid)"])
@@ -222,26 +215,25 @@ extension AccessibilityService {
             }
             return errorJSON("Specify bundleId or name")
         case "activate":
-            if let bid = bundleId, let app = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == bid }) {
+            if let bid = bundleId, let app = RunningApplicationHelper.applications(withBundleIdentifier: bid).first {
                 app.activate()
                 return successJSON(["message": "Activated \(bid)"])
-            } else if let n = name, let app = NSWorkspace.shared.runningApplications.first(where: { $0.localizedName == n }) {
+            } else if let n = name, let app = RunningApplicationHelper.allApplications().first(where: { $0.localizedName == n }) {
                 app.activate()
                 return successJSON(["message": "Activated \(n)"])
             }
             return errorJSON("App not running")
         case "quit":
-            if let bid = bundleId, let app = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == bid }) {
+            if let bid = bundleId, let app = RunningApplicationHelper.applications(withBundleIdentifier: bid).first {
                 app.terminate()
                 return successJSON(["message": "Quit \(bid)"])
-            } else if let n = name, let app = NSWorkspace.shared.runningApplications.first(where: { $0.localizedName == n }) {
+            } else if let n = name, let app = RunningApplicationHelper.allApplications().first(where: { $0.localizedName == n }) {
                 app.terminate()
                 return successJSON(["message": "Quit \(n)"])
             }
             return errorJSON("App not running")
         case "list":
-            let apps = NSWorkspace.shared.runningApplications
-                .filter { $0.activationPolicy == .regular }
+            let apps = RunningApplicationHelper.filteredApplications(options: .init(excludeProhibitedApps: true))
                 .map { "\($0.localizedName ?? "?") — \($0.bundleIdentifier ?? "?")\($0.isActive ? " (active)" : "")" }
             return successJSON(["apps": apps])
         default:
@@ -265,9 +257,9 @@ extension AccessibilityService {
         // Get window center for scroll
         let appElement: Element?
         if let bundleId = appBundleId,
-           let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundleId).first {
+           let app = RunningApplicationHelper.applications(withBundleIdentifier: bundleId).first {
             appElement = Element.application(for: app)
-        } else if let app = NSWorkspace.shared.frontmostApplication {
+        } else if let app = RunningApplicationHelper.frontmostApplication {
             appElement = Element.application(for: app)
         } else {
             return errorJSON("No app to scroll in")
@@ -276,8 +268,8 @@ extension AccessibilityService {
         var scrollX: CGFloat = 400
         var scrollY: CGFloat = 400
         if let root = appElement,
-           let children = root.children(),
-           let window = children.first(where: { $0.role() == "AXWindow" }),
+           let appWindows = root.windows(),
+           let window = appWindows.first(where: { $0.role() == "AXWindow" }),
            let frame = window.frame() {
             scrollX = frame.midX
             scrollY = frame.midY
@@ -305,9 +297,9 @@ extension AccessibilityService {
 
         let appElement: Element?
         if let bundleId = appBundleId,
-           let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundleId).first {
+           let app = RunningApplicationHelper.applications(withBundleIdentifier: bundleId).first {
             appElement = Element.application(for: app)
-        } else if let app = NSWorkspace.shared.frontmostApplication {
+        } else if let app = RunningApplicationHelper.frontmostApplication {
             appElement = Element.application(for: app)
         } else {
             return errorJSON("No frontmost app")
@@ -315,7 +307,11 @@ extension AccessibilityService {
 
         guard let root = appElement else { return errorJSON("No app element") }
 
-        // AXorcist: use focusedApplicationElement
+        // AXorcist: use focusedUIElement for getting focused element within the app
+        if let focused = root.focusedUIElement() {
+            return successJSON(elementProperties(focused))
+        }
+        // Fallback: try focusedApplicationElement
         if let focused = root.focusedApplicationElement() {
             return successJSON(elementProperties(focused))
         }

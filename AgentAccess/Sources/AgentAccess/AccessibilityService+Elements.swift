@@ -2,7 +2,6 @@ import AgentAudit
 import AXorcist
 import Foundation
 import AppKit
-@preconcurrency import ApplicationServices
 
 extension AccessibilityService {
     // MARK: - Element Inspection
@@ -62,9 +61,9 @@ extension AccessibilityService {
 
         let appElement: Element?
         if let bid = appBundleId,
-           let app = NSRunningApplication.runningApplications(withBundleIdentifier: bid).first {
+           let app = RunningApplicationHelper.applications(withBundleIdentifier: bid).first {
             appElement = Element.application(for: app)
-        } else if let front = NSWorkspace.shared.frontmostApplication {
+        } else if let front = RunningApplicationHelper.frontmostApplication {
             appElement = Element.application(for: front)
         } else {
             return errorJSON("No app found")
