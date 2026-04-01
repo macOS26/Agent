@@ -61,7 +61,7 @@ struct ActivityLogView: NSViewRepresentable {
         coord.latestText = text
         coord.updateNSViewLastLength = len
         coord.latestTabID = tabID
-        if tabChanged { coord.lastTabID = nil } // force full rebuild on tab switch
+        if tabChanged { coord.forceTabSwitch = true } // force full rebuild on tab switch
         coord.latestSearchText = searchText
         coord.latestCaseSensitive = caseSensitive
         coord.latestMatchIndex = currentMatchIndex
@@ -96,6 +96,8 @@ struct ActivityLogView: NSViewRepresentable {
         var lastRenderedText = ""
         /// Track which tab we last rendered — forces full rebuild on tab switch
         var lastTabID: UUID?
+        /// Set by updateNSView when tab changes — consumed by performRender
+        var forceTabSwitch = false
         /// Separate length tracker for updateNSView dedup (independent of performRender's lastLength)
         var updateNSViewLastLength = 0
         /// Polls the text source directly — bypasses SwiftUI observation
@@ -217,7 +219,8 @@ struct ActivityLogView: NSViewRepresentable {
 
             let len = (text as NSString).length
             let searchChanged = searchText != lastSearch || currentMatchIndex != lastMatchIndex
-            let tabSwitched = tabID != lastTabID
+            let tabSwitched = forceTabSwitch || tabID != lastTabID
+            forceTabSwitch = false
 
             let currentAppearance = scrollView.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua])
             let appearanceChanged = currentAppearance != lastAppearanceName
