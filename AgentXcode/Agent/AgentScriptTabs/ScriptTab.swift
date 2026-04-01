@@ -197,6 +197,14 @@ final class ScriptTab: Identifiable {
         if !logBuffer.isEmpty {
             activityLog += logBuffer
             logBuffer = ""
+            // Trim from front if too large
+            if activityLog.count > Self.maxLogChars {
+                let drop = activityLog.count - Self.maxLogChars
+                activityLog = String(activityLog.dropFirst(drop))
+                if let nl = activityLog.firstIndex(of: "\n") {
+                    activityLog = "--- Log truncated (showing last \(Self.maxLogChars / 1000)K characters) ---\n" + String(activityLog[activityLog.index(after: nl)...])
+                }
+            }
             NotificationCenter.default.post(name: .activityLogDidChange, object: id)
         }
     }
