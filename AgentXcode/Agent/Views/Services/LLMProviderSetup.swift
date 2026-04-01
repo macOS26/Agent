@@ -1,0 +1,152 @@
+import AgentLLM
+
+/// All Agent! LLM provider configurations — defined in the app, not the package.
+/// To add a new LLM: add a static config here and register it in registerAllProviders().
+enum LLMProviderSetup {
+
+    static func registerAllProviders() {
+        LLMRegistry.shared.registerAll([
+            claude, openAI, deepSeek, huggingFace, zAI,
+            ollama, localOllama, vLLM, lmStudio, appleIntelligence
+        ])
+    }
+
+    // MARK: - Cloud API Providers
+
+    static let claude = LLMProviderConfig(
+        id: "claude", displayName: "Claude",
+        kind: .cloudAPI, apiProtocol: .anthropic,
+        endpoint: LLMEndpoint(
+            chatURL: "https://api.anthropic.com/v1/messages",
+            modelsURL: "https://api.anthropic.com/v1/models",
+            authHeader: "x-api-key",
+            authPrefix: "",
+            extraHeaders: ["anthropic-version": "2023-06-01"]
+        ),
+        capabilities: [.streaming, .tools, .vision, .systemPrompt, .caching, .thinking, .webSearch]
+    )
+
+    static let openAI = LLMProviderConfig(
+        id: "openAI", displayName: "OpenAI",
+        kind: .cloudAPI, apiProtocol: .openAI,
+        endpoint: LLMEndpoint(
+            chatURL: "https://api.openai.com/v1/chat/completions",
+            modelsURL: "https://api.openai.com/v1/models"
+        ),
+        capabilities: [.streaming, .tools, .vision, .systemPrompt]
+    )
+
+    static let deepSeek = LLMProviderConfig(
+        id: "deepSeek", displayName: "DeepSeek",
+        kind: .cloudAPI, apiProtocol: .openAI,
+        endpoint: LLMEndpoint(
+            chatURL: "https://api.deepseek.com/chat/completions",
+            modelsURL: "https://api.deepseek.com/v1/models"
+        ),
+        capabilities: [.streaming, .tools, .systemPrompt]
+    )
+
+    static let huggingFace = LLMProviderConfig(
+        id: "huggingFace", displayName: "Hugging Face",
+        kind: .cloudAPI, apiProtocol: .openAI,
+        endpoint: LLMEndpoint(
+            chatURL: "https://router.huggingface.co/v1/chat/completions",
+            modelsURL: "https://router.huggingface.co/v1/models"
+        ),
+        capabilities: [.streaming, .tools, .systemPrompt]
+    )
+
+    static let zAI = LLMProviderConfig(
+        id: "zAI", displayName: "Z.ai",
+        kind: .cloudAPI, apiProtocol: .openAI,
+        endpoint: LLMEndpoint(
+            chatURL: "https://api.z.ai/api/coding/paas/v4/chat/completions",
+            modelsURL: "https://api.z.ai/api/coding/paas/v4/models"
+        ),
+        capabilities: [.streaming, .tools, .systemPrompt, .vision],
+        temperature: 0.7
+    )
+
+    // MARK: - Ollama
+
+    static let ollama = LLMProviderConfig(
+        id: "ollama", displayName: "Ollama",
+        kind: .remoteServer, apiProtocol: .ollama,
+        endpoint: LLMEndpoint(
+            chatURL: "https://ollama.com/api/chat",
+            modelsURL: "https://ollama.com/api/tags",
+            defaultPort: LLMEndpoint.ollamaPort
+        ),
+        capabilities: [.streaming, .tools, .systemPrompt, .vision]
+    )
+
+    static let localOllama = LLMProviderConfig(
+        id: "localOllama", displayName: "Local Ollama",
+        kind: .localServer, apiProtocol: .ollama,
+        endpoint: LLMEndpoint(
+            chatURL: "http://localhost:\(LLMEndpoint.ollamaPort)/api/chat",
+            modelsURL: "http://localhost:\(LLMEndpoint.ollamaPort)/api/tags",
+            authHeader: "", authPrefix: "",
+            defaultPort: LLMEndpoint.ollamaPort
+        ),
+        capabilities: [.streaming, .tools, .systemPrompt, .vision],
+        apiKeyOptional: true
+    )
+
+    // MARK: - Self-Hosted
+
+    static let vLLM = LLMProviderConfig(
+        id: "vLLM", displayName: "vLLM",
+        kind: .remoteServer, apiProtocol: .openAI,
+        endpoint: LLMEndpoint(
+            chatURL: "http://localhost:\(LLMEndpoint.vLLMPort)/v1/chat/completions",
+            modelsURL: "http://localhost:\(LLMEndpoint.vLLMPort)/v1/models",
+            authHeader: "", authPrefix: "",
+            defaultPort: LLMEndpoint.vLLMPort
+        ),
+        capabilities: [.streaming, .tools, .systemPrompt],
+        apiKeyOptional: true
+    )
+
+    // MARK: - LM Studio (3 protocol variants)
+
+    static let lmStudio = LLMProviderConfig(
+        id: "lmStudio", displayName: "LM Studio",
+        kind: .localServer, apiProtocol: .openAI,
+        endpoint: LLMEndpoint(
+            chatURL: "http://localhost:\(LLMEndpoint.lmStudioPort)/v1/chat/completions",
+            modelsURL: "http://localhost:\(LLMEndpoint.lmStudioPort)/v1/models",
+            authHeader: "", authPrefix: "",
+            defaultPort: LLMEndpoint.lmStudioPort
+        ),
+        capabilities: [.streaming, .tools, .systemPrompt],
+        apiKeyOptional: true,
+        supportedProtocols: [.openAI, .anthropic, .custom]
+    )
+
+    /// LM Studio endpoint for Anthropic Compatible mode
+    static let lmStudioAnthropicEndpoint = LLMEndpoint(
+        chatURL: "http://localhost:\(LLMEndpoint.lmStudioPort)/v1/messages",
+        modelsURL: "http://localhost:\(LLMEndpoint.lmStudioPort)/v1/models",
+        authHeader: "", authPrefix: "",
+        defaultPort: LLMEndpoint.lmStudioPort
+    )
+
+    /// LM Studio endpoint for Native mode
+    static let lmStudioNativeEndpoint = LLMEndpoint(
+        chatURL: "http://localhost:\(LLMEndpoint.lmStudioPort)/api/v1/chat",
+        modelsURL: "http://localhost:\(LLMEndpoint.lmStudioPort)/api/v1/models",
+        authHeader: "", authPrefix: "",
+        defaultPort: LLMEndpoint.lmStudioPort
+    )
+
+    // MARK: - On-Device
+
+    static let appleIntelligence = LLMProviderConfig(
+        id: "foundationModel", displayName: "Apple Intelligence",
+        kind: .embedded, apiProtocol: .foundationModel,
+        endpoint: LLMEndpoint(chatURL: ""),
+        capabilities: [.streaming, .tools, .systemPrompt],
+        apiKeyOptional: true
+    )
+}

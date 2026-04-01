@@ -1,19 +1,21 @@
 import Foundation
 
-/// Connection details for an LLM service.
+/// Connection details for an LLM service. Fully configurable — no hardcoded URLs.
 public struct LLMEndpoint: Codable, Sendable, Hashable {
-    /// Full chat URL (e.g. "https://api.anthropic.com/v1/messages")
+    /// Full chat API URL
     public var chatURL: String
-    /// Models list URL (e.g. "https://api.anthropic.com/v1/models")
+    /// Full models list URL (empty if not supported)
     public var modelsURL: String
-    /// Authentication header name ("x-api-key", "Authorization", "" for none)
+    /// Auth header name ("x-api-key", "Authorization", "" for none)
     public var authHeader: String
     /// Auth value prefix ("Bearer ", "" for raw key)
     public var authPrefix: String
-    /// Additional headers sent with every request
+    /// Extra headers sent with every request
     public var extraHeaders: [String: String]
     /// Request timeout in seconds
     public var timeout: TimeInterval
+    /// Default port for this service (0 = use URL as-is)
+    public var defaultPort: Int
 
     public init(
         chatURL: String,
@@ -21,7 +23,8 @@ public struct LLMEndpoint: Codable, Sendable, Hashable {
         authHeader: String = "Authorization",
         authPrefix: String = "Bearer ",
         extraHeaders: [String: String] = [:],
-        timeout: TimeInterval = 120
+        timeout: TimeInterval = 120,
+        defaultPort: Int = 0
     ) {
         self.chatURL = chatURL
         self.modelsURL = modelsURL
@@ -29,76 +32,15 @@ public struct LLMEndpoint: Codable, Sendable, Hashable {
         self.authPrefix = authPrefix
         self.extraHeaders = extraHeaders
         self.timeout = timeout
+        self.defaultPort = defaultPort
     }
 
-    // MARK: - Presets (exact URLs matching the app)
+    // MARK: - Well-Known Default Ports
 
-    public static let claude = LLMEndpoint(
-        chatURL: "https://api.anthropic.com/v1/messages",
-        modelsURL: "https://api.anthropic.com/v1/models",
-        authHeader: "x-api-key",
-        authPrefix: "",
-        extraHeaders: ["anthropic-version": "2023-06-01"]
-    )
-
-    public static let openAI = LLMEndpoint(
-        chatURL: "https://api.openai.com/v1/chat/completions",
-        modelsURL: "https://api.openai.com/v1/models"
-    )
-
-    public static let deepSeek = LLMEndpoint(
-        chatURL: "https://api.deepseek.com/chat/completions",
-        modelsURL: "https://api.deepseek.com/v1/models"
-    )
-
-    public static let huggingFace = LLMEndpoint(
-        chatURL: "https://router.huggingface.co/v1/chat/completions",
-        modelsURL: "https://router.huggingface.co/v1/models"
-    )
-
-    public static let zAI = LLMEndpoint(
-        chatURL: "https://api.z.ai/api/coding/paas/v4/chat/completions",
-        modelsURL: "https://api.z.ai/api/coding/paas/v4/models"
-    )
-
-    public static let ollamaCloud = LLMEndpoint(
-        chatURL: "https://ollama.com/api/chat",
-        modelsURL: "https://ollama.com/api/tags"
-    )
-
-    public static let ollamaLocal = LLMEndpoint(
-        chatURL: "http://localhost:11434/api/chat",
-        modelsURL: "http://localhost:11434/api/tags",
-        authHeader: "",
-        authPrefix: ""
-    )
-
-    public static let vLLM = LLMEndpoint(
-        chatURL: "http://localhost:8000/v1/chat/completions",
-        modelsURL: "http://localhost:8000/v1/models",
-        authHeader: "",
-        authPrefix: ""
-    )
-
-    // LM Studio — 3 protocol variants
-    public static let lmStudioOpenAI = LLMEndpoint(
-        chatURL: "http://localhost:1234/v1/chat/completions",
-        modelsURL: "http://localhost:1234/v1/models",
-        authHeader: "",
-        authPrefix: ""
-    )
-
-    public static let lmStudioAnthropic = LLMEndpoint(
-        chatURL: "http://localhost:1234/v1/messages",
-        modelsURL: "http://localhost:1234/v1/models",
-        authHeader: "",
-        authPrefix: ""
-    )
-
-    public static let lmStudioNative = LLMEndpoint(
-        chatURL: "http://localhost:1234/api/v1/chat",
-        modelsURL: "http://localhost:1234/api/v1/models",
-        authHeader: "",
-        authPrefix: ""
-    )
+    /// Ollama default port
+    public static let ollamaPort = 11434
+    /// LM Studio default port
+    public static let lmStudioPort = 1234
+    /// vLLM default port
+    public static let vLLMPort = 8000
 }

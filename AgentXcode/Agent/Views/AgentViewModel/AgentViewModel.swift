@@ -926,7 +926,7 @@ final class AgentViewModel {
         Self._started = true
 
         // Register all LLM providers with AgentLLM framework
-        LLMRegistry.shared.registerAll(LLMProviderConfig.allPresets)
+        LLMProviderSetup.registerAllProviders()
 
         activityLog = ChatHistoryStore.shared.buildActivityLogText(maxTasks: 3)
         CodeBlockTheme.updateAppearance()

@@ -25,6 +25,7 @@ public enum LLMAPIProtocol: String, Codable, Sendable, CaseIterable {
 }
 
 /// Full configuration for an LLM provider instance.
+/// The app creates these — the package just defines the shape.
 public struct LLMProviderConfig: Codable, Sendable, Identifiable, Hashable {
     public let id: String
     public var displayName: String
@@ -38,9 +39,9 @@ public struct LLMProviderConfig: Codable, Sendable, Identifiable, Hashable {
     public var maxTokens: Int
     public var contextSize: Int
     public var enabled: Bool
-    /// Whether API key is optional (e.g. vLLM, local servers)
+    /// Whether API key is optional (local servers, etc.)
     public var apiKeyOptional: Bool
-    /// Alternative API protocols this provider supports (e.g. LM Studio: openAI, anthropic, custom)
+    /// Alternative protocols this provider supports (e.g. LM Studio: openAI, anthropic, custom)
     public var supportedProtocols: [LLMAPIProtocol]
 
     public init(
@@ -87,89 +88,4 @@ public struct LLMProviderConfig: Codable, Sendable, Identifiable, Hashable {
         if kind != .embedded && endpoint.chatURL.isEmpty { return false }
         return true
     }
-
-    // MARK: - Presets for all 10 Agent! providers
-
-    public static let claude = LLMProviderConfig(
-        id: "claude", displayName: "Claude",
-        kind: .cloudAPI, apiProtocol: .anthropic,
-        endpoint: .claude,
-        capabilities: [.streaming, .tools, .vision, .systemPrompt, .caching, .thinking, .webSearch]
-    )
-
-    public static let openAI = LLMProviderConfig(
-        id: "openAI", displayName: "OpenAI",
-        kind: .cloudAPI, apiProtocol: .openAI,
-        endpoint: .openAI,
-        capabilities: [.streaming, .tools, .vision, .systemPrompt]
-    )
-
-    public static let deepSeek = LLMProviderConfig(
-        id: "deepSeek", displayName: "DeepSeek",
-        kind: .cloudAPI, apiProtocol: .openAI,
-        endpoint: .deepSeek,
-        capabilities: [.streaming, .tools, .systemPrompt]
-    )
-
-    public static let huggingFace = LLMProviderConfig(
-        id: "huggingFace", displayName: "Hugging Face",
-        kind: .cloudAPI, apiProtocol: .openAI,
-        endpoint: .huggingFace,
-        capabilities: [.streaming, .tools, .systemPrompt]
-    )
-
-    public static let zAI = LLMProviderConfig(
-        id: "zAI", displayName: "Z.ai",
-        kind: .cloudAPI, apiProtocol: .openAI,
-        endpoint: .zAI,
-        capabilities: [.streaming, .tools, .systemPrompt, .vision],
-        temperature: 0.7
-    )
-
-    public static let ollama = LLMProviderConfig(
-        id: "ollama", displayName: "Ollama",
-        kind: .remoteServer, apiProtocol: .ollama,
-        endpoint: .ollamaCloud,
-        capabilities: [.streaming, .tools, .systemPrompt, .vision],
-        apiKeyOptional: false
-    )
-
-    public static let localOllama = LLMProviderConfig(
-        id: "localOllama", displayName: "Local Ollama",
-        kind: .localServer, apiProtocol: .ollama,
-        endpoint: .ollamaLocal,
-        capabilities: [.streaming, .tools, .systemPrompt, .vision],
-        apiKeyOptional: true
-    )
-
-    public static let vLLM = LLMProviderConfig(
-        id: "vLLM", displayName: "vLLM",
-        kind: .remoteServer, apiProtocol: .openAI,
-        endpoint: .vLLM,
-        capabilities: [.streaming, .tools, .systemPrompt],
-        apiKeyOptional: true
-    )
-
-    public static let lmStudio = LLMProviderConfig(
-        id: "lmStudio", displayName: "LM Studio",
-        kind: .localServer, apiProtocol: .openAI,
-        endpoint: .lmStudioOpenAI,
-        capabilities: [.streaming, .tools, .systemPrompt],
-        apiKeyOptional: true,
-        supportedProtocols: [.openAI, .anthropic, .custom]
-    )
-
-    public static let foundationModel = LLMProviderConfig(
-        id: "foundationModel", displayName: "Apple Intelligence",
-        kind: .embedded, apiProtocol: .foundationModel,
-        endpoint: LLMEndpoint(chatURL: ""),
-        capabilities: [.streaming, .tools, .systemPrompt],
-        apiKeyOptional: true
-    )
-
-    /// All built-in provider presets
-    public static let allPresets: [LLMProviderConfig] = [
-        .claude, .openAI, .deepSeek, .huggingFace, .zAI,
-        .ollama, .localOllama, .vLLM, .lmStudio, .foundationModel
-    ]
 }
