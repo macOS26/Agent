@@ -61,7 +61,17 @@ struct ActivityLogView: NSViewRepresentable {
         coord.latestText = text
         coord.updateNSViewLastLength = len
         coord.latestTabID = tabID
-        if tabChanged { coord.forceTabSwitch = true } // force full rebuild on tab switch
+        if tabChanged {
+            coord.forceTabSwitch = true
+            // Guaranteed scroll-to-bottom after render settles — fires after scheduleRender's work
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak coord] in
+                guard let coord, let tv = coord.latestTextView, let sv = coord.latestScrollView else { return }
+                tv.layoutManager?.ensureLayout(for: tv.textContainer!)
+                tv.scrollToEndOfDocument(nil)
+                sv.reflectScrolledClipView(sv.contentView)
+                coord.userIsAtBottom = true
+            }
+        }
         coord.latestSearchText = searchText
         coord.latestCaseSensitive = caseSensitive
         coord.latestMatchIndex = currentMatchIndex
