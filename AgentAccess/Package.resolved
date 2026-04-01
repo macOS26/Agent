@@ -1,5 +1,5 @@
 {
-  "originHash" : "1ef00134e3d6dffaac5b6dcfeb77b77a946241fed533516e57a8653752ab528d",
+  "originHash" : "e9e4412d6217ac49069cedb0e1434d39e4b3ad43400923266122beb0cf98ec54",
   "pins" : [
     {
       "identity" : "agentaudit",
@@ -8,6 +8,33 @@
       "state" : {
         "revision" : "cc777ea0867837c55586c627508cbe37c672a7e7",
         "version" : "1.0.0"
+      }
+    },
+    {
+      "identity" : "axorcist",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/steipete/AXorcist.git",
+      "state" : {
+        "revision" : "c75d06f7f93e264a9786edc2b78c04973061cb2f",
+        "version" : "0.1.0"
+      }
+    },
+    {
+      "identity" : "commander",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/steipete/Commander.git",
+      "state" : {
+        "revision" : "9e349575c8e3c6745e81fe19e5bb5efa01b078ce",
+        "version" : "0.2.1"
+      }
+    },
+    {
+      "identity" : "swift-log",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-log.git",
+      "state" : {
+        "revision" : "8c0f217f01000dd30f60d6e536569ad4e74291f9",
+        "version" : "1.11.0"
       }
     }
   ],
