@@ -1503,7 +1503,7 @@
 			repositoryURL = "https://github.com/macOS26/AgentAccess.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.1.0;
+				minimumVersion = 2.0.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
