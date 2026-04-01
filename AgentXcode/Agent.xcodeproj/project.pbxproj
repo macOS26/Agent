@@ -819,6 +819,7 @@
 				EAE1E7132F7BF6880079432C /* XCRemoteSwiftPackageReference "AgentSwift" */,
 				EAE1E7162F7BF6E70079432C /* XCRemoteSwiftPackageReference "AgentEventBridges" */,
 				EAE1E7192F7BF7000079432C /* XCRemoteSwiftPackageReference "AgentAudit" */,
+				EAE1E7202F7C00000079432C /* XCLocalSwiftPackageReference "../AgentLLM" */,
 			);
 			productRefGroup = AA10000000000000000042 /* Products */;
 			projectDirPath = "";

@@ -2,15 +2,15 @@ import Foundation
 
 /// Connection details for an LLM service.
 public struct LLMEndpoint: Codable, Sendable, Hashable {
-    /// Base URL for API calls (e.g. "https://api.anthropic.com", "http://localhost:11434")
+    /// Base URL for API calls
     public var baseURL: String
-    /// Chat/completions path appended to baseURL (e.g. "/v1/messages", "/api/chat")
+    /// Chat/completions path appended to baseURL
     public var chatPath: String
-    /// Models list path (e.g. "/v1/models", "/api/tags")
+    /// Models list path
     public var modelsPath: String
-    /// Authentication header name (e.g. "x-api-key", "Authorization")
+    /// Authentication header name ("x-api-key", "Authorization", "" for none)
     public var authHeader: String
-    /// Auth value prefix (e.g. "Bearer ", "" for raw key)
+    /// Auth value prefix ("Bearer ", "" for raw key)
     public var authPrefix: String
     /// Additional headers sent with every request
     public var extraHeaders: [String: String]
@@ -47,29 +47,14 @@ public struct LLMEndpoint: Codable, Sendable, Hashable {
         chatPath: "/v1/messages",
         modelsPath: "/v1/models",
         authHeader: "x-api-key",
-        authPrefix: ""
+        authPrefix: "",
+        extraHeaders: ["anthropic-version": "2023-06-01"]
     )
 
     public static let openAI = LLMEndpoint(
         baseURL: "https://api.openai.com",
         chatPath: "/v1/chat/completions",
         modelsPath: "/v1/models"
-    )
-
-    public static let ollama = LLMEndpoint(
-        baseURL: "http://localhost:11434",
-        chatPath: "/api/chat",
-        modelsPath: "/api/tags",
-        authHeader: "",
-        authPrefix: ""
-    )
-
-    public static let lmStudio = LLMEndpoint(
-        baseURL: "http://localhost:1234",
-        chatPath: "/v1/chat/completions",
-        modelsPath: "/v1/models",
-        authHeader: "",
-        authPrefix: ""
     )
 
     public static let deepSeek = LLMEndpoint(
@@ -82,5 +67,58 @@ public struct LLMEndpoint: Codable, Sendable, Hashable {
         baseURL: "https://router.huggingface.co",
         chatPath: "/v1/chat/completions",
         modelsPath: "/v1/models"
+    )
+
+    public static let zAI = LLMEndpoint(
+        baseURL: "https://api.z.ai",
+        chatPath: "/api/coding/paas/v4/chat/completions",
+        modelsPath: "/api/coding/paas/v4/models"
+    )
+
+    public static let ollama = LLMEndpoint(
+        baseURL: "http://localhost:11434",
+        chatPath: "/api/chat",
+        modelsPath: "/api/tags",
+        authHeader: "",
+        authPrefix: ""
+    )
+
+    public static let ollamaCloud = LLMEndpoint(
+        baseURL: "https://ollama.com",
+        chatPath: "/api/chat",
+        modelsPath: "/api/tags"
+    )
+
+    public static let vLLM = LLMEndpoint(
+        baseURL: "http://localhost:8000",
+        chatPath: "/v1/chat/completions",
+        modelsPath: "/v1/models",
+        authHeader: "",
+        authPrefix: ""
+    )
+
+    // LM Studio — 3 protocol variants
+    public static let lmStudioOpenAI = LLMEndpoint(
+        baseURL: "http://localhost:1234",
+        chatPath: "/v1/chat/completions",
+        modelsPath: "/v1/models",
+        authHeader: "",
+        authPrefix: ""
+    )
+
+    public static let lmStudioAnthropic = LLMEndpoint(
+        baseURL: "http://localhost:1234",
+        chatPath: "/v1/messages",
+        modelsPath: "/v1/models",
+        authHeader: "",
+        authPrefix: ""
+    )
+
+    public static let lmStudioNative = LLMEndpoint(
+        baseURL: "http://localhost:1234",
+        chatPath: "/api/v1/chat",
+        modelsPath: "/api/v1/models",
+        authHeader: "",
+        authPrefix: ""
     )
 }
