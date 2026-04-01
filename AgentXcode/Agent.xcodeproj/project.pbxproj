@@ -51,7 +51,6 @@
 		AA1000000000000000003E /* ScriptingBridge.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002C /* ScriptingBridge.framework */; };
 		AA1000000000000000003F /* DependencyChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002D /* DependencyChecker.swift */; };
 		AA10000000000000000044 /* DependencyOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002E /* DependencyOverlayView.swift */; };
-		AA10000000000000000045 /* AppleEventService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002F /* AppleEventService.swift */; };
 		AA10000000000000000047 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000046 /* KeychainService.swift */; };
 		AA10000000000000000049 /* AgentViewModel+Logging.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000048 /* AgentViewModel+Logging.swift */; };
 		AA1000000000000000004B /* AgentViewModel+TaskExecution.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000004A /* AgentViewModel+TaskExecution.swift */; };
@@ -137,7 +136,6 @@
 		EASP000000000000000001 /* SystemPromptService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EASP000000000000000002 /* SystemPromptService.swift */; };
 		EASP000000000000000003 /* SystemPromptEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = EASP000000000000000004 /* SystemPromptEditor.swift */; };
 		EATD000000000000000001 /* TrainingData.swift in Sources */ = {isa = PBXBuildFile; fileRef = EATD000000000000000002 /* TrainingData.swift */; };
-		EE10000000000000000004 /* ObjCTry.m in Sources */ = {isa = PBXBuildFile; fileRef = EE10000000000000000002 /* ObjCTry.m */; };
 		F035BAFA78E9DDFDF6DD5A1C /* TaskBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4128E21FF13BC4029D6548B /* TaskBannerView.swift */; };
 		F123A9EA71C5383EFFFF1A8A /* ActivityLogView+Rendering.swift in Sources */ = {isa = PBXBuildFile; fileRef = C428D9A5859B0E1BB0D2FB6B /* ActivityLogView+Rendering.swift */; };
 		FF10000000000000000011 /* AgentViewModel+Speech.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000010 /* AgentViewModel+Speech.swift */; };
@@ -266,7 +264,6 @@
 		AA1000000000000000002C /* ScriptingBridge.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ScriptingBridge.framework; path = System/Library/Frameworks/ScriptingBridge.framework; sourceTree = SDKROOT; };
 		AA1000000000000000002D /* DependencyChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyChecker.swift; sourceTree = "<group>"; };
 		AA1000000000000000002E /* DependencyOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyOverlayView.swift; sourceTree = "<group>"; };
-		AA1000000000000000002F /* AppleEventService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleEventService.swift; sourceTree = "<group>"; };
 		AA10000000000000000046 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
 		AA10000000000000000048 /* AgentViewModel+Logging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+Logging.swift"; sourceTree = "<group>"; };
 		AA1000000000000000004A /* AgentViewModel+TaskExecution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TaskExecution.swift"; sourceTree = "<group>"; };
@@ -347,8 +344,6 @@
 		EASP000000000000000002 /* SystemPromptService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemPromptService.swift; sourceTree = "<group>"; };
 		EASP000000000000000004 /* SystemPromptEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemPromptEditor.swift; sourceTree = "<group>"; };
 		EATD000000000000000002 /* TrainingData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingData.swift; sourceTree = "<group>"; };
-		EE10000000000000000001 /* ObjCTry.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ObjCTry.h; sourceTree = "<group>"; };
-		EE10000000000000000002 /* ObjCTry.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ObjCTry.m; sourceTree = "<group>"; };
 		EE10000000000000000003 /* Agent-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Agent-Bridging-Header.h"; sourceTree = "<group>"; };
 		EF914BA393B97296A51A534F /* AgentViewModel+TabHandlers+Git.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Git.swift"; sourceTree = "<group>"; };
 		F03E40CE4E05384C443BA8A9 /* KeyboardShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardShortcuts.swift; sourceTree = "<group>"; };
@@ -531,7 +526,6 @@
 				SS110000000000000000006 /* ScriptService+SavedScripts.swift */,
 				AA1000000000000000002B /* XcodeService.swift */,
 				AA10000000000000000046 /* KeychainService.swift */,
-				AA1000000000000000002F /* AppleEventService.swift */,
 				AA10000000000000000075 /* AccessibilityService.swift */,
 				WEB1000000000000000002 /* WebAutomationService.swift */,
 				WEB1000000000000000004 /* WebAutomationService+Navigation.swift */,
@@ -707,8 +701,6 @@
 			isa = PBXGroup;
 			children = (
 				EE10000000000000000003 /* Agent-Bridging-Header.h */,
-				EE10000000000000000001 /* ObjCTry.h */,
-				EE10000000000000000002 /* ObjCTry.m */,
 			);
 			path = ObjC;
 			sourceTree = "<group>";
@@ -902,7 +894,6 @@
 				AA1000000000000000003D /* XcodeService.swift in Sources */,
 				AA1000000000000000003F /* DependencyChecker.swift in Sources */,
 				AA10000000000000000044 /* DependencyOverlayView.swift in Sources */,
-				AA10000000000000000045 /* AppleEventService.swift in Sources */,
 				AA10000000000000000076 /* AccessibilityService.swift in Sources */,
 				WEB1000000000000000001 /* WebAutomationService.swift in Sources */,
 				WEB1000000000000000003 /* WebAutomationService+Navigation.swift in Sources */,
@@ -962,7 +953,6 @@
 				AA10000000000000000065 /* StatusDotView.swift in Sources */,
 				AA10000000000000000101 /* ProjectFolderField.swift in Sources */,
 				AA10000000000000000066 /* ActivityLogView.swift in Sources */,
-				EE10000000000000000004 /* ObjCTry.m in Sources */,
 				AA10000000000000000036 /* Models.swift in Sources */,
 				EATD000000000000000001 /* TrainingData.swift in Sources */,
 				AA10000000000000000079 /* ScriptTab.swift in Sources */,

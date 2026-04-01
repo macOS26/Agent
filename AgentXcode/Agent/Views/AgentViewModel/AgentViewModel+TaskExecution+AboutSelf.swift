@@ -50,7 +50,6 @@ extension AgentViewModel {
             - execute_daemon_command: Run shell commands as root (troubleshooting, diagnostics)
             - batch_commands: Run multiple shell commands in one call
             - batch_tools: Run multiple tool calls in one batch
-            - apple_event_query: Query scriptable apps via Apple Events
             - plan_mode (action: create, update, read, list, delete): Task planning
 
             CONVERSATION (action-based):
@@ -132,7 +131,6 @@ extension AgentViewModel {
 
             SCRIPTINGBRIDGE:
             - applescript_tool (action: lookup_sdef): Read app dictionaries
-            - apple_event_query: Query scriptable apps directly
             """
             
         case "automation":
@@ -144,7 +142,6 @@ extension AgentViewModel {
             - applescript_tool (action: execute): AppleScript with full TCC
             - javascript_tool (action: execute): JavaScript for Automation
             - agent (action: run): Swift AgentScripts with ScriptingBridge
-            - apple_event_query: Query scriptable apps via Apple Events
             - accessibility (action: click, type_text, find_element, etc.): UI automation
 
             ACCESSIBILITY AUTOMATION:

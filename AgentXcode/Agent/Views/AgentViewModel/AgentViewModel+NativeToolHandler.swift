@@ -278,35 +278,6 @@ extension AgentViewModel {
                 .map { "mcp_\($0.serverName)_\($0.name)" }
             let all = builtIn + (mcpTools.isEmpty ? [] : ["--- MCP Tools ---"] + mcpTools)
             return all.joined(separator: "\n")
-        // Apple Event query — flat keys wrapped into single operation
-        case "apple_event_query":
-            let bundleID = input["bundle_id"] as? String ?? ""
-            let operations: [[String: Any]]
-            if let ops = input["operations"] as? [[String: Any]] {
-                operations = ops // legacy nested format still works
-            } else if let action = input["action"] as? String {
-                var op: [String: Any] = ["action": action]
-                if let key = input["key"] as? String { op["key"] = key }
-                if let props = input["properties"] as? String {
-                    op["properties"] = props.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) }
-                }
-                if let limit = input["limit"] as? Int { op["limit"] = limit }
-                if let index = input["index"] as? Int { op["index"] = index }
-                if let method = input["method"] as? String { op["method"] = method }
-                if let arg = input["arg"] as? String { op["arg"] = arg }
-                if let predicate = input["predicate"] as? String { op["predicate"] = predicate }
-                operations = [op]
-            } else {
-                return "Error: action is required"
-            }
-            let opsData = try? JSONSerialization.data(withJSONObject: operations)
-            return await Self.offMain {
-                guard let data = opsData,
-                      let ops = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
-                    return "Error: failed to process operations"
-                }
-                return AppleEventService.shared.execute(bundleID: bundleID, operations: ops)
-            }
         // Memory tool — persistent user preferences the LLM reads at task start
         case "memory":
             let action = input["action"] as? String ?? "read"
