@@ -421,7 +421,7 @@ struct ActivityLogView: NSViewRepresentable {
             textView.layoutManager?.ensureLayout(for: textContainer)
             let contentHeight = textView.frame.height
             let clipHeight = scrollView.contentView.bounds.height
-            let targetY = max(0, contentHeight - clipHeight)
+            let targetY = max(0, contentHeight - clipHeight + 250)
             isProgrammaticScroll = true
             NSAnimationContext.runAnimationGroup { ctx in
                 ctx.duration = 0.25
