@@ -55,6 +55,10 @@ enum AccessibilityEnabledIDs {
     /// Scroll operations
     static let axScrollActions: [(id: String, label: String)] = [
         ("AXScrollToVisible", "AXScrollToVisible"),
+        ("AXScrollPageUp", "AXScrollPageUp"),
+        ("AXScrollPageDown", "AXScrollPageDown"),
+        ("AXScrollPageLeft", "AXScrollPageLeft"),
+        ("AXScrollPageRight", "AXScrollPageRight"),
     ]
 
     /// Focus operation
@@ -62,15 +66,51 @@ enum AccessibilityEnabledIDs {
         ("AXFocus", "AXFocus"),
     ]
 
-    /// All AX actions combined (for backward compatibility)
+    /// UI reveal actions
+    static let axUIActions: [(id: String, label: String)] = [
+        ("AXShowDefaultUI", "AXShowDefaultUI"),
+        ("AXShowAlternateUI", "AXShowAlternateUI"),
+    ]
+
+    /// Content actions
+    static let axContentActions: [(id: String, label: String)] = [
+        ("AXDelete", "AXDelete"),
+        ("AXPick", "AXPick"),
+    ]
+
+    /// All AX actions combined
     static var axActions: [(id: String, label: String)] {
-        axCoreActions + axValueActions + axDisclosureActions + axWindowActions + axTextActions + axScrollActions + axFocusActions
+        axCoreActions + axValueActions + axDisclosureActions + axWindowActions + axTextActions + axScrollActions + axFocusActions + axUIActions + axContentActions
     }
 
     static let axRoles: [(id: String, label: String)] = [
         ("AXSecureTextField", "AXSecureTextField"),
         ("AXPasswordField", "AXPasswordField"),
         ("AXSecureText", "AXSecureText"),
+    ]
+
+    /// Named group for dynamic UI rendering
+    struct AXGroup {
+        let title: String
+        let items: [(id: String, label: String)]
+    }
+
+    /// All action groups — UI iterates this dynamically
+    static let actionGroups: [AXGroup] = [
+        AXGroup(title: "AX Core Actions", items: axCoreActions),
+        AXGroup(title: "AX Value Actions", items: axValueActions),
+        AXGroup(title: "AX Disclosure Actions", items: axDisclosureActions),
+        AXGroup(title: "AX Window Actions", items: axWindowActions),
+        AXGroup(title: "AX Text Actions", items: axTextActions),
+        AXGroup(title: "AX Scroll Actions", items: axScrollActions),
+        AXGroup(title: "AX Focus Actions", items: axFocusActions),
+        AXGroup(title: "AX UI Actions", items: axUIActions),
+        AXGroup(title: "AX Content Actions", items: axContentActions),
+    ]
+
+    /// Role groups
+    static let roleGroups: [AXGroup] = [
+        AXGroup(title: "AX Protected Roles", items: axRoles),
     ]
 
     /// All Accessibility IDs (actions + roles)
@@ -243,14 +283,13 @@ struct AccessibilitySettingsView: View {
                     .foregroundStyle(.secondary)
 
                 LazyVGrid(columns: columns, alignment: .leading, spacing: 12) {
-                    axSection(title: "AX Core Actions", items: AccessibilityEnabledIDs.axCoreActions)
-                    axSection(title: "AX Value Actions", items: AccessibilityEnabledIDs.axValueActions)
-                    axSection(title: "AX Disclosure Actions", items: AccessibilityEnabledIDs.axDisclosureActions)
-                    axSection(title: "AX Window Actions", items: AccessibilityEnabledIDs.axWindowActions)
-                    axSection(title: "AX Text Actions", items: AccessibilityEnabledIDs.axTextActions)
-                    axSection(title: "AX Scroll Actions", items: AccessibilityEnabledIDs.axScrollActions)
-                    axSection(title: "AX Focus Actions", items: AccessibilityEnabledIDs.axFocusActions)
-                    axSection(title: "AX Protected Roles", items: AccessibilityEnabledIDs.axRoles)
+                    // Dynamic from package — add new groups in AccessibilityEnabledIDs.actionGroups
+                    ForEach(AccessibilityEnabledIDs.actionGroups, id: \.title) { group in
+                        axSection(title: group.title, items: group.items)
+                    }
+                    ForEach(AccessibilityEnabledIDs.roleGroups, id: \.title) { group in
+                        axSection(title: group.title, items: group.items)
+                    }
                 }
 
                 Divider()
