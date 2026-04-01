@@ -33,11 +33,32 @@ public final class AccessibilityService: @unchecked Sendable {
     // MARK: - Window Listing
 
     @MainActor
-    public func listWindows(limit: Int = 50) -> String {
+    public func listWindows(limit: Int = 50, appBundleId: String? = nil) -> String {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        AuditLog.log(.accessibility, "listWindows(limit: \(limit))")
+        let resolvedApp = resolveBundleId(appBundleId)
+        AuditLog.log(.accessibility, "listWindows(limit: \(limit), app: \(resolvedApp ?? "all"))")
+
+        // If app specified, use AXorcist to get just that app's windows
+        if let bundleId = resolvedApp,
+           let app = RunningApplicationHelper.applications(withBundleIdentifier: bundleId).first,
+           let appElement = Element.application(for: app),
+           let appWindows = appElement.windows() {
+            var results: [[String: Any]] = []
+            for window in appWindows.prefix(limit) {
+                var info: [String: Any] = [:]
+                info["ownerName"] = app.localizedName ?? bundleId
+                info["ownerPID"] = Int(app.processIdentifier)
+                if let title = window.title() { info["windowName"] = title }
+                if let frame = window.frame() {
+                    info["bounds"] = ["x": frame.origin.x, "y": frame.origin.y, "width": frame.width, "height": frame.height]
+                }
+                if let role = window.role() { info["role"] = role }
+                results.append(info)
+            }
+            return successJSON(["windows": results, "count": results.count, "app": bundleId])
+        }
 
         let windows = WindowInfoHelper.getVisibleWindows() ?? []
 
@@ -178,39 +199,116 @@ public final class AccessibilityService: @unchecked Sendable {
 
     // MARK: - App Name → Bundle ID Resolution
 
+    // MARK: - Static App Name → Bundle ID Lookup Table
+
+    /// Known macOS app names → bundle IDs. Works even if app isn't running.
+    private static let knownApps: [String: String] = {
+        var map: [String: String] = [:]
+        let apps: [(String, String)] = [
+            ("calculator", "com.apple.calculator"),
+            ("calendar", "com.apple.iCal"),
+            ("contacts", "com.apple.AddressBook"),
+            ("facetime", "com.apple.FaceTime"),
+            ("finder", "com.apple.finder"),
+            ("freeform", "com.apple.freeform"),
+            ("garageband", "com.apple.garageband"),
+            ("imovie", "com.apple.iMovieApp"),
+            ("keynote", "com.apple.Keynote"),
+            ("mail", "com.apple.mail"),
+            ("maps", "com.apple.Maps"),
+            ("messages", "com.apple.MobileSMS"),
+            ("music", "com.apple.Music"),
+            ("notes", "com.apple.Notes"),
+            ("numbers", "com.apple.iWork.Numbers"),
+            ("pages", "com.apple.iWork.Pages"),
+            ("photo booth", "com.apple.PhotoBooth"),
+            ("photobooth", "com.apple.PhotoBooth"),
+            ("photos", "com.apple.Photos"),
+            ("podcasts", "com.apple.podcasts"),
+            ("preview", "com.apple.Preview"),
+            ("quicktime player", "com.apple.QuickTimePlayerX"),
+            ("quicktime", "com.apple.QuickTimePlayerX"),
+            ("reminders", "com.apple.reminders"),
+            ("safari", "com.apple.Safari"),
+            ("shortcuts", "com.apple.shortcuts"),
+            ("system settings", "com.apple.systempreferences"),
+            ("system preferences", "com.apple.systempreferences"),
+            ("terminal", "com.apple.Terminal"),
+            ("textedit", "com.apple.TextEdit"),
+            ("text edit", "com.apple.TextEdit"),
+            ("tv", "com.apple.TV"),
+            ("voice memos", "com.apple.VoiceMemos"),
+            ("weather", "com.apple.weather"),
+            ("xcode", "com.apple.dt.Xcode"),
+            ("automator", "com.apple.Automator"),
+            ("console", "com.apple.Console"),
+            ("disk utility", "com.apple.DiskUtility"),
+            ("font book", "com.apple.FontBook"),
+            ("activity monitor", "com.apple.ActivityMonitor"),
+            ("script editor", "com.apple.ScriptEditor2"),
+            ("google chrome", "com.google.Chrome"),
+            ("chrome", "com.google.Chrome"),
+            ("firefox", "org.mozilla.firefox"),
+            ("microsoft edge", "com.microsoft.edgemac"),
+            ("edge", "com.microsoft.edgemac"),
+            ("slack", "com.tinyspeck.slackmacgap"),
+            ("zoom", "us.zoom.xos"),
+            ("spotify", "com.spotify.client"),
+            ("discord", "com.hnc.Discord"),
+            ("github desktop", "com.github.GitHubClient"),
+            ("visual studio code", "com.microsoft.VSCode"),
+            ("vscode", "com.microsoft.VSCode"),
+        ]
+        for (name, bid) in apps { map[name] = bid }
+        return map
+    }()
+
     /// Resolve an app name or bundle ID to an actual bundle ID.
-    /// Accepts: bundle ID ("com.apple.PhotoBooth"), app name ("Photo Booth", "photobooth"),
-    /// or special values ("focused", "frontmost" → nil).
+    /// Uses static lookup table (works even if app isn't running), then searches running apps.
+    /// Auto-launches the app if not running.
     @MainActor
     public func resolveBundleId(_ input: String?) -> String? {
         guard let input = input else { return nil }
 
-        // Special values → nil (use frontmost)
-        let lower = input.lowercased()
-        if lower == "focused" || lower == "frontmost" { return nil }
+        let lower = input.lowercased().trimmingCharacters(in: .whitespaces)
+        if lower == "focused" || lower == "frontmost" || lower.isEmpty { return nil }
 
         // Already a bundle ID (contains dots)
-        if input.contains(".") {
-            return input
+        if input.contains(".") { return input }
+
+        // Static lookup table (works even if app isn't running)
+        if let bid = Self.knownApps[lower] {
+            launchIfNeeded(bundleId: bid)
+            return bid
+        }
+        // Try without spaces: "photobooth" → "photo booth"
+        let noSpaces = lower.replacingOccurrences(of: " ", with: "")
+        if let bid = Self.knownApps.first(where: { $0.key.replacingOccurrences(of: " ", with: "") == noSpaces })?.value {
+            launchIfNeeded(bundleId: bid)
+            return bid
         }
 
-        // Search running apps by name (case-insensitive)
+        // Search running apps by name
         let apps = RunningApplicationHelper.allApplications()
         if let match = apps.first(where: { ($0.localizedName ?? "").lowercased() == lower }) {
             return match.bundleIdentifier
         }
-        // Fuzzy: check if app name contains the input
         if let match = apps.first(where: { ($0.localizedName ?? "").lowercased().contains(lower) }) {
             return match.bundleIdentifier
         }
-        // Try without spaces: "photobooth" → "Photo Booth"
-        let noSpaces = lower.replacingOccurrences(of: " ", with: "")
-        if let match = apps.first(where: { ($0.localizedName ?? "").lowercased().replacingOccurrences(of: " ", with: "") == noSpaces }) {
-            return match.bundleIdentifier
-        }
 
-        // Return as-is (might be a bundle ID without dots)
         return input
+    }
+
+    /// Launch app if not already running, then wait briefly for it to start.
+    @MainActor
+    private func launchIfNeeded(bundleId: String) {
+        if RunningApplicationHelper.applications(withBundleIdentifier: bundleId).isEmpty {
+            if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId) {
+                NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
+                Thread.sleep(forTimeInterval: 1.0)  // Wait for app to start
+            }
+        }
     }
 
     // MARK: - Helpers
