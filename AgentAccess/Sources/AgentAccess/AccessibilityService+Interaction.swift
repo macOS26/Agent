@@ -335,6 +335,16 @@ extension AccessibilityService {
             return errorJSON("Cannot interact with \(elRole) — disabled in Accessibility Access")
         }
 
+        // Wait for element to become enabled (e.g. Photo Booth camera warmup)
+        let enableStart = Date()
+        let enableTimeout: TimeInterval = 5.0
+        while found.isEnabled() == false, Date().timeIntervalSince(enableStart) < enableTimeout {
+            Thread.sleep(forTimeInterval: 0.2)
+        }
+        if found.isEnabled() == false {
+            return errorJSON("Element not enabled after \(enableTimeout)s — may still be loading")
+        }
+
         guard let frame = found.frame() else {
             return errorJSON("Could not get element position")
         }
