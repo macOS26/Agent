@@ -174,6 +174,43 @@ public final class AccessibilityService: @unchecked Sendable {
         return result
     }
 
+    // MARK: - App Name → Bundle ID Resolution
+
+    /// Resolve an app name or bundle ID to an actual bundle ID.
+    /// Accepts: bundle ID ("com.apple.PhotoBooth"), app name ("Photo Booth", "photobooth"),
+    /// or special values ("focused", "frontmost" → nil).
+    @MainActor
+    public func resolveBundleId(_ input: String?) -> String? {
+        guard let input = input else { return nil }
+
+        // Special values → nil (use frontmost)
+        let lower = input.lowercased()
+        if lower == "focused" || lower == "frontmost" { return nil }
+
+        // Already a bundle ID (contains dots)
+        if input.contains(".") {
+            return input
+        }
+
+        // Search running apps by name (case-insensitive)
+        let apps = RunningApplicationHelper.allApplications()
+        if let match = apps.first(where: { ($0.localizedName ?? "").lowercased() == lower }) {
+            return match.bundleIdentifier
+        }
+        // Fuzzy: check if app name contains the input
+        if let match = apps.first(where: { ($0.localizedName ?? "").lowercased().contains(lower) }) {
+            return match.bundleIdentifier
+        }
+        // Try without spaces: "photobooth" → "Photo Booth"
+        let noSpaces = lower.replacingOccurrences(of: " ", with: "")
+        if let match = apps.first(where: { ($0.localizedName ?? "").lowercased().replacingOccurrences(of: " ", with: "") == noSpaces }) {
+            return match.bundleIdentifier
+        }
+
+        // Return as-is (might be a bundle ID without dots)
+        return input
+    }
+
     // MARK: - Helpers
 
     @MainActor
