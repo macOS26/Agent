@@ -136,6 +136,11 @@ final class AccessibilityEnabled {
 
     // MARK: - State
 
+    /// Global on/off for all accessibility automation
+    var accessibilityGlobalEnabled: Bool {
+        didSet { UserDefaults.standard.set(accessibilityGlobalEnabled, forKey: "AccessibilityGlobalEnabled") }
+    }
+
     /// Accessibility actions/roles that are ENABLED. Defaults to ALL.
     var axEnabled: Set<String> {
         didSet { UserDefaults.standard.set(Array(axEnabled), forKey: axEnabledKey) }
@@ -147,6 +152,9 @@ final class AccessibilityEnabled {
     }
 
     private init() {
+        // Initialize global toggle (defaults to ON)
+        self.accessibilityGlobalEnabled = UserDefaults.standard.object(forKey: "AccessibilityGlobalEnabled") as? Bool ?? true
+
         // Initialize Accessibility enabled set
         if let arr = UserDefaults.standard.stringArray(forKey: axEnabledKey) {
             let savedSet = Set(arr)
@@ -176,9 +184,9 @@ final class AccessibilityEnabled {
 
     // MARK: - Accessibility Queries
 
-    /// Returns true if the AX action/role is BLOCKED (user disabled it).
+    /// Returns true if the AX action/role is BLOCKED (global toggle off, or user disabled it).
     func isAxRestricted(_ id: String) -> Bool {
-        !axEnabled.contains(id)
+        !accessibilityGlobalEnabled || !axEnabled.contains(id)
     }
 
     /// Returns true if the AX action/role is ENABLED.
@@ -216,13 +224,12 @@ final class AccessibilityEnabled {
 
     // MARK: - Legacy Compatibility (for migration)
 
-    /// Returns true if the ID is enabled (checks both AX and AE).
-    /// Used for backward compatibility during transition.
+    /// Returns true if the ID is enabled (checks global toggle + both AX and AE).
     func isEnabled(_ id: String) -> Bool {
-        axEnabled.contains(id) || aeEnabled.contains(id)
+        accessibilityGlobalEnabled && (axEnabled.contains(id) || aeEnabled.contains(id))
     }
 
-    /// Returns true if the ID is restricted (checks both AX and AE).
+    /// Returns true if the ID is restricted (global toggle off, or user disabled it).
     func isRestricted(_ id: String) -> Bool {
         !isEnabled(id)
     }
@@ -241,11 +248,6 @@ final class AccessibilityEnabled {
 
 struct AccessibilitySettingsView: View {
     @Bindable var settings = AccessibilityEnabled.shared
-
-    private let columns = [
-        GridItem(.flexible(), spacing: 16),
-        GridItem(.flexible(), spacing: 16)
-    ]
 
     @State private var hasAccessibility = AccessibilityService.hasAccessibilityPermission()
 
@@ -276,22 +278,19 @@ struct AccessibilitySettingsView: View {
 
                 Divider()
 
-                Text("Accessibility Actions")
-                    .font(.headline)
-
-                Text("Enabled actions are allowed. Click to disable.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                LazyVGrid(columns: columns, alignment: .leading, spacing: 12) {
-                    // Dynamic from package — add new groups in AccessibilityEnabledIDs.actionGroups
-                    ForEach(AccessibilityEnabledIDs.actionGroups, id: \.title) { group in
-                        axSection(title: group.title, items: group.items)
-                    }
-                    ForEach(AccessibilityEnabledIDs.roleGroups, id: \.title) { group in
-                        axSection(title: group.title, items: group.items)
+                Toggle(isOn: Binding(
+                    get: { settings.accessibilityGlobalEnabled },
+                    set: { settings.accessibilityGlobalEnabled = $0 }
+                )) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Accessibility Automation")
+                            .font(.headline)
+                        Text(settings.accessibilityGlobalEnabled ? "Agent can interact with UI elements via AXorcist" : "All accessibility actions are blocked")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
+                .toggleStyle(.switch)
 
                 Divider()
 
@@ -321,108 +320,4 @@ struct AccessibilitySettingsView: View {
         .frame(maxHeight: 515)
     }
 
-    @ViewBuilder
-    private func axSection(title: String, items: [(id: String, label: String)]) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(.medium)
-
-            FlowLayout(spacing: 4) {
-                ForEach(items, id: \.id) { item in
-                    let enabled = settings.isAxEnabled(item.id)
-                    Button {
-                        settings.toggleAx(item.id)
-                    } label: {
-                        Text(item.label)
-                            .font(.caption2)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(enabled ? Color.accentColor.opacity(0.2) : Color.secondary.opacity(0.1))
-                            .foregroundStyle(enabled ? .primary : .tertiary)
-                            .clipShape(Capsule())
-                            .overlay(Capsule().stroke(enabled ? Color.accentColor.opacity(0.5) : Color.clear, lineWidth: 0.5))
-                    }
-                    .buttonStyle(.plain)
-                    .help(enabled ? "\(item.label): enabled (click to disable)" : "\(item.label): disabled (click to enable)")
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func aeSection(title: String, items: [(id: String, label: String)]) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(.medium)
-
-            FlowLayout(spacing: 4) {
-                ForEach(items, id: \.id) { item in
-                    let enabled = settings.isAeEnabled(item.id)
-                    Button {
-                        settings.toggleAe(item.id)
-                    } label: {
-                        Text(item.label)
-                            .font(.caption2)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(enabled ? Color.accentColor.opacity(0.2) : Color.secondary.opacity(0.1))
-                            .foregroundStyle(enabled ? .primary : .tertiary)
-                            .clipShape(Capsule())
-                            .overlay(Capsule().stroke(enabled ? Color.accentColor.opacity(0.5) : Color.clear, lineWidth: 0.5))
-                    }
-                    .buttonStyle(.plain)
-                    .help(enabled ? "\(item.label): enabled (click to disable)" : "\(item.label): disabled (click to enable)")
-                }
-            }
-        }
-    }
-}
-
-// MARK: - Flow Layout
-
-private struct FlowLayout: Layout {
-    var spacing: CGFloat = 4
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let rows = computeRows(proposal: proposal, subviews: subviews)
-        var height: CGFloat = 0
-        for (i, row) in rows.enumerated() {
-            let rowHeight = row.map { $0.sizeThatFits(.unspecified).height }.max() ?? 0
-            height += rowHeight + (i > 0 ? spacing : 0)
-        }
-        return CGSize(width: proposal.width ?? 0, height: height)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let rows = computeRows(proposal: proposal, subviews: subviews)
-        var y = bounds.minY
-        for row in rows {
-            let rowHeight = row.map { $0.sizeThatFits(.unspecified).height }.max() ?? 0
-            var x = bounds.minX
-            for subview in row {
-                let size = subview.sizeThatFits(.unspecified)
-                subview.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
-                x += size.width + spacing
-            }
-            y += rowHeight + spacing
-        }
-    }
-
-    private func computeRows(proposal: ProposedViewSize, subviews: Subviews) -> [[LayoutSubviews.Element]] {
-        let maxWidth = proposal.width ?? .infinity
-        var rows: [[LayoutSubviews.Element]] = [[]]
-        var x: CGFloat = 0
-        for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
-            if x + size.width > maxWidth && !rows[rows.count - 1].isEmpty {
-                rows.append([])
-                x = 0
-            }
-            rows[rows.count - 1].append(subview)
-            x += size.width + spacing
-        }
-        return rows
-    }
 }
