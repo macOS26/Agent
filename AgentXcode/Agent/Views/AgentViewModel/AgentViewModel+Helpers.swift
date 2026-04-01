@@ -112,7 +112,15 @@ extension AgentViewModel {
             } else {
                 projectFolder = resolved
             }
-            return "Project folder set to: \(resolved)"
+            // Quick directory listing so LLM sees what's here
+            let contents = (try? fm.contentsOfDirectory(atPath: resolved)) ?? []
+            let visible = contents.filter { !$0.hasPrefix(".") }.sorted().prefix(30)
+            let listing = visible.map { name -> String in
+                var d: ObjCBool = false
+                fm.fileExists(atPath: (resolved as NSString).appendingPathComponent(name), isDirectory: &d)
+                return d.boolValue ? "📁 \(name)/" : "  \(name)"
+            }.joined(separator: "\n")
+            return "cd \(CodingService.trimHome(resolved))\n\(listing)"
 
         default:
             return "Error: invalid action '\(action)'. Use get, set, cd, home, documents, library, or none."
