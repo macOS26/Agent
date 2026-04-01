@@ -130,6 +130,7 @@
 		EAE1E7122F7BF6290079432C /* AgentD1F in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7112F7BF6290079432C /* AgentD1F */; };
 		EAE1E7152F7BF6880079432C /* AgentSwift in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7142F7BF6880079432C /* AgentSwift */; };
 		EAE1E71B2F7BF7000079432C /* AgentAudit in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E71A2F7BF7000079432C /* AgentAudit */; };
+		EAE1E7222F7C00000079432C /* AgentLLM in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7212F7C00000079432C /* AgentLLM */; };
 		EAE1E7182F7BF6E70079432C /* XcodeScriptingBridge in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7172F7BF6E70079432C /* XcodeScriptingBridge */; };
 		EAF3666F2F623D6A004B7E38 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = EAF3666E2F623D6A004B7E38 /* AppIcon.icon */; };
 		EAFA000000000000000001 /* FoundationModelService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAFA000000000000000002 /* FoundationModelService.swift */; };
@@ -375,6 +376,7 @@
 				EAE1E70C2F7BF5780079432C /* AgentMCP in Frameworks */,
 				EAE1E71B2F7BF7000079432C /* AgentAudit in Frameworks */,
 				EAE1E7152F7BF6880079432C /* AgentSwift in Frameworks */,
+				EAE1E7222F7C00000079432C /* AgentLLM in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -737,6 +739,7 @@
 				EAE1E7112F7BF6290079432C /* AgentD1F */,
 				EAE1E7142F7BF6880079432C /* AgentSwift */,
 				EAE1E7172F7BF6E70079432C /* XcodeScriptingBridge */,
+				EAE1E7212F7C00000079432C /* AgentLLM */,
 			);
 			productName = Agent;
 			productReference = AA10000000000000000024 /* Agent!.app */;
@@ -1559,7 +1562,18 @@
 			package = EAE1E7192F7BF7000079432C /* XCRemoteSwiftPackageReference "AgentAudit" */;
 			productName = AgentAudit;
 		};
+		EAE1E7212F7C00000079432C /* AgentLLM */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AgentLLM;
+		};
 /* End XCSwiftPackageProductDependency section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		EAE1E7202F7C00000079432C /* XCLocalSwiftPackageReference "../AgentLLM" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../AgentLLM;
+		};
+/* End XCLocalSwiftPackageReference section */
 	};
 	rootObject = AA10000000000000000000 /* Project object */;
 }
