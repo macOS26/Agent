@@ -932,7 +932,8 @@ extension AgentViewModel {
         let role = input["role"] as? String
         let title = input["title"] as? String
         let value = input["value"] as? String
-        let app = input["appBundleId"] as? String
+        // Resolve app name → bundle ID: "Photo Booth" → "com.apple.PhotoBooth", "photobooth" → "com.apple.PhotoBooth"
+        let app = ax.resolveBundleId(input["appBundleId"] as? String ?? input["app"] as? String ?? input["name"] as? String)
         let x = (input["x"] as? Double).map { CGFloat($0) }
         let y = (input["y"] as? Double).map { CGFloat($0) }
 
