@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/macOS26/AgentAccess.git",
       "state" : {
-        "revision" : "b0d1577aed451178fc51558cbf269bb7dcbd396e",
-        "version" : "1.1.0"
+        "revision" : "b65ee65b199c368b4415579e99b21263fc64d414",
+        "version" : "1.3.0"
       }
     },
     {
@@ -89,6 +89,33 @@
       "state" : {
         "revision" : "ce536bd4dcd9e1b0d7533bea2e205ff3c8b95c1f",
         "version" : "1.1.0"
+      }
+    },
+    {
+      "identity" : "axorcist",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/steipete/AXorcist.git",
+      "state" : {
+        "revision" : "c75d06f7f93e264a9786edc2b78c04973061cb2f",
+        "version" : "0.1.0"
+      }
+    },
+    {
+      "identity" : "commander",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/steipete/Commander.git",
+      "state" : {
+        "revision" : "9e349575c8e3c6745e81fe19e5bb5efa01b078ce",
+        "version" : "0.2.1"
+      }
+    },
+    {
+      "identity" : "swift-log",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-log.git",
+      "state" : {
+        "revision" : "8c0f217f01000dd30f60d6e536569ad4e74291f9",
+        "version" : "1.11.0"
       }
     },
     {
