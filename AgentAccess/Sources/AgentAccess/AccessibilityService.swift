@@ -103,6 +103,8 @@ public final class AccessibilityService: @unchecked Sendable {
     /// Find an AXorcist Element using role/title/value in a specific app or globally.
     @MainActor
     public func findAXElement(role: String?, title: String?, value: String?, appBundleId: String?) -> Element? {
+        // Resolve app name → bundle ID
+        let appBundleId = resolveBundleId(appBundleId)
         if let bundleId = appBundleId {
             guard let app = RunningApplicationHelper.applications(withBundleIdentifier: bundleId).first,
                   let appElement = Element.application(for: app) else { return nil }
