@@ -8,6 +8,8 @@
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE) [![Stars](https://img.shields.io/github/stars/macos26/Agent?style=for-the-badge&color=yellow)](https://github.com/macos26/Agent/stargazers) [![Downloads](https://img.shields.io/github/downloads/macos26/Agent/total?style=for-the-badge&color=brightgreen)](https://github.com/macos26/Agent/releases)
 [![Agent!](https://img.shields.io/badge/Agent!-v1.0.GM-blue?style=for-the-badge)](https://github.com/macos26/Agent) [![Website](https://img.shields.io/badge/Website-agent.macos26.com-purple?style=for-the-badge)](https://agent.macos26.com) ![Platform](https://img.shields.io/badge/Platform-macOS%2026%2B-cyan?style=for-the-badge) ![Swift](https://img.shields.io/badge/Swift-6.2-orange?style=for-the-badge)
 
+<img width="920" height="700" alt="image" src="https://github.com/user-attachments/assets/d11ca82e-052c-4a14-9f78-9ee4a84c35a4" />
+
 **Tell your Mac what to do in plain English -- and watch it happen.**
 
 [Download](https://github.com/macOS26/Agent/releases) | [Website](https://agent.macos26.com) | [Technical Docs](TECHNICAL.md) | [Comparisons](COMPARISON.md)
