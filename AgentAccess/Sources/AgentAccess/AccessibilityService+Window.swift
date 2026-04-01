@@ -215,12 +215,31 @@ extension AccessibilityService {
             }
             return errorJSON("Specify bundleId or name")
         case "activate":
-            if let bid = bundleId, let app = RunningApplicationHelper.applications(withBundleIdentifier: bid).first {
-                app.activate()
+            // AXorcist: use Element.activate() to bring app forward
+            if let bid = bundleId, let app = RunningApplicationHelper.applications(withBundleIdentifier: bid).first,
+               let appElement = Element.application(for: app) {
+                _ = appElement.activate()
                 return successJSON(["message": "Activated \(bid)"])
-            } else if let n = name, let app = RunningApplicationHelper.allApplications().first(where: { $0.localizedName == n }) {
-                app.activate()
+            } else if let n = name, let app = RunningApplicationHelper.allApplications().first(where: { $0.localizedName == n }),
+                      let appElement = Element.application(for: app) {
+                _ = appElement.activate()
                 return successJSON(["message": "Activated \(n)"])
+            }
+            return errorJSON("App not running")
+        case "hide":
+            // AXorcist: use Element.hideApplication()
+            if let bid = bundleId, let app = RunningApplicationHelper.applications(withBundleIdentifier: bid).first,
+               let appElement = Element.application(for: app) {
+                _ = appElement.hideApplication()
+                return successJSON(["message": "Hidden \(bid)"])
+            }
+            return errorJSON("App not running")
+        case "unhide":
+            // AXorcist: use Element.unhideApplication()
+            if let bid = bundleId, let app = RunningApplicationHelper.applications(withBundleIdentifier: bid).first,
+               let appElement = Element.application(for: app) {
+                _ = appElement.unhideApplication()
+                return successJSON(["message": "Unhidden \(bid)"])
             }
             return errorJSON("App not running")
         case "quit":

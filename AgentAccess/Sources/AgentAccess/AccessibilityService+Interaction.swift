@@ -239,6 +239,14 @@ extension AccessibilityService {
         }
         AuditLog.log(.accessibility, "clickElement(role: \(role ?? "nil"), title: \(title ?? "nil"), value: \(value ?? "nil"), app: \(appBundleId ?? "nil"), timeout: \(timeout))")
 
+        // AXorcist: activate the target app first so it's frontmost
+        if let bundleId = appBundleId,
+           let app = RunningApplicationHelper.applications(withBundleIdentifier: bundleId).first,
+           let appElement = Element.application(for: app) {
+            _ = appElement.activate()
+            Thread.sleep(forTimeInterval: 0.1)
+        }
+
         // Use AXorcist PerformActionCommand — atomic find + press in one operation
         var criteria: [Criterion] = []
         if let role = role { criteria.append(Criterion(attribute: "AXRole", value: role)) }

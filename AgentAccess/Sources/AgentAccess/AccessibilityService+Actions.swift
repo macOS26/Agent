@@ -20,6 +20,14 @@ extension AccessibilityService {
             return errorJSON("Action '\(action)' is disabled in Accessibility Settings. Enable it in Settings to allow this action.")
         }
 
+        // AXorcist: activate the target app first so it's frontmost
+        if let bundleId = appBundleId,
+           let app = RunningApplicationHelper.applications(withBundleIdentifier: bundleId).first,
+           let appElement = Element.application(for: app) {
+            _ = appElement.activate()
+            Thread.sleep(forTimeInterval: 0.1)
+        }
+
         // If coordinates given, use AXorcist Element.elementAtPoint + performAction
         if let x = x, let y = y {
             guard let found = Element.elementAtPoint(CGPoint(x: x, y: y)) else {
