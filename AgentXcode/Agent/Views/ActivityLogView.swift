@@ -63,9 +63,13 @@ struct ActivityLogView: NSViewRepresentable {
         coord.latestTabID = tabID
         if tabChanged {
             coord.forceTabSwitch = true
-            // Hide, snap to bottom while invisible, fade in
+            // Hide, two snaps for layout settling, fade in
             coord.latestTextView?.alphaValue = 0
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak coord] in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak coord] in
+                guard let coord, let tv = coord.latestTextView else { return }
+                coord.snapToEnd(tv)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak coord] in
                 guard let coord, let tv = coord.latestTextView else { return }
                 coord.snapToEnd(tv)
                 NSAnimationContext.runAnimationGroup { ctx in
