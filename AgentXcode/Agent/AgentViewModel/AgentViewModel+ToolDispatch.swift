@@ -75,6 +75,61 @@ extension AgentViewModel {
         "list_tools", "web_search", "google_search", "list_agents", "read_agent", "lookup_sdef",
     ]
 
+    /// Pre-computed results from parallel shell execution. Cleared after use.
+    @MainActor static var precomputedResults: [String: String]?
+
+    /// Build a shell command for a read-only tool (runs off MainActor).
+    nonisolated static func buildReadOnlyCommand(name: String, input: [String: Any], projectFolder: String) -> String {
+        let pf = projectFolder.isEmpty ? NSHomeDirectory() : projectFolder
+        switch name {
+        case "read_file":
+            let path = input["file_path"] as? String ?? ""
+            guard !path.isEmpty else { return "" }
+            return "cat \(Self.shellEscape(path))"
+        case "list_files":
+            let pattern = input["pattern"] as? String ?? "*"
+            let path = input["path"] as? String ?? pf
+            return "find \(Self.shellEscape(path)) -maxdepth 5 -name \(Self.shellEscape(pattern)) -not -path '*/.*' 2>/dev/null | head -200"
+        case "search_files":
+            let pattern = input["pattern"] as? String ?? ""
+            let path = input["path"] as? String ?? pf
+            guard !pattern.isEmpty else { return "" }
+            return "grep -rn \(Self.shellEscape(pattern)) \(Self.shellEscape(path)) --include='*.swift' --include='*.py' --include='*.js' --include='*.ts' 2>/dev/null | head -100"
+        case "read_dir":
+            let path = input["path"] as? String ?? pf
+            return "ls -la \(Self.shellEscape(path)) 2>/dev/null"
+        case "git_status":
+            return "cd \(Self.shellEscape(pf)) && git status --short 2>/dev/null"
+        case "git_diff":
+            return "cd \(Self.shellEscape(pf)) && git diff 2>/dev/null | head -500"
+        case "git_log":
+            let count = input["count"] as? Int ?? 10
+            return "cd \(Self.shellEscape(pf)) && git log --oneline -\(count) 2>/dev/null"
+        case "git_diff_patch":
+            return "cd \(Self.shellEscape(pf)) && git diff 2>/dev/null"
+        default:
+            return ""
+        }
+    }
+
+    nonisolated private static func shellEscape(_ s: String) -> String {
+        "'" + s.replacingOccurrences(of: "'", with: "'\\''") + "'"
+    }
+
+    /// Cache for read-only tool results within a task. Cleared on new task.
+    @MainActor static var toolResultCache: [String: String] = [:]
+
+    /// Clear tool result cache — call at start of each task.
+    @MainActor static func clearToolCache() {
+        toolResultCache.removeAll()
+    }
+
+    /// Build cache key from tool name + input.
+    private static func cacheKey(name: String, input: [String: Any]) -> String {
+        let inputStr = (try? JSONSerialization.data(withJSONObject: input, options: .sortedKeys)).flatMap { String(data: $0, encoding: .utf8) } ?? ""
+        return "\(name):\(inputStr)"
+    }
+
     /// Dispatch a tool call by name. Returns the handler result.
     func dispatchTool(
         name: String,
@@ -82,6 +137,16 @@ extension AgentViewModel {
         ctx: ToolContext,
         toolResults: inout [[String: Any]]
     ) async -> ToolHandlerResult {
+
+        // Cache hit for read-only tools — return cached result instantly
+        if Self.readOnlyTools.contains(name) {
+            let key = Self.cacheKey(name: name, input: input)
+            if let cached = Self.toolResultCache[key] {
+                appendLog("(cached)")
+                toolResults.append(["type": "tool_result", "tool_use_id": ctx.toolId, "content": cached])
+                return .handled(cached)
+            }
+        }
 
         // MCP tools (mcp_ServerName_toolName) — checked first by prefix
         if name.hasPrefix("mcp_") {
@@ -131,6 +196,13 @@ extension AgentViewModel {
         appendLog(output)
         flushLog()
         toolResults.append(["type": "tool_result", "tool_use_id": ctx.toolId, "content": output])
+
+        // Cache read-only tool results for reuse within this task
+        if Self.readOnlyTools.contains(name) {
+            let key = Self.cacheKey(name: name, input: input)
+            Self.toolResultCache[key] = output
+        }
+
         return .handled(output)
     }
 

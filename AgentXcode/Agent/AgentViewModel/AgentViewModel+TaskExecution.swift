@@ -30,6 +30,7 @@ extension AgentViewModel {
         trimToRecentTasks()
         taskInputTokens = 0
         taskOutputTokens = 0
+        Self.clearToolCache()
         // All tool groups available — user controls via UI toggles
         var activeGroups: Set<String>? = codingModeEnabled ? Self.codingModeGroups : automationModeEnabled ? Self.automationModeGroups : nil
         appendLog("--- New Task ---")
@@ -454,11 +455,48 @@ extension AgentViewModel {
 
                     if allReadOnly && pendingTools.count > 1 {
                         // Parallel execution for read-only tools
-                        // @MainActor tools run concurrently via async let pattern
+                        // Pre-execute shell-based tools concurrently off MainActor, then dispatch results on MainActor
+                        let shellTools: Set<String> = ["read_file", "list_files", "search_files", "read_dir", "git_status", "git_diff", "git_log", "git_diff_patch"]
+                        let shellPending = pendingTools.filter { shellTools.contains($0.name) }
+
+                        // Pre-warm shell results concurrently off MainActor
+                        if shellPending.count > 1 {
+                            // Capture Sendable values before entering TaskGroup
+                            let cmds: [(id: String, cmd: String)] = shellPending.map { tool in
+                                (tool.toolId, Self.buildReadOnlyCommand(name: tool.name, input: tool.input, projectFolder: projectFolder))
+                            }
+                            var preResults: [String: String] = [:]
+                            await withTaskGroup(of: (String, String).self) { group in
+                                for (id, cmd) in cmds {
+                                    let capturedId = id
+                                    let capturedCmd = cmd
+                                    group.addTask {
+                                        guard !capturedCmd.isEmpty else { return (capturedId, "") }
+                                        let pipe = Pipe()
+                                        let process = Process()
+                                        process.executableURL = URL(fileURLWithPath: "/bin/zsh")
+                                        process.arguments = ["-c", capturedCmd]
+                                        process.standardOutput = pipe
+                                        process.standardError = pipe
+                                        try? process.run()
+                                        process.waitUntilExit()
+                                        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                                        return (capturedId, String(data: data, encoding: .utf8) ?? "")
+                                    }
+                                }
+                                for await (id, result) in group {
+                                    preResults[id] = result
+                                }
+                            }
+                            Self.precomputedResults = preResults
+                        }
+
+                        // Dispatch all tools sequentially on MainActor (logging etc.) but shell tools use cached results
                         for tool in pendingTools {
                             let ctx = ToolContext(toolId: tool.toolId, projectFolder: projectFolder, selectedProvider: selectedProvider, tavilyAPIKey: tavilyAPIKey)
                             _ = await dispatchTool(name: tool.name, input: tool.input, ctx: ctx, toolResults: &toolResults)
                         }
+                        Self.precomputedResults = nil
                     } else {
                         // Sequential execution
                         for tool in pendingTools {

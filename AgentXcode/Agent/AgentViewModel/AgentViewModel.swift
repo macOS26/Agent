@@ -1010,6 +1010,41 @@ final class AgentViewModel {
             if !userOK || (rootEnabled && !daemonOK) {
                 appendLog("⚠️ Click Register to restart services")
             }
+
+            // Pre-warm Ollama model to avoid cold-start delay on first task
+            await self.preWarmOllama()
+        }
+    }
+
+    /// Send a tiny request to Ollama to load the model into memory.
+    /// This eliminates the 5-15s cold-start delay on the first task.
+    private func preWarmOllama() async {
+        let provider = selectedProvider
+        guard provider == .ollama || provider == .localOllama else { return }
+        let endpoint = provider == .ollama ? ollamaEndpoint : localOllamaEndpoint
+        let model = provider == .ollama ? ollamaModel : localOllamaModel
+        guard !model.isEmpty else { return }
+
+        let chatURL = endpoint.isEmpty ? "http://localhost:11434/api/chat" : endpoint
+        guard let url = URL(string: chatURL) else { return }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 30
+        let body: [String: Any] = [
+            "model": model,
+            "messages": [["role": "user", "content": "hi"]],
+            "stream": false,
+            "options": ["num_predict": 1]  // Generate just 1 token — enough to load model
+        ]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        do {
+            let _ = try await URLSession.shared.data(for: request)
+            appendLog("⚙️ Ollama: \(model) pre-warmed")
+        } catch {
+            // Silent fail — model will load on first task instead
         }
     }
 }
