@@ -26,8 +26,42 @@ extension AgentViewModel {
         // Prefix-matched tools
         if let result = await handleWebTool(name: name, input: input) { return result }
         if let result = await handleSeleniumTool(name: name, input: input) { return result }
+        // ax_ accessibility tools — route through the consolidated accessibility handler
+        if name.hasPrefix("ax_") {
+            // Convert ax_list_windows → accessibility(action: "list_windows")
+            let action = String(name.dropFirst(3)) // strip "ax_"
+            var axInput = input
+            axInput["action"] = action
+            return await executeNativeTool("accessibility", input: axInput)
+        }
 
         switch name {
+        // Shell commands
+        case "execute_agent_command", "run_shell_script":
+            let command = input["command"] as? String ?? ""
+            if let suggestion = Self.suggestTool(command) { return suggestion }
+            if let pathErr = Self.preflightCommand(command) { return pathErr }
+            let fullCmd = Self.prependWorkingDirectory(command, projectFolder: pf)
+            appendLog("🔧 $ \(Self.collapseHeredocs(command))")
+            flushLog()
+            if Self.needsTCCPermissions(command) {
+                let result = await Self.executeTCCStreaming(command: fullCmd) { [weak self] chunk in
+                    Task { @MainActor in self?.appendRawOutput(chunk) }
+                }
+                if result.status > 0 { appendLog("exit code: \(result.status)") }
+                flushLog()
+                return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
+            }
+            let result = await executeViaUserAgent(command: fullCmd)
+            return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
+        case "execute_daemon_command":
+            let command = input["command"] as? String ?? ""
+            appendLog("🔴 # \(Self.collapseHeredocs(command))")
+            flushLog()
+            let result = await helperService.execute(command: command)
+            if result.status > 0 { appendLog("exit code: \(result.status)") }
+            flushLog()
+            return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
         // AppleScript (NSAppleScript in-process with TCC)
         case "run_applescript":
             let source = (input["source"] as? String ?? "")
