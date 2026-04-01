@@ -63,6 +63,13 @@ struct ActivityLogView: NSViewRepresentable {
         coord.latestTabID = tabID
         if tabChanged {
             coord.forceTabSwitch = true
+            // Triple pass smooth scroll — ensures layout settles for NSTextTable content
+            for delay in [0.05, 0.1, 0.15] {
+                DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak coord] in
+                    guard let coord, let tv = coord.latestTextView else { return }
+                    coord.smoothScrollToEnd(tv)
+                }
+            }
         }
         coord.latestSearchText = searchText
         coord.latestCaseSensitive = caseSensitive
@@ -411,8 +418,8 @@ struct ActivityLogView: NSViewRepresentable {
             userIsAtBottom = true
         }
 
-        /// Smooth animated scroll to end (used for streaming content)
-        private func smoothScrollToEnd(_ textView: NSTextView) {
+        /// Smooth animated scroll to end
+        func smoothScrollToEnd(_ textView: NSTextView) {
             guard let scrollView = textView.enclosingScrollView,
                   let textContainer = textView.textContainer else {
                 textView.scrollToEndOfDocument(nil)
@@ -421,7 +428,7 @@ struct ActivityLogView: NSViewRepresentable {
             textView.layoutManager?.ensureLayout(for: textContainer)
             let contentHeight = textView.frame.height
             let clipHeight = scrollView.contentView.bounds.height
-            let targetY = max(0, contentHeight - clipHeight + 250)
+            let targetY = max(0, contentHeight - clipHeight)
             isProgrammaticScroll = true
             NSAnimationContext.runAnimationGroup { ctx in
                 ctx.duration = 0.25
