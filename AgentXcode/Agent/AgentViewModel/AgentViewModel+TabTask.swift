@@ -364,7 +364,12 @@ extension AgentViewModel {
                 Self.pruneMessages(&messages)
             }
             if iterations > 2 { Self.stripOldImages(&messages) }
-
+            // Drop oldest messages after 25 iterations
+            if iterations >= 25 && messages.count > 12 {
+                let keep = 8
+                let drop = messages.count - keep
+                if drop > 1 { messages.removeSubrange(1..<(1 + drop)) }
+            }
 
             do {
                 tab.isLLMThinking = true

@@ -289,7 +289,14 @@ extension AgentViewModel {
             if iterations > 2 {
                 Self.stripOldImages(&messages)
             }
-
+            // Drop oldest messages after 25 iterations to prevent unbounded growth
+            if iterations >= 25 && messages.count > 12 {
+                let keep = 8 // Keep system + recent 8 messages
+                let drop = messages.count - keep
+                if drop > 1 {
+                    messages.removeSubrange(1..<(1 + drop)) // Keep index 0 (system), drop middle
+                }
+            }
 
             do {
                 isThinking = true
