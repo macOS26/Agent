@@ -1,3 +1,4 @@
+import AgentAccess
 import SwiftUI
 
 // MARK: - UserDefaults Keys (nonisolated for thread-safe access)
