@@ -939,6 +939,10 @@ extension AgentViewModel {
 
         switch action {
         case "list_windows":
+            // If app specified, filter to just that app's windows
+            if let app = app {
+                return ax.listWindows(limit: input["limit"] as? Int ?? 50, appBundleId: app)
+            }
             return ax.listWindows(limit: input["limit"] as? Int ?? 50)
         case "inspect_element":
             // If role/title provided, find element first then inspect at its position
