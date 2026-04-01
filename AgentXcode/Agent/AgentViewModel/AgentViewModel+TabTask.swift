@@ -371,7 +371,8 @@ extension AgentViewModel {
                 tab.thinkingDismissed = false
                 let response: (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int)
                 let streamStart = CFAbsoluteTimeGetCurrent()
-                if iterations > 1 {
+                // Summarize only after 5 iterations — most tasks finish in 2-3
+                if iterations >= 5 {
                     await Self.summarizeOldMessages(&messages)
                 }
                 let sendMessages = iterations > 1 ? Self.compressMessages(messages) : messages

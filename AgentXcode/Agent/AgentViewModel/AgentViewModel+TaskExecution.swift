@@ -295,8 +295,9 @@ extension AgentViewModel {
                 isThinking = true
                 thinkingDismissed = false
 
-                // Summarize old messages with Apple AI, then compress
-                if iterations > 1 {
+                // Summarize old messages with Apple AI — only after 5 iterations
+                // Most tasks complete in 2-3 iterations, no need to summarize early
+                if iterations >= 5 {
                     await Self.summarizeOldMessages(&messages)
                 }
                 let sendMessages = iterations > 1 ? Self.compressMessages(messages) : messages
