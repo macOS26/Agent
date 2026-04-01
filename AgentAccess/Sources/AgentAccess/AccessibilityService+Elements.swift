@@ -212,10 +212,11 @@ extension AccessibilityService {
     public func getAllProperties(_ element: AXUIElement) -> [String: Any] {
         var result: [String: Any] = [:]
         let attrs: [String] = [
-            kAXRoleAttribute, kAXRoleDescriptionAttribute, kAXTitleAttribute,
+            kAXRoleAttribute, kAXRoleDescriptionAttribute, kAXSubroleAttribute, kAXTitleAttribute,
             kAXValueAttribute, kAXDescriptionAttribute, kAXHelpAttribute,
             kAXEnabledAttribute, kAXFocusedAttribute, kAXSelectedAttribute,
-            kAXPositionAttribute, kAXSizeAttribute, kAXIdentifierAttribute
+            kAXPositionAttribute, kAXSizeAttribute, kAXIdentifierAttribute,
+            "AXURL", "AXDOMIdentifier", "AXDOMClassList", "AXPlaceholderValue"
         ]
         for attr in attrs {
             var val: CFTypeRef?
@@ -246,5 +247,135 @@ extension AccessibilityService {
             }
         }
         return String(describing: value)
+    }
+
+    // MARK: - Web Content Scanning
+
+    /// Scan web content in a browser window. Finds links, inputs, buttons, and text.
+    /// Works with Safari and Chrome AXWebArea elements.
+    public func scanWebContent(appBundleId: String? = nil, maxDepth: Int = 10) -> String {
+        guard Self.hasAccessibilityPermission() else {
+            return errorJSON("Accessibility permission required.")
+        }
+        AuditLog.log(.accessibility, "scanWebContent(app: \(appBundleId ?? "frontmost"), depth: \(maxDepth))")
+
+        let pid: pid_t
+        if let bid = appBundleId,
+           let app = NSRunningApplication.runningApplications(withBundleIdentifier: bid).first {
+            pid = app.processIdentifier
+        } else if let front = NSWorkspace.shared.frontmostApplication {
+            pid = front.processIdentifier
+        } else {
+            return errorJSON("No app found")
+        }
+
+        let appElement = AXUIElementCreateApplication(pid)
+        var webElements: [[String: Any]] = []
+
+        // Find AXWebArea in the element tree
+        func findWebArea(_ element: AXUIElement, depth: Int) {
+            guard depth > 0 else { return }
+            var roleRef: CFTypeRef?
+            AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &roleRef)
+            let role = roleRef as? String ?? ""
+
+            if role == "AXWebArea" {
+                // Found web content — scan its children
+                scanWebChildren(element, depth: maxDepth, into: &webElements)
+                return
+            }
+            // Keep searching
+            var childrenRef: CFTypeRef?
+            if AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &childrenRef) == .success,
+               let children = childrenRef as? [AXUIElement] {
+                for child in children { findWebArea(child, depth: depth - 1) }
+            }
+        }
+
+        findWebArea(appElement, depth: 8)
+
+        if webElements.isEmpty {
+            return errorJSON("No web content found. Is a browser window open?")
+        }
+        return successJSON(["elements": webElements, "count": webElements.count])
+    }
+
+    /// Recursively scan web content children for interactive/visible elements.
+    private func scanWebChildren(_ element: AXUIElement, depth: Int, into results: inout [[String: Any]]) {
+        guard depth > 0, results.count < 200 else { return }
+
+        var roleRef: CFTypeRef?
+        AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &roleRef)
+        let role = roleRef as? String ?? ""
+
+        // Collect interesting elements
+        let interactiveRoles: Set<String> = [
+            "AXLink", "AXButton", "AXTextField", "AXTextArea", "AXCheckBox",
+            "AXRadioButton", "AXPopUpButton", "AXComboBox", "AXSlider",
+            "AXImage", "AXHeading", "AXStaticText", "AXGroup"
+        ]
+
+        if interactiveRoles.contains(role) {
+            var info: [String: Any] = ["role": role]
+
+            var titleRef: CFTypeRef?
+            if AXUIElementCopyAttributeValue(element, kAXTitleAttribute as CFString, &titleRef) == .success,
+               let title = titleRef as? String, !title.isEmpty {
+                info["title"] = String(title.prefix(200))
+            }
+
+            var valueRef: CFTypeRef?
+            if AXUIElementCopyAttributeValue(element, kAXValueAttribute as CFString, &valueRef) == .success {
+                if let val = valueRef as? String, !val.isEmpty {
+                    info["value"] = String(val.prefix(200))
+                }
+            }
+
+            var descRef: CFTypeRef?
+            if AXUIElementCopyAttributeValue(element, kAXDescriptionAttribute as CFString, &descRef) == .success,
+               let desc = descRef as? String, !desc.isEmpty {
+                info["description"] = String(desc.prefix(200))
+            }
+
+            var urlRef: CFTypeRef?
+            if AXUIElementCopyAttributeValue(element, "AXURL" as CFString, &urlRef) == .success,
+               let url = urlRef as? String ?? (urlRef as? URL)?.absoluteString {
+                info["url"] = String(url.prefix(500))
+            }
+
+            var domIdRef: CFTypeRef?
+            if AXUIElementCopyAttributeValue(element, "AXDOMIdentifier" as CFString, &domIdRef) == .success,
+               let domId = domIdRef as? String, !domId.isEmpty {
+                info["domId"] = domId
+            }
+
+            // Get position
+            var posRef: CFTypeRef?
+            if AXUIElementCopyAttributeValue(element, kAXPositionAttribute as CFString, &posRef) == .success {
+                let pos = posRef as! AXValue
+                var point = CGPoint.zero
+                AXValueGetValue(pos, .cgPoint, &point)
+                info["x"] = Int(point.x)
+                info["y"] = Int(point.y)
+            }
+
+            // Skip empty static text (whitespace, line breaks)
+            if role == "AXStaticText" {
+                let text = info["value"] as? String ?? info["title"] as? String ?? ""
+                if text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { /* skip */ }
+                else { results.append(info) }
+            } else {
+                results.append(info)
+            }
+        }
+
+        // Recurse into children
+        var childrenRef: CFTypeRef?
+        if AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &childrenRef) == .success,
+           let children = childrenRef as? [AXUIElement] {
+            for child in children {
+                scanWebChildren(child, depth: depth - 1, into: &results)
+            }
+        }
     }
 }
