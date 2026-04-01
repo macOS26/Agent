@@ -63,16 +63,15 @@ struct ActivityLogView: NSViewRepresentable {
         coord.latestTabID = tabID
         if tabChanged {
             coord.forceTabSwitch = true
-            // Silent snaps while layout settles, then one smooth scroll
-            for delay in [0.05, 0.1] {
-                DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak coord] in
-                    guard let coord, let tv = coord.latestTextView else { return }
-                    coord.snapToEnd(tv)
-                }
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak coord] in
+            // Hide, snap to bottom while invisible, fade in
+            coord.latestTextView?.alphaValue = 0
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak coord] in
                 guard let coord, let tv = coord.latestTextView else { return }
-                coord.smoothScrollToEnd(tv)
+                coord.snapToEnd(tv)
+                NSAnimationContext.runAnimationGroup { ctx in
+                    ctx.duration = 0.2
+                    tv.animator().alphaValue = 1
+                }
             }
         }
         coord.latestSearchText = searchText
