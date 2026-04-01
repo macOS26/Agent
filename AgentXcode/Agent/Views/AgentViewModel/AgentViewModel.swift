@@ -2,6 +2,7 @@
 import AgentTools
 import AgentColorSyntax
 import AgentTerminalNeo
+import AgentLLM
 import AppKit
 import SwiftUI
 import SQLite3
@@ -923,6 +924,9 @@ final class AgentViewModel {
     init() {
         guard !Self._started else { return }
         Self._started = true
+
+        // Register all LLM providers with AgentLLM framework
+        LLMRegistry.shared.registerAll(LLMProviderConfig.allPresets)
 
         activityLog = ChatHistoryStore.shared.buildActivityLogText(maxTasks: 3)
         CodeBlockTheme.updateAppearance()

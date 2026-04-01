@@ -84,7 +84,7 @@ public struct LLMProviderConfig: Codable, Sendable, Identifiable, Hashable {
     public var isConfigured: Bool {
         if requiresAPIKey && apiKey.isEmpty { return false }
         if model.isEmpty { return false }
-        if kind != .embedded && endpoint.baseURL.isEmpty { return false }
+        if kind != .embedded && endpoint.chatURL.isEmpty { return false }
         return true
     }
 
@@ -131,13 +131,13 @@ public struct LLMProviderConfig: Codable, Sendable, Identifiable, Hashable {
         kind: .remoteServer, apiProtocol: .ollama,
         endpoint: .ollamaCloud,
         capabilities: [.streaming, .tools, .systemPrompt, .vision],
-        apiKeyOptional: true
+        apiKeyOptional: false
     )
 
     public static let localOllama = LLMProviderConfig(
         id: "localOllama", displayName: "Local Ollama",
         kind: .localServer, apiProtocol: .ollama,
-        endpoint: .ollama,
+        endpoint: .ollamaLocal,
         capabilities: [.streaming, .tools, .systemPrompt, .vision],
         apiKeyOptional: true
     )
@@ -162,7 +162,7 @@ public struct LLMProviderConfig: Codable, Sendable, Identifiable, Hashable {
     public static let foundationModel = LLMProviderConfig(
         id: "foundationModel", displayName: "Apple Intelligence",
         kind: .embedded, apiProtocol: .foundationModel,
-        endpoint: LLMEndpoint(baseURL: "", chatPath: "", modelsPath: ""),
+        endpoint: LLMEndpoint(chatURL: ""),
         capabilities: [.streaming, .tools, .systemPrompt],
         apiKeyOptional: true
     )
