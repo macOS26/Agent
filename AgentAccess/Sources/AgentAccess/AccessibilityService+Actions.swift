@@ -38,16 +38,17 @@ extension AccessibilityService {
         }
 
         // Use AXorcist PerformActionCommand — atomic find + action
+        // Search AXTitle, AXDescription, AXIdentifier, and AXValue
         var criteria: [Criterion] = []
         if let role = role { criteria.append(Criterion(attribute: "AXRole", value: role)) }
-        if let title = title { criteria.append(Criterion(attribute: "AXTitle", value: title, matchType: .contains)) }
         if let value = value { criteria.append(Criterion(attribute: "AXValue", value: value, matchType: .contains)) }
 
-        if criteria.isEmpty {
+        if criteria.isEmpty && title == nil {
             return errorJSON("No search criteria — provide role, title, value, or coordinates")
         }
 
-        let locator = Locator(matchAll: true, criteria: criteria)
+        // Use computedNameContains for title — searches AXTitle + AXDescription + AXHelp
+        let locator = Locator(matchAll: true, criteria: criteria, computedNameContains: title)
         let cmd = PerformActionCommand(appIdentifier: appBundleId, locator: locator, action: action, maxDepthForSearch: 100)
         let envelope = AXCommandEnvelope(commandID: UUID().uuidString, command: .performAction(cmd))
         let response = AXorcist.shared.runCommand(envelope)
