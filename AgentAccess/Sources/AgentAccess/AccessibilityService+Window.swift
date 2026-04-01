@@ -315,12 +315,11 @@ extension AccessibilityService {
 
         guard let root = appElement else { return errorJSON("No app element") }
 
-        var focusedRef: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(root.underlyingElement, kAXFocusedUIElementAttribute as CFString, &focusedRef) == .success else {
-            return errorJSON("No focused element")
+        // AXorcist: use focusedApplicationElement
+        if let focused = root.focusedApplicationElement() {
+            return successJSON(elementProperties(focused))
         }
-        let focused = Element(focusedRef as! AXUIElement)
-        return successJSON(elementProperties(focused))
+        return errorJSON("No focused element")
     }
 
     /// Get recent audit log entries
