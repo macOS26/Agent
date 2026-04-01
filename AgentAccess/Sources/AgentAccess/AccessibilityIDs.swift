@@ -79,6 +79,36 @@ public enum AccessibilityEnabledIDs {
         ("AXSecureText", "AXSecureText"),
     ]
 
+    // MARK: - Grouped for UI (dynamic — add new groups here, UI picks them up)
+
+    /// A named group of AX IDs for settings UI rendering.
+    public struct AXGroup: Sendable {
+        public let title: String
+        public let items: [(id: String, label: String)]
+        public init(title: String, items: [(id: String, label: String)]) {
+            self.title = title
+            self.items = items
+        }
+    }
+
+    /// All action groups — UI iterates this to build the settings view.
+    public static let actionGroups: [AXGroup] = [
+        AXGroup(title: "AX Core Actions", items: axCoreActions),
+        AXGroup(title: "AX Value Actions", items: axValueActions),
+        AXGroup(title: "AX Disclosure Actions", items: axDisclosureActions),
+        AXGroup(title: "AX Window Actions", items: axWindowActions),
+        AXGroup(title: "AX Text Actions", items: axTextActions),
+        AXGroup(title: "AX Scroll Actions", items: axScrollActions),
+        AXGroup(title: "AX Focus Actions", items: axFocusActions),
+        AXGroup(title: "AX UI Actions", items: axUIActions),
+        AXGroup(title: "AX Content Actions", items: axContentActions),
+    ]
+
+    /// Role groups — UI iterates this separately.
+    public static let roleGroups: [AXGroup] = [
+        AXGroup(title: "AX Protected Roles", items: axRoles),
+    ]
+
     // MARK: - Well-Known Roles (for reference — not gated)
 
     /// Web content roles (detected automatically, not permission-gated)
