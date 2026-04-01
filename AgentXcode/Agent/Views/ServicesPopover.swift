@@ -31,7 +31,7 @@ struct ServicesPopover: View {
                         .font(.caption)
                     Toggle("", isOn: $viewModel.userEnabled)
                         .toggleStyle(.switch)
-                        .controlSize(.mini)
+                        .controlSize(.small)
                         .tint(.green)
                         .labelsHidden()
                 }
@@ -46,7 +46,7 @@ struct ServicesPopover: View {
                         .font(.caption)
                     Toggle("", isOn: $viewModel.rootEnabled)
                         .toggleStyle(.switch)
-                        .controlSize(.mini)
+                        .controlSize(.small)
                         .tint(.green)
                         .labelsHidden()
                 }
@@ -61,20 +61,20 @@ struct ServicesPopover: View {
                     viewModel.unregisterDaemon()
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.mini)
+                .controlSize(.small)
                 
                 Button("Register") {
                     viewModel.registerAgent()
                     viewModel.registerDaemon()
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.mini)
+                .controlSize(.small)
                 
                 Button("Connect") {
                     viewModel.testConnection()
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.mini)
+                .controlSize(.small)
             }
         }
         .padding(16)
