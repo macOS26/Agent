@@ -1,0 +1,242 @@
+{
+  "builtTestProducts" : [
+
+  ],
+  "copyCommands" : {
+
+  },
+  "explicitTargetDependencyImportCheckingMode" : {
+    "none" : {
+
+    }
+  },
+  "generatedSourceTargetSet" : [
+
+  ],
+  "pluginDescriptions" : [
+
+  ],
+  "swiftCommands" : {
+    "C.AgentTools-arm64-apple-macosx-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/AgentTools.build/sources",
+      "importPath" : "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/Sources/AgentTools/APIProvider.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/Sources/AgentTools/AgentTools.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/AgentTools.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "AgentTools",
+      "moduleOutputPath" : "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/Modules/AgentTools.swiftmodule",
+      "objects" : [
+        "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/AgentTools.build/APIProvider.swift.o",
+        "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/AgentTools.build/AgentTools.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx26.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-Onone",
+        "-enable-testing",
+        "-j10",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/AgentTools.build/include/AgentTools-Swift.h",
+        "-swift-version",
+        "6",
+        "-Xfrontend",
+        "-experimental-lazy-typecheck",
+        "-Xfrontend",
+        "-experimental-skip-all-function-bodies",
+        "-Xfrontend",
+        "-experimental-allow-module-with-compiler-errors",
+        "-Xfrontend",
+        "-empty-abi-descriptor",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "agenttools"
+      ],
+      "outputFileMapPath" : "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/AgentTools.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/Modules/AgentTools.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : true,
+      "sources" : [
+        "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/Sources/AgentTools/APIProvider.swift",
+        "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/Sources/AgentTools/AgentTools.swift"
+      ],
+      "tempsPath" : "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/AgentTools.build",
+      "wholeModuleOptimization" : false
+    }
+  },
+  "swiftFrontendCommands" : {
+
+  },
+  "swiftTargetScanArgs" : {
+    "AgentTools" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "AgentTools",
+      "-package-name",
+      "agenttools",
+      "-c",
+      "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/Sources/AgentTools/APIProvider.swift",
+      "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/Sources/AgentTools/AgentTools.swift",
+      "-I",
+      "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx26.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-Onone",
+      "-enable-testing",
+      "-j10",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/AgentTools.build/include/AgentTools-Swift.h",
+      "-swift-version",
+      "6",
+      "-Xfrontend",
+      "-experimental-lazy-typecheck",
+      "-Xfrontend",
+      "-experimental-skip-all-function-bodies",
+      "-Xfrontend",
+      "-experimental-allow-module-with-compiler-errors",
+      "-Xfrontend",
+      "-empty-abi-descriptor",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "agenttools",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ]
+  },
+  "targetDependencyMap" : {
+    "AgentTools" : [
+
+    ]
+  },
+  "testDiscoveryCommands" : {
+
+  },
+  "testEntryPointCommands" : {
+
+  },
+  "traitConfiguration" : {
+    "default" : {
+
+    }
+  },
+  "writeCommands" : {
+    "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/AgentTools.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/Sources/AgentTools/APIProvider.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/Sources/AgentTools/AgentTools.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/AgentTools.build/sources"
+    },
+    "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt" : {
+      "alwaysOutOfDate" : true,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<swift-get-version>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+        }
+      ],
+      "outputFilePath" : "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+    }
+  }
+}

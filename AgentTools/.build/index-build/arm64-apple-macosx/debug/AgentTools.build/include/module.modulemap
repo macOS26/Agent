@@ -1,0 +1,3 @@
+module AgentTools {
+    header "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/AgentTools.build/include/AgentTools-Swift.h"
+}

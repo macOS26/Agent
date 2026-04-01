@@ -1,0 +1,47 @@
+client:
+  name: basic
+  file-system: device-agnostic
+tools: {}
+targets:
+  "AgentTools-arm64-apple-macosx-debug.module": ["<AgentTools-arm64-apple-macosx-debug.module>"]
+  "PackageStructure": ["<PackageStructure>"]
+  "main": ["<AgentTools-arm64-apple-macosx-debug.module>"]
+  "test": ["<AgentTools-arm64-apple-macosx-debug.module>"]
+default: "main"
+nodes:
+  "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/Sources/AgentTools/":
+    is-directory-structure: true
+    content-exclusion-patterns: [".git",".build"]
+commands:
+  "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/AgentTools.build/sources":
+    tool: write-auxiliary-file
+    inputs: ["<sources-file-list>","/Users/toddbruss/Documents/GitHub/Agent/AgentTools/Sources/AgentTools/APIProvider.swift","/Users/toddbruss/Documents/GitHub/Agent/AgentTools/Sources/AgentTools/AgentTools.swift"]
+    outputs: ["/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/AgentTools.build/sources"]
+    description: "Write auxiliary file /Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/AgentTools.build/sources"
+
+  "/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt":
+    tool: write-auxiliary-file
+    inputs: ["<swift-get-version>","/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"]
+    outputs: ["/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"]
+    always-out-of-date: "true"
+    description: "Write auxiliary file /Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+
+  "<AgentTools-arm64-apple-macosx-debug.module>":
+    tool: phony
+    inputs: ["/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/Modules/AgentTools.swiftmodule"]
+    outputs: ["<AgentTools-arm64-apple-macosx-debug.module>"]
+
+  "C.AgentTools-arm64-apple-macosx-debug.module":
+    tool: shell
+    inputs: ["/Users/toddbruss/Documents/GitHub/Agent/AgentTools/Sources/AgentTools/APIProvider.swift","/Users/toddbruss/Documents/GitHub/Agent/AgentTools/Sources/AgentTools/AgentTools.swift","/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt","/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/AgentTools.build/sources"]
+    outputs: ["/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/Modules/AgentTools.swiftmodule"]
+    description: "Compiling Swift Module 'AgentTools' (2 sources)"
+    args: ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc","-module-name","AgentTools","-emit-dependencies","-emit-module","-emit-module-path","/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/Modules/AgentTools.swiftmodule","-output-file-map","/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/AgentTools.build/output-file-map.json","-parse-as-library","-incremental","@/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/AgentTools.build/sources","-I","/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/Modules","-target","arm64-apple-macosx26.0","-incremental","-enable-batch-mode","-serialize-diagnostics","-Onone","-enable-testing","-j10","-DSWIFT_PACKAGE","-DDEBUG","-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE","-module-cache-path","/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/ModuleCache","-parseable-output","-parse-as-library","-emit-objc-header","-emit-objc-header-path","/Users/toddbruss/Documents/GitHub/Agent/AgentTools/.build/index-build/arm64-apple-macosx/debug/AgentTools.build/include/AgentTools-Swift.h","-swift-version","6","-Xfrontend","-experimental-lazy-typecheck","-Xfrontend","-experimental-skip-all-function-bodies","-Xfrontend","-experimental-allow-module-with-compiler-errors","-Xfrontend","-empty-abi-descriptor","-plugin-path","/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing","-sdk","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk","-F","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks","-I","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-L","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-g","-Xcc","-isysroot","-Xcc","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk","-Xcc","-F","-Xcc","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks","-Xcc","-fPIC","-Xcc","-g","-package-name","agenttools"]
+
+  "PackageStructure":
+    tool: package-structure-tool
+    inputs: ["/Users/toddbruss/Documents/GitHub/Agent/AgentTools/Sources/AgentTools/","/Users/toddbruss/Documents/GitHub/Agent/AgentTools/Package.swift","/Users/toddbruss/Documents/GitHub/Agent/AgentTools/Package.resolved"]
+    outputs: ["<PackageStructure>"]
+    description: "Planning build"
+    allow-missing-inputs: true
+
