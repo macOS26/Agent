@@ -1,4 +1,5 @@
 import AgentAudit
+import AXorcist
 import Foundation
 import AppKit
 @preconcurrency import ApplicationServices
