@@ -185,10 +185,8 @@ final class AgentViewModel {
 
     /// Hand icon color reflecting accessibility status
     var accessibilityIconColor: Color {
+        if !AccessibilityEnabled.shared.accessibilityGlobalEnabled { return .gray }
         if !AccessibilityService.hasAccessibilityPermission() { return .red }
-        let prefs = ToolPreferencesService.shared
-        if !prefs.isEnabled(selectedProvider, "accessibility") { return .orange }
-        if !AccessibilityEnabled.shared.accessibilityGlobalEnabled { return .yellow }
         return .green
     }
 
