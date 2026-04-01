@@ -174,6 +174,16 @@ struct ContentView: View {
         } message: {
             Text("'\(viewModel.failedAgentName)' failed. Remove from 🦾 Agents menu?")
         }
+        .onChange(of: viewModel.isRunning) { _, newValue in
+            // Auto-expand LLM output when a new task starts on main tab
+            if newValue, viewModel.selectedTabId == nil {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    viewModel.thinkingDismissed = false
+                    viewModel.thinkingExpanded = true
+                    viewModel.thinkingOutputExpanded = true
+                }
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .appWillQuit)) { _ in
             viewModel.stopAll()
             viewModel.stopMessagesMonitor()
