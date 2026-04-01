@@ -2,7 +2,6 @@ import AgentAudit
 import AXorcist
 import Foundation
 import AppKit
-@preconcurrency import ApplicationServices
 
 // MARK: - Full AXorcist Command System Integration
 
@@ -494,15 +493,15 @@ extension AccessibilityService {
     private func findAppWindow(appBundleId: String?) -> Element? {
         let appElement: Element?
         if let bundleId = appBundleId,
-           let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundleId).first {
+           let app = RunningApplicationHelper.applications(withBundleIdentifier: bundleId).first {
             appElement = Element.application(for: app)
-        } else if let app = NSWorkspace.shared.frontmostApplication {
+        } else if let app = RunningApplicationHelper.frontmostApplication {
             appElement = Element.application(for: app)
         } else {
             return nil
         }
-        guard let root = appElement, let children = root.children() else { return nil }
-        return children.first(where: { $0.role() == "AXWindow" })
+        guard let root = appElement, let appWindows = root.windows() else { return nil }
+        return appWindows.first(where: { $0.role() == "AXWindow" })
     }
 
     private func parseMatchType(_ str: String?) -> JSONPathHintComponent.MatchType? {

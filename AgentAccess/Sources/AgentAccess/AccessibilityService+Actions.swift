@@ -2,7 +2,6 @@ import AgentAudit
 import AXorcist
 import Foundation
 import AppKit
-@preconcurrency import ApplicationServices
 
 extension AccessibilityService {
     // MARK: - Perform Actions
@@ -38,7 +37,6 @@ extension AccessibilityService {
         }
 
         // Use AXorcist PerformActionCommand — atomic find + action
-        // Search AXTitle, AXDescription, AXIdentifier, and AXValue
         var criteria: [Criterion] = []
         if let role = role { criteria.append(Criterion(attribute: "AXRole", value: role)) }
         if let value = value { criteria.append(Criterion(attribute: "AXValue", value: value, matchType: .contains)) }

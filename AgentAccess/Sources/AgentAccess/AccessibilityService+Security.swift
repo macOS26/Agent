@@ -2,7 +2,6 @@ import AgentAudit
 import AXorcist
 import Foundation
 import AppKit
-@preconcurrency import ApplicationServices
 
 // MARK: - Security Extension for AccessibilityService
 
@@ -16,6 +15,7 @@ extension AccessibilityService {
     // MARK: - Permission Methods
 
     /// Check if the app has Accessibility permissions (cached once granted).
+    /// Uses AXIsProcessTrusted() directly since AXPermissionHelpers is @MainActor restricted.
     public static func hasAccessibilityPermission() -> Bool {
         if _permissionGranted { return true }
         let granted = AXIsProcessTrusted()
@@ -31,8 +31,7 @@ extension AccessibilityService {
         }
         if !_promptShown {
             _promptShown = true
-            let promptKey = "AXTrustedCheckOptionPrompt" as CFString
-            let options: [CFString: Bool] = [promptKey: true]
+            let options: [String: Bool] = ["AXTrustedCheckOptionPrompt": true]
             let result = AXIsProcessTrustedWithOptions(options as CFDictionary)
             if result { _permissionGranted = true; return true }
             startPermissionPolling()
