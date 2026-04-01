@@ -132,6 +132,7 @@
 		EAE1E7152F7BF6880079432C /* AgentSwift in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7142F7BF6880079432C /* AgentSwift */; };
 		EAE1E7182F7BF6E70079432C /* XcodeScriptingBridge in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7172F7BF6E70079432C /* XcodeScriptingBridge */; };
 		EAE1E71B2F7BF7000079432C /* AgentAudit in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E71A2F7BF7000079432C /* AgentAudit */; };
+		EAE1E7262F7C02000079432C /* AgentAccess in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7252F7C02000079432C /* AgentAccess */; };
 		EAE1E7222F7C00000079432C /* AgentLLM in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7212F7C00000079432C /* AgentLLM */; };
 		EAE1E7242F7C01000079432C /* LLMProviderSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAE1E7232F7C01000079432C /* LLMProviderSetup.swift */; };
 		EAF3666F2F623D6A004B7E38 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = EAF3666E2F623D6A004B7E38 /* AppIcon.icon */; };
@@ -377,6 +378,7 @@
 				EAE1E7122F7BF6290079432C /* AgentD1F in Frameworks */,
 				EAE1E70C2F7BF5780079432C /* AgentMCP in Frameworks */,
 				EAE1E71B2F7BF7000079432C /* AgentAudit in Frameworks */,
+				EAE1E7262F7C02000079432C /* AgentAccess in Frameworks */,
 				EAE1E7152F7BF6880079432C /* AgentSwift in Frameworks */,
 				EAE1E7222F7C00000079432C /* AgentLLM in Frameworks */,
 				EAA08AAC2F7D549300D5998A /* AgentLLM in Frameworks */,
@@ -736,6 +738,7 @@
 				EAE1E7172F7BF6E70079432C /* XcodeScriptingBridge */,
 				EAE1E7212F7C00000079432C /* AgentLLM */,
 				EAA08AAB2F7D549300D5998A /* AgentLLM */,
+				EAE1E7252F7C02000079432C /* AgentAccess */,
 			);
 			productName = Agent;
 			productReference = AA10000000000000000024 /* Agent!.app */;
@@ -819,6 +822,7 @@
 				EAE1E7162F7BF6E70079432C /* XCRemoteSwiftPackageReference "AgentEventBridges" */,
 				EAE1E7192F7BF7000079432C /* XCRemoteSwiftPackageReference "AgentAudit" */,
 				EAA08AAA2F7D549300D5998A /* XCRemoteSwiftPackageReference "AgentLLM" */,
+				EAE1E7242F7C02000079432C /* XCRemoteSwiftPackageReference "AgentAccess" */,
 			);
 			productRefGroup = AA10000000000000000042 /* Products */;
 			projectDirPath = "";
@@ -1522,6 +1526,14 @@
 				minimumVersion = 1.0.0;
 			};
 		};
+		EAE1E7242F7C02000079432C /* XCRemoteSwiftPackageReference "AgentAccess" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/macOS26/AgentAccess.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1573,6 +1585,11 @@
 		EAE1E7212F7C00000079432C /* AgentLLM */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = AgentLLM;
+		};
+		EAE1E7252F7C02000079432C /* AgentAccess */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EAE1E7242F7C02000079432C /* XCRemoteSwiftPackageReference "AgentAccess" */;
+			productName = AgentAccess;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
