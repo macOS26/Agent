@@ -20,6 +20,9 @@ extension AccessibilityService {
             return errorJSON("Action '\(action)' is disabled in Accessibility Settings. Enable it in Settings to allow this action.")
         }
 
+        // Normalize "focused" to nil — means use frontmost app
+        let appBundleId = (appBundleId == "focused" || appBundleId == "frontmost") ? nil : appBundleId
+
         // AXorcist: activate the target app first so it's frontmost
         if let bundleId = appBundleId,
            let app = RunningApplicationHelper.applications(withBundleIdentifier: bundleId).first,
