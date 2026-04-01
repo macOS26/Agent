@@ -63,24 +63,6 @@ struct ActivityLogView: NSViewRepresentable {
         coord.latestTabID = tabID
         if tabChanged {
             coord.forceTabSwitch = true
-            // Single smooth scroll after content is rendered
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak coord] in
-                guard let coord, let tv = coord.latestTextView, let sv = coord.latestScrollView else { return }
-                tv.layoutManager?.ensureLayout(for: tv.textContainer!)
-                let targetY = max(0, tv.frame.height - sv.contentView.bounds.height)
-                coord.isProgrammaticScroll = true
-                NSAnimationContext.runAnimationGroup { ctx in
-                    ctx.duration = 0.3
-                    ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-                    sv.contentView.animator().setBoundsOrigin(NSPoint(x: 0, y: targetY))
-                } completionHandler: {
-                    MainActor.assumeIsolated {
-                        sv.reflectScrolledClipView(sv.contentView)
-                        coord.isProgrammaticScroll = false
-                        coord.userIsAtBottom = true
-                    }
-                }
-            }
         }
         coord.latestSearchText = searchText
         coord.latestCaseSensitive = caseSensitive
@@ -262,43 +244,16 @@ struct ActivityLogView: NSViewRepresentable {
             showingPlaceholder = false
 
             if tabSwitched {
-                // Hide view while we swap content and scroll — prevents visible scroll animation
-                textView.alphaValue = 0
-
                 if let storage = textView.textStorage, lastLength > 0, !lastRenderedText.isEmpty {
                     cacheAttributedString(NSAttributedString(attributedString: storage), for: lastTabID, text: lastRenderedText)
                 }
                 lastTabID = tabID
                 clearCache()
-
-                if let cached = cachedAttributedString(for: tabID, text: text) {
-                    textView.textStorage?.setAttributedString(cached)
-                } else {
-                    textView.textStorage?.beginEditing()
-                    textView.textStorage?.setAttributedString(buildAttributedString(from: text))
-                    textView.textStorage?.endEditing()
-                }
-                lastLength = len
-                lastRenderedText = text
-                showingPlaceholder = false
-
-                // Scroll to bottom, then show after layout settles
-                textView.layoutManager?.ensureLayout(for: textView.textContainer!)
-                textView.scrollToEndOfDocument(nil)
-                scrollView.reflectScrolledClipView(scrollView.contentView)
+                // Reset lastLength to 0 so the textChanged path treats this as fresh content
+                lastLength = 0
+                lastRenderedText = ""
                 userIsAtBottom = true
-                // Deferred second pass — ensures large text layout is complete before showing
-                DispatchQueue.main.async { [weak textView, weak scrollView] in
-                    guard let textView, let scrollView else { return }
-                    textView.layoutManager?.ensureLayout(for: textView.textContainer!)
-                    textView.scrollToEndOfDocument(nil)
-                    scrollView.reflectScrolledClipView(scrollView.contentView)
-                    textView.alphaValue = 1
-                }
-
-                lastSearch = searchText
-                lastMatchIndex = currentMatchIndex
-                return
+                // Fall through to textChanged path — same scroll behavior as first load
             }
 
             if textChanged || searchCleared {
