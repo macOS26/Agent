@@ -60,9 +60,10 @@ final class AgentViewModel {
     var activityLog = ""
     var isRunning = false
     var isThinking = false
-    /// When true, only Core+Workflow+Coding+UserAgent tools sent to LLM
+    /// When true, only focused tool groups sent to LLM
     var codingModeEnabled = false
     static let codingModeGroups: Set<String> = ["Core", "Workflow", "Coding", "User Agent"]
+    static let automationModeGroups: Set<String> = ["Core", "Workflow", "Automation", "User Agent"]
     var thinkingDismissed: Bool = UserDefaults.standard.object(forKey: "thinkingDismissed") as? Bool ?? true {
         didSet { UserDefaults.standard.set(thinkingDismissed, forKey: "thinkingDismissed") }
     }
