@@ -241,17 +241,16 @@ extension AccessibilityService {
         AuditLog.log(.accessibility, "clickElement(role: \(role ?? "nil"), title: \(title ?? "nil"), value: \(value ?? "nil"), app: \(appBundleId ?? "nil"), timeout: \(timeout))")
 
         // Use AXorcist PerformActionCommand — atomic find + press in one operation
+        // Search AXTitle + AXDescription + AXHelp via computedNameContains
         var criteria: [Criterion] = []
         if let role = role { criteria.append(Criterion(attribute: "AXRole", value: role)) }
-        if let title = title { criteria.append(Criterion(attribute: "AXTitle", value: title, matchType: .contains)) }
         if let value = value { criteria.append(Criterion(attribute: "AXValue", value: value, matchType: .contains)) }
 
-        // If no criteria from role/title/value, try description-based search
-        if criteria.isEmpty {
+        if criteria.isEmpty && title == nil {
             return errorJSON("No search criteria provided")
         }
 
-        let locator = Locator(matchAll: true, criteria: criteria)
+        let locator = Locator(matchAll: true, criteria: criteria, computedNameContains: title)
         let cmd = PerformActionCommand(appIdentifier: appBundleId, locator: locator, action: "AXPress", maxDepthForSearch: 100)
         let envelope = AXCommandEnvelope(commandID: UUID().uuidString, command: .performAction(cmd))
         let response = AXorcist.shared.runCommand(envelope)
