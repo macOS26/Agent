@@ -77,8 +77,45 @@ extension AgentViewModel {
             }
             return "Project folder cleared."
 
+        case "cd":
+            let path = input["path"] as? String ?? "~"
+            let current = (tab != nil ? (tab!.projectFolder.isEmpty ? projectFolder : tab!.projectFolder) : projectFolder)
+            let resolved: String
+            if path == "~" || path == "~/" {
+                resolved = home
+            } else if path == ".." || path == "../" {
+                resolved = (current as NSString).deletingLastPathComponent
+            } else if path == "." || path == "./" {
+                return "Project folder: \(CodingService.trimHome(current))"
+            } else if path.hasPrefix("/") {
+                resolved = path
+            } else if path.hasPrefix("~/") {
+                resolved = (path as NSString).expandingTildeInPath
+            } else if path.hasPrefix("../") {
+                let parent = (current as NSString).deletingLastPathComponent
+                let rest = String(path.dropFirst(3))
+                resolved = (parent as NSString).appendingPathComponent(rest)
+            } else if path.hasPrefix("./") {
+                let rest = String(path.dropFirst(2))
+                resolved = (current as NSString).appendingPathComponent(rest)
+            } else {
+                resolved = (current as NSString).appendingPathComponent(path)
+            }
+            let fm = FileManager.default
+            var isDir: ObjCBool = false
+            guard fm.fileExists(atPath: resolved, isDirectory: &isDir), isDir.boolValue else {
+                return "Error: '\(resolved)' is not a valid directory."
+            }
+            if let tab {
+                tab.projectFolder = resolved
+                persistScriptTabs()
+            } else {
+                projectFolder = resolved
+            }
+            return "Project folder set to: \(resolved)"
+
         default:
-            return "Error: invalid action '\(action)'. Use get, set, home, documents, library, or none."
+            return "Error: invalid action '\(action)'. Use get, set, cd, home, documents, library, or none."
         }
     }
 
