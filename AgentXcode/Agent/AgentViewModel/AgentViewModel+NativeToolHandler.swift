@@ -938,6 +938,9 @@ extension AgentViewModel {
         let y = (input["y"] as? Double).map { CGFloat($0) }
 
         switch action {
+        case "open_app":
+            // Launch/activate app and return all interactive elements in one call
+            return ax.openApp(input["appBundleId"] as? String ?? input["app"] as? String ?? input["name"] as? String)
         case "list_windows":
             // If app specified, filter to just that app's windows
             if let app = app {
