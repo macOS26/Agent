@@ -262,12 +262,17 @@ extension AccessibilityService {
         }
 
         // Step 2: Search the app's element tree for the target element
+        // Prefer visible, actionable elements (buttons with size > 0) over hidden menu items
         var found: Element?
         let startTime = Date()
         while Date().timeIntervalSince(startTime) < timeout {
             // Use AXorcist Element.findElements to search by role/title/value
             let results = root.findElements(role: role, title: title, label: nil, value: value, identifier: nil, maxDepth: 20)
-            if let match = results.first {
+            // Pick the best match: prefer elements with size > 0 and not hidden
+            if let match = results.first(where: {
+                let sz = $0.size()
+                return sz != nil && sz!.width > 0 && sz!.height > 0 && $0.isHidden() != true
+            }) ?? results.first(where: { $0.isHidden() != true }) {
                 found = match
                 break
             }
@@ -276,6 +281,7 @@ extension AccessibilityService {
                 var options = ElementSearchOptions()
                 options.maxDepth = 20
                 options.caseInsensitive = true
+                options.visibleOnly = true
                 if let role = role { options.includeRoles = [role] }
                 if let match = root.findElement(matching: title, options: options) {
                     found = match
