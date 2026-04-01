@@ -295,21 +295,26 @@ extension AccessibilityService {
             Thread.sleep(forTimeInterval: 0.2)
         }
 
-        // Step 4: Press the element via AXorcist
+        // Step 4: Click — try AXorcist Element.click() first (handles centering),
+        // then AXPress, then InputDriver.click at coordinates
         do {
-            try element.performAction(.press)
+            try element.click()
             return successJSON(["message": "Clicked element", "element": elementProperties(element)])
         } catch {
-            // Fallback: click at center if element has a valid frame
-            if let frame = element.frame(), frame.width > 0, frame.height > 0 {
-                do {
-                    try InputDriver.click(at: CGPoint(x: frame.midX, y: frame.midY))
-                    return successJSON(["message": "Clicked at element center", "x": frame.midX, "y": frame.midY, "element": elementProperties(element)])
-                } catch {
-                    return errorJSON("Click failed: \(error.localizedDescription)")
+            // Element.click needs frame — try AXPress for menu items etc.
+            do {
+                try element.performAction(.press)
+                return successJSON(["message": "Pressed element", "element": elementProperties(element)])
+            } catch {
+                // Last resort: manual coordinate click
+                if let frame = element.frame(), frame.width > 0, frame.height > 0 {
+                    do {
+                        try InputDriver.click(at: CGPoint(x: frame.midX, y: frame.midY))
+                        return successJSON(["message": "Clicked at center", "x": frame.midX, "y": frame.midY, "element": elementProperties(element)])
+                    } catch {}
                 }
+                return errorJSON("All click methods failed for element: \(element.role() ?? "unknown")")
             }
-            return errorJSON("AXPress failed and element has no frame: \(error.localizedDescription)")
         }
     }
 
