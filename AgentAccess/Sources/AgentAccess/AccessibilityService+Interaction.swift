@@ -237,8 +237,8 @@ extension AccessibilityService {
         guard Self.hasAccessibilityPermission() else {
             return errorJSON("Accessibility permission required.")
         }
-        // Normalize "focused" to nil — means use frontmost app
-        let appBundleId = (appBundleId == "focused" || appBundleId == "frontmost") ? nil : appBundleId
+        // Resolve app name → bundle ID
+        let appBundleId = resolveBundleId(appBundleId)
 
         AuditLog.log(.accessibility, "clickElement(role: \(role ?? "nil"), title: \(title ?? "nil"), value: \(value ?? "nil"), app: \(appBundleId ?? "nil"), timeout: \(timeout))")
 
