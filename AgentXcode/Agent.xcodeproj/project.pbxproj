@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 60;
+	objectVersion = 56;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -121,6 +121,7 @@
 		EA6EA3872F6E35CF003FDB6C /* send_message_input.json in Resources */ = {isa = PBXBuildFile; fileRef = EA6EA3822F6E35CF003FDB6C /* send_message_input.json */; };
 		EA70000000000000000001 /* SDEFService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA70000000000000000002 /* SDEFService.swift */; };
 		EA80000000000000000001 /* NSAppleScriptService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA80000000000000000002 /* NSAppleScriptService.swift */; };
+		EAA08AAC2F7D549300D5998A /* AgentLLM in Frameworks */ = {isa = PBXBuildFile; productRef = EAA08AAB2F7D549300D5998A /* AgentLLM */; };
 		EAAI000000000000000001 /* AppleIntelligenceMediator.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAAI000000000000000002 /* AppleIntelligenceMediator.swift */; };
 		EABA0FBD2F7B78DA005CCD6E /* ChatModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = EABA0FBC2F7B78DA005CCD6E /* ChatModels.swift */; };
 		EAE1E7032F7BF5270079432C /* AgentTerminalNeo in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7022F7BF5270079432C /* AgentTerminalNeo */; };
@@ -129,10 +130,10 @@
 		EAE1E70C2F7BF5780079432C /* AgentMCP in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E70B2F7BF5780079432C /* AgentMCP */; };
 		EAE1E7122F7BF6290079432C /* AgentD1F in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7112F7BF6290079432C /* AgentD1F */; };
 		EAE1E7152F7BF6880079432C /* AgentSwift in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7142F7BF6880079432C /* AgentSwift */; };
+		EAE1E7182F7BF6E70079432C /* XcodeScriptingBridge in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7172F7BF6E70079432C /* XcodeScriptingBridge */; };
 		EAE1E71B2F7BF7000079432C /* AgentAudit in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E71A2F7BF7000079432C /* AgentAudit */; };
 		EAE1E7222F7C00000079432C /* AgentLLM in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7212F7C00000079432C /* AgentLLM */; };
 		EAE1E7242F7C01000079432C /* LLMProviderSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAE1E7232F7C01000079432C /* LLMProviderSetup.swift */; };
-		EAE1E7182F7BF6E70079432C /* XcodeScriptingBridge in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7172F7BF6E70079432C /* XcodeScriptingBridge */; };
 		EAF3666F2F623D6A004B7E38 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = EAF3666E2F623D6A004B7E38 /* AppIcon.icon */; };
 		EAFA000000000000000001 /* FoundationModelService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAFA000000000000000002 /* FoundationModelService.swift */; };
 		EASP000000000000000001 /* SystemPromptService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EASP000000000000000002 /* SystemPromptService.swift */; };
@@ -340,14 +341,13 @@
 		EA70000000000000000002 /* SDEFService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDEFService.swift; sourceTree = "<group>"; };
 		EA80000000000000000002 /* NSAppleScriptService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NSAppleScriptService.swift; sourceTree = "<group>"; };
 		EAAI000000000000000002 /* AppleIntelligenceMediator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleIntelligenceMediator.swift; sourceTree = "<group>"; };
-		EAE1E7232F7C01000079432C /* LLMProviderSetup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMProviderSetup.swift; sourceTree = "<group>"; };
 		EABA0FBC2F7B78DA005CCD6E /* ChatModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModels.swift; sourceTree = "<group>"; };
+		EAE1E7232F7C01000079432C /* LLMProviderSetup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMProviderSetup.swift; sourceTree = "<group>"; };
 		EAF3666E2F623D6A004B7E38 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		EAFA000000000000000002 /* FoundationModelService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoundationModelService.swift; sourceTree = "<group>"; };
 		EASP000000000000000002 /* SystemPromptService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemPromptService.swift; sourceTree = "<group>"; };
 		EASP000000000000000004 /* SystemPromptEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemPromptEditor.swift; sourceTree = "<group>"; };
 		EATD000000000000000002 /* TrainingData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingData.swift; sourceTree = "<group>"; };
-		EE10000000000000000003 /* Agent-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Agent-Bridging-Header.h"; sourceTree = "<group>"; };
 		EF914BA393B97296A51A534F /* AgentViewModel+TabHandlers+Git.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Git.swift"; sourceTree = "<group>"; };
 		F03E40CE4E05384C443BA8A9 /* KeyboardShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardShortcuts.swift; sourceTree = "<group>"; };
 		F28CE82663AE42638CBF1E71 /* AccessibilityService+Interaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AccessibilityService+Interaction.swift"; sourceTree = "<group>"; };
@@ -379,6 +379,7 @@
 				EAE1E71B2F7BF7000079432C /* AgentAudit in Frameworks */,
 				EAE1E7152F7BF6880079432C /* AgentSwift in Frameworks */,
 				EAE1E7222F7C00000079432C /* AgentLLM in Frameworks */,
+				EAA08AAC2F7D549300D5998A /* AgentLLM in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -424,7 +425,6 @@
 				EADF39CB2F68BFD600CD01E5 /* Protocols */,
 				EADF39CA2F68BFC400CD01E5 /* Models */,
 				EADF39C72F68BF2100CD01E5 /* Views */,
-				EE10000000000000000010 /* ObjC */,
 				AA1000000000000000001A /* AgentApp.swift */,
 				EAE00000000000000001 /* UX */,
 				EA50J00000000000001 /* JSON */,
@@ -702,14 +702,6 @@
 			path = Sound;
 			sourceTree = "<group>";
 		};
-		EE10000000000000000010 /* ObjC */ = {
-			isa = PBXGroup;
-			children = (
-				EE10000000000000000003 /* Agent-Bridging-Header.h */,
-			);
-			path = ObjC;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -743,6 +735,7 @@
 				EAE1E7142F7BF6880079432C /* AgentSwift */,
 				EAE1E7172F7BF6E70079432C /* XcodeScriptingBridge */,
 				EAE1E7212F7C00000079432C /* AgentLLM */,
+				EAA08AAB2F7D549300D5998A /* AgentLLM */,
 			);
 			productName = Agent;
 			productReference = AA10000000000000000024 /* Agent!.app */;
@@ -825,7 +818,7 @@
 				EAE1E7132F7BF6880079432C /* XCRemoteSwiftPackageReference "AgentSwift" */,
 				EAE1E7162F7BF6E70079432C /* XCRemoteSwiftPackageReference "AgentEventBridges" */,
 				EAE1E7192F7BF7000079432C /* XCRemoteSwiftPackageReference "AgentAudit" */,
-				EAE1E7202F7C00000079432C /* XCLocalSwiftPackageReference "../AgentLLM" */,
+				EAA08AAA2F7D549300D5998A /* XCRemoteSwiftPackageReference "AgentLLM" */,
 			);
 			productRefGroup = AA10000000000000000042 /* Products */;
 			projectDirPath = "";
@@ -1234,7 +1227,6 @@
 				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = YES;
 				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "Agent/ObjC/Agent-Bridging-Header.h";
 				SWIFT_VERSION = 6.2;
 			};
 			name = Debug;
@@ -1303,7 +1295,6 @@
 				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = YES;
 				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "Agent/ObjC/Agent-Bridging-Header.h";
 				SWIFT_VERSION = 6.2;
 			};
 			name = Release;
@@ -1459,6 +1450,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		EAA08AAA2F7D549300D5998A /* XCRemoteSwiftPackageReference "AgentLLM" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/macOS26/AgentLLM.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
 		EAE1E7012F7BF5270079432C /* XCRemoteSwiftPackageReference "AgentTerminalNeo" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/macOS26/AgentTerminalNeo.git";
@@ -1526,6 +1525,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		EAA08AAB2F7D549300D5998A /* AgentLLM */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EAA08AAA2F7D549300D5998A /* XCRemoteSwiftPackageReference "AgentLLM" */;
+			productName = AgentLLM;
+		};
 		EAE1E7022F7BF5270079432C /* AgentTerminalNeo */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = EAE1E7012F7BF5270079432C /* XCRemoteSwiftPackageReference "AgentTerminalNeo" */;
@@ -1571,13 +1575,6 @@
 			productName = AgentLLM;
 		};
 /* End XCSwiftPackageProductDependency section */
-
-/* Begin XCLocalSwiftPackageReference section */
-		EAE1E7202F7C00000079432C /* XCLocalSwiftPackageReference "../AgentLLM" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ../AgentLLM;
-		};
-/* End XCLocalSwiftPackageReference section */
 	};
 	rootObject = AA10000000000000000000 /* Project object */;
 }
