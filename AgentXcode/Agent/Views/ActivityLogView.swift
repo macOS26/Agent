@@ -63,12 +63,15 @@ struct ActivityLogView: NSViewRepresentable {
         coord.latestTabID = tabID
         if tabChanged {
             coord.forceTabSwitch = true
-            // Snap + fade immediately
-            coord.snapToEnd(scrollView.documentView as! NSTextView)
+            // Hide, snap at 100ms, fade in
             coord.latestTextView?.alphaValue = 0
-            NSAnimationContext.runAnimationGroup { ctx in
-                ctx.duration = 0.2
-                coord.latestTextView?.animator().alphaValue = 1
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak coord] in
+                guard let coord, let tv = coord.latestTextView else { return }
+                coord.snapToEnd(tv)
+                NSAnimationContext.runAnimationGroup { ctx in
+                    ctx.duration = 0.2
+                    tv.animator().alphaValue = 1
+                }
             }
         }
         coord.latestSearchText = searchText
