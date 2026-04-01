@@ -14,7 +14,6 @@
 
 [Download](https://github.com/macOS26/Agent/releases) | [Website](https://agent.macos26.com) | [Technical Docs](TECHNICAL.md) | [Comparisons](COMPARISON.md)
 
-<img width="989" height="1236" alt="image" src="https://github.com/user-attachments/assets/fb801e8e-8cf5-4f84-85e4-a9e4e406bc1d" />
 
 </div>
 
