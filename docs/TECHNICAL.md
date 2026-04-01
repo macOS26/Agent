@@ -1,10 +1,12 @@
+[< Back to README](../README.md)
+
 <img width="107" height="107" alt="Agent! Agentic AI for the rest of us only on  macOS Desktop" src="https://github.com/user-attachments/assets/245b3612-c354-4177-a500-3ee4f22a5111" />
 
 # Agent! for macOS26
 
 [![Swift 6.2](https://img.shields.io/badge/Swift-6.2-blue.svg)](https://swift.org)
 [![Website](https://img.shields.io/badge/website-macos26.app-blue.svg)](https://macos26.app)
-[![Version](https://img.shields.io/badge/version-1.0.20-blue.svg)](https://github.com/macOS26/Agent)
+[![Version](https://img.shields.io/badge/version-latest-blue.svg)](https://github.com/macOS26/Agent)
 [![GitHub downloads](https://img.shields.io/github/downloads/macOS26/Agent/total.svg)](https://github.com/macOS26/Agent/releases)
 [![GitHub stars](https://img.shields.io/github/stars/macOS26/Agent.svg?style=social)](https://github.com/macOS26/Agent/stargazers)
 
@@ -17,7 +19,7 @@
 ## 🧠 Agentic AI for the  Mac Desktop 
 Agent! is the result of 27 years of Mac automation experience — from FaceSpan and AppleScript on macOS 9 through AppleScript Studio, AppleScript-ObjC, and now Swift. It connects LLMs to Apple Events, ScriptingBridge, Accessibility APIs, and XPC services for native macOS control.
 
-Now with Apple Intelligence supporting 8 LLM providers.
+Now with Apple Intelligence supporting 10 LLM providers.
 
 ### Apple Intelligence Mediator
 
@@ -86,7 +88,7 @@ The privileged daemon requires explicit approval because it runs with root privi
 
 ### 5. Configure Your Provider
 
-Click the **gear icon** (⚙️) to open Settings and configure one of the 8 supported providers:
+Click the **gear icon** (⚙️) to open Settings and configure one of the 10 supported providers:
 
 <details>
 <summary>Supported Providers (Click to expand)</summary>
@@ -126,8 +128,6 @@ Agent! implements a comprehensive security model based on Apple's recommended pa
 
 ### Dual Privilege Model
 
-### Dual Privilege Model
-
 <details>
 <summary>Privilege Model Details (Click to expand)</summary>
 
@@ -148,15 +148,15 @@ The AI defaults to **user-level execution** and only uses the privileged daemon 
 
 | Component | TCC Grants |
 |-----------|------------|
-| `run_agent_script`, `apple_event_query`, TCC shell commands | **ALL** (Accessibility, Screen Recording, Automation) |
+| `run_agent_script`, `applescript_tool`, TCC shell commands | **ALL** (Accessibility, Screen Recording, Automation) |
 | `execute_user_command` (LaunchAgent) | **None** |
 | `execute_command` (root) | **Separate context** |
 
-**Rule:** Use `run_agent_script` or `apple_event_query` for Accessibility/Automation tasks, not shell commands.
+**Rule:** Use `run_agent_script` or `applescript_tool` for Accessibility/Automation tasks, not shell commands.
 
 #### Write Protection
 
-- `apple_event_query` blocks destructive operations (`delete`, `close`, `move`, `quit`) by default
+- `applescript_tool` blocks destructive operations (`delete`, `close`, `move`, `quit`) by default
 - The AI must explicitly set `allow_writes: true` to permit them
 - This prevents accidental data loss from misinterpreted commands
 
@@ -313,7 +313,7 @@ Execution contexts:
 | Priority | Tool | Best For |
 |----------|------|----------|
 | 1 | `run_agent_script` | Complex automation (full TCC) |
-| 2 | `apple_event_query` | Reading app data (instant, zero compilation) |
+| 2 | `applescript_tool` | Reading app data and AppleScript automation |
 | 3 | `execute_shell_command` (TCC) | Quick one-off AppleScript commands |
 | 4 | Accessibility tools | UI inspection and interaction |
 
@@ -583,7 +583,7 @@ The D1F package lives in the project folder as a local Swift package dependency,
 
 ### Dynamic Apple Event Queries
 
-Agent includes an `apple_event_query` tool that lets the AI query any scriptable Mac app **instantly — with zero compilation**. It uses Objective-C dynamic dispatch to walk an app's Apple Event object graph at runtime.
+Agent includes an `applescript_tool` tool that lets the AI query any scriptable Mac app **instantly — with zero compilation**. It uses Objective-C dynamic dispatch to walk an app's Apple Event object graph at runtime.
 
 | Operation | Description | Example |
 |-----------|-------------|---------|

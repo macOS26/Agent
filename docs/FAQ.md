@@ -1,3 +1,5 @@
+[< Back to README](../README.md)
+
 # Frequently Asked Questions
 
 ## General Questions
@@ -62,9 +64,9 @@ All root operations require explicit user-initiated tasks. The helper does not a
 
 ### What about the "Fabricated Security Features" claim?
 
-**Claim:** "SECURITY.md claims `apple_event_query` blocks destructive operations, but the code has no filtering logic."
+**Claim:** "SECURITY.md claims `applescript_tool` blocks destructive operations, but the code has no filtering logic."
 
-**Reality:** The write protection is implemented as a *parameter constraint* in the tool definition sent to the LLM, not as runtime filtering. When the LLM calls `apple_event_query`, the default behavior prevents destructive actions unless explicitly overridden.
+**Reality:** The write protection is implemented as a *parameter constraint* in the tool definition sent to the LLM, not as runtime filtering. When the LLM calls `applescript_tool`, the default behavior prevents destructive actions unless explicitly overridden.
 
 The design philosophy is:
 1. The LLM receives tool definitions with safe defaults
@@ -219,7 +221,7 @@ No. Agent! does not access your passwords, keychain items, or sensitive authenti
 
 ## More Information
 
-- [README.md](README.md) -- Quick start and overview
+- [README.md](../README.md) -- Quick start and overview
 - [TECHNICAL.md](TECHNICAL.md) -- Architecture and developer details
 - [SECURITY.md](SECURITY.md) -- Security model and entitlements
 - [COMPARISON.md](COMPARISON.md) -- Comparisons with similar tools
