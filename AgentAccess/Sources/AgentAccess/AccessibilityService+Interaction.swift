@@ -265,7 +265,15 @@ extension AccessibilityService {
             return errorJSON("Element not enabled after \(enableTimeout)s — may still be loading")
         }
 
-        // AXorcist: Element.click() — handles centering automatically
+        // AXorcist: prefer AXPress (works without frame), fall back to Element.click()
+        if found.isActionSupported("AXPress") {
+            do {
+                try found.performAction("AXPress")
+                return successJSON(["message": "Clicked element (AXPress)", "role": found.role() ?? "Unknown", "title": found.title() ?? "", "description": found.descriptionText() ?? ""])
+            } catch {
+                // Fall through to Element.click()
+            }
+        }
         do {
             try found.click()
             return successJSON(["message": "Clicked element", "role": found.role() ?? "Unknown", "title": found.title() ?? "", "description": found.descriptionText() ?? ""])
