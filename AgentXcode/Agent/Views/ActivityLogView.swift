@@ -260,6 +260,8 @@ struct ActivityLogView: NSViewRepresentable {
                             scrollView.reflectScrolledClipView(scrollView.contentView)
                         }
                     } else {
+                        CATransaction.begin()
+                        CATransaction.setDisableActions(true)
                         textView.textStorage?.beginEditing()
                         textView.textStorage?.append(renderMarkdownOnly(newText))
                         // Trim from top if textStorage exceeds cap
@@ -279,6 +281,7 @@ struct ActivityLogView: NSViewRepresentable {
                             storage.insert(banner, at: 0)
                         }
                         textView.textStorage?.endEditing()
+                        CATransaction.commit()
                         lastLength = len
                         lastRenderedText = text
                     }
