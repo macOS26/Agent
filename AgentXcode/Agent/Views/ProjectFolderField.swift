@@ -54,8 +54,7 @@ private struct PathTextField: NSViewRepresentable {
     }
 
     func updateNSView(_ tf: FocusAwareTextField, context: Context) {
-        // Only update when NOT actively editing to avoid cursor jumps
-        if tf.currentEditor() == nil && tf.stringValue != text {
+        if tf.stringValue != text {
             tf.stringValue = text
         }
     }
