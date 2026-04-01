@@ -45,7 +45,7 @@ final class SystemPromptService {
     private static let readOnlyPrefix = "// Agent! READ ONLY v"
 
     /// Bump this when system prompt content changes to force re-sync of saved prompts.
-    private static let promptRevision = "36"
+    private static let promptRevision = "37"
 
     /// Combined version: app version + prompt revision. Change in either triggers re-sync.
     private static let appVersion: String = {
