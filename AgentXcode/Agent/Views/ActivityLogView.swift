@@ -63,13 +63,18 @@ struct ActivityLogView: NSViewRepresentable {
         coord.latestTabID = tabID
         if tabChanged {
             coord.forceTabSwitch = true
-            // Guaranteed scroll-to-bottom after render settles — fires after scheduleRender's work
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak coord] in
-                guard let coord, let tv = coord.latestTextView, let sv = coord.latestScrollView else { return }
-                tv.layoutManager?.ensureLayout(for: tv.textContainer!)
-                tv.scrollToEndOfDocument(nil)
-                sv.reflectScrolledClipView(sv.contentView)
-                coord.userIsAtBottom = true
+            // Multiple scroll passes — NSTextTable layout can take time
+            for delay in [0.05, 0.15, 0.3] {
+                DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak coord] in
+                    guard let coord, let tv = coord.latestTextView, let sv = coord.latestScrollView else { return }
+                    tv.layoutManager?.ensureLayout(for: tv.textContainer!)
+                    let contentH = tv.frame.height
+                    let clipH = sv.contentView.bounds.height
+                    let targetY = max(0, contentH - clipH)
+                    sv.contentView.scroll(to: NSPoint(x: 0, y: targetY))
+                    sv.reflectScrolledClipView(sv.contentView)
+                    coord.userIsAtBottom = true
+                }
             }
         }
         coord.latestSearchText = searchText
