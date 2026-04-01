@@ -290,12 +290,21 @@ extension AgentViewModel {
                 .sorted { $0.name < $1.name }
             let builtIn = enabledTools.map { tool -> String in
                 if let actionProp = tool.properties["action"],
-                   let desc = actionProp["description"] as? String,
-                   desc.lowercased().contains("action:") {
-                    let parts = desc.components(separatedBy: "Action:")
-                    if parts.count > 1 {
-                        let actions = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
-                        return "\(tool.name) (actions: \(actions))"
+                   let desc = actionProp["description"] as? String {
+                    // Extract action names from description
+                    // Handles "Action: x, y, z" and "START with open_app. Then: click, ..." formats
+                    if desc.lowercased().contains("action:") {
+                        let parts = desc.components(separatedBy: "Action:")
+                        if parts.count > 1 {
+                            let actions = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
+                            return "\(tool.name) (actions: \(actions))"
+                        }
+                    }
+                    // Fallback: extract comma-separated words after "Then:" or first sentence
+                    if let range = desc.range(of: "START with ") ?? desc.range(of: "Common: ") {
+                        let after = String(desc[range.upperBound...])
+                        let trimmed = after.components(separatedBy: "]").first ?? after
+                        return "\(tool.name) (actions: \(trimmed.prefix(200)))"
                     }
                 }
                 return tool.name
