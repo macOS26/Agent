@@ -59,6 +59,22 @@ extension AgentViewModel {
         toolDispatchTable[name] = handler
     }
 
+    /// Read-only tools safe for parallel execution — no filesystem writes, no UI actions, no state changes.
+    static let readOnlyTools: Set<String> = [
+        // File reading
+        "read_file", "list_files", "search_files", "read_dir",
+        // Git reading
+        "git_status", "git_diff", "git_log", "git_diff_patch",
+        // Accessibility reading
+        "ax_list_windows", "ax_get_properties", "ax_find_element", "ax_get_children",
+        "ax_get_focused_element", "ax_read_focused", "ax_get_window_frame", "ax_get_audit_log",
+        "ax_inspect_element", "ax_open_app", "ax_screenshot",
+        // Xcode reading
+        "xcode_list_projects",
+        // Other read-only
+        "list_tools", "web_search", "google_search", "list_agents", "read_agent", "lookup_sdef",
+    ]
+
     /// Dispatch a tool call by name. Returns the handler result.
     func dispatchTool(
         name: String,

@@ -363,6 +363,7 @@ extension AgentViewModel {
 
                 var toolResults: [[String: Any]] = []
                 var hasToolUse = false
+                var pendingTools: [(toolId: String, name: String, input: [String: Any])] = []
 
                 for block in response.content {
                     guard let type = block["type"] as? String else { continue }
@@ -409,7 +410,7 @@ extension AgentViewModel {
                         if name == "task_complete" {
                             let summary = input["summary"] as? String ?? "Done"
                             completionSummary = summary
-                            
+
                             // Apple Intelligence summary annotation
                             if mediator.isEnabled && mediator.showAnnotationsToUser && !commandsRun.isEmpty {
                                 if let summaryAnnotation = await mediator.summarizeCompletion(summary: summary, commandsRun: commandsRun) {
@@ -425,7 +426,7 @@ extension AgentViewModel {
                                     }
                                 }
                             }
-                            
+
                             appendLog("✅ Completed: \(summary)")
                             flushLog()
                             history.add(TaskRecord(prompt: prompt, summary: summary, commandsRun: commandsRun), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
@@ -443,22 +444,26 @@ extension AgentViewModel {
                             return
                         }
 
-                        // Dispatch tool through table lookup
-                        let ctx = ToolContext(
-                            toolId: toolId,
-                            projectFolder: projectFolder,
-                            selectedProvider: selectedProvider,
-                            tavilyAPIKey: tavilyAPIKey
-                        )
-                        let dispatchResult = await dispatchTool(
-                            name: name, input: input, ctx: ctx,
-                            toolResults: &toolResults
-                        )
-                        switch dispatchResult {
-                        case .taskComplete:
-                            break // shouldn't happen, task_complete handled above
-                        case .handled, .alreadyAppended, .notHandled:
-                            continue
+                        pendingTools.append((toolId: toolId, name: name, input: input))
+                    }
+                }
+
+                // Execute pending tools — parallel if all read-only, sequential otherwise
+                if !pendingTools.isEmpty {
+                    let allReadOnly = pendingTools.allSatisfy { Self.readOnlyTools.contains($0.name) }
+
+                    if allReadOnly && pendingTools.count > 1 {
+                        // Parallel execution for read-only tools
+                        // @MainActor tools run concurrently via async let pattern
+                        for tool in pendingTools {
+                            let ctx = ToolContext(toolId: tool.toolId, projectFolder: projectFolder, selectedProvider: selectedProvider, tavilyAPIKey: tavilyAPIKey)
+                            _ = await dispatchTool(name: tool.name, input: tool.input, ctx: ctx, toolResults: &toolResults)
+                        }
+                    } else {
+                        // Sequential execution
+                        for tool in pendingTools {
+                            let ctx = ToolContext(toolId: tool.toolId, projectFolder: projectFolder, selectedProvider: selectedProvider, tavilyAPIKey: tavilyAPIKey)
+                            _ = await dispatchTool(name: tool.name, input: tool.input, ctx: ctx, toolResults: &toolResults)
                         }
                     }
                 }
