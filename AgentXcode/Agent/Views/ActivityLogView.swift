@@ -63,12 +63,16 @@ struct ActivityLogView: NSViewRepresentable {
         coord.latestTabID = tabID
         if tabChanged {
             coord.forceTabSwitch = true
-            // Triple pass smooth scroll — ensures layout settles for NSTextTable content
-            for delay in [0.05, 0.1, 0.15] {
+            // Silent snaps while layout settles, then one smooth scroll
+            for delay in [0.05, 0.1] {
                 DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak coord] in
                     guard let coord, let tv = coord.latestTextView else { return }
-                    coord.smoothScrollToEnd(tv)
+                    coord.snapToEnd(tv)
                 }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak coord] in
+                guard let coord, let tv = coord.latestTextView else { return }
+                coord.smoothScrollToEnd(tv)
             }
         }
         coord.latestSearchText = searchText
@@ -403,8 +407,8 @@ struct ActivityLogView: NSViewRepresentable {
             return (contentHeight - visibleBottom) < 300
         }
 
-        /// Instant scroll to end — no animation (used for tab switches)
-        private func snapToEnd(_ textView: NSTextView) {
+        /// Instant scroll to end — no animation
+        func snapToEnd(_ textView: NSTextView) {
             guard let scrollView = textView.enclosingScrollView,
                   let textContainer = textView.textContainer else {
                 textView.scrollToEndOfDocument(nil)
