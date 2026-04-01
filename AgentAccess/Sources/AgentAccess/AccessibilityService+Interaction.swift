@@ -242,51 +242,74 @@ extension AccessibilityService {
 
         AuditLog.log(.accessibility, "clickElement(role: \(role ?? "nil"), title: \(title ?? "nil"), value: \(value ?? "nil"), app: \(appBundleId ?? "nil"), timeout: \(timeout))")
 
-        // AXorcist: activate the target app first so it's frontmost
-        if let bundleId = appBundleId,
-           let app = RunningApplicationHelper.applications(withBundleIdentifier: bundleId).first,
-           let appElement = Element.application(for: app) {
-            _ = appElement.activate()
-            Thread.sleep(forTimeInterval: 0.1)
-        }
-
-        // Use AXorcist PerformActionCommand — atomic find + press in one operation
-        var criteria: [Criterion] = []
-        if let role = role { criteria.append(Criterion(attribute: "AXRole", value: role)) }
-        if let value = value { criteria.append(Criterion(attribute: "AXValue", value: value, matchType: .contains)) }
-
-        if criteria.isEmpty && title == nil {
+        if role == nil && title == nil && value == nil {
             return errorJSON("No search criteria provided")
         }
 
-        let locator = Locator(matchAll: true, criteria: criteria, computedNameContains: title)
-        let cmd = PerformActionCommand(appIdentifier: appBundleId, locator: locator, action: AXAction.press.rawValue, maxDepthForSearch: 100)
-        let envelope = AXCommandEnvelope(commandID: UUID().uuidString, command: .performAction(cmd))
-        let response = AXorcist.shared.runCommand(envelope)
+        // Step 1: Get the app element via AXorcist
+        let appElement: Element?
+        if let bundleId = appBundleId,
+           let app = RunningApplicationHelper.applications(withBundleIdentifier: bundleId).first {
+            appElement = Element.application(for: app)
+            // Activate app so it's frontmost
+            _ = appElement?.activate()
+        } else {
+            appElement = Element.focusedApplication()
+        }
 
-        switch response {
-        case .success:
-            return successJSON(["message": "Clicked element (AXPress via AXorcist command)"])
-        case .error(let message, _, _):
-            // Fallback: find element ourselves and try click at position
-            if let found = findAXElement(role: role, title: title, value: value, appBundleId: appBundleId) {
-                // Wait for enabled
-                let enableStart = Date()
-                while found.isEnabled() == false, Date().timeIntervalSince(enableStart) < 5.0 {
-                    Thread.sleep(forTimeInterval: 0.2)
-                }
-                // Try position-based click via AXorcist InputDriver
-                if let pos = found.position(), let sz = found.size() {
-                    let center = CGPoint(x: pos.x + sz.width / 2, y: pos.y + sz.height / 2)
-                    do {
-                        try InputDriver.click(at: center)
-                        return successJSON(["message": "Clicked element at center", "x": center.x, "y": center.y])
-                    } catch {
-                        return errorJSON("Click failed: \(error.localizedDescription)")
-                    }
+        guard let root = appElement else {
+            return errorJSON("Could not get app element for \(appBundleId ?? "frontmost")")
+        }
+
+        // Step 2: Search the app's element tree for the target element
+        var found: Element?
+        let startTime = Date()
+        while Date().timeIntervalSince(startTime) < timeout {
+            // Use AXorcist Element.findElements to search by role/title/value
+            let results = root.findElements(role: role, title: title, label: nil, value: value, identifier: nil, maxDepth: 20)
+            if let match = results.first {
+                found = match
+                break
+            }
+            // Fallback: fuzzy search by title across description/help/placeholder
+            if let title = title {
+                var options = ElementSearchOptions()
+                options.maxDepth = 20
+                options.caseInsensitive = true
+                if let role = role { options.includeRoles = [role] }
+                if let match = root.findElement(matching: title, options: options) {
+                    found = match
+                    break
                 }
             }
-            return errorJSON("Click failed: \(message)")
+            Thread.sleep(forTimeInterval: 0.3)
+        }
+
+        guard let element = found else {
+            return errorJSON("Element not found in \(appBundleId ?? "frontmost app"): role=\(role ?? "any"), title=\(title ?? "any")")
+        }
+
+        // Step 3: Wait for element to be enabled
+        let enableStart = Date()
+        while element.isEnabled() == false, Date().timeIntervalSince(enableStart) < 5.0 {
+            Thread.sleep(forTimeInterval: 0.2)
+        }
+
+        // Step 4: Press the element via AXorcist
+        do {
+            try element.performAction(.press)
+            return successJSON(["message": "Clicked element", "element": elementProperties(element)])
+        } catch {
+            // Fallback: click at center if element has a valid frame
+            if let frame = element.frame(), frame.width > 0, frame.height > 0 {
+                do {
+                    try InputDriver.click(at: CGPoint(x: frame.midX, y: frame.midY))
+                    return successJSON(["message": "Clicked at element center", "x": frame.midX, "y": frame.midY, "element": elementProperties(element)])
+                } catch {
+                    return errorJSON("Click failed: \(error.localizedDescription)")
+                }
+            }
+            return errorJSON("AXPress failed and element has no frame: \(error.localizedDescription)")
         }
     }
 
