@@ -131,12 +131,11 @@
 		EAE1E7152F7BF6880079432C /* AgentSwift in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7142F7BF6880079432C /* AgentSwift */; };
 		EAE1E71B2F7BF7000079432C /* AgentAudit in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E71A2F7BF7000079432C /* AgentAudit */; };
 		EAE1E7222F7C00000079432C /* AgentLLM in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7212F7C00000079432C /* AgentLLM */; };
+		EAE1E7242F7C01000079432C /* LLMProviderSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAE1E7232F7C01000079432C /* LLMProviderSetup.swift */; };
 		EAE1E7182F7BF6E70079432C /* XcodeScriptingBridge in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7172F7BF6E70079432C /* XcodeScriptingBridge */; };
 		EAF3666F2F623D6A004B7E38 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = EAF3666E2F623D6A004B7E38 /* AppIcon.icon */; };
 		EAFA000000000000000001 /* FoundationModelService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAFA000000000000000002 /* FoundationModelService.swift */; };
 		EASP000000000000000001 /* SystemPromptService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EASP000000000000000002 /* SystemPromptService.swift */; };
-ttttEAE1E7232F7C01000079432C /* LLMProviderSetup.swift */,
-ttttEAE1E7242F7C01000079432C /* LLMProviderSetup.swift in Sources */,
 		EASP000000000000000003 /* SystemPromptEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = EASP000000000000000004 /* SystemPromptEditor.swift */; };
 		EATD000000000000000001 /* TrainingData.swift in Sources */ = {isa = PBXBuildFile; fileRef = EATD000000000000000002 /* TrainingData.swift */; };
 		F035BAFA78E9DDFDF6DD5A1C /* TaskBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4128E21FF13BC4029D6548B /* TaskBannerView.swift */; };
@@ -151,7 +150,6 @@ ttttEAE1E7242F7C01000079432C /* LLMProviderSetup.swift in Sources */,
 		WEB1000000000000000003 /* WebAutomationService+Navigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = WEB1000000000000000004 /* WebAutomationService+Navigation.swift */; };
 		WEB1000000000000000005 /* WebAutomationService+Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = WEB1000000000000000006 /* WebAutomationService+Utilities.swift */; };
 		WEB1000000000000000007 /* WebAutomationService+Search.swift in Sources */ = {isa = PBXBuildFile; fileRef = WEB1000000000000000008 /* WebAutomationService+Search.swift */; };
-ttEAE1E7242F7C01000079432C /* LLMProviderSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAE1E7232F7C01000079432C /* LLMProviderSetup.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -342,11 +340,11 @@ ttEAE1E7242F7C01000079432C /* LLMProviderSetup.swift in Sources */ = {isa = PBXB
 		EA70000000000000000002 /* SDEFService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDEFService.swift; sourceTree = "<group>"; };
 		EA80000000000000000002 /* NSAppleScriptService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NSAppleScriptService.swift; sourceTree = "<group>"; };
 		EAAI000000000000000002 /* AppleIntelligenceMediator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleIntelligenceMediator.swift; sourceTree = "<group>"; };
+		EAE1E7232F7C01000079432C /* LLMProviderSetup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMProviderSetup.swift; sourceTree = "<group>"; };
 		EABA0FBC2F7B78DA005CCD6E /* ChatModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModels.swift; sourceTree = "<group>"; };
 		EAF3666E2F623D6A004B7E38 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		EAFA000000000000000002 /* FoundationModelService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoundationModelService.swift; sourceTree = "<group>"; };
 		EASP000000000000000002 /* SystemPromptService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemPromptService.swift; sourceTree = "<group>"; };
-ttttEAE1E7232F7C01000079432C /* LLMProviderSetup.swift */,
 		EASP000000000000000004 /* SystemPromptEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemPromptEditor.swift; sourceTree = "<group>"; };
 		EATD000000000000000002 /* TrainingData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingData.swift; sourceTree = "<group>"; };
 		EE10000000000000000003 /* Agent-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Agent-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -364,7 +362,6 @@ ttttEAE1E7232F7C01000079432C /* LLMProviderSetup.swift */,
 		WEB1000000000000000004 /* WebAutomationService+Navigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WebAutomationService+Navigation.swift"; sourceTree = "<group>"; };
 		WEB1000000000000000006 /* WebAutomationService+Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WebAutomationService+Utilities.swift"; sourceTree = "<group>"; };
 		WEB1000000000000000008 /* WebAutomationService+Search.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WebAutomationService+Search.swift"; sourceTree = "<group>"; };
-ttEAE1E7232F7C01000079432C /* LLMProviderSetup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMProviderSetup.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -541,11 +538,11 @@ ttEAE1E7232F7C01000079432C /* LLMProviderSetup.swift */ = {isa = PBXFileReferenc
 				EA80000000000000000002 /* NSAppleScriptService.swift */,
 				EA70000000000000000002 /* SDEFService.swift */,
 				EAFA000000000000000002 /* FoundationModelService.swift */,
+				EAE1E7232F7C01000079432C /* LLMProviderSetup.swift */,
 				A3804F32B8914764A3690CB5 /* TokenUsageStore.swift */,
 				CDB8327F7EE04EFBB6153380 /* MemoryStore.swift */,
 				EAAI000000000000000002 /* AppleIntelligenceMediator.swift */,
 				EASP000000000000000002 /* SystemPromptService.swift */,
-ttttEAE1E7232F7C01000079432C /* LLMProviderSetup.swift */,
 				AA100000000000000000B0 /* SoundPlayerService.swift */,
 				AA100000000000000000B4 /* ToolPreferencesService.swift */,
 				1E185ABB626D6FCD3D74523A /* DiffStore.swift */,
@@ -912,12 +909,11 @@ ttttEAE1E7232F7C01000079432C /* LLMProviderSetup.swift */,
 				EA80000000000000000001 /* NSAppleScriptService.swift in Sources */,
 				EA70000000000000000001 /* SDEFService.swift in Sources */,
 				EAFA000000000000000001 /* FoundationModelService.swift in Sources */,
+				EAE1E7242F7C01000079432C /* LLMProviderSetup.swift in Sources */,
 				23D4A25EAF30497598063A0D /* TokenUsageStore.swift in Sources */,
 				5A9DE31CE50141059B14FAA9 /* MemoryStore.swift in Sources */,
 				EAAI000000000000000001 /* AppleIntelligenceMediator.swift in Sources */,
 				EASP000000000000000001 /* SystemPromptService.swift in Sources */,
-ttttEAE1E7232F7C01000079432C /* LLMProviderSetup.swift */,
-ttttEAE1E7242F7C01000079432C /* LLMProviderSetup.swift in Sources */,
 				EASP000000000000000003 /* SystemPromptEditor.swift in Sources */,
 				AA100000000000000000B1 /* SoundPlayerService.swift in Sources */,
 				AA100000000000000000B5 /* ToolPreferencesService.swift in Sources */,
