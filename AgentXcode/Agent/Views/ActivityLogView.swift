@@ -63,18 +63,27 @@ struct ActivityLogView: NSViewRepresentable {
         coord.latestTabID = tabID
         if tabChanged {
             coord.forceTabSwitch = true
-            // Multiple scroll passes — NSTextTable layout can take time
-            for delay in [0.05, 0.15, 0.3] {
+            coord.latestTextView?.alphaValue = 0
+            // Scroll passes while hidden — show after layout settles
+            for delay in [0.05, 0.15] {
                 DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak coord] in
                     guard let coord, let tv = coord.latestTextView, let sv = coord.latestScrollView else { return }
                     tv.layoutManager?.ensureLayout(for: tv.textContainer!)
-                    let contentH = tv.frame.height
-                    let clipH = sv.contentView.bounds.height
-                    let targetY = max(0, contentH - clipH)
+                    let targetY = max(0, tv.frame.height - sv.contentView.bounds.height)
                     sv.contentView.scroll(to: NSPoint(x: 0, y: targetY))
                     sv.reflectScrolledClipView(sv.contentView)
                     coord.userIsAtBottom = true
                 }
+            }
+            // Final pass — show the view
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak coord] in
+                guard let coord, let tv = coord.latestTextView, let sv = coord.latestScrollView else { return }
+                tv.layoutManager?.ensureLayout(for: tv.textContainer!)
+                let targetY = max(0, tv.frame.height - sv.contentView.bounds.height)
+                sv.contentView.scroll(to: NSPoint(x: 0, y: targetY))
+                sv.reflectScrolledClipView(sv.contentView)
+                coord.userIsAtBottom = true
+                tv.alphaValue = 1
             }
         }
         coord.latestSearchText = searchText
