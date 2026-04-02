@@ -160,6 +160,9 @@ extension AgentViewModel {
         case "write_file":
             let path = input["file_path"] as? String ?? ""
             let content = input["content"] as? String ?? ""
+            // Back up before overwriting
+            let tabID = selectedTabId ?? Self.mainTabBackupID
+            FileBackupService.shared.backup(filePath: path, tabID: tabID)
             let url = URL(fileURLWithPath: path)
             try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
             do { try content.write(to: url, atomically: true, encoding: .utf8); return "Wrote \(path)" }
@@ -174,6 +177,9 @@ extension AgentViewModel {
             guard old != new else { return "Error: old_string and new_string are identical" }
             guard let data = FileManager.default.contents(atPath: path),
                   let content = String(data: data, encoding: .utf8) else { return "Error: cannot read \(path)" }
+            // Back up before editing
+            let tabID = selectedTabId ?? Self.mainTabBackupID
+            FileBackupService.shared.backup(filePath: path, tabID: tabID)
 
             let occurrences = content.components(separatedBy: old).count - 1
             if occurrences == 0 {
@@ -881,6 +887,8 @@ extension AgentViewModel {
         // diff_and_apply
         case "diff_and_apply":
             let fp = input["file_path"] as? String ?? ""
+            // Back up before diff_and_apply
+            FileBackupService.shared.backup(filePath: fp, tabID: selectedTabId ?? Self.mainTabBackupID)
             let dest = input["destination"] as? String ?? ""
             let source = input["source"] as? String
             let startLine = input["start_line"] as? Int
