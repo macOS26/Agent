@@ -9,6 +9,8 @@
 ## No Electron, No Node, No NPM, Native Mac App, 100% Swift
 
 [![Latest Release](https://img.shields.io/github/v/release/macOS26/Agent?label=Download&color=blue&style=for-the-badge)](https://github.com/macOS26/Agent/releases/latest)
+[![GitHub Stars](https://img.shields.io/github/stars/macOS26/Agent?style=for-the-badge&logo=github&label=Stars&color=gold)](https://github.com/macOS26/Agent/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/macOS26/Agent?style=for-the-badge&logo=github&label=Forks&color=blue)](https://github.com/macOS26/Agent/fork)
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B-black?style=for-the-badge)](https://github.com/apple)
 [![Swift](https://img.shields.io/badge/Swift-5.9-orange?style=for-the-badge&logo=swift)](https://github.com/apple/swift)
 [![MIT License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
