@@ -9,9 +9,9 @@
 ## No Electron, No Node, No NPM, Native Mac App, 100% Swift
 
 [![Latest Release](https://img.shields.io/github/v/release/macOS26/Agent?label=Download&color=blue&style=for-the-badge)](https://github.com/macOS26/Agent/releases/latest)
-[![macOS 26+](https://img.shields.io/badge/macOS-26%2B-black?style=flat-square)](https://github.com/apple)
-[![Swift](https://img.shields.io/badge/Swift-5.9-orange?style=flat-square&logo=swift)](https://github.com/apple/swift)
-[![MIT License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+[![macOS 26+](https://img.shields.io/badge/macOS-26%2B-black?style=for-the-badge)](https://github.com/apple)
+[![Swift](https://img.shields.io/badge/Swift-5.9-orange?style=for-the-badge&logo=swift)](https://github.com/apple/swift)
+[![MIT License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 A native macOS AI agent that controls your apps, writes code, automates workflows, and runs tasks from your iPhone via iMessage -- all powered by the AI provider of your choice.
 
