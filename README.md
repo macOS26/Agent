@@ -141,12 +141,12 @@ Take screenshots or paste images. Vision-capable AI models analyze what they see
 
 ## License
 
-MIT -- free and open source.
+MIT - free and open source.
 
 ---
 
 <div align="center">
 
-**Agent! -- Not just smart chat. Real action on your Mac.**
+# **Agent! for macOS 26 - Agentic AI for your  Mac Desktop**
 
 </div>
