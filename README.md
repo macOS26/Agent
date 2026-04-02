@@ -105,8 +105,11 @@ brew install node
 # 2. Install Playwright MCP server globally
 npm install -g @playwright/mcp@latest
 
-# 3. Install browser binaries
-npx playwright install chromium
+# 3. Install browser binaries (pick one or all)
+npx playwright install chromium          # Chrome (~165MB)
+npx playwright install firefox           # Firefox (~97MB)
+npx playwright install webkit            # Safari/WebKit (~75MB)
+npx playwright install                   # All browsers
 ```
 
 **Configure in Agent!:**
