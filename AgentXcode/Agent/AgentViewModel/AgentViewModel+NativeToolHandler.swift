@@ -36,18 +36,17 @@ extension AgentViewModel {
             let command = input["command"] as? String ?? ""
             if let suggestion = Self.suggestTool(command) { return suggestion }
             if let pathErr = Self.preflightCommand(command) { return pathErr }
-            let fullCmd = Self.prependWorkingDirectory(command, projectFolder: pf)
             appendLog("🔧 $ \(Self.collapseHeredocs(command))")
             flushLog()
             if Self.needsTCCPermissions(command) {
-                let result = await Self.executeTCCStreaming(command: fullCmd) { [weak self] chunk in
+                let result = await Self.executeTCCStreaming(command: command, workingDirectory: pf) { [weak self] chunk in
                     Task { @MainActor in self?.appendRawOutput(chunk) }
                 }
                 if result.status > 0 { appendLog("exit code: \(result.status)") }
                 flushLog()
                 return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
             }
-            let result = await executeViaUserAgent(command: fullCmd)
+            var result = await executeViaUserAgent(command: command, workingDirectory: pf)
             // Auto-detect "command not found" and respond with whereis lookup
             if result.status != 0 && result.output.contains("command not found") {
                 let tool = command.trimmingCharacters(in: .whitespaces).components(separatedBy: " ").first ?? ""
