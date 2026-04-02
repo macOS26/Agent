@@ -445,6 +445,19 @@ final class AgentViewModel {
         OpenAIModelInfo(id: "mistralai/Mistral-Small-24B-Instruct-2501", name: "Mistral Small 24B"),
     ]
 
+    /// Detect vision-capable models by name patterns
+    nonisolated static func isVisionModel(_ model: String) -> Bool {
+        let lower = model.lowercased()
+        let visionKeywords = [
+            "vision", "vl", "llava", "cogvlm", "qwen-vl", "qwen2-vl",
+            "internvl", "minicpm-v", "phi-3-vision", "phi-3.5-vision",
+            "glm-4v", "glm-5", "pixtral", "molmo", "llama-3.2-vision",
+            "gemma-2-vision", "idefics", "fuyu", "bakllava", "obsidian",
+            "gpt-4o", "gpt-4-turbo", "gpt-4-vision", "claude",
+        ]
+        return visionKeywords.contains { lower.contains($0) }
+    }
+
     var maxHistoryBeforeSummary: Int = UserDefaults.standard.object(forKey: "agentMaxHistory") as? Int ?? 10 {
         didSet { UserDefaults.standard.set(maxHistoryBeforeSummary, forKey: "agentMaxHistory") }
     }
