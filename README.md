@@ -92,6 +92,12 @@ Work on multiple tasks simultaneously. Each tab has its own project folder and c
 ### 📸 Screenshot & Vision
 Take screenshots or paste images. Vision-capable AI models analyze what they see -- describe content, read text, spot UI issues.
 
+### 🌐 Safari Web Automation (Built-in)
+
+Agent! includes built-in Safari web automation via JavaScript and AppleScript. Search Google, click links, fill forms, read page content, and execute JavaScript -- all hands-free.
+
+**To enable:** Open Safari → Settings → Advanced → check "Show features for web developers". Then go to Developer menu → check "Allow JavaScript from Apple Events".
+
 ### 🎭 Playwright Web Automation (Optional)
 
 Full cross-browser automation via [Microsoft Playwright MCP](https://github.com/microsoft/playwright-mcp). Click, type, screenshot, and navigate any website in Chrome, Firefox, or WebKit -- all controlled by the AI.
