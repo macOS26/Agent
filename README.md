@@ -18,6 +18,8 @@ A native macOS AI agent that controls your apps, writes code, automates workflow
 
 </div>
 
+<img width="1346" height="1439" alt="Screenshot 2026-04-02 at 11 31 06 AM" src="https://github.com/user-attachments/assets/eec1850d-c068-4b4e-9c5b-d5e3c4a7bf1d" />
+
 ---
 
 ## Quick Start
