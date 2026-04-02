@@ -176,62 +176,45 @@ Toggle ON and Playwright tools appear automatically. The AI can now control brow
 - [Comparisons](docs/COMPARISON.md) -- vs Claude Code, Cursor, Cline, OpenClaw
 - [Security Model](docs/SECURITY.md) -- XPC architecture, privilege separation
 - [FAQ](docs/FAQ.md) -- Common questions
+
 ---
 
 ## Model Context Protocol (MCP)
 
-Agent! supports MCP (Model Context Protocol) servers for extended capabilities. Configure in Settings → MCP.
+Agent! supports [MCP](https://modelcontextprotocol.io) servers for extended capabilities. Configure in Settings → MCP Servers.
 
 ### Xcode MCP Server
 
-Connect Agent! directly to Xcode for project-aware operations:
-
 ```json
 {
-  "mcpServers" : {
-    "xcode" : {
-      "command" : "xcrun",
-      "args" : [
-        "mcpbridge"
-      ],
-      "transport" : "stdio"
+    "mcpServers": {
+        "xcode": {
+            "command": "xcrun",
+            "args": ["mcpbridge"],
+            "transport": "stdio"
+        }
     }
-  }
 }
 ```
 
-**Xcode MCP provides:**
-- Project-aware file operations (read/write/edit/delete)
-- Build and test integration
-- SwiftUI Preview rendering
-- Code snippet execution
-- Apple Developer Documentation search
-- Real-time issue tracking
+Project-aware file operations, build/test integration, SwiftUI previews, documentation search, and real-time issue tracking.
 
 ### Playwright MCP Server
 
-Connect Agent! to Playwright for browser automation:
+See [Playwright setup](#-playwright-web-automation-optional) above for full install instructions.
 
 ```json
 {
-  "mcpServers" : {
-    "playwright" : {
-      "command" : "/opt/homebrew/bin/playwright-mcp",
-      "transport" : "stdio"
+    "mcpServers": {
+        "playwright": {
+            "command": "/opt/homebrew/bin/playwright-mcp",
+            "transport": "stdio"
+        }
     }
-  }
 }
 ```
 
-**Playwright MCP provides:**
-- Browser navigation and interaction
-- Click, type, and form filling
-- Screenshots and snapshots
-- JavaScript execution
-- Tab management
-- Network request monitoring
-
----
+Cross-browser automation -- click, type, screenshot, navigate, fill forms, execute JavaScript.
 
 ---
 
