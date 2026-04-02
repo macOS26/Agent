@@ -146,6 +146,13 @@ private struct TokenDetailView: View {
 
                     Chart {
                         ForEach(recent, id: \.date) { day in
+                            AreaMark(
+                                x: .value("Date", shortDate(day.date)),
+                                y: .value("Tokens", day.inputTokens)
+                            )
+                            .foregroundStyle(.blue.opacity(0.15))
+                            .interpolationMethod(.catmullRom)
+
                             LineMark(
                                 x: .value("Date", shortDate(day.date)),
                                 y: .value("Tokens", day.inputTokens)
@@ -153,14 +160,23 @@ private struct TokenDetailView: View {
                             .foregroundStyle(.blue)
                             .interpolationMethod(.catmullRom)
 
+                            AreaMark(
+                                x: .value("Date", shortDate(day.date)),
+                                y: .value("Tokens", day.outputTokens)
+                            )
+                            .foregroundStyle(.green.opacity(0.3))
+                            .interpolationMethod(.catmullRom)
+
                             LineMark(
                                 x: .value("Date", shortDate(day.date)),
                                 y: .value("Tokens", day.outputTokens)
                             )
                             .foregroundStyle(.green)
+                            .lineStyle(StrokeStyle(lineWidth: 2))
                             .interpolationMethod(.catmullRom)
                         }
                     }
+                    .chartYScale(domain: .automatic(includesZero: true))
                     .chartYAxis {
                         AxisMarks(position: .leading) { value in
                             AxisValueLabel {
