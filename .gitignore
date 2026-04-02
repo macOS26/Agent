@@ -1,18 +1,6 @@
-.build/
-.swiftpm/
-.claude/
-*.dmg
-*.app
-AgentXcode/build/
+# Xcode User Interface State
+*.xcuserstate
 
-# Swift packages (now remote dependencies)
-AgentAccess/
-AgentAudit/
-AgentColorSyntax/
-AgentD1F/
-AgentEventBridges/
-AgentLLM/
-AgentMCP/
-AgentSwift/
-AgentTerminalNeo/
-AgentTools/
+# Xcode user-specific files
+*.xcuserstate
+*.xcuserdatad
