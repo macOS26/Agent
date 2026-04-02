@@ -113,15 +113,15 @@ final class ScriptTab: Identifiable {
     init(record: ScriptTabRecord) {
         self.id = record.tabId
         self.scriptName = record.scriptName
-        // Truncate restored log to last 15K chars so app restart stays snappy
+        // Cap restored log at 50K chars (matches ActivityLogView render cap)
         let restored = record.activityLog
-        if restored.count > 15_000 {
-            let drop = restored.count - 15_000
+        if restored.count > 50_000 {
+            let drop = restored.count - 50_000
             var trimmed = String(restored.dropFirst(drop))
             if let nl = trimmed.firstIndex(of: "\n") {
                 trimmed = String(trimmed[trimmed.index(after: nl)...])
             }
-            self.activityLog = "--- Log truncated (showing last 15K characters) ---\n" + trimmed
+            self.activityLog = trimmed
         } else {
             self.activityLog = restored
         }
@@ -197,14 +197,7 @@ final class ScriptTab: Identifiable {
         if !logBuffer.isEmpty {
             activityLog += logBuffer
             logBuffer = ""
-            // Trim from front if too large
-            if activityLog.count > Self.maxLogChars {
-                let drop = activityLog.count - Self.maxLogChars
-                activityLog = String(activityLog.dropFirst(drop))
-                if let nl = activityLog.firstIndex(of: "\n") {
-                    activityLog = "--- Log truncated (showing last \(Self.maxLogChars / 1000)K characters) ---\n" + String(activityLog[activityLog.index(after: nl)...])
-                }
-            }
+            // Trimming handled by ActivityLogView at render time (50K cap with yellow banner)
             NotificationCenter.default.post(name: .activityLogDidChange, object: id)
         }
     }
