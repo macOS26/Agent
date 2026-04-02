@@ -131,7 +131,10 @@ extension AgentViewModel {
         // No agent name injection — avoid message format issues with some APIs
 
         let folderPrefix = projectFolder.isEmpty ? "" : "[project folder: \(projectFolder)] "
-        let effectivePrompt = folderPrefix + prompt
+        // Auto-read project config (.agent.md, AGENT.md, CLAUDE.md) on first iteration
+        let projectConfig = Self.readProjectConfig(projectFolder: projectFolder)
+        let configPrefix = projectConfig.isEmpty ? "" : "[Project instructions:\n\(projectConfig)]\n\n"
+        let effectivePrompt = folderPrefix + configPrefix + prompt
 
         if !attachedImagesBase64.isEmpty {
             appendLog("(\(attachedImagesBase64.count) screenshot(s) attached)")
