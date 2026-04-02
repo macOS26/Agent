@@ -138,6 +138,39 @@ Take screenshots or paste images. Vision-capable AI models analyze what they see
 - [Comparisons](docs/COMPARISON.md) -- vs Claude Code, Cursor, Cline, OpenClaw
 - [Security Model](docs/SECURITY.md) -- XPC architecture, privilege separation
 - [FAQ](docs/FAQ.md) -- Common questions
+---
+
+## Model Context Protocol (MCP)
+
+Agent! supports MCP (Model Context Protocol) servers for extended capabilities. Configure in Settings → MCP.
+
+### Xcode MCP Server
+
+Connect Agent! directly to Xcode for project-aware operations:
+
+```json
+{
+  "mcpServers" : {
+    "xcode" : {
+      "command" : "xcrun",
+      "args" : [
+        "mcpbridge"
+      ],
+      "transport" : "stdio"
+    }
+  }
+}
+```
+
+**Xcode MCP provides:**
+- Project-aware file operations (read/write/edit/delete)
+- Build and test integration
+- SwiftUI Preview rendering
+- Code snippet execution
+- Apple Developer Documentation search
+- Real-time issue tracking
+
+---
 
 ---
 
