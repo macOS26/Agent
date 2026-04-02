@@ -53,7 +53,7 @@ extension AgentViewModel {
             isVision = false // DeepSeek text-only
         case .huggingFace:
             modelName = huggingFaceModel
-            isVision = false // Model-dependent, default off
+            isVision = Self.isVisionModel(huggingFaceModel)
         case .ollama:
             modelName = ollamaModel
             isVision = selectedOllamaSupportsVision
@@ -62,10 +62,10 @@ extension AgentViewModel {
             isVision = selectedLocalOllamaSupportsVision
         case .vLLM:
             modelName = vLLMModel
-            isVision = false // Model-dependent, default off
+            isVision = Self.isVisionModel(vLLMModel)
         case .lmStudio:
             modelName = lmStudioModel
-            isVision = false // Model-dependent, default off
+            isVision = Self.isVisionModel(lmStudioModel)
         case .zAI:
             modelName = zAIModel
             isVision = true  // GLM-5 supports vision
