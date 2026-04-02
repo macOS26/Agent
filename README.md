@@ -11,7 +11,7 @@
 [![GitHub Stars](https://img.shields.io/github/stars/macOS26/Agent?style=for-the-badge&logo=github&label=Stars&color=hotpink)](https://github.com/macOS26/Agent/stargazers)
 [![GitHub Forks](https://img.shields.io/github/forks/macOS26/Agent?style=for-the-badge&logo=github&label=Forks&color=white)](https://github.com/macOS26/Agent/fork)
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B-purple?style=for-the-badge)](https://github.com/apple)
-[![Swift](https://img.shields.io/badge/Swift-6.2-CC5500?style=for-the-badge&logo=swift)](https://github.com/apple/swift) 🐦
+[![Swift](https://img.shields.io/badge/Swift-6.2-CC5500?style=for-the-badge&logo=swift)](https://github.com/apple/swift)
 [![MIT License](https://img.shields.io/badge/License-MIT-228B22?style=for-the-badge)](LICENSE)
 
 A native macOS AI agent that controls your apps, writes code, automates workflows, and runs tasks from your iPhone via iMessage -- all powered by the AI provider of your choice.
