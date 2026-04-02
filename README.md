@@ -209,28 +209,6 @@ Connect Agent! directly to Xcode for project-aware operations:
 - Apple Developer Documentation search
 - Real-time issue tracking
 
-### Playwright MCP Server
-
-See [Playwright setup](#-playwright-web-automation-optional) above for full install instructions.
-
-```json
-{
-  "mcpServers" : {
-    "playwright" : {
-      "command" : "/opt/homebrew/bin/playwright-mcp",
-      "transport" : "stdio"
-    }
-  }
-}
-```
-
-**Playwright MCP provides:**
-- Browser navigation and interaction
-- Click, type, and form filling
-- Screenshots and snapshots
-- JavaScript execution
-- Tab management
-- Network request monitoring
 
 ---
 
