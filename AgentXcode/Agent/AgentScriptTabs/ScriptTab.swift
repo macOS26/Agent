@@ -113,18 +113,8 @@ final class ScriptTab: Identifiable {
     init(record: ScriptTabRecord) {
         self.id = record.tabId
         self.scriptName = record.scriptName
-        // Cap restored log at 50K chars (matches ActivityLogView render cap)
-        let restored = record.activityLog
-        if restored.count > 50_000 {
-            let drop = restored.count - 50_000
-            var trimmed = String(restored.dropFirst(drop))
-            if let nl = trimmed.firstIndex(of: "\n") {
-                trimmed = String(trimmed[trimmed.index(after: nl)...])
-            }
-            self.activityLog = trimmed
-        } else {
-            self.activityLog = restored
-        }
+        // Truncation handled by ActivityLogView at render time
+        self.activityLog = record.activityLog
         self.exitCode = record.exitCode == -999 ? nil : Int32(record.exitCode)
         self.isRunning = false
         self.isMessagesTab = record.isMessagesTab

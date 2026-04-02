@@ -480,15 +480,7 @@ extension AgentViewModel {
             activityLog += combined
             NotificationCenter.default.post(name: .activityLogDidChange, object: nil)
         }
-        // Trim from front if too large — ActivityLogView shows yellow banner
-        let maxChars = 50_000
-        if activityLog.count > maxChars {
-            let drop = activityLog.count - maxChars
-            activityLog = String(activityLog.dropFirst(drop))
-            if let nl = activityLog.firstIndex(of: "\n") {
-                activityLog = String(activityLog[activityLog.index(after: nl)...])
-            }
-        }
+        // Truncation handled by ActivityLogView at render time (50K cap)
     }
 
     private func schedulePersist() {
