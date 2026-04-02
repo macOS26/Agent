@@ -185,19 +185,29 @@ Agent! supports [MCP](https://modelcontextprotocol.io) servers for extended capa
 
 ### Xcode MCP Server
 
+Connect Agent! directly to Xcode for project-aware operations:
+
 ```json
 {
-    "mcpServers": {
-        "xcode": {
-            "command": "xcrun",
-            "args": ["mcpbridge"],
-            "transport": "stdio"
-        }
+  "mcpServers" : {
+    "xcode" : {
+      "command" : "xcrun",
+      "args" : [
+        "mcpbridge"
+      ],
+      "transport" : "stdio"
     }
+  }
 }
 ```
 
-Project-aware file operations, build/test integration, SwiftUI previews, documentation search, and real-time issue tracking.
+**Xcode MCP provides:**
+- Project-aware file operations (read/write/edit/delete)
+- Build and test integration
+- SwiftUI Preview rendering
+- Code snippet execution
+- Apple Developer Documentation search
+- Real-time issue tracking
 
 ### Playwright MCP Server
 
@@ -205,16 +215,22 @@ See [Playwright setup](#-playwright-web-automation-optional) above for full inst
 
 ```json
 {
-    "mcpServers": {
-        "playwright": {
-            "command": "/opt/homebrew/bin/playwright-mcp",
-            "transport": "stdio"
-        }
+  "mcpServers" : {
+    "playwright" : {
+      "command" : "/opt/homebrew/bin/playwright-mcp",
+      "transport" : "stdio"
     }
+  }
 }
 ```
 
-Cross-browser automation -- click, type, screenshot, navigate, fill forms, execute JavaScript.
+**Playwright MCP provides:**
+- Browser navigation and interaction
+- Click, type, and form filling
+- Screenshots and snapshots
+- JavaScript execution
+- Tab management
+- Network request monitoring
 
 ---
 
