@@ -6,7 +6,7 @@
 
 ## **Agentic AI for your  Mac Desktop**
 ## Open Source replacement for Claude Code, Cursor, Open Claw
-No Eledtron, No Node, No NPM, Native Mac App, 100% Swift
+## No Eledtron, No Node, No NPM, Native Mac App, 100% Swift
 
 [![Latest Release](https://img.shields.io/github/v/release/macOS26/Agent?label=Download&color=blue&style=for-the-badge)](https://github.com/macOS26/Agent/releases/latest)
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B-black?style=flat-square)](https://github.com/apple)
