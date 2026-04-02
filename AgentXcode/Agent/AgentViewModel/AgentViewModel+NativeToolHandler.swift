@@ -3,6 +3,7 @@
 import AgentTools
 import AgentMCP
 import AgentD1F
+import AgentSwift
 import AgentAccess
 import Cocoa
 
@@ -874,9 +875,19 @@ extension AgentViewModel {
             } else {
                 return SDEFService.shared.summary(for: bundleID)
             }
+        case "symbol_search":
+            let query = input["query"] as? String ?? ""
+            let path = input["path"] as? String ?? pf
+            let exact = input["exact"] as? Bool ?? false
+            guard !query.isEmpty else { return "Error: query is required" }
+            let results = SymbolSearchService.search(query: query, in: path, exactMatch: exact)
+            if results.isEmpty { return "No symbols found matching '\(query)'" }
+            return results.prefix(50).map { r in
+                "\(r.kind) \(r.name) — \(r.filePath):\(r.line)\n  \(r.signature)"
+            }.joined(separator: "\n")
         // undo_edit
         case "undo_edit":
-            let fp = (input["file_path"] as? String ?? "")
+            let fp = input["file_path"] as? String ?? ""
             let expanded = (fp as NSString).expandingTildeInPath
             guard let original = DiffStore.shared.lastEdit(for: expanded) else {
                 return "Error: no edit history for \(fp)"

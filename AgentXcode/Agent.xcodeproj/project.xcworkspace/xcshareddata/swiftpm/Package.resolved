@@ -69,8 +69,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/macOS26/AgentSwift.git",
       "state" : {
-        "revision" : "69d2d0c690bcfde53583daefbdf3e78d2732595b",
-        "version" : "1.0.2"
+        "revision" : "6e58d69eadfa7e9f72dd6e505aa04c27f2df0f86",
+        "version" : "1.1.0"
       }
     },
     {
