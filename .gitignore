@@ -6,3 +6,33 @@
 
 # Build directory
 AgentXcode/build/
+
+# Large binary files
+*.dmg
+*.app
+*.ipa
+*.xcarchive
+*.dSYM
+*.dSYM/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# macOS
+.DS_Store
+
+# Claude
+.claude/
+
+# Swift packages (remote SPM dependencies)
+AgentAccess/
+AgentAudit/
+AgentColorSyntax/
+AgentD1F/
+AgentEventBridges/
+AgentLLM/
+AgentMCP/
+AgentSwift/
+AgentTerminalNeo/
+AgentTools/
