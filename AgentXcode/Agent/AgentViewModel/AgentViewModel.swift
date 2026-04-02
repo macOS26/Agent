@@ -451,7 +451,7 @@ final class AgentViewModel {
         let visionKeywords = [
             "vision", "vl", "llava", "cogvlm", "qwen-vl", "qwen2-vl",
             "internvl", "minicpm-v", "phi-3-vision", "phi-3.5-vision",
-            "glm-4v", "glm-5", "pixtral", "molmo", "llama-3.2-vision",
+            "glm-4v", "glm-5", "glm-5.1", "pixtral", "molmo", "llama-3.2-vision",
             "gemma-2-vision", "idefics", "fuyu", "bakllava", "obsidian",
             "gpt-4o", "gpt-4-turbo", "gpt-4-vision", "claude",
         ]
