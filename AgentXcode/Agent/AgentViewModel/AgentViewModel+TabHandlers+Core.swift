@@ -55,10 +55,26 @@ extension AgentViewModel {
                 isComplete: false
             )
 
-        case "coding_mode":
-            let enabled = input["enabled"] as? Bool ?? true
-            codingModeEnabled = enabled
-            let output = enabled ? "Coding mode ON — only Core+Workflow+Coding+UserAgent tools active." : "Coding mode OFF — all tools restored."
+        case "coding_mode", "mode":
+            let action = input["action"] as? String
+            let output: String
+            if let action {
+                switch action {
+                case "coding":
+                    codingModeEnabled = true; automationModeEnabled = false
+                    output = "Coding mode ON — Core+Workflow+Coding+UserAgent tools active."
+                case "automation":
+                    automationModeEnabled = true; codingModeEnabled = false
+                    output = "Automation mode ON — Core+Workflow+Automation+UserAgent tools active."
+                default:
+                    codingModeEnabled = false; automationModeEnabled = false
+                    output = "Standard mode — all user-enabled tools restored."
+                }
+            } else {
+                let enabled = input["enabled"] as? Bool ?? true
+                codingModeEnabled = enabled; automationModeEnabled = false
+                output = enabled ? "Coding mode ON — Core+Workflow+Coding+UserAgent tools active." : "Standard mode — all tools restored."
+            }
             tab.appendLog(output)
             tab.flush()
             return TabToolResult(
