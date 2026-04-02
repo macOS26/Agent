@@ -44,7 +44,7 @@ extension AgentViewModel {
         table["extract_function"] = handleExtractFunction
 
         // Plan & project tools — delegate to executeNativeTool
-        for name in ["plan_mode", "project_folder", "coding_mode", "list_tools", "conversation", "send_message", "memory"] {
+        for name in ["plan_mode", "project_folder", "coding_mode", "mode", "list_tools", "conversation", "send_message", "memory"] {
             table[name] = handleNativeTool
         }
 
