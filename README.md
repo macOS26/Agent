@@ -1,4 +1,3 @@
-<img width="1349" height="1438" alt="Screenshot 2026-04-02 at 12 00 03 PM" src="https://github.com/user-attachments/assets/b0d9346e-f807-4089-bab3-29c7058868d8" />
 <div align="center">
 <img width="256" height="256" alt="Agent! icon" src="https://github.com/user-attachments/assets/7a452184-6b31-49fa-9b24-d450d2889f66" />
 
@@ -18,7 +17,7 @@ A native macOS AI agent that controls your apps, writes code, automates workflow
 
 </div>
 
-<img width="1349" height="1438" alt="image" src="https://github.com/user-attachments/assets/463d955a-a854-49d8-8f94-b8e3a1de392d" />
+<img width="1349" height="1438" alt="Screenshot 2026-04-02 at 12 00 03 PM" src="https://github.com/user-attachments/assets/b0d9346e-f807-4089-bab3-29c7058868d8" />
 
 ---
 
