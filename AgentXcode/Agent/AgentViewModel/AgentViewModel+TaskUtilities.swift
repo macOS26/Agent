@@ -14,6 +14,27 @@ private let maxToolResultChars = 4_000
 
 extension AgentViewModel {
 
+    /// Read project-specific instructions from config files in the project folder.
+    /// Checks: .agent.md, AGENT.md, .claude/CLAUDE.md (for Claude Code compat)
+    nonisolated static func readProjectConfig(projectFolder: String) -> String {
+        guard !projectFolder.isEmpty else { return "" }
+        let fm = FileManager.default
+        let candidates = [
+            "\(projectFolder)/.agent.md",
+            "\(projectFolder)/AGENT.md",
+            "\(projectFolder)/.claude/CLAUDE.md",
+        ]
+        for path in candidates {
+            if fm.fileExists(atPath: path),
+               let content = try? String(contentsOfFile: path, encoding: .utf8),
+               !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                // Cap at 2000 chars to avoid bloating the prompt
+                let trimmed = String(content.prefix(2000))
+                return trimmed
+            }
+        }
+        return ""
+    }
 
     static func truncateToolResults(_ results: [[String: Any]]) -> [[String: Any]] {
         results.map { result in

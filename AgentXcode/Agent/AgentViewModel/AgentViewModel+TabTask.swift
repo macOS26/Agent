@@ -301,8 +301,10 @@ extension AgentViewModel {
             messages.removeLast()
         }
 
-        // Remind LLM of current project folder on every task
-        let promptPrefix = projectFolder.isEmpty ? "" : "[project folder: \(projectFolder)] "
+        // Remind LLM of current project folder + inject project config
+        let projectConfig = Self.readProjectConfig(projectFolder: projectFolder)
+        let configPrefix = projectConfig.isEmpty ? "" : "[Project instructions:\n\(projectConfig)]\n\n"
+        let promptPrefix = (projectFolder.isEmpty ? "" : "[project folder: \(projectFolder)] ") + configPrefix
 
         // Inject direct command context if set
         if let context = directCommandContext {
