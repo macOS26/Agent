@@ -12,27 +12,25 @@ struct TokenBadge: View {
     @State private var showDetail: Bool = false
 
     var body: some View {
-        let total: Int = taskIn + taskOut
-        if total > 0 {
-            Button {
-                showDetail.toggle()
-            } label: {
-                Text(formatTokens(total))
-                    .font(.caption2.monospacedDigit())
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 2)
-                    .background(Color.secondary.opacity(0.1))
-                    .clipShape(Capsule())
-            }
-            .buttonStyle(.plain)
-            .popover(isPresented: $showDetail) {
-                TokenDetailView(
-                    taskIn: taskIn, taskOut: taskOut,
-                    sessionIn: sessionIn, sessionOut: sessionOut,
-                    providerName: providerName, modelName: modelName
-                )
-            }
+        Button {
+            showDetail.toggle()
+        } label: {
+            let total = TokenUsageStore.shared.todayInput + TokenUsageStore.shared.todayOutput
+            Text(formatTokens(total))
+                .font(.caption2.monospacedDigit())
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 5)
+                .padding(.vertical, 2)
+                .background(Color.secondary.opacity(0.1))
+                .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .popover(isPresented: $showDetail) {
+            TokenDetailView(
+                taskIn: taskIn, taskOut: taskOut,
+                sessionIn: sessionIn, sessionOut: sessionOut,
+                providerName: providerName, modelName: modelName
+            )
         }
     }
 
@@ -146,37 +144,23 @@ private struct TokenDetailView: View {
 
                     Chart {
                         ForEach(recent, id: \.date) { day in
-                            AreaMark(
-                                x: .value("Date", shortDate(day.date)),
-                                y: .value("Tokens", day.inputTokens)
-                            )
-                            .foregroundStyle(.blue.opacity(0.15))
-                            .interpolationMethod(.catmullRom)
-
                             LineMark(
                                 x: .value("Date", shortDate(day.date)),
-                                y: .value("Tokens", day.inputTokens)
+                                y: .value("Tokens", day.inputTokens),
+                                series: .value("Type", "Sent")
                             )
                             .foregroundStyle(.blue)
                             .interpolationMethod(.catmullRom)
 
-                            AreaMark(
-                                x: .value("Date", shortDate(day.date)),
-                                y: .value("Tokens", day.outputTokens)
-                            )
-                            .foregroundStyle(.green.opacity(0.3))
-                            .interpolationMethod(.catmullRom)
-
                             LineMark(
                                 x: .value("Date", shortDate(day.date)),
-                                y: .value("Tokens", day.outputTokens)
+                                y: .value("Tokens", day.outputTokens),
+                                series: .value("Type", "Received")
                             )
                             .foregroundStyle(.green)
-                            .lineStyle(StrokeStyle(lineWidth: 2))
                             .interpolationMethod(.catmullRom)
                         }
                     }
-                    .chartYScale(domain: .automatic(includesZero: true))
                     .chartYAxis {
                         AxisMarks(position: .leading) { value in
                             AxisValueLabel {
