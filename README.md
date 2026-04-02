@@ -147,6 +147,6 @@ MIT - free and open source.
 
 <div align="center">
 
-# **Agent! for macOS 26 - Agentic AI for your  Mac Desktop**
+### **Agent! for macOS 26 - Agentic AI for your  Mac Desktop**
 
 </div>
