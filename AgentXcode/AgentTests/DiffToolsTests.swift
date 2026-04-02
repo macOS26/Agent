@@ -8,9 +8,9 @@ import AgentD1F
 @Suite("DiffTools")
 @MainActor struct DiffToolsTests {
 
-    private func makeTempDir() -> String {
+    private func makeTempDir() throws -> String {
         let dir = NSTemporaryDirectory() + "agent_diff_tests_\(UUID().uuidString)"
-        try! FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
         return dir
     }
 
@@ -19,12 +19,12 @@ import AgentD1F
         DiffStore.shared.clear()
     }
 
-    private func writeFile(_ path: String, _ content: String) {
-        try! content.write(toFile: path, atomically: true, encoding: .utf8)
+    private func writeFile(_ path: String, _ content: String) throws {
+        try content.write(toFile: path, atomically: true, encoding: .utf8)
     }
 
-    private func readFile(_ path: String) -> String {
-        try! String(contentsOfFile: path, encoding: .utf8)
+    private func readFile(_ path: String) throws -> String {
+        try String(contentsOfFile: path, encoding: .utf8)
     }
 
     // =========================================================================

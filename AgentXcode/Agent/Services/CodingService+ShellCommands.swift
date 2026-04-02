@@ -35,7 +35,7 @@ extension CodingService {
                 rootFiles.append(comps[0])
             } else {
                 let dir = comps.dropLast().joined(separator: "/")
-                let file = comps.last!
+                guard let file = comps.last else { continue }
                 dirs[dir, default: []].append(file)
             }
         }
