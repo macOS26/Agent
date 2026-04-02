@@ -25,6 +25,9 @@ AgentXcode/build/
 # Claude
 .claude/
 
+# Plan files
+plan*.md
+
 # Swift packages (remote SPM dependencies)
 AgentAccess/
 AgentAudit/
