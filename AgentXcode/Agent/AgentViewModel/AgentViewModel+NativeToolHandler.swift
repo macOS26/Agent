@@ -46,7 +46,7 @@ extension AgentViewModel {
                 flushLog()
                 return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
             }
-            var result = await executeViaUserAgent(command: command, workingDirectory: pf)
+            let result = await executeViaUserAgent(command: command, workingDirectory: pf)
             // Auto-detect "command not found" and respond with whereis lookup
             if result.status != 0 && result.output.contains("command not found") {
                 let tool = command.trimmingCharacters(in: .whitespaces).components(separatedBy: " ").first ?? ""
