@@ -14,7 +14,7 @@
 [![Swift](https://img.shields.io/badge/Swift-6.2-CC5500?style=for-the-badge&logo=swift)](https://github.com/apple/swift)
 [![MIT License](https://img.shields.io/badge/License-MIT-228B22?style=for-the-badge)](LICENSE)
 
-A native macOS AI agent that controls your apps, writes code, automates workflows, and runs tasks from your iPhone via iMessage -- all powered by the AI provider of your choice.
+A native macOS AI agent that controls your apps, writes code, automates workflows, and runs tasks from your iPhone via iMessage - all powered by the AI provider of your choice.
 
 </div>
 
