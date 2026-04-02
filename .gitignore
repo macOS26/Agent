@@ -2,5 +2,7 @@
 *.xcuserstate
 
 # Xcode user-specific files
-*.xcuserstate
 *.xcuserdatad
+
+# Build directory
+AgentXcode/build/
