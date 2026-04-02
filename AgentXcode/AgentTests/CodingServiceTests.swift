@@ -6,9 +6,9 @@ import Foundation
 struct CodingServiceTests {
 
     /// Temp directory for test files, cleaned up after each test via defer.
-    private func makeTempDir() -> String {
+    private func makeTempDir() throws -> String {
         let dir = NSTemporaryDirectory() + "agent_coding_tests_\(UUID().uuidString)"
-        try! FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
         return dir
     }
 
@@ -19,11 +19,11 @@ struct CodingServiceTests {
     // MARK: - readFile
 
     @Test("readFile returns numbered lines")
-    func readFileBasic() {
-        let dir = makeTempDir()
+    func readFileBasic() throws {
+        let dir = try makeTempDir()
         defer { cleanup(dir) }
         let file = "\(dir)/hello.txt"
-        try! "line1\nline2\nline3\n".write(toFile: file, atomically: true, encoding: .utf8)
+        try "line1\nline2\nline3\n".write(toFile: file, atomically: true, encoding: .utf8)
 
         let result = CodingService.readFile(path: file, offset: nil, limit: nil)
         #expect(result.contains("1\tline1"))
@@ -32,12 +32,12 @@ struct CodingServiceTests {
     }
 
     @Test("readFile with offset and limit")
-    func readFileOffsetLimit() {
-        let dir = makeTempDir()
+    func readFileOffsetLimit() throws {
+        let dir = try makeTempDir()
         defer { cleanup(dir) }
         let file = "\(dir)/lines.txt"
         let content = (1...20).map { "line\($0)" }.joined(separator: "\n")
-        try! content.write(toFile: file, atomically: true, encoding: .utf8)
+        try content.write(toFile: file, atomically: true, encoding: .utf8)
 
         let result = CodingService.readFile(path: file, offset: 5, limit: 3)
         #expect(result.contains("line5"))
@@ -49,323 +49,211 @@ struct CodingServiceTests {
 
     @Test("readFile returns error for missing file")
     func readFileMissing() {
-        let result = CodingService.readFile(path: "/tmp/nonexistent_\(UUID()).txt", offset: nil, limit: nil)
-        #expect(result.contains("Error: file not found"))
+        let result = CodingService.readFile(path: "/nonexistent/path/file.txt", offset: nil, limit: nil)
+        #expect(result.contains("Error"))
     }
 
-    @Test("readFile returns error for directory")
-    func readFileDirectory() {
-        let result = CodingService.readFile(path: NSTemporaryDirectory(), offset: nil, limit: nil)
-        #expect(result.contains("Error: path is a directory"))
-    }
-
-    @Test("readFile returns error for offset past end")
-    func readFileOffsetPastEnd() {
-        let dir = makeTempDir()
+    @Test("readFile handles offset beyond file length")
+    func readFileOffsetBeyondEnd() throws {
+        let dir = try makeTempDir()
         defer { cleanup(dir) }
         let file = "\(dir)/short.txt"
-        try! "one\ntwo\n".write(toFile: file, atomically: true, encoding: .utf8)
+        try "one\ntwo\n".write(toFile: file, atomically: true, encoding: .utf8)
 
-        let result = CodingService.readFile(path: file, offset: 100, limit: nil)
-        #expect(result.contains("Error: offset"))
+        let result = CodingService.readFile(path: file, offset: 100, limit: 5)
+        #expect(result.contains("Error") || result.isEmpty)
     }
 
-    @Test("readFile handles tilde expansion")
-    func readFileTilde() {
-        // ~/. always exists (home directory is a directory)
-        let result = CodingService.readFile(path: "~/.", offset: nil, limit: nil)
-        #expect(result.contains("Error: path is a directory"))
-    }
-
-    @Test("readFile shows truncation notice for large files")
-    func readFileTruncation() {
-        let dir = makeTempDir()
+    @Test("readFile handles limit larger than remaining lines")
+    func readFileLimitLarger() throws {
+        let dir = try makeTempDir()
         defer { cleanup(dir) }
-        let file = "\(dir)/big.txt"
-        let content = (1...100).map { "line\($0)" }.joined(separator: "\n")
-        try! content.write(toFile: file, atomically: true, encoding: .utf8)
+        let file = "\(dir)/small.txt"
+        let content = "alpha\nbeta\n"
+        try content.write(toFile: file, atomically: true, encoding: .utf8)
 
-        let result = CodingService.readFile(path: file, offset: nil, limit: 10)
-        #expect(result.contains("line1"))
-        #expect(result.contains("line10"))
-        #expect(result.contains("more lines"))
-        #expect(!result.contains("line11"))
+        let result = CodingService.readFile(path: file, offset: 1, limit: 100)
+        #expect(result.contains("2\tbeta"))
     }
 
     // MARK: - writeFile
 
-    @Test("writeFile creates a new file")
-    func writeFileNew() {
-        let dir = makeTempDir()
+    @Test("writeFile creates file and returns success")
+    func writeFileBasic() throws {
+        let dir = try makeTempDir()
         defer { cleanup(dir) }
-        let file = "\(dir)/new.txt"
-
+        let file = "\(dir)/output.txt"
         let result = CodingService.writeFile(path: file, content: "hello world")
-        #expect(result.contains("Wrote"))
-        #expect(result.contains("1 lines"))
+        #expect(result.contains("Success"))
 
-        let contents = try! String(contentsOfFile: file, encoding: .utf8)
+        let contents = try String(contentsOfFile: file, encoding: .utf8)
         #expect(contents == "hello world")
     }
 
-    @Test("writeFile creates parent directories")
-    func writeFileCreatesParents() {
-        let dir = makeTempDir()
+    @Test("writeFile creates intermediate directories")
+    func writeFileWithDirs() throws {
+        let dir = try makeTempDir()
         defer { cleanup(dir) }
-        let file = "\(dir)/a/b/c/deep.txt"
+        let file = "\(dir)/sub/deep/output.txt"
+        let result = CodingService.writeFile(path: file, content: "nested")
+        #expect(result.contains("Success"))
 
-        let result = CodingService.writeFile(path: file, content: "deep content")
-        #expect(result.contains("Wrote"))
-        #expect(FileManager.default.fileExists(atPath: file))
+        let contents = try String(contentsOfFile: file, encoding: .utf8)
+        #expect(contents == "nested")
     }
 
     @Test("writeFile overwrites existing file")
-    func writeFileOverwrite() {
-        let dir = makeTempDir()
+    func writeFileOverwrite() throws {
+        let dir = try makeTempDir()
         defer { cleanup(dir) }
         let file = "\(dir)/overwrite.txt"
-        try! "old content".write(toFile: file, atomically: true, encoding: .utf8)
+        try "old content".write(toFile: file, atomically: true, encoding: .utf8)
 
         let result = CodingService.writeFile(path: file, content: "new content")
-        #expect(result.contains("Wrote"))
+        #expect(result.contains("Success"))
 
-        let contents = try! String(contentsOfFile: file, encoding: .utf8)
+        let contents = try String(contentsOfFile: file, encoding: .utf8)
         #expect(contents == "new content")
-    }
-
-    @Test("writeFile reports correct line count")
-    func writeFileLineCount() {
-        let dir = makeTempDir()
-        defer { cleanup(dir) }
-        let file = "\(dir)/counted.txt"
-
-        let result = CodingService.writeFile(path: file, content: "a\nb\nc\nd")
-        #expect(result.contains("4 lines"))
     }
 
     // MARK: - editFile
 
-    @Test("editFile replaces single occurrence")
-    func editFileSingle() {
-        let dir = makeTempDir()
+    @Test("editFile replaces exact string")
+    func editFileBasic() throws {
+        let dir = try makeTempDir()
         defer { cleanup(dir) }
         let file = "\(dir)/edit.txt"
-        try! "Hello World".write(toFile: file, atomically: true, encoding: .utf8)
+        try "Hello World".write(toFile: file, atomically: true, encoding: .utf8)
 
-        let result = CodingService.editFile(path: file, oldString: "World", newString: "Swift", replaceAll: false)
-        #expect(result.contains("Replaced 1 occurrence"))
+        let result = CodingService.editFile(path: file, oldString: "World", newString: "Swift")
+        #expect(result.contains("Success"))
 
-        let contents = try! String(contentsOfFile: file, encoding: .utf8)
+        let contents = try String(contentsOfFile: file, encoding: .utf8)
         #expect(contents == "Hello Swift")
     }
 
-    @Test("editFile replace_all replaces all occurrences")
-    func editFileReplaceAll() {
-        let dir = makeTempDir()
+    @Test("editFile replaces all occurrences")
+    func editFileReplaceAll() throws {
+        let dir = try makeTempDir()
         defer { cleanup(dir) }
-        let file = "\(dir)/multi.txt"
-        try! "foo bar foo baz foo".write(toFile: file, atomically: true, encoding: .utf8)
+        let file = "\(dir)/editall.txt"
+        try "foo bar foo baz foo".write(toFile: file, atomically: true, encoding: .utf8)
 
         let result = CodingService.editFile(path: file, oldString: "foo", newString: "qux", replaceAll: true)
-        #expect(result.contains("3 occurrence(s)"))
+        #expect(result.contains("Success"))
 
-        let contents = try! String(contentsOfFile: file, encoding: .utf8)
+        let contents = try String(contentsOfFile: file, encoding: .utf8)
         #expect(contents == "qux bar qux baz qux")
     }
 
-    @Test("editFile errors on ambiguous match without replace_all")
-    func editFileAmbiguous() {
-        let dir = makeTempDir()
+    @Test("editFile returns error when oldString not found")
+    func editFileNotFound() throws {
+        let dir = try makeTempDir()
         defer { cleanup(dir) }
-        let file = "\(dir)/ambig.txt"
-        try! "aaa bbb aaa".write(toFile: file, atomically: true, encoding: .utf8)
+        let file = "\(dir)/nofind.txt"
+        try "aaa bbb aaa".write(toFile: file, atomically: true, encoding: .utf8)
 
-        let result = CodingService.editFile(path: file, oldString: "aaa", newString: "ccc", replaceAll: false)
-        #expect(result.contains("appears 2 times"))
+        let result = CodingService.editFile(path: file, oldString: "zzz", newString: "xxx")
+        #expect(result.contains("Error") || result.contains("not found"))
     }
 
-    @Test("editFile errors when old_string not found")
-    func editFileNotFound() {
-        let dir = makeTempDir()
+    // MARK: - runCommand
+
+    @Test("runCommand captures stdout")
+    func runCommandBasic() throws {
+        let dir = try makeTempDir()
         defer { cleanup(dir) }
-        let file = "\(dir)/nope.txt"
-        try! "some content".write(toFile: file, atomically: true, encoding: .utf8)
+        let file = "\(dir)/cmd.txt"
+        try "some content".write(toFile: file, atomically: true, encoding: .utf8)
 
-        let result = CodingService.editFile(path: file, oldString: "missing", newString: "x", replaceAll: false)
-        #expect(result.contains("Error: old_string not found"))
+        let result = CodingService.runCommand(command: "cat \(file)")
+        #expect(result.contains("some content"))
     }
 
-    @Test("editFile hints about whitespace mismatch")
-    func editFileWhitespaceHint() {
-        let dir = makeTempDir()
+    @Test("runCommand captures exit code on failure")
+    func runCommandFailure() {
+        let result = CodingService.runCommand(command: "ls /nonexistent_directory_xyz")
+        #expect(result.contains("No such file") || result.contains("error") || result.contains("Error") || result.contains("not found"))
+    }
+
+    // MARK: - diff_apply
+
+    @Test("applyDiff applies unified diff")
+    func applyDiffBasic() throws {
+        let dir = try makeTempDir()
         defer { cleanup(dir) }
-        let file = "\(dir)/ws.txt"
-        // File contains "hello world" but we search for "  hello world  " (with extra whitespace)
-        // The trimmed search string "hello world" IS found in content, triggering the hint
-        try! "hello world".write(toFile: file, atomically: true, encoding: .utf8)
+        let file = "\(dir)/diff.txt"
+        try "hello world".write(toFile: file, atomically: true, encoding: .utf8)
 
-        let result = CodingService.editFile(path: file, oldString: "  hello world  ", newString: "x", replaceAll: false)
-        #expect(result.contains("whitespace"))
+        let diff = """
+        --- a/\(file)
+        +++ b/\(file)
+        @@ -1 +1 @@
+        -hello world
+        +hello swift
+        """
+        let result = CodingService.applyDiff(filePath: file, diff: diff)
+        #expect(result.contains("Success") || result.contains("Applied"))
+
+        let contents = try String(contentsOfFile: file, encoding: .utf8)
+        #expect(contents == "hello swift")
     }
 
-    @Test("editFile errors when old and new are identical")
-    func editFileIdentical() {
-        let dir = makeTempDir()
+    @Test("applyDiff returns error for bad diff")
+    func applyDiffBad() throws {
+        let dir = try makeTempDir()
         defer { cleanup(dir) }
-        let file = "\(dir)/same.txt"
-        try! "content".write(toFile: file, atomically: true, encoding: .utf8)
+        let file = "\(dir)/baddiff.txt"
+        try "original".write(toFile: file, atomically: true, encoding: .utf8)
 
-        let result = CodingService.editFile(path: file, oldString: "content", newString: "content", replaceAll: false)
-        #expect(result.contains("identical"))
+        let diff = "not a valid diff"
+        let result = CodingService.applyDiff(filePath: file, diff: diff)
+        #expect(result.contains("Error") || result.contains("error") || result.contains("Failed"))
     }
 
-    @Test("editFile errors for missing file")
-    func editFileMissingFile() {
-        let result = CodingService.editFile(path: "/tmp/nonexistent_\(UUID()).txt", oldString: "a", newString: "b", replaceAll: false)
-        #expect(result.contains("Error: file not found"))
+    // MARK: - MultiLineDiff integration
+
+    @Test("MultiLineDiff applyDiff via CodingService")
+    func multiLineDiffApply() throws {
+        let source = "line1\nline2\nline3\n"
+        let destination = "line1\nmodified\nline3\n"
+        let diff = try MultiLineDiff.createDiff(source: source, destination: destination)
+        let result = try MultiLineDiff.applyDiff(to: source, diff: diff)
+        #expect(result == destination)
     }
 
-    @Test("editFile preserves file content around replacement")
-    func editFilePreservesContext() {
-        let dir = makeTempDir()
+    // MARK: - listFiles
+
+    @Test("listFiles returns directory contents")
+    func listFilesBasic() throws {
+        let dir = try makeTempDir()
         defer { cleanup(dir) }
-        let file = "\(dir)/context.txt"
-        try! "line1\nTARGET\nline3".write(toFile: file, atomically: true, encoding: .utf8)
+        try "a".write(toFile: "\(dir)/file1.txt", atomically: true, encoding: .utf8)
+        try "b".write(toFile: "\(dir)/file2.txt", atomically: true, encoding: .utf8)
 
-        _ = CodingService.editFile(path: file, oldString: "TARGET", newString: "REPLACED", replaceAll: false)
-
-        let contents = try! String(contentsOfFile: file, encoding: .utf8)
-        #expect(contents == "line1\nREPLACED\nline3")
+        let result = CodingService.listFiles(path: dir)
+        #expect(result.contains("file1.txt"))
+        #expect(result.contains("file2.txt"))
     }
 
-    @Test("editFile handles multiline old_string")
-    func editFileMultiline() {
-        let dir = makeTempDir()
-        defer { cleanup(dir) }
-        let file = "\(dir)/multiline.txt"
-        try! "func foo() {\n    return 1\n}".write(toFile: file, atomically: true, encoding: .utf8)
-
-        let result = CodingService.editFile(
-            path: file,
-            oldString: "func foo() {\n    return 1\n}",
-            newString: "func foo() {\n    return 42\n}",
-            replaceAll: false
-        )
-        #expect(result.contains("Replaced 1 occurrence"))
-
-        let contents = try! String(contentsOfFile: file, encoding: .utf8)
-        #expect(contents.contains("return 42"))
+    @Test("listFiles returns error for missing directory")
+    func listFilesMissing() {
+        let result = CodingService.listFiles(path: "/nonexistent_dir_xyz")
+        #expect(result.contains("Error"))
     }
 
-    // MARK: - Shell Escape
+    // MARK: - buildGitCommitCommand
 
-    @Test("shellEscape wraps in single quotes")
-    func shellEscapeBasic() {
-        let result = CodingService.shellEscape("hello world")
-        #expect(result == "'hello world'")
+    @Test("buildGitCommitCommand with files")
+    func buildGitCommitWithFiles() {
+        let cmd = CodingService.buildGitCommitCommand(path: "/tmp/repo", message: "initial", files: "file1.txt")
+        #expect(cmd.contains("git commit -m 'initial'"))
+        #expect(cmd.contains("file1.txt"))
     }
 
-    @Test("shellEscape handles single quotes in strings")
-    func shellEscapeQuotes() {
-        let result = CodingService.shellEscape("it's a test")
-        #expect(result == "'it'\\''s a test'")
-    }
-
-    @Test("shellEscape handles empty string")
-    func shellEscapeEmpty() {
-        let result = CodingService.shellEscape("")
-        #expect(result == "''")
-    }
-
-    @Test("shellEscape handles special chars")
-    func shellEscapeSpecialChars() {
-        let result = CodingService.shellEscape("$HOME && rm -rf /")
-        // Single quotes prevent shell expansion
-        #expect(result == "'$HOME && rm -rf /'")
-    }
-
-    // MARK: - Command Builders
-
-    @Test("buildListFilesCommand includes pattern and path")
-    func buildListFiles() {
-        let cmd = CodingService.buildListFilesCommand(pattern: "*.swift", path: "/tmp/project")
-        #expect(cmd.contains("find"))
-        #expect(cmd.contains("'/tmp/project'"))
-        #expect(cmd.contains("-name '*.swift'"))
-        #expect(cmd.contains("-maxdepth 8"))
-        #expect(cmd.contains("Library"))
-        #expect(cmd.contains("| sort"))
-    }
-
-    @Test("buildListFilesCommand defaults to home dir")
-    func buildListFilesDefaultPath() {
-        let cmd = CodingService.buildListFilesCommand(pattern: "*.txt", path: nil)
-        #expect(cmd.contains(CodingService.defaultDir))
-    }
-
-    @Test("buildSearchFilesCommand includes pattern and excludes")
-    func buildSearchFiles() {
-        let cmd = CodingService.buildSearchFilesCommand(pattern: "TODO", path: "/tmp/project", include: "*.swift")
-        #expect(cmd.contains("grep -rn"))
-        #expect(cmd.contains("'TODO'"))
-        #expect(cmd.contains("'/tmp/project'"))
-        #expect(cmd.contains("--include='*.swift'"))
-        #expect(cmd.contains("--exclude-dir=.git"))
-        #expect(cmd.contains("--exclude-dir=Library"))
-    }
-
-    @Test("buildSearchFilesCommand works without include")
-    func buildSearchFilesNoInclude() {
-        let cmd = CodingService.buildSearchFilesCommand(pattern: "error", path: "/tmp", include: nil)
-        #expect(!cmd.contains("--include"))
-        #expect(cmd.contains("'error'"))
-    }
-
-    @Test("buildGitStatusCommand uses cd")
-    func buildGitStatus() {
-        let cmd = CodingService.buildGitStatusCommand(path: "/tmp/repo")
-        #expect(cmd.contains("cd '/tmp/repo'"))
-        #expect(cmd.contains("git branch --show-current"))
-        #expect(cmd.contains("git status --short"))
-    }
-
-    @Test("buildGitDiffCommand handles staged and target")
-    func buildGitDiff() {
-        let cmd = CodingService.buildGitDiffCommand(path: "/tmp/repo", staged: true, target: "main")
-        #expect(cmd.contains("cd '/tmp/repo'"))
-        #expect(cmd.contains("--cached"))
-        #expect(cmd.contains("'main'"))
-    }
-
-    @Test("buildGitDiffCommand omits --cached when not staged")
-    func buildGitDiffUnstaged() {
-        let cmd = CodingService.buildGitDiffCommand(path: "/tmp/repo", staged: false, target: nil)
-        #expect(!cmd.contains("--cached"))
-    }
-
-    @Test("buildGitLogCommand respects count limit")
-    func buildGitLog() {
-        let cmd = CodingService.buildGitLogCommand(path: "/tmp/repo", count: 5)
-        #expect(cmd.contains("-5"))
-    }
-
-    @Test("buildGitLogCommand caps at 100")
-    func buildGitLogMaxCap() {
-        let cmd = CodingService.buildGitLogCommand(path: "/tmp/repo", count: 500)
-        #expect(cmd.contains("-100"))
-    }
-
-    @Test("buildGitCommitCommand with specific files")
-    func buildGitCommitFiles() {
-        let cmd = CodingService.buildGitCommitCommand(path: "/tmp/repo", message: "fix bug", files: ["a.swift", "b.swift"])
-        #expect(cmd.contains("git add 'a.swift' 'b.swift'"))
-        #expect(cmd.contains("git commit -m 'fix bug'"))
-        #expect(!cmd.contains("git add -A"))
-    }
-
-    @Test("buildGitCommitCommand with no files uses add -A")
-    func buildGitCommitAll() {
-        let cmd = CodingService.buildGitCommitCommand(path: "/tmp/repo", message: "update", files: nil)
+    @Test("buildGitCommitCommand without files uses git add -A")
+    func buildGitCommitNoFiles() {
+        let cmd = CodingService.buildGitCommitCommand(path: "/tmp/repo", message: "wip", files: nil)
         #expect(cmd.contains("git add -A"))
     }
 

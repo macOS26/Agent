@@ -306,8 +306,8 @@ final class ClaudeService {
                     currentToolJson = ""
                     inToolUse = false
                     inServerToolUse = false
-                } else if pendingServerResult != nil {
-                    contentBlocks.append(pendingServerResult!)
+                } else if let result = pendingServerResult {
+                    contentBlocks.append(result)
                     pendingServerResult = nil
                 } else if !currentTextBlock.isEmpty {
                     contentBlocks.append(["type": "text", "text": currentTextBlock])
