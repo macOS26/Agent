@@ -44,16 +44,16 @@ extension AgentViewModel {
         switch provider {
         case .claude:
             modelName = selectedModel
-            isVision = false
+            isVision = true  // Claude Sonnet/Opus/Haiku all support vision
         case .openAI:
             modelName = openAIModel
-            isVision = false
+            isVision = true  // GPT-4o, GPT-4 Turbo support vision
         case .deepSeek:
             modelName = deepSeekModel
-            isVision = false
+            isVision = false // DeepSeek text-only
         case .huggingFace:
             modelName = huggingFaceModel
-            isVision = false
+            isVision = false // Model-dependent, default off
         case .ollama:
             modelName = ollamaModel
             isVision = selectedOllamaSupportsVision
@@ -62,16 +62,16 @@ extension AgentViewModel {
             isVision = selectedLocalOllamaSupportsVision
         case .vLLM:
             modelName = vLLMModel
-            isVision = false
+            isVision = false // Model-dependent, default off
         case .lmStudio:
             modelName = lmStudioModel
-            isVision = false
+            isVision = false // Model-dependent, default off
         case .zAI:
             modelName = zAIModel
-            isVision = false
+            isVision = true  // GLM-5 supports vision
         case .foundationModel:
             modelName = "Apple Intelligence"
-            isVision = false
+            isVision = false // Apple Intelligence doesn't support image input
         }
         appendLog("🧠 \(provider.displayName) / \(modelName)\(isVision ? " (vision)" : "")")
 
