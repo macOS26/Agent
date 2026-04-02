@@ -1,11 +1,11 @@
-
+<img width="1349" height="1438" alt="Screenshot 2026-04-02 at 12 00 03 PM" src="https://github.com/user-attachments/assets/b0d9346e-f807-4089-bab3-29c7058868d8" />
 <div align="center">
 <img width="256" height="256" alt="Agent! icon" src="https://github.com/user-attachments/assets/7a452184-6b31-49fa-9b24-d450d2889f66" />
 
 # 🦾 Agent! for macOS 26
 
 ## **Agentic AI for your  Mac Desktop**
-## Open Source replacement for Claude Code, Cursor, OpenClaw
+## Open Source replacement for Claude Code, Cursor, Open Claw
 
 [![Latest Release](https://img.shields.io/github/v/release/macOS26/Agent?label=Download&color=blue&style=for-the-badge)](https://github.com/macOS26/Agent/releases/latest)
 [![GitHub Stars](https://img.shields.io/github/stars/macOS26/Agent?style=for-the-badge&logo=github&label=Stars&color=hotpink)](https://github.com/macOS26/Agent/stargazers)
@@ -18,7 +18,7 @@ A native macOS AI agent that controls your apps, writes code, automates workflow
 
 </div>
 
-<img width="1346" height="1439" alt="Screenshot 2026-04-02 at 11 31 06 AM" src="https://github.com/user-attachments/assets/eec1850d-c068-4b4e-9c5b-d5e3c4a7bf1d" />
+<img width="1349" height="1438" alt="image" src="https://github.com/user-attachments/assets/463d955a-a854-49d8-8f94-b8e3a1de392d" />
 
 ---
 
