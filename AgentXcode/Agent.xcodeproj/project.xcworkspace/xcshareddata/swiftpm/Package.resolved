@@ -33,8 +33,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/macOS26/AgentD1F.git",
       "state" : {
-        "revision" : "de9798a5768f00cc8cf0cea689e7fadaa7485fdd",
-        "version" : "1.0.1"
+        "revision" : "2f65032044581b21d8686be9ddbacd1839d3cbb2",
+        "version" : "1.0.2"
       }
     },
     {
@@ -69,8 +69,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/macOS26/AgentSwift.git",
       "state" : {
-        "revision" : "6d9992872a80192a8bf020bb8f61c344e7cf5b8e",
-        "version" : "1.0.1"
+        "revision" : "69d2d0c690bcfde53583daefbdf3e78d2732595b",
+        "version" : "1.0.2"
       }
     },
     {
