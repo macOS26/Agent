@@ -121,13 +121,16 @@ Go to Settings → MCP Servers → Add Server, paste this JSON:
     "mcpServers": {
         "playwright": {
             "command": "/opt/homebrew/bin/playwright-mcp",
-            "transport": "stdio"
+            "transport": "stdio",
+            "env": {
+                "HOME": "/Users/YOURUSERNAME"
+            }
         }
     }
 }
 ```
 
-> **Note:** If you installed Node.js via nvm or another method, replace `/opt/homebrew/bin/playwright-mcp` with the output of `which playwright-mcp`.
+> **Note:** Replace `YOURUSERNAME` with your macOS username (run `whoami` in Terminal). If you installed Node.js via nvm, replace the command path with the output of `which playwright-mcp`.
 
 Toggle ON and Playwright tools appear automatically. The AI can now control browsers directly.
 
