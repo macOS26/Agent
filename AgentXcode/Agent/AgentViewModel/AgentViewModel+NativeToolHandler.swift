@@ -47,23 +47,15 @@ extension AgentViewModel {
                 flushLog()
                 return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
             }
-            var result = await executeViaUserAgent(command: fullCmd)
-            // Auto-resolve "command not found" by finding the full path
+            let result = await executeViaUserAgent(command: fullCmd)
+            // Auto-detect "command not found" and respond with whereis lookup
             if result.status != 0 && result.output.contains("command not found") {
                 let tool = command.trimmingCharacters(in: .whitespaces).components(separatedBy: " ").first ?? ""
                 if !tool.isEmpty {
-                    let whereis = await executeViaUserAgent(command: "which \(tool) 2>/dev/null || /usr/bin/whereis \(tool) 2>/dev/null || find /opt/homebrew/bin /usr/local/bin -name \(tool) 2>/dev/null | head -1")
-                    let foundPath = whereis.output.trimmingCharacters(in: .whitespacesAndNewlines).components(separatedBy: "\n").first ?? ""
-                    if !foundPath.isEmpty && foundPath.hasPrefix("/") {
-                        // Retry with full path
-                        let retryCmd = command.replacingOccurrences(of: tool, with: foundPath, options: [], range: command.range(of: tool))
-                        let retryFull = Self.prependWorkingDirectory(retryCmd, projectFolder: pf)
-                        appendLog("🔄 Resolved \(tool) → \(foundPath)")
-                        result = await executeViaUserAgent(command: retryFull)
-                    } else {
-                        // Return helpful message with search results
-                        return "command not found: \(tool). Searched PATH, /opt/homebrew/bin, /usr/local/bin. Try: execute_daemon_command to search system-wide, or install with brew install \(tool)"
-                    }
+                    let lookup = await executeViaUserAgent(command: "/usr/bin/whereis \(tool) 2>/dev/null; which \(tool) 2>/dev/null; ls /opt/homebrew/bin/\(tool) /usr/local/bin/\(tool) 2>/dev/null")
+                    let paths = lookup.output.trimmingCharacters(in: .whitespacesAndNewlines)
+                    appendLog("🔍 whereis \(tool): \(paths.isEmpty ? "not found" : paths)")
+                    return "command not found: \(tool)\nwhereis results:\n\(paths.isEmpty ? "Not installed on this system." : paths)\nUse the full path to run it, or ask the user to install it."
                 }
             }
             return result.output.isEmpty ? "(no output, exit \(result.status))" : result.output
