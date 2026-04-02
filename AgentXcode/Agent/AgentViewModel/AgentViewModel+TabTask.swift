@@ -276,9 +276,9 @@ extension AgentViewModel {
         let ollama: OllamaService?
         switch provider {
         case .ollama:
-            ollama = OllamaService(apiKey: ollamaAPIKey, model: modelId, endpoint: ollamaEndpoint, supportsVision: false, historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .ollama)
+            ollama = OllamaService(apiKey: ollamaAPIKey, model: modelId, endpoint: ollamaEndpoint, supportsVision: selectedOllamaSupportsVision, historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .ollama)
         case .localOllama:
-            ollama = OllamaService(apiKey: "", model: modelId, endpoint: localOllamaEndpoint, supportsVision: false, historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .localOllama, contextSize: localOllamaContextSize)
+            ollama = OllamaService(apiKey: "", model: modelId, endpoint: localOllamaEndpoint, supportsVision: selectedLocalOllamaSupportsVision, historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .localOllama, contextSize: localOllamaContextSize)
         default:
             ollama = nil
         }
