@@ -1,6 +1,37 @@
 @preconcurrency import Foundation
 
 
+// MARK: - Vision Verification
+extension AgentViewModel {
+    /// Capture a screenshot of the frontmost window and return base64-encoded PNG data.
+    /// Used by the vision loop to auto-verify UI actions.
+    nonisolated static func captureVerificationScreenshot() async -> String? {
+        await withCheckedContinuation { continuation in
+            DispatchQueue.global().async {
+                let tempPath = NSTemporaryDirectory() + "agent_vision_\(UUID().uuidString).png"
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+                process.arguments = ["-x", "-t", "png", tempPath]
+                do {
+                    try process.run()
+                    process.waitUntilExit()
+                    guard process.terminationStatus == 0,
+                          let data = try? Data(contentsOf: URL(fileURLWithPath: tempPath)) else {
+                        continuation.resume(returning: nil)
+                        return
+                    }
+                    // Resize to max 1024px wide to save tokens
+                    let base64 = data.base64EncodedString()
+                    try? FileManager.default.removeItem(atPath: tempPath)
+                    continuation.resume(returning: base64)
+                } catch {
+                    continuation.resume(returning: nil)
+                }
+            }
+        }
+    }
+}
+
 // MARK: - Shell Execution Tools
 extension AgentViewModel {
 

@@ -506,6 +506,30 @@ extension AgentViewModel {
                     }
                 }
 
+                // Vision verification: auto-screenshot after UI actions so the LLM can see the result
+                if isVision && !pendingTools.isEmpty {
+                    let uiActions: Set<String> = ["ax_click", "ax_click_element", "ax_perform_action", "ax_type_text",
+                        "ax_type_into_element", "ax_open_app", "ax_scroll", "ax_drag",
+                        "click", "click_element", "perform_action", "type_text", "open_app",
+                        "web_click", "web_type", "web_navigate"]
+                    let hadUIAction = pendingTools.contains { uiActions.contains($0.name) }
+                    if hadUIAction {
+                        let screenshotResult = await Self.captureVerificationScreenshot()
+                        if let imageData = screenshotResult {
+                            // Append screenshot as image content block to tool results
+                            toolResults.append([
+                                "type": "tool_result",
+                                "tool_use_id": "vision_verify",
+                                "content": [
+                                    ["type": "text", "text": "[Auto-screenshot after UI action — verify the action succeeded]"],
+                                    ["type": "image", "source": ["type": "base64", "media_type": "image/png", "data": imageData]]
+                                ]
+                            ])
+                            appendLog("📸 Vision: auto-screenshot for verification")
+                        }
+                    }
+                }
+
                 // Add assistant response to conversation
                 // Guard against empty content — Ollama rejects assistant messages with no content or tool_calls
                 let assistantContent: Any = response.content.isEmpty
