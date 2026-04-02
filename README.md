@@ -92,6 +92,42 @@ Work on multiple tasks simultaneously. Each tab has its own project folder and c
 ### 📸 Screenshot & Vision
 Take screenshots or paste images. Vision-capable AI models analyze what they see -- describe content, read text, spot UI issues.
 
+### 🎭 Playwright Web Automation (Optional)
+
+Full cross-browser automation via [Microsoft Playwright MCP](https://github.com/microsoft/playwright-mcp). Click, type, screenshot, and navigate any website in Chrome, Firefox, or WebKit -- all controlled by the AI.
+
+**Setup (one-time):**
+
+```bash
+# 1. Install Node.js (if not already installed)
+brew install node
+
+# 2. Install Playwright MCP server globally
+npm install -g @playwright/mcp@latest
+
+# 3. Install browser binaries
+npx playwright install chromium
+```
+
+**Configure in Agent!:**
+
+Go to Settings → MCP Servers → Add Server, paste this JSON:
+
+```json
+{
+    "mcpServers": {
+        "playwright": {
+            "command": "/opt/homebrew/bin/playwright-mcp",
+            "transport": "stdio"
+        }
+    }
+}
+```
+
+> **Note:** If you installed Node.js via nvm or another method, replace `/opt/homebrew/bin/playwright-mcp` with the output of `which playwright-mcp`.
+
+Toggle ON and Playwright tools appear automatically. The AI can now control browsers directly.
+
 ---
 
 ## Privacy & Safety
@@ -168,6 +204,29 @@ Connect Agent! directly to Xcode for project-aware operations:
 - Code snippet execution
 - Apple Developer Documentation search
 - Real-time issue tracking
+
+### Playwright MCP Server
+
+Connect Agent! to Playwright for browser automation:
+
+```json
+{
+  "mcpServers" : {
+    "playwright" : {
+      "command" : "/opt/homebrew/bin/playwright-mcp",
+      "transport" : "stdio"
+    }
+  }
+}
+```
+
+**Playwright MCP provides:**
+- Browser navigation and interaction
+- Click, type, and form filling
+- Screenshots and snapshots
+- JavaScript execution
+- Tab management
+- Network request monitoring
 
 ---
 
