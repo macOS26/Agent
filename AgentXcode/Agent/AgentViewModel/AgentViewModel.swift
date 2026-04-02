@@ -446,14 +446,25 @@ final class AgentViewModel {
     ]
 
     /// Detect vision-capable models by name patterns
+    /// Auto-detect vision-capable models by name keywords.
+    /// Sources: ollama.com/search?c=vision, OpenAI docs, Anthropic docs
     nonisolated static func isVisionModel(_ model: String) -> Bool {
         let lower = model.lowercased()
         let visionKeywords = [
-            "vision", "vl", "llava", "cogvlm", "qwen-vl", "qwen2-vl",
-            "internvl", "minicpm-v", "phi-3-vision", "phi-3.5-vision",
-            "glm-4v", "glm-5", "glm-5.1", "pixtral", "molmo", "llama-3.2-vision",
-            "gemma-2-vision", "idefics", "fuyu", "bakllava", "obsidian",
+            // Ollama vision models (from ollama.com/search?c=vision)
+            "llava", "llava-llama3", "bakllava", "minicpm-v",
+            "gemma3", "gemma4", "gemma-3", "gemma-4",
+            "qwen2.5vl", "qwen2.5-vl", "qwen3-vl", "qwen3.5",
+            "llama3.2-vision", "llama-3.2-vision", "llama4",
+            "mistral-small3.1", "mistral-small3.2", "mistral-large-3",
+            "kimi-k2.5", "gemini-3-flash", "glm-ocr", "deepseek-ocr",
+            "ministral-3", "devstral-small-2",
+            // General vision keywords
+            "vision", "-vl", "cogvlm", "internvl", "pixtral", "molmo",
+            "phi-3-vision", "phi-3.5-vision", "phi-4", "idefics", "fuyu",
+            // Cloud API vision models
             "gpt-4o", "gpt-4-turbo", "gpt-4-vision", "claude",
+            "glm-4v",
         ]
         return visionKeywords.contains { lower.contains($0) }
     }

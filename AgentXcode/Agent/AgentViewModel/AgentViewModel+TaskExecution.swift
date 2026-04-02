@@ -56,10 +56,10 @@ extension AgentViewModel {
             isVision = Self.isVisionModel(huggingFaceModel)
         case .ollama:
             modelName = ollamaModel
-            isVision = selectedOllamaSupportsVision
+            isVision = selectedOllamaSupportsVision || Self.isVisionModel(ollamaModel)
         case .localOllama:
             modelName = localOllamaModel
-            isVision = selectedLocalOllamaSupportsVision
+            isVision = selectedLocalOllamaSupportsVision || Self.isVisionModel(localOllamaModel)
         case .vLLM:
             modelName = vLLMModel
             isVision = Self.isVisionModel(vLLMModel)
