@@ -29,15 +29,21 @@ extension AgentViewModel {
 
     /// Runs a command in the Agent app process to inherit TCC permissions
     /// (Automation, Accessibility, ScreenRecording).
-    nonisolated static func executeTCC(command: String) async -> (status: Int32, output: String) {
+    nonisolated static func executeTCC(command: String, workingDirectory: String = "") async -> (status: Int32, output: String) {
         await withCheckedContinuation { continuation in
             DispatchQueue.global().async {
                 let process = Process()
                 process.executableURL = URL(fileURLWithPath: AppConstants.shellPath)
                 process.arguments = ["-c", command]
 
+                if !workingDirectory.isEmpty {
+                    process.currentDirectoryURL = URL(fileURLWithPath: workingDirectory)
+                }
+
                 var env = ProcessInfo.processInfo.environment
                 env["HOME"] = FileManager.default.homeDirectoryForCurrentUser.path
+                let extraPaths = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+                env["PATH"] = extraPaths + ":" + (env["PATH"] ?? "")
                 process.environment = env
 
                 let stdoutPipe = Pipe()
@@ -71,15 +77,22 @@ extension AgentViewModel {
 
     /// Run a command in the Agent app process with streaming output.
     /// Inherits TCC permissions (Automation, Accessibility, ScreenRecording).
-    nonisolated static func executeTCCStreaming(command: String, onOutput: @escaping @Sendable (String) -> Void) async -> (status: Int32, output: String) {
+    nonisolated static func executeTCCStreaming(command: String, workingDirectory: String = "", onOutput: @escaping @Sendable (String) -> Void) async -> (status: Int32, output: String) {
         await withCheckedContinuation { continuation in
             DispatchQueue.global().async {
                 let process = Process()
                 process.executableURL = URL(fileURLWithPath: AppConstants.shellPath)
                 process.arguments = ["-c", command]
 
+                if !workingDirectory.isEmpty {
+                    process.currentDirectoryURL = URL(fileURLWithPath: workingDirectory)
+                }
+
                 var env = ProcessInfo.processInfo.environment
                 env["HOME"] = FileManager.default.homeDirectoryForCurrentUser.path
+                // Ensure common tool paths are in PATH
+                let extraPaths = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+                env["PATH"] = extraPaths + ":" + (env["PATH"] ?? "")
                 process.environment = env
 
                 let pipe = Pipe()
