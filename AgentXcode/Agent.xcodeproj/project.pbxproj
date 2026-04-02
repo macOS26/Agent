@@ -16,6 +16,7 @@
 		22439788DCAA5510D58ABEEC /* AgentViewModel+TabHandlers+Core.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D96CB6C2479E8BCCBF6B487 /* AgentViewModel+TabHandlers+Core.swift */; };
 		238B40E2A7DFCFB745101269 /* HeaderSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEA10A5913CDA508518F6EDA /* HeaderSectionView.swift */; };
 		23D4A25EAF30497598063A0D /* TokenUsageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3804F32B8914764A3690CB5 /* TokenUsageStore.swift */; };
+		3E8B8A7B5C4F4DD0B9DA34BC /* FileBackupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AFB0612717E44BF8818651B /* FileBackupService.swift */; };
 		294AAA2C5E0241FCC1290B01 /* AgentViewModel+TaskUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEBEFF49533F8BC00811AE5C /* AgentViewModel+TaskUtilities.swift */; };
 		34558227A73FD129C9AF86AA /* AgentViewModel+TabHandlers+Automation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 224DF4E08C4D8857DC2B563B /* AgentViewModel+TabHandlers+Automation.swift */; };
 		4992CD23A14EED92AB5B902A /* KeyboardShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = F03E40CE4E05384C443BA8A9 /* KeyboardShortcuts.swift */; };
@@ -237,6 +238,7 @@
 		87F1A988F00C4E7050FED023 /* TaskExecution+WebTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskExecution+WebTools.swift"; sourceTree = "<group>"; };
 		93C673DDB50E956B2E5FD610 /* AgentViewModel+NativeToolHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+NativeToolHandler.swift"; sourceTree = "<group>"; };
 		A3804F32B8914764A3690CB5 /* TokenUsageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenUsageStore.swift; sourceTree = "<group>"; };
+		2AFB0612717E44BF8818651B /* FileBackupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileBackupService.swift; sourceTree = "<group>"; };
 		AA1000000000000000001A /* AgentApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentApp.swift; sourceTree = "<group>"; };
 		AA1000000000000000001B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		AA1000000000000000001C /* AgentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentViewModel.swift; sourceTree = "<group>"; };
@@ -531,6 +533,7 @@
 				EAFA000000000000000002 /* FoundationModelService.swift */,
 				EAE1E7232F7C01000079432C /* LLMProviderSetup.swift */,
 				A3804F32B8914764A3690CB5 /* TokenUsageStore.swift */,
+				2AFB0612717E44BF8818651B /* FileBackupService.swift */,
 				CDB8327F7EE04EFBB6153380 /* MemoryStore.swift */,
 				EAAI000000000000000002 /* AppleIntelligenceMediator.swift */,
 				EASP000000000000000002 /* SystemPromptService.swift */,
@@ -886,6 +889,7 @@
 				EAFA000000000000000001 /* FoundationModelService.swift in Sources */,
 				EAE1E7242F7C01000079432C /* LLMProviderSetup.swift in Sources */,
 				23D4A25EAF30497598063A0D /* TokenUsageStore.swift in Sources */,
+				3E8B8A7B5C4F4DD0B9DA34BC /* FileBackupService.swift in Sources */,
 				5A9DE31CE50141059B14FAA9 /* MemoryStore.swift in Sources */,
 				EAAI000000000000000001 /* AppleIntelligenceMediator.swift in Sources */,
 				EASP000000000000000001 /* SystemPromptService.swift in Sources */,
