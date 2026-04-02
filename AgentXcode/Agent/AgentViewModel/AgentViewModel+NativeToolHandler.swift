@@ -1062,41 +1062,39 @@ extension AgentViewModel {
             return ax.readFocusedElement(appBundleId: app)
         case "set_properties":
             return ax.setProperties(role: role, title: title, value: value, appBundleId: app, x: x, y: y, properties: input["properties"] as? [String: Any] ?? [:])
-        case "clipboard_read":
-            // Read text from clipboard
-            let pb = NSPasteboard.general
-            if let text = pb.string(forType: .string) {
-                return text
+        case "clipboard":
+            let clipAction = input["action"] as? String ?? "read"
+            switch clipAction {
+            case "read":
+                let pb = NSPasteboard.general
+                if let text = pb.string(forType: .string) { return text }
+                if pb.data(forType: .png) != nil || pb.data(forType: .tiff) != nil {
+                    return "Clipboard contains an image (use action:paste to paste it)"
+                }
+                return "Clipboard is empty"
+            case "write":
+                let text = input["text"] as? String ?? ""
+                guard !text.isEmpty else { return "Error: text is required" }
+                let pb = NSPasteboard.general
+                pb.clearContents()
+                pb.setString(text, forType: .string)
+                return "Copied to clipboard: \(text.prefix(100))"
+            case "paste":
+                return ax.pressKey(virtualKey: 9, modifiers: ["command"])
+            case "copy_image":
+                let path = input["file_path"] as? String ?? ""
+                guard !path.isEmpty else { return "Error: file_path is required" }
+                guard let imageData = try? Data(contentsOf: URL(fileURLWithPath: path)) else {
+                    return "Error: cannot read image at \(path)"
+                }
+                let pb = NSPasteboard.general
+                pb.clearContents()
+                let ext = (path as NSString).pathExtension.lowercased()
+                pb.setData(imageData, forType: ext == "png" ? .png : .tiff)
+                return "Image copied to clipboard from \(path)"
+            default:
+                return "Unknown clipboard action: \(clipAction). Use read, write, paste, or copy_image."
             }
-            // Check for image
-            if pb.data(forType: .png) != nil || pb.data(forType: .tiff) != nil {
-                return "Clipboard contains an image (use clipboard_paste to paste it into an app)"
-            }
-            return "Clipboard is empty"
-        case "clipboard_write":
-            // Write text to clipboard
-            let text = input["text"] as? String ?? ""
-            guard !text.isEmpty else { return "Error: text is required" }
-            let pb = NSPasteboard.general
-            pb.clearContents()
-            pb.setString(text, forType: .string)
-            return "Copied to clipboard: \(text.prefix(100))"
-        case "clipboard_paste":
-            // Paste clipboard contents into the focused app via Cmd+V
-            return ax.pressKey(virtualKey: 9, modifiers: ["command"])  // V key = keycode 9
-        case "clipboard_copy_image":
-            // Copy a screenshot/image file to clipboard
-            let path = input["file_path"] as? String ?? ""
-            guard !path.isEmpty else { return "Error: file_path is required" }
-            guard let imageData = try? Data(contentsOf: URL(fileURLWithPath: path)) else {
-                return "Error: cannot read image at \(path)"
-            }
-            let pb = NSPasteboard.general
-            pb.clearContents()
-            let ext = (path as NSString).pathExtension.lowercased()
-            let type: NSPasteboard.PasteboardType = ext == "png" ? .png : .tiff
-            pb.setData(imageData, forType: type)
-            return "Image copied to clipboard from \(path)"
         default:
             return "Unknown accessibility action: \(action)"
         }
