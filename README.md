@@ -2,7 +2,7 @@
 <div align="center">
 <img width="256" height="256" alt="Agent! icon" src="https://github.com/user-attachments/assets/7a452184-6b31-49fa-9b24-d450d2889f66" />
 
-🦾 # Agent!
+# 🦾 Agent!
 
 ## **Agentic AI for your  Mac Desktop**
 ## Open Source replacement for Claude Code, Cursor, OpenClaw
