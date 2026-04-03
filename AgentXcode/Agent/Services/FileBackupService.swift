@@ -52,11 +52,15 @@ final class FileBackupService {
 
         let formatter = ISO8601DateFormatter()
         return files.compactMap { name -> (String, String, Date)? in
-            // Parse timestamp_filename format
+            // Parse timestamp_filename format: 2026-04-03T04-46-51Z_README.md
             guard let underscoreRange = name.range(of: "_", range: name.index(name.startIndex, offsetBy: 15)..<name.endIndex) else { return nil }
-            let timestampStr = String(name[..<underscoreRange.lowerBound])
-                .replacingOccurrences(of: "-", with: ":")
-            // Restore the colons for hours/minutes/seconds (positions 13,16)
+            var timestampStr = String(name[..<underscoreRange.lowerBound])
+            // Only restore colons in the time portion (after T), not the date hyphens
+            if let tIdx = timestampStr.firstIndex(of: "T") {
+                let timePart = String(timestampStr[timestampStr.index(after: tIdx)...])
+                    .replacingOccurrences(of: "-", with: ":")
+                timestampStr = String(timestampStr[...tIdx]) + timePart
+            }
             guard let date = formatter.date(from: timestampStr) else { return nil }
             let fileName = String(name[underscoreRange.upperBound...])
             let backupPath = tabDir.appendingPathComponent(name).path
