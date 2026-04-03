@@ -68,6 +68,7 @@ extension AgentViewModel {
         case .grok: return grokModel
         case .mistral: return mistralModel
         case .codestral: return codestralModel
+        case .vibe: return vibeModel
         case .foundationModel: return "Apple Intelligence"
         }
     }
@@ -106,6 +107,8 @@ extension AgentViewModel {
         case .mistral:
             return modelId
         case .codestral:
+            return modelId
+        case .vibe:
             return modelId
         case .foundationModel:
             return "Apple Intelligence"
