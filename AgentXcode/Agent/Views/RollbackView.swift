@@ -5,6 +5,7 @@ struct RollbackView: View {
     @Bindable var viewModel: AgentViewModel
     @State private var backups: [(original: String, backup: String, date: Date)] = []
     @State private var restoreResult: String?
+    @State private var showClearConfirmation = false
 
     private var tabID: UUID {
         viewModel.selectedTabId ?? AgentViewModel.mainTabID
@@ -63,9 +64,7 @@ struct RollbackView: View {
 
             HStack {
                 Button("Clear All") {
-                    FileBackupService.shared.clearBackups(tabID: tabID)
-                    loadBackups()
-                    restoreResult = "All backups cleared"
+                    showClearConfirmation = true
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
@@ -82,6 +81,16 @@ struct RollbackView: View {
         .padding(16)
         .frame(width: 400)
         .onAppear { loadBackups() }
+        .alert("Clear All Backups?", isPresented: $showClearConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Clear All", role: .destructive) {
+                FileBackupService.shared.clearAllBackups()
+                loadBackups()
+                restoreResult = "All backups cleared"
+            }
+        } message: {
+            Text("This will permanently delete all \(backups.count) backup file(s). This cannot be undone.")
+        }
     }
 
     private func loadBackups() {
