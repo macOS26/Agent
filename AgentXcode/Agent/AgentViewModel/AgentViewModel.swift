@@ -1225,7 +1225,7 @@ final class AgentViewModel {
         let model = provider == .ollama ? ollamaModel : localOllamaModel
         guard !model.isEmpty else { return }
 
-        let chatURL = endpoint.isEmpty ? "http://localhost:11434/v1/chat/completions" : endpoint
+        let chatURL = endpoint.isEmpty ? "http://localhost:11434/api/chat" : endpoint
         guard let url = URL(string: chatURL) else { return }
 
         var request = URLRequest(url: url)
