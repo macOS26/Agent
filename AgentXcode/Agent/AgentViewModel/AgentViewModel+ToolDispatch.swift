@@ -133,10 +133,14 @@ extension AgentViewModel {
     /// Dispatch a tool call by name. Returns the handler result.
     func dispatchTool(
         name: String,
-        input: [String: Any],
+        input rawInput: [String: Any],
         ctx: ToolContext,
         toolResults: inout [[String: Any]]
     ) async -> ToolHandlerResult {
+        // Normalize empty path/file_path to nil so handlers fall back to project folder
+        var input = rawInput
+        if let p = input["path"] as? String, p.isEmpty { input["path"] = nil }
+        if let p = input["file_path"] as? String, p.isEmpty { input["file_path"] = nil }
 
         // Cache hit for read-only tools — return cached result instantly
         if Self.readOnlyTools.contains(name) {
