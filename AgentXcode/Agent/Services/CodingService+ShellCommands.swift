@@ -64,11 +64,10 @@ extension CodingService {
     }
 
     static func buildListFilesCommand(pattern: String, path: String?) -> String {
-        let dir = shellEscape(path ?? defaultDir)
         let pat = shellEscape(pattern)
-        // cd into dir so find outputs relative paths (saves tokens)
+        // Working directory set on Process — find . outputs relative paths (saves tokens)
         // -type f: files only, prune dotdirs and build artifacts
-        return "cd \(dir) && find . -maxdepth 8 -type f -name \(pat)"
+        return "find . -maxdepth 8 -type f -name \(pat)"
             + " -not -path '*/.*'"
             + " -not -path '*/.build/*'"
             + " -not -path '*/.swiftpm/*'"
@@ -81,6 +80,11 @@ extension CodingService {
             + " -not -name '.DS_Store'"
             + " -not -name '*.xcuserstate'"
             + " 2>/dev/null | sed 's|^\\./||' | sort | head -200"
+    }
+
+    /// Resolve the working directory for a command from an optional path.
+    static func resolveDir(_ path: String?) -> String {
+        return path ?? defaultDir
     }
 
     static func buildSearchFilesCommand(pattern: String, path: String?, include: String?) -> String {
@@ -96,43 +100,39 @@ extension CodingService {
     }
 
     static func buildGitStatusCommand(path: String?) -> String {
-        let dir = shellEscape(path ?? defaultDir)
-        return "cd \(dir) && echo \"Branch: $(git branch --show-current)\" && git status --short"
+        // Working directory set on Process — no cd needed
+        return "echo \"Branch: $(git branch --show-current)\" && git status --short"
     }
 
     static func buildGitDiffCommand(path: String?, staged: Bool, target: String?) -> String {
-        let dir = shellEscape(path ?? defaultDir)
-        var cmd = "cd \(dir) && git diff --stat -p"
+        var cmd = "git diff --stat -p"
         if staged { cmd += " --cached" }
         if let target { cmd += " \(shellEscape(target))" }
         return cmd
     }
 
     static func buildGitLogCommand(path: String?, count: Int?) -> String {
-        let dir = shellEscape(path ?? defaultDir)
         let n = min(count ?? 20, 100)
-        return "cd \(dir) && git log --oneline --no-decorate -\(n)"
+        return "git log --oneline --no-decorate -\(n)"
     }
 
     static func buildGitCommitCommand(path: String?, message: String, files: [String]?) -> String {
-        let dir = shellEscape(path ?? defaultDir)
-        var cmd = "cd \(dir)"
+        var cmd: String
         if let files, !files.isEmpty {
             let escaped = files.map { shellEscape($0) }.joined(separator: " ")
-            cmd += " && git add \(escaped)"
+            cmd = "git add \(escaped)"
         } else {
-            cmd += " && git add -A"
+            cmd = "git add -A"
         }
         cmd += " && git diff --cached --quiet && echo 'Nothing to commit (no staged changes)' || git commit -m \(shellEscape(message))"
         return cmd
     }
 
     static func buildGitBranchCommand(path: String?, name: String, checkout: Bool) -> String {
-        let dir = shellEscape(path ?? defaultDir)
         if checkout {
-            return "cd \(dir) && git checkout -b \(shellEscape(name))"
+            return "git checkout -b \(shellEscape(name))"
         } else {
-            return "cd \(dir) && git branch \(shellEscape(name))"
+            return "git branch \(shellEscape(name))"
         }
     }
 

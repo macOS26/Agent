@@ -466,20 +466,23 @@ extension AgentViewModel {
                         // Pre-warm shell results concurrently off MainActor
                         if shellPending.count > 1 {
                             // Capture Sendable values before entering TaskGroup
+                            let capturedPF = projectFolder
                             let cmds: [(id: String, cmd: String)] = shellPending.map { tool in
-                                (tool.toolId, Self.buildReadOnlyCommand(name: tool.name, input: tool.input, projectFolder: projectFolder))
+                                (tool.toolId, Self.buildReadOnlyCommand(name: tool.name, input: tool.input, projectFolder: capturedPF))
                             }
                             var preResults: [String: String] = [:]
                             await withTaskGroup(of: (String, String).self) { group in
                                 for (id, cmd) in cmds {
                                     let capturedId = id
                                     let capturedCmd = cmd
+                                    let workDir = capturedPF.isEmpty ? NSHomeDirectory() : capturedPF
                                     group.addTask {
                                         guard !capturedCmd.isEmpty else { return (capturedId, "") }
                                         let pipe = Pipe()
                                         let process = Process()
                                         process.executableURL = URL(fileURLWithPath: "/bin/zsh")
                                         process.arguments = ["-c", capturedCmd]
+                                        process.currentDirectoryURL = URL(fileURLWithPath: workDir)
                                         process.standardOutput = pipe
                                         process.standardError = pipe
                                         try? process.run()
