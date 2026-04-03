@@ -1,4 +1,5 @@
 import Foundation
+import AgentAudit
 import AgentTools
 
 /// Manages editable system prompt files stored at ~/Documents/AgentScript/system/.
@@ -100,7 +101,11 @@ final class SystemPromptService {
 
         if needsWrite {
             let versioned = Self.versionPrefix + Self.appVersion + "\n" + defaultContent
-            try? versioned.write(to: url, atomically: true, encoding: .utf8)
+            do {
+                try versioned.write(to: url, atomically: true, encoding: .utf8)
+            } catch {
+                AuditLog.log(.api, "[SystemPrompt] Failed to write \(url.lastPathComponent): \(error)")
+            }
         }
     }
 
@@ -160,7 +165,11 @@ final class SystemPromptService {
         let isReadOnly = trimmed.hasPrefix("READ ONLY") || trimmed.hasPrefix("// READ ONLY")
         let header = isReadOnly ? Self.readOnlyPrefix : Self.customPrefix
         let versioned = header + Self.appVersion + "\n" + stripped
-        try? versioned.write(to: url, atomically: true, encoding: .utf8)
+        do {
+            try versioned.write(to: url, atomically: true, encoding: .utf8)
+        } catch {
+            AuditLog.log(.api, "[SystemPrompt] Failed to save template \(fileName): \(error)")
+        }
     }
 
     /// Legacy overload for backward compatibility.
@@ -174,7 +183,11 @@ final class SystemPromptService {
         let url = Self.systemDir.appendingPathComponent(fileName)
         let content = compact ? Self.defaultCompactPrompt() : Self.defaultPrompt()
         let versioned = Self.versionPrefix + Self.appVersion + "\n" + content
-        try? versioned.write(to: url, atomically: true, encoding: .utf8)
+        do {
+            try versioned.write(to: url, atomically: true, encoding: .utf8)
+        } catch {
+            AuditLog.log(.api, "[SystemPrompt] Failed to reset \(fileName): \(error)")
+        }
     }
 
     /// Legacy overload for backward compatibility.

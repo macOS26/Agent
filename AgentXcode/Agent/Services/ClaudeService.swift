@@ -1,4 +1,5 @@
 import AgentLLM
+import AgentAudit
 @preconcurrency import Foundation
 import AgentTools
 
@@ -292,6 +293,7 @@ final class ClaudeService {
                     if let parsed = try? JSONSerialization.jsonObject(with: Data(currentToolJson.utf8)) as? [String: Any] {
                         input = parsed
                     } else {
+                        AuditLog.log(.api, "[ClaudeService] Failed to parse tool args for \(currentToolName): \(currentToolJson.prefix(200))")
                         input = [:]
                     }
                     let blockType = inServerToolUse ? "server_tool_use" : "tool_use"
