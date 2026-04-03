@@ -410,7 +410,7 @@ extension AgentViewModel {
                             tab?.appendStreamDelta(delta)
                         }
                     }
-                    response = (r.content, r.stopReason, 0, 0)
+                    response = (r.content, r.stopReason, r.inputTokens, r.outputTokens)
 
                     tab.flushStreamBuffer()
                 } else if let ollama {
@@ -420,7 +420,7 @@ extension AgentViewModel {
                             tab?.appendStreamDelta(delta)
                         }
                     }
-                    response = (r.content, r.stopReason, 0, 0)
+                    response = (r.content, r.stopReason, r.inputTokens, r.outputTokens)
 
                     tab.flushStreamBuffer()
                 } else if let foundationModelService {
