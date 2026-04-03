@@ -197,6 +197,13 @@ final class OpenAICompatibleService {
                     var assistantMsg: [String: Any] = ["role": "assistant"]
                     if !textParts.isEmpty { assistantMsg["content"] = textParts }
                     if !toolCalls.isEmpty { assistantMsg["tool_calls"] = toolCalls }
+                    // Gemini thought_signature — echo on the assistant message
+                    for block in blocks {
+                        if let sig = block["thought_signature"] as? String {
+                            assistantMsg["thought_signature"] = sig
+                            break
+                        }
+                    }
                     chatMessages.append(assistantMsg)
                 }
             }
@@ -436,8 +443,10 @@ final class OpenAICompatibleService {
         var fullText = ""
         var finishReason = "stop"
 
-        // Accumulate streamed tool calls: index -> (id, name, arguments, thought_signature)
-        var toolCallAccum: [Int: (id: String, name: String, arguments: String, thoughtSig: String?)] = [:]
+        // Accumulate streamed tool calls: index -> (id, name, arguments)
+        var toolCallAccum: [Int: (id: String, name: String, arguments: String)] = [:]
+        // Gemini thought_signature — on the message/delta level, echoed back on assistant message
+        var thoughtSignature: String?
 
         // Buffer text line-by-line so we can suppress raw JSON tool calls
         // that vLLM/Qwen outputs as text content instead of native tool_calls
@@ -495,13 +504,20 @@ final class OpenAICompatibleService {
 
             guard let delta = firstChoice["delta"] as? [String: Any] else { continue }
 
+            // Gemini thought_signature — on delta or choice level
+            if let sig = delta["thought_signature"] as? String {
+                thoughtSignature = sig
+            } else if let sig = firstChoice["thought_signature"] as? String {
+                thoughtSignature = sig
+            }
+
             // Tool call deltas (streamed incrementally)
             if let toolCalls = delta["tool_calls"] as? [[String: Any]] {
                 for tc in toolCalls {
                     let index = tc["index"] as? Int ?? 0
 
                     if toolCallAccum[index] == nil {
-                        toolCallAccum[index] = (id: "", name: "", arguments: "", thoughtSig: nil)
+                        toolCallAccum[index] = (id: "", name: "", arguments: "")
                     }
 
                     if let id = tc["id"] as? String {
@@ -515,9 +531,9 @@ final class OpenAICompatibleService {
                             toolCallAccum[index]?.arguments += args
                         }
                     }
-                    // Gemini thought_signature — per tool call, must be echoed back
+                    // Also check per-tool-call thought_signature
                     if let sig = tc["thought_signature"] as? String {
-                        toolCallAccum[index]?.thoughtSig = sig
+                        thoughtSignature = sig
                     }
                 }
             }
@@ -573,7 +589,8 @@ final class OpenAICompatibleService {
                 "name": tc.name,
                 "input": input
             ]
-            if let sig = tc.thoughtSig { toolBlock["thought_signature"] = sig }
+            // Store thought_signature on each tool_use block so it can be echoed on the assistant message
+            if let sig = thoughtSignature { toolBlock["thought_signature"] = sig }
             contentBlocks.append(toolBlock)
         }
 
