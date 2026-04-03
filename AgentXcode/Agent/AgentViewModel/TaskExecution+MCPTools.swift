@@ -63,7 +63,7 @@ extension AgentViewModel {
                     arguments: args
                 )
                 mcpOutput = result.content.compactMap { block -> String? in
-                    if case .text(let t) = block { return t }
+                    if case .text(let t) = block { return Self.formatMCPText(t) }
                     return nil
                 }.joined(separator: "\n")
             } catch {
@@ -82,5 +82,29 @@ extension AgentViewModel {
         ])
 
         return true
+    }
+
+    /// Format MCP text responses — extract readable content from JSON wrappers.
+    private static func formatMCPText(_ text: String) -> String {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        // If it's a JSON object with a "content" or "message" key, extract the value
+        guard trimmed.hasPrefix("{"),
+              let data = trimmed.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return text
+        }
+        // Extract the most useful field
+        if let content = json["content"] as? String {
+            return content
+        }
+        if let message = json["message"] as? String {
+            return message
+        }
+        // Multiple string fields — show them nicely
+        let parts = json.compactMap { key, value -> String? in
+            guard let str = value as? String else { return nil }
+            return "\(key): \(str)"
+        }
+        return parts.isEmpty ? text : parts.joined(separator: "\n")
     }
 }
