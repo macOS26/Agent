@@ -87,24 +87,81 @@ extension AgentViewModel {
     /// Format MCP text responses — extract readable content from JSON wrappers.
     private static func formatMCPText(_ text: String) -> String {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        // If it's a JSON object with a "content" or "message" key, extract the value
         guard trimmed.hasPrefix("{"),
               let data = trimmed.data(using: .utf8),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             return text
         }
-        // Extract the most useful field
+
+        var lines: [String] = []
+
+        // Primary content fields (XcodeRead, diagnostics)
         if let content = json["content"] as? String {
-            return content
+            lines.append(content)
         }
-        if let message = json["message"] as? String {
-            return message
+
+        // Summary/result fields (build, tests)
+        for key in ["summary", "buildResult", "executionResults"] {
+            if let val = json[key] as? String, !val.isEmpty {
+                lines.append(val)
+            }
         }
-        // Multiple string fields — show them nicely
-        let parts = json.compactMap { key, value -> String? in
-            guard let str = value as? String else { return nil }
-            return "\(key): \(str)"
+
+        // Message field (additional info)
+        if let msg = json["message"] as? String, !msg.isEmpty {
+            lines.append(msg)
         }
-        return parts.isEmpty ? text : parts.joined(separator: "\n")
+
+        // String arrays: results, matches, items (XcodeGrep, XcodeGlob, XcodeLS)
+        for key in ["results", "matches", "items"] {
+            if let arr = json[key] as? [String], !arr.isEmpty {
+                lines.append(contentsOf: arr)
+            }
+        }
+
+        // Object arrays: issues, errors, tests (build errors, diagnostics, test results)
+        for key in ["issues", "errors", "buildLogEntries"] {
+            if let arr = json[key] as? [[String: Any]], !arr.isEmpty {
+                for obj in arr {
+                    lines.append(formatIssue(obj))
+                }
+            }
+        }
+
+        // Test results
+        if let results = json["results"] as? [[String: Any]], !results.isEmpty {
+            for r in results {
+                let name = r["displayName"] as? String ?? r["identifier"] as? String ?? ""
+                let state = r["state"] as? String ?? ""
+                let errs = (r["errors"] as? [String])?.joined(separator: "; ") ?? ""
+                let line = errs.isEmpty ? "\(state) \(name)" : "\(state) \(name): \(errs)"
+                lines.append(line)
+            }
+        }
+
+        // Document search results
+        if let docs = json["documents"] as? [[String: Any]], !docs.isEmpty {
+            for doc in docs {
+                let title = doc["title"] as? String ?? ""
+                let contents = doc["contents"] as? String ?? ""
+                lines.append("### \(title)")
+                lines.append(contents)
+            }
+        }
+
+        return lines.isEmpty ? text : lines.joined(separator: "\n")
+    }
+
+    /// Format a single issue/error object into a readable line.
+    private static func formatIssue(_ obj: [String: Any]) -> String {
+        let severity = obj["severity"] as? String ?? obj["classification"] as? String ?? ""
+        let message = obj["message"] as? String ?? ""
+        let path = obj["filePath"] as? String ?? obj["path"] as? String ?? ""
+        let line = obj["line"] as? Int ?? obj["lineNumber"] as? Int
+        let lineStr = line.map { ":\($0)" } ?? ""
+        if path.isEmpty {
+            return "[\(severity)] \(message)"
+        }
+        return "[\(severity)] \(path)\(lineStr): \(message)"
     }
 }
