@@ -508,11 +508,14 @@ extension AgentViewModel {
             }
             do {
                 let allModels = try await Self.fetchOpenAICompatibleModels(apiKey: key, endpoint: "https://api.mistral.ai/v1/models")
-                let filtered = allModels.filter { $0.id.lowercased().contains("devstral") }
+                // Vibe key only works with *-latest models, not dated versions like devstral-small-2507
+                let filtered = allModels.filter {
+                    $0.id.lowercased().contains("devstral") && $0.id.contains("latest")
+                }
                 let models = filtered.isEmpty ? allModels : filtered
                 vibeModels = models.isEmpty ? Self.defaultVibeModels : models
                 if vibeModel.isEmpty || !vibeModels.contains(where: { $0.id == vibeModel }) {
-                    vibeModel = vibeModels.first?.id ?? "devstral-small-2507"
+                    vibeModel = vibeModels.first?.id ?? "devstral-latest"
                 }
             } catch {
                 AuditLog.log(.api, "Failed to fetch Vibe models: \(error.localizedDescription)")
