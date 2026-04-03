@@ -464,17 +464,17 @@ extension AgentViewModel {
     /// Intercept shell commands that should use built-in tools instead
     static func suggestTool(_ command: String) -> String? {
         let trimmed = command.trimmingCharacters(in: .whitespaces)
-        // find with wildcard * pattern → use list_files tool
-        if trimmed.contains("find ") && trimmed.contains("-name '*'") {
-            return "Error: Use the list_files tool instead of raw find. Example: list_files(pattern: \"*.swift\", path: \"/your/path\")"
+        // Block ALL raw find commands — they timeout on large trees
+        if trimmed.hasPrefix("find ") || trimmed.contains("| find ") || trimmed.contains("; find ") || trimmed.contains("&& find ") {
+            return "Error: NEVER use raw find — it times out on large projects. Use file_manager(action:\"list\", pattern:\"*.swift\") to list files or file_manager(action:\"search\", pattern:\"keyword\") to search content."
         }
-        // find without -name filter → too broad
-        if trimmed.hasPrefix("find ") && !trimmed.contains("-name") {
-            return "Error: find without -name is too broad. Use list_files(pattern: \"*.swift\") or read_dir(path: \"/your/path\") instead."
+        // Block raw grep -r — can also hang on large trees
+        if trimmed.hasPrefix("grep -r") || trimmed.hasPrefix("grep --recursive") || trimmed.contains("| grep -r") {
+            return "Error: NEVER use raw grep -r — it times out on large projects. Use file_manager(action:\"search\", pattern:\"keyword\") instead."
         }
         // ls -R → use read_dir or list_files
         if trimmed.contains("ls -R") || trimmed.contains("ls -la -R") || trimmed.contains("ls -lR") {
-            return "Error: Recursive ls is too broad. Use list_files(pattern: \"*\") or read_dir(path: \"/your/path\") instead."
+            return "Error: Recursive ls is too broad. Use file_manager(action:\"list\", pattern:\"*\") or read_dir instead."
         }
         // cat on large/unknown files → use read_file with offset/limit
         if trimmed.hasPrefix("cat ") && !trimmed.contains("|") && !trimmed.contains(">") {
