@@ -7,7 +7,7 @@ struct RollbackView: View {
     @State private var restoreResult: String?
 
     private var tabID: UUID {
-        viewModel.selectedTabId ?? AgentViewModel.mainTabBackupID
+        viewModel.selectedTabId ?? AgentViewModel.mainTabID
     }
 
     var body: some View {
