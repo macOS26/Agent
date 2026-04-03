@@ -195,7 +195,9 @@ final class HelperService {
             }
         }
 
-        return await executeViaXPC(script: command, workingDirectory: workingDirectory, outputHandler: handler)
+        // Never pass empty — fall back to home directory
+        let dir = workingDirectory.isEmpty ? NSHomeDirectory() : workingDirectory
+        return await executeViaXPC(script: command, workingDirectory: dir, outputHandler: handler)
     }
 
     /// Quick connectivity test with 5-second timeout. Returns true if XPC responds.
