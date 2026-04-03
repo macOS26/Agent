@@ -572,6 +572,17 @@ struct SettingsView: View {
                 SystemPromptWindow.shared.show()
             }
 
+            Divider()
+
+            HStack {
+                Text("Force Vision").font(.caption)
+                Spacer()
+                Toggle("", isOn: $viewModel.forceVision)
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .help("Always send images to LLM, even for non-vision models")
+            }
+
         }
         .padding(16)
         .padding(.bottom, 15)

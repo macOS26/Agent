@@ -40,7 +40,7 @@ extension AgentViewModel {
         let historyContext = ChatHistoryStore.shared.buildLLMContext()
         let provider = selectedProvider
         let modelName: String
-        let isVision: Bool
+        var isVision: Bool
         switch provider {
         case .claude:
             modelName = selectedModel
@@ -82,6 +82,7 @@ extension AgentViewModel {
             modelName = "Apple Intelligence"
             isVision = false // Apple Intelligence doesn't support image input
         }
+        if forceVision { isVision = true }
         appendLog("🧠 \(provider.displayName) / \(modelName)\(isVision ? " (vision)" : "")")
 
         // Start training data capture for Apple AI LoRA fine-tuning (only when toggle is on)
