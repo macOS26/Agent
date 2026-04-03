@@ -565,11 +565,17 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(codestralModel, forKey: "codestralModel") }
     }
 
-    var codestralModels: [OpenAIModelInfo] = [OpenAIModelInfo(id: "codestral-latest", name: "Codestral Latest")]
+    var codestralModels: [OpenAIModelInfo] = [
+        OpenAIModelInfo(id: "codestral-latest", name: "Codestral Latest"),
+        OpenAIModelInfo(id: "codestral-2501", name: "Codestral 25.01"),
+        OpenAIModelInfo(id: "codestral-2508", name: "Codestral 25.08"),
+    ]
     var isFetchingCodestralModels = false
 
     nonisolated static let defaultCodestralModels: [OpenAIModelInfo] = [
         OpenAIModelInfo(id: "codestral-latest", name: "Codestral Latest"),
+        OpenAIModelInfo(id: "codestral-2501", name: "Codestral 25.01"),
+        OpenAIModelInfo(id: "codestral-2508", name: "Codestral 25.08"),
     ]
 
     nonisolated static let defaultHuggingFaceModels: [OpenAIModelInfo] = [
