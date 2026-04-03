@@ -483,6 +483,11 @@ extension AgentViewModel {
                                         process.executableURL = URL(fileURLWithPath: "/bin/zsh")
                                         process.arguments = ["-c", capturedCmd]
                                         process.currentDirectoryURL = URL(fileURLWithPath: workDir)
+                                        var env = ProcessInfo.processInfo.environment
+                                        env["HOME"] = NSHomeDirectory()
+                                        let extraPaths = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+                                        env["PATH"] = extraPaths + ":" + (env["PATH"] ?? "")
+                                        process.environment = env
                                         process.standardOutput = pipe
                                         process.standardError = pipe
                                         try? process.run()
