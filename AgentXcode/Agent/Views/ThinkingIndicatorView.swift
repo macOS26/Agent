@@ -229,7 +229,8 @@ struct ThinkingIndicatorView: View {
                         // Context budget bar
                         if inputTokens > 0 {
                             let used = inputTokens + outputTokens
-                            let fraction = min(Double(used) / Double(contextWindow), 1.0)
+                            let rawFraction = min(Double(used) / Double(contextWindow), 1.0)
+                            let fraction = rawFraction > 0.95 ? 1.0 : rawFraction
                             let isRunning = viewModel.isRunning || (tab?.isLLMRunning ?? false)
                             let barColor: Color = isRunning ? .green : .blue
                             HStack(spacing: 4) {
