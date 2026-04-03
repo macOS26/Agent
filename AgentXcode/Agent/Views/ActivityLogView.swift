@@ -303,7 +303,12 @@ struct ActivityLogView: NSViewRepresentable {
                     let savedOrigin = scrollView.contentView.bounds.origin
                     let wasAtBottom = tabSwitched || isNearBottom(textView)
                     textView.textStorage?.beginEditing()
-                    textView.textStorage?.setAttributedString(buildAttributedString(from: text))
+                    // Use cached attributed string on tab switch if available
+                    if let cached = cachedAttributedString(for: tabID, text: text) {
+                        textView.textStorage?.setAttributedString(cached)
+                    } else {
+                        textView.textStorage?.setAttributedString(buildAttributedString(from: text))
+                    }
                     textView.textStorage?.endEditing()
                     lastLength = len
                     lastRenderedText = text
