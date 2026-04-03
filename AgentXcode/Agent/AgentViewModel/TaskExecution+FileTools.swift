@@ -56,7 +56,7 @@ extension AgentViewModel {
         case "write_file":
             let filePath = input["file_path"] as? String ?? ""
             let content = input["content"] as? String ?? ""
-            FileBackupService.shared.backup(filePath: (filePath as NSString).expandingTildeInPath, tabID: selectedTabId ?? UUID())
+            FileBackupService.shared.backup(filePath: (filePath as NSString).expandingTildeInPath, tabID: selectedTabId ?? Self.mainTabBackupID)
             appendLog("📝 Write: \(filePath)")
             let output = await Self.offMain { CodingService.writeFile(path: filePath, content: content) }
             appendLog(output)
@@ -73,7 +73,7 @@ extension AgentViewModel {
             let newString = input["new_string"] as? String ?? ""
             let replaceAll = input["replace_all"] as? Bool ?? false
             let context = input["context"] as? String
-            FileBackupService.shared.backup(filePath: (filePath as NSString).expandingTildeInPath, tabID: selectedTabId ?? UUID())
+            FileBackupService.shared.backup(filePath: (filePath as NSString).expandingTildeInPath, tabID: selectedTabId ?? Self.mainTabBackupID)
             appendLog("📝 Edit: \(filePath)")
             let expandedEdit = (filePath as NSString).expandingTildeInPath
 
