@@ -7,8 +7,15 @@ extension AgentViewModel {
 
     /// Handle FileManager tool calls for tab tasks.
     func handleTabFileManagerTool(
-        tab: ScriptTab, name: String, input: [String: Any], toolId: String
+        tab: ScriptTab, name: String, input rawInput: [String: Any], toolId: String
     ) async -> TabToolResult {
+
+        // Resolve relative file_path against project folder
+        var input = rawInput
+        if let fp = input["file_path"] as? String, !fp.isEmpty, !fp.hasPrefix("/"), !fp.hasPrefix("~") {
+            let base = projectFolder.isEmpty ? NSHomeDirectory() : projectFolder
+            input["file_path"] = (base as NSString).appendingPathComponent(fp)
+        }
 
         switch name {
         case "read_file":
@@ -261,7 +268,7 @@ extension AgentViewModel {
             let displayDir = CodingService.trimHome(resolvedDir)
             tab.appendLog("🔍 $ find \(displayDir) -name '\(pattern)'")
             tab.flush()
-            let cmd = CodingService.buildListFilesCommand(pattern: pattern, path: path)
+            let cmd = CodingService.buildListFilesCommand(pattern: pattern, path: resolvedDir)
             let result = await executeForTab(command: cmd, projectFolder: resolvedDir)
             guard !Task.isCancelled else { return TabToolResult(toolResult: nil, isComplete: false) }
             let raw = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -283,8 +290,8 @@ extension AgentViewModel {
             let displaySearch = CodingService.trimHome(resolvedSearch)
             tab.appendLog("🔍 $ grep -rn '\(pattern)' \(displaySearch)")
             tab.flush()
-            let cmd = CodingService.buildSearchFilesCommand(pattern: pattern, path: path, include: include)
-            let result = await executeForTab(command: cmd, projectFolder: tabFolder)
+            let cmd = CodingService.buildSearchFilesCommand(pattern: pattern, path: resolvedSearch, include: include)
+            let result = await executeForTab(command: cmd, projectFolder: resolvedSearch)
             guard !Task.isCancelled else { return TabToolResult(toolResult: nil, isComplete: false) }
             let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 ? "No matches for '\(pattern)'" : "[project folder: \(displaySearch)] paths are relative to project folder\n\(result.output)"
