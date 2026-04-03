@@ -1,4 +1,5 @@
 import Foundation
+import AppKit
 
 /// Thread-safe boolean flag for cross-thread cancellation checks.
 final class AtomicFlag: @unchecked Sendable {
@@ -86,6 +87,11 @@ final class ScriptTab: Identifiable {
 
     var tabTaskSummaries: [String] = []
     var tabErrors: [String] = []
+
+    // MARK: - Per-Tab Attached Images
+
+    var attachedImages: [NSImage] = []
+    var attachedImagesBase64: [String] = []
 
     // LLM streaming state
     var llmStreamBuffer: String = ""
