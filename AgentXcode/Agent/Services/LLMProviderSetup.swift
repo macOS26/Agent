@@ -7,7 +7,7 @@ enum LLMProviderSetup {
 
     static func registerAllProviders() {
         LLMRegistry.shared.registerAll([
-            claude, openAI, gemini, grok, mistral, codestral, deepSeek, huggingFace, zAI,
+            claude, openAI, gemini, grok, mistral, codestral, vibe, deepSeek, huggingFace, zAI,
             ollama, localOllama, vLLM, lmStudio, appleIntelligence
         ])
     }
@@ -99,7 +99,17 @@ enum LLMProviderSetup {
     )
 
     static let codestral = LLMProviderConfig(
-        id: "codestral", displayName: "Mistral Vibe",
+        id: "codestral", displayName: "Codestral",
+        kind: .cloudAPI, apiProtocol: .openAI,
+        endpoint: LLMEndpoint(
+            chatURL: "https://api.mistral.ai/v1/chat/completions",
+            modelsURL: "https://api.mistral.ai/v1/models"
+        ),
+        capabilities: [.streaming, .tools, .systemPrompt]
+    )
+
+    static let vibe = LLMProviderConfig(
+        id: "vibe", displayName: "Mistral Vibe",
         kind: .cloudAPI, apiProtocol: .openAI,
         endpoint: LLMEndpoint(
             chatURL: "https://api.mistral.ai/v1/chat/completions",
