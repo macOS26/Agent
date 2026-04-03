@@ -127,6 +127,16 @@ struct AgentOptionsView: View {
                         Slider(value: temperatureBinding, in: 0...2, step: 0.1)
                             .id(viewModel.selectedProvider)
                             .frame(width: 120)
+                            .onAppear {
+                                let current = temperatureBinding.wrappedValue
+                                temperatureBinding.wrappedValue = current - 0.01
+                                DispatchQueue.main.async {
+                                    temperatureBinding.wrappedValue = current + 0.01
+                                    DispatchQueue.main.async {
+                                        temperatureBinding.wrappedValue = current
+                                    }
+                                }
+                            }
                         Text(String(format: "%.1f", temperatureBinding.wrappedValue))
                             .font(.caption.monospacedDigit())
                             .frame(width: 28)
