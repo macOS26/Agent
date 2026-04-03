@@ -85,7 +85,7 @@ struct RollbackView: View {
     }
 
     private func loadBackups() {
-        backups = FileBackupService.shared.listBackups(tabID: tabID)
+        backups = FileBackupService.shared.allBackups()
         restoreResult = nil
     }
 

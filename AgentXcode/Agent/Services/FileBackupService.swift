@@ -135,4 +135,28 @@ final class FileBackupService {
         let tabDir = backupsDir.appendingPathComponent(tabID.uuidString)
         return (try? FileManager.default.contentsOfDirectory(atPath: tabDir.path))?.count ?? 0
     }
+
+    /// List ALL backups across all tabs, newest first.
+    func allBackups() -> [(original: String, backup: String, date: Date)] {
+        let fm = FileManager.default
+        guard let tabDirs = try? fm.contentsOfDirectory(atPath: backupsDir.path) else { return [] }
+        var all: [(String, String, Date)] = []
+        for dir in tabDirs {
+            guard let uuid = UUID(uuidString: dir) else { continue }
+            all.append(contentsOf: listBackups(tabID: uuid))
+        }
+        return all.sorted { $0.2 > $1.2 }
+    }
+
+    /// Count ALL backups across all tabs.
+    func totalBackupCount() -> Int {
+        let fm = FileManager.default
+        guard let tabDirs = try? fm.contentsOfDirectory(atPath: backupsDir.path) else { return 0 }
+        var count = 0
+        for dir in tabDirs {
+            let tabPath = backupsDir.appendingPathComponent(dir)
+            count += (try? fm.contentsOfDirectory(atPath: tabPath.path))?.count ?? 0
+        }
+        return count
+    }
 }
