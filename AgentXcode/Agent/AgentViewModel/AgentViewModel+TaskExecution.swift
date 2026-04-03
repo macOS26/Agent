@@ -107,33 +107,21 @@ extension AgentViewModel {
         } else {
             claude = nil
         }
+        // OpenAI-compatible service — URLs from LLMRegistry (single source of truth)
         let openAICompatible: OpenAICompatibleService?
         switch provider {
-        case .openAI:
-            openAICompatible = OpenAICompatibleService(apiKey: openAIAPIKey, model: openAIModel, baseURL: "https://api.openai.com/v1/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .openAI, maxTokens: mt)
-        case .deepSeek:
-            openAICompatible = OpenAICompatibleService(apiKey: deepSeekAPIKey, model: deepSeekModel, baseURL: "https://api.deepseek.com/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .deepSeek, maxTokens: mt)
-        case .huggingFace:
-            openAICompatible = OpenAICompatibleService(apiKey: huggingFaceAPIKey, model: huggingFaceModel, baseURL: "https://router.huggingface.co/v1/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .huggingFace, maxTokens: mt)
-        case .vLLM:
-            openAICompatible = OpenAICompatibleService(apiKey: vLLMAPIKey, model: vLLMModel, baseURL: vLLMEndpoint, historyContext: historyContext, projectFolder: projectFolder, provider: .vLLM, maxTokens: mt)
-        case .lmStudio where lmStudioProtocol != .anthropic:
-            let key = lmStudioProtocol == .lmStudio ? "input" : "messages"
-            openAICompatible = OpenAICompatibleService(apiKey: lmStudioAPIKey, model: lmStudioModel, baseURL: lmStudioEndpoint, historyContext: historyContext, projectFolder: projectFolder, provider: .lmStudio, messagesKey: key, maxTokens: mt)
-        case .zAI:
-            openAICompatible = OpenAICompatibleService(apiKey: zAIAPIKey, model: zAIModel, baseURL: "https://api.z.ai/api/coding/paas/v4/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .zAI, maxTokens: mt)
-        case .gemini:
-            openAICompatible = OpenAICompatibleService(apiKey: geminiAPIKey, model: geminiModel, baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .gemini, maxTokens: mt)
-        case .grok:
-            openAICompatible = OpenAICompatibleService(apiKey: grokAPIKey, model: grokModel, baseURL: "https://api.x.ai/v1/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .grok, maxTokens: mt)
-        case .mistral:
-            openAICompatible = OpenAICompatibleService(apiKey: mistralAPIKey, model: mistralModel, baseURL: "https://api.mistral.ai/v1/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .mistral, maxTokens: mt)
-        case .codestral:
-            openAICompatible = OpenAICompatibleService(apiKey: codestralAPIKey, model: codestralModel, baseURL: "https://codestral.mistral.ai/v1/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .codestral, maxTokens: mt)
-        case .vibe:
-            openAICompatible = OpenAICompatibleService(apiKey: vibeAPIKey, model: vibeModel, baseURL: "https://api.mistral.ai/v1/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .vibe, maxTokens: mt)
-        default:
+        case .claude, .ollama, .localOllama, .foundationModel:
             openAICompatible = nil
+        case .lmStudio where lmStudioProtocol == .anthropic:
+            openAICompatible = nil
+        case .lmStudio:
+            let key = lmStudioProtocol == .lmStudio ? "input" : "messages"
+            openAICompatible = OpenAICompatibleService(apiKey: apiKeyForProvider(provider), model: modelName, baseURL: lmStudioEndpoint, historyContext: historyContext, projectFolder: projectFolder, provider: provider, messagesKey: key, maxTokens: mt)
+        case .vLLM:
+            openAICompatible = OpenAICompatibleService(apiKey: apiKeyForProvider(provider), model: modelName, baseURL: vLLMEndpoint, historyContext: historyContext, projectFolder: projectFolder, provider: provider, maxTokens: mt)
+        default:
+            let url = chatURLForProvider(provider)
+            openAICompatible = url.isEmpty ? nil : OpenAICompatibleService(apiKey: apiKeyForProvider(provider), model: modelName, baseURL: url, historyContext: historyContext, projectFolder: projectFolder, provider: provider, maxTokens: mt)
         }
         let ollama: OllamaService?
         switch provider {
