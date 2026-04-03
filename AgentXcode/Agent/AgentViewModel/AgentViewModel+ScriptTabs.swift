@@ -73,6 +73,32 @@ extension AgentViewModel {
         }
     }
 
+    /// Return the API key for the given provider.
+    func apiKeyForProvider(_ provider: APIProvider) -> String {
+        switch provider {
+        case .claude: return apiKey
+        case .openAI: return openAIAPIKey
+        case .deepSeek: return deepSeekAPIKey
+        case .huggingFace: return huggingFaceAPIKey
+        case .ollama: return ollamaAPIKey
+        case .localOllama: return ""
+        case .vLLM: return vLLMAPIKey
+        case .lmStudio: return lmStudioAPIKey
+        case .zAI: return zAIAPIKey
+        case .gemini: return geminiAPIKey
+        case .grok: return grokAPIKey
+        case .mistral: return mistralAPIKey
+        case .codestral: return codestralAPIKey
+        case .vibe: return vibeAPIKey
+        case .foundationModel: return ""
+        }
+    }
+
+    /// Return the chat URL for the given provider from the LLM registry (single source of truth).
+    func chatURLForProvider(_ provider: APIProvider) -> String {
+        LLMRegistry.shared.provider(provider.rawValue)?.endpoint.chatURL ?? ""
+    }
+
     /// Return a human-readable display name for a model ID given its provider.
     func modelDisplayName(provider: APIProvider, modelId: String) -> String {
         switch provider {

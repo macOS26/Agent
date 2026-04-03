@@ -142,13 +142,14 @@ extension AgentViewModel {
         if let p = input["path"] as? String, (p.isEmpty || p == "." || p == "./") { input["path"] = nil }
         if let p = input["file_path"] as? String, p.isEmpty { input["file_path"] = nil }
 
-        // Record tool step for structured display
-        let detail = input["path"] as? String
+        // Record tool step for structured display — show filename not full path
+        let rawDetail = input["path"] as? String
             ?? input["file_path"] as? String
             ?? input["command"] as? String
             ?? input["action"] as? String
             ?? ""
-        let stepId = recordToolStep(name: name, detail: String(detail.prefix(80)))
+        let detail = (rawDetail as NSString).lastPathComponent.isEmpty ? rawDetail : (rawDetail as NSString).lastPathComponent
+        let stepId = recordToolStep(name: name, detail: detail)
 
         /// Helper to complete step on every exit path
         func finishStep(_ status: ToolStep.Status = .success) {
