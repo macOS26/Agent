@@ -17,242 +17,330 @@ A native macOS AI agent that controls your apps, writes code, automates workflow
 
 </div>
 
-<img width="1349" height="1438" alt="Screenshot 2026-04-02 at 12 00 03 PM" src="https://github.com/user-attachments/assets/b0d9346e-f807-4089-bab3-29c7058868d8" />
+## 🚀 Quick Start
 
----
+### Prerequisites
+- macOS 26.0 or later
+- Xcode 16.0 or later
+- Swift 6.2
 
-## Quick Start
+### Installation
 
-1. **Download** [Agent!](https://github.com/macOS26/Agent/releases/latest) and drag to Applications
-2. **Open Agent!** -- it sets up everything automatically
-3. **Pick your AI** -- Settings → choose a provider → enter API key
-4. **Type a task and press Enter**
-
-> 💡 **No API key?** Use **Ollama** with **GLM-5** -- completely free, runs offline, no account needed. Requires 32GB+ RAM.
-
----
-
-## What Can It Do?
-
-> *"Play my Workout playlist in Music"*
-> *"Build the Xcode project and fix any errors"*
-> *"Take a photo with Photo Booth"*
-> *"Send an iMessage to Mom saying I'll be home at 6"*
-> *"Open Safari and search for flights to Tokyo"*
-> *"Refactor this class into smaller files"*
-> *"What calendar events do I have today?"*
-
-Just type what you want. Agent! figures out how and makes it happen.
-
----
-
-## Key Features
-
-### 🛠 Agentic Coding
-Full coding environment built in. Reads codebases, edits files with precision, runs shell commands, builds Xcode projects, manages git, and auto-enables coding mode to focus the AI on development tools. Replaces Claude Code, Cursor, and Cline -- no terminal, no IDE plugins, no monthly fee.
-
-### 🖥 Desktop Automation (AXorcist)
-Control any Mac app through the Accessibility API. Click buttons, type into fields, navigate menus, scroll, drag -- all programmatically. Powered by [AXorcist](https://github.com/steipete/AXorcist) for reliable, fuzzy-matched element finding.
-
-### 🤖 10 AI Providers
-| Provider | Cost | Best For |
-|---|---|---|
-| **GLM-5 / GLM-5.1** (Ollama) | Low Cost | Recommended starting point |
-| **Claude** (Anthropic) | Paid | Complex tasks |
-| **ChatGPT** (OpenAI) | Paid | General purpose |
-| **Apple Intelligence** | Free | On-device, private |
-| **DeepSeek** | Paid | Budget cloud AI |
-| **Local Ollama** | Free | Full privacy, offline |
-| **LM Studio** | Free | Easy local setup |
-| **Hugging Face** | Varies | Open-source models |
-| **Z.ai** | Paid | Fast, versatile |
-| **Ollama Cloud / vLLM** | Varies | Self-hosted |
-
-### 🎙 Voice Control
-Click the microphone and speak. Agent! transcribes in real time and executes your request.
-
-### 📱 Remote Control via iMessage
-Text your Mac from your iPhone:
-```
-Agent! What song is playing?
-Agent! Check my email
-Agent! Next Song
-```
-Your Mac runs the task and texts back the result. Only approved contacts can send commands.
-
-### 🌐 Web Automation
-Drives Safari hands-free -- search Google, click links, fill forms, read pages, extract information.
-
-### 📋 Smart Planning
-For complex tasks, Agent! creates a step-by-step plan, works through each step, and checks them off in real time.
-
-### 🗂 Tabs
-Work on multiple tasks simultaneously. Each tab has its own project folder and conversation history.
-
-### 📸 Screenshot & Vision
-Take screenshots or paste images. Vision-capable AI models analyze what they see -- describe content, read text, spot UI issues.
-
-### 🌐 Safari Web Automation (Built-in)
-
-Agent! includes built-in Safari web automation via JavaScript and AppleScript. Search Google, click links, fill forms, read page content, and execute JavaScript -- all hands-free.
-
-**To enable:** Open Safari → Settings → Advanced → check "Show features for web developers". Then go to Developer menu → check "Allow JavaScript from Apple Events".
-
-### 🎭 Playwright Web Automation (Optional)
-
-Full cross-browser automation via [Microsoft Playwright MCP](https://github.com/microsoft/playwright-mcp). Click, type, screenshot, and navigate any website in Chrome, Firefox, or WebKit -- all controlled by the AI.
-
-**Setup (one-time):**
-
+1. **Clone the repository:**
 ```bash
-# 1. Install Node.js (if not already installed)
-brew install node
-
-# 2. Install Playwright MCP server globally
-npm install -g @playwright/mcp@latest
-
-# 3. Install browser binaries (pick one or all)
-npx playwright install chromium          # Chrome (~165MB)
-npx playwright install firefox           # Firefox (~97MB)
-npx playwright install webkit            # Safari/WebKit (~75MB)
-npx playwright install                   # All browsers
+git clone https://github.com/macOS26/Agent.git
+cd Agent
 ```
 
-**Configure in Agent!:**
+2. **Open in Xcode:**
+```bash
+open Agent.xcodeproj
+```
 
-Go to Settings → MCP Servers → Add Server, paste this JSON:
+3. **Set Development Team:**
+- Open project settings
+- Set Development Team to `469UCUB275` (or your own team ID)
+- Ensure both `Agent` and `AgentHelper` targets are configured
+
+4. **Build and Run:**
+```bash
+# Using Xcode
+xcf build
+xcf run
+
+# Or via Xcode UI
+```
+
+5. **Grant Privileges:**
+- On first launch, macOS will prompt you to approve the privileged helper tool
+- This allows Agent! to execute commands as root when needed
+
+## ⚡ Features
+
+### Core Capabilities
+
+- **🤖 Multi-Provider AI Support**: Claude, Ollama, OpenAI-compatible, and Apple Intelligence (Foundation Models)
+- **🔐 Privileged Daemon**: Execute commands as root without repeated authentication
+- **📦 XPC Communication**: Secure and efficient inter-process communication
+- **🛠️ Native Xcode Integration**: Built-in tools for building, running, and managing Xcode projects
+- **🌐 Model Context Protocol (MCP)**: Extend functionality with MCP servers for advanced capabilities
+- **📝 Task Automation**: Automate workflows and control apps directly from your AI agent
+- **📱 iMessage Integration**: Control Agent! from your iPhone
+
+### Built-in Tools
+
+| Category | Tools | Description |
+|----------|-------|-------------|
+| **Xcode** | `xcode build`, `xcode run`, `xcode list_projects` | Build, run, and manage Xcode projects |
+| **File System** | `file_manager`, `git`, `execute_agent_command` | File operations, version control, shell commands |
+| **UI Automation** | `accessibility`, `applescript_tool` | Control macOS apps and UI elements |
+| **Web** | `web`, `web_search` | Browser automation and web searches |
+| **System** | `execute_daemon_command` | Root-level system operations |
+
+## 📚 Architecture
+
+### Project Structure
+
+```
+Agent/
+├── Agent/                    # Main SwiftUI application
+│   ├── AgentApp.swift        # @main entry point
+│   ├── ContentView.swift     # Main UI components
+│   ├── AgentViewModel.swift  # Core logic and orchestration
+│   ├── ClaudeService.swift   # Anthropic Messages API wrapper
+│   ├── HelperService.swift   # XPC client + SMAppService
+│   └── ...
+├── AgentHelper/              # Privileged daemon
+│   └── main.swift            # NSXPCListener implementation
+└── LaunchDaemons/            # Daemon configuration
+    └── Agent.app.toddbruss.helper.plist
+```
+
+### Key Components
+
+1. **Agent (Main App)**
+   - SwiftUI interface with @Observable ViewModel pattern
+   - Task management and execution loop
+   - Screenshot capture and clipboard integration
+   - Multi-provider AI integration
+
+2. **AgentHelper (Privileged Daemon)**
+   - Executes commands as root via NSXPCListener
+   - Mach service: `Agent.app.toddbruss.helper`
+   - Secure XPC communication with `.privileged` option
+
+3. **Communication Protocol**
+   - `HelperToolProtocol`: Command execution and cancellation
+   - `HelperProgressProtocol`: Streaming output updates
+   - JSON-based message format for tool calls
+
+### XPC Communication Flow
+
+```mermaid
+graph TD
+    A[Agent App] -->|XPC Request| B[AgentHelper Daemon]
+    B -->|Root Execution| C[System]
+    C -->|Result| B
+    B -->|XPC Response| A
+```
+
+## 🛠️ Configuration
+
+### AI Provider Setup
+
+Configure your preferred AI provider in the app settings:
+
+1. **Claude (Anthropic)**
+   - API Key: Required
+   - Model: `claude-3-5-sonnet-20240620` (recommended)
+   - Features: SSE streaming, native tool calling
+
+2. **Ollama (Local)**
+   - Server URL: `http://localhost:11434`
+   - Model: `llama3`, `mistral`, etc.
+   - Features: Local execution, no API key required
+
+3. **OpenAI-compatible**
+   - API Base URL: Your provider endpoint
+   - API Key: Required
+   - Model: Provider-specific models
+
+4. **Apple Intelligence**
+   - Built-in Foundation Models
+   - No configuration needed
+   - Requires macOS 26+
+
+### MCP Server Configuration
+
+Add MCP servers in `Settings → MCP Servers`:
 
 ```json
 {
-    "mcpServers": {
-        "playwright": {
-            "command": "npx",
-            "args": ["@playwright/mcp"],
-            "transport": "stdio"
-        }
-    }
-}
-```
-
-> **Note:** If `npx` is not found, use the full path: run `which npx` in Terminal and replace `"npx"` with the result (e.g. `"/opt/homebrew/bin/npx"`).
-
-Toggle ON and Playwright tools appear automatically. The AI can now control browsers directly.
-
----
-
-## Privacy & Safety
-
-- **Your data stays on your Mac.** Files, screen contents, and personal data are never uploaded.
-- **Cloud AI only sees your prompt text.** Use local AI to stay 100% offline.
-- **You're in control.** Agent! shows everything it does and logs every action.
-- **Built on Apple's security model.** macOS permissions protect your system.
-
----
-
-## Keyboard Shortcuts
-
-| Shortcut | Action |
-|---|---|
-| `Enter` | Run task |
-| `⌘ R` | Run current task |
-| `⌘ .` | Stop task |
-| `Escape` | Cancel active task |
-| `⌘ D` | Toggle LLM output panel |
-| `⌘ T` | New tab |
-| `⌘ W` | Close tab |
-| `⌘ 1-9` | Switch to tab |
-| `⌘ [` / `⌘ ]` | Previous / next tab |
-| `⌘ F` | Search activity log |
-| `⌘ L` | Clear conversation |
-| `⌘ H` | Task history |
-| `⌘ ,` | Settings |
-| `⌘ V` | Paste image |
-| `↑` / `↓` | Prompt history |
-
----
-
-## FAQ
-
-**Do I need to know how to code?** No. Just type what you want in plain English.
-
-**Is it safe?** Yes. Standard macOS automation, full activity logging, you approve permissions.
-
-**How much does it cost?** Agent! is free (MIT License). Cloud AI providers charge for API usage. Local models are free.
-
-**What Mac do I need?** macOS 26+. Apple Silicon recommended. 32GB+ RAM for local models.
-
-**How is this different from Siri?** Siri answers questions. Agent! *performs actions* -- controls apps, manages files, builds code, automates workflows.
-
----
-
-## Documentation
-
-- [Technical Architecture](docs/TECHNICAL.md) -- Tools, scripting, developer details
-- [Comparisons](docs/COMPARISON.md) -- vs Claude Code, Cursor, Cline, OpenClaw
-- [Security Model](docs/SECURITY.md) -- XPC architecture, privilege separation
-- [FAQ](docs/FAQ.md) -- Common questions
-
----
-
-## Built-in Xcode Tools
-
-Agent! includes native Xcode integration that works without any MCP server setup. These built-in tools are often faster and more reliable than the MCP alternative since they run directly inside the app.
-
-| Tool | What It Does |
-|---|---|
-| **xcode build** | Build the current Xcode project, capture errors and warnings |
-| **xcode run** | Build and run the app |
-| **xcode list_projects** | Discover open Xcode workspaces and projects |
-| **xcode select_project** | Switch the active project |
-| **xcode grant_permission** | Grant file access to the Xcode project folder |
-
-The AI automatically uses these when you ask it to build, fix errors, or work with Xcode projects. No configuration needed -- just have your project open in Xcode.
-
-> **Tip:** For most coding workflows, the built-in tools are all you need. The MCP Xcode server below adds extras like SwiftUI Preview rendering and documentation search.
-
----
-
-## Model Context Protocol (MCP)
-
-Agent! supports [MCP](https://modelcontextprotocol.io) servers for extended capabilities. Configure in Settings → MCP Servers.
-
-### Xcode MCP Server
-
-Connect Agent! directly to Xcode for project-aware operations:
-
-```json
-{
-  "mcpServers" : {
-    "xcode" : {
-      "command" : "xcrun",
-      "args" : [
-        "mcpbridge"
-      ],
-      "transport" : "stdio"
+  "mcpServers": {
+    "xcode": {
+      "command": "xcrun",
+      "args": ["mcpbridge"],
+      "transport": "stdio"
+    },
+    "custom": {
+      "command": "/path/to/your/server",
+      "args": ["--mcp"],
+      "transport": "stdio"
     }
   }
 }
 ```
 
-**Xcode MCP provides:**
-- Project-aware file operations (read/write/edit/delete)
-- Build and test integration
-- SwiftUI Preview rendering
-- Code snippet execution
-- Apple Developer Documentation search
-- Real-time issue tracking
+## 📖 Usage Examples
 
+### Basic Commands
 
----
+```swift
+// Execute a shell command
+agent.execute("ls -la")
 
-## License
+// Build an Xcode project
+agent.xcodeBuild()
 
-MIT - free and open source.
+// Run UI automation
+agent.clickButton(title: "OK")
+```
+
+### Advanced Workflows
+
+1. **Automated Code Review:**
+   ```
+   1. Open Xcode project
+   2. Run `xcode analyze`
+   3. Fix issues automatically
+   4. Commit changes to git
+   ```
+
+2. **System Diagnostics:**
+   ```
+   1. Check disk usage with `execute_daemon_command`
+   2. Analyze system logs
+   3. Generate diagnostic report
+   ```
+
+3. **App Automation:**
+   ```
+   1. Launch target application
+   2. Navigate UI with accessibility tools
+   3. Extract data
+   4. Generate summary report
+   ```
+
+## 🔧 Development
+
+### Building from Source
+
+```bash
+# Clone repository
+git clone https://github.com/macOS26/Agent.git
+cd Agent
+
+# Open in Xcode
+open Agent.xcodeproj
+
+# Build both targets
+xcodebuild -scheme Agent -configuration Release
+xcodebuild -scheme AgentHelper -configuration Release
+
+# Run tests
+xcodebuild test -scheme Agent
+```
+
+### Code Structure
+
+- **View Models**: Follow `@Observable` pattern for state management
+- **Services**: Modular design with clear separation of concerns
+- **Protocols**: Shared XPC protocols in `HelperProtocol.swift`
+- **Error Handling**: Comprehensive `AgentError` enum in `Models.swift`
+
+### Debugging
+
+```bash
+# View Xcode logs
+Console.app → Filter for "Agent"
+
+# Check daemon status
+launchctl list | grep "Agent.app.toddbruss.helper"
+
+# View XPC communication
+sudo log stream --predicate 'process == "Agent" OR process == "AgentHelper"'
+```
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+**Issue: Privileged helper fails to install**
+- Solution: Check System Preferences → Security & Privacy → Privacy → Full Disk Access
+- Ensure Agent! has the necessary permissions
+
+**Issue: XPC connection refused**
+- Solution: Verify daemon is running: `launchctl list | grep Agent`
+- Restart daemon: `launchctl kickstart -k system/Agent.app.toddbruss.helper`
+
+**Issue: Xcode tools not working**
+- Solution: Ensure Xcode is properly installed and selected: `xcode-select --install`
+- Grant necessary permissions in System Preferences
+
+### Logs and Diagnostics
+
+```bash
+# Application logs
+~/Library/Logs/Agent/
+
+# System logs
+sudo log show --predicate 'sender == "Agent"' --last 1h
+
+# Daemon logs
+sudo log show --predicate 'sender == "AgentHelper"' --last 1h
+```
+
+## 🤝 Contributing
+
+We welcome contributions! Please follow these guidelines:
+
+### How to Contribute
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Commit your changes: `git commit -am 'Add some feature'`
+4. Push to the branch: `git push origin feature/your-feature`
+5. Submit a pull request
+
+### Code Style
+
+- Follow Swift API Design Guidelines
+- Use 4-space indentation
+- Prefer `let` over `var` where possible
+- Document public interfaces with comments
+- Keep functions focused and small
+
+### Testing
+
+- Write unit tests for new functionality
+- Test with multiple AI providers
+- Verify privileged operations work correctly
+- Ensure UI remains responsive during long operations
+
+## 📋 Roadmap
+
+### Upcoming Features
+
+- **Enhanced iMessage Integration**: More commands and better error handling
+- **Improved Xcode Tools**: Better SwiftUI preview support, documentation search
+- **Additional MCP Servers**: More built-in server configurations
+- **Performance Optimizations**: Faster tool execution and reduced memory usage
+- **UI Improvements**: Dark mode enhancements, better accessibility
+
+### Long-term Goals
+
+- Cross-platform support (iOS, iPadOS)
+- Enhanced security features
+- Expanded automation capabilities
+- Better integration with Apple ecosystem
+
+## 📄 License
+
+MIT - Free and open source. See [LICENSE](LICENSE) for details.
+
+## 🙏 Acknowledgements
+
+- [Anthropic](https://www.anthropic.com) for Claude AI
+- [Apple](https://developer.apple.com) for Swift and macOS technologies
+- [Model Context Protocol](https://modelcontextprotocol.io) for extensible AI tools
+- All contributors and testers who helped make Agent! better
 
 ---
 
 <div align="center">
 
 ### **Agent! for macOS 26 - Agentic AI for your  Mac Desktop**
+
+🌟 Star us on GitHub and join our community!
 
 </div>
