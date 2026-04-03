@@ -25,7 +25,7 @@ final class FileBackupService {
     func backup(filePath: String, tabID: UUID) -> String? {
         let fm = FileManager.default
         guard fm.fileExists(atPath: filePath) else {
-            AuditLog.log(.shell, "FileBackup SKIP — file not found: \(filePath)")
+            AuditLog.log(.fileBackup, " SKIP — file not found: \(filePath)")
             return nil
         }
 
@@ -33,7 +33,7 @@ final class FileBackupService {
         do {
             try fm.createDirectory(at: tabDir, withIntermediateDirectories: true)
         } catch {
-            AuditLog.log(.shell, "FileBackup ERROR creating dir: \(error)")
+            AuditLog.log(.fileBackup, " ERROR creating dir: \(error)")
             return nil
         }
 
@@ -45,10 +45,10 @@ final class FileBackupService {
 
         do {
             try fm.copyItem(atPath: filePath, toPath: backupURL.path)
-            AuditLog.log(.shell, "FileBackup OK — \(backupURL.path)")
+            AuditLog.log(.fileBackup, " OK — \(backupURL.path)")
             return backupURL.path
         } catch {
-            AuditLog.log(.shell, "FileBackup ERROR copying: \(error)")
+            AuditLog.log(.fileBackup, " ERROR copying: \(error)")
             return nil
         }
     }
