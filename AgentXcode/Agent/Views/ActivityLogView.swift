@@ -253,9 +253,11 @@ struct ActivityLogView: NSViewRepresentable {
                     if hasTableLines || prevHasTableLines {
                         let savedOrigin = scrollView.contentView.bounds.origin
                         let wasAtBottom = isNearBottom(textView)
+                        let t0 = CFAbsoluteTimeGetCurrent()
                         textView.textStorage?.beginEditing()
-                        textView.textStorage?.setAttributedString(buildAttributedString(from: text))
+                        textView.textStorage?.setAttributedString(buildAttributedString(from: text, cap: renderCap))
                         textView.textStorage?.endEditing()
+                        adaptRenderCap(elapsed: CFAbsoluteTimeGetCurrent() - t0)
                         lastLength = len
                         lastRenderedText = text
                         if !wasAtBottom {
@@ -271,9 +273,9 @@ struct ActivityLogView: NSViewRepresentable {
                         CATransaction.setDisableActions(true)
                         textView.textStorage?.beginEditing()
                         textView.textStorage?.append(renderMarkdownOnly(newText))
-                        // Trim from top if textStorage exceeds cap — always, to prevent beach ball
-                        if let storage = textView.textStorage, storage.length > Self.maxRenderChars {
-                            let trim = storage.length - Self.maxRenderChars
+                        // Trim from top if textStorage exceeds adaptive cap
+                        if let storage = textView.textStorage, storage.length > renderCap {
+                            let trim = storage.length - renderCap
                             let snapRange = NSRange(location: trim, length: min(200, storage.length - trim))
                             let snippet = storage.string as NSString
                             let nlRange = snippet.range(of: "\n", range: snapRange)
@@ -306,9 +308,11 @@ struct ActivityLogView: NSViewRepresentable {
                     if tabSwitched, swapToCachedStorage(for: tabID, text: text, textView: textView, scrollView: scrollView) {
                         // Cache hit — layout preserved, scroll restored
                     } else {
+                        let t0 = CFAbsoluteTimeGetCurrent()
                         textView.textStorage?.beginEditing()
-                        textView.textStorage?.setAttributedString(buildAttributedString(from: text))
+                        textView.textStorage?.setAttributedString(buildAttributedString(from: text, cap: renderCap))
                         textView.textStorage?.endEditing()
+                        adaptRenderCap(elapsed: CFAbsoluteTimeGetCurrent() - t0)
                         if !wasAtBottom {
                             scrollView.contentView.scroll(to: savedOrigin)
                             scrollView.reflectScrolledClipView(scrollView.contentView)
@@ -631,21 +635,36 @@ struct ActivityLogView: NSViewRepresentable {
             return result
         }
 
-        /// Maximum characters to render — truncate from the front to keep the tail visible.
-        private nonisolated static let maxRenderChars = 50_000
+        // MARK: - Beach Ball Predictor
+        /// Tracks render time to dynamically adjust truncation threshold.
+        /// Starts generous (200K), shrinks when renders get slow, grows when fast.
+        var renderCap = 200_000
+        /// Threshold in seconds — if a render takes longer, shrink the cap
+        private static let beachBallThreshold: CFAbsoluteTime = 0.08  // 80ms
+
+        /// Call after a render completes to adapt the cap for next time.
+        func adaptRenderCap(elapsed: CFAbsoluteTime) {
+            if elapsed > Self.beachBallThreshold {
+                // Slow render — shrink cap by 25%, floor at 20K
+                renderCap = max(20_000, renderCap * 3 / 4)
+            } else if elapsed < Self.beachBallThreshold / 2, renderCap < 500_000 {
+                // Fast render — grow cap by 10%, ceiling at 500K
+                renderCap = min(500_000, renderCap * 11 / 10)
+            }
+        }
 
         /// Build attributed string from text. Converts image/HTML paths to clickable links.
-        nonisolated func buildAttributedString(from text: String) -> NSAttributedString {
+        nonisolated func buildAttributedString(from text: String, cap: Int = 200_000) -> NSAttributedString {
             let baseAttrs: [NSAttributedString.Key: Any] = [
                 .font: font,
                 .foregroundColor: NSColor.labelColor
             ]
 
-            // Truncate from the front if text exceeds render cap — always, to prevent beach ball
+            // Truncate from the front if text exceeds adaptive render cap
             var renderText = text
             var wasTruncated = false
-            if renderText.count > Self.maxRenderChars {
-                let drop = renderText.count - Self.maxRenderChars
+            if renderText.count > cap {
+                let drop = renderText.count - cap
                 renderText = String(renderText.dropFirst(drop))
                 // Snap to next newline so we don't start mid-line
                 if let nl = renderText.firstIndex(of: "\n") {
