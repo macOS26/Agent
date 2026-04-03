@@ -70,6 +70,12 @@ extension AgentViewModel {
         case .zAI:
             modelName = zAIModel
             isVision = true  // GLM-5 supports vision
+        case .gemini:
+            modelName = geminiModel
+            isVision = true  // Gemini supports vision
+        case .grok:
+            modelName = grokModel
+            isVision = Self.isVisionModel(grokModel)
         case .foundationModel:
             modelName = "Apple Intelligence"
             isVision = false // Apple Intelligence doesn't support image input
@@ -106,6 +112,10 @@ extension AgentViewModel {
             openAICompatible = OpenAICompatibleService(apiKey: lmStudioAPIKey, model: lmStudioModel, baseURL: lmStudioEndpoint, historyContext: historyContext, projectFolder: projectFolder, provider: .lmStudio, messagesKey: key, maxTokens: mt)
         case .zAI:
             openAICompatible = OpenAICompatibleService(apiKey: zAIAPIKey, model: zAIModel, baseURL: "https://api.z.ai/api/coding/paas/v4/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .zAI, maxTokens: mt)
+        case .gemini:
+            openAICompatible = OpenAICompatibleService(apiKey: geminiAPIKey, model: geminiModel, baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .gemini, maxTokens: mt)
+        case .grok:
+            openAICompatible = OpenAICompatibleService(apiKey: grokAPIKey, model: grokModel, baseURL: "https://api.x.ai/v1/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .grok, maxTokens: mt)
         default:
             openAICompatible = nil
         }

@@ -64,6 +64,8 @@ extension AgentViewModel {
         case .vLLM: return vLLMModel
         case .lmStudio: return lmStudioModel
         case .zAI: return zAIModel
+        case .gemini: return geminiModel
+        case .grok: return grokModel
         case .foundationModel: return "Apple Intelligence"
         }
     }
@@ -93,6 +95,12 @@ extension AgentViewModel {
         case .zAI:
             return zAIModels.first(where: { $0.id == modelId })?.name
                 ?? Self.defaultZAIModels.first(where: { $0.id == modelId })?.name ?? modelId
+        case .gemini:
+            return geminiModels.first(where: { $0.id == modelId })?.name
+                ?? Self.defaultGeminiModels.first(where: { $0.id == modelId })?.name ?? modelId
+        case .grok:
+            return grokModels.first(where: { $0.id == modelId })?.name
+                ?? Self.defaultGrokModels.first(where: { $0.id == modelId })?.name ?? modelId
         case .foundationModel:
             return "Apple Intelligence"
         }

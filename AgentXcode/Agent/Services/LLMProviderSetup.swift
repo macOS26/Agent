@@ -7,7 +7,7 @@ enum LLMProviderSetup {
 
     static func registerAllProviders() {
         LLMRegistry.shared.registerAll([
-            claude, openAI, deepSeek, huggingFace, zAI,
+            claude, openAI, gemini, grok, deepSeek, huggingFace, zAI,
             ollama, localOllama, vLLM, lmStudio, appleIntelligence
         ])
     }
@@ -66,6 +66,26 @@ enum LLMProviderSetup {
         ),
         capabilities: [.streaming, .tools, .systemPrompt, .vision],
         temperature: 0.7
+    )
+
+    static let gemini = LLMProviderConfig(
+        id: "gemini", displayName: "Google Gemini",
+        kind: .cloudAPI, apiProtocol: .openAI,
+        endpoint: LLMEndpoint(
+            chatURL: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+            modelsURL: "https://generativelanguage.googleapis.com/v1beta/openai/models"
+        ),
+        capabilities: [.streaming, .tools, .vision, .systemPrompt]
+    )
+
+    static let grok = LLMProviderConfig(
+        id: "grok", displayName: "Grok",
+        kind: .cloudAPI, apiProtocol: .openAI,
+        endpoint: LLMEndpoint(
+            chatURL: "https://api.x.ai/v1/chat/completions",
+            modelsURL: "https://api.x.ai/v1/models"
+        ),
+        capabilities: [.streaming, .tools, .vision, .systemPrompt]
     )
 
     // MARK: - Ollama

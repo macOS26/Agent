@@ -270,6 +270,10 @@ extension AgentViewModel {
             openAICompatible = OpenAICompatibleService(apiKey: lmStudioAPIKey, model: modelId, baseURL: lmStudioEndpoint, historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .lmStudio, messagesKey: key, maxTokens: mt)
         case .zAI:
             openAICompatible = OpenAICompatibleService(apiKey: zAIAPIKey, model: modelId, baseURL: "https://api.z.ai/api/coding/paas/v4/chat/completions", historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .zAI, maxTokens: mt)
+        case .gemini:
+            openAICompatible = OpenAICompatibleService(apiKey: geminiAPIKey, model: modelId, baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .gemini, maxTokens: mt)
+        case .grok:
+            openAICompatible = OpenAICompatibleService(apiKey: grokAPIKey, model: modelId, baseURL: "https://api.x.ai/v1/chat/completions", historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .grok, maxTokens: mt)
         default:
             openAICompatible = nil
         }

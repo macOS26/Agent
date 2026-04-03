@@ -41,6 +41,14 @@ final class KeychainService: Sendable {
     func setZAIAPIKey(_ key: String) { set(key: Self.zAIAPIKey, value: key) }
     func getZAIAPIKey() -> String? { get(key: Self.zAIAPIKey) }
 
+    private static let geminiAPIKey = "com.agent.gemini-api-key"
+    func setGeminiAPIKey(_ key: String) { set(key: Self.geminiAPIKey, value: key) }
+    func getGeminiAPIKey() -> String? { get(key: Self.geminiAPIKey) }
+
+    private static let grokAPIKey = "com.agent.grok-api-key"
+    func setGrokAPIKey(_ key: String) { set(key: Self.grokAPIKey, value: key) }
+    func getGrokAPIKey() -> String? { get(key: Self.grokAPIKey) }
+
     private func set(key: String, value: String) {
         guard let data = value.data(using: .utf8) else { return }
         delete(key: key)
