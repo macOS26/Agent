@@ -501,6 +501,30 @@ extension AgentViewModel {
         }
     }
 
+    func fetchVibeModels() {
+        isFetchingVibeModels = true
+        let key = vibeAPIKey
+        Task {
+            defer { isFetchingVibeModels = false }
+            guard !key.isEmpty else {
+                vibeModels = Self.defaultVibeModels
+                return
+            }
+            do {
+                let allModels = try await Self.fetchOpenAICompatibleModels(apiKey: key, endpoint: "https://api.mistral.ai/v1/models")
+                let filtered = allModels.filter { $0.id.lowercased().contains("devstral") }
+                let models = filtered.isEmpty ? allModels : filtered
+                vibeModels = models.isEmpty ? Self.defaultVibeModels : models
+                if vibeModel.isEmpty || !vibeModels.contains(where: { $0.id == vibeModel }) {
+                    vibeModel = vibeModels.first?.id ?? "devstral-small-2507"
+                }
+            } catch {
+                AuditLog.log(.api, "Failed to fetch Vibe models: \(error.localizedDescription)")
+                vibeModels = Self.defaultVibeModels
+            }
+        }
+    }
+
     /// Shared OpenAI-compatible model list fetcher
     private nonisolated static func fetchOpenAICompatibleModels(apiKey: String, endpoint: String) async throws -> [OpenAIModelInfo] {
         guard let url = URL(string: endpoint) else { throw AgentError.invalidURL }

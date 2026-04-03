@@ -58,6 +58,10 @@ final class KeychainService: Sendable {
     func setCodestralAPIKey(_ key: String) { set(key: Self.codestralAPIKey, value: key) }
     func getCodestralAPIKey() -> String? { get(key: Self.codestralAPIKey) }
 
+    private static let vibeAPIKeyId = "com.agent.vibe-api-key"
+    func setVibeAPIKey(_ key: String) { set(key: Self.vibeAPIKeyId, value: key) }
+    func getVibeAPIKey() -> String? { get(key: Self.vibeAPIKeyId) }
+
     private func set(key: String, value: String) {
         guard let data = value.data(using: .utf8) else { return }
         delete(key: key)

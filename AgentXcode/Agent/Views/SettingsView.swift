@@ -346,12 +346,12 @@ struct SettingsView: View {
                 }
             } else if viewModel.selectedProvider == .codestral {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Mistral Vibe")
+                    Text("Codestral")
                         .font(.headline)
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("API Key").font(.caption).foregroundStyle(.secondary)
-                        LockedSecureField(text: $viewModel.codestralAPIKey, placeholder: "Vibe API key", lockKey: "lock.codestralAPIKey")
+                        LockedSecureField(text: $viewModel.codestralAPIKey, placeholder: "Codestral API key", lockKey: "lock.codestralAPIKey")
                     }
 
                     VStack(alignment: .leading, spacing: 4) {
@@ -376,6 +376,42 @@ struct SettingsView: View {
                             .buttonStyle(.bordered)
                             .controlSize(.small)
                             .disabled(viewModel.isFetchingCodestralModels)
+                            .help("Fetch available models")
+                        }
+                    }
+                }
+            } else if viewModel.selectedProvider == .vibe {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Mistral Vibe")
+                        .font(.headline)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("API Key").font(.caption).foregroundStyle(.secondary)
+                        LockedSecureField(text: $viewModel.vibeAPIKey, placeholder: "Vibe API key", lockKey: "lock.vibeAPIKey")
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Model").font(.caption).foregroundStyle(.secondary)
+                        HStack {
+                            Picker("", selection: $viewModel.vibeModel) {
+                                ForEach(viewModel.vibeModels, id: \.id) { model in
+                                    Text(model.name.isEmpty ? model.id : model.name).tag(model.id)
+                                }
+                            }
+                            .labelsHidden()
+
+                            Button {
+                                viewModel.fetchVibeModels()
+                            } label: {
+                                if viewModel.isFetchingVibeModels {
+                                    ProgressView().controlSize(.mini)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(viewModel.isFetchingVibeModels)
                             .help("Fetch available models")
                         }
                     }
@@ -682,6 +718,7 @@ struct SettingsView: View {
         case .grok: viewModel.fetchGrokModels()
         case .mistral: viewModel.fetchMistralModels()
         case .codestral: viewModel.fetchCodestralModels()
+        case .vibe: viewModel.fetchVibeModels()
         case .claude: Task { await viewModel.fetchClaudeModels() }
         case .foundationModel: break
         }

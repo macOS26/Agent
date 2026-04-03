@@ -18,6 +18,7 @@ struct AgentOptionsView: View {
         case .grok: return $viewModel.grokTemperature
         case .mistral: return $viewModel.openAITemperature
         case .codestral: return $viewModel.openAITemperature
+        case .vibe: return $viewModel.openAITemperature
         case .foundationModel: return $viewModel.claudeTemperature // unused
         }
     }

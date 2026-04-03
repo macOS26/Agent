@@ -555,13 +555,13 @@ final class AgentViewModel {
     var mistralModels: [OpenAIModelInfo] = []
     var isFetchingMistralModels = false
 
-    // MARK: - Mistral Vibe (Codestral/Devstral)
+    // MARK: - Codestral (codestral.mistral.ai)
 
     var codestralAPIKey: String = KeychainService.shared.getCodestralAPIKey() ?? "" {
         didSet { KeychainService.shared.setCodestralAPIKey(codestralAPIKey) }
     }
 
-    var codestralModel: String = UserDefaults.standard.string(forKey: "codestralModel") ?? "devstral-small-2507" {
+    var codestralModel: String = UserDefaults.standard.string(forKey: "codestralModel") ?? "codestral-latest" {
         didSet { UserDefaults.standard.set(codestralModel, forKey: "codestralModel") }
     }
 
@@ -576,6 +576,27 @@ final class AgentViewModel {
         OpenAIModelInfo(id: "codestral-latest", name: "Codestral Latest"),
         OpenAIModelInfo(id: "codestral-2501", name: "Codestral 25.01"),
         OpenAIModelInfo(id: "codestral-2508", name: "Codestral 25.08"),
+    ]
+
+    // MARK: - Mistral Vibe (api.mistral.ai with Vibe key, Devstral models)
+
+    var vibeAPIKey: String = KeychainService.shared.getVibeAPIKey() ?? "" {
+        didSet { KeychainService.shared.setVibeAPIKey(vibeAPIKey) }
+    }
+
+    var vibeModel: String = UserDefaults.standard.string(forKey: "vibeModel") ?? "devstral-small-2507" {
+        didSet { UserDefaults.standard.set(vibeModel, forKey: "vibeModel") }
+    }
+
+    var vibeModels: [OpenAIModelInfo] = [
+        OpenAIModelInfo(id: "devstral-small-2507", name: "Devstral Small 2"),
+        OpenAIModelInfo(id: "devstral-2-2512", name: "Devstral 2"),
+    ]
+    var isFetchingVibeModels = false
+
+    nonisolated static let defaultVibeModels: [OpenAIModelInfo] = [
+        OpenAIModelInfo(id: "devstral-small-2507", name: "Devstral Small 2"),
+        OpenAIModelInfo(id: "devstral-2-2512", name: "Devstral 2"),
     ]
 
     nonisolated static let defaultHuggingFaceModels: [OpenAIModelInfo] = [
@@ -685,6 +706,7 @@ final class AgentViewModel {
         case .grok: return grokTemperature
         case .mistral: return openAITemperature
         case .codestral: return 0.2
+        case .vibe: return openAITemperature
         case .foundationModel: return claudeTemperature
         }
     }

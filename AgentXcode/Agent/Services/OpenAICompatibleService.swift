@@ -32,6 +32,7 @@ final class OpenAICompatibleService {
     private static let rateLimitSeconds: [APIProvider: Double] = [
         .mistral: 31.0,
         .codestral: 31.0,
+        .vibe: 31.0,
     ]
     /// Dynamic backoff from Retry-After header (overrides static limit until it expires).
     private static var retryAfterUntil: [APIProvider: CFAbsoluteTime] = [:]

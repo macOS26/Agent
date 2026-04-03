@@ -169,6 +169,10 @@ struct NewMainTabSheet: View {
             TextField("Model (e.g. codestral-latest)", text: $selectedModelId)
                 .textFieldStyle(.roundedBorder)
 
+        case .vibe:
+            TextField("Model (e.g. devstral-small-2507)", text: $selectedModelId)
+                .textFieldStyle(.roundedBorder)
+
         case .foundationModel:
             HStack {
                 Text("Apple Intelligence")
@@ -269,6 +273,7 @@ struct NewMainTabSheet: View {
         case .grok: return viewModel.grokModel
         case .mistral: return "mistral-large-latest"
         case .codestral: return "codestral-latest"
+        case .vibe: return "devstral-small-2507"
         case .foundationModel: return "Apple Intelligence"
         }
     }
@@ -302,6 +307,8 @@ struct NewMainTabSheet: View {
         case .mistral:
             if viewModel.mistralModels.isEmpty { viewModel.fetchMistralModels() }
         case .codestral:
+            break
+        case .vibe:
             break
         case .foundationModel:
             break
