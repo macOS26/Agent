@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import FoundationModels
 
 // MARK: - AboutSelf Tool
 
@@ -196,43 +197,62 @@ extension AgentViewModel {
             """
             
         default: // "all"
+            let aiInsight = await generateAppleAIInsight()
             aboutText = """
-            \(detailPrefix) About Agent!
-            
-            Agent! is a native macOS automation assistant that helps you automate tasks, write code, control apps, and manage your Mac.
-            
-            WHAT I CAN DO:
-            - Control apps using AppleScript, JavaScript, or Accessibility
-            - Read, write, and edit files in any project
-            - Build and run Xcode projects
-            - Automate web browsers (Safari, Chrome, Firefox)
-            - Execute shell commands with user or root privileges
-            - Manage git repositories and commits
-            - Generate, transform, and fix text
-            - Send messages via iMessage, email, or SMS
-            
-            HOW TO USE ME:
-            Simply describe what you want to accomplish in natural language.
-            I will choose the appropriate tools and execute them.
-            
-            EXAMPLES:
-            - "Read the main.swift file and explain it"
-            - "Build the Xcode project and fix any errors"
-            - "Write a paragraph about machine learning"
-            - "Turn this text into a grocery list"
-            - "Fix spelling and grammar in this paragraph, no emojis"
-            - "Send this summary to me via iMessage"
-            - "Automate Safari to fill out this form"
-            
-            CURRENT CONTEXT:
-            - Working directory: \(projectFolder)
+            \(detailPrefix) Agent! for macOS 26
+
+            I'm Agent! — an open-source autonomous AI that lives on your Mac. I don't just answer questions. I act. Give me a goal and I'll figure out the tools, the steps, and the execution. No hand-holding required.
+
+            I THINK, PLAN, AND EXECUTE:
+            - Break complex tasks into steps and work through them
+            - Choose the right tool for each job automatically
+            - Recover from errors and try alternative approaches
+            - Chain multiple operations without stopping
+
+            I WRITE AND SHIP CODE:
+            - Read, edit, and create files across your entire project
+            - Build Xcode projects and fix compiler errors in a loop
+            - Manage git — branches, commits, diffs, patches
+            - Run shell commands as you or as root via privileged daemon
+
+            I CONTROL YOUR MAC:
+            - Drive any app through Accessibility (click, type, navigate)
+            - Run AppleScript and JavaScript for Automation with full TCC
+            - Automate Safari — search, click, fill forms, extract data
+            - Send iMessages, read calendars, play music, control system settings
+
+            I WORK WITH 13 AI PROVIDERS:
+            Claude, OpenAI, Gemini, Grok, Mistral, Codestral, Mistral Vibe, DeepSeek, Hugging Face, Z.ai, Ollama, LM Studio, and Apple Intelligence — all with tool calling, streaming, and vision support.
+
+            I PROTECT YOUR WORK:
+            - File backups before every edit (automatic restore)
+            - Full audit logging via OSLog (Console.app)
+            - All data stays on your Mac — no telemetry, no uploads
+            - API keys stored in macOS Keychain
+
+            RIGHT NOW:
+            - Project: \(projectFolder.isEmpty ? "(none)" : projectFolder)
             - User: \(NSFullUserName())
             - System: macOS \(ProcessInfo.processInfo.operatingSystemVersionString)
-            
-            Type naturally and I will help you get things done.
+            \(aiInsight.isEmpty ? "" : "\n            APPLE AI SAYS:\n            \(aiInsight)")
+
+            Just tell me what you want done.
             """
         }
         
         return aboutText
+    }
+
+    /// Ask Apple Intelligence for a brief insight about what Agent! could help with right now.
+    private func generateAppleAIInsight() async -> String {
+        guard AppleIntelligenceMediator.isAvailable else { return "" }
+        do {
+            let session = LanguageModelSession()
+            let prompt = "In one sentence, what's something creative or useful a Mac automation agent could do for the user right now? Be specific and practical. No filler."
+            let response = try await session.respond(to: prompt)
+            return response.content.trimmingCharacters(in: .whitespacesAndNewlines)
+        } catch {
+            return ""
+        }
     }
 }
