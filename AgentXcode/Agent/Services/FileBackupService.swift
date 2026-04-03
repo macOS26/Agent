@@ -1,4 +1,5 @@
 import Foundation
+import AgentAudit
 
 /// Backs up files before editing, organized by tab UUID.
 /// Structure: ~/Documents/AgentScript/backups/<tabUUID>/<timestamp>_<filename>
@@ -24,7 +25,7 @@ final class FileBackupService {
     func backup(filePath: String, tabID: UUID) -> String? {
         let fm = FileManager.default
         guard fm.fileExists(atPath: filePath) else {
-            print("[FileBackup] SKIP — file not found: \(filePath)")
+            AuditLog.log(.shell, "FileBackup SKIP — file not found: \(filePath)")
             return nil
         }
 
@@ -32,7 +33,7 @@ final class FileBackupService {
         do {
             try fm.createDirectory(at: tabDir, withIntermediateDirectories: true)
         } catch {
-            print("[FileBackup] ERROR creating dir: \(error)")
+            AuditLog.log(.shell, "FileBackup ERROR creating dir: \(error)")
             return nil
         }
 
@@ -44,10 +45,10 @@ final class FileBackupService {
 
         do {
             try fm.copyItem(atPath: filePath, toPath: backupURL.path)
-            print("[FileBackup] OK — \(backupURL.path)")
+            AuditLog.log(.shell, "FileBackup OK — \(backupURL.path)")
             return backupURL.path
         } catch {
-            print("[FileBackup] ERROR copying: \(error)")
+            AuditLog.log(.shell, "FileBackup ERROR copying: \(error)")
             return nil
         }
     }
