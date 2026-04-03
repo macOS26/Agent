@@ -78,7 +78,7 @@ final class OllamaService {
 
     /// Send messages via OpenAI-compatible chat completions API.
     /// Translates response into the same format as ClaudeService for the task loop.
-    func send(messages: [[String: Any]], activeGroups: Set<String>? = nil) async throws -> (content: [[String: Any]], stopReason: String) {
+    func send(messages: [[String: Any]], activeGroups: Set<String>? = nil) async throws -> (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int) {
         // Convert Claude-format messages to OpenAI-format
         var chatMessages: [[String: Any]] = [
             ["role": "system", "content": systemPrompt]
@@ -199,7 +199,7 @@ final class OllamaService {
         messages: [[String: Any]],
         activeGroups: Set<String>? = nil,
         onTextDelta: @escaping @Sendable (String) -> Void
-    ) async throws -> (content: [[String: Any]], stopReason: String) {
+    ) async throws -> (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int) {
         // Convert Claude-format messages to OpenAI-format (same as send())
         var chatMessages: [[String: Any]] = [
             ["role": "system", "content": systemPrompt]
@@ -313,7 +313,7 @@ final class OllamaService {
     /// Network I/O off main thread. Parses Ollama native response into Claude-compatible format.
     nonisolated private static func performRequest(
         bodyData: Data, apiKey: String, url: URL
-    ) async throws -> (content: [[String: Any]], stopReason: String) {
+    ) async throws -> (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int) {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "content-type")
@@ -344,6 +344,8 @@ final class OllamaService {
         }
 
         let done = json["done"] as? Bool ?? true
+        let promptEval = json["prompt_eval_count"] as? Int ?? 0
+        let evalCount = json["eval_count"] as? Int ?? 0
 
         // Convert to Claude-compatible content blocks
         var contentBlocks: [[String: Any]] = []
@@ -445,13 +447,13 @@ final class OllamaService {
         let hasToolCalls = message["tool_calls"] != nil || parsedToolFromText
         let stopReason = hasToolCalls ? "tool_use" : (done ? "end_turn" : "end_turn")
 
-        return (contentBlocks, stopReason)
+        return (contentBlocks, stopReason, promptEval, evalCount)
     }
 
     nonisolated private static func performStreamingRequest(
         bodyData: Data, apiKey: String, url: URL,
         onTextDelta: @escaping @Sendable (String) -> Void
-    ) async throws -> (content: [[String: Any]], stopReason: String) {
+    ) async throws -> (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int) {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "content-type")
@@ -483,6 +485,8 @@ final class OllamaService {
         var pendingBuffer = ""  // Buffer text that might be the start of a tool call
         var repetitionCount = 0
         var lastSegment = ""
+        var streamInputTokens = 0
+        var streamOutputTokens = 0
 
         // Ollama streaming returns NDJSON: one JSON object per line
         for try await line in bytes.lines {
@@ -598,8 +602,10 @@ final class OllamaService {
                 }
             }
 
-            // Final message has done: true
+            // Final message has done: true — extract token counts
             if let done = json["done"] as? Bool, done {
+                streamInputTokens = json["prompt_eval_count"] as? Int ?? 0
+                streamOutputTokens = json["eval_count"] as? Int ?? 0
                 break
             }
         }
@@ -654,7 +660,7 @@ final class OllamaService {
             contentBlocks.append(["type": "text", "text": fullText])
         }
 
-        return (contentBlocks, stopReason)
+        return (contentBlocks, stopReason, streamInputTokens, streamOutputTokens)
     }
 
     /// Find the earliest tool call by position in the text, parse its JSON args.

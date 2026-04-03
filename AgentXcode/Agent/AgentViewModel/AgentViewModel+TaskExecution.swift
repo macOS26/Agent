@@ -346,7 +346,7 @@ extension AgentViewModel {
                             self?.appendStreamDelta(delta)
                         }
                     }
-                    response = (r.content, r.stopReason, 0, 0)
+                    response = (r.content, r.stopReason, r.inputTokens, r.outputTokens)
 
                 } else if let ollama {
                     let r = try await ollama.sendStreaming(messages: sendMessages, activeGroups: activeGroups) { [weak self] delta in
@@ -355,7 +355,7 @@ extension AgentViewModel {
                             self?.appendStreamDelta(delta)
                         }
                     }
-                    response = (r.content, r.stopReason, 0, 0)
+                    response = (r.content, r.stopReason, r.inputTokens, r.outputTokens)
 
                 } else if let foundationModelService {
                     let r = try await foundationModelService.sendStreaming(messages: sendMessages) { [weak self] delta in

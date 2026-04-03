@@ -256,7 +256,7 @@ final class OpenAICompatibleService {
     /// LM Studio Native (/api/v1/chat) doesn't support tools or max_tokens
     private var isNativeFormat: Bool { messagesKey == "input" }
 
-    func send(messages: [[String: Any]], activeGroups: Set<String>? = nil) async throws -> (content: [[String: Any]], stopReason: String) {
+    func send(messages: [[String: Any]], activeGroups: Set<String>? = nil) async throws -> (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int) {
         let payload = buildMessagesPayload(messages)
 
         var body: [String: Any] = [
@@ -281,7 +281,7 @@ final class OpenAICompatibleService {
         messages: [[String: Any]],
         activeGroups: Set<String>? = nil,
         onTextDelta: @escaping @Sendable (String) -> Void
-    ) async throws -> (content: [[String: Any]], stopReason: String) {
+    ) async throws -> (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int) {
         let payload = buildMessagesPayload(messages)
 
         var body: [String: Any] = [
@@ -309,7 +309,7 @@ final class OpenAICompatibleService {
 
     nonisolated private static func performRequest(
         bodyData: Data, apiKey: String, url: URL
-    ) async throws -> (content: [[String: Any]], stopReason: String) {
+    ) async throws -> (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int) {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -421,7 +421,10 @@ final class OpenAICompatibleService {
 
         let hasToolCalls = (message["tool_calls"] != nil) || parsedToolFromText
         let stopReason = hasToolCalls ? "tool_use" : (finishReason == "tool_calls" ? "tool_use" : (finishReason == "length" ? "max_tokens" : "end_turn"))
-        return (contentBlocks, stopReason)
+        let usage = json["usage"] as? [String: Any]
+        let inTok = usage?["prompt_tokens"] as? Int ?? 0
+        let outTok = usage?["completion_tokens"] as? Int ?? 0
+        return (contentBlocks, stopReason, inTok, outTok)
     }
 
     // MARK: - Streaming Request (SSE)
@@ -429,7 +432,7 @@ final class OpenAICompatibleService {
     nonisolated private static func performStreamingRequest(
         bodyData: Data, apiKey: String, url: URL,
         onTextDelta: @escaping @Sendable (String) -> Void
-    ) async throws -> (content: [[String: Any]], stopReason: String) {
+    ) async throws -> (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int) {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -454,6 +457,8 @@ final class OpenAICompatibleService {
 
         var fullText = ""
         var finishReason = "stop"
+        var streamInputTokens = 0
+        var streamOutputTokens = 0
 
         // Accumulate streamed tool calls: index -> (id, name, arguments)
         var toolCallAccum: [Int: (id: String, name: String, arguments: String)] = [:]
@@ -498,6 +503,12 @@ final class OpenAICompatibleService {
 
             guard let data = payload.data(using: .utf8),
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { continue }
+
+            // Extract usage if present (final chunk)
+            if let usage = json["usage"] as? [String: Any] {
+                streamInputTokens = usage["prompt_tokens"] as? Int ?? streamInputTokens
+                streamOutputTokens = usage["completion_tokens"] as? Int ?? streamOutputTokens
+            }
 
             // LM Studio Native: top-level "content" field without "choices"
             if let nativeContent = json["content"] as? String, json["choices"] == nil {
@@ -673,6 +684,6 @@ final class OpenAICompatibleService {
 
         let hasToolCalls = !toolCallAccum.isEmpty || parsedToolFromText
         let stopReason = hasToolCalls ? "tool_use" : (finishReason == "tool_calls" ? "tool_use" : (finishReason == "length" ? "max_tokens" : "end_turn"))
-        return (contentBlocks, stopReason)
+        return (contentBlocks, stopReason, streamInputTokens, streamOutputTokens)
     }
 }
