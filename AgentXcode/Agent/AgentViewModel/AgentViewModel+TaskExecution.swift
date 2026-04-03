@@ -277,6 +277,7 @@ extension AgentViewModel {
         // Apple AI still runs on task_complete to summarize results for the user
 
         var iterations = 0
+        var textOnlyCount = 0
 
         while !Task.isCancelled {
             iterations += 1
@@ -568,8 +569,10 @@ extension AgentViewModel {
                     let capped = Self.truncateToolResults(toolResults)
                     messages.append(["role": "user", "content": capped])
                 } else if !hasToolUse {
-                    // LLM responded with text and no tool calls — task is complete
-                    break
+                    // LLM responded with text only — nudge it to continue or finish
+                    textOnlyCount += 1
+                    if textOnlyCount >= 3 { break }
+                    messages.append(["role": "user", "content": "Continue with the next step. When you are completely done, call task_complete(summary: \"...\")."])
                 } else {
                     // Check if LLM signaled it's done via text even though it made tool calls
                     let allText = response.content.compactMap { $0["text"] as? String }.joined().lowercased()
