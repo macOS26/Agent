@@ -481,7 +481,10 @@ extension AgentViewModel {
                 return
             }
             do {
-                let models = try await Self.fetchOpenAICompatibleModels(apiKey: key, endpoint: "https://codestral.mistral.ai/v1/models")
+                // Codestral endpoint has no /v1/models — fetch from main Mistral API and filter
+                let allModels = try await Self.fetchOpenAICompatibleModels(apiKey: key, endpoint: "https://api.mistral.ai/v1/models")
+                let filtered = allModels.filter { $0.id.lowercased().contains("codestral") }
+                let models = filtered.isEmpty ? allModels : filtered
                 codestralModels = models.isEmpty ? Self.defaultCodestralModels : models
                 if codestralModel.isEmpty || !codestralModels.contains(where: { $0.id == codestralModel }) {
                     codestralModel = codestralModels.first?.id ?? "codestral-latest"
