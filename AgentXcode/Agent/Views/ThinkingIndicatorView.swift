@@ -1,4 +1,5 @@
 import SwiftUI
+import AgentTools
 import AgentTerminalNeo
 
 /// Collapsible thinking indicator shown in the activity log area while the LLM is processing.
@@ -92,6 +93,29 @@ struct ThinkingIndicatorView: View {
 
     private var inputTokens: Int { tab?.tabInputTokens ?? viewModel.taskInputTokens }
     private var outputTokens: Int { tab?.tabOutputTokens ?? viewModel.taskOutputTokens }
+
+    /// Approximate context window for the current provider/model
+    private var contextWindow: Int {
+        let provider: APIProvider
+        if let tab {
+            provider = tab.llmConfig?.provider ?? viewModel.selectedProvider
+        } else {
+            provider = viewModel.selectedProvider
+        }
+        switch provider {
+        case .claude: return 200_000
+        case .openAI: return 128_000
+        case .deepSeek: return 128_000
+        case .gemini: return 1_000_000
+        case .grok: return 131_072
+        case .zAI: return 128_000
+        case .mistral: return 128_000
+        case .huggingFace: return 32_000
+        case .ollama, .localOllama: return viewModel.localOllamaContextSize > 0 ? viewModel.localOllamaContextSize : 32_000
+        case .vLLM, .lmStudio: return 32_000
+        case .foundationModel: return 4_096
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -197,6 +221,30 @@ struct ThinkingIndicatorView: View {
                                 Text("↓").font(.caption).foregroundStyle(.green)
                                 Text(Self.fmtTokens(outputTokens)).font(.caption).foregroundStyle(.secondary)
                             }
+                        }
+
+                        // Context budget bar
+                        if inputTokens > 0 {
+                            let used = inputTokens + outputTokens
+                            let fraction = min(Double(used) / Double(contextWindow), 1.0)
+                            let barColor: Color = fraction > 0.9 ? .red : fraction > 0.7 ? .orange : .green
+                            HStack(spacing: 4) {
+                                GeometryReader { geo in
+                                    ZStack(alignment: .leading) {
+                                        RoundedRectangle(cornerRadius: 2)
+                                            .fill(Color.gray.opacity(0.3))
+                                        RoundedRectangle(cornerRadius: 2)
+                                            .fill(barColor)
+                                            .frame(width: geo.size.width * fraction)
+                                    }
+                                }
+                                .frame(width: 40, height: 6)
+                                Text("\(Int(fraction * 100))%")
+                                    .font(.system(size: 9, design: .monospaced))
+                                    .foregroundStyle(barColor)
+                            }
+                            .accessibilityLabel("Context usage")
+                            .accessibilityValue("\(Int(fraction * 100)) percent, \(Self.fmtTokens(used)) of \(Self.fmtTokens(contextWindow))")
                         }
 
                         // Status — show executing alongside LLM status
