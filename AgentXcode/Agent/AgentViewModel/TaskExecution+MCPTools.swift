@@ -66,6 +66,12 @@ extension AgentViewModel {
                     if case .text(let t) = block { return Self.formatMCPText(t) }
                     return nil
                 }.joined(separator: "\n")
+                // Wrap file content in code fence for syntax highlighting
+                if toolName == "XcodeRead" || toolName == "XcodeGrep" {
+                    let filePath = input["filePath"] as? String ?? input["path"] as? String ?? ""
+                    let lang = Self.langFromPath(filePath)
+                    mcpOutput = Self.codeFence(mcpOutput, language: lang)
+                }
             } catch {
                 mcpOutput = "MCP error: \(error.localizedDescription)"
             }
