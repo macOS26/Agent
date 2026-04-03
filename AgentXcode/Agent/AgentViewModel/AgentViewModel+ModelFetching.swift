@@ -1,6 +1,7 @@
 @preconcurrency import Foundation
 import AppKit
 import SwiftUI
+import AgentAudit
 
 // MARK: - Model Fetching Extension
 extension AgentViewModel {
@@ -19,7 +20,7 @@ extension AgentViewModel {
                 self.availableClaudeModels = models.isEmpty ? Self.defaultClaudeModels : models
             }
         } catch {
-            print("Error fetching Claude models: \(error)")
+            AuditLog.log(.api, "Error fetching Claude models: \(error)")
             await MainActor.run {
                 self.availableClaudeModels = Self.defaultClaudeModels
             }

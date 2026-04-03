@@ -1,4 +1,5 @@
 import Foundation
+import AgentAudit
 
 // MARK: - MCP Server Configuration
 
@@ -318,12 +319,12 @@ final class MCPServerRegistry {
         if let index = servers.firstIndex(where: { $0.id == config.id }) {
             if config.isHTTP {
                 guard let url = URL(string: config.url ?? ""), url.scheme != nil, url.host != nil else {
-                    print("[MCPConfig] Refusing to update server: invalid URL \(config.url ?? "")")
+                    AuditLog.log(.mcp, "[MCPConfig] Refusing to update server: invalid URL \(config.url ?? "")")
                     return
                 }
             } else {
                 guard Self.validateCommandPath(config.command) else {
-                    print("[MCPConfig] Refusing to update server: command not found at \(config.command)")
+                    AuditLog.log(.mcp, "[MCPConfig] Refusing to update server: command not found at \(config.command)")
                     return
                 }
             }

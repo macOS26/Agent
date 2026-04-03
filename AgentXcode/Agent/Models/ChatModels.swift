@@ -1,6 +1,7 @@
 import Foundation
 import SQLite3
 import SwiftData
+import AgentAudit
 
 /// A single log entry in the chat history
 @Model
@@ -129,7 +130,7 @@ final class ChatHistoryStore {
         // (e.g. _PFFaultHandlerLookupRow) that Swift do/catch cannot intercept.
         if FileManager.default.fileExists(atPath: url.path) {
             if !Self.storeHasRequiredTables(at: url) {
-                print("SwiftData store missing required tables — deleting for recreation")
+                AuditLog.log(.storage, "SwiftData store missing required tables — deleting for recreation")
                 deleteStoreFiles()
             }
         }
@@ -139,14 +140,14 @@ final class ChatHistoryStore {
             container = try ModelContainer(for: schema, configurations: config)
             context = container?.mainContext
         } catch {
-            print("SwiftData init failed — recreating: \(error)")
+            AuditLog.log(.storage, "SwiftData init failed — recreating: \(error)")
             deleteStoreFiles()
             do {
                 let config = ModelConfiguration(schema: schema, url: url)
                 container = try ModelContainer(for: schema, configurations: config)
                 context = container?.mainContext
             } catch {
-                print("Failed to initialize SwiftData after reset: \(error)")
+                AuditLog.log(.storage, "Failed to initialize SwiftData after reset: \(error)")
             }
         }
     }
@@ -165,7 +166,7 @@ final class ChatHistoryStore {
             let new = URL(fileURLWithPath: newURL.path + suffix)
             try? fm.moveItem(at: old, to: new)
         }
-        print("Migrated default.store → chat2.store")
+        AuditLog.log(.storage, "Migrated default.store → chat2.store")
     }
 
     /// Open the SQLite file read-only and verify all required tables exist.
@@ -272,7 +273,7 @@ final class ChatHistoryStore {
         do {
             try context.save()
         } catch {
-            print("SwiftData save failed — disabling store: \(error)")
+            AuditLog.log(.storage, "SwiftData save failed — disabling store: \(error)")
             storeDisabled = true
             context.rollback()
         }
@@ -453,7 +454,7 @@ final class ChatHistoryStore {
             container = try ModelContainer(for: schema, configurations: config)
             context = container?.mainContext
         } catch {
-            print("Failed to recreate store after clear: \(error)")
+            AuditLog.log(.storage, "Failed to recreate store after clear: \(error)")
         }
     }
     
@@ -543,6 +544,6 @@ final class ChatHistoryStore {
         
         if !storeDisabled { try? context?.save() }
         UserDefaults.standard.set(true, forKey: "agentActivityLogMigrated")
-        print("Migrated chat history to SwiftData")
+        AuditLog.log(.storage, "Migrated chat history to SwiftData")
     }
 }
