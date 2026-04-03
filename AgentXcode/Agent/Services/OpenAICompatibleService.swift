@@ -5,6 +5,20 @@ import AgentTools
 
 /// Unified service for OpenAI and Hugging Face Inference API.
 /// Both use the OpenAI chat completions format with SSE streaming.
+/// Generate a 9-char alphanumeric tool call ID compatible with all providers (including Mistral).
+private func shortToolId() -> String {
+    let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    return String((0..<9).map { _ in chars.randomElement()! })
+}
+
+/// Sanitize an existing tool call ID to 9 alphanumeric chars.
+private func sanitizeToolId(_ id: String) -> String {
+    let clean = String(id.unicodeScalars.filter { CharacterSet.alphanumerics.contains($0) })
+    if clean.count >= 9 { return String(clean.prefix(9)) }
+    // Pad if too short
+    return clean + shortToolId().prefix(9 - clean.count)
+}
+
 @MainActor
 final class OpenAICompatibleService {
     let apiKey: String
@@ -176,7 +190,7 @@ final class OpenAICompatibleService {
                         if blockType == "text", let t = block["text"] as? String {
                             textParts += t
                         } else if blockType == "tool_use" {
-                            let callId = block["id"] as? String ?? UUID().uuidString
+                            let callId = sanitizeToolId(block["id"] as? String ?? shortToolId())
                             let name = block["name"] as? String ?? ""
                             let input = block["input"] as? [String: Any] ?? [:]
                             // OpenAI expects arguments as a JSON string
@@ -449,7 +463,7 @@ final class OpenAICompatibleService {
                 for call in deepSeekCalls {
                     contentBlocks.append([
                         "type": "tool_use",
-                        "id": UUID().uuidString,
+                        "id": shortToolId(),
                         "name": call.name,
                         "input": call.input
                     ])
@@ -459,7 +473,7 @@ final class OpenAICompatibleService {
                 for call in dsmlCalls {
                     contentBlocks.append([
                         "type": "tool_use",
-                        "id": UUID().uuidString,
+                        "id": shortToolId(),
                         "name": call.name,
                         "input": call.input
                     ])
@@ -468,7 +482,7 @@ final class OpenAICompatibleService {
             } else if let (toolName, _, parsed) = OllamaService.extractFirstToolCall(from: text) {
                 contentBlocks.append([
                     "type": "tool_use",
-                    "id": UUID().uuidString,
+                    "id": shortToolId(),
                     "name": toolName,
                     "input": parsed
                 ])
@@ -494,7 +508,7 @@ final class OpenAICompatibleService {
                 guard let function = call["function"] as? [String: Any],
                       let name = function["name"] as? String else { continue }
 
-                let callId = call["id"] as? String ?? UUID().uuidString
+                let callId = sanitizeToolId(call["id"] as? String ?? shortToolId())
 
                 // OpenAI: arguments is a JSON string
                 let input: [String: Any]
@@ -706,7 +720,7 @@ final class OpenAICompatibleService {
         // Convert accumulated native tool calls first
         for index in toolCallAccum.keys.sorted() {
             guard let tc = toolCallAccum[index], !tc.name.isEmpty else { continue }
-            let callId = tc.id.isEmpty ? "call_\(UUID().uuidString.prefix(8).lowercased())" : tc.id
+            let callId = tc.id.isEmpty ? shortToolId() : sanitizeToolId(tc.id)
 
             let input: [String: Any]
             if let parsed = try? JSONSerialization.jsonObject(with: Data(tc.arguments.utf8)) as? [String: Any] {
@@ -735,7 +749,7 @@ final class OpenAICompatibleService {
                 for call in deepSeekCalls {
                     contentBlocks.append([
                         "type": "tool_use",
-                        "id": UUID().uuidString,
+                        "id": shortToolId(),
                         "name": call.name,
                         "input": call.input
                     ])
@@ -745,7 +759,7 @@ final class OpenAICompatibleService {
                 for call in dsmlCalls {
                     contentBlocks.append([
                         "type": "tool_use",
-                        "id": UUID().uuidString,
+                        "id": shortToolId(),
                         "name": call.name,
                         "input": call.input
                     ])
@@ -754,7 +768,7 @@ final class OpenAICompatibleService {
             } else if let (toolName, _, parsed) = OllamaService.extractFirstToolCall(from: fullText) {
                 contentBlocks.append([
                     "type": "tool_use",
-                    "id": UUID().uuidString,
+                    "id": shortToolId(),
                     "name": toolName,
                     "input": parsed
                 ])
