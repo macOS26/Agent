@@ -178,14 +178,19 @@ final class OpenAICompatibleService {
                             } else {
                                 argsString = "{}"
                             }
-                            toolCalls.append([
+                            var tc: [String: Any] = [
                                 "id": callId,
                                 "type": "function",
                                 "function": [
                                     "name": name,
                                     "arguments": argsString
                                 ] as [String: Any]
-                            ])
+                            ]
+                            // Gemini thought_signature — echo back for tool call round-trips
+                            if let sig = block["thought_signature"] as? String {
+                                tc["thought_signature"] = sig
+                            }
+                            toolCalls.append(tc)
                         }
                     }
 
@@ -433,6 +438,8 @@ final class OpenAICompatibleService {
 
         // Accumulate streamed tool calls: index -> (id, name, arguments)
         var toolCallAccum: [Int: (id: String, name: String, arguments: String)] = [:]
+        // Gemini thought_signature — must be echoed back for tool call round-trips
+        var thoughtSignature: String?
 
         // Buffer text line-by-line so we can suppress raw JSON tool calls
         // that vLLM/Qwen outputs as text content instead of native tool_calls
@@ -489,6 +496,11 @@ final class OpenAICompatibleService {
             }
 
             guard let delta = firstChoice["delta"] as? [String: Any] else { continue }
+
+            // Capture Gemini thought_signature for tool call round-trips
+            if let sig = delta["thought_signature"] as? String {
+                thoughtSignature = sig
+            }
 
             // Tool call deltas (streamed incrementally)
             if let toolCalls = delta["tool_calls"] as? [[String: Any]] {
@@ -558,12 +570,14 @@ final class OpenAICompatibleService {
                 input = [:]
             }
 
-            contentBlocks.append([
+            var toolBlock: [String: Any] = [
                 "type": "tool_use",
                 "id": callId,
                 "name": tc.name,
                 "input": input
-            ])
+            ]
+            if let sig = thoughtSignature { toolBlock["thought_signature"] = sig }
+            contentBlocks.append(toolBlock)
         }
 
         // If no native tool calls, check text for DeepSeek-style tool calls
