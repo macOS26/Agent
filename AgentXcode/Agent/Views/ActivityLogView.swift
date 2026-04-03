@@ -271,9 +271,9 @@ struct ActivityLogView: NSViewRepresentable {
                         CATransaction.setDisableActions(true)
                         textView.textStorage?.beginEditing()
                         textView.textStorage?.append(renderMarkdownOnly(newText))
-                        // Trim from top if textStorage exceeds cap — only when not actively running
-                        if !self.isActive, let storage = textView.textStorage, storage.length > 50_000 {
-                            let trim = storage.length - 50_000
+                        // Trim from top if textStorage exceeds cap — always, to prevent beach ball
+                        if let storage = textView.textStorage, storage.length > Self.maxRenderChars {
+                            let trim = storage.length - Self.maxRenderChars
                             let snapRange = NSRange(location: trim, length: min(200, storage.length - trim))
                             let snippet = storage.string as NSString
                             let nlRange = snippet.range(of: "\n", range: snapRange)
@@ -632,7 +632,7 @@ struct ActivityLogView: NSViewRepresentable {
         }
 
         /// Maximum characters to render — truncate from the front to keep the tail visible.
-        private static let maxRenderChars = 50_000
+        private nonisolated static let maxRenderChars = 50_000
 
         /// Build attributed string from text. Converts image/HTML paths to clickable links.
         nonisolated func buildAttributedString(from text: String) -> NSAttributedString {
@@ -641,11 +641,11 @@ struct ActivityLogView: NSViewRepresentable {
                 .foregroundColor: NSColor.labelColor
             ]
 
-            // Truncate from the front if text exceeds render cap — only on app load, not during active runs
+            // Truncate from the front if text exceeds render cap — always, to prevent beach ball
             var renderText = text
             var wasTruncated = false
-            if renderText.count > 50_000, !isActive {
-                let drop = renderText.count - 50_000
+            if renderText.count > Self.maxRenderChars {
+                let drop = renderText.count - Self.maxRenderChars
                 renderText = String(renderText.dropFirst(drop))
                 // Snap to next newline so we don't start mid-line
                 if let nl = renderText.firstIndex(of: "\n") {
