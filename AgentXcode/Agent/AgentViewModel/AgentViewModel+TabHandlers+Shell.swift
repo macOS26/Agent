@@ -35,7 +35,7 @@ extension AgentViewModel {
                 if Self.needsTCCPermissions(cmd) {
                     result = await Self.executeTCC(command: cmd)
                 } else if userService.userReady {
-                    result = await executeForTab(command: cmd)
+                    result = await executeForTab(command: cmd, projectFolder: tabFolder)
                 } else {
                     result = await Self.executeTCC(command: cmd)
                 }
@@ -133,13 +133,13 @@ extension AgentViewModel {
             let result: (status: Int32, output: String)
             if isPrivileged {
                 // Root commands → LaunchDaemon via XPC
-                result = await helperService.execute(command: command)
+                result = await helperService.execute(command: command, workingDirectory: tabFolder)
             } else if Self.needsTCCPermissions(command) {
                 // TCC commands → Agent process (inherits TCC permissions)
                 result = await Self.executeTCC(command: command)
             } else if userService.userReady {
                 // User LaunchAgent via XPC
-                result = await executeForTab(command: command)
+                result = await executeForTab(command: command, projectFolder: tabFolder)
             } else {
                 // Fallback: in-process when User Agent is off
                 result = await Self.executeTCC(command: command)
