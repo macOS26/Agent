@@ -473,26 +473,32 @@ extension AgentViewModel {
 
     func fetchCodestralModels() {
         isFetchingCodestralModels = true
-        let key = codestralAPIKey
+        // Codestral key only works on codestral.mistral.ai (no /v1/models there).
+        // Try Codestral key first on api.mistral.ai, fall back to Mistral key.
+        let keys = [codestralAPIKey, mistralAPIKey].filter { !$0.isEmpty }
         Task {
             defer { isFetchingCodestralModels = false }
-            guard !key.isEmpty else {
+            guard !keys.isEmpty else {
                 codestralModels = Self.defaultCodestralModels
                 return
             }
-            do {
-                // Codestral endpoint has no /v1/models — fetch from main Mistral API and filter
-                let allModels = try await Self.fetchOpenAICompatibleModels(apiKey: key, endpoint: "https://api.mistral.ai/v1/models")
-                let filtered = allModels.filter { $0.id.lowercased().contains("codestral") }
-                let models = filtered.isEmpty ? allModels : filtered
-                codestralModels = models.isEmpty ? Self.defaultCodestralModels : models
-                if codestralModel.isEmpty || !codestralModels.contains(where: { $0.id == codestralModel }) {
-                    codestralModel = codestralModels.first?.id ?? "codestral-latest"
+            for key in keys {
+                do {
+                    let allModels = try await Self.fetchOpenAICompatibleModels(apiKey: key, endpoint: "https://api.mistral.ai/v1/models")
+                    let filtered = allModels.filter { $0.id.lowercased().contains("codestral") }
+                    let models = filtered.isEmpty ? allModels : filtered
+                    if !models.isEmpty {
+                        codestralModels = models
+                        if codestralModel.isEmpty || !codestralModels.contains(where: { $0.id == codestralModel }) {
+                            codestralModel = codestralModels.first?.id ?? "codestral-latest"
+                        }
+                        return
+                    }
+                } catch {
+                    AuditLog.log(.api, "Failed to fetch Codestral models with key: \(error.localizedDescription)")
                 }
-            } catch {
-                AuditLog.log(.api, "Failed to fetch Codestral models: \(error.localizedDescription)")
-                codestralModels = Self.defaultCodestralModels
             }
+            codestralModels = Self.defaultCodestralModels
         }
     }
 
