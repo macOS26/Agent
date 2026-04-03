@@ -69,6 +69,14 @@ struct RollbackView: View {
                 .buttonStyle(.bordered)
                 .controlSize(.small)
 
+                Button("Open Folder") {
+                    let url = FileManager.default.homeDirectoryForCurrentUser
+                        .appendingPathComponent("Documents/AgentScript/backups")
+                    NSWorkspace.shared.open(url)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+
                 Spacer()
 
                 Button("Refresh") {
