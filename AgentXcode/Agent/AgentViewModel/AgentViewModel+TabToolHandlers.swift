@@ -12,8 +12,13 @@ extension AgentViewModel {
 
     /// Dispatch tab tool calls to group handlers.
     func handleTabToolCallBody(
-        tab: ScriptTab, name: String, input: [String: Any], toolId: String
+        tab: ScriptTab, name: String, input rawInput: [String: Any], toolId: String
     ) async -> TabToolResult {
+        // Normalize empty path/file_path to nil so handlers fall back to project folder
+        var input = rawInput
+        if let p = input["path"] as? String, p.isEmpty { input["path"] = nil }
+        if let p = input["file_path"] as? String, p.isEmpty { input["file_path"] = nil }
+
         switch name {
         // Core
         case "task_complete", "plan_mode":
