@@ -52,7 +52,9 @@ extension AgentViewModel {
                 self?.appendRawOutput(chunk)
             }
         }
-        let result = await userService.execute(command: command, workingDirectory: workingDirectory)
+        // Fallback chain: workingDirectory → projectFolder → home (handled by UserService)
+        let dir = workingDirectory.isEmpty ? projectFolder : workingDirectory
+        let result = await userService.execute(command: command, workingDirectory: dir)
         userService.onOutput = nil
         userServiceActive = false
 
