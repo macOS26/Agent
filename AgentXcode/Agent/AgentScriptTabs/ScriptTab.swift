@@ -88,6 +88,24 @@ final class ScriptTab: Identifiable {
     var tabTaskSummaries: [String] = []
     var tabErrors: [String] = []
 
+    // MARK: - Tool Steps (structured tool call tracking)
+
+    var toolSteps: [AgentViewModel.ToolStep] = []
+
+    @discardableResult
+    func recordToolStep(name: String, detail: String) -> UUID {
+        let step = AgentViewModel.ToolStep(name: name, detail: detail, startTime: Date())
+        toolSteps.append(step)
+        return step.id
+    }
+
+    func completeToolStep(id: UUID, status: AgentViewModel.ToolStep.Status = .success) {
+        if let idx = toolSteps.firstIndex(where: { $0.id == id }) {
+            toolSteps[idx].duration = Date().timeIntervalSince(toolSteps[idx].startTime)
+            toolSteps[idx].status = status
+        }
+    }
+
     // MARK: - Per-Tab Attached Images
 
     var attachedImages: [NSImage] = []

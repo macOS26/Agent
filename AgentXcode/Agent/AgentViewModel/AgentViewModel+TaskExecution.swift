@@ -16,6 +16,7 @@ extension AgentViewModel {
         userWasActive = false
         rootWasActive = false
         recentOutputHashes.removeAll()
+        toolSteps.removeAll()
         DiffStore.shared.clear()
 
         // Start progress updates for iMessage requests (every 10 minutes)
