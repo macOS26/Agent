@@ -584,17 +584,19 @@ final class AgentViewModel {
         didSet { KeychainService.shared.setVibeAPIKey(vibeAPIKey) }
     }
 
-    var vibeModel: String = UserDefaults.standard.string(forKey: "vibeModel") ?? "devstral-small-2507" {
+    var vibeModel: String = UserDefaults.standard.string(forKey: "vibeModel") ?? "mistral-vibe-cli-latest" {
         didSet { UserDefaults.standard.set(vibeModel, forKey: "vibeModel") }
     }
 
     var vibeModels: [OpenAIModelInfo] = [
+        OpenAIModelInfo(id: "mistral-vibe-cli-latest", name: "Vibe CLI Latest"),
         OpenAIModelInfo(id: "devstral-small-2507", name: "Devstral Small 2"),
         OpenAIModelInfo(id: "devstral-2-2512", name: "Devstral 2"),
     ]
     var isFetchingVibeModels = false
 
     nonisolated static let defaultVibeModels: [OpenAIModelInfo] = [
+        OpenAIModelInfo(id: "mistral-vibe-cli-latest", name: "Vibe CLI Latest"),
         OpenAIModelInfo(id: "devstral-small-2507", name: "Devstral Small 2"),
         OpenAIModelInfo(id: "devstral-2-2512", name: "Devstral 2"),
     ]
