@@ -357,7 +357,14 @@ final class OpenAICompatibleService {
         if !isNativeFormat {
             if maxTokens > 0 { body["max_tokens"] = maxTokens }
             let toolDefs = toolsForIteration(messages, activeGroups: activeGroups)
-            if !toolDefs.isEmpty { body["tools"] = toolDefs }
+            if !toolDefs.isEmpty {
+                body["tools"] = toolDefs
+                body["tool_choice"] = "auto"
+                // Mistral: disable parallel tool calls — our loop handles one at a time
+                if provider == .mistral || provider == .codestral || provider == .vibe {
+                    body["parallel_tool_calls"] = false
+                }
+            }
         }
 
         let bodyData = try JSONSerialization.data(withJSONObject: body)
@@ -383,7 +390,13 @@ final class OpenAICompatibleService {
         if !isNativeFormat {
             if maxTokens > 0 { body["max_tokens"] = maxTokens }
             let toolDefs = toolsForIteration(messages, activeGroups: activeGroups)
-            if !toolDefs.isEmpty { body["tools"] = toolDefs }
+            if !toolDefs.isEmpty {
+                body["tools"] = toolDefs
+                body["tool_choice"] = "auto"
+                if provider == .mistral || provider == .codestral || provider == .vibe {
+                    body["parallel_tool_calls"] = false
+                }
+            }
         }
 
         let bodyData = try JSONSerialization.data(withJSONObject: body)
