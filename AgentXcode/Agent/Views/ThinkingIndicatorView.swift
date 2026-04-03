@@ -93,6 +93,7 @@ struct ThinkingIndicatorView: View {
 
     private var inputTokens: Int { tab?.tabInputTokens ?? viewModel.taskInputTokens }
     private var outputTokens: Int { tab?.tabOutputTokens ?? viewModel.taskOutputTokens }
+    private var toolSteps: [AgentViewModel.ToolStep] { tab?.toolSteps ?? viewModel.toolSteps }
 
     /// Approximate context window for the current provider/model
     private var contextWindow: Int {
@@ -297,6 +298,11 @@ struct ThinkingIndicatorView: View {
                                 }
                             }
                         )
+                    }
+
+                    // Tool steps list
+                    if !toolSteps.isEmpty {
+                        ToolStepsView(steps: toolSteps)
                     }
                 }
                 .padding(.horizontal, 20)
@@ -593,5 +599,79 @@ private struct ContentHeightKey: PreferenceKey {
     nonisolated(unsafe) static var defaultValue: CGFloat = 40
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = max(value, nextValue())
+    }
+}
+
+// MARK: - Tool Steps View
+
+/// Collapsible list of tool invocations for the current task
+struct ToolStepsView: View {
+    let steps: [AgentViewModel.ToolStep]
+    @State private var isExpanded = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isExpanded.toggle()
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 8, weight: .bold))
+                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                    Text("Steps (\(steps.count))")
+                        .font(.caption)
+                    Spacer()
+                }
+                .foregroundStyle(.secondary)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            if isExpanded {
+                // Show last 20 steps, most recent at bottom
+                let visible = steps.suffix(20)
+                ForEach(Array(visible.enumerated()), id: \.element.id) { idx, step in
+                    HStack(spacing: 6) {
+                        Text("\(steps.count - visible.count + idx + 1)")
+                            .font(.system(size: 9, design: .monospaced))
+                            .foregroundStyle(.tertiary)
+                            .frame(width: 20, alignment: .trailing)
+                        switch step.status {
+                        case .running:
+                            ProgressView().controlSize(.mini)
+                        case .success:
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 9))
+                                .foregroundStyle(.green)
+                        case .error:
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 9))
+                                .foregroundStyle(.red)
+                        }
+                        Text(step.name)
+                            .font(.system(size: 10, weight: .medium, design: .monospaced))
+                            .foregroundStyle(.primary)
+                        if !step.detail.isEmpty {
+                            Text(step.detail)
+                                .font(.system(size: 10, design: .monospaced))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                        }
+                        Spacer()
+                        if let d = step.duration {
+                            Text(String(format: "%.1fs", d))
+                                .font(.system(size: 9, design: .monospaced))
+                                .foregroundStyle(.tertiary)
+                        }
+                    }
+                    .padding(.vertical, 1)
+                }
+                .padding(.top, 2)
+            }
+        }
+        .padding(.vertical, 4)
     }
 }

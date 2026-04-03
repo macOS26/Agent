@@ -142,12 +142,26 @@ extension AgentViewModel {
         if let p = input["path"] as? String, (p.isEmpty || p == "." || p == "./") { input["path"] = nil }
         if let p = input["file_path"] as? String, p.isEmpty { input["file_path"] = nil }
 
+        // Record tool step for structured display
+        let detail = input["path"] as? String
+            ?? input["file_path"] as? String
+            ?? input["command"] as? String
+            ?? input["action"] as? String
+            ?? ""
+        let stepId = recordToolStep(name: name, detail: String(detail.prefix(80)))
+
+        /// Helper to complete step on every exit path
+        func finishStep(_ status: ToolStep.Status = .success) {
+            completeToolStep(id: stepId, status: status)
+        }
+
         // Cache hit for read-only tools — return cached result instantly
         if Self.readOnlyTools.contains(name) {
             let key = Self.cacheKey(name: name, input: input)
             if let cached = Self.toolResultCache[key] {
                 appendLog("(cached)")
                 toolResults.append(["type": "tool_result", "tool_use_id": ctx.toolId, "content": cached])
+                finishStep()
                 return .handled(cached)
             }
         }
@@ -160,6 +174,7 @@ extension AgentViewModel {
                 flushLog: { @MainActor [weak self] in self?.flushLog() },
                 toolResults: &toolResults
             ) {
+                finishStep()
                 return .alreadyAppended
             }
         }
@@ -171,6 +186,7 @@ extension AgentViewModel {
             appendRawOutput: { [weak self] msg in Task { @MainActor in self?.appendLog(msg) } },
             toolResults: &toolResults
         ) {
+            finishStep()
             return .alreadyAppended
         }
 
@@ -180,6 +196,7 @@ extension AgentViewModel {
             appendLog(String(webResult.prefix(500)))
             flushLog()
             toolResults.append(["type": "tool_result", "tool_use_id": ctx.toolId, "content": webResult])
+            finishStep()
             return .alreadyAppended
         }
 
@@ -189,8 +206,13 @@ extension AgentViewModel {
             switch result {
             case .handled(let output):
                 toolResults.append(["type": "tool_result", "tool_use_id": ctx.toolId, "content": output])
-            case .alreadyAppended, .taskComplete, .notHandled:
-                break
+                finishStep()
+            case .taskComplete:
+                finishStep()
+            case .alreadyAppended:
+                finishStep()
+            case .notHandled:
+                finishStep(.error)
             }
             return result
         }
@@ -207,6 +229,7 @@ extension AgentViewModel {
             Self.toolResultCache[key] = output
         }
 
+        finishStep()
         return .handled(output)
     }
 

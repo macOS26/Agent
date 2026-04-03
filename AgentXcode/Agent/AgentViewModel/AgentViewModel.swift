@@ -69,6 +69,41 @@ final class AgentViewModel {
     /// Width of the task input field, updated by InputSectionView via GeometryReader
     var inputFieldWidth: CGFloat = 0
 
+    // MARK: - Tool Steps (structured tool call tracking)
+
+    /// A single tool invocation step for structured display
+    struct ToolStep: Identifiable {
+        let id = UUID()
+        let name: String
+        let detail: String
+        let startTime: Date
+        var duration: TimeInterval?
+        var status: Status = .running
+
+        enum Status {
+            case running, success, error
+        }
+    }
+
+    /// Tool steps for the current task (main tab)
+    var toolSteps: [ToolStep] = []
+
+    /// Record a tool step starting. Returns the step ID for later completion.
+    @discardableResult
+    func recordToolStep(name: String, detail: String) -> UUID {
+        let step = ToolStep(name: name, detail: detail, startTime: Date())
+        toolSteps.append(step)
+        return step.id
+    }
+
+    /// Mark a tool step as completed.
+    func completeToolStep(id: UUID, status: ToolStep.Status = .success) {
+        if let idx = toolSteps.firstIndex(where: { $0.id == id }) {
+            toolSteps[idx].duration = Date().timeIntervalSince(toolSteps[idx].startTime)
+            toolSteps[idx].status = status
+        }
+    }
+
     // Stored property drives live UI; ChatHistoryStore persists across launches via SwiftData
     var activityLog = ""
     var isRunning = false
