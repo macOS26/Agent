@@ -85,7 +85,13 @@ struct RollbackView: View {
     }
 
     private func loadBackups() {
-        backups = FileBackupService.shared.listBackups(tabID: tabID)
+        // Show current tab's backups first, then all others
+        let tabBackups = FileBackupService.shared.listBackups(tabID: tabID)
+        if !tabBackups.isEmpty {
+            backups = tabBackups
+        } else {
+            backups = FileBackupService.shared.allBackups()
+        }
         restoreResult = nil
     }
 
