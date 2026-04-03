@@ -123,62 +123,6 @@ final class UserDelegate: NSObject, NSXPCListenerDelegate {
     }
 }
 
-// MARK: - Package.swift auto-sync
-
-/// Replace the contents of a named array in Package.swift with the given set of names.
-/// Returns the updated content, or the original if unchanged.
-func syncArray(named marker: String, with diskNames: Set<String>, in content: String) -> String {
-    guard let arrayStart = content.range(of: marker) else { return content }
-    guard let arrayEnd = content[arrayStart.upperBound...].range(of: "]") else { return content }
-
-    let arrayContent = content[arrayStart.upperBound..<arrayEnd.lowerBound]
-    let registered = Set(arrayContent.components(separatedBy: "\n")
-        .map { $0.trimmingCharacters(in: .whitespaces).trimmingCharacters(in: CharacterSet(charactersIn: "\",")) }
-        .filter { !$0.isEmpty })
-
-    guard diskNames != registered else { return content }
-
-    let sorted = diskNames.sorted()
-    let newArray = sorted.map { "    \"\($0)\"," }.joined(separator: "\n")
-    return String(content[..<arrayStart.upperBound]) + "\n" + newArray + "\n" + String(content[arrayEnd.lowerBound...])
-}
-
-/// Sync scriptNames in Package.swift with actual .swift files on disk.
-/// Bridge names come from AppleEventBridges package (single source of truth).
-func syncPackage() {
-    let fm = FileManager.default
-    let home = fm.homeDirectoryForCurrentUser
-    let agentsDir = home.appendingPathComponent("Documents/AgentScript/agents")
-    let scriptsDir = agentsDir.appendingPathComponent("Sources/Scripts")
-    let packageURL = agentsDir.appendingPathComponent("Package.swift")
-
-    guard fm.fileExists(atPath: packageURL.path) else { return }
-    guard var content = try? String(contentsOf: packageURL, encoding: .utf8) else { return }
-
-    let original = content
-
-    // Sync scripts
-    if fm.fileExists(atPath: scriptsDir.path),
-       let files = try? fm.contentsOfDirectory(atPath: scriptsDir.path) {
-        let diskScripts = Set(files.filter { $0.hasSuffix(".swift") }
-            .map { $0.replacingOccurrences(of: ".swift", with: "") })
-        content = syncArray(named: "let scriptNames = [", with: diskScripts, in: content)
-    }
-
-    // Only write if something changed
-    guard content != original else { return }
-    try? content.write(to: packageURL, atomically: true, encoding: .utf8)
-}
-
-// Run sync on startup
-syncPackage()
-
-// Schedule sync every 20 seconds
-let syncTimer = DispatchSource.makeTimerSource(queue: DispatchQueue.global(qos: .utility))
-syncTimer.schedule(deadline: .now() + 20, repeating: 20)
-syncTimer.setEventHandler { syncPackage() }
-syncTimer.resume()
-
 let delegate = UserDelegate()
 let listener = NSXPCListener(machServiceName: "Agent.app.toddbruss.user")
 listener.delegate = delegate
