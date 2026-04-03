@@ -28,10 +28,8 @@ final class OpenAICompatibleService {
     // MARK: - Rate Limiting
     /// Per-provider last request timestamp for rate limiting.
     private static var lastRequestTime: [APIProvider: CFAbsoluteTime] = [:]
-    /// Minimum seconds between requests per provider. Free tier = 2 RPM = 30s gap.
-    private static let rateLimitSeconds: [APIProvider: Double] = [
-        .mistral: 1.5,
-    ]
+    /// Minimum seconds between requests per provider. Empty = no throttle.
+    private static let rateLimitSeconds: [APIProvider: Double] = [:]
     /// Dynamic backoff from Retry-After header (overrides static limit until it expires).
     private static var retryAfterUntil: [APIProvider: CFAbsoluteTime] = [:]
 
