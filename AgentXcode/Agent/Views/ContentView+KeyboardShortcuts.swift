@@ -102,21 +102,7 @@ extension ContentView {
             return nil
         }
         
-        // Cmd+D: Toggle both LLM chevrons (expand/collapse) on current tab
-        if event.modifierFlags.contains(.command),
-           event.charactersIgnoringModifiers == "d" {
-            if let selId = viewModel.selectedTabId,
-               let tab = viewModel.tab(for: selId) {
-                let expand = !tab.thinkingExpanded
-                tab.thinkingExpanded = expand
-                tab.thinkingOutputExpanded = expand
-            } else {
-                let expand = !viewModel.thinkingExpanded
-                viewModel.thinkingExpanded = expand
-                viewModel.thinkingOutputExpanded = expand
-            }
-            return nil
-        }
+        // Cmd+D handled in ContentView.swift (toggles both LLM chevrons)
 
         // Cmd+H: Open History
         if event.modifierFlags.contains(.command),
