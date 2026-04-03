@@ -156,12 +156,20 @@ Toggle ON and Playwright tools appear automatically. The AI can now control brow
 | Shortcut | Action |
 |---|---|
 | `Enter` | Run task |
+| `⌘ R` | Run current task |
 | `⌘ .` | Stop task |
-| `⌘ ,` | Settings |
-| `⌘ F` | Search activity log |
+| `Escape` | Cancel active task |
+| `⌘ D` | Toggle LLM output panel |
 | `⌘ T` | New tab |
 | `⌘ W` | Close tab |
-| `/clear` | Clear conversation |
+| `⌘ 1-9` | Switch to tab |
+| `⌘ [` / `⌘ ]` | Previous / next tab |
+| `⌘ F` | Search activity log |
+| `⌘ L` | Clear conversation |
+| `⌘ H` | Task history |
+| `⌘ ,` | Settings |
+| `⌘ V` | Paste image |
+| `↑` / `↓` | Prompt history |
 
 ---
 
