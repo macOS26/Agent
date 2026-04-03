@@ -76,6 +76,9 @@ extension AgentViewModel {
         case .grok:
             modelName = grokModel
             isVision = Self.isVisionModel(grokModel)
+        case .mistral:
+            modelName = "mistral-large-latest"
+            isVision = true
         case .foundationModel:
             modelName = "Apple Intelligence"
             isVision = false // Apple Intelligence doesn't support image input
