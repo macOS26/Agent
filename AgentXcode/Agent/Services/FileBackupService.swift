@@ -145,6 +145,16 @@ final class FileBackupService {
         try? FileManager.default.removeItem(at: tabDir)
     }
 
+    /// Remove ALL backups across all tabs.
+    func clearAllBackups() {
+        let fm = FileManager.default
+        guard let dirs = try? fm.contentsOfDirectory(atPath: backupsDir.path) else { return }
+        for dir in dirs {
+            let path = backupsDir.appendingPathComponent(dir)
+            try? fm.removeItem(at: path)
+        }
+    }
+
     /// Count backups for a tab.
     func backupCount(tabID: UUID) -> Int {
         let tabDir = backupsDir.appendingPathComponent(tabID.uuidString)
