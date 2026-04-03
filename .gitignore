@@ -7,6 +7,9 @@
 # Build directory
 AgentXcode/build/
 
+# Export options (contains team ID)
+ExportOptions.plist
+
 # Large binary files
 *.dmg
 *.app
