@@ -1,5 +1,6 @@
 import Foundation
 import Security
+import AgentAudit
 
 /// Secure credential storage using the macOS data protection keychain.
 /// No password prompts across rebuilds.
@@ -64,7 +65,7 @@ final class KeychainService: Sendable {
 
         let status = SecItemAdd(query as CFDictionary, nil)
         if status != errSecSuccess && status != errSecDuplicateItem {
-            print("KeychainService: Failed to store \(key): \(status)")
+            AuditLog.log(.keychain, "KeychainService: Failed to store \(key): \(status)")
         }
     }
 

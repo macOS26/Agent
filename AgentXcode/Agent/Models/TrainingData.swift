@@ -1,6 +1,7 @@
 import Foundation
 import SQLite3
 import SwiftData
+import AgentAudit
 
 /// Training data captured from Apple Intelligence for LoRA adapter fine-tuning.
 /// Stores the full conversation context including Apple AI decisions, user prompts, and LLM responses.
@@ -89,7 +90,7 @@ final class TrainingDataStore {
         let url = Self.storeURL
         if FileManager.default.fileExists(atPath: url.path) {
             if !Self.storeHasRequiredTables(at: url) {
-                print("TrainingDataStore: store missing required tables — deleting for recreation")
+                AuditLog.log(.storage, "TrainingDataStore: store missing required tables — deleting for recreation")
                 Self.deleteStoreFiles(at: url)
             }
         }
@@ -99,14 +100,14 @@ final class TrainingDataStore {
             container = try ModelContainer(for: schema, configurations: config)
             context = container?.mainContext
         } catch {
-            print("TrainingDataStore: init failed — recreating: \(error)")
+            AuditLog.log(.storage, "TrainingDataStore: init failed — recreating: \(error)")
             Self.deleteStoreFiles(at: url)
             do {
                 let config = ModelConfiguration(schema: schema, url: url)
                 container = try ModelContainer(for: schema, configurations: config)
                 context = container?.mainContext
             } catch {
-                print("TrainingDataStore: Failed to initialize after reset: \(error)")
+                AuditLog.log(.storage, "TrainingDataStore: Failed to initialize after reset: \(error)")
             }
         }
     }
@@ -205,7 +206,7 @@ final class TrainingDataStore {
         do {
             try context.save()
         } catch {
-            print("TrainingDataStore: Save failed — disabling store: \(error)")
+            AuditLog.log(.storage, "TrainingDataStore: Save failed — disabling store: \(error)")
             storeDisabled = true
             context.rollback()
         }
@@ -318,7 +319,7 @@ final class TrainingDataStore {
             try content.write(to: fileURL, atomically: true, encoding: .utf8)
             return fileURL
         } catch {
-            print("TrainingDataStore: Export failed: \(error)")
+            AuditLog.log(.storage, "TrainingDataStore: Export failed: \(error)")
             return nil
         }
     }

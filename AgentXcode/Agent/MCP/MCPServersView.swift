@@ -1,4 +1,5 @@
 import SwiftUI
+import AgentAudit
 
 struct MCPServersView: View {
     @Bindable var registry = MCPServerRegistry.shared
@@ -543,12 +544,12 @@ struct MCPServerEditView: View {
     private func debugDump(_ dict: [String: Any], prefix: String = "") {
         for (key, value) in dict {
             if let nested = value as? [String: Any] {
-                print("\(prefix)\(key):")
+                AuditLog.log(.mcp, "\(prefix)\(key):")
                 debugDump(nested, prefix: "  \(prefix)")
             } else if let nested = value as? [Any] {
-                print("\(prefix)\(key): [\(nested.count) items]")
+                AuditLog.log(.mcp, "\(prefix)\(key): [\(nested.count) items]")
             } else {
-                print("\(prefix)\(key): \(value)")
+                AuditLog.log(.mcp, "\(prefix)\(key): \(value)")
             }
         }
     }

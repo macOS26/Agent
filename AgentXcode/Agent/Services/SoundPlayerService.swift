@@ -1,5 +1,6 @@
 import Foundation
 import AVFoundation
+import AgentAudit
 
 @MainActor
 final class SoundPlayer {
@@ -17,7 +18,7 @@ final class SoundPlayer {
             audioPlayer?.volume = 0.75
             audioPlayer?.play()
         } catch {
-            print("Failed to load startup sound: \(error)")
+            AuditLog.log(.shell, "Failed to load startup sound: \(error)")
         }
     }
 }
