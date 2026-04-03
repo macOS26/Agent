@@ -35,6 +35,7 @@ extension AgentViewModel {
         var activeGroups: Set<String>? = codingModeEnabled ? Self.codingModeGroups : automationModeEnabled ? Self.automationModeGroups : nil
         appendLog("--- New Task ---")
         appendLog("👤 \(prompt)")
+        flushLog()
 
         // Use ChatHistoryStore for LLM context (summaries for older tasks, full messages for recent)
         let historyContext = ChatHistoryStore.shared.buildLLMContext()
