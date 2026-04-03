@@ -66,7 +66,7 @@ extension AgentViewModel {
         case .zAI: return zAIModel
         case .gemini: return geminiModel
         case .grok: return grokModel
-        case .mistral: return "mistral-large-latest"
+        case .mistral: return mistralModel
         case .foundationModel: return "Apple Intelligence"
         }
     }

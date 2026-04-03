@@ -274,6 +274,8 @@ extension AgentViewModel {
             openAICompatible = OpenAICompatibleService(apiKey: geminiAPIKey, model: modelId, baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .gemini, maxTokens: mt)
         case .grok:
             openAICompatible = OpenAICompatibleService(apiKey: grokAPIKey, model: modelId, baseURL: "https://api.x.ai/v1/chat/completions", historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .grok, maxTokens: mt)
+        case .mistral:
+            openAICompatible = OpenAICompatibleService(apiKey: mistralAPIKey, model: modelId, baseURL: "https://api.mistral.ai/v1/chat/completions", historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .mistral, maxTokens: mt)
         default:
             openAICompatible = nil
         }
