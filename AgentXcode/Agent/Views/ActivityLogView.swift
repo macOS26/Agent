@@ -1186,6 +1186,30 @@ struct ActivityLogView: NSViewRepresentable {
                 result.addAttribute(.foregroundColor, value: NSColor.linkColor, range: match.range)
                 result.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: match.range)
             }
+
+            // 3. Linkify Xcode build errors: /path/file.swift:42:10: error/warning: message
+            let resultText = result.string
+            if resultText.contains(": error:") || resultText.contains(": warning:") || resultText.contains(": note:") {
+                let errorPattern = try? NSRegularExpression(pattern: #"(/[^\s:]+\.\w+):(\d+):(\d+): (error|warning|note):"#)
+                let errorMatches = errorPattern?.matches(in: resultText, range: NSRange(location: 0, length: (resultText as NSString).length)) ?? []
+                for match in errorMatches.reversed() {
+                    let filePath = (resultText as NSString).substring(with: match.range(at: 1))
+                    let line = (resultText as NSString).substring(with: match.range(at: 2))
+                    let col = (resultText as NSString).substring(with: match.range(at: 3))
+                    let severity = (resultText as NSString).substring(with: match.range(at: 4))
+                    // Encode as xcode:// URL for clickedOnLink handler
+                    let xcodeURL = "xcode://open?file=\(filePath)&line=\(line)&col=\(col)"
+                    let color: NSColor = severity == "error" ? .systemRed : severity == "warning" ? .systemOrange : .systemBlue
+                    // Only linkify the file:line:col portion
+                    let fileRange = match.range(at: 1)
+                    let colonAfterCol = match.range(at: 3).location + match.range(at: 3).length
+                    let linkRange = NSRange(location: fileRange.location, length: colonAfterCol - fileRange.location)
+                    result.addAttribute(.link, value: xcodeURL, range: linkRange)
+                    result.addAttribute(.foregroundColor, value: color, range: linkRange)
+                    result.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: linkRange)
+                }
+            }
+
             return result
         }
 
@@ -1233,6 +1257,25 @@ struct ActivityLogView: NSViewRepresentable {
             } else {
                 return false
             }
+            // Handle xcode:// links — open file at line in Xcode
+            if urlString.hasPrefix("xcode://open?") {
+                if let comps = URLComponents(string: urlString),
+                   let file = comps.queryItems?.first(where: { $0.name == "file" })?.value,
+                   let line = comps.queryItems?.first(where: { $0.name == "line" })?.value {
+                    let script = "tell application \"Xcode\" to open \"\(file)\""
+                    // Open file in Xcode, then jump to line via xed
+                    Task { @MainActor in
+                        NSAppleScript(source: script)?.executeAndReturnError(nil)
+                        let p = Process()
+                        p.executableURL = URL(fileURLWithPath: "/usr/bin/xed")
+                        p.arguments = ["--line", line, file]
+                        try? p.run()
+                        p.waitUntilExit()
+                    }
+                }
+                return true
+            }
+
             guard let url = URL(string: urlString), url.isFileURL else { return false }
             let ext = url.pathExtension.lowercased()
             let htmlExtensions: Set<String> = ["html", "htm"]
