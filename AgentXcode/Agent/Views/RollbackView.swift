@@ -103,7 +103,7 @@ struct RollbackView: View {
                         }
                     }
                 }
-                .frame(maxHeight: 350)
+                .frame(maxHeight: 500)
             }
 
             if let result = restoreResult {
@@ -137,7 +137,7 @@ struct RollbackView: View {
             }
         }
         .padding(16)
-        .frame(width: 420)
+        .frame(width: 520)
         .onAppear { loadBackups() }
         .alert("Clear All Backups?", isPresented: $showClearConfirmation) {
             Button("Cancel", role: .cancel) {}
