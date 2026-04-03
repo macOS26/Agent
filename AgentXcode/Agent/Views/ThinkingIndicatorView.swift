@@ -104,13 +104,14 @@ struct ThinkingIndicatorView: View {
             provider = viewModel.selectedProvider
         }
         switch provider {
-        case .claude: return 200_000
-        case .openAI: return 128_000
+        case .claude: return 1_000_000
+        case .openAI: return 272_000
         case .deepSeek: return 128_000
-        case .gemini: return 1_000_000
-        case .grok: return 131_072
+        case .gemini: return 2_000_000
+        case .grok: return 2_000_000
         case .zAI: return 128_000
-        case .mistral: return 128_000
+        case .mistral: return 256_000
+        case .codestral: return 256_000
         case .huggingFace: return 32_000
         case .ollama, .localOllama: return viewModel.localOllamaContextSize > 0 ? viewModel.localOllamaContextSize : 32_000
         case .vLLM, .lmStudio: return 32_000

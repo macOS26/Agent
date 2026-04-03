@@ -54,6 +54,10 @@ final class KeychainService: Sendable {
     func setMistralAPIKey(_ key: String) { set(key: Self.mistralAPIKey, value: key) }
     func getMistralAPIKey() -> String? { get(key: Self.mistralAPIKey) }
 
+    private static let codestralAPIKey = "com.agent.codestral-api-key"
+    func setCodestralAPIKey(_ key: String) { set(key: Self.codestralAPIKey, value: key) }
+    func getCodestralAPIKey() -> String? { get(key: Self.codestralAPIKey) }
+
     private func set(key: String, value: String) {
         guard let data = value.data(using: .utf8) else { return }
         delete(key: key)

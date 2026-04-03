@@ -79,6 +79,9 @@ extension AgentViewModel {
         case .mistral:
             modelName = mistralModel
             isVision = true
+        case .codestral:
+            modelName = codestralModel
+            isVision = false
         case .foundationModel:
             modelName = "Apple Intelligence"
             isVision = false // Apple Intelligence doesn't support image input
@@ -122,6 +125,8 @@ extension AgentViewModel {
             openAICompatible = OpenAICompatibleService(apiKey: grokAPIKey, model: grokModel, baseURL: "https://api.x.ai/v1/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .grok, maxTokens: mt)
         case .mistral:
             openAICompatible = OpenAICompatibleService(apiKey: mistralAPIKey, model: mistralModel, baseURL: "https://api.mistral.ai/v1/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .mistral, maxTokens: mt)
+        case .codestral:
+            openAICompatible = OpenAICompatibleService(apiKey: codestralAPIKey, model: codestralModel, baseURL: "https://codestral.mistral.ai/v1/chat/completions", historyContext: historyContext, projectFolder: projectFolder, provider: .codestral, maxTokens: mt)
         default:
             openAICompatible = nil
         }

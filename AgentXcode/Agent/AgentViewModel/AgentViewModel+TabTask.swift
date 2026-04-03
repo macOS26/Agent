@@ -276,6 +276,8 @@ extension AgentViewModel {
             openAICompatible = OpenAICompatibleService(apiKey: grokAPIKey, model: modelId, baseURL: "https://api.x.ai/v1/chat/completions", historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .grok, maxTokens: mt)
         case .mistral:
             openAICompatible = OpenAICompatibleService(apiKey: mistralAPIKey, model: modelId, baseURL: "https://api.mistral.ai/v1/chat/completions", historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .mistral, maxTokens: mt)
+        case .codestral:
+            openAICompatible = OpenAICompatibleService(apiKey: codestralAPIKey, model: modelId, baseURL: "https://codestral.mistral.ai/v1/chat/completions", historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .codestral, maxTokens: mt)
         default:
             openAICompatible = nil
         }
