@@ -1,4 +1,5 @@
 import AgentLLM
+import AgentAudit
 @preconcurrency import Foundation
 import AgentTools
 
@@ -400,6 +401,8 @@ final class OpenAICompatibleService {
                 } else if let args = function["arguments"] as? [String: Any] {
                     input = args
                 } else {
+                    let funcName = function["name"] as? String ?? "unknown"
+                    AuditLog.log(.api, "[OpenAIService] Failed to parse tool args for \(funcName): \(String(describing: function["arguments"]).prefix(200))")
                     input = [:]
                 }
 
@@ -595,6 +598,7 @@ final class OpenAICompatibleService {
             if let parsed = try? JSONSerialization.jsonObject(with: Data(tc.arguments.utf8)) as? [String: Any] {
                 input = parsed
             } else {
+                AuditLog.log(.api, "[OpenAIService] Failed to parse streamed tool args for \(tc.name): \(tc.arguments.prefix(200))")
                 input = [:]
             }
 

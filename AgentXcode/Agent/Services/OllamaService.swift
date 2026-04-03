@@ -423,6 +423,8 @@ final class OllamaService {
                           let parsed = try? JSONSerialization.jsonObject(with: Data(argsString.utf8)) as? [String: Any] {
                     input = parsed
                 } else {
+                    let funcName = function["name"] as? String ?? "unknown"
+                    AuditLog.log(.api, "[OllamaService] Failed to parse tool args for \(funcName): \(String(describing: function["arguments"]).prefix(200))")
                     input = [:]
                 }
 
