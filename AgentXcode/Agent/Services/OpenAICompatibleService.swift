@@ -196,13 +196,22 @@ final class OpenAICompatibleService {
 
                     var assistantMsg: [String: Any] = ["role": "assistant"]
                     if !textParts.isEmpty { assistantMsg["content"] = textParts }
-                    if !toolCalls.isEmpty { assistantMsg["tool_calls"] = toolCalls }
-                    // Gemini thought_signature — echo on the assistant message
-                    for block in blocks {
-                        if let sig = block["thought_signature"] as? String {
-                            assistantMsg["thought_signature"] = sig
-                            break
+                    // Gemini thought_signature — echo back on assistant message and each tool_call
+                    if !toolCalls.isEmpty {
+                        var sig: String?
+                        for block in blocks {
+                            if let s = block["thought_signature"] as? String { sig = s; break }
                         }
+                        if let sig {
+                            // Echo on each tool_call as extra_content.google.thought_signature
+                            let extraContent: [String: Any] = ["google": ["thought_signature": sig]]
+                            for i in toolCalls.indices {
+                                toolCalls[i]["extra_content"] = extraContent
+                            }
+                            // Also echo at the message level
+                            assistantMsg["extra_content"] = extraContent
+                        }
+                        assistantMsg["tool_calls"] = toolCalls
                     }
                     chatMessages.append(assistantMsg)
                 }
@@ -504,10 +513,14 @@ final class OpenAICompatibleService {
 
             guard let delta = firstChoice["delta"] as? [String: Any] else { continue }
 
-            // Gemini thought_signature — on delta or choice level
-            if let sig = delta["thought_signature"] as? String {
+            // Gemini thought_signature — nested under extra_content.google.thought_signature
+            if let extra = delta["extra_content"] as? [String: Any],
+               let google = extra["google"] as? [String: Any],
+               let sig = google["thought_signature"] as? String {
                 thoughtSignature = sig
-            } else if let sig = firstChoice["thought_signature"] as? String {
+            }
+            // Also check top-level (future-proofing)
+            if thoughtSignature == nil, let sig = delta["thought_signature"] as? String {
                 thoughtSignature = sig
             }
 
@@ -531,8 +544,10 @@ final class OpenAICompatibleService {
                             toolCallAccum[index]?.arguments += args
                         }
                     }
-                    // Also check per-tool-call thought_signature
-                    if let sig = tc["thought_signature"] as? String {
+                    // Gemini: extra_content.google.thought_signature per tool_call
+                    if let extra = tc["extra_content"] as? [String: Any],
+                       let google = extra["google"] as? [String: Any],
+                       let sig = google["thought_signature"] as? String {
                         thoughtSignature = sig
                     }
                 }
@@ -589,8 +604,10 @@ final class OpenAICompatibleService {
                 "name": tc.name,
                 "input": input
             ]
-            // Store thought_signature on each tool_use block so it can be echoed on the assistant message
-            if let sig = thoughtSignature { toolBlock["thought_signature"] = sig }
+            // Gemini thought_signature — store for echoing back
+            if let sig = thoughtSignature {
+                toolBlock["thought_signature"] = sig
+            }
             contentBlocks.append(toolBlock)
         }
 
