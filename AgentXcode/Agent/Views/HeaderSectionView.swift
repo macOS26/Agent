@@ -157,15 +157,6 @@ struct HeaderToolbarButtons: View {
             MCPServersView()
         }
 
-        Button { showRollback.toggle() } label: {
-            Image(systemName: "arrow.uturn.backward.circle")
-                .foregroundStyle(FileBackupService.shared.backupCount(tabID: viewModel.selectedTabId ?? AgentViewModel.mainTabBackupID) > 0 ? .green : .secondary)
-        }
-        .help("File Backups & Rollback")
-        .popover(isPresented: $showRollback) {
-            RollbackView(viewModel: viewModel)
-        }
-
         Button { showTools.toggle() } label: {
             Image(systemName: "wrench.and.screwdriver")
                 .foregroundStyle(viewModel.toolsIconColor)
@@ -198,6 +189,15 @@ struct HeaderToolbarButtons: View {
         }
         .popover(isPresented: $showOptions) {
             AgentOptionsView(viewModel: viewModel)
+        }
+
+        Button { showRollback.toggle() } label: {
+            Image(systemName: "arrow.uturn.backward.circle")
+                .foregroundStyle(FileBackupService.shared.backupCount(tabID: viewModel.selectedTabId ?? AgentViewModel.mainTabBackupID) > 0 ? .green : .secondary)
+        }
+        .help("File Backups & Rollback")
+        .popover(isPresented: $showRollback) {
+            RollbackView(viewModel: viewModel)
         }
 
         Button { showHistory.toggle() } label: {
