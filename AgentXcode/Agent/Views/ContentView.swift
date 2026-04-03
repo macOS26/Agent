@@ -106,8 +106,23 @@ struct ContentView: View {
 
             Divider()
 
-            // Screenshot previews
-            if !viewModel.attachedImages.isEmpty {
+            // Screenshot previews (per-tab or main)
+            if let tab = viewModel.selectedTabId.flatMap({ viewModel.tab(for: $0) }) {
+                if !tab.attachedImages.isEmpty {
+                    ScreenshotPreviewView(
+                        images: tab.attachedImages,
+                        onRemove: { index in
+                            guard tab.attachedImages.indices.contains(index) else { return }
+                            tab.attachedImages.remove(at: index)
+                            tab.attachedImagesBase64.remove(at: index)
+                        },
+                        onRemoveAll: {
+                            tab.attachedImages.removeAll()
+                            tab.attachedImagesBase64.removeAll()
+                        }
+                    )
+                }
+            } else if !viewModel.attachedImages.isEmpty {
                 ScreenshotPreviewView(
                     images: viewModel.attachedImages,
                     onRemove: { index in viewModel.removeAttachment(at: index) },

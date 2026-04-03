@@ -103,8 +103,13 @@ extension AgentViewModel {
                 return
             }
 
-            attachedImages.append(image)
-            attachedImagesBase64.append(pngData.base64EncodedString())
+            if let tab = selectedTabId.flatMap({ tab(for: $0) }) {
+                tab.attachedImages.append(image)
+                tab.attachedImagesBase64.append(pngData.base64EncodedString())
+            } else {
+                attachedImages.append(image)
+                attachedImagesBase64.append(pngData.base64EncodedString())
+            }
             try? FileManager.default.removeItem(atPath: tempPath)
         }
     }
@@ -162,12 +167,18 @@ extension AgentViewModel {
         guard let imageData = rawData else { return false }
 
         // Encode on a background thread to avoid blocking the main thread
+        let currentTabId = selectedTabId
         Task {
             let base64 = await Self.encodeImageToBase64(imageData)
             guard let base64 else { return }
             if let image = NSImage(data: imageData) {
-                attachedImages.append(image)
-                attachedImagesBase64.append(base64)
+                if let tabId = currentTabId, let tab = self.tab(for: tabId) {
+                    tab.attachedImages.append(image)
+                    tab.attachedImagesBase64.append(base64)
+                } else {
+                    attachedImages.append(image)
+                    attachedImagesBase64.append(base64)
+                }
             }
         }
 
