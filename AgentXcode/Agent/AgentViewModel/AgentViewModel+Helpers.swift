@@ -133,9 +133,9 @@ extension AgentViewModel {
     /// into legacy tool names so existing handlers work unchanged.
     static func expandConsolidatedTool(name: String, input: [String: Any]) -> (String, [String: Any]) {
         let action = input["action"] as? String ?? ""
-        // Normalize empty path/file_path to nil so handlers fall back to project folder
+        // Normalize empty/relative path to nil so handlers fall back to project folder
         var newInput = input
-        if let p = newInput["path"] as? String, p.isEmpty { newInput["path"] = nil }
+        if let p = newInput["path"] as? String, (p.isEmpty || p == "." || p == "./") { newInput["path"] = nil }
         if let p = newInput["file_path"] as? String, p.isEmpty { newInput["file_path"] = nil }
 
         switch name {
@@ -416,14 +416,12 @@ extension AgentViewModel {
         return path
     }
     
-    /// Set `PWD` for a shell command when a project folder is set.
-    /// Skips if the command already starts with `cd `.
-    /// Returns the command unchanged. Working directory is now set on the Process
-    /// via currentDirectoryURL + PWD env var — no cd prefix needed.
-    /// Kept for backward compatibility — callers pass projectFolder to execute() instead.
+    /// Prepend `cd <projectFolder> &&` so the shell runs in the right directory.
+    /// Skips if folder is empty or command already starts with `cd `.
     static func prependWorkingDirectory(_ command: String, projectFolder: String) -> String {
-        // No longer prepends cd — directory is set on the Process itself
-        return command
+        guard !projectFolder.isEmpty, !command.hasPrefix("cd ") else { return command }
+        let escaped = "'" + projectFolder.replacingOccurrences(of: "'", with: "'\\''") + "'"
+        return "cd \(escaped) && \(command)"
     }
     
     /// Extract the target directory from a command starting with `cd `.

@@ -137,9 +137,9 @@ extension AgentViewModel {
         ctx: ToolContext,
         toolResults: inout [[String: Any]]
     ) async -> ToolHandlerResult {
-        // Normalize empty path/file_path to nil so handlers fall back to project folder
+        // Normalize empty/relative path to nil so handlers fall back to project folder
         var input = rawInput
-        if let p = input["path"] as? String, p.isEmpty { input["path"] = nil }
+        if let p = input["path"] as? String, (p.isEmpty || p == "." || p == "./") { input["path"] = nil }
         if let p = input["file_path"] as? String, p.isEmpty { input["file_path"] = nil }
 
         // Cache hit for read-only tools — return cached result instantly
