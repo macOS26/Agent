@@ -23,6 +23,9 @@ struct HeaderStatusView: View {
                     .foregroundStyle(.secondary)
             }
             .help("User Agent: \(viewModel.userServiceActive ? "Running" : (viewModel.userEnabled ? "Stopped" : "Disabled"))")
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("User Agent")
+            .accessibilityValue(viewModel.userServiceActive ? "Running" : (viewModel.userEnabled ? "Stopped" : "Disabled"))
 
             HStack(spacing: 4) {
                 StatusDot(
@@ -36,6 +39,9 @@ struct HeaderStatusView: View {
                     .foregroundStyle(.secondary)
             }
             .help("Daemon: \(viewModel.rootServiceActive ? "Running" : (viewModel.rootEnabled ? "Stopped" : "Disabled"))")
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Daemon")
+            .accessibilityValue(viewModel.rootServiceActive ? "Running" : (viewModel.rootEnabled ? "Stopped" : "Disabled"))
         }
         .padding(.leading, 15)
         .fixedSize()
@@ -83,6 +89,7 @@ struct HeaderToolbarButtons: View {
                 .foregroundStyle(viewModel.servicesGearColor)
         }
         .help(viewModel.servicesGearHelp)
+        .accessibilityLabel("Services")
         .popover(isPresented: $showServices) {
             ServicesPopover(viewModel: viewModel)
         }
@@ -92,6 +99,8 @@ struct HeaderToolbarButtons: View {
                 .foregroundStyle(viewModel.messagesMonitorEnabled ? Color.green : Color.gray)
         }
         .help(viewModel.messagesMonitorEnabled ? "Messages Monitor: ON" : "Messages Monitor: OFF")
+        .accessibilityLabel("Messages Monitor")
+        .accessibilityValue(viewModel.messagesMonitorEnabled ? "On" : "Off")
         .popover(isPresented: $showMessages) {
             MessagesView(viewModel: viewModel)
         }
@@ -100,6 +109,7 @@ struct HeaderToolbarButtons: View {
             Image(systemName: "hand.raised")
                 .foregroundStyle(viewModel.accessibilityIconColor)
         }
+        .accessibilityLabel("Accessibility")
         .popover(isPresented: $showAccessibility) {
             AccessibilitySettingsView()
         }
@@ -108,6 +118,7 @@ struct HeaderToolbarButtons: View {
             Image(systemName: "server.rack")
                 .foregroundStyle(viewModel.mcpIconColor)
         }
+        .accessibilityLabel("MCP Servers")
         .popover(isPresented: $showMCPServers) {
             MCPServersView()
         }
@@ -116,6 +127,7 @@ struct HeaderToolbarButtons: View {
             Image(systemName: "wrench.and.screwdriver")
                 .foregroundStyle(viewModel.toolsIconColor)
         }
+        .accessibilityLabel("Tools")
         .popover(isPresented: $showTools) {
             ToolsView(selectedProvider: $viewModel.selectedProvider, viewModel: viewModel)
         }
@@ -125,6 +137,8 @@ struct HeaderToolbarButtons: View {
                 .foregroundStyle(llmIconColor)
                 .symbolEffect(.pulse, isActive: isLLMActive)
         }
+        .accessibilityLabel("LLM Settings")
+        .accessibilityValue(isLLMActive ? "Active" : "Idle")
         .popover(isPresented: $showSettings) {
             SettingsView(viewModel: viewModel)
         }
@@ -134,6 +148,8 @@ struct HeaderToolbarButtons: View {
                 .foregroundStyle(aiMediator.brainIconColor)
         }
         .help("Apple Intelligence Settings")
+        .accessibilityLabel("Apple Intelligence")
+        .accessibilityValue(AppleIntelligenceMediator.isAvailable ? "Available" : "Unavailable")
         .popover(isPresented: $showAIPopover) {
             AppleIntelligencePopover()
         }
@@ -142,6 +158,7 @@ struct HeaderToolbarButtons: View {
             Image(systemName: "slider.horizontal.3")
                 .foregroundStyle(viewModel.optionsIconColor)
         }
+        .accessibilityLabel("Options")
         .popover(isPresented: $showOptions) {
             AgentOptionsView(viewModel: viewModel)
         }
@@ -151,6 +168,8 @@ struct HeaderToolbarButtons: View {
                 .foregroundStyle(FileBackupService.shared.totalBackupCount() > 0 ? .green : .secondary)
         }
         .help("File Backups & Rollback")
+        .accessibilityLabel("Rollback")
+        .accessibilityValue("\(FileBackupService.shared.totalBackupCount()) backups")
         .popover(isPresented: $showRollback) {
             RollbackView(viewModel: viewModel)
         }
@@ -159,6 +178,7 @@ struct HeaderToolbarButtons: View {
             Image(systemName: "clock.arrow.circlepath")
                 .foregroundStyle(viewModel.historyIconColor)
         }
+        .accessibilityLabel("History")
         .popover(isPresented: $showHistory) {
             HistoryView(
                 prompts: viewModel.currentTabPromptHistory,
@@ -183,6 +203,7 @@ struct HeaderToolbarButtons: View {
             Image(systemName: "trash")
                 .foregroundStyle(.primary)
         }
+        .accessibilityLabel("Clear Log")
         .alert("Clear Log", isPresented: $showClearConfirm) {
             Button("Clear", role: .destructive) { viewModel.clearSelectedLog() }
             Button("Cancel", role: .cancel) { }

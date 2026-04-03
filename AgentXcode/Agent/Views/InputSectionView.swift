@@ -32,6 +32,7 @@ struct InputSectionView: View {
                         .clipShape(Capsule())
                         .controlSize(.small)
                         .help("Cancel tab task")
+                        .accessibilityLabel("Cancel task")
                     } else {
                         Button { tab.taskInput = "" } label: {
                             Image(systemName: "xmark.circle.fill")
@@ -42,6 +43,7 @@ struct InputSectionView: View {
                         .clipShape(Capsule())
                         .controlSize(.small)
                         .help("Clear task input")
+                        .accessibilityLabel("Clear input")
                         .disabled(tab.taskInput.isEmpty)
                     }
 
@@ -53,6 +55,7 @@ struct InputSectionView: View {
                     .buttonStyle(.borderedProminent)
                     .clipShape(Capsule())
                     .controlSize(.small)
+                    .accessibilityLabel("Run task")
                     .disabled(tab.taskInput.isEmpty || {
                         let provider = tab.llmConfig?.provider ?? viewModel.selectedProvider
                         return provider == .claude && viewModel.apiKey.isEmpty
@@ -130,6 +133,7 @@ struct InputSectionView: View {
                         .clipShape(Capsule())
                         .controlSize(.small)
                         .help("Cancel running task")
+                        .accessibilityLabel("Cancel task")
                     } else {
                         Button { viewModel.taskInput = "" } label: {
                             Image(systemName: "xmark.circle.fill")
@@ -140,6 +144,7 @@ struct InputSectionView: View {
                         .clipShape(Capsule())
                         .controlSize(.small)
                         .help("Clear task input")
+                        .accessibilityLabel("Clear input")
                         .disabled(viewModel.taskInput.isEmpty)
                     }
 
@@ -151,6 +156,7 @@ struct InputSectionView: View {
                     .buttonStyle(.borderedProminent)
                     .clipShape(Capsule())
                     .controlSize(.small)
+                    .accessibilityLabel("Run task")
                     .disabled(viewModel.taskInput.isEmpty || (viewModel.selectedProvider == .claude && viewModel.apiKey.isEmpty))
                 }
 
@@ -360,6 +366,7 @@ struct InputSectionView: View {
                 .clipShape(Capsule())
                 .controlSize(.small)
                 .help("Take a screenshot to attach")
+                .accessibilityLabel("Screenshot")
 
                 Button { viewModel.pasteImageFromClipboard() } label: {
                     Image(systemName: "photo.on.rectangle.angled")
@@ -369,6 +376,7 @@ struct InputSectionView: View {
                 .clipShape(Capsule())
                 .controlSize(.small)
                 .help("Paste image from clipboard")
+                .accessibilityLabel("Paste image")
             }
             HStack(spacing: 4) {
                 Button { viewModel.toggleDictation() } label: {
@@ -380,6 +388,8 @@ struct InputSectionView: View {
                 .clipShape(Capsule())
                 .controlSize(.small)
                 .help(viewModel.isListening ? "Stop dictation" : "Start dictation")
+                .accessibilityLabel("Dictation")
+                .accessibilityValue(viewModel.isListening ? "Recording" : "Off")
 
                 Button { viewModel.toggleHotwordListening() } label: {
                     Image(systemName: viewModel.isHotwordListening ? "waveform.circle.fill" : "waveform.circle")
@@ -394,6 +404,8 @@ struct InputSectionView: View {
                 .help(viewModel.isHotwordListening
                     ? (viewModel.isHotwordCapturing ? "Capturing command..." : "Listening for \"Agent!\" — click to stop")
                     : "Say \"Agent!\" to send a voice command")
+                .accessibilityLabel("Hotword")
+                .accessibilityValue(viewModel.isHotwordListening ? (viewModel.isHotwordCapturing ? "Capturing" : "Listening") : "Off")
             }
         }
     }
