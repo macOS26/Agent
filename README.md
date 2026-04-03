@@ -10,9 +10,20 @@
 [![GitHub Stars](https://img.shields.io/github/stars/macOS26/Agent?style=for-the-badge&logo=github&label=Stars&color=hotpink)](https://github.com/macOS26/Agent/stargazers)
 [![GitHub Forks](https://img.shields.io/github/forks/macOS26/Agent?style=for-the-badge&logo=github&label=Forks&color=white)](https://github.com/macOS26/Agent/fork)
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B-purple?style=for-the-badge)](https://github.com/apple)
-[![Swift](https://img.shields.io/badge/Swift-6.2-CC5500?style=for-the-badge&logo=swift)](https://github.com/apple/swift)
-[![MIT License](https://img.shields.io/badge/License-MIT-228B22?style=for-the-badge)](LICENSE)
-
+13	</div>
+14	
+15	## What's New 🚀
+16	
+17	- **Autonomous Task Loop:** Agent! now reasons, executes, and self-corrects until the task is complete.
+18	- **Agentic Coding:** Advanced code editing with **Time Machine-style backups** for every file change.
+19	- **Native Xcode Tools:** Faster, project-aware builds and runs without external MCP configuration.
+20	- **Privileged Root Access:** Secure, user-approved daemon for executing any system command.
+21	- **Desktop Automation:** Full control of any macOS app via AXorcist (Accessibility API).
+22	
+23	---
+24	
+25	## Quick Start
+26	
 A native macOS AI agent that controls your apps, writes code, automates workflows, and runs tasks from your iPhone via iMessage. All powered by the AI provider of your choice.
 
 </div>
@@ -46,15 +57,24 @@ Just type what you want. Agent! figures out how and makes it happen.
 
 ---
 
-## Key Features
-
-### 🛠 Agentic Coding
-Full coding environment built in. Reads codebases, edits files with precision, runs shell commands, builds Xcode projects, manages git, and auto-enables coding mode to focus the AI on development tools. Replaces Claude Code, Cursor, and Cline -- no terminal, no IDE plugins, no monthly fee.
-
-### 🖥 Desktop Automation (AXorcist)
-Control any Mac app through the Accessibility API. Click buttons, type into fields, navigate menus, scroll, drag -- all programmatically. Powered by [AXorcist](https://github.com/steipete/AXorcist) for reliable, fuzzy-matched element finding.
-
-### 🤖 10 AI Providers
+49	## Key Features
+50	
+51	### 🧠 Agentic AI Framework
+52	Built-in autonomous task loop that reasons, executes, and self-corrects. Agent! doesn't just run code; it observes the results, debugs errors, and iterates until the task is complete.
+53	
+54	### 🛠 Agentic Coding
+55	Full coding environment built in. Reads codebases, edits files with precision, runs shell commands, builds Xcode projects, manages git, and auto-enables coding mode to focus the AI on development tools. Replaces Claude Code, Cursor, and Cline -- no terminal, no IDE plugins, no monthly fee. Features **Time Machine-style backups** for every file change, letting you revert any edit instantly.
+56	
+57	### 🔍 Dynamic Tool Discovery
+58	Automatically detects and uses available tools (Xcode, Playwright, Shell, etc.) based on your prompt. No manual configuration required for core tools.
+59	
+60	### 🛡 Privileged Execution
+61	Securely runs root-level commands via a dedicated macOS Launch Daemon. The user approves the daemon once, then the agent can execute commands autonomously via XPC.
+62	
+63	### 🖥 Desktop Automation (AXorcist)
+64	Control any Mac app through the Accessibility API. Click buttons, type into fields, navigate menus, scroll, drag -- all programmatically. Powered by [AXorcist](https://github.com/steipete/AXorcist) for reliable, fuzzy-matched element finding.
+65	
+### 🤖 11 AI Providers
 | Provider | Cost | Best For |
 |---|---|---|
 | **GLM-5 / GLM-5.1** (Ollama) | Low Cost | Recommended starting point |
@@ -62,11 +82,12 @@ Control any Mac app through the Accessibility API. Click buttons, type into fiel
 | **ChatGPT** (OpenAI) | Paid | General purpose |
 | **Apple Intelligence** | Free | On-device, private |
 | **DeepSeek** | Paid | Budget cloud AI |
+| **Grok-2** (xAI) | Paid | Real-time info |
 | **Local Ollama** | Free | Full privacy, offline |
 | **LM Studio** | Free | Easy local setup |
 | **Hugging Face** | Varies | Open-source models |
 | **Z.ai** | Paid | Fast, versatile |
-| **Ollama Cloud / vLLM** | Varies | Self-hosted |
+| **Mistral Vibe** | Varies | High-performance open models |
 
 ### 🎙 Voice Control
 Click the microphone and speak. Agent! transcribes in real time and executes your request.
@@ -200,15 +221,18 @@ Agent! includes native Xcode integration that works without any MCP server setup
 
 | Tool | What It Does |
 |---|---|
-| **xcode build** | Build the current Xcode project, capture errors and warnings |
+| **xcode build** | Build the current Xcode project, capture errors and warnings. Errors in the activity log are **clickable** and open directly in Xcode. |
 | **xcode run** | Build and run the app |
 | **xcode list_projects** | Discover open Xcode workspaces and projects |
 | **xcode select_project** | Switch the active project |
 | **xcode grant_permission** | Grant file access to the Xcode project folder |
 
-The AI automatically uses these when you ask it to build, fix errors, or work with Xcode projects. No configuration needed -- just have your project open in Xcode.
-
-> **Tip:** For most coding workflows, the built-in tools are all you need. The MCP Xcode server below adds extras like SwiftUI Preview rendering and documentation search.
+219	The AI automatically uses these when you ask it to build, fix errors, or work with Xcode projects. No configuration needed -- just have your project open in Xcode.
+220	
+221	> 🚀 **iOS/iPadOS Support:** Coming soon! Native support for building, running, and testing iOS and iPadOS apps directly from Agent! is in development.
+222	
+223	> **Tip:** For most coding workflows, the built-in tools are all you need. The MCP Xcode server below adds extras like SwiftUI Preview rendering and documentation search.
+224	
 
 ---
 
