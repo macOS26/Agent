@@ -262,7 +262,7 @@ extension AgentViewModel {
             tab.appendLog("🔍 $ find \(displayDir) -name '\(pattern)'")
             tab.flush()
             let cmd = CodingService.buildListFilesCommand(pattern: pattern, path: path)
-            let result = await executeForTab(command: cmd, projectFolder: tabFolder)
+            let result = await executeForTab(command: cmd, projectFolder: resolvedDir)
             guard !Task.isCancelled else { return TabToolResult(toolResult: nil, isComplete: false) }
             let raw = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
             let formatted = raw.isEmpty ? "No files matching '\(pattern)'" : CodingService.formatFileTree(raw)

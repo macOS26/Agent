@@ -99,14 +99,14 @@ extension AgentViewModel {
             let path = input["path"] as? String ?? pf
             return "ls -la \(Self.shellEscape(path)) 2>/dev/null"
         case "git_status":
-            return "cd \(Self.shellEscape(pf)) && git status --short 2>/dev/null"
+            return "git status --short 2>/dev/null"
         case "git_diff":
-            return "cd \(Self.shellEscape(pf)) && git diff 2>/dev/null | head -500"
+            return "git diff 2>/dev/null | head -500"
         case "git_log":
             let count = input["count"] as? Int ?? 10
-            return "cd \(Self.shellEscape(pf)) && git log --oneline -\(count) 2>/dev/null"
+            return "git log --oneline -\(count) 2>/dev/null"
         case "git_diff_patch":
-            return "cd \(Self.shellEscape(pf)) && git diff 2>/dev/null"
+            return "git diff 2>/dev/null"
         default:
             return ""
         }
@@ -222,7 +222,7 @@ extension AgentViewModel {
         let displayPath = CodingService.trimHome(resolvedPath)
         vm.appendLog("🔍 $ find \(displayPath) -name '\(pattern)'"); vm.flushLog()
         let cmd = CodingService.buildListFilesCommand(pattern: pattern, path: path)
-        let result = await vm.executeViaUserAgent(command: cmd, silent: true)
+        let result = await vm.executeViaUserAgent(command: cmd, workingDirectory: resolvedPath, silent: true)
         guard !Task.isCancelled else { return .handled("cancelled") }
         let raw = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
         let formatted = raw.isEmpty ? "No files matching '\(pattern)'" : CodingService.formatFileTree(raw)
@@ -252,9 +252,8 @@ extension AgentViewModel {
         let displayPath = CodingService.trimHome(path)
         let detail = (input["detail"] as? String ?? "slim") == "more"
         vm.appendLog("📂 \(displayPath)"); vm.flushLog()
-        let dir = CodingService.shellEscape(path)
-        let cmd = detail ? "ls -la \(dir) 2>/dev/null" : "cd \(dir) && find . -maxdepth 1 -not -name '.*' 2>/dev/null | sed 's|^\\./||' | sort"
-        let result = await vm.executeViaUserAgent(command: cmd, silent: !detail)
+        let cmd = detail ? "ls -la . 2>/dev/null" : "find . -maxdepth 1 -not -name '.*' 2>/dev/null | sed 's|^\\./||' | sort"
+        let result = await vm.executeViaUserAgent(command: cmd, workingDirectory: path, silent: !detail)
         guard !Task.isCancelled else { return .handled("cancelled") }
         let raw = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
         return .handled(raw.isEmpty ? "Directory not found or empty" : "[project folder: \(displayPath)]\n\(raw)")

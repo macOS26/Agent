@@ -267,27 +267,25 @@ extension AgentViewModel {
             }
             let pat = CodingService.shellEscape(rawPat)
             let rawDir = input["path"] as? String ?? pf
-            let dir = CodingService.shellEscape(rawDir)
             let displayDir = CodingService.trimHome(rawDir)
-            let result = await executeViaUserAgent(command: "cd \(dir) && find . -maxdepth 8 -type f -name \(pat) ! -path '*/.*' ! -path '*/.build/*' ! -path '*/.git/*' ! -path '*/.swiftpm/*' ! -name '.DS_Store' ! -name '*.xcuserstate' 2>/dev/null | sed 's|^\\./||' | sort | head -100", silent: true)
+            let result = await executeViaUserAgent(command: "find . -maxdepth 8 -type f -name \(pat) ! -path '*/.*' ! -path '*/.build/*' ! -path '*/.git/*' ! -path '*/.swiftpm/*' ! -name '.DS_Store' ! -name '*.xcuserstate' 2>/dev/null | sed 's|^\\./||' | sort | head -100", workingDirectory: rawDir, silent: true)
             let raw = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
             return raw.isEmpty ? "No files found" : "[project folder: \(displayDir)] paths are relative to project folder\n\(CodingService.formatFileTree(raw))"
         case "search_files":
             let pat = CodingService.shellEscape(input["pattern"] as? String ?? "")
             let rawDir = input["path"] as? String ?? pf
-            let dir = CodingService.shellEscape(rawDir)
             let displayDir = CodingService.trimHome(rawDir)
-            let result = await executeViaUserAgent(command: "grep -rn \(pat) \(dir) 2>/dev/null | head -50")
+            let escapedDir = CodingService.shellEscape(rawDir)
+            let result = await executeViaUserAgent(command: "grep -rn \(pat) \(escapedDir) 2>/dev/null | head -50")
             return result.output.isEmpty ? "No matches" : "[project folder: \(displayDir)] paths are relative to project folder\n\(result.output)"
         case "read_dir":
             let rawDir = input["path"] as? String ?? pf
-            let dir = CodingService.shellEscape(rawDir)
             let displayDir = CodingService.trimHome(rawDir)
             let detail = (input["detail"] as? String ?? "slim") == "more"
             let cmd = detail
-                ? "ls -la \(dir) 2>/dev/null"
-                : "cd \(dir) && find . -maxdepth 1 -not -name '.*' 2>/dev/null | sed 's|^\\./||' | sort"
-            let result = await executeViaUserAgent(command: cmd, silent: !detail)
+                ? "ls -la . 2>/dev/null"
+                : "find . -maxdepth 1 -not -name '.*' 2>/dev/null | sed 's|^\\./||' | sort"
+            let result = await executeViaUserAgent(command: cmd, workingDirectory: rawDir, silent: !detail)
             let raw = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
             return raw.isEmpty ? "Directory not found or empty" : "[project folder: \(displayDir)]\n\(raw)"
         case "if_to_switch":
@@ -909,36 +907,42 @@ extension AgentViewModel {
 
         // Git tools (expanded from git(action:X) → git_X)
         case "git_status":
+            let dir = CodingService.resolveDir(pf.isEmpty ? nil : pf)
             let cmd = CodingService.buildGitStatusCommand(path: pf.isEmpty ? nil : pf)
-            let result = await executeViaUserAgent(command: cmd)
+            let result = await executeViaUserAgent(command: cmd, workingDirectory: dir)
             return result.output.isEmpty ? "(no output)" : result.output
         case "git_diff":
             let staged = input["staged"] as? Bool ?? false
             let target = input["target"] as? String
+            let dir = CodingService.resolveDir(pf.isEmpty ? nil : pf)
             let cmd = CodingService.buildGitDiffCommand(path: pf.isEmpty ? nil : pf, staged: staged, target: target)
-            let result = await executeViaUserAgent(command: cmd)
+            let result = await executeViaUserAgent(command: cmd, workingDirectory: dir)
             return result.output.isEmpty ? "(no changes)" : result.output
         case "git_log":
             let count = input["count"] as? Int
+            let dir = CodingService.resolveDir(pf.isEmpty ? nil : pf)
             let cmd = CodingService.buildGitLogCommand(path: pf.isEmpty ? nil : pf, count: count)
-            let result = await executeViaUserAgent(command: cmd)
+            let result = await executeViaUserAgent(command: cmd, workingDirectory: dir)
             return result.output.isEmpty ? "(no commits)" : result.output
         case "git_commit":
             let message = input["message"] as? String ?? "Update"
             let files = input["files"] as? [String]
+            let dir = CodingService.resolveDir(pf.isEmpty ? nil : pf)
             let cmd = CodingService.buildGitCommitCommand(path: pf.isEmpty ? nil : pf, message: message, files: files)
-            let result = await executeViaUserAgent(command: cmd)
+            let result = await executeViaUserAgent(command: cmd, workingDirectory: dir)
             return result.output.isEmpty ? "(no output)" : result.output
         case "git_branch":
             let branchName = input["name"] as? String ?? ""
             let checkout = input["checkout"] as? Bool ?? false
+            let dir = CodingService.resolveDir(pf.isEmpty ? nil : pf)
             let cmd = CodingService.buildGitBranchCommand(path: pf.isEmpty ? nil : pf, name: branchName, checkout: checkout)
-            let result = await executeViaUserAgent(command: cmd)
+            let result = await executeViaUserAgent(command: cmd, workingDirectory: dir)
             return result.output.isEmpty ? "(no output)" : result.output
         case "git_diff_patch":
             let target = input["target"] as? String
+            let dir = CodingService.resolveDir(pf.isEmpty ? nil : pf)
             let cmd = CodingService.buildGitDiffCommand(path: pf.isEmpty ? nil : pf, staged: false, target: target)
-            let result = await executeViaUserAgent(command: cmd)
+            let result = await executeViaUserAgent(command: cmd, workingDirectory: dir)
             return result.output.isEmpty ? "(no changes)" : result.output
         // Batch commands
         case "batch_commands":

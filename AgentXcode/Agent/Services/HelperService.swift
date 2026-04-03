@@ -178,7 +178,7 @@ final class HelperService {
         return registerHelper()
     }
 
-    func execute(command: String) async -> (status: Int32, output: String) {
+    func execute(command: String, workingDirectory: String = "") async -> (status: Int32, output: String) {
         AuditLog.log(.launchDaemon, "execute: \(command.prefix(100))")
         if !helperReady {
             let msg = restartDaemon()
@@ -193,7 +193,7 @@ final class HelperService {
             }
         }
 
-        return await executeViaXPC(script: command, outputHandler: handler)
+        return await executeViaXPC(script: command, workingDirectory: workingDirectory, outputHandler: handler)
     }
 
     /// Quick connectivity test with 5-second timeout. Returns true if XPC responds.
@@ -260,7 +260,7 @@ final class HelperService {
         return connection
     }
 
-    nonisolated private func executeViaXPC(script: String, outputHandler: OutputHandler) async -> (status: Int32, output: String) {
+    nonisolated private func executeViaXPC(script: String, workingDirectory: String = "", outputHandler: OutputHandler) async -> (status: Int32, output: String) {
         await withCheckedContinuation { continuation in
             var didResume = false
             let resumeLock = NSLock()
@@ -303,7 +303,7 @@ final class HelperService {
             }
             DispatchQueue.global().asyncAfter(deadline: .now() + toolFinishTimeout, execute: finishTimer)
 
-            proxy.execute(script: script, instanceID: self.instanceID) { status, output in
+            proxy.execute(script: script, instanceID: self.instanceID, workingDirectory: workingDirectory) { status, output in
                 startedLock.lock()
                 started = true
                 startedLock.unlock()

@@ -31,8 +31,9 @@ extension AgentViewModel {
             }
             appendLog("🔀 $ git status\(path.map { " (\($0))" } ?? "")")
             flushLog()
+            let dir = CodingService.resolveDir(path)
             let cmd = CodingService.buildGitStatusCommand(path: path)
-            let result = await executeViaUserAgent(command: cmd)
+            let result = await executeViaUserAgent(command: cmd, workingDirectory: dir)
             guard !Task.isCancelled else { return true }
             let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 ? "(no output, exit code: \(result.status))" : result.output
@@ -52,8 +53,9 @@ extension AgentViewModel {
             }
             appendLog("🔀 $ git diff\(staged ? " --cached" : "")\(target.map { " \($0)" } ?? "")")
             flushLog()
+            let dir = CodingService.resolveDir(path)
             let cmd = CodingService.buildGitDiffCommand(path: path, staged: staged, target: target)
-            let result = await executeViaUserAgent(command: cmd)
+            let result = await executeViaUserAgent(command: cmd, workingDirectory: dir)
             guard !Task.isCancelled else { return true }
             let output: String
             if result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -78,8 +80,9 @@ extension AgentViewModel {
             }
             appendLog("🔀 $ git log\(path.map { " (\($0))" } ?? "")")
             flushLog()
+            let dir = CodingService.resolveDir(path)
             let cmd = CodingService.buildGitLogCommand(path: path, count: count)
-            let result = await executeViaUserAgent(command: cmd)
+            let result = await executeViaUserAgent(command: cmd, workingDirectory: dir)
             guard !Task.isCancelled else { return true }
             let output: String
             if result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -105,8 +108,9 @@ extension AgentViewModel {
             }
             appendLog("🔀 Git commit: \(message)")
             flushLog()
+            let dir = CodingService.resolveDir(path)
             let cmd = CodingService.buildGitCommitCommand(path: path, message: message, files: files)
-            let result = await executeViaUserAgent(command: cmd)
+            let result = await executeViaUserAgent(command: cmd, workingDirectory: dir)
             guard !Task.isCancelled else { return true }
             if !result.output.isEmpty { appendLog(result.output) }
             commandsRun.append("git_commit: \(message)")
@@ -123,12 +127,12 @@ extension AgentViewModel {
             let patch = input["patch"] as? String ?? ""
             appendLog("🔧 git apply patch")
             flushLog()
+            let dir = CodingService.resolveDir(path)
             // Write patch to temp file, apply, clean up
             let tempName = "agent_patch_\(UUID().uuidString).patch"
             let tempPath = "/tmp/\(tempName)"
-            let dir = CodingService.shellEscape(path ?? CodingService.defaultDir)
-            let cmd = "cat > \(tempPath) << 'AGENT_PATCH_EOF'\n\(patch)\nAGENT_PATCH_EOF\ncd \(dir) && git apply --verbose \(tempPath); STATUS=$?; rm -f \(tempPath); exit $STATUS"
-            let result = await executeViaUserAgent(command: cmd)
+            let cmd = "cat > \(tempPath) << 'AGENT_PATCH_EOF'\n\(patch)\nAGENT_PATCH_EOF\ngit apply --verbose \(tempPath); STATUS=$?; rm -f \(tempPath); exit $STATUS"
+            let result = await executeViaUserAgent(command: cmd, workingDirectory: dir)
             guard !Task.isCancelled else { return true }
             if !result.output.isEmpty { appendLog(result.output) }
             commandsRun.append("git_diff_patch")
@@ -154,8 +158,9 @@ extension AgentViewModel {
             }
             appendLog("🔧 git branch: \(branchName)")
             flushLog()
+            let dir = CodingService.resolveDir(path)
             let cmd = CodingService.buildGitBranchCommand(path: path, name: branchName, checkout: checkout)
-            let result = await executeViaUserAgent(command: cmd)
+            let result = await executeViaUserAgent(command: cmd, workingDirectory: dir)
             guard !Task.isCancelled else { return true }
             if !result.output.isEmpty { appendLog(result.output) }
             commandsRun.append("git_branch: \(branchName)")

@@ -39,10 +39,12 @@ final class UserCommandHandler: NSObject, UserToolProtocol, @unchecked Sendable 
             process.currentDirectoryURL = URL(fileURLWithPath: workingDirectory)
         }
 
-        // Force color output, set PWD to match working directory
+        // Force color output, set PWD, ensure common tool paths in PATH
         var env = ProcessInfo.processInfo.environment
         env["CLICOLOR_FORCE"] = "1"
         env["TERM"] = env["TERM"] ?? "xterm-256color"
+        let extraPaths = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+        env["PATH"] = extraPaths + ":" + (env["PATH"] ?? "")
         if !workingDirectory.isEmpty {
             env["PWD"] = workingDirectory
         }
