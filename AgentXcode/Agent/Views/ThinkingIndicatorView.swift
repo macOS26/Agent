@@ -250,22 +250,9 @@ struct ThinkingIndicatorView: View {
                     showStreamText = true
                     tab.thinkingDismissed = false
                 }
-            } else if !tab.rawLLMOutput.isEmpty {
-                // LLM finished — keep indicator visible and expanded to show result
+            } else if tab.isRunning && !tab.rawLLMOutput.isEmpty {
+                // LLM finished but script still running — keep indicator visible
                 tab.thinkingDismissed = false
-                isExpanded = true
-                showStreamText = true
-            }
-        }
-        .onChange(of: tab?.rawLLMOutput) { _, newValue in
-            // Auto-expand both chevrons whenever new LLM output arrives on a script tab
-            guard let tab, !tab.isMainTab, let output = newValue, !output.isEmpty else { return }
-            if !isExpanded || !showStreamText {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    isExpanded = true
-                    showStreamText = true
-                    tab.thinkingDismissed = false
-                }
             }
         }
         .onChange(of: viewModel.isRunning) { _, newValue in
