@@ -675,7 +675,7 @@ struct ToolStepsView: View {
                 }
                 .padding(.top, 2)
                 }
-                .frame(maxHeight: 200)
+                .frame(maxHeight: min(CGFloat(steps.count) * 18, 200))
             }
         }
         .padding(.vertical, 4)
