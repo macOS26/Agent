@@ -545,6 +545,16 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(mistralModel, forKey: "mistralModel") }
     }
 
+    nonisolated static let defaultMistralModels: [OpenAIModelInfo] = [
+        OpenAIModelInfo(id: "mistral-large-latest", name: "Mistral Large"),
+        OpenAIModelInfo(id: "mistral-small-latest", name: "Mistral Small"),
+        OpenAIModelInfo(id: "codestral-latest", name: "Codestral"),
+        OpenAIModelInfo(id: "mistral-medium-latest", name: "Mistral Medium"),
+    ]
+
+    var mistralModels: [OpenAIModelInfo] = []
+    var isFetchingMistralModels = false
+
     nonisolated static let defaultHuggingFaceModels: [OpenAIModelInfo] = [
         OpenAIModelInfo(id: "deepseek-ai/DeepSeek-V3-0324", name: "DeepSeek V3"),
         OpenAIModelInfo(id: "deepseek-ai/DeepSeek-R1", name: "DeepSeek R1"),
@@ -650,8 +660,8 @@ final class AgentViewModel {
         case .zAI: return zAITemperature
         case .gemini: return geminiTemperature
         case .grok: return grokTemperature
-        case .mistral: return 0.7
-        case .foundationModel: return 0.2
+        case .mistral: return openAITemperature
+        case .foundationModel: return claudeTemperature
         }
     }
 
