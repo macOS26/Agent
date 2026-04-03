@@ -231,9 +231,7 @@ struct ThinkingIndicatorView: View {
                             let used = inputTokens + outputTokens
                             let fraction = min(Double(used) / Double(contextWindow), 1.0)
                             let isRunning = viewModel.isRunning || (tab?.isLLMRunning ?? false)
-                            let barColor: Color = isRunning
-                                ? (fraction > 0.9 ? .red : fraction > 0.7 ? .orange : .green)
-                                : (fraction > 0.9 ? .blue : fraction > 0.7 ? .orange : .green)
+                            let barColor: Color = isRunning ? .green : .blue
                             HStack(spacing: 4) {
                                 GeometryReader { geo in
                                     ZStack(alignment: .leading) {
