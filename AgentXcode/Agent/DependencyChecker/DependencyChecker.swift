@@ -61,6 +61,7 @@ struct DependencyChecker {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/xcode-select")
         process.arguments = ["--install"]
+        process.currentDirectoryURL = URL(fileURLWithPath: NSHomeDirectory())
         try? process.run()
     }
 }

@@ -247,6 +247,12 @@ final class LoRAAdapterManager {
             let pipe = Pipe()
             p.executableURL = URL(fileURLWithPath: path)
             p.arguments = ["--version"]
+            p.currentDirectoryURL = URL(fileURLWithPath: NSHomeDirectory())
+            var pyEnv = ProcessInfo.processInfo.environment
+            pyEnv["HOME"] = NSHomeDirectory()
+            let pyPaths = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+            pyEnv["PATH"] = pyPaths + ":" + (pyEnv["PATH"] ?? "")
+            p.environment = pyEnv
             p.standardOutput = pipe
             p.standardError = pipe
             try? p.run()

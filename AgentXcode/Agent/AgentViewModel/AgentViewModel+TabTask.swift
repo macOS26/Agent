@@ -554,7 +554,8 @@ extension AgentViewModel {
                                     let healthCheckTask = Process()
                                     healthCheckTask.executableURL = URL(fileURLWithPath: "/usr/bin/curl")
                                     healthCheckTask.arguments = ["-s", "-f", "http://localhost:11434/api/tags", "--max-time", "5"]
-                                    
+                                    healthCheckTask.currentDirectoryURL = URL(fileURLWithPath: NSHomeDirectory())
+
                                     let pipe = Pipe()
                                     healthCheckTask.standardOutput = pipe
                                     healthCheckTask.standardError = pipe

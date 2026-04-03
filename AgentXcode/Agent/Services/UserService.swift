@@ -155,6 +155,7 @@ final class UserService {
         let kill = Process()
         kill.executableURL = URL(fileURLWithPath: "/usr/bin/pkill")
         kill.arguments = ["-f", "AgentUser"]
+        kill.currentDirectoryURL = URL(fileURLWithPath: NSHomeDirectory())
         try? kill.run()
         kill.waitUntilExit()
 
@@ -168,6 +169,7 @@ final class UserService {
         let kill = Process()
         kill.executableURL = URL(fileURLWithPath: "/usr/bin/pkill")
         kill.arguments = ["-f", "AgentUser"]
+        kill.currentDirectoryURL = URL(fileURLWithPath: NSHomeDirectory())
         try? kill.run()
         kill.waitUntilExit()
 

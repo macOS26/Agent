@@ -45,7 +45,13 @@ public func scriptMain() -> Int32 {
         let whichTask = Process()
         whichTask.executableURL = URL(fileURLWithPath: "/bin/sh")
         whichTask.arguments = ["-c", "which gh 2>/dev/null"]
-        
+        whichTask.currentDirectoryURL = URL(fileURLWithPath: workingDir)
+        var whichEnv = ProcessInfo.processInfo.environment
+        whichEnv["HOME"] = NSHomeDirectory()
+        let whichPaths = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+        whichEnv["PATH"] = whichPaths + ":" + (whichEnv["PATH"] ?? "")
+        whichTask.environment = whichEnv
+
         let whichPipe = Pipe()
         whichTask.standardOutput = whichPipe
         whichTask.standardError = whichPipe

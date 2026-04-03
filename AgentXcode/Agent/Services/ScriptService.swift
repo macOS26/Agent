@@ -230,6 +230,12 @@ final class ScriptService: @unchecked Sendable {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
         process.arguments = ["clone", "--depth", "1", Self.scriptsRepoURL, tmpDir.path]
+        process.currentDirectoryURL = URL(fileURLWithPath: NSHomeDirectory())
+        var env = ProcessInfo.processInfo.environment
+        env["HOME"] = NSHomeDirectory()
+        let extraPaths = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+        env["PATH"] = extraPaths + ":" + (env["PATH"] ?? "")
+        process.environment = env
         try? process.run()
         process.waitUntilExit()
         // Move cloned Agent/agents/Sources into place
@@ -252,6 +258,12 @@ final class ScriptService: @unchecked Sendable {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
         process.arguments = ["clone", "--depth", "1", Self.bridgesRepoURL, dest.path]
+        process.currentDirectoryURL = URL(fileURLWithPath: NSHomeDirectory())
+        var cloneEnv = ProcessInfo.processInfo.environment
+        cloneEnv["HOME"] = NSHomeDirectory()
+        let cloneExtraPaths = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+        cloneEnv["PATH"] = cloneExtraPaths + ":" + (cloneEnv["PATH"] ?? "")
+        process.environment = cloneEnv
         try? process.run()
         process.waitUntilExit()
     }

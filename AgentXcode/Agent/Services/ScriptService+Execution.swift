@@ -56,6 +56,12 @@ extension ScriptService {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/swiftc")
         process.arguments = ["-O", "-o", runnerPath, srcPath]
+        process.currentDirectoryURL = Self.agentsDir
+        var swiftcEnv = ProcessInfo.processInfo.environment
+        swiftcEnv["HOME"] = NSHomeDirectory()
+        let swiftcPaths = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+        swiftcEnv["PATH"] = swiftcPaths + ":" + (swiftcEnv["PATH"] ?? "")
+        process.environment = swiftcEnv
         let pipe = Pipe()
         process.standardOutput = pipe
         process.standardError = pipe
@@ -83,9 +89,13 @@ extension ScriptService {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: Self.runnerPath)
         process.arguments = [dylib]
+        process.currentDirectoryURL = URL(fileURLWithPath: NSHomeDirectory())
 
         // Inherit current environment and add script args
         var env = ProcessInfo.processInfo.environment
+        env["HOME"] = NSHomeDirectory()
+        let runnerPaths = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+        env["PATH"] = runnerPaths + ":" + (env["PATH"] ?? "")
         if !arguments.isEmpty {
             env["AGENT_SCRIPT_ARGS"] = arguments
         }
