@@ -699,11 +699,16 @@ extension AgentViewModel {
     // MARK: - Tab Command Execution
 
     /// Execute a command via UserService with cd prefix to ensure correct directory.
+    /// Falls back to in-process execution when working directory is TCC-protected.
     func executeForTab(command: String, projectFolder pf: String = "") async -> (status: Int32, output: String) {
         // Fallback chain: passed projectFolder → self.projectFolder → home (handled by UserService)
         let folder = pf.isEmpty ? self.projectFolder : pf
         let dir = folder.isEmpty ? "" : Self.resolvedWorkingDirectory(folder)
         let fullCommand = Self.prependWorkingDirectory(command, projectFolder: dir)
+        // TCC-protected folders must run in-process
+        if Self.isTCCProtectedPath(dir) || Self.needsTCCPermissions(command) {
+            return await Self.executeTCC(command: fullCommand)
+        }
         return await userService.execute(command: fullCommand, workingDirectory: dir)
     }
 }
