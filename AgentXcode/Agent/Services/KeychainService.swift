@@ -50,6 +50,10 @@ final class KeychainService: Sendable {
     func setGrokAPIKey(_ key: String) { set(key: Self.grokAPIKey, value: key) }
     func getGrokAPIKey() -> String? { get(key: Self.grokAPIKey) }
 
+    private static let mistralAPIKey = "com.agent.mistral-api-key"
+    func setMistralAPIKey(_ key: String) { set(key: Self.mistralAPIKey, value: key) }
+    func getMistralAPIKey() -> String? { get(key: Self.mistralAPIKey) }
+
     private func set(key: String, value: String) {
         guard let data = value.data(using: .utf8) else { return }
         delete(key: key)

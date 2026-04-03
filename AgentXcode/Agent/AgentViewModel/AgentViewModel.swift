@@ -531,6 +531,16 @@ final class AgentViewModel {
     var grokModels: [OpenAIModelInfo] = []
     var isFetchingGrokModels = false
 
+    // MARK: - Mistral
+
+    var mistralAPIKey: String = KeychainService.shared.getMistralAPIKey() ?? "" {
+        didSet { KeychainService.shared.setMistralAPIKey(mistralAPIKey) }
+    }
+
+    var mistralModel: String = UserDefaults.standard.string(forKey: "mistralModel") ?? "mistral-large-latest" {
+        didSet { UserDefaults.standard.set(mistralModel, forKey: "mistralModel") }
+    }
+
     nonisolated static let defaultHuggingFaceModels: [OpenAIModelInfo] = [
         OpenAIModelInfo(id: "deepseek-ai/DeepSeek-V3-0324", name: "DeepSeek V3"),
         OpenAIModelInfo(id: "deepseek-ai/DeepSeek-R1", name: "DeepSeek R1"),

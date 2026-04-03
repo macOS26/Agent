@@ -304,6 +304,22 @@ struct SettingsView: View {
                         }
                     }
                 }
+            } else if viewModel.selectedProvider == .mistral {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Mistral AI")
+                        .font(.headline)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("API Key").font(.caption).foregroundStyle(.secondary)
+                        LockedSecureField(text: $viewModel.mistralAPIKey, placeholder: "Mistral API key", lockKey: "lock.mistralAPIKey")
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Model").font(.caption).foregroundStyle(.secondary)
+                        TextField("Model name", text: $viewModel.mistralModel)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                }
             } else if viewModel.selectedProvider == .ollama {
                 // Cloud Ollama settings
                 VStack(alignment: .leading, spacing: 10) {
