@@ -123,14 +123,35 @@ struct ThinkingIndicatorView: View {
                         if isScriptOnly {
                             ShimmerText("Running\(dots)", color: .green)
                         } else if isExecuting {
-                            ShimmerText("Executing\(dots)", color: .green)
-                        } else {
+                            if viewModel.rootServiceActive {
+                                ShimmerText("Root\(dots)", color: .red)
+                            } else if viewModel.userServiceActive {
+                                ShimmerText("Executing\(dots)", color: .orange)
+                            } else {
+                                ShimmerText("Executing\(dots)", color: .green)
+                            }
+                        } else if let t = tab, t.isLLMThinking {
                             ShimmerText("Thinking\(dots)", color: .green)
+                        } else if tab == nil && viewModel.isThinking {
+                            ShimmerText("Thinking\(dots)", color: .green)
+                        } else {
+                            ShimmerText("Running\(dots)", color: .yellow)
                         }
                     } else {
                         Text("Done")
                             .font(.caption.bold())
                             .foregroundStyle(.green)
+                    }
+
+                    // Queue count
+                    if let t = tab, !t.taskQueue.isEmpty {
+                        Text("+\(t.taskQueue.count) queued")
+                            .font(.caption)
+                            .foregroundStyle(.teal)
+                    } else if tab == nil && !viewModel.mainTaskQueue.isEmpty {
+                        Text("+\(viewModel.mainTaskQueue.count) queued")
+                            .font(.caption)
+                            .foregroundStyle(.teal)
                     }
 
                     Spacer()
