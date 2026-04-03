@@ -102,8 +102,8 @@ enum LLMProviderSetup {
         id: "codestral", displayName: "Codestral",
         kind: .cloudAPI, apiProtocol: .openAI,
         endpoint: LLMEndpoint(
-            chatURL: "https://api.mistral.ai/v1/chat/completions",
-            modelsURL: "https://api.mistral.ai/v1/models"
+            chatURL: "https://codestral.mistral.ai/v1/chat/completions",
+            modelsURL: "https://codestral.mistral.ai/v1/models"
         ),
         capabilities: [.streaming, .tools, .systemPrompt]
     )
