@@ -277,7 +277,7 @@ extension AgentViewModel {
         case .mistral:
             openAICompatible = OpenAICompatibleService(apiKey: mistralAPIKey, model: modelId, baseURL: "https://api.mistral.ai/v1/chat/completions", historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .mistral, maxTokens: mt)
         case .codestral:
-            openAICompatible = OpenAICompatibleService(apiKey: codestralAPIKey, model: modelId, baseURL: "https://codestral.mistral.ai/v1/chat/completions", historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .codestral, maxTokens: mt)
+            openAICompatible = OpenAICompatibleService(apiKey: codestralAPIKey, model: modelId, baseURL: "https://api.mistral.ai/v1/chat/completions", historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .codestral, maxTokens: mt)
         default:
             openAICompatible = nil
         }

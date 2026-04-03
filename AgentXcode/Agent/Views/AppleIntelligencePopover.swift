@@ -38,7 +38,7 @@ struct AppleIntelligencePopover: View {
                     VStack(alignment: .leading) {
                         Text("Enable Mediator")
                             .font(.caption)
-                        Text("Rephrases and clarifies user requests for the LLM")
+                        Text("Chat code completions using Apple AI")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
