@@ -195,9 +195,24 @@ final class HelperService {
             }
         }
 
-        // Never pass empty — fall back to home directory
-        let dir = workingDirectory.isEmpty ? NSHomeDirectory() : workingDirectory
-        return await executeViaXPC(script: command, workingDirectory: dir, outputHandler: handler)
+        // Always send an absolute path — relative paths resolve wrong in the daemon
+        let dir: String
+        if workingDirectory.isEmpty || workingDirectory == "." || workingDirectory == "./" {
+            dir = NSHomeDirectory()
+        } else if !workingDirectory.hasPrefix("/") && !workingDirectory.hasPrefix("~") {
+            dir = (NSHomeDirectory() as NSString).appendingPathComponent(workingDirectory)
+        } else {
+            dir = (workingDirectory as NSString).expandingTildeInPath
+        }
+        // Prepend cd so the shell runs in the right directory regardless of daemon cwd
+        let fullCommand: String
+        if !dir.isEmpty && !command.hasPrefix("cd ") {
+            let escaped = "'" + dir.replacingOccurrences(of: "'", with: "'\\''") + "'"
+            fullCommand = "cd \(escaped) && \(command)"
+        } else {
+            fullCommand = command
+        }
+        return await executeViaXPC(script: fullCommand, workingDirectory: dir, outputHandler: handler)
     }
 
     /// Quick connectivity test with 5-second timeout. Returns true if XPC responds.

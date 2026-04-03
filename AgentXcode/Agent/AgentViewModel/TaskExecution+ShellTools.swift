@@ -52,9 +52,10 @@ extension AgentViewModel {
                 self?.appendRawOutput(chunk)
             }
         }
-        // Fallback chain: workingDirectory → projectFolder → home (handled by UserService)
+        // Prepend cd to ensure shell runs in the right directory
         let dir = workingDirectory.isEmpty ? projectFolder : workingDirectory
-        let result = await userService.execute(command: command, workingDirectory: dir)
+        let fullCommand = Self.prependWorkingDirectory(command, projectFolder: dir)
+        let result = await userService.execute(command: fullCommand, workingDirectory: dir)
         userService.onOutput = nil
         userServiceActive = false
 
