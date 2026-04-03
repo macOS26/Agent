@@ -157,6 +157,10 @@ struct NewMainTabSheet: View {
                 fetch: { viewModel.fetchGrokModels() }
             )
 
+        case .mistral:
+            TextField("Model (e.g. mistral-large-latest)", text: $selectedModelId)
+                .textFieldStyle(.roundedBorder)
+
         case .foundationModel:
             HStack {
                 Text("Apple Intelligence")
@@ -255,6 +259,7 @@ struct NewMainTabSheet: View {
         case .zAI: return viewModel.zAIModel
         case .gemini: return viewModel.geminiModel
         case .grok: return viewModel.grokModel
+        case .mistral: return "mistral-large-latest"
         case .foundationModel: return "Apple Intelligence"
         }
     }
@@ -285,6 +290,8 @@ struct NewMainTabSheet: View {
             if viewModel.geminiModels.isEmpty { viewModel.fetchGeminiModels() }
         case .grok:
             if viewModel.grokModels.isEmpty { viewModel.fetchGrokModels() }
+        case .mistral:
+            break
         case .foundationModel:
             break
         }

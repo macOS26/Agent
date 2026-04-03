@@ -7,7 +7,7 @@ enum LLMProviderSetup {
 
     static func registerAllProviders() {
         LLMRegistry.shared.registerAll([
-            claude, openAI, gemini, grok, deepSeek, huggingFace, zAI,
+            claude, openAI, gemini, grok, mistral, deepSeek, huggingFace, zAI,
             ollama, localOllama, vLLM, lmStudio, appleIntelligence
         ])
     }
@@ -84,6 +84,16 @@ enum LLMProviderSetup {
         endpoint: LLMEndpoint(
             chatURL: "https://api.x.ai/v1/chat/completions",
             modelsURL: "https://api.x.ai/v1/models"
+        ),
+        capabilities: [.streaming, .tools, .vision, .systemPrompt]
+    )
+
+    static let mistral = LLMProviderConfig(
+        id: "mistral", displayName: "Mistral",
+        kind: .cloudAPI, apiProtocol: .openAI,
+        endpoint: LLMEndpoint(
+            chatURL: "https://api.mistral.ai/v1/chat/completions",
+            modelsURL: "https://api.mistral.ai/v1/models"
         ),
         capabilities: [.streaming, .tools, .vision, .systemPrompt]
     )
