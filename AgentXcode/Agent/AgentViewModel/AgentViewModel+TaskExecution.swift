@@ -50,7 +50,7 @@ extension AgentViewModel {
             isVision = true  // GPT-4o, GPT-4 Turbo support vision
         case .deepSeek:
             modelName = deepSeekModel
-            isVision = false // DeepSeek text-only
+            isVision = Self.isVisionModel(deepSeekModel)
         case .huggingFace:
             modelName = huggingFaceModel
             isVision = Self.isVisionModel(huggingFaceModel)
