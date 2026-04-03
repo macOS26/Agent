@@ -2,6 +2,32 @@ import Foundation
 
 enum AgentError: Error, LocalizedError {
     case noAPIKey
+    case rateLimited
+    case apiError(statusCode: Int, message: String)
+    case invalidResponse
+    case invalidURL
+    case timeout(seconds: TimeInterval)
+    case serviceUnavailable(service: String)
+    case permissionDenied(permission: String)
+    case toolFailed(tool: String, reason: String)
+    case scriptError(script: String, message: String)
+    case xpcError(service: String, reason: String)
+    case mcpError(server: String, reason: String)
+    case accessibilityError(action: String, reason: String)
+    case networkError(underlying: Error)
+    case fileError(path: String, reason: String)
+    case notFound(item: String)
+    case invalidInput(field: String, reason: String)
+    case cancelled
+    case unknown(Error)
+
+    var errorDescription: String? {
+        switch self {
+import Foundation
+
+enum AgentError: Error, LocalizedError {
+    case noAPIKey
+    case rateLimited
     case apiError(statusCode: Int, message: String)
     case invalidResponse
     case invalidURL
@@ -23,7 +49,120 @@ enum AgentError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .noAPIKey: "No API key configured. Open Settings to add your Anthropic API key."
+        case .rateLimited: "API rate limit exceeded. Please try again later."
+        case .networkError(let underlying): "Network error: \(underlying.localizedDescription)"
         case .apiError(let code, let msg): "API error (\(code)): \(msg)"
+        case .invalidResponse: "Invalid response from API"
+        case .invalidURL: "Invalid URL"
+        case .timeout(let seconds): "Operation timed out after \(Int(seconds)) seconds"
+        case .serviceUnavailable(let service): "Service '\(service)' is not available. Try restarting the service or the app."
+        case .permissionDenied(let permission): "Permission denied: \(permission). Grant access in System Settings > Privacy & Security."
+        case .toolFailed(let tool, let reason): "Tool '\(tool)' failed: \(reason)"
+        case .scriptError(let script, let message): "Script '\(script)' error: \(message)"
+        case .xpcError(let service, let reason): "XPC error with '\(service)': \(reason)"
+        case .mcpError(let server, let reason): "MCP error with '\(server)': \(reason)"
+        case .accessibilityError(let action, let reason): "Accessibility error during '\(action)': \(reason)"
+        case .fileError(let path, let reason): "File error at '\(path)': \(reason)"
+        case .notFound(let item): "\(item) not found"
+        case .invalidInput(let field, let reason): "Invalid input for '\(field)': \(reason)"
+        case .cancelled: "Operation cancelled by user"
+        case .unknown(let error): "Unknown error: \(error.localizedDescription)"
+        }
+    }
+}
+
+struct TaskRecord: Codable {
+    let date: Date
+    let prompt: String
+    let summary: String
+    let isSummary: Bool
+    let commandsRun: [String]
+
+    init(prompt: String, summary: String, isSummary: Bool = false, commandsRun: [String] = []) {
+        self.date = Date()
+        self.prompt = prompt
+        self.summary = summary
+        self.isSummary = isSummary
+        self.commandsRun = commandsRun
+    }
+}
+
+actor TaskHistory {
+    private var records: [TaskRecord] = []
+    private let fileURL: URL
+
+    init() {
+        let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        fileURL = documents.appendingPathComponent("task_history.json")
+        load()
+    }
+
+    func add(prompt: String, summary: String, isSummary: Bool = false, commandsRun: [String] = []) {
+        let record = TaskRecord(prompt: prompt, summary: summary, isSummary: isSummary, commandsRun: commandsRun)
+        records.append(record)
+        save()
+    }
+
+    func getHistory(maxCount: Int = 20) -> [TaskRecord] {
+        Array(records.suffix(maxCount))
+    }
+
+    func clear() {
+        records.removeAll()
+        save()
+    }
+
+    func contextForPrompt(maxRecent: Int = 20) -> String {
+        guard !records.isEmpty else { return "" }
+        let recent = records.suffix(maxRecent)
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .short
+
+        var lines: [String] = ["\n\nPrevious task history (most recent last):"]
+        for record in recent {
+            let date = formatter.string(from: record.date)
+            if record.isSummary {
+                lines.append("[\(date)] Earlier work summary:")
+                lines.append("  \(record.summary)")
+            } else {
+                lines.append("[\(date)] Task: \(record.prompt)")
+                lines.append("  Result: \(record.summary)")
+                if !record.commandsRun.isEmpty {
+                    let cmds = record.commandsRun.prefix(5).joined(separator: "; ")
+                    lines.append("  Commands: \(cmds)")
+                }
+            }
+        }
+        return lines.joined(separator: "\n")
+    }
+
+    private func load() {
+        guard FileManager.default.fileExists(atPath: fileURL.path) else { return }
+        do {
+            let data = try Data(contentsOf: fileURL)
+            records = try JSONDecoder().decode([TaskRecord].self, from: data)
+        } catch {
+            records = []
+        }
+    }
+
+    private func save() {
+        // Capture data synchronously on main actor, then write async
+        let data: Data?
+        do {
+            data = try JSONEncoder().encode(records)
+        } catch {
+            data = nil
+        }
+        guard let data else { return }
+
+        let fileURL = self.fileURL
+        Task.detached(priority: .background) {
+            try? data.write(to: fileURL, options: .atomic)
+        }
+    }
+}
         case .invalidResponse: "Invalid response from API"
         case .invalidURL: "Invalid URL"
         case .timeout(let seconds): "Operation timed out after \(Int(seconds)) seconds"
