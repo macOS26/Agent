@@ -16,6 +16,13 @@ extension AgentViewModel {
         appendRawOutput: @escaping @Sendable (String) -> Void,
         toolResults: inout [[String: Any]]
     ) async -> Bool {
+        // Resolve relative file_path against project folder
+        var input = input
+        if let fp = input["file_path"] as? String, !fp.isEmpty, !fp.hasPrefix("/"), !fp.hasPrefix("~") {
+            let base = projectFolder.isEmpty ? NSHomeDirectory() : projectFolder
+            input["file_path"] = (base as NSString).appendingPathComponent(fp)
+        }
+
         // MARK: read_file
         switch name {
 

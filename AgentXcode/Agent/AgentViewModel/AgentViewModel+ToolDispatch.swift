@@ -225,7 +225,7 @@ extension AgentViewModel {
         let resolvedPath = path ?? ctx.projectFolder
         let displayPath = CodingService.trimHome(resolvedPath)
         vm.appendLog("🔍 $ find \(displayPath) -name '\(pattern)'"); vm.flushLog()
-        let cmd = CodingService.buildListFilesCommand(pattern: pattern, path: path)
+        let cmd = CodingService.buildListFilesCommand(pattern: pattern, path: resolvedPath)
         let result = await vm.executeViaUserAgent(command: cmd, workingDirectory: resolvedPath, silent: true)
         guard !Task.isCancelled else { return .handled("cancelled") }
         let raw = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -242,8 +242,8 @@ extension AgentViewModel {
         let resolvedSearch = path ?? ctx.projectFolder
         let displaySearch = CodingService.trimHome(resolvedSearch)
         vm.appendLog("🔍 $ grep -rn '\(pattern)' \(displaySearch)\(include.map { " --include=\($0)" } ?? "")"); vm.flushLog()
-        let cmd = CodingService.buildSearchFilesCommand(pattern: pattern, path: path, include: include)
-        let result = await vm.executeViaUserAgent(command: cmd)
+        let cmd = CodingService.buildSearchFilesCommand(pattern: pattern, path: resolvedSearch, include: include)
+        let result = await vm.executeViaUserAgent(command: cmd, workingDirectory: resolvedSearch)
         guard !Task.isCancelled else { return .handled("cancelled") }
         let output = result.output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             ? "No matches for '\(pattern)'" : "[project folder: \(displaySearch)] paths are relative to project folder\n\(result.output)"
