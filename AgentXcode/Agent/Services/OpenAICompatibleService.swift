@@ -154,10 +154,9 @@ final class OpenAICompatibleService {
                                 "tool_call_id": sanitizedId,
                                 "content": content
                             ]
-                            // Add "name" field — required by Mistral
-                            if let name = toolIdToName[toolUseId] ?? toolIdToName[sanitizedId] {
-                                toolMsg["name"] = name
-                            }
+                            // Add "name" field — required by Mistral and Gemini
+                            let toolName = toolIdToName[toolUseId] ?? toolIdToName[sanitizedId] ?? (block["name"] as? String) ?? "tool"
+                            toolMsg["name"] = toolName
                             chatMessages.append(toolMsg)
                         }
                     } else {
