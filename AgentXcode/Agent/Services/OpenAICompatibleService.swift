@@ -28,11 +28,13 @@ final class OpenAICompatibleService {
     // MARK: - Rate Limiting
     /// Per-provider last request timestamp for rate limiting.
     private static var lastRequestTime: [APIProvider: CFAbsoluteTime] = [:]
-    /// Minimum seconds between requests per provider. 0 = no limit.
+    /// Minimum seconds between requests per provider. Free tier = 2 RPM = 30s gap.
     private static let rateLimitSeconds: [APIProvider: Double] = [
-        .mistral: 1.1,
-        .codestral: 1.1,
+        .mistral: 31.0,
+        .codestral: 31.0,
     ]
+    /// Dynamic backoff from Retry-After header (overrides static limit until it expires).
+    private static var retryAfterUntil: [APIProvider: CFAbsoluteTime] = [:]
 
     init(apiKey: String, model: String, baseURL: String, supportsVision: Bool = false, historyContext: String = "", projectFolder: String = "", provider: APIProvider, messagesKey: String = "messages", maxTokens: Int = 0) {
         self.apiKey = apiKey
@@ -265,8 +267,15 @@ final class OpenAICompatibleService {
     /// LM Studio Native (/api/v1/chat) doesn't support tools or max_tokens
     private var isNativeFormat: Bool { messagesKey == "input" }
 
-    /// Wait if needed to respect per-provider rate limits.
+    /// Wait if needed to respect per-provider rate limits and Retry-After backoff.
     private func enforceRateLimit() async {
+        let now = CFAbsoluteTimeGetCurrent()
+        // Honor Retry-After from a previous 429
+        if let until = Self.retryAfterUntil[provider], now < until {
+            let wait = until - now
+            try? await Task.sleep(for: .seconds(wait))
+        }
+        // Enforce minimum gap between requests
         if let minGap = Self.rateLimitSeconds[provider],
            let last = Self.lastRequestTime[provider] {
             let elapsed = CFAbsoluteTimeGetCurrent() - last
@@ -276,6 +285,11 @@ final class OpenAICompatibleService {
             }
         }
         Self.lastRequestTime[provider] = CFAbsoluteTimeGetCurrent()
+    }
+
+    /// Record a Retry-After value from a 429 response.
+    private static func recordRetryAfter(_ seconds: Double, for provider: APIProvider) {
+        retryAfterUntil[provider] = CFAbsoluteTimeGetCurrent() + seconds
     }
 
     func send(messages: [[String: Any]], activeGroups: Set<String>? = nil) async throws -> (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int) {
