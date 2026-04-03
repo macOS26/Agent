@@ -283,6 +283,12 @@ final class AgentViewModel {
             if selectedProvider == .zAI && zAIModels.isEmpty {
                 fetchZAIModels()
             }
+            if selectedProvider == .gemini && geminiModels.isEmpty {
+                fetchGeminiModels()
+            }
+            if selectedProvider == .grok && grokModels.isEmpty {
+                fetchGrokModels()
+            }
         }
     }
 
@@ -440,6 +446,46 @@ final class AgentViewModel {
     var zAIModels: [OpenAIModelInfo] = []
     var isFetchingZAIModels = false
 
+    // MARK: - Google Gemini
+
+    var geminiAPIKey: String = KeychainService.shared.getGeminiAPIKey() ?? "" {
+        didSet { KeychainService.shared.setGeminiAPIKey(geminiAPIKey) }
+    }
+
+    var geminiModel: String = UserDefaults.standard.string(forKey: "geminiModel") ?? "gemini-2.5-flash" {
+        didSet { UserDefaults.standard.set(geminiModel, forKey: "geminiModel") }
+    }
+
+    nonisolated static let defaultGeminiModels: [OpenAIModelInfo] = [
+        OpenAIModelInfo(id: "gemini-2.5-pro-preview-05-06", name: "Gemini 2.5 Pro"),
+        OpenAIModelInfo(id: "gemini-2.5-flash-preview-05-20", name: "Gemini 2.5 Flash"),
+        OpenAIModelInfo(id: "gemini-2.5-flash", name: "Gemini 2.5 Flash (Stable)"),
+        OpenAIModelInfo(id: "gemini-2.0-flash", name: "Gemini 2.0 Flash"),
+    ]
+
+    var geminiModels: [OpenAIModelInfo] = []
+    var isFetchingGeminiModels = false
+
+    // MARK: - Grok (xAI)
+
+    var grokAPIKey: String = KeychainService.shared.getGrokAPIKey() ?? "" {
+        didSet { KeychainService.shared.setGrokAPIKey(grokAPIKey) }
+    }
+
+    var grokModel: String = UserDefaults.standard.string(forKey: "grokModel") ?? "grok-3-mini-fast" {
+        didSet { UserDefaults.standard.set(grokModel, forKey: "grokModel") }
+    }
+
+    nonisolated static let defaultGrokModels: [OpenAIModelInfo] = [
+        OpenAIModelInfo(id: "grok-3", name: "Grok 3"),
+        OpenAIModelInfo(id: "grok-3-fast", name: "Grok 3 Fast"),
+        OpenAIModelInfo(id: "grok-3-mini", name: "Grok 3 Mini"),
+        OpenAIModelInfo(id: "grok-3-mini-fast", name: "Grok 3 Mini Fast"),
+    ]
+
+    var grokModels: [OpenAIModelInfo] = []
+    var isFetchingGrokModels = false
+
     nonisolated static let defaultHuggingFaceModels: [OpenAIModelInfo] = [
         OpenAIModelInfo(id: "deepseek-ai/DeepSeek-V3-0324", name: "DeepSeek V3"),
         OpenAIModelInfo(id: "deepseek-ai/DeepSeek-R1", name: "DeepSeek R1"),
@@ -524,6 +570,12 @@ final class AgentViewModel {
     var zAITemperature: Double = UserDefaults.standard.object(forKey: "zAITemperature") as? Double ?? 0.7 {
         didSet { UserDefaults.standard.set(zAITemperature, forKey: "zAITemperature") }
     }
+    var geminiTemperature: Double = UserDefaults.standard.object(forKey: "geminiTemperature") as? Double ?? 0.7 {
+        didSet { UserDefaults.standard.set(geminiTemperature, forKey: "geminiTemperature") }
+    }
+    var grokTemperature: Double = UserDefaults.standard.object(forKey: "grokTemperature") as? Double ?? 0.7 {
+        didSet { UserDefaults.standard.set(grokTemperature, forKey: "grokTemperature") }
+    }
 
     /// Get temperature for the current provider.
     func temperatureForProvider(_ provider: APIProvider) -> Double {
@@ -537,6 +589,8 @@ final class AgentViewModel {
         case .vLLM: return vLLMTemperature
         case .lmStudio: return lmStudioTemperature
         case .zAI: return zAITemperature
+        case .gemini: return geminiTemperature
+        case .grok: return grokTemperature
         case .foundationModel: return 0.2
         }
     }

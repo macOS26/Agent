@@ -222,6 +222,88 @@ struct SettingsView: View {
                         }
                     }
                 }
+            } else if viewModel.selectedProvider == .gemini {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Google Gemini API")
+                        .font(.headline)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("API Key").font(.caption).foregroundStyle(.secondary)
+                        LockedSecureField(text: $viewModel.geminiAPIKey, placeholder: "Gemini API key", lockKey: "lock.geminiAPIKey")
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Model").font(.caption).foregroundStyle(.secondary)
+                        HStack {
+                            if viewModel.geminiModels.isEmpty {
+                                TextField("Model name", text: $viewModel.geminiModel)
+                                    .textFieldStyle(.roundedBorder)
+                            } else {
+                                Picker("Model", selection: $viewModel.geminiModel) {
+                                    ForEach(viewModel.geminiModels) { model in
+                                        Text(model.name).tag(model.id)
+                                    }
+                                }
+                                .labelsHidden()
+                            }
+
+                            Button {
+                                viewModel.fetchGeminiModels()
+                            } label: {
+                                if viewModel.isFetchingGeminiModels {
+                                    ProgressView().controlSize(.small)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(viewModel.isFetchingGeminiModels)
+                            .help("Fetch available models")
+                        }
+                    }
+                }
+            } else if viewModel.selectedProvider == .grok {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Grok API (xAI)")
+                        .font(.headline)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("API Key").font(.caption).foregroundStyle(.secondary)
+                        LockedSecureField(text: $viewModel.grokAPIKey, placeholder: "Grok API key", lockKey: "lock.grokAPIKey")
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Model").font(.caption).foregroundStyle(.secondary)
+                        HStack {
+                            if viewModel.grokModels.isEmpty {
+                                TextField("Model name", text: $viewModel.grokModel)
+                                    .textFieldStyle(.roundedBorder)
+                            } else {
+                                Picker("Model", selection: $viewModel.grokModel) {
+                                    ForEach(viewModel.grokModels) { model in
+                                        Text(model.name).tag(model.id)
+                                    }
+                                }
+                                .labelsHidden()
+                            }
+
+                            Button {
+                                viewModel.fetchGrokModels()
+                            } label: {
+                                if viewModel.isFetchingGrokModels {
+                                    ProgressView().controlSize(.small)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(viewModel.isFetchingGrokModels)
+                            .help("Fetch available models")
+                        }
+                    }
+                }
             } else if viewModel.selectedProvider == .ollama {
                 // Cloud Ollama settings
                 VStack(alignment: .leading, spacing: 10) {
@@ -509,6 +591,8 @@ struct SettingsView: View {
         case .vLLM: viewModel.fetchVLLMModels()
         case .lmStudio: viewModel.fetchLMStudioModels()
         case .zAI: viewModel.fetchZAIModels()
+        case .gemini: viewModel.fetchGeminiModels()
+        case .grok: viewModel.fetchGrokModels()
         case .claude: Task { await viewModel.fetchClaudeModels() }
         case .foundationModel: break
         }

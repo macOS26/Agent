@@ -141,6 +141,22 @@ struct NewMainTabSheet: View {
                 fetch: { viewModel.fetchZAIModels() }
             )
 
+        case .gemini:
+            modelPickerWithFetch(
+                models: viewModel.geminiModels,
+                fallbackBinding: $selectedModelId,
+                isFetching: viewModel.isFetchingGeminiModels,
+                fetch: { viewModel.fetchGeminiModels() }
+            )
+
+        case .grok:
+            modelPickerWithFetch(
+                models: viewModel.grokModels,
+                fallbackBinding: $selectedModelId,
+                isFetching: viewModel.isFetchingGrokModels,
+                fetch: { viewModel.fetchGrokModels() }
+            )
+
         case .foundationModel:
             HStack {
                 Text("Apple Intelligence")
@@ -237,6 +253,8 @@ struct NewMainTabSheet: View {
         case .vLLM: return viewModel.vLLMModel
         case .lmStudio: return viewModel.lmStudioModel
         case .zAI: return viewModel.zAIModel
+        case .gemini: return viewModel.geminiModel
+        case .grok: return viewModel.grokModel
         case .foundationModel: return "Apple Intelligence"
         }
     }
@@ -263,6 +281,10 @@ struct NewMainTabSheet: View {
             if viewModel.lmStudioModels.isEmpty { viewModel.fetchLMStudioModels() }
         case .zAI:
             if viewModel.zAIModels.isEmpty { viewModel.fetchZAIModels() }
+        case .gemini:
+            if viewModel.geminiModels.isEmpty { viewModel.fetchGeminiModels() }
+        case .grok:
+            if viewModel.grokModels.isEmpty { viewModel.fetchGrokModels() }
         case .foundationModel:
             break
         }

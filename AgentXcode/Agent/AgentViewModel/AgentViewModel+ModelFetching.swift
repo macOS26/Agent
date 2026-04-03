@@ -398,6 +398,71 @@ extension AgentViewModel {
         }.sorted { $0.name < $1.name }
     }
 
+    // MARK: - Google Gemini Models
+
+    func fetchGeminiModels() {
+        isFetchingGeminiModels = true
+        let key = geminiAPIKey
+        Task {
+            defer { isFetchingGeminiModels = false }
+            guard !key.isEmpty else {
+                geminiModels = Self.defaultGeminiModels
+                return
+            }
+            do {
+                let models = try await Self.fetchOpenAICompatibleModels(apiKey: key, endpoint: "https://generativelanguage.googleapis.com/v1beta/openai/models")
+                geminiModels = models.isEmpty ? Self.defaultGeminiModels : models
+                if geminiModel.isEmpty || !geminiModels.contains(where: { $0.id == geminiModel }) {
+                    geminiModel = geminiModels.first?.id ?? "gemini-2.5-flash"
+                }
+            } catch {
+                appendLog("Failed to fetch Gemini models: \(error.localizedDescription)")
+                geminiModels = Self.defaultGeminiModels
+            }
+        }
+    }
+
+    // MARK: - Grok Models
+
+    func fetchGrokModels() {
+        isFetchingGrokModels = true
+        let key = grokAPIKey
+        Task {
+            defer { isFetchingGrokModels = false }
+            guard !key.isEmpty else {
+                grokModels = Self.defaultGrokModels
+                return
+            }
+            do {
+                let models = try await Self.fetchOpenAICompatibleModels(apiKey: key, endpoint: "https://api.x.ai/v1/models")
+                grokModels = models.isEmpty ? Self.defaultGrokModels : models
+                if grokModel.isEmpty || !grokModels.contains(where: { $0.id == grokModel }) {
+                    grokModel = grokModels.first?.id ?? "grok-3-mini-fast"
+                }
+            } catch {
+                appendLog("Failed to fetch Grok models: \(error.localizedDescription)")
+                grokModels = Self.defaultGrokModels
+            }
+        }
+    }
+
+    /// Shared OpenAI-compatible model list fetcher
+    private nonisolated static func fetchOpenAICompatibleModels(apiKey: String, endpoint: String) async throws -> [OpenAIModelInfo] {
+        guard let url = URL(string: endpoint) else { throw AgentError.invalidURL }
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = llmAPITimeout
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else { return [] }
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let modelsData = json["data"] as? [[String: Any]] else { return [] }
+        return modelsData.compactMap { model -> OpenAIModelInfo? in
+            guard let id = model["id"] as? String else { return nil }
+            return OpenAIModelInfo(id: id, name: id)
+        }.sorted { $0.name < $1.name }
+    }
+
     // MARK: - vLLM Models
 
     func fetchVLLMModels() {
