@@ -308,29 +308,19 @@ struct ContentView: View {
                     return nil
                 }
 
-                // Cmd+D: Dismiss (collapse) LLM Output
+                // Cmd+D: Toggle both LLM chevrons on current tab
                 if event.modifierFlags.contains(.command),
                    event.charactersIgnoringModifiers == "d" {
                     withAnimation(.easeInOut(duration: 0.25)) {
                         if let selId = viewModel.selectedTabId,
                            let tab = viewModel.tab(for: selId) {
-                            tab.thinkingExpanded = false
+                            let expand = !tab.thinkingExpanded
+                            tab.thinkingExpanded = expand
+                            tab.thinkingOutputExpanded = expand
                         } else {
-                            viewModel.thinkingExpanded = false
-                        }
-                    }
-                    return nil
-                }
-
-                // Cmd+O: Show (expand) LLM Output
-                if event.modifierFlags.contains(.command),
-                   event.charactersIgnoringModifiers == "o" {
-                    withAnimation(.easeInOut(duration: 0.25)) {
-                        if let selId = viewModel.selectedTabId,
-                           let tab = viewModel.tab(for: selId) {
-                            tab.thinkingExpanded = true
-                        } else {
-                            viewModel.thinkingExpanded = true
+                            let expand = !viewModel.thinkingExpanded
+                            viewModel.thinkingExpanded = expand
+                            viewModel.thinkingOutputExpanded = expand
                         }
                     }
                     return nil

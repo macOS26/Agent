@@ -242,9 +242,9 @@ struct ThinkingIndicatorView: View {
             }
         }
         .onChange(of: tab?.isLLMRunning) { _, newValue in
-            guard let tab, !tab.isMainTab else { return }
+            guard let tab else { return }
             if newValue == true {
-                // Auto-expand both chevrons when LLM starts on a script tab
+                // Auto-expand both chevrons when LLM starts on any tab
                 withAnimation(.easeInOut(duration: 0.2)) {
                     isExpanded = true
                     showStreamText = true
