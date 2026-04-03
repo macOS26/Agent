@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/macOS26/AgentAudit.git",
       "state" : {
-        "revision" : "cc777ea0867837c55586c627508cbe37c672a7e7",
-        "version" : "1.0.0"
+        "revision" : "f1cef0f94b4f5cabe06bae42613e82e857c9d24a",
+        "version" : "1.1.0"
       }
     },
     {
