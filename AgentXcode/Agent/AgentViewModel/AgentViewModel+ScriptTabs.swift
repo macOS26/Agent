@@ -112,7 +112,9 @@ extension AgentViewModel {
             }
             tab.logFlushTask?.cancel()
             tab.llmStreamFlushTask?.cancel()
-            tab.flush()
+            // Clear log before removal — prevents expensive NSAttributedString copy on tab switch
+            tab.activityLog = ""
+            tab.rawLLMOutput = ""
         }
         if selectedTabId == id {
             if let idx = scriptTabs.firstIndex(where: { $0.id == id }) {
