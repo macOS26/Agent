@@ -599,6 +599,7 @@ final class AgentViewModel {
         case .zAI: return zAITemperature
         case .gemini: return geminiTemperature
         case .grok: return grokTemperature
+        case .copilot: return openAITemperature
         case .foundationModel: return 0.2
         }
     }
