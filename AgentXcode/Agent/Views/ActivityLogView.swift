@@ -302,20 +302,20 @@ struct ActivityLogView: NSViewRepresentable {
                 } else {
                     let savedOrigin = scrollView.contentView.bounds.origin
                     let wasAtBottom = tabSwitched || isNearBottom(textView)
-                    textView.textStorage?.beginEditing()
-                    // Use cached attributed string on tab switch if available
-                    if let cached = cachedAttributedString(for: tabID, text: text) {
-                        textView.textStorage?.setAttributedString(cached)
+                    // Try instant swap from cached TextStorage (no re-layout)
+                    if tabSwitched, swapToCachedStorage(for: tabID, text: text, textView: textView, scrollView: scrollView) {
+                        // Cache hit — layout preserved, scroll restored
                     } else {
+                        textView.textStorage?.beginEditing()
                         textView.textStorage?.setAttributedString(buildAttributedString(from: text))
+                        textView.textStorage?.endEditing()
+                        if !wasAtBottom {
+                            scrollView.contentView.scroll(to: savedOrigin)
+                            scrollView.reflectScrolledClipView(scrollView.contentView)
+                        }
                     }
-                    textView.textStorage?.endEditing()
                     lastLength = len
                     lastRenderedText = text
-                    if !wasAtBottom {
-                        scrollView.contentView.scroll(to: savedOrigin)
-                        scrollView.reflectScrolledClipView(scrollView.contentView)
-                    }
                 }
             }
 
@@ -1232,30 +1232,50 @@ struct ActivityLogView: NSViewRepresentable {
             return true
         }
 
-        // MARK: - Per-Tab Attributed String Cache
+        // MARK: - Per-Tab TextStorage Cache
 
-        /// Cached rendered output per tab, keyed by tab ID (nil = main tab)
+        /// Cached NSTextStorage per tab — swapping avoids re-layout entirely.
         private struct TabCache {
-            let attributedString: NSAttributedString
+            let textStorage: NSTextStorage
             let textLength: Int
             let textHash: Int
+            let scrollY: CGFloat
         }
         private var tabCaches: [UUID?: TabCache] = [:]
 
-        /// Returns cached attributed string if the text hasn't changed, otherwise nil
+        /// Returns cached text storage if the text hasn't changed, otherwise nil
         func cachedAttributedString(for tabID: UUID?, text: String) -> NSAttributedString? {
             guard let cache = tabCaches[tabID] else { return nil }
             let len = (text as NSString).length
             let hash = text.hashValue
             guard cache.textLength == len, cache.textHash == hash else { return nil }
-            return cache.attributedString
+            return cache.textStorage
         }
 
-        /// Store rendered attributed string in the per-tab cache
-        func cacheAttributedString(_ attrStr: NSAttributedString, for tabID: UUID?, text: String) {
+        /// Swap to a cached NSTextStorage for instant tab switch (no re-layout).
+        /// Returns true if cache was used.
+        func swapToCachedStorage(for tabID: UUID?, text: String, textView: NSTextView, scrollView: NSScrollView) -> Bool {
+            guard let cache = tabCaches[tabID] else { return false }
             let len = (text as NSString).length
             let hash = text.hashValue
-            tabCaches[tabID] = TabCache(attributedString: attrStr, textLength: len, textHash: hash)
+            guard cache.textLength == len, cache.textHash == hash else { return false }
+            // Swap the textStorage on the layout manager — instant, no re-layout
+            textView.layoutManager?.replaceTextStorage(cache.textStorage)
+            // Restore scroll position
+            scrollView.contentView.scroll(to: NSPoint(x: 0, y: cache.scrollY))
+            scrollView.reflectScrolledClipView(scrollView.contentView)
+            return true
+        }
+
+        /// Save current textStorage and scroll position for a tab
+        func cacheAttributedString(_ attrStr: NSAttributedString, for tabID: UUID?, text: String) {
+            guard let scrollView = latestScrollView else { return }
+            let len = (text as NSString).length
+            let hash = text.hashValue
+            let scrollY = scrollView.contentView.bounds.origin.y
+            // Copy into a new NSTextStorage so the cached one is independent
+            let storage = NSTextStorage(attributedString: attrStr)
+            tabCaches[tabID] = TabCache(textStorage: storage, textLength: len, textHash: hash, scrollY: scrollY)
         }
 
         /// Invalidate cache for a specific tab
