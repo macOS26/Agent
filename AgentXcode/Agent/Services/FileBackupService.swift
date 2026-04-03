@@ -23,10 +23,18 @@ final class FileBackupService {
     @discardableResult
     func backup(filePath: String, tabID: UUID) -> String? {
         let fm = FileManager.default
-        guard fm.fileExists(atPath: filePath) else { return nil }
+        guard fm.fileExists(atPath: filePath) else {
+            print("[FileBackup] SKIP — file not found: \(filePath)")
+            return nil
+        }
 
         let tabDir = backupsDir.appendingPathComponent(tabID.uuidString)
-        try? fm.createDirectory(at: tabDir, withIntermediateDirectories: true)
+        do {
+            try fm.createDirectory(at: tabDir, withIntermediateDirectories: true)
+        } catch {
+            print("[FileBackup] ERROR creating dir: \(error)")
+            return nil
+        }
 
         let fileName = (filePath as NSString).lastPathComponent
         let timestamp = ISO8601DateFormatter().string(from: Date())
@@ -36,8 +44,10 @@ final class FileBackupService {
 
         do {
             try fm.copyItem(atPath: filePath, toPath: backupURL.path)
+            print("[FileBackup] OK — \(backupURL.path)")
             return backupURL.path
         } catch {
+            print("[FileBackup] ERROR copying: \(error)")
             return nil
         }
     }
