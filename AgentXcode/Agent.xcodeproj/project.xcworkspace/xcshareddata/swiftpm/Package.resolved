@@ -87,7 +87,7 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/macOS26/AgentTools.git",
       "state" : {
-        "revision" : "2af40ad8f3d8318dca355740fadf4606015113dc",
+        "revision" : "ceeb96e0aeead52a8da0d62b4bf3ad208a8d5e11",
         "version" : "2.12.0"
       }
     },

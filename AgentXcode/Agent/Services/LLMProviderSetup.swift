@@ -99,7 +99,7 @@ enum LLMProviderSetup {
     )
 
     static let codestral = LLMProviderConfig(
-        id: "codestral", displayName: "Codestral",
+        id: "codestral", displayName: "Mistral Vibe",
         kind: .cloudAPI, apiProtocol: .openAI,
         endpoint: LLMEndpoint(
             chatURL: "https://codestral.mistral.ai/v1/chat/completions",
