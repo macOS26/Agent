@@ -158,7 +158,15 @@ struct NewMainTabSheet: View {
             )
 
         case .mistral:
-            TextField("Model (e.g. mistral-large-latest)", text: $selectedModelId)
+            modelPickerWithFetch(
+                models: viewModel.mistralModels,
+                fallbackBinding: $selectedModelId,
+                isFetching: viewModel.isFetchingMistralModels,
+                fetch: { viewModel.fetchMistralModels() }
+            )
+
+        case .codestral:
+            TextField("Model (e.g. codestral-latest)", text: $selectedModelId)
                 .textFieldStyle(.roundedBorder)
 
         case .foundationModel:
@@ -260,6 +268,7 @@ struct NewMainTabSheet: View {
         case .gemini: return viewModel.geminiModel
         case .grok: return viewModel.grokModel
         case .mistral: return "mistral-large-latest"
+        case .codestral: return "codestral-latest"
         case .foundationModel: return "Apple Intelligence"
         }
     }
@@ -291,6 +300,8 @@ struct NewMainTabSheet: View {
         case .grok:
             if viewModel.grokModels.isEmpty { viewModel.fetchGrokModels() }
         case .mistral:
+            if viewModel.mistralModels.isEmpty { viewModel.fetchMistralModels() }
+        case .codestral:
             break
         case .foundationModel:
             break

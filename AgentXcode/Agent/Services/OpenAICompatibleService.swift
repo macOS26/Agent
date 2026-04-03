@@ -25,6 +25,15 @@ final class OpenAICompatibleService {
     /// Max output tokens. 0 = omit (let provider decide).
     let maxTokens: Int
 
+    // MARK: - Rate Limiting
+    /// Per-provider last request timestamp for rate limiting.
+    private static var lastRequestTime: [APIProvider: CFAbsoluteTime] = [:]
+    /// Minimum seconds between requests per provider. 0 = no limit.
+    private static let rateLimitSeconds: [APIProvider: Double] = [
+        .mistral: 1.1,
+        .codestral: 1.1,
+    ]
+
     init(apiKey: String, model: String, baseURL: String, supportsVision: Bool = false, historyContext: String = "", projectFolder: String = "", provider: APIProvider, messagesKey: String = "messages", maxTokens: Int = 0) {
         self.apiKey = apiKey
         self.model = model
@@ -256,7 +265,21 @@ final class OpenAICompatibleService {
     /// LM Studio Native (/api/v1/chat) doesn't support tools or max_tokens
     private var isNativeFormat: Bool { messagesKey == "input" }
 
+    /// Wait if needed to respect per-provider rate limits.
+    private func enforceRateLimit() async {
+        if let minGap = Self.rateLimitSeconds[provider],
+           let last = Self.lastRequestTime[provider] {
+            let elapsed = CFAbsoluteTimeGetCurrent() - last
+            if elapsed < minGap {
+                let wait = minGap - elapsed
+                try? await Task.sleep(for: .seconds(wait))
+            }
+        }
+        Self.lastRequestTime[provider] = CFAbsoluteTimeGetCurrent()
+    }
+
     func send(messages: [[String: Any]], activeGroups: Set<String>? = nil) async throws -> (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int) {
+        await enforceRateLimit()
         let payload = buildMessagesPayload(messages)
 
         var body: [String: Any] = [
@@ -282,6 +305,7 @@ final class OpenAICompatibleService {
         activeGroups: Set<String>? = nil,
         onTextDelta: @escaping @Sendable (String) -> Void
     ) async throws -> (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int) {
+        await enforceRateLimit()
         let payload = buildMessagesPayload(messages)
 
         var body: [String: Any] = [

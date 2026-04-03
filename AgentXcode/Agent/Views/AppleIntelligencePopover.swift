@@ -4,29 +4,11 @@ struct AppleIntelligencePopover: View {
     @ObservedObject private var aiMediator = AppleIntelligenceMediator.shared
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
-                // Header
-                Text("LoRA Training Tools")
-                    .font(.headline)
-                
-                Text("Train and manage LoRA adapters for local models.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                                
-                // Mediator Section
-                mediatorSection
-
-                Divider()
-
-                // LoRA Sections
-                LoRASettingsView()
-            }
-            .padding(16)
-            .padding(.bottom, 20)
+        VStack(alignment: .leading, spacing: 12) {
+            mediatorSection
         }
+        .padding(16)
         .frame(width: 380)
-        .frame(maxHeight: 580)
     }
 
     // MARK: - Mediator Section
@@ -90,20 +72,6 @@ struct AppleIntelligencePopover: View {
                                 .foregroundStyle(.secondary)
                         }
                         Toggle("", isOn: $aiMediator.injectContextToLLM)
-                            .toggleStyle(.switch)
-                            .controlSize(.mini)
-                            .labelsHidden()
-                    }
-
-                    GridRow {
-                        VStack(alignment: .leading) {
-                            Text("Capture training data")
-                                .font(.caption)
-                            Text("Records prompts, AI context, LLM responses, and summaries for LoRA JSONL")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        }
-                        Toggle("", isOn: $aiMediator.trainingEnabled)
                             .toggleStyle(.switch)
                             .controlSize(.mini)
                             .labelsHidden()
