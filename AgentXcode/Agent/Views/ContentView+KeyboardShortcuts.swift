@@ -102,14 +102,18 @@ extension ContentView {
             return nil
         }
         
-        // Cmd+D: Toggle LLM Output expanded/collapsed
+        // Cmd+D: Toggle both LLM chevrons (expand/collapse) on current tab
         if event.modifierFlags.contains(.command),
            event.charactersIgnoringModifiers == "d" {
             if let selId = viewModel.selectedTabId,
                let tab = viewModel.tab(for: selId) {
-                tab.thinkingExpanded.toggle()
+                let expand = !tab.thinkingExpanded
+                tab.thinkingExpanded = expand
+                tab.thinkingOutputExpanded = expand
             } else {
-                viewModel.thinkingExpanded.toggle()
+                let expand = !viewModel.thinkingExpanded
+                viewModel.thinkingExpanded = expand
+                viewModel.thinkingOutputExpanded = expand
             }
             return nil
         }
