@@ -133,6 +133,8 @@ final class OpenAICompatibleService {
         var chatMessages: [[String: Any]] = [
             ["role": "system", "content": prompt]
         ]
+        // Track tool call ID → name mapping for tool response "name" field (required by Mistral)
+        var toolIdToName: [String: String] = [:]
 
         for msg in withFolderPrefix(messages) {
             guard let role = msg["role"] as? String else { continue }
@@ -146,11 +148,17 @@ final class OpenAICompatibleService {
                         for block in blocks {
                             guard let toolUseId = block["tool_use_id"] as? String,
                                   let content = block["content"] as? String else { continue }
-                            chatMessages.append([
+                            let sanitizedId = sanitizeToolId(toolUseId)
+                            var toolMsg: [String: Any] = [
                                 "role": "tool",
-                                "tool_call_id": toolUseId,
+                                "tool_call_id": sanitizedId,
                                 "content": content
-                            ])
+                            ]
+                            // Add "name" field — required by Mistral
+                            if let name = toolIdToName[toolUseId] ?? toolIdToName[sanitizedId] {
+                                toolMsg["name"] = name
+                            }
+                            chatMessages.append(toolMsg)
                         }
                     } else {
                         // Content blocks (text + images) — use OpenAI multipart content
@@ -190,8 +198,12 @@ final class OpenAICompatibleService {
                         if blockType == "text", let t = block["text"] as? String {
                             textParts += t
                         } else if blockType == "tool_use" {
-                            let callId = sanitizeToolId(block["id"] as? String ?? shortToolId())
+                            let rawId = block["id"] as? String ?? shortToolId()
+                            let callId = sanitizeToolId(rawId)
                             let name = block["name"] as? String ?? ""
+                            // Track ID → name for tool response messages
+                            toolIdToName[rawId] = name
+                            toolIdToName[callId] = name
                             let input = block["input"] as? [String: Any] ?? [:]
                             // OpenAI expects arguments as a JSON string
                             let argsString: String
@@ -275,12 +287,20 @@ final class OpenAICompatibleService {
                             }
                         }
                         // Pad any missing tool responses so counts match
+                        let callNameMap = Dictionary(uniqueKeysWithValues: calls.compactMap { c -> (String, String)? in
+                            guard let id = c["id"] as? String,
+                                  let fn = c["function"] as? [String: Any],
+                                  let name = fn["name"] as? String else { return nil }
+                            return (id, name)
+                        })
                         for cid in callIds where !usedIds.contains(cid) {
-                            cleaned.append([
+                            var pad: [String: Any] = [
                                 "role": "tool",
                                 "tool_call_id": cid,
                                 "content": "(no result)"
-                            ])
+                            ]
+                            if let name = callNameMap[cid] { pad["name"] = name }
+                            cleaned.append(pad)
                         }
                     }
                     i = j
