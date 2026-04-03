@@ -12,6 +12,12 @@ extension AgentViewModel {
                 let process = Process()
                 process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
                 process.arguments = ["-x", "-t", "png", tempPath]
+                process.currentDirectoryURL = URL(fileURLWithPath: NSTemporaryDirectory())
+                var env = ProcessInfo.processInfo.environment
+                env["HOME"] = NSHomeDirectory()
+                let extraPaths = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+                env["PATH"] = extraPaths + ":" + (env["PATH"] ?? "")
+                process.environment = env
                 do {
                     try process.run()
                     process.waitUntilExit()

@@ -47,6 +47,12 @@ final class XcodeService: @unchecked Sendable {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
         process.arguments = ["-e", script]
+        process.currentDirectoryURL = URL(fileURLWithPath: NSHomeDirectory())
+        var env = ProcessInfo.processInfo.environment
+        env["HOME"] = NSHomeDirectory()
+        let extraPaths = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+        env["PATH"] = extraPaths + ":" + (env["PATH"] ?? "")
+        process.environment = env
 
         let outputPipe = Pipe()
         let errorPipe = Pipe()
