@@ -567,14 +567,12 @@ final class AgentViewModel {
 
     var codestralModels: [OpenAIModelInfo] = [
         OpenAIModelInfo(id: "codestral-latest", name: "Codestral Latest"),
-        OpenAIModelInfo(id: "codestral-2501", name: "Codestral 25.01"),
         OpenAIModelInfo(id: "codestral-2508", name: "Codestral 25.08"),
     ]
     var isFetchingCodestralModels = false
 
     nonisolated static let defaultCodestralModels: [OpenAIModelInfo] = [
         OpenAIModelInfo(id: "codestral-latest", name: "Codestral Latest"),
-        OpenAIModelInfo(id: "codestral-2501", name: "Codestral 25.01"),
         OpenAIModelInfo(id: "codestral-2508", name: "Codestral 25.08"),
     ]
 
@@ -1227,7 +1225,7 @@ final class AgentViewModel {
         let model = provider == .ollama ? ollamaModel : localOllamaModel
         guard !model.isEmpty else { return }
 
-        let chatURL = endpoint.isEmpty ? "http://localhost:11434/api/chat" : endpoint
+        let chatURL = endpoint.isEmpty ? "http://localhost:11434/v1/chat/completions" : endpoint
         guard let url = URL(string: chatURL) else { return }
 
         var request = URLRequest(url: url)
