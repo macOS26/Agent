@@ -1,5 +1,6 @@
 import Foundation
 import AgentTools
+import AgentLLM
 
 extension AgentViewModel {
     // MARK: - Script Tabs
