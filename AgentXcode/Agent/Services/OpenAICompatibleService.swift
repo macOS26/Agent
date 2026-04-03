@@ -226,22 +226,56 @@ final class OpenAICompatibleService {
                 }
             }
         }
-        // Mistral/Codestral require strict ordering: tool messages must follow an assistant message
-        // with tool_calls. Drop orphaned tool messages that violate this constraint.
+        // Mistral requires strict tool message ordering:
+        // 1. tool messages must follow an assistant message with tool_calls
+        // 2. number of tool responses must equal number of tool_calls
         if provider == .mistral || provider == .codestral || provider == .vibe {
             var cleaned: [[String: Any]] = []
-            for msg in chatMessages {
+            var i = 0
+            while i < chatMessages.count {
+                let msg = chatMessages[i]
                 let role = msg["role"] as? String ?? ""
-                if role == "tool" {
-                    // Only keep tool messages if previous message is assistant with tool_calls
-                    if let prev = cleaned.last,
-                       prev["role"] as? String == "assistant",
-                       prev["tool_calls"] != nil {
-                        cleaned.append(msg)
+
+                if role == "assistant", let calls = msg["tool_calls"] as? [[String: Any]], !calls.isEmpty {
+                    let expectedCount = calls.count
+                    let callIds = Set(calls.compactMap { $0["id"] as? String })
+                    // Collect following tool messages
+                    var toolMsgs: [[String: Any]] = []
+                    var j = i + 1
+                    while j < chatMessages.count, chatMessages[j]["role"] as? String == "tool" {
+                        toolMsgs.append(chatMessages[j])
+                        j += 1
                     }
-                    // Otherwise drop — orphaned tool result
+                    if toolMsgs.count == expectedCount {
+                        // Counts match — keep assistant + all tool messages
+                        cleaned.append(msg)
+                        cleaned.append(contentsOf: toolMsgs)
+                    } else {
+                        // Mismatch — only keep tool messages that match a call ID, pad missing ones
+                        cleaned.append(msg)
+                        var usedIds = Set<String>()
+                        for tm in toolMsgs {
+                            if let tid = tm["tool_call_id"] as? String, callIds.contains(tid) {
+                                cleaned.append(tm)
+                                usedIds.insert(tid)
+                            }
+                        }
+                        // Pad any missing tool responses so counts match
+                        for cid in callIds where !usedIds.contains(cid) {
+                            cleaned.append([
+                                "role": "tool",
+                                "tool_call_id": cid,
+                                "content": "(no result)"
+                            ])
+                        }
+                    }
+                    i = j
+                } else if role == "tool" {
+                    // Orphaned tool message — drop it
+                    i += 1
                 } else {
                     cleaned.append(msg)
+                    i += 1
                 }
             }
             return cleaned
