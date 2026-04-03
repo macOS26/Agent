@@ -31,7 +31,8 @@ enum CodingService {
 
         guard FileManager.default.fileExists(atPath: url.path) else {
             let dir = (path as NSString).deletingLastPathComponent
-            return "Error: file not found: \(path)\nSTOP guessing paths. Call file_manager(action:\"list\", path:\"\(dir)\") to see what files exist."
+            let suggestPath = dir.isEmpty ? "." : dir
+            return "Error: file not found: \(path)\nSTOP guessing paths. Call file_manager(action:\"list\", path:\"\(suggestPath)\") to see what files exist."
         }
 
         // Check if it's a directory

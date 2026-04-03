@@ -133,7 +133,10 @@ extension AgentViewModel {
     /// into legacy tool names so existing handlers work unchanged.
     static func expandConsolidatedTool(name: String, input: [String: Any]) -> (String, [String: Any]) {
         let action = input["action"] as? String ?? ""
-        let newInput = input
+        // Normalize empty path/file_path to nil so handlers fall back to project folder
+        var newInput = input
+        if let p = newInput["path"] as? String, p.isEmpty { newInput["path"] = nil }
+        if let p = newInput["file_path"] as? String, p.isEmpty { newInput["file_path"] = nil }
 
         switch name {
         case "git":

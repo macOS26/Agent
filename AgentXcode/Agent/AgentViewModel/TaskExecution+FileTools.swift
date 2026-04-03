@@ -34,7 +34,8 @@ extension AgentViewModel {
             // If file not found, suggest listing files first
             if output.hasPrefix("Error:") && output.contains("not found") {
                 let dir = (filePath as NSString).deletingLastPathComponent
-                let suggestion = output + "\nUse file_manager(action:\"list\", path:\"\(dir)\") to see available files."
+                let suggestPath = dir.isEmpty ? "." : dir
+                let suggestion = output + "\nUse file_manager(action:\"list\", path:\"\(suggestPath)\") to see available files."
                 appendLog(suggestion)
                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": suggestion])
                 return true
