@@ -38,8 +38,8 @@ struct HeaderStatusView: View {
             .help("Daemon: \(viewModel.rootServiceActive ? "Running" : (viewModel.rootEnabled ? "Stopped" : "Disabled"))")
         }
         .padding(.leading, 15)
-        .frame(width: 260, alignment: .leading)
-        .padding(.trailing, 15)
+        .fixedSize()
+        .padding(.trailing, 18)
     }
 }
 
