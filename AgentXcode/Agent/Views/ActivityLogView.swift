@@ -1070,9 +1070,9 @@ struct ActivityLogView: NSViewRepresentable {
                 return result
             }
 
-            // Activity log output (timestamps, grep results) — bypass markdown parser
+            // Activity log output (timestamps, grep results) — bypass markdown parser but still linkify URLs
             if let highlighted = CodeBlockHighlighter.highlightActivityLogLine(line: line, font: font) {
-                return highlighted
+                return linkifyURLs(highlighted)
             }
 
             // Regular line — inline elements only
