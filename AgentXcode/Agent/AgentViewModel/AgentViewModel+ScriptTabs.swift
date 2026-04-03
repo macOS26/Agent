@@ -66,7 +66,6 @@ extension AgentViewModel {
         case .zAI: return zAIModel
         case .gemini: return geminiModel
         case .grok: return grokModel
-        case .copilot: return "gpt-4o"
         case .foundationModel: return "Apple Intelligence"
         }
     }
@@ -102,8 +101,6 @@ extension AgentViewModel {
         case .grok:
             return grokModels.first(where: { $0.id == modelId })?.name
                 ?? Self.defaultGrokModels.first(where: { $0.id == modelId })?.name ?? modelId
-        case .copilot:
-            return modelId
         case .foundationModel:
             return "Apple Intelligence"
         }

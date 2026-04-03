@@ -593,7 +593,6 @@ struct SettingsView: View {
         case .zAI: viewModel.fetchZAIModels()
         case .gemini: viewModel.fetchGeminiModels()
         case .grok: viewModel.fetchGrokModels()
-        case .copilot: break
         case .claude: Task { await viewModel.fetchClaudeModels() }
         case .foundationModel: break
         }
