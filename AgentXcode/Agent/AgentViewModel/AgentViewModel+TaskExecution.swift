@@ -76,9 +76,6 @@ extension AgentViewModel {
         case .grok:
             modelName = grokModel
             isVision = Self.isVisionModel(grokModel)
-        case .copilot:
-            modelName = "gpt-4o"
-            isVision = true
         case .foundationModel:
             modelName = "Apple Intelligence"
             isVision = false // Apple Intelligence doesn't support image input

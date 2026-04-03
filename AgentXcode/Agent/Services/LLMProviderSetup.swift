@@ -7,7 +7,7 @@ enum LLMProviderSetup {
 
     static func registerAllProviders() {
         LLMRegistry.shared.registerAll([
-            claude, openAI, copilot, gemini, grok, deepSeek, huggingFace, zAI,
+            claude, openAI, gemini, grok, deepSeek, huggingFace, zAI,
             ollama, localOllama, vLLM, lmStudio, appleIntelligence
         ])
     }
@@ -74,16 +74,6 @@ enum LLMProviderSetup {
         endpoint: LLMEndpoint(
             chatURL: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
             modelsURL: "https://generativelanguage.googleapis.com/v1beta/openai/models"
-        ),
-        capabilities: [.streaming, .tools, .vision, .systemPrompt]
-    )
-
-    static let copilot = LLMProviderConfig(
-        id: "copilot", displayName: "Microsoft Copilot",
-        kind: .cloudAPI, apiProtocol: .openAI,
-        endpoint: LLMEndpoint(
-            chatURL: "https://api.githubcopilot.com/chat/completions",
-            modelsURL: "https://api.githubcopilot.com/models"
         ),
         capabilities: [.streaming, .tools, .vision, .systemPrompt]
     )

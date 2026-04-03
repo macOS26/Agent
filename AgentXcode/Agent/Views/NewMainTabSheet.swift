@@ -157,10 +157,6 @@ struct NewMainTabSheet: View {
                 fetch: { viewModel.fetchGrokModels() }
             )
 
-        case .copilot:
-            TextField("Model name (e.g. gpt-4o)", text: $selectedModelId)
-                .textFieldStyle(.roundedBorder)
-
         case .foundationModel:
             HStack {
                 Text("Apple Intelligence")
@@ -259,7 +255,6 @@ struct NewMainTabSheet: View {
         case .zAI: return viewModel.zAIModel
         case .gemini: return viewModel.geminiModel
         case .grok: return viewModel.grokModel
-        case .copilot: return "gpt-4o"
         case .foundationModel: return "Apple Intelligence"
         }
     }
@@ -290,8 +285,6 @@ struct NewMainTabSheet: View {
             if viewModel.geminiModels.isEmpty { viewModel.fetchGeminiModels() }
         case .grok:
             if viewModel.grokModels.isEmpty { viewModel.fetchGrokModels() }
-        case .copilot:
-            break
         case .foundationModel:
             break
         }
