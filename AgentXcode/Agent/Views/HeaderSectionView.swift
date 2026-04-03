@@ -97,6 +97,7 @@ struct HeaderToolbarButtons: View {
     @Binding var showMCPServers: Bool
     @Binding var showTools: Bool
     @Binding var showSettings: Bool
+    @State private var showRollback = false
     @Binding var showAIPopover: Bool
     @Binding var showOptions: Bool
     @Binding var showHistory: Bool
@@ -154,6 +155,15 @@ struct HeaderToolbarButtons: View {
         }
         .popover(isPresented: $showMCPServers) {
             MCPServersView()
+        }
+
+        Button { showRollback.toggle() } label: {
+            Image(systemName: "arrow.uturn.backward.circle")
+                .foregroundStyle(FileBackupService.shared.backupCount(tabID: viewModel.selectedTabId ?? AgentViewModel.mainTabBackupID) > 0 ? .green : .secondary)
+        }
+        .help("File Backups & Rollback")
+        .popover(isPresented: $showRollback) {
+            RollbackView(viewModel: viewModel)
         }
 
         Button { showTools.toggle() } label: {
