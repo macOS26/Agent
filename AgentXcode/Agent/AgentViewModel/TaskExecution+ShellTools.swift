@@ -42,7 +42,7 @@ extension AgentViewModel {
 extension AgentViewModel {
 
     /// Execute a command via UserService XPC with streaming output.
-    /// Used by TabTask and TaskExecution for Ollama restart commands.
+    /// Falls back to in-process execution when working directory is TCC-protected.
     func executeViaUserAgent(command: String, workingDirectory: String = "", silent: Bool = false) async -> (status: Int32, output: String) {
         resetStreamCounters()
         userServiceActive = true
@@ -55,7 +55,16 @@ extension AgentViewModel {
         // Prepend cd to ensure shell runs in the right directory
         let dir = workingDirectory.isEmpty ? projectFolder : workingDirectory
         let fullCommand = Self.prependWorkingDirectory(command, projectFolder: dir)
-        let result = await userService.execute(command: fullCommand, workingDirectory: dir)
+
+        // TCC-protected folders must run in-process (app has permissions, launch agent doesn't)
+        let result: (status: Int32, output: String)
+        if Self.isTCCProtectedPath(dir) || Self.needsTCCPermissions(command) {
+            result = await Self.executeTCCStreaming(command: fullCommand, workingDirectory: dir) { [weak self] chunk in
+                Task { @MainActor in self?.appendRawOutput(chunk) }
+            }
+        } else {
+            result = await userService.execute(command: fullCommand, workingDirectory: dir)
+        }
         userService.onOutput = nil
         userServiceActive = false
 
@@ -65,6 +74,14 @@ extension AgentViewModel {
         }
         flushLog()
         return result
+    }
+
+    /// Returns true if the path is under a TCC-protected folder that the launch agent can't access.
+    nonisolated static func isTCCProtectedPath(_ path: String) -> Bool {
+        let expanded = (path as NSString).expandingTildeInPath
+        let home = NSHomeDirectory()
+        let protected = ["/Documents", "/Desktop", "/Downloads"]
+        return protected.contains { expanded.hasPrefix(home + $0) }
     }
 
     /// Runs a command in the Agent app process to inherit TCC permissions
