@@ -193,7 +193,7 @@ struct HeaderToolbarButtons: View {
 
         Button { showRollback.toggle() } label: {
             Image(systemName: "arrow.uturn.backward.circle")
-                .foregroundStyle(FileBackupService.shared.backupCount(tabID: viewModel.selectedTabId ?? AgentViewModel.mainTabBackupID) > 0 ? .green : .secondary)
+                .foregroundStyle(FileBackupService.shared.totalBackupCount() > 0 ? .green : .secondary)
         }
         .help("File Backups & Rollback")
         .popover(isPresented: $showRollback) {
