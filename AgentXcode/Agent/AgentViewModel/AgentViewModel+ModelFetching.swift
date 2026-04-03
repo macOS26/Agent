@@ -447,6 +447,52 @@ extension AgentViewModel {
         }
     }
 
+    // MARK: - Mistral Models
+
+    func fetchMistralModels() {
+        isFetchingMistralModels = true
+        let key = mistralAPIKey
+        Task {
+            defer { isFetchingMistralModels = false }
+            guard !key.isEmpty else {
+                mistralModels = Self.defaultMistralModels
+                return
+            }
+            do {
+                let models = try await Self.fetchOpenAICompatibleModels(apiKey: key, endpoint: "https://api.mistral.ai/v1/models")
+                mistralModels = models.isEmpty ? Self.defaultMistralModels : models
+                if mistralModel.isEmpty || !mistralModels.contains(where: { $0.id == mistralModel }) {
+                    mistralModel = mistralModels.first?.id ?? "mistral-large-latest"
+                }
+            } catch {
+                AuditLog.log(.api, "Failed to fetch Mistral models: \(error.localizedDescription)")
+                mistralModels = Self.defaultMistralModels
+            }
+        }
+    }
+
+    func fetchCodestralModels() {
+        isFetchingCodestralModels = true
+        let key = codestralAPIKey
+        Task {
+            defer { isFetchingCodestralModels = false }
+            guard !key.isEmpty else {
+                codestralModels = Self.defaultCodestralModels
+                return
+            }
+            do {
+                let models = try await Self.fetchOpenAICompatibleModels(apiKey: key, endpoint: "https://codestral.mistral.ai/v1/models")
+                codestralModels = models.isEmpty ? Self.defaultCodestralModels : models
+                if codestralModel.isEmpty || !codestralModels.contains(where: { $0.id == codestralModel }) {
+                    codestralModel = codestralModels.first?.id ?? "codestral-latest"
+                }
+            } catch {
+                AuditLog.log(.api, "Failed to fetch Codestral models: \(error.localizedDescription)")
+                codestralModels = Self.defaultCodestralModels
+            }
+        }
+    }
+
     /// Shared OpenAI-compatible model list fetcher
     private nonisolated static func fetchOpenAICompatibleModels(apiKey: String, endpoint: String) async throws -> [OpenAIModelInfo] {
         guard let url = URL(string: endpoint) else { throw AgentError.invalidURL }

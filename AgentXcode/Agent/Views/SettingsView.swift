@@ -316,8 +316,68 @@ struct SettingsView: View {
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Model").font(.caption).foregroundStyle(.secondary)
-                        TextField("Model name", text: $viewModel.mistralModel)
-                            .textFieldStyle(.roundedBorder)
+                        HStack {
+                            if viewModel.mistralModels.isEmpty {
+                                TextField("Model name", text: $viewModel.mistralModel)
+                                    .textFieldStyle(.roundedBorder)
+                            } else {
+                                Picker("Model", selection: $viewModel.mistralModel) {
+                                    ForEach(viewModel.mistralModels) { model in
+                                        Text(model.name).tag(model.id)
+                                    }
+                                }
+                                .labelsHidden()
+                            }
+                            Button {
+                                viewModel.fetchMistralModels()
+                            } label: {
+                                if viewModel.isFetchingMistralModels {
+                                    ProgressView().controlSize(.small)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(viewModel.isFetchingMistralModels)
+                            .help("Fetch available models")
+                        }
+                    }
+                }
+            } else if viewModel.selectedProvider == .codestral {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Codestral")
+                        .font(.headline)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("API Key").font(.caption).foregroundStyle(.secondary)
+                        LockedSecureField(text: $viewModel.codestralAPIKey, placeholder: "Codestral API key", lockKey: "lock.codestralAPIKey")
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Model").font(.caption).foregroundStyle(.secondary)
+                        HStack {
+                            Picker("", selection: $viewModel.codestralModel) {
+                                ForEach(viewModel.codestralModels, id: \.id) { model in
+                                    Text(model.name.isEmpty ? model.id : model.name).tag(model.id)
+                                }
+                            }
+                            .labelsHidden()
+
+                            Button {
+                                viewModel.fetchCodestralModels()
+                            } label: {
+                                if viewModel.isFetchingCodestralModels {
+                                    ProgressView().controlSize(.mini)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(viewModel.isFetchingCodestralModels)
+                            .help("Fetch available models")
+                        }
                     }
                 }
             } else if viewModel.selectedProvider == .ollama {
@@ -620,7 +680,8 @@ struct SettingsView: View {
         case .zAI: viewModel.fetchZAIModels()
         case .gemini: viewModel.fetchGeminiModels()
         case .grok: viewModel.fetchGrokModels()
-        case .mistral: break
+        case .mistral: viewModel.fetchMistralModels()
+        case .codestral: viewModel.fetchCodestralModels()
         case .claude: Task { await viewModel.fetchClaudeModels() }
         case .foundationModel: break
         }

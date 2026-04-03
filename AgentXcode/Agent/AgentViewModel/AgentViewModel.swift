@@ -555,6 +555,23 @@ final class AgentViewModel {
     var mistralModels: [OpenAIModelInfo] = []
     var isFetchingMistralModels = false
 
+    // MARK: - Codestral
+
+    var codestralAPIKey: String = KeychainService.shared.getCodestralAPIKey() ?? "" {
+        didSet { KeychainService.shared.setCodestralAPIKey(codestralAPIKey) }
+    }
+
+    var codestralModel: String = UserDefaults.standard.string(forKey: "codestralModel") ?? "codestral-latest" {
+        didSet { UserDefaults.standard.set(codestralModel, forKey: "codestralModel") }
+    }
+
+    var codestralModels: [OpenAIModelInfo] = [OpenAIModelInfo(id: "codestral-latest", name: "Codestral Latest")]
+    var isFetchingCodestralModels = false
+
+    nonisolated static let defaultCodestralModels: [OpenAIModelInfo] = [
+        OpenAIModelInfo(id: "codestral-latest", name: "Codestral Latest"),
+    ]
+
     nonisolated static let defaultHuggingFaceModels: [OpenAIModelInfo] = [
         OpenAIModelInfo(id: "deepseek-ai/DeepSeek-V3-0324", name: "DeepSeek V3"),
         OpenAIModelInfo(id: "deepseek-ai/DeepSeek-R1", name: "DeepSeek R1"),
@@ -661,6 +678,7 @@ final class AgentViewModel {
         case .gemini: return geminiTemperature
         case .grok: return grokTemperature
         case .mistral: return openAITemperature
+        case .codestral: return 0.2
         case .foundationModel: return claudeTemperature
         }
     }
