@@ -186,6 +186,13 @@ struct ContentView: View {
             }
         }
         .onChange(of: viewModel.selectedTabId) { _, _ in
+            // Reset search state when switching tabs
+            if showSearch {
+                showSearch = false
+                searchText = ""
+                currentMatchIndex = 0
+                totalMatches = 0
+            }
             // Focus task input when switching/creating tabs
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 isTaskFieldFocused = true
