@@ -16,10 +16,9 @@
 		22439788DCAA5510D58ABEEC /* AgentViewModel+TabHandlers+Core.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D96CB6C2479E8BCCBF6B487 /* AgentViewModel+TabHandlers+Core.swift */; };
 		238B40E2A7DFCFB745101269 /* HeaderSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEA10A5913CDA508518F6EDA /* HeaderSectionView.swift */; };
 		23D4A25EAF30497598063A0D /* TokenUsageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3804F32B8914764A3690CB5 /* TokenUsageStore.swift */; };
-		3E8B8A7B5C4F4DD0B9DA34BC /* FileBackupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AFB0612717E44BF8818651B /* FileBackupService.swift */; };
-		E5CBD1143D2B44B8B9A209FE /* RollbackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B0C57073F5C4305AF673454 /* RollbackView.swift */; };
 		294AAA2C5E0241FCC1290B01 /* AgentViewModel+TaskUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEBEFF49533F8BC00811AE5C /* AgentViewModel+TaskUtilities.swift */; };
 		34558227A73FD129C9AF86AA /* AgentViewModel+TabHandlers+Automation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 224DF4E08C4D8857DC2B563B /* AgentViewModel+TabHandlers+Automation.swift */; };
+		3E8B8A7B5C4F4DD0B9DA34BC /* FileBackupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AFB0612717E44BF8818651B /* FileBackupService.swift */; };
 		4992CD23A14EED92AB5B902A /* KeyboardShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = F03E40CE4E05384C443BA8A9 /* KeyboardShortcuts.swift */; };
 		5276D54C0C7BAB0F9F5DE24A /* AgentViewModel+TabHandlers+AgentScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CDC0CB629A59A0594ED17DA /* AgentViewModel+TabHandlers+AgentScript.swift */; };
 		5A9DE31CE50141059B14FAA9 /* MemoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDB8327F7EE04EFBB6153380 /* MemoryStore.swift */; };
@@ -108,6 +107,7 @@
 		CS110000000000000000005 /* CodingService+Refactoring.swift in Sources */ = {isa = PBXBuildFile; fileRef = CS110000000000000000006 /* CodingService+Refactoring.swift */; };
 		DE0C6B19A80C218E670D6C69 /* AgentViewModel+TabHandlers+Web.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05EEC654A3A0762D24BE1901 /* AgentViewModel+TabHandlers+Web.swift */; };
 		E3E55709254183FE587097A8 /* DiffStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E185ABB626D6FCD3D74523A /* DiffStore.swift */; };
+		E5CBD1143D2B44B8B9A209FE /* RollbackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B0C57073F5C4305AF673454 /* RollbackView.swift */; };
 		E6A8395D5098ED44E0118609 /* InputSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C14A00A8D2269268767BD2D /* InputSectionView.swift */; };
 		EA60000000000000000001 /* SDEFs in Resources */ = {isa = PBXBuildFile; fileRef = EA60000000000000000002 /* SDEFs */; };
 		EA6EA3842F6E35CF003FDB6C /* send_image_output.json in Resources */ = {isa = PBXBuildFile; fileRef = EA6EA3812F6E35CF003FDB6C /* send_image_output.json */; };
@@ -229,6 +229,8 @@
 		1E185ABB626D6FCD3D74523A /* DiffStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffStore.swift; sourceTree = "<group>"; };
 		21810D90659A7DAD10CFA17A /* ScreenshotPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotPreviewView.swift; sourceTree = "<group>"; };
 		224DF4E08C4D8857DC2B563B /* AgentViewModel+TabHandlers+Automation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Automation.swift"; sourceTree = "<group>"; };
+		2AFB0612717E44BF8818651B /* FileBackupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileBackupService.swift; sourceTree = "<group>"; };
+		4B0C57073F5C4305AF673454 /* RollbackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RollbackView.swift; sourceTree = "<group>"; };
 		5D8FE3C1065B23B9424ED23C /* TaskExecution+Selenium.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskExecution+Selenium.swift"; sourceTree = "<group>"; };
 		6CD920ED377E5386B020BC79 /* AgentViewModel+ModelFetching.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+ModelFetching.swift"; sourceTree = "<group>"; };
 		6CDC0CB629A59A0594ED17DA /* AgentViewModel+TabHandlers+AgentScript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+AgentScript.swift"; sourceTree = "<group>"; };
@@ -239,8 +241,6 @@
 		87F1A988F00C4E7050FED023 /* TaskExecution+WebTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskExecution+WebTools.swift"; sourceTree = "<group>"; };
 		93C673DDB50E956B2E5FD610 /* AgentViewModel+NativeToolHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+NativeToolHandler.swift"; sourceTree = "<group>"; };
 		A3804F32B8914764A3690CB5 /* TokenUsageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenUsageStore.swift; sourceTree = "<group>"; };
-		2AFB0612717E44BF8818651B /* FileBackupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileBackupService.swift; sourceTree = "<group>"; };
-		4B0C57073F5C4305AF673454 /* RollbackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RollbackView.swift; sourceTree = "<group>"; };
 		AA1000000000000000001A /* AgentApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentApp.swift; sourceTree = "<group>"; };
 		AA1000000000000000001B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		AA1000000000000000001C /* AgentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentViewModel.swift; sourceTree = "<group>"; };
@@ -1157,7 +1157,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 106;
+				CURRENT_PROJECT_VERSION = 107;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 469UCUB275;
 				ENABLE_APP_SANDBOX = NO;
@@ -1187,7 +1187,7 @@
 				INFOPLIST_KEY_NSCameraUsageDescription = "Agent! needs camera access for scripts that capture photos.";
 				INFOPLIST_KEY_NSContactsUsageDescription = "Agent! needs contacts access for scripts that query your address book.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Agent! needs biometric authentication for scripts that use Touch ID or Face ID.";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "(c) 2000 - 2026 agent@macos26.app";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "\U0003© 2026 agent@macos26.app";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Agent! needs local network access for scripts that discover devices on your network.";
 				INFOPLIST_KEY_NSLocationUsageDescription = "Agent! needs location access for scripts that use GPS data.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Agent! needs location access for scripts that use GPS data.";
@@ -1200,7 +1200,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0.22;
+				MARKETING_VERSION = 1.0.23;
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1225,7 +1225,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 106;
+				CURRENT_PROJECT_VERSION = 107;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 469UCUB275;
 				ENABLE_APP_SANDBOX = NO;
@@ -1255,7 +1255,7 @@
 				INFOPLIST_KEY_NSCameraUsageDescription = "Agent! needs camera access for scripts that capture photos.";
 				INFOPLIST_KEY_NSContactsUsageDescription = "Agent! needs contacts access for scripts that query your address book.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Agent! needs biometric authentication for scripts that use Touch ID or Face ID.";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "(c) 2000 - 2026 agent@macos26.app";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "\U0003© 2026 agent@macos26.app";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Agent! needs local network access for scripts that discover devices on your network.";
 				INFOPLIST_KEY_NSLocationUsageDescription = "Agent! needs location access for scripts that use GPS data.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Agent! needs location access for scripts that use GPS data.";
@@ -1268,7 +1268,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0.22;
+				MARKETING_VERSION = 1.0.23;
 				PRODUCT_BUNDLE_IDENTIFIER = Agent.app.toddbruss;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
