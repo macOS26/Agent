@@ -555,13 +555,13 @@ final class AgentViewModel {
     var mistralModels: [OpenAIModelInfo] = []
     var isFetchingMistralModels = false
 
-    // MARK: - Codestral
+    // MARK: - Mistral Vibe (Codestral/Devstral)
 
     var codestralAPIKey: String = KeychainService.shared.getCodestralAPIKey() ?? "" {
         didSet { KeychainService.shared.setCodestralAPIKey(codestralAPIKey) }
     }
 
-    var codestralModel: String = UserDefaults.standard.string(forKey: "codestralModel") ?? "codestral-latest" {
+    var codestralModel: String = UserDefaults.standard.string(forKey: "codestralModel") ?? "devstral-small-2507" {
         didSet { UserDefaults.standard.set(codestralModel, forKey: "codestralModel") }
     }
 

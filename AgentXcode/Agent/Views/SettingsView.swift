@@ -346,7 +346,7 @@ struct SettingsView: View {
                 }
             } else if viewModel.selectedProvider == .codestral {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Codestral")
+                    Text("Mistral Vibe")
                         .font(.headline)
 
                     VStack(alignment: .leading, spacing: 4) {
