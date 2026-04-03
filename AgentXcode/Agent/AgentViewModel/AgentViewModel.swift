@@ -54,8 +54,16 @@ enum PromptStyle: String, CaseIterable, Codable {
 
 @MainActor @Observable
 final class AgentViewModel {
-    /// Stable UUID for main tab file backups
-    static let mainTabBackupID = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
+    /// Stable UUID for the main tab — persisted across launches
+    static let mainTabID: UUID = {
+        let key = "agentMainTabUUID"
+        if let str = UserDefaults.standard.string(forKey: key), let id = UUID(uuidString: str) {
+            return id
+        }
+        let id = UUID()
+        UserDefaults.standard.set(id.uuidString, forKey: key)
+        return id
+    }()
 
     var taskInput = ""
     
