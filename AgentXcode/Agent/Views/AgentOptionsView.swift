@@ -125,6 +125,7 @@ struct AgentOptionsView: View {
                     Text("\(viewModel.selectedProvider.displayName)").font(.caption).foregroundStyle(.secondary)
                     HStack(spacing: 4) {
                         Slider(value: temperatureBinding, in: 0...2, step: 0.1)
+                            .id(viewModel.selectedProvider)
                             .frame(width: 120)
                         Text(String(format: "%.1f", temperatureBinding.wrappedValue))
                             .font(.caption.monospacedDigit())
