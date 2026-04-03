@@ -36,51 +36,6 @@ struct HeaderStatusView: View {
                     .foregroundStyle(.secondary)
             }
             .help("Daemon: \(viewModel.rootServiceActive ? "Running" : (viewModel.rootEnabled ? "Stopped" : "Disabled"))")
-
-            // Unified status spinner — main tab or active script tab
-            if let selId = viewModel.selectedTabId,
-               let tab = viewModel.tab(for: selId) {
-                if tab.isLLMThinking {
-                    HStack(spacing: 4) {
-                        ProgressView().controlSize(.mini)
-                        if tab.taskQueue.isEmpty {
-                            ShimmerText("Thinking...", color: .green)
-                        } else {
-                            ShimmerText("Thinking... +\(tab.taskQueue.count) queued", color: .teal)
-                        }
-                    }
-                } else if tab.isLLMRunning {
-                    HStack(spacing: 4) {
-                        ProgressView().controlSize(.mini)
-                        if tab.taskQueue.isEmpty {
-                            ShimmerText("Running...", color: runningColor)
-                        } else {
-                            ShimmerText("Running... +\(tab.taskQueue.count) queued", color: .teal)
-                        }
-                    }
-                }
-            } else {
-                if viewModel.isThinking {
-                    HStack(spacing: 4) {
-                        ProgressView().controlSize(.mini)
-                        if viewModel.mainTaskQueue.isEmpty {
-                            ShimmerText("Thinking...", color: .green)
-                        } else {
-                            ShimmerText("Thinking... +\(viewModel.mainTaskQueue.count) queued", color: .teal)
-                        }
-                    }
-                } else if viewModel.isRunning {
-                    HStack(spacing: 4) {
-                        ProgressView().controlSize(.mini)
-                        if viewModel.mainTaskQueue.isEmpty {
-                            ShimmerText(viewModel.rootServiceActive ? "Root..." : viewModel.userServiceActive ? "Executing..." : "Running...",
-                                        color: viewModel.rootServiceActive ? .red : viewModel.userServiceActive ? .orange : runningColor)
-                        } else {
-                            ShimmerText("Running... +\(viewModel.mainTaskQueue.count) queued", color: .teal)
-                        }
-                    }
-                }
-            }
         }
         .padding(.leading, 15)
         .frame(width: 260, alignment: .leading)
