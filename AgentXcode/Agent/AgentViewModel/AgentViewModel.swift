@@ -66,7 +66,9 @@ final class AgentViewModel {
     }()
 
     var taskInput = ""
-    
+    /// Width of the task input field, updated by InputSectionView via GeometryReader
+    var inputFieldWidth: CGFloat = 0
+
     // Stored property drives live UI; ChatHistoryStore persists across launches via SwiftData
     var activityLog = ""
     var isRunning = false

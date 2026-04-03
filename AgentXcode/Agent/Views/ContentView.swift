@@ -419,15 +419,34 @@ struct ContentView: View {
                 }
 
                 // Up/Down arrow for prompt history (per-tab or main)
+                // Only navigate history for short, single-line input;
+                // let arrows move the cursor in longer/multi-line text.
+                // Always allow history navigation when already browsing history.
                 if event.keyCode == 126 || event.keyCode == 125 {
-                    let direction = event.keyCode == 126 ? -1 : 1
+                    let text: String
+                    let browsingHistory: Bool
                     if let tabId = viewModel.selectedTabId,
                        let tab = viewModel.tab(for: tabId) {
-                        tab.navigateHistory(direction: direction)
+                        text = tab.taskInput
+                        browsingHistory = tab.historyIndex != -1
                     } else {
-                        viewModel.navigatePromptHistory(direction: direction)
+                        text = viewModel.taskInput
+                        browsingHistory = viewModel.historyIndex != -1
                     }
-                    return nil
+                    let font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
+                    let textWidth = (text as NSString).size(withAttributes: [.font: font]).width
+                    let isSingleLine = !text.contains("\n") && textWidth <= viewModel.inputFieldWidth
+                    if isSingleLine || browsingHistory {
+                        let direction = event.keyCode == 126 ? -1 : 1
+                        if let tabId = viewModel.selectedTabId,
+                           let tab = viewModel.tab(for: tabId) {
+                            tab.navigateHistory(direction: direction)
+                        } else {
+                            viewModel.navigatePromptHistory(direction: direction)
+                        }
+                        return nil
+                    }
+                    return event // Let TextField handle cursor movement
                 }
 
                 return event
