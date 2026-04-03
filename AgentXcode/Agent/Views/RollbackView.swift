@@ -137,7 +137,8 @@ struct RollbackView: View {
             }
         }
         .padding(16)
-        .frame(width: 520, maxHeight: 600)
+        .frame(idealWidth: 520)
+        .fixedSize(horizontal: true, vertical: true)
         .onAppear { loadBackups() }
         .alert("Clear All Backups?", isPresented: $showClearConfirmation) {
             Button("Cancel", role: .cancel) {}
