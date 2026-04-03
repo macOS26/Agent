@@ -351,7 +351,7 @@ struct SettingsView: View {
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("API Key").font(.caption).foregroundStyle(.secondary)
-                        LockedSecureField(text: $viewModel.codestralAPIKey, placeholder: "Codestral API key", lockKey: "lock.codestralAPIKey")
+                        LockedSecureField(text: $viewModel.codestralAPIKey, placeholder: "Vibe API key", lockKey: "lock.codestralAPIKey")
                     }
 
                     VStack(alignment: .leading, spacing: 4) {

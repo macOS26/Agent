@@ -473,8 +473,7 @@ extension AgentViewModel {
 
     func fetchCodestralModels() {
         isFetchingCodestralModels = true
-        // Codestral key only works on codestral.mistral.ai (no /v1/models there).
-        // Try Codestral key first on api.mistral.ai, fall back to Mistral key.
+        // Vibe key works on api.mistral.ai for devstral/codestral models.
         let keys = [codestralAPIKey, mistralAPIKey].filter { !$0.isEmpty }
         Task {
             defer { isFetchingCodestralModels = false }
