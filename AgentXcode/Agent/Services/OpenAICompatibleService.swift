@@ -226,6 +226,27 @@ final class OpenAICompatibleService {
                 }
             }
         }
+        // Mistral/Codestral require strict ordering: tool messages must follow an assistant message
+        // with tool_calls. Drop orphaned tool messages that violate this constraint.
+        if provider == .mistral || provider == .codestral || provider == .vibe {
+            var cleaned: [[String: Any]] = []
+            for msg in chatMessages {
+                let role = msg["role"] as? String ?? ""
+                if role == "tool" {
+                    // Only keep tool messages if previous message is assistant with tool_calls
+                    if let prev = cleaned.last,
+                       prev["role"] as? String == "assistant",
+                       prev["tool_calls"] != nil {
+                        cleaned.append(msg)
+                    }
+                    // Otherwise drop — orphaned tool result
+                } else {
+                    cleaned.append(msg)
+                }
+            }
+            return cleaned
+        }
+
         return chatMessages
     }
 
