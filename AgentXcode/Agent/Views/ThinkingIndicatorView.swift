@@ -633,11 +633,11 @@ struct ToolStepsView: View {
             .buttonStyle(.plain)
 
             if isExpanded {
-                // Show last 20 steps, most recent at bottom
-                let visible = steps.suffix(20)
-                ForEach(Array(visible.enumerated()), id: \.element.id) { idx, step in
+                ScrollView {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                ForEach(Array(steps.enumerated()), id: \.element.id) { idx, step in
                     HStack(spacing: 6) {
-                        Text("\(steps.count - visible.count + idx + 1)")
+                        Text("\(idx + 1)")
                             .font(.system(size: 9, design: .monospaced))
                             .foregroundStyle(.tertiary)
                             .frame(width: 20, alignment: .trailing)
@@ -672,7 +672,10 @@ struct ToolStepsView: View {
                     }
                     .padding(.vertical, 1)
                 }
+                }
                 .padding(.top, 2)
+                }
+                .frame(maxHeight: 200)
             }
         }
         .padding(.vertical, 4)
