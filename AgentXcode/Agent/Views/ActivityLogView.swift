@@ -11,6 +11,7 @@ struct ActivityLogView: NSViewRepresentable {
     @Environment(\.colorScheme) private var colorScheme
     let text: String
     var tabID: UUID?  // nil = main tab
+    var isActive: Bool = false  // true when tab/task is running — skip truncation
     var textProvider: (@MainActor () -> String)? = nil  // polled for live updates
     var searchText: String = ""
     var caseSensitive: Bool = false
@@ -75,6 +76,7 @@ struct ActivityLogView: NSViewRepresentable {
         }
         coord.latestSearchText = searchText
         coord.latestCaseSensitive = caseSensitive
+        coord.isActive = isActive
         coord.latestMatchIndex = currentMatchIndex
         coord.latestMatchCallback = onMatchCount
         coord.scheduleRender()
@@ -97,6 +99,7 @@ struct ActivityLogView: NSViewRepresentable {
         var latestText = ""
         var latestSearchText = ""
         var latestCaseSensitive = false
+        nonisolated(unsafe) var isActive = false
         var latestMatchIndex = 0
         var latestMatchCallback: ((Int) -> Void)?
         /// Weak reference to text view for debounced search callbacks
@@ -268,8 +271,8 @@ struct ActivityLogView: NSViewRepresentable {
                         CATransaction.setDisableActions(true)
                         textView.textStorage?.beginEditing()
                         textView.textStorage?.append(renderMarkdownOnly(newText))
-                        // Trim from top if textStorage exceeds cap
-                        if let storage = textView.textStorage, storage.length > 50_000 {
+                        // Trim from top if textStorage exceeds cap — only when not actively running
+                        if !self.isActive, let storage = textView.textStorage, storage.length > 50_000 {
                             let trim = storage.length - 50_000
                             let snapRange = NSRange(location: trim, length: min(200, storage.length - trim))
                             let snippet = storage.string as NSString
@@ -633,10 +636,10 @@ struct ActivityLogView: NSViewRepresentable {
                 .foregroundColor: NSColor.labelColor
             ]
 
-            // Truncate from the front if text exceeds render cap
+            // Truncate from the front if text exceeds render cap — only on app load, not during active runs
             var renderText = text
             var wasTruncated = false
-            if renderText.count > 50_000 {
+            if renderText.count > 50_000, !isActive {
                 let drop = renderText.count - 50_000
                 renderText = String(renderText.dropFirst(drop))
                 // Snap to next newline so we don't start mid-line

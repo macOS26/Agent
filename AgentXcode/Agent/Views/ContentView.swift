@@ -88,6 +88,7 @@ struct ContentView: View {
             ActivityLogView(
                 text: viewModel.selectedTab?.activityLog ?? viewModel.activityLog,
                 tabID: viewModel.selectedTabId,
+                isActive: viewModel.selectedTab?.isBusy ?? viewModel.isRunning,
                 textProvider: { [weak viewModel] in
                     guard let vm = viewModel else { return "" }
                     return vm.selectedTab?.activityLog ?? vm.activityLog
