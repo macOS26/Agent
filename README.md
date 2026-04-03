@@ -194,6 +194,24 @@ Toggle ON and Playwright tools appear automatically. The AI can now control brow
 
 ---
 
+## Built-in Xcode Tools
+
+Agent! includes native Xcode integration that works without any MCP server setup. These built-in tools are often faster and more reliable than the MCP alternative since they run directly inside the app.
+
+| Tool | What It Does |
+|---|---|
+| **xcode build** | Build the current Xcode project, capture errors and warnings |
+| **xcode run** | Build and run the app |
+| **xcode list_projects** | Discover open Xcode workspaces and projects |
+| **xcode select_project** | Switch the active project |
+| **xcode grant_permission** | Grant file access to the Xcode project folder |
+
+The AI automatically uses these when you ask it to build, fix errors, or work with Xcode projects. No configuration needed -- just have your project open in Xcode.
+
+> **Tip:** For most coding workflows, the built-in tools are all you need. The MCP Xcode server below adds extras like SwiftUI Preview rendering and documentation search.
+
+---
+
 ## Model Context Protocol (MCP)
 
 Agent! supports [MCP](https://modelcontextprotocol.io) servers for extended capabilities. Configure in Settings → MCP Servers.
