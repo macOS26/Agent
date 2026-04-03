@@ -702,6 +702,9 @@ struct SettingsView: View {
         .onAppear {
             refreshModelsForCurrentProvider()
         }
+        .onChange(of: viewModel.selectedProvider) { _, _ in
+            refreshModelsForCurrentProvider()
+        }
     }
 
     private func refreshModelsForCurrentProvider() {
