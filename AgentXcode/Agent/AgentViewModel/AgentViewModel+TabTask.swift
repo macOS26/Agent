@@ -514,20 +514,28 @@ extension AgentViewModel {
                     messages.append(["role": "user", "content": capped])
                     tab.llmMessages = messages
                 } else if !hasToolUse {
+                    // Check if model wrote task_complete as text instead of a tool call
+                    let responseText = response.content.compactMap { $0["text"] as? String }.joined()
+                    if responseText.contains("task_complete") {
+                        // Extract summary from task_complete(summary: "...")
+                        if let range = responseText.range(of: #"task_complete\(summary:\s*"([^"]+)""#, options: .regularExpression) {
+                            completionSummary = String(responseText[range]).replacingOccurrences(of: #"task_complete\(summary:\s*""#, with: "", options: .regularExpression).replacingOccurrences(of: "\"", with: "")
+                        } else {
+                            completionSummary = String(responseText.prefix(500))
+                        }
+                        break
+                    }
                     // LLM responded with text only — nudge it to continue or finish
                     textOnlyCount += 1
                     if textOnlyCount >= 3 {
-                        // Gave it 3 chances, treat as done
-                        let responseText = response.content.compactMap { $0["text"] as? String }.joined()
                         if !responseText.isEmpty { completionSummary = String(responseText.prefix(500)) }
                         break
                     }
-                    // Nudge: ask it to keep going or call task_complete
                     messages.append(["role": "user", "content": "Continue with the next step. When you are completely done, call task_complete(summary: \"...\")."])
                 } else {
                     // Check if LLM signaled it's done via text even though it made tool calls
                     let allText = response.content.compactMap { $0["text"] as? String }.joined().lowercased()
-                    let stopPhrases = ["no more content", "no further action", "task is complete", "nothing more to do"]
+                    let stopPhrases = ["no more content", "no further action", "task is complete", "nothing more to do", "task_complete"]
                     if stopPhrases.contains(where: { allText.contains($0) }) && completionSummary.isEmpty {
                         completionSummary = "Done"
                         break
