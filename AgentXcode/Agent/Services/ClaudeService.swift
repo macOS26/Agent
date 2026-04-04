@@ -55,8 +55,9 @@ final class ClaudeService {
         // Local endpoints (LM Studio etc.) get essential groups only to fit small context windows
         let groups = isLocalEndpoint ? Set(["Core", "User Agent", "Coding", "Workflow"]) : activeGroups
         var t = AgentTools.claudeFormat(activeGroups: groups, compact: compact)
-        // Only add web_search for real Anthropic API — local endpoints can't handle it
+        // Only add native web_search for real Anthropic API — remove Tavily duplicate first
         if !isLocalEndpoint {
+            t.removeAll { ($0["name"] as? String) == "web_search" }
             t.append([
                 "type": "web_search_20250305",
                 "name": "web_search"
