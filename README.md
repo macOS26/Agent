@@ -97,6 +97,7 @@ Control any Mac app through the Accessibility API. Click buttons, type into fiel
 | **LM Studio** | Free | Easy local setup |
 | **Hugging Face** | Varies | Open-source models |
 | **Z.ai** | Recommended | Fast, versatile |
+| **Mistral ** | Varies | High-performance open models |
 | **Mistral Vibe** | Varies | High-performance open models |
 
 ### 🎙 Voice Control
