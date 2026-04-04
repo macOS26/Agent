@@ -245,6 +245,10 @@ struct ActivityLogView: NSViewRepresentable {
                 if isAppending {
                     let prevLen = lastLength
                     let newText = (text as NSString).substring(from: prevLen)
+                    // Auto-scroll to bottom when a new task starts
+                    if newText.contains("--- New Task ---") {
+                        userIsAtBottom = true
+                    }
                     let newLines = newText.components(separatedBy: "\n")
                     let hasTableLines = newLines.contains { $0.trimmingCharacters(in: .whitespaces).hasPrefix("|") }
                     let prevTail = (text as NSString).substring(to: prevLen).components(separatedBy: "\n").suffix(3)
