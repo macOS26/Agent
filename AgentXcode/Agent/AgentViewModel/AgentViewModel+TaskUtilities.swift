@@ -37,6 +37,14 @@ extension AgentViewModel {
         return ""
     }
 
+    /// Build the prompt prefix for a new task — shared between main task and tab task.
+    nonisolated static func newTaskPrefix(projectFolder: String) -> String {
+        let folderPrefix = projectFolder.isEmpty ? "" : "[project folder: \(projectFolder)] "
+        let projectConfig = readProjectConfig(projectFolder: projectFolder)
+        let configPrefix = projectConfig.isEmpty ? "" : "[Project instructions:\n\(projectConfig)]\n\n"
+        return "[NEW TASK — Follow these instructions carefully. This task overrides any previous task context.]\n" + folderPrefix + configPrefix
+    }
+
     static func truncateToolResults(_ results: [[String: Any]]) -> [[String: Any]] {
         results.map { result in
             guard var content = result["content"] as? String,
