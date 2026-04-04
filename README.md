@@ -86,7 +86,7 @@ Control any Mac app through the Accessibility API. Click buttons, type into fiel
 ### 🤖 12 AI Providers
 | Provider | Verdict | Best For |
 |---|---|---|
-| **GLM-5 / GLM-5.1** | Reliable | Recommended starting point |
+| **Z.ai** | GLM5.1 | Recommended starting point |
 | **Claude** (Anthropic) | Paid | Complex tasks |
 | **ChatGPT** (OpenAI) | Paid | General purpose |
 | **Google Gemini** | Paid/Free | High performance, long context |
@@ -96,7 +96,7 @@ Control any Mac app through the Accessibility API. Click buttons, type into fiel
 | **Local Ollama** | Free | Full privacy, offline |
 | **LM Studio** | Free | Easy local setup |
 | **Hugging Face** | Varies | Open-source models |
-| **Z.ai** | Recommended | Fast, versatile |
+| **vLLM** | Free | Local or Cloud |
 | **Mistral** | Varies | High-performance open models |
 | **Mistral Vibe** | Varies | High-performance open models |
 
