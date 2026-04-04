@@ -252,6 +252,22 @@ struct SettingsView: View {
                             .textFieldStyle(.roundedBorder)
                     }
                 }
+            } else if viewModel.selectedProvider == .qwen {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Qwen (DashScope)")
+                        .font(.headline)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("API Key").font(.caption).foregroundStyle(.secondary)
+                        LockedSecureField(text: $viewModel.qwenAPIKey, placeholder: "DashScope API key", lockKey: "lock.qwenAPIKey")
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Model").font(.caption).foregroundStyle(.secondary)
+                        TextField("Model name", text: $viewModel.qwenModel)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                }
             } else if viewModel.selectedProvider == .gemini {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Google Gemini API")
@@ -786,6 +802,7 @@ struct SettingsView: View {
         case .lmStudio: viewModel.fetchLMStudioModels()
         case .zAI: viewModel.fetchZAIModels()
         case .bigModel: break
+        case .qwen: break
         case .gemini: viewModel.fetchGeminiModels()
         case .grok: viewModel.fetchGrokModels()
         case .mistral: viewModel.fetchMistralModels()

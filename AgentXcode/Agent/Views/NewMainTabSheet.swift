@@ -145,6 +145,10 @@ struct NewMainTabSheet: View {
             TextField("Model (e.g. glm-4.7)", text: $selectedModelId)
                 .textFieldStyle(.roundedBorder)
 
+        case .qwen:
+            TextField("Model (e.g. qwen-plus)", text: $selectedModelId)
+                .textFieldStyle(.roundedBorder)
+
         case .gemini:
             modelPickerWithFetch(
                 models: viewModel.geminiModels,
@@ -274,6 +278,7 @@ struct NewMainTabSheet: View {
         case .lmStudio: return viewModel.lmStudioModel
         case .zAI: return viewModel.zAIModel
         case .bigModel: return "glm-4.7"
+        case .qwen: return "qwen-plus"
         case .gemini: return viewModel.geminiModel
         case .grok: return viewModel.grokModel
         case .mistral: return "mistral-large-latest"
@@ -306,6 +311,8 @@ struct NewMainTabSheet: View {
         case .zAI:
             if viewModel.zAIModels.isEmpty { viewModel.fetchZAIModels() }
         case .bigModel:
+            break
+        case .qwen:
             break
         case .gemini:
             if viewModel.geminiModels.isEmpty { viewModel.fetchGeminiModels() }

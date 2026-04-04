@@ -516,6 +516,16 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(bigModelModel, forKey: "bigModelModel") }
     }
 
+    // MARK: - Qwen (Alibaba DashScope)
+
+    var qwenAPIKey: String = KeychainService.shared.getQwenAPIKey() ?? "" {
+        didSet { KeychainService.shared.setQwenAPIKey(qwenAPIKey) }
+    }
+
+    var qwenModel: String = UserDefaults.standard.string(forKey: "qwenModel") ?? "qwen-plus" {
+        didSet { UserDefaults.standard.set(qwenModel, forKey: "qwenModel") }
+    }
+
     // MARK: - Google Gemini
 
     var geminiAPIKey: String = KeychainService.shared.getGeminiAPIKey() ?? "" {
@@ -725,6 +735,7 @@ final class AgentViewModel {
         case .lmStudio: return lmStudioTemperature
         case .zAI: return zAITemperature
         case .bigModel: return zAITemperature
+        case .qwen: return 0.7
         case .gemini: return geminiTemperature
         case .grok: return grokTemperature
         case .mistral: return openAITemperature

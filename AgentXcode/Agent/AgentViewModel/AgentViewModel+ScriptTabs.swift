@@ -66,6 +66,7 @@ extension AgentViewModel {
         case .lmStudio: return lmStudioModel
         case .zAI: return zAIModel
         case .bigModel: return bigModelModel
+        case .qwen: return qwenModel
         case .gemini: return geminiModel
         case .grok: return grokModel
         case .mistral: return mistralModel
@@ -88,6 +89,7 @@ extension AgentViewModel {
         case .lmStudio: return lmStudioAPIKey
         case .zAI: return zAIAPIKey
         case .bigModel: return bigModelAPIKey
+        case .qwen: return qwenAPIKey
         case .gemini: return geminiAPIKey
         case .grok: return grokAPIKey
         case .mistral: return mistralAPIKey
@@ -138,6 +140,8 @@ extension AgentViewModel {
             return zAIModels.first(where: { $0.id == modelId })?.name
                 ?? Self.defaultZAIModels.first(where: { $0.id == modelId })?.name ?? modelId
         case .bigModel:
+            return modelId
+        case .qwen:
             return modelId
         case .gemini:
             return geminiModels.first(where: { $0.id == modelId })?.name

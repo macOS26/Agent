@@ -66,6 +66,10 @@ final class KeychainService: Sendable {
     func setBigModelAPIKey(_ key: String) { set(key: Self.bigModelAPIKeyId, value: key) }
     func getBigModelAPIKey() -> String? { get(key: Self.bigModelAPIKeyId) }
 
+    private static let qwenAPIKeyId = "com.agent.qwen-api-key"
+    func setQwenAPIKey(_ key: String) { set(key: Self.qwenAPIKeyId, value: key) }
+    func getQwenAPIKey() -> String? { get(key: Self.qwenAPIKeyId) }
+
     private func set(key: String, value: String) {
         guard let data = value.data(using: .utf8) else { return }
         delete(key: key)

@@ -7,7 +7,7 @@ enum LLMProviderSetup {
 
     static func registerAllProviders() {
         LLMRegistry.shared.registerAll([
-            claude, openAI, gemini, grok, mistral, codestral, vibe, deepSeek, huggingFace, zAI, bigModel,
+            claude, openAI, gemini, grok, mistral, codestral, vibe, deepSeek, huggingFace, zAI, bigModel, qwen,
             ollama, localOllama, vLLM, lmStudio, appleIntelligence
         ])
     }
@@ -81,6 +81,26 @@ enum LLMProviderSetup {
         capabilities: [.streaming, .tools, .systemPrompt, .vision],
         temperature: 0.7
     )
+
+    // Qwen (Alibaba DashScope) — URL based on user locale
+    static let qwen: LLMProviderConfig = {
+        let region = Locale.current.region?.identifier ?? ""
+        let baseURL: String
+        switch region {
+        case "CN": baseURL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+        case "HK": baseURL = "https://cn-hongkong.aliyuncs.com/compatible-mode/v1"
+        default:   baseURL = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+        }
+        return LLMProviderConfig(
+            id: "qwen", displayName: "Qwen",
+            kind: .cloudAPI, apiProtocol: .openAI,
+            endpoint: LLMEndpoint(
+                chatURL: "\(baseURL)/chat/completions",
+                modelsURL: "\(baseURL)/models"
+            ),
+            capabilities: [.streaming, .tools, .systemPrompt, .vision]
+        )
+    }()
 
     static let gemini = LLMProviderConfig(
         id: "gemini", displayName: "Google Gemini",

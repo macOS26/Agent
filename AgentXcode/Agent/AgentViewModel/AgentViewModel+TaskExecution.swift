@@ -73,6 +73,9 @@ extension AgentViewModel {
         case .bigModel:
             modelName = bigModelModel
             isVision = true
+        case .qwen:
+            modelName = qwenModel
+            isVision = Self.isVisionModel(qwenModel)
         case .gemini:
             modelName = geminiModel
             isVision = true  // Gemini supports vision

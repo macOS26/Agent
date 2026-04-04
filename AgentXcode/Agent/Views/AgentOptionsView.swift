@@ -15,6 +15,7 @@ struct AgentOptionsView: View {
         case .lmStudio: return $viewModel.lmStudioTemperature
         case .zAI: return $viewModel.zAITemperature
         case .bigModel: return $viewModel.zAITemperature
+        case .qwen: return $viewModel.openAITemperature
         case .gemini: return $viewModel.geminiTemperature
         case .grok: return $viewModel.grokTemperature
         case .mistral: return $viewModel.openAITemperature
