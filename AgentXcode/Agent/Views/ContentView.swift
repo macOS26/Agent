@@ -81,28 +81,29 @@ struct ContentView: View {
                 )
             }
 
-            // Thinking indicator in log area — always visible while LLM is active
-            thinkingIndicator
-
-            // Activity Log — single view, switches text source via tab selection
-            ActivityLogView(
-                text: viewModel.selectedTab?.activityLog ?? viewModel.activityLog,
-                tabID: viewModel.selectedTabId,
-                isActive: viewModel.selectedTab?.isBusy ?? viewModel.isRunning,
-                textProvider: { [weak viewModel] in
-                    guard let vm = viewModel else { return "" }
-                    return vm.selectedTab?.activityLog ?? vm.activityLog
-                },
-                searchText: searchText,
-                caseSensitive: caseSensitive,
-                currentMatchIndex: currentMatchIndex,
-                onMatchCount: { count in
-                    DispatchQueue.main.async {
-                        totalMatches = count
-                        if currentMatchIndex >= count { currentMatchIndex = max(0, count - 1) }
+            // Activity Log with LLM Output overlaid on top — overlay doesn't push log down
+            ZStack(alignment: .top) {
+                ActivityLogView(
+                    text: viewModel.selectedTab?.activityLog ?? viewModel.activityLog,
+                    tabID: viewModel.selectedTabId,
+                    isActive: viewModel.selectedTab?.isBusy ?? viewModel.isRunning,
+                    textProvider: { [weak viewModel] in
+                        guard let vm = viewModel else { return "" }
+                        return vm.selectedTab?.activityLog ?? vm.activityLog
+                    },
+                    searchText: searchText,
+                    caseSensitive: caseSensitive,
+                    currentMatchIndex: currentMatchIndex,
+                    onMatchCount: { count in
+                        DispatchQueue.main.async {
+                            totalMatches = count
+                            if currentMatchIndex >= count { currentMatchIndex = max(0, count - 1) }
+                        }
                     }
-                }
-            )
+                )
+
+                thinkingIndicator
+            }
 
             Divider()
 
