@@ -7,17 +7,17 @@ struct ToolsView: View {
     @Bindable var prefs = ToolPreferencesService.shared
     @State private var collapsedGroups: Set<String> = []
     
-    // Group definitions matching ToolPreferencesService — use exact name sets to avoid overlap
+    // Group definitions — use actual consolidated tool names from AgentTools.Name
     static let groups: [String: (filter: (AgentTools.ToolDef) -> Bool, icon: String)] = [
-        "Coding": ({ ["read_file", "write_file", "edit_file", "create_diff", "apply_diff", "diff_and_apply", "undo_edit", "list_files", "search_files", "read_dir", "file_manager", "xcode", "project_folder", "mode"].contains($0.name) }, "chevron.left.forwardslash.chevron.right"),
-        "Automation": ({ ["applescript_tool", "accessibility", "javascript_tool", "lookup_sdef"].contains($0.name) }, "gearshape.2"),
-        "Experimental": ({ ["ax_screenshot", "selenium"].contains($0.name) }, "flask"),
-        "Core": ({ ["task_complete", "list_tools", "web_search"].contains($0.name) }, "checkmark.circle"),
-        "Conversation": ({ $0.name == "conversation" }, "text.bubble"),
-        "Workflow": ({ ["agent", "plan_mode", "git", "send_message", "batch_commands", "batch_tools"].contains($0.name) }, "flowchart"),
-        "User Agent": ({ $0.name == "execute_agent_command" }, "person"),
-        "Launch Daemon": ({ $0.name == "execute_daemon_command" }, "lock.shield"),
+        "Core": ({ ["done", "tools", "search", "folder"].contains($0.name) }, "checkmark.circle"),
+        "Conversation": ({ ["chat", "msg"].contains($0.name) }, "text.bubble"),
+        "Workflow": ({ ["agent", "plan", "git", "batch", "multi"].contains($0.name) }, "flowchart"),
+        "Coding": ({ ["file", "xc"].contains($0.name) }, "chevron.left.forwardslash.chevron.right"),
+        "Automation": ({ ["as", "ax", "jxa", "sdef"].contains($0.name) }, "gearshape.2"),
+        "User Agent": ({ $0.name == "sh" }, "person"),
+        "Launch Daemon": ({ $0.name == "root" }, "lock.shield"),
         "Web": ({ $0.name == "web" }, "globe"),
+        "Experimental": ({ $0.name == "sel" }, "flask"),
     ]
 
     static let groupOrder: [String] = ["Core", "Conversation", "Workflow", "Coding", "Automation", "User Agent", "Launch Daemon", "Web", "Experimental"]
