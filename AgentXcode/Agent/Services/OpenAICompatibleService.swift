@@ -162,6 +162,8 @@ final class OpenAICompatibleService {
                     } else {
                         // Content blocks (text + images) — use OpenAI multipart content
                         var contentParts: [[String: Any]] = []
+                        let imageBlocks = blocks.filter { $0["type"] as? String == "image" }
+                        AuditLog.log(.api, "convertMessages: \(blocks.count) blocks, \(imageBlocks.count) images, supportsVision=\(supportsVision)")
                         for block in blocks {
                             if block["type"] as? String == "text",
                                let t = block["text"] as? String {
@@ -171,6 +173,7 @@ final class OpenAICompatibleService {
                                       let source = block["source"] as? [String: Any],
                                       let base64 = source["data"] as? String {
                                 let mediaType = source["media_type"] as? String ?? "image/png"
+                                AuditLog.log(.api, "convertMessages: adding image \(base64.count) chars, mediaType=\(mediaType)")
                                 contentParts.append([
                                     "type": "image_url",
                                     "image_url": [

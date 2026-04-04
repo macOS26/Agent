@@ -313,8 +313,9 @@ extension AgentViewModel {
 
         // Use tab's own attached images, fall back to global
         let tabImages = tab.attachedImagesBase64.isEmpty ? attachedImagesBase64 : tab.attachedImagesBase64
+        AuditLog.log(.shell, "TabTask images: tab=\(tab.attachedImagesBase64.count) global=\(attachedImagesBase64.count) using=\(tabImages.count)")
         if !tabImages.isEmpty {
-            tab.appendLog("(\(tabImages.count) screenshot(s) attached)")
+            tab.appendLog("(\(tabImages.count) screenshot(s) attached, \(tabImages.map(\.count).reduce(0,+)) bytes)")
             tab.flush()
             var contentBlocks: [[String: Any]] = tabImages.map { base64 in
                 [
