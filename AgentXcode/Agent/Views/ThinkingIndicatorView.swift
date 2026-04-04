@@ -142,11 +142,9 @@ struct ThinkingIndicatorView: View {
                             .foregroundStyle(.green)
                     }
 
-                    if isActive || elapsed > 0 {
-                        Text("(\(Self.formatElapsed(elapsed)))")
-                            .font(.system(size: 11, design: .monospaced))
-                            .foregroundStyle(.secondary)
-                    }
+                    Text("(\(Self.formatElapsed(elapsed)))")
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(.secondary)
 
                     if isActive {
                         if isScriptOnly {
