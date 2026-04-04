@@ -80,10 +80,9 @@ Automatically detects and uses available tools (Xcode, Playwright, Shell, etc.) 
 ### 🛡 Privileged Execution
 Securely runs root-level commands via a dedicated macOS Launch Daemon. The user approves the daemon once, then the agent can execute commands autonomously via XPC.
 
-62	
-63	### 🖥 Desktop Automation (AXorcist)
-64	Control any Mac app through the Accessibility API. Click buttons, type into fields, navigate menus, scroll, drag -- all programmatically. Powered by [AXorcist](https://github.com/steipete/AXorcist) for reliable, fuzzy-matched element finding.
-65	
+### 🖥 Desktop Automation (AXorcist)
+Control any Mac app through the Accessibility API. Click buttons, type into fields, navigate menus, scroll, drag -- all programmatically. Powered by [AXorcist](https://github.com/steipete/AXorcist) for reliable, fuzzy-matched element finding.
+
 ### 🤖 12 AI Providers
 | Provider | Cost | Best For |
 |---|---|---|
