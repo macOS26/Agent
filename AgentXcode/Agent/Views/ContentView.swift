@@ -332,9 +332,10 @@ struct ContentView: View {
                     return nil
                 }
 
-                // Cmd+Shift+D: Toggle entire LLM Output overlay visibility
-                if event.modifierFlags.contains([.command, .shift]),
-                   event.charactersIgnoringModifiers == "d" {
+                // Cmd+B: Toggle entire LLM Output overlay visibility
+                if event.modifierFlags.contains(.command),
+                   !event.modifierFlags.contains(.shift),
+                   event.charactersIgnoringModifiers == "b" {
                     withAnimation(.easeInOut(duration: 0.2)) {
                         if let selId = viewModel.selectedTabId,
                            let tab = viewModel.tab(for: selId) {
