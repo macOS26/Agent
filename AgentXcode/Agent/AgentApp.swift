@@ -94,10 +94,10 @@ struct AgentApp: App {
                 .keyboardShortcut("p", modifiers: [.command, .shift])
             }
             CommandMenu("Shortcuts") {
-                Button("Dismiss LLM Output") {}
+                Button("Toggle LLM Chevrons") {}
                     .keyboardShortcut("d", modifiers: .command)
-                Button("Show LLM Output") {}
-                    .keyboardShortcut("o", modifiers: .command)
+                Button("Toggle LLM Overlay") {}
+                    .keyboardShortcut("d", modifiers: [.command, .shift])
                 Divider()
                 Button("Run Task") {}
                     .keyboardShortcut(.return, modifiers: .command)
