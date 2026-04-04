@@ -592,6 +592,11 @@ extension AgentViewModel {
                     // Check if model wrote task_complete/done as text instead of a tool call
                     let responseText = response.content.compactMap { $0["text"] as? String }.joined()
                     if responseText.contains("task_complete") || responseText.contains("done(summary") {
+                        // Restore previous LLM output — don't show completion boilerplate
+                        dripTask?.cancel(); dripTask = nil
+                        rawLLMOutput = preStreamOutput
+                        displayedLLMOutput = preStreamDisplayed
+                        dripDisplayIndex = preStreamDripIndex
                         if let match = responseText.range(of: #"(?:task_complete|done)\(summary[=:]\s*"([^"]+)""#, options: .regularExpression) {
                             let raw = String(responseText[match])
                             let summary = raw.replacingOccurrences(of: #"(?:task_complete|done)\(summary[=:]\s*""#, with: "", options: .regularExpression).replacingOccurrences(of: "\"", with: "")
