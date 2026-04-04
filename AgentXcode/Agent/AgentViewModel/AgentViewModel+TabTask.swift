@@ -471,7 +471,7 @@ extension AgentViewModel {
 
                         // Loop detection — consecutive identical read with no write in between
                         let isRead = name == "read_file" || (name == "file_manager" && (input["action"] as? String) == "read")
-                        let isWrite = name == "write_file" || name == "edit_file" || (name == "file_manager" && ["write", "edit", "diff_apply"].contains(input["action"] as? String ?? ""))
+                        let isWrite = name == "write_file" || name == "edit_file" || name == "create_diff" || name == "apply_diff" || name == "diff_and_apply" || (name == "file_manager" && ["write", "edit", "diff_apply", "create", "apply"].contains(input["action"] as? String ?? ""))
                         if isWrite { recentToolCalls.removeAll() }
                         if isRead {
                             let fp = input["file_path"] as? String ?? input["path"] as? String ?? ""
