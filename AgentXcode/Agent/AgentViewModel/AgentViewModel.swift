@@ -624,7 +624,7 @@ final class AgentViewModel {
             "phi-3-vision", "phi-3.5-vision", "phi-4", "idefics", "fuyu",
             // Cloud API vision models
             "gpt-4o", "gpt-4-turbo", "gpt-4-vision", "claude",
-            "glm-4v", "deepseek-vl",
+            "glm-4v", "glm-4.5v", "glm-4.6v", "glm-4.7", "glm-5", "glm-6", "deepseek-vl",
         ]
         return visionKeywords.contains { lower.contains($0) }
     }

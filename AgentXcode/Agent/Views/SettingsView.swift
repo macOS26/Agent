@@ -741,7 +741,7 @@ struct SettingsView: View {
         let visionKeywords = [
             "-vl-", "-vl ", "vl-", "-vision",
             "pixtral", "llava", "minicpm-v",
-            "glm-4.5v", "glm-4.6v", "glm-4.7",
+            "glm-4.5v", "glm-4.6v", "glm-4.7", "glm-5", "glm-6",
             "gemma-3", "gemma-4", "gemma3", "gemma4",
             "llama-4", "llama4", "mimo",
             "aya-vision", "command-a-vision",
