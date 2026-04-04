@@ -302,7 +302,7 @@ extension AgentViewModel {
             messages.removeLast()
         }
 
-        let promptPrefix = Self.newTaskPrefix(projectFolder: projectFolder)
+        let promptPrefix = Self.newTaskPrefix(projectFolder: projectFolder, prompt: prompt)
 
         // Inject direct command context if set
         if let context = directCommandContext {

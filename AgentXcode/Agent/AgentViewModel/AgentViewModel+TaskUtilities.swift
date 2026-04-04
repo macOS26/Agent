@@ -38,11 +38,25 @@ extension AgentViewModel {
     }
 
     /// Build the prompt prefix for a new task — shared between main task and tab task.
-    nonisolated static func newTaskPrefix(projectFolder: String) -> String {
+    nonisolated static func newTaskPrefix(projectFolder: String, prompt: String = "") -> String {
         let folderPrefix = projectFolder.isEmpty ? "" : "[project folder: \(projectFolder)] "
         let projectConfig = readProjectConfig(projectFolder: projectFolder)
         let configPrefix = projectConfig.isEmpty ? "" : "[Project instructions:\n\(projectConfig)]\n\n"
-        return "[NEW TASK — Do ONLY what is asked below. Ignore all previous task history. When done, call done(summary:\"...\") immediately. Do NOT continue with unrelated work.]\n" + folderPrefix + configPrefix
+        let isQuestion = isQuestionPrompt(prompt)
+        let taskHeader = isQuestion
+            ? "[QUESTION — Answer this directly. Do NOT use tools unless the question requires reading files or running commands. Call done(summary:\"...\") with your answer.]\n"
+            : "[NEW TASK — Do ONLY what is asked below. Ignore all previous task history. When done, call done(summary:\"...\") immediately. Do NOT continue with unrelated work.]\n"
+        return taskHeader + folderPrefix + configPrefix
+    }
+
+    /// Detect if a prompt is a question (How/What/When/Where/Why/Can/Is/Does/Do/Which)
+    nonisolated static func isQuestionPrompt(_ prompt: String) -> Bool {
+        let lower = prompt.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        let questionStarters = ["how ", "what ", "when ", "where ", "why ", "who ",
+                                "can ", "is ", "does ", "do ", "which ", "should ",
+                                "could ", "would ", "will ", "are ", "was ", "were ",
+                                "has ", "have ", "explain ", "describe ", "tell me "]
+        return questionStarters.contains { lower.hasPrefix($0) } || lower.hasSuffix("?")
     }
 
     static func truncateToolResults(_ results: [[String: Any]]) -> [[String: Any]] {

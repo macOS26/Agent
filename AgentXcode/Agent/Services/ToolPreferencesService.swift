@@ -59,7 +59,7 @@ final class ToolPreferencesService {
     private func seedDefaultDisabledGroups() {
         guard !UserDefaults.standard.bool(forKey: Self.groupSeededKey) else { return }
         UserDefaults.standard.set(true, forKey: Self.groupSeededKey)
-        disabledGroups.insert(Tool.Group.exp)
+        disabledGroups.insert("Experimental")
     }
 
     /// On first launch, disable all Apple AI tools not in the core default set.

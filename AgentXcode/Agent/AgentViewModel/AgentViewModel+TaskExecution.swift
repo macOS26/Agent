@@ -151,7 +151,7 @@ extension AgentViewModel {
 
         // No agent name injection — avoid message format issues with some APIs
 
-        let effectivePrompt = Self.newTaskPrefix(projectFolder: projectFolder) + prompt
+        let effectivePrompt = Self.newTaskPrefix(projectFolder: projectFolder, prompt: prompt) + prompt
 
         if !attachedImagesBase64.isEmpty {
             appendLog("(\(attachedImagesBase64.count) screenshot(s) attached)")
