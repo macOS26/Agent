@@ -21,7 +21,9 @@
 - **Desktop Automation:** Full control of any macOS app via AXorcist (Accessibility API).
 - **Expanded AI Support:** Stabilized tool calling for **Mistral** and **Google Gemini** models.
 - **Unified Provider Registry:** Centralized model and URL management via `LLMRegistry`.
-
+- **Ollama Pre-warming:** Eliminates cold-start delays by pre-loading models on launch.
+- **Enhanced Logging & Diagnostics:** Improved daemon status checks and error reporting in the activity log.
+- **Multi-tab LLM Configuration:** Per-tab provider/model settings for flexible multi-agent workflows.
 ---
 
 A native macOS AI agent that controls your apps, writes code, automates workflows, and runs tasks from your iPhone via iMessage. All powered by the AI provider of your choice.
