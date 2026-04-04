@@ -150,6 +150,7 @@
 
 		DC10000000000000000001 /* DaemonCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC10000000000000000000 /* DaemonCore.swift */; };
 		DC10000000000000000002 /* DaemonCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC10000000000000000000 /* DaemonCore.swift */; };
+		TN10000000000000000001 /* ToolNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = TN10000000000000000000 /* ToolNames.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -357,6 +358,7 @@
 		WEB1000000000000000006 /* WebAutomationService+Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WebAutomationService+Utilities.swift"; sourceTree = "<group>"; };
 		WEB1000000000000000008 /* WebAutomationService+Search.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WebAutomationService+Search.swift"; sourceTree = "<group>"; };
 		DC10000000000000000000 /* DaemonCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DaemonCore.swift; sourceTree = "<group>"; };
+		TN10000000000000000000 /* ToolNames.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolNames.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -644,6 +646,7 @@
 			isa = PBXGroup;
 			children = (
 				EABA0FBC2F7B78DA005CCD6E /* ChatModels.swift */,
+				TN10000000000000000000 /* ToolNames.swift */,
 				AA10000000000000000020 /* Models.swift */,
 				EATD000000000000000002 /* TrainingData.swift */,
 			);
@@ -958,6 +961,7 @@
 				AA10000000000000000101 /* ProjectFolderField.swift in Sources */,
 				AA10000000000000000066 /* ActivityLogView.swift in Sources */,
 				AA10000000000000000036 /* Models.swift in Sources */,
+				TN10000000000000000001 /* ToolNames.swift in Sources */,
 				EATD000000000000000001 /* TrainingData.swift in Sources */,
 				AA10000000000000000079 /* ScriptTab.swift in Sources */,
 				AA1000000000000000007B /* TabBarView.swift in Sources */,
