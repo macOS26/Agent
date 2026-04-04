@@ -29,13 +29,13 @@ final class ToolPreferencesService {
 
     /// Tool group definitions - maps group name to tool name prefixes
     static let toolGroups: [String: Set<String>] = [
-        "Core": Set(["done", "task_complete", "tools", "list_tools", "search", "web_search", "chat", "conversation", "msg", "send_message", "sh", "run_shell_script"]),
-        "Work": Set(["agent", "plan", "plan_mode", "git", "batch", "batch_commands", "multi", "batch_tools"]),
-        "Code": Set(["xc", "xcode", "file", "file_manager", "dir", "project_folder", "code", "coding_mode"]),
-        "Auto": Set(["as", "applescript_tool", "ax", "accessibility", "js", "jxa", "javascript_tool", "sdef", "lookup_sdef", "web"]),
-        "User": Set(["user", "execute_agent_command"]),
-        "Root": Set(["root", "execute_daemon_command"]),
-        "Exp": Set(["sel", "selenium", "ax_screenshot"]),
+        Tool.Group.core: Set([Tool.done, "task_complete", Tool.tools, "list_tools", Tool.search, "web_search", Tool.chat, "conversation", Tool.msg, "send_message", Tool.sh, "run_shell_script"]),
+        Tool.Group.work: Set([Tool.agent, Tool.plan, "plan_mode", Tool.git, Tool.batch, "batch_commands", Tool.multi, "batch_tools"]),
+        Tool.Group.code: Set([Tool.xc, "xcode", Tool.file, "file_manager", Tool.folder, "project_folder", Tool.code, "coding_mode"]),
+        Tool.Group.auto: Set([Tool.as, "applescript_tool", Tool.ax, "accessibility", Tool.js, "jxa", "javascript_tool", Tool.sdef, "lookup_sdef", Tool.web]),
+        Tool.Group.user: Set([Tool.user, "execute_agent_command"]),
+        Tool.Group.root: Set([Tool.root, "execute_daemon_command"]),
+        Tool.Group.exp: Set([Tool.sel, "selenium", "ax_screenshot"]),
     ]
 
     /// Tools enabled by default for Apple Intelligence (small context window).
@@ -59,7 +59,7 @@ final class ToolPreferencesService {
     private func seedDefaultDisabledGroups() {
         guard !UserDefaults.standard.bool(forKey: Self.groupSeededKey) else { return }
         UserDefaults.standard.set(true, forKey: Self.groupSeededKey)
-        disabledGroups.insert("Experimental")
+        disabledGroups.insert(Tool.Group.exp)
     }
 
     /// On first launch, disable all Apple AI tools not in the core default set.

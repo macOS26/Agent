@@ -86,7 +86,7 @@ final class OpenAICompatibleService {
     }
 
     func tools(activeGroups: Set<String>? = nil, compact: Bool = false) -> [[String: Any]] {
-        let groups = isLMStudio ? Set([Tool.Group.core, Tool.Group.user, Tool.Group.code, Tool.Group.work]) : activeGroups
+        let groups = isLMStudio ? Tool.codingGroups : activeGroups
         return AgentTools.ollamaTools(for: provider, activeGroups: groups, compact: compact)
     }
 
