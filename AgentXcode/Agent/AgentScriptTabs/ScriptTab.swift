@@ -181,6 +181,14 @@ final class ScriptTab: Identifiable {
         self.thinkingDismissed = record.rawLLMOutput.isEmpty ? true : record.thinkingDismissed
         self.tabInputTokens = record.tabInputTokens
         self.tabOutputTokens = record.tabOutputTokens
+        // Trim main/script tab logs to last 250K chars on relaunch (skip Messages/automation tabs)
+        if !isMessagesTab, activityLog.count > 250_000 {
+            let drop = activityLog.count - 250_000
+            activityLog = String(activityLog.dropFirst(drop))
+            if let nl = activityLog.firstIndex(of: "\n") {
+                activityLog = String(activityLog[activityLog.index(after: nl)...])
+            }
+        }
     }
 
     // MARK: - Logging
@@ -212,9 +220,9 @@ final class ScriptTab: Identifiable {
         }
     }
 
-    /// Max chars to keep in activityLog to prevent UI beach ball.
-    /// ActivityLogView renders at most 30K, so 60K gives scrollback headroom.
-    private static let maxLogChars = 60_000
+    /// Max chars to keep in activityLog — trimmed only on app relaunch (250K).
+    /// During session, full history is preserved; render cap handles display performance.
+    private static let maxLogChars = 250_000
 
     func flush() {
         logFlushTask?.cancel()

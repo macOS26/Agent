@@ -642,23 +642,23 @@ struct ActivityLogView: NSViewRepresentable {
         // MARK: - Beach Ball Predictor
         /// Tracks render time to dynamically adjust truncation threshold.
         /// Starts generous (200K), shrinks when renders get slow, grows when fast.
-        var renderCap = 200_000
+        var renderCap = 500_000
         /// Threshold in seconds — if a render takes longer, shrink the cap
         private static let beachBallThreshold: CFAbsoluteTime = 0.08  // 80ms
 
         /// Call after a render completes to adapt the cap for next time.
         func adaptRenderCap(elapsed: CFAbsoluteTime) {
             if elapsed > Self.beachBallThreshold {
-                // Slow render — shrink cap by 25%, floor at 20K
-                renderCap = max(20_000, renderCap * 3 / 4)
-            } else if elapsed < Self.beachBallThreshold / 2, renderCap < 500_000 {
-                // Fast render — grow cap by 10%, ceiling at 500K
-                renderCap = min(500_000, renderCap * 11 / 10)
+                // Slow render — shrink cap by 25%, floor at 100K
+                renderCap = max(100_000, renderCap * 3 / 4)
+            } else if elapsed < Self.beachBallThreshold / 2, renderCap < 1_000_000 {
+                // Fast render — grow cap by 10%, ceiling at 1M
+                renderCap = min(1_000_000, renderCap * 11 / 10)
             }
         }
 
         /// Build attributed string from text. Converts image/HTML paths to clickable links.
-        nonisolated func buildAttributedString(from text: String, cap: Int = 200_000) -> NSAttributedString {
+        nonisolated func buildAttributedString(from text: String, cap: Int = 500_000) -> NSAttributedString {
             let baseAttrs: [NSAttributedString.Key: Any] = [
                 .font: font,
                 .foregroundColor: NSColor.labelColor
@@ -697,7 +697,7 @@ struct ActivityLogView: NSViewRepresentable {
                     .foregroundColor: NSColor.secondaryLabelColor,
                     .backgroundColor: NSColor.systemYellow.withAlphaComponent(0.15)
                 ]
-                return NSAttributedString(string: "--- Log truncated (showing last 15K characters) ---\n", attributes: bannerAttrs)
+                return NSAttributedString(string: "--- Log truncated (showing last 250K characters) ---\n", attributes: bannerAttrs)
             }() : nil
 
             guard !imageMatches.isEmpty || !htmlMatches.isEmpty else {

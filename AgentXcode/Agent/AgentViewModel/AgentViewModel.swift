@@ -1143,6 +1143,14 @@ final class AgentViewModel {
         LLMProviderSetup.registerAllProviders()
 
         activityLog = ChatHistoryStore.shared.buildActivityLogText(maxTasks: 3)
+        // Trim main tab log to last 250K chars on relaunch only
+        if activityLog.count > 250_000 {
+            let drop = activityLog.count - 250_000
+            activityLog = String(activityLog.dropFirst(drop))
+            if let nl = activityLog.firstIndex(of: "\n") {
+                activityLog = String(activityLog[activityLog.index(after: nl)...])
+            }
+        }
         CodeBlockTheme.updateAppearance()
         TerminalNeoTheme.updateAppearance()
         // Restore ~/Documents/AgentScript/ folder and bundled resources if missing (off main thread)
