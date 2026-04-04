@@ -24,8 +24,14 @@ extension AgentViewModel {
             startProgressUpdates(for: prompt)
         }
 
+        // Clear LLM Output for new task — show blinking cursor
+        dripTask?.cancel(); dripTask = nil
+        rawLLMOutput = ""
+        displayedLLMOutput = ""
+        dripDisplayIndex = 0
+
         if !activityLog.isEmpty {
-            logBuffer += "\n"
+            logBuffer += "\n\n\n\n\n"
         }
         trimToRecentTasks()
         taskInputTokens = 0

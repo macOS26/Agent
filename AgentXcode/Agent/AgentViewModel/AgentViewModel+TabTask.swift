@@ -106,6 +106,15 @@ extension AgentViewModel {
         var completionSummary = ""
         var directCommandContext: String?
 
+        // Clear LLM Output for new task — show blinking cursor
+        tab.dripTask?.cancel(); tab.dripTask = nil
+        tab.rawLLMOutput = ""
+        tab.displayedLLMOutput = ""
+        tab.dripDisplayIndex = 0
+
+        if !tab.activityLog.isEmpty {
+            tab.logBuffer += "\n\n\n\n\n"
+        }
         tab.appendLog("--- Tab Task ---")
         tab.appendLog("👤 \(prompt)")
         tab.flush()
