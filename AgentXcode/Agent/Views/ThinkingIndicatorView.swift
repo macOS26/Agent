@@ -553,19 +553,14 @@ private struct LLMOutputBox: View {
         VStack(spacing: 0) {
             ZStack(alignment: .bottomTrailing) {
                 if !displayText.isEmpty {
-                    ZStack {
-                        TerminalNeoTextView(text: displayText, onContentHeight: { h in
-                            if !userDragged {
-                                withAnimation(.easeInOut(duration: 0.3)) {
-                                    height = min(max(minHeight, h), maxHeight)
-                                }
+                    TerminalNeoTextView(text: displayText, onContentHeight: { h in
+                        if !userDragged {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                height = min(max(minHeight, h), maxHeight)
                             }
-                        })
-
-                        // CRT scanline overlay — always on like a real CRT
-                        ScanlineOverlay()
-                            .allowsHitTesting(false)
-                    }
+                        }
+                    })
+                    .overlay(ScanlineOverlay().allowsHitTesting(false))
                     .frame(height: min(height, maxHeight))
                     .animation(.easeInOut(duration: 0.3), value: height)
                 } else {
