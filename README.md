@@ -377,8 +377,33 @@ Agent! can be controlled via voice command "Agent!" using the Messages app. This
 To enable this feature, users need to configure the Messages app to allow Agent! to access and monitor incoming messages. This can be done through the system preferences under Security & Privacy → Privacy → Accessibility.
 
 > **Note**: Ensure that the Messages app is running and that the user has granted the necessary permissions for Agent! to interact with it.
+### Services Popover Button
 
----
+The Services button (gear icon) provides quick access to project folder management and task configuration options:
+
+- **Move/Go Down**: Navigate to a different project folder location
+- **New Folder**: Create a new folder for your project
+- **Home**: Quickly return to your home directory
+- **Close**: Clear the current project folder selection
+- **Project Folder Input**: Enter or paste a custom project folder path
+- **Folder Size Display**: Shows the current folder size (e.g., "20.0M")
+- **User Prompt**: Configure user prompts for tasks
+- **Cancel**: Cancel the current operation
+- **Thinking Indicator**: Shows when Agent! is processing a task
+- **Task Progress**: Displays progress information during task execution
+- **Context Usage**: Shows how much context is being used for the current task
+- **More Options**: Additional configuration settings
+- **Dismiss**: Close the popover (currently disabled when active)
+- **Steps**: View the steps of the current task (7 steps shown)
+- **Screenshot**: Take a screenshot to attach to your task
+- **Paste Image**: Paste an image from clipboard into the task
+- **Cancel Task**: Cancel a running task
+- **Dictation**: Start voice dictation for entering tasks
+- **Hotword**: Activate voice command with "Agent!"
+- **Run Task**: Execute the current task (currently disabled when not ready)
+- **Task Input Field**: Enter your task description here
+
+This popover provides comprehensive control over your project environment and task execution workflow.
 
 
 Agent! supports [MCP](https://modelcontextprotocol.io) servers for extended capabilities. Configure in Settings → MCP Servers.
