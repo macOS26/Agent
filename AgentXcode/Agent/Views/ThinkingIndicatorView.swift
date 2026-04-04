@@ -410,7 +410,7 @@ private struct LLMOutputBox: View {
             : Color(red: 0.85, green: 0.92, blue: 0.85)
     }
 
-    private let minHeight: CGFloat = 60
+    private let minHeight: CGFloat = 80
 
     /// Convert URLs in text to clickable underlined links, keeping the rest in termText color.
     private static func linkify(_ text: String, color: Color) -> AttributedString {
@@ -555,14 +555,10 @@ private struct LLMOutputBox: View {
                 if !displayText.isEmpty {
                     TerminalNeoTextView(text: displayText, onContentHeight: { h in
                         if !userDragged {
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                height = min(max(minHeight, h), maxHeight)
-                            }
+                            height = min(max(minHeight, h), maxHeight)
                         }
                     })
-                    .overlay(ScanlineOverlay().allowsHitTesting(false))
                     .frame(height: min(height, maxHeight))
-                    .animation(.easeInOut(duration: 0.3), value: height)
                 } else {
                     HStack(spacing: 0) {
                         Text("> ")
