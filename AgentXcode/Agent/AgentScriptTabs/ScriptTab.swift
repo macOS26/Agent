@@ -181,14 +181,8 @@ final class ScriptTab: Identifiable {
         self.thinkingDismissed = record.rawLLMOutput.isEmpty ? true : record.thinkingDismissed
         self.tabInputTokens = record.tabInputTokens
         self.tabOutputTokens = record.tabOutputTokens
-        // Trim main/script tab logs to last 250K chars on relaunch (skip Messages/automation tabs)
-        if !isMessagesTab, activityLog.count > 250_000 {
-            let drop = activityLog.count - 250_000
-            activityLog = String(activityLog.dropFirst(drop))
-            if let nl = activityLog.firstIndex(of: "\n") {
-                activityLog = String(activityLog[activityLog.index(after: nl)...])
-            }
-        }
+        // Trim main/script tab logs on relaunch (skip Messages/automation tabs)
+        if !isMessagesTab { activityLog = Self.trimForRelaunch(activityLog) }
     }
 
     // MARK: - Logging
@@ -222,7 +216,17 @@ final class ScriptTab: Identifiable {
 
     /// Max chars to keep in activityLog — trimmed only on app relaunch (250K).
     /// During session, full history is preserved; render cap handles display performance.
-    private static let maxLogChars = 250_000
+    static let maxLogChars = 250_000
+
+    /// Trim a log string to the relaunch cap, snapping to the next newline.
+    static func trimForRelaunch(_ log: String) -> String {
+        guard log.count > maxLogChars else { return log }
+        var trimmed = String(log.dropFirst(log.count - maxLogChars))
+        if let nl = trimmed.firstIndex(of: "\n") {
+            trimmed = String(trimmed[trimmed.index(after: nl)...])
+        }
+        return trimmed
+    }
 
     func flush() {
         logFlushTask?.cancel()
