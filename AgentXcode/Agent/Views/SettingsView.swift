@@ -156,7 +156,14 @@ struct SettingsView: View {
                             } else {
                                 Picker("Model", selection: $viewModel.huggingFaceModel) {
                                     ForEach(viewModel.huggingFaceModels) { model in
-                                        Text(model.name).tag(model.id)
+                                        HStack(spacing: 4) {
+                                            Text(model.name)
+                                            if Self.isHFVisionModel(model.id) {
+                                                Image(systemName: "eye")
+                                                    .foregroundStyle(.blue)
+                                                    .font(.caption2)
+                                            }
+                                        }.tag(model.id)
                                     }
                                 }
                                 .labelsHidden()
@@ -726,6 +733,23 @@ struct SettingsView: View {
         let lower = id.lowercased()
         let visionPrefixes = ["pixtral", "mistral-small", "mistral-large", "mistral-medium"]
         return visionPrefixes.contains { lower.hasPrefix($0) }
+    }
+
+    /// Hugging Face / general vision model detection by name patterns
+    private static func isHFVisionModel(_ id: String) -> Bool {
+        let lower = id.lowercased()
+        let visionKeywords = [
+            "-vl-", "-vl ", "vl-", "-vision",
+            "pixtral", "llava", "minicpm-v",
+            "glm-4.5v", "glm-4.6v", "glm-4.7",
+            "gemma-3", "gemma-4", "gemma3", "gemma4",
+            "llama-4", "llama4", "mimo",
+            "aya-vision", "command-a-vision",
+            "ernie-4.5-vl", "qwen2.5-vl", "qwen3-vl",
+            "phi-4-reasoning-vision",
+            "autoglm-phone",
+        ]
+        return visionKeywords.contains { lower.contains($0) }
     }
 
     private func refreshModelsForCurrentProvider() {
