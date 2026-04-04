@@ -79,6 +79,21 @@ struct AgentOptionsView: View {
             }
 
             row {
+                Text("Network Retry").font(.subheadline)
+                Spacer()
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("Seconds between retries").font(.caption).foregroundStyle(.secondary)
+                    Picker("", selection: $viewModel.networkRetryDelay) {
+                        ForEach([10, 20, 30, 40, 50, 60], id: \.self) { sec in
+                            Text("\(sec)s").tag(sec)
+                        }
+                    }
+                    .labelsHidden()
+                    .frame(width: 80)
+                }
+            }
+
+            row {
                 Text("Output").font(.subheadline)
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {

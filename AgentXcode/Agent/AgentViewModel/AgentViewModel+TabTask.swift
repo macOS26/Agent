@@ -679,9 +679,10 @@ extension AgentViewModel {
                         // Network lost — retry in 60 seconds
                         timeoutRetryCount += 1
                         if timeoutRetryCount <= maxTimeoutRetries {
-                            tab.appendLog("🌐 Network connection lost — retrying in 60s (attempt \(timeoutRetryCount)/\(maxTimeoutRetries))...")
+                            let delay = networkRetryDelay
+                            tab.appendLog("🌐 Network connection lost — retrying in \(delay)s (attempt \(timeoutRetryCount)/\(maxTimeoutRetries))...")
                             tab.flush()
-                            try? await Task.sleep(for: .seconds(60))
+                            try? await Task.sleep(for: .seconds(Double(delay)))
                             if Task.isCancelled { break }
                             continue
                         } else {

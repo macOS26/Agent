@@ -709,6 +709,20 @@ extension AgentViewModel {
                         try? await Task.sleep(for: .seconds(retryDelay))
                         if Task.isCancelled { break }
                         continue
+                    } else if errMsg.lowercased().contains("network") || errMsg.lowercased().contains("connection") || errMsg.lowercased().contains("internet") || (error as? URLError)?.code == .networkConnectionLost || (error as? URLError)?.code == .notConnectedToInternet {
+                        timeoutRetryCount += 1
+                        if timeoutRetryCount <= maxTimeoutRetries {
+                            let delay = networkRetryDelay
+                            appendLog("🌐 Network connection lost — retrying in \(delay)s (attempt \(timeoutRetryCount)/\(maxTimeoutRetries))...")
+                            flushLog()
+                            try? await Task.sleep(for: .seconds(Double(delay)))
+                            if Task.isCancelled { break }
+                            continue
+                        } else {
+                            appendLog("🌐 Network connection lost after \(maxTimeoutRetries) retries.")
+                            flushLog()
+                            break
+                        }
                     } else {
                         // Non-recoverable error — don't retry (400 bad request, auth errors, etc.)
                         appendLog("\(errorSource) Error: \(errMsg)")

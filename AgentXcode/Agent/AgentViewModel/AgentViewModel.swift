@@ -659,6 +659,9 @@ final class AgentViewModel {
     var maxRetries: Int = UserDefaults.standard.object(forKey: "agentMaxRetries") as? Int ?? 10 {
         didSet { UserDefaults.standard.set(maxRetries, forKey: "agentMaxRetries") }
     }
+    var networkRetryDelay: Int = UserDefaults.standard.object(forKey: "agentNetworkRetryDelay") as? Int ?? 60 {
+        didSet { UserDefaults.standard.set(networkRetryDelay, forKey: "agentNetworkRetryDelay") }
+    }
 
     // MARK: - Temperature per provider
     var claudeTemperature: Double = UserDefaults.standard.object(forKey: "claudeTemperature") as? Double ?? 0.2 {
