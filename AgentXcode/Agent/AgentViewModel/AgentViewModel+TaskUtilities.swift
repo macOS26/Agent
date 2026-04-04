@@ -1,6 +1,7 @@
 
 @preconcurrency import Foundation
 import AgentTools
+import AgentAudit
 import AgentMCP
 import AgentD1F
 import Cocoa
