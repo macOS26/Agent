@@ -86,7 +86,7 @@ Control any Mac app through the Accessibility API. Click buttons, type into fiel
 ### 🤖 12 AI Providers
 | Provider | Verdict | Best For |
 |---|---|---|
-| **Zai GLM-5 / GLM-5.1** | Powerful | Recommended starting point |
+| **GLM-5 / GLM-5.1** | Reliable | Recommended starting point |
 | **Claude** (Anthropic) | Paid | Complex tasks |
 | **ChatGPT** (OpenAI) | Paid | General purpose |
 | **Google Gemini** | Paid/Free | High performance, long context |
