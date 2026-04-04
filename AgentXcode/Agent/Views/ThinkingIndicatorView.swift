@@ -316,8 +316,13 @@ struct ThinkingIndicatorView: View {
         }
         .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
         .onAppear {
-            if let tab, tab.lastElapsed > 0, elapsed == 0 {
-                elapsed = tab.lastElapsed
+            if let tab {
+                elapsed = tab.taskElapsed
+            }
+        }
+        .onDisappear {
+            if let tab {
+                tab.taskElapsed = elapsed
             }
         }
         .onChange(of: tab?.isLLMRunning) { _, newValue in

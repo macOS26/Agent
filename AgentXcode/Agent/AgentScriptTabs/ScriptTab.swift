@@ -115,6 +115,7 @@ final class ScriptTab: Identifiable {
     var llmStreamBuffer: String = ""
     var rawLLMOutput: String = ""
     var lastElapsed: Double = 0
+    var taskElapsed: Double = 0  // Total task elapsed for display — survives tab switches
     var tabInputTokens: Int = 0
     var tabOutputTokens: Int = 0
     var llmStreamFlushTask: Task<Void, Never>?
