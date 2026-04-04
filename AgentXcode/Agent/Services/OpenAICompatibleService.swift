@@ -718,21 +718,20 @@ final class OpenAICompatibleService {
                 // Suppress all text when native tool calls are being streamed
                 if !toolCallAccum.isEmpty { continue }
 
-                // Buffer text and flush on newlines to filter JSON tool calls
-                // Only buffer lines starting with '{' (potential JSON) — flush normal text immediately
-                for ch in cleaned {
-                    if ch == "\n" {
-                        let suppressed = isToolCallJSON(lineBuffer)
-                        flushLineBuffer()
-                        if !suppressed {
-                            onTextDelta("\n")
-                        }
-                    } else {
-                        lineBuffer.append(ch)
-                        if !lineBuffer.hasPrefix("{") {
+                // Stream text directly (like Claude) — only buffer potential JSON tool calls
+                if lineBuffer.hasPrefix("{") || cleaned.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("{") {
+                    // Buffering a potential JSON tool call line — accumulate until newline
+                    for ch in cleaned {
+                        if ch == "\n" {
+                            let suppressed = isToolCallJSON(lineBuffer)
                             flushLineBuffer()
+                            if !suppressed { onTextDelta("\n") }
+                        } else {
+                            lineBuffer.append(ch)
                         }
                     }
+                } else {
+                    onTextDelta(cleaned)
                 }
             }
         }
