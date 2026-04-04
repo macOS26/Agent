@@ -10,23 +10,21 @@
 [![GitHub Stars](https://img.shields.io/github/stars/macOS26/Agent?style=for-the-badge&logo=github&label=Stars&color=hotpink)](https://github.com/macOS26/Agent/stargazers)
 [![GitHub Forks](https://img.shields.io/github/forks/macOS26/Agent?style=for-the-badge&logo=github&label=Forks&color=white)](https://github.com/macOS26/Agent/fork)
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B-purple?style=for-the-badge)](https://github.com/apple)
-13	</div>
-14	
-15	## What's New 🚀
-16	
-17	- **Autonomous Task Loop:** Agent! now reasons, executes, and self-corrects until the task is complete.
-18	- **Agentic Coding:** Advanced code editing with **Time Machine-style backups** for every file change.
-19	- **Native Xcode Tools:** Faster, project-aware builds and runs without external MCP configuration.
-20	- **Privileged Root Access:** Secure, user-approved daemon for executing any system command.
-21	- **Desktop Automation:** Full control of any macOS app via AXorcist (Accessibility API).
-22	
-23	---
-24	
-25	## Quick Start
-26	
-A native macOS AI agent that controls your apps, writes code, automates workflows, and runs tasks from your iPhone via iMessage. All powered by the AI provider of your choice.
-
 </div>
+
+## What's New 🚀
+
+- **Autonomous Task Loop:** Agent! now reasons, executes, and self-corrects until the task is complete.
+- **Agentic Coding:** Advanced code editing with **Time Machine-style backups** for every file change.
+- **Native Xcode Tools:** Faster, project-aware builds and runs without external MCP configuration.
+- **Privileged Root Access:** Secure, user-approved daemon for executing any system command.
+- **Desktop Automation:** Full control of any macOS app via AXorcist (Accessibility API).
+- **Expanded AI Support:** Stabilized tool calling for **Mistral** and **Google Gemini** models.
+- **Unified Provider Registry:** Centralized model and URL management via `LLMRegistry`.
+
+---
+
+A native macOS AI agent that controls your apps, writes code, automates workflows, and runs tasks from your iPhone via iMessage. All powered by the AI provider of your choice.
 
 <img width="1349" height="1438" alt="Screenshot 2026-04-02 at 12 00 03 PM" src="https://github.com/user-attachments/assets/b0d9346e-f807-4089-bab3-29c7058868d8" />
 
@@ -37,11 +35,20 @@ A native macOS AI agent that controls your apps, writes code, automates workflow
 1. **Download** [Agent!](https://github.com/macOS26/Agent/releases/latest) and drag to Applications
 2. **Open Agent!** -- it sets up everything automatically
 3. **Pick your AI** -- Settings → choose a provider → enter API key
-4. **Type a task and press Enter**
+## Quick Start
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/toddbruss/Agent.git
+   cd Agent
+   ```
+2. **Open `Agent.xcodeproj` in Xcode.**
+3. **Build and Run the `Agent` target.**
+4. **Approve the Helper Tool:** When prompted, authorize the privileged daemon to allow root-level command execution.
+5. **Configure your AI Provider:** Go to Settings and enter your API key or select a local provider like Ollama.
 
 > 💡 **No API key?** Use **Ollama** with **GLM-5** -- completely free, runs offline, no account needed. Requires 32GB+ RAM.
 
----
 
 ## What Can It Do?
 
@@ -57,19 +64,20 @@ Just type what you want. Agent! figures out how and makes it happen.
 
 ---
 
-49	## Key Features
-50	
-51	### 🧠 Agentic AI Framework
-52	Built-in autonomous task loop that reasons, executes, and self-corrects. Agent! doesn't just run code; it observes the results, debugs errors, and iterates until the task is complete.
-53	
-54	### 🛠 Agentic Coding
-55	Full coding environment built in. Reads codebases, edits files with precision, runs shell commands, builds Xcode projects, manages git, and auto-enables coding mode to focus the AI on development tools. Replaces Claude Code, Cursor, and Cline -- no terminal, no IDE plugins, no monthly fee. Features **Time Machine-style backups** for every file change, letting you revert any edit instantly.
-56	
-57	### 🔍 Dynamic Tool Discovery
-58	Automatically detects and uses available tools (Xcode, Playwright, Shell, etc.) based on your prompt. No manual configuration required for core tools.
-59	
-60	### 🛡 Privileged Execution
-61	Securely runs root-level commands via a dedicated macOS Launch Daemon. The user approves the daemon once, then the agent can execute commands autonomously via XPC.
+## Key Features
+
+### 🧠 Agentic AI Framework
+Built-in autonomous task loop that reasons, executes, and self-corrects. Agent! doesn't just run code; it observes the results, debugs errors, and iterates until the task is complete.
+
+### 🛠 Agentic Coding
+Full coding environment built in. Reads codebases, edits files with precision, runs shell commands, builds Xcode projects, manages git, and auto-enables coding mode to focus the AI on development tools. Replaces Claude Code, Cursor, and Cline -- no terminal, no IDE plugins, no monthly fee. Features **Time Machine-style backups** for every file change, letting you revert any edit instantly.
+
+### 🔍 Dynamic Tool Discovery
+Automatically detects and uses available tools (Xcode, Playwright, Shell, etc.) based on your prompt. No manual configuration required for core tools.
+
+### 🛡 Privileged Execution
+Securely runs root-level commands via a dedicated macOS Launch Daemon. The user approves the daemon once, then the agent can execute commands autonomously via XPC.
+
 62	
 63	### 🖥 Desktop Automation (AXorcist)
 64	Control any Mac app through the Accessibility API. Click buttons, type into fields, navigate menus, scroll, drag -- all programmatically. Powered by [AXorcist](https://github.com/steipete/AXorcist) for reliable, fuzzy-matched element finding.
@@ -227,14 +235,15 @@ Agent! includes native Xcode integration that works without any MCP server setup
 | **xcode select_project** | Switch the active project |
 | **xcode grant_permission** | Grant file access to the Xcode project folder |
 
-219	The AI automatically uses these when you ask it to build, fix errors, or work with Xcode projects. No configuration needed -- just have your project open in Xcode.
-220	
-221	> 🚀 **iOS/iPadOS Support:** Coming soon! Native support for building, running, and testing iOS and iPadOS apps directly from Agent! is in development.
-222	
-223	> **Tip:** For most coding workflows, the built-in tools are all you need. The MCP Xcode server below adds extras like SwiftUI Preview rendering and documentation search.
-224	
+The AI automatically uses these when you ask it to build, fix errors, or work with Xcode projects. No configuration needed -- just have your project open in Xcode.
+
+> 🚀 **iOS/iPadOS Support:** Coming soon! Native support for building, running, and testing iOS and iPadOS apps directly from Agent! is in development.
+
+> **Tip:** For most coding workflows, the built-in tools are all you need. The MCP Xcode server below adds extras like SwiftUI Preview rendering and documentation search.
+
 
 ---
+
 
 ## Model Context Protocol (MCP)
 
