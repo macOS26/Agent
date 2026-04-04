@@ -327,23 +327,28 @@ struct ThinkingIndicatorView: View {
             guard let tab else { return }
             if newValue == true {
                 // Reset timer and auto-expand when LLM starts
-                elapsed = 0
-                tab.taskElapsed = 0
+                tab.taskStartDate = Date()
+                tab._taskElapsedFrozen = 0
                 withAnimation(.easeInOut(duration: 0.2)) {
                     isExpanded = true
                     showStreamText = true
                     tab.thinkingDismissed = false
                 }
-            } else if tab.isRunning && !tab.rawLLMOutput.isEmpty {
-                // LLM finished but script still running — keep indicator visible
-                tab.thinkingDismissed = false
+            } else {
+                // Freeze elapsed when LLM stops
+                tab._taskElapsedFrozen = tab.taskElapsed
+                tab.taskStartDate = nil
+                if tab.isRunning && !tab.rawLLMOutput.isEmpty {
+                    tab.thinkingDismissed = false
+                }
             }
         }
         .onChange(of: viewModel.isRunning) { _, newValue in
             // Auto-expand on main tab when task starts
             guard tab == nil else { return }
             if newValue {
-                elapsed = 0
+                viewModel.mainTaskStartDate = Date()
+                viewModel.mainTaskElapsed = 0
                 withAnimation(.easeInOut(duration: 0.2)) {
                     isExpanded = true
                     showStreamText = true
@@ -353,8 +358,7 @@ struct ThinkingIndicatorView: View {
         }
         .onReceive(refreshTimer) { _ in
             guard isActive else { return }
-            elapsed += 1.0
-            tick += 1
+            tick += 1  // Just refresh UI — elapsed is computed from taskStartDate
             switch dots.count {
             case 0: dots = "."
             case 1: dots = ".."

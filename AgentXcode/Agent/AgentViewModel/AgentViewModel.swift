@@ -126,7 +126,17 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(thinkingOutputExpanded, forKey: "thinkingOutputExpanded") }
     }
     var isListening = false
-    var mainTaskElapsed: TimeInterval = 0
+    var mainTaskStartDate: Date?
+    var _mainTaskElapsedFrozen: TimeInterval = 0
+    var mainTaskElapsed: TimeInterval {
+        get {
+            if let start = mainTaskStartDate, isRunning {
+                return Date().timeIntervalSince(start)
+            }
+            return _mainTaskElapsedFrozen
+        }
+        set { _mainTaskElapsedFrozen = newValue }
+    }
 
     // Failed agent alert
     var showFailedAgentAlert = false

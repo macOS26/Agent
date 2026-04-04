@@ -115,7 +115,17 @@ final class ScriptTab: Identifiable {
     var llmStreamBuffer: String = ""
     var rawLLMOutput: String = ""
     var lastElapsed: Double = 0
-    var taskElapsed: Double = 0  // Total task elapsed for display — survives tab switches
+    var taskStartDate: Date?     // Set when task starts, nil when idle
+    var taskElapsed: Double {    // Computes live elapsed — works even when tab is in background
+        get {
+            if let start = taskStartDate, isRunning || isLLMRunning {
+                return Date().timeIntervalSince(start)
+            }
+            return _taskElapsedFrozen
+        }
+        set { _taskElapsedFrozen = newValue }
+    }
+    var _taskElapsedFrozen: Double = 0  // Stored value when task stops
     var tabInputTokens: Int = 0
     var tabOutputTokens: Int = 0
     var llmStreamFlushTask: Task<Void, Never>?
