@@ -404,9 +404,33 @@ extension AgentViewModel {
     func appendStreamDelta(_ delta: String) {
         if !streamingTextStarted {
             rawLLMOutput = ""
+            displayedLLMOutput = ""
+            dripDisplayIndex = 0
         }
         streamingTextStarted = true
         rawLLMOutput += delta
+        startDripIfNeeded()
+    }
+
+    /// Drip characters from rawLLMOutput into displayedLLMOutput one at a time (terminal effect)
+    private func startDripIfNeeded() {
+        guard dripTask == nil else { return }
+        dripTask = Task { [weak self] in
+            guard let self else { return }
+            while !Task.isCancelled {
+                if self.dripDisplayIndex < self.rawLLMOutput.count {
+                    let idx = self.rawLLMOutput.index(self.rawLLMOutput.startIndex, offsetBy: self.dripDisplayIndex)
+                    self.displayedLLMOutput.append(self.rawLLMOutput[idx])
+                    self.dripDisplayIndex += 1
+                    try? await Task.sleep(for: .milliseconds(8))
+                } else if !self.streamingTextStarted {
+                    break // Stream ended and all chars dripped
+                } else {
+                    try? await Task.sleep(for: .milliseconds(5)) // Wait for more
+                }
+            }
+            self.dripTask = nil
+        }
     }
 
     /// Collapse runs of 3+ newlines to 2 (one blank line max) to prevent huge gaps from chatty models.
@@ -455,6 +479,11 @@ extension AgentViewModel {
                 activityLog += "\n"
             }
             streamingTextStarted = false
+            // Drain remaining characters immediately
+            if dripDisplayIndex < rawLLMOutput.count {
+                displayedLLMOutput = rawLLMOutput
+                dripDisplayIndex = rawLLMOutput.count
+            }
         }
     }
 

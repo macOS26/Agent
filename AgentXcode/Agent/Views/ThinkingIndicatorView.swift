@@ -60,9 +60,9 @@ struct ThinkingIndicatorView: View {
 
     private var streamText: String {
         if let tab {
-            return tab.rawLLMOutput
+            return tab.displayedLLMOutput
         }
-        return viewModel.rawLLMOutput
+        return viewModel.displayedLLMOutput
     }
 
     private var modelName: String {

@@ -1106,6 +1106,10 @@ final class AgentViewModel {
     @ObservationIgnored var rawLLMOutput: String = UserDefaults.standard.string(forKey: "mainRawLLMOutput") ?? "" {
         didSet { UserDefaults.standard.set(rawLLMOutput, forKey: "mainRawLLMOutput") }
     }
+    /// Character-by-character dripped version of rawLLMOutput for terminal effect
+    var displayedLLMOutput: String = UserDefaults.standard.string(forKey: "mainRawLLMOutput") ?? ""
+    var dripDisplayIndex: Int = (UserDefaults.standard.string(forKey: "mainRawLLMOutput") ?? "").count
+    var dripTask: Task<Void, Never>?
     var streamFlushTask: Task<Void, Never>?
     var streamingTextStarted = false
     static let maxLogSize = 60_000

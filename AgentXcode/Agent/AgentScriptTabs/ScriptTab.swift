@@ -114,6 +114,10 @@ final class ScriptTab: Identifiable {
     // LLM streaming state
     var llmStreamBuffer: String = ""
     var rawLLMOutput: String = ""
+    /// Character-by-character dripped version of rawLLMOutput for terminal effect
+    var displayedLLMOutput: String = ""
+    var dripDisplayIndex: Int = 0
+    var dripTask: Task<Void, Never>?
     var lastElapsed: Double = 0
     var taskStartDate: Date?     // Set when task starts, nil when idle
     var taskElapsed: Double {    // Computes live elapsed — works even when tab is in background
@@ -174,6 +178,8 @@ final class ScriptTab: Identifiable {
             self.tabErrors = errors
         }
         self.rawLLMOutput = record.rawLLMOutput
+        self.displayedLLMOutput = record.rawLLMOutput  // Show full text on restore (no drip)
+        self.dripDisplayIndex = record.rawLLMOutput.count
         self.lastElapsed = record.lastElapsed
         self.thinkingExpanded = record.thinkingExpanded
         self.thinkingOutputExpanded = record.thinkingOutputExpanded
@@ -246,8 +252,32 @@ final class ScriptTab: Identifiable {
             llmStreamingStarted = true
             llmStreamBuffer = ""
             rawLLMOutput = ""
+            displayedLLMOutput = ""
+            dripDisplayIndex = 0
         }
         rawLLMOutput += delta
+        startDripIfNeeded()
+    }
+
+    /// Drip characters from rawLLMOutput into displayedLLMOutput one at a time (terminal effect)
+    private func startDripIfNeeded() {
+        guard dripTask == nil else { return }
+        dripTask = Task { [weak self] in
+            guard let self else { return }
+            while !Task.isCancelled {
+                if self.dripDisplayIndex < self.rawLLMOutput.count {
+                    let idx = self.rawLLMOutput.index(self.rawLLMOutput.startIndex, offsetBy: self.dripDisplayIndex)
+                    self.displayedLLMOutput.append(self.rawLLMOutput[idx])
+                    self.dripDisplayIndex += 1
+                    try? await Task.sleep(for: .milliseconds(8))
+                } else if self.llmStreamingStarted {
+                    try? await Task.sleep(for: .milliseconds(5))
+                } else {
+                    break
+                }
+            }
+            self.dripTask = nil
+        }
     }
 
     func flushStreamBuffer() {
@@ -256,6 +286,11 @@ final class ScriptTab: Identifiable {
         // Stream text goes to LLM output only — not the activity log
         llmStreamBuffer = ""
         llmStreamingStarted = false
+        // Drain remaining characters immediately
+        if dripDisplayIndex < rawLLMOutput.count {
+            displayedLLMOutput = rawLLMOutput
+            dripDisplayIndex = rawLLMOutput.count
+        }
     }
 
     private func scheduleLLMStreamFlush() {
