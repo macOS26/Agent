@@ -269,7 +269,7 @@ final class ScriptTab: Identifiable {
                     let idx = self.rawLLMOutput.index(self.rawLLMOutput.startIndex, offsetBy: self.dripDisplayIndex)
                     self.displayedLLMOutput.append(self.rawLLMOutput[idx])
                     self.dripDisplayIndex += 1
-                    try? await Task.sleep(for: .milliseconds(8))
+                    try? await Task.sleep(for: .milliseconds(30))
                 } else if self.llmStreamingStarted {
                     try? await Task.sleep(for: .milliseconds(5))
                 } else {

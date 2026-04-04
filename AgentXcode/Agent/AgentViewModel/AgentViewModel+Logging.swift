@@ -422,7 +422,7 @@ extension AgentViewModel {
                     let idx = self.rawLLMOutput.index(self.rawLLMOutput.startIndex, offsetBy: self.dripDisplayIndex)
                     self.displayedLLMOutput.append(self.rawLLMOutput[idx])
                     self.dripDisplayIndex += 1
-                    try? await Task.sleep(for: .milliseconds(8))
+                    try? await Task.sleep(for: .milliseconds(30))
                 } else if !self.streamingTextStarted {
                     break // Stream ended and all chars dripped
                 } else {
