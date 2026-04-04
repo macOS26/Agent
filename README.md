@@ -4,7 +4,6 @@
 # 🦾 Agent! for macOS 26
 
 ## **Agentic AI for your  Mac Desktop**
-## **Agentic AI for your  Mac Desktop**
 ## Open Source replacement for Claude Code, Cursor, Open Claw
 
 > Note: Claude refers to the Anthropic AI model integrated into Agent! for LLM functionality. It is not a human contributor to this repository.
