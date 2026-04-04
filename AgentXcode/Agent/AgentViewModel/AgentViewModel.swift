@@ -126,6 +126,7 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(thinkingOutputExpanded, forKey: "thinkingOutputExpanded") }
     }
     var isListening = false
+    var mainTaskElapsed: TimeInterval = 0
 
     // Failed agent alert
     var showFailedAgentAlert = false

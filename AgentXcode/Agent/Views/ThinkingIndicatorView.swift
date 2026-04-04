@@ -26,8 +26,15 @@ struct ThinkingIndicatorView: View {
     @State private var outputHeight: CGFloat = 40
     @State private var userDragged: Bool = false
     @State private var dots = ""
-    @State private var elapsed: TimeInterval = 0
     @State private var tick = 0
+    /// Elapsed time — stored on the tab to survive tab switches
+    private var elapsed: TimeInterval {
+        get { tab?.taskElapsed ?? viewModel.mainTaskElapsed }
+        nonmutating set {
+            if let tab { tab.taskElapsed = newValue }
+            else { viewModel.mainTaskElapsed = newValue }
+        }
+    }
     private let refreshTimer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
 
     private var isActive: Bool {
@@ -316,16 +323,6 @@ struct ThinkingIndicatorView: View {
         }
         .background(colorScheme == .dark ? Color.clear : Color.white.opacity(0.53))
         .background(.ultraThinMaterial.opacity(colorScheme == .dark ? 0.95 : 0.97))
-        .onAppear {
-            if let tab {
-                elapsed = tab.taskElapsed
-            }
-        }
-        .onDisappear {
-            if let tab {
-                tab.taskElapsed = elapsed
-            }
-        }
         .onChange(of: tab?.isLLMRunning) { _, newValue in
             guard let tab else { return }
             if newValue == true {
