@@ -410,7 +410,7 @@ private struct LLMOutputBox: View {
             : Color(red: 0.85, green: 0.92, blue: 0.85)
     }
 
-    private let minHeight: CGFloat = 40
+    private let minHeight: CGFloat = 60
 
     /// Convert URLs in text to clickable underlined links, keeping the rest in termText color.
     private static func linkify(_ text: String, color: Color) -> AttributedString {
@@ -574,7 +574,7 @@ private struct LLMOutputBox: View {
                         Spacer()
                     }
                     .padding(5)
-                    .frame(maxWidth: .infinity, minHeight: 40, alignment: .topLeading)
+                    .frame(maxWidth: .infinity, minHeight: 60, alignment: .topLeading)
                 }
 
                 // Dismiss button — overlaid bottom right, no extra space
