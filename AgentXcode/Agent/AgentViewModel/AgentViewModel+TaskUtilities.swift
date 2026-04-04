@@ -42,7 +42,7 @@ extension AgentViewModel {
         let folderPrefix = projectFolder.isEmpty ? "" : "[project folder: \(projectFolder)] "
         let projectConfig = readProjectConfig(projectFolder: projectFolder)
         let configPrefix = projectConfig.isEmpty ? "" : "[Project instructions:\n\(projectConfig)]\n\n"
-        return "[NEW TASK — Follow these instructions carefully. This task overrides any previous task context.]\n" + folderPrefix + configPrefix
+        return "[NEW TASK — Do ONLY what is asked below. Ignore all previous task history. When done, call done(summary:\"...\") immediately. Do NOT continue with unrelated work.]\n" + folderPrefix + configPrefix
     }
 
     static func truncateToolResults(_ results: [[String: Any]]) -> [[String: Any]] {
