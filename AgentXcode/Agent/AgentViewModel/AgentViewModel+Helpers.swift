@@ -131,12 +131,35 @@ extension AgentViewModel {
 
     /// Expands consolidated CRUDL tool names (git, agent, applescript_tool, javascript_tool)
     /// into legacy tool names so existing handlers work unchanged.
+    /// Maps short tool names to their handler names. Supports both old and new names.
+    private static let toolAliases: [String: String] = [
+        // New short names → old handler names
+        "sh": "execute_agent_command",
+        "root": "execute_daemon_command",
+        "batch": "batch_commands",
+        "multi": "batch_tools",
+        "done": "task_complete",
+        "search": "web_search",
+        "chat": "conversation",
+        "msg": "send_message",
+        "plan": "plan_mode",
+        "folder": "project_folder",
+        "code": "coding_mode",
+        "tools": "list_tools",
+        "sdef": "lookup_sdef",
+    ]
+
     static func expandConsolidatedTool(name: String, input: [String: Any]) -> (String, [String: Any]) {
         let action = input["action"] as? String ?? ""
         // Normalize empty/relative path to nil so handlers fall back to project folder
         var newInput = input
         if let p = newInput["path"] as? String, (p.isEmpty || p == "." || p == "./") { newInput["path"] = nil }
         if let p = newInput["file_path"] as? String, p.isEmpty { newInput["file_path"] = nil }
+
+        // Resolve short aliases to handler names — no handler changes needed
+        if let resolved = toolAliases[name] {
+            return (resolved, newInput)
+        }
 
         switch name {
         case "git":
@@ -162,7 +185,7 @@ extension AgentViewModel {
             default:        return ("list_agents", newInput)
             }
 
-        case "applescript_tool":
+        case "applescript_tool", "as":
             switch action {
             case "execute":     return ("run_applescript", newInput)
             case "lookup_sdef": return ("lookup_sdef", newInput)
@@ -173,7 +196,7 @@ extension AgentViewModel {
             default:            return ("list_apple_scripts", newInput)
             }
 
-        case "javascript_tool":
+        case "javascript_tool", "jxa":
             switch action {
             case "execute": return ("execute_javascript", newInput)
             case "list":    return ("list_javascript", newInput)
@@ -183,7 +206,7 @@ extension AgentViewModel {
             default:        return ("list_javascript", newInput)
             }
 
-        case "file_manager":
+        case "file_manager", "file":
             switch action {
             case "read":             return ("read_file", newInput)
             case "write":            return ("write_file", newInput)
@@ -200,7 +223,7 @@ extension AgentViewModel {
             default:                 return ("read_file", newInput)
             }
 
-        case "xcode":
+        case "xcode", "xc":
             switch action {
             case "build":            return ("xcode_build", newInput)
             case "run":              return ("xcode_run", newInput)
@@ -218,7 +241,7 @@ extension AgentViewModel {
             default:                return ("xcode_build", newInput)
             }
 
-        case "safari", "web":
+        case "safari", "web", "w":
             switch action {
             case "open":          return ("web_open", newInput)
             case "find":          return ("web_find", newInput)
@@ -241,7 +264,7 @@ extension AgentViewModel {
             default:              return ("web_open", newInput)
             }
 
-        case "selenium":
+        case "selenium", "sel":
             switch action {
             case "start":      return ("selenium_start", newInput)
             case "stop":       return ("selenium_stop", newInput)
@@ -255,7 +278,7 @@ extension AgentViewModel {
             default:           return ("selenium_start", newInput)
             }
 
-        case "accessibility":
+        case "accessibility", "ax":
             // Remap "action" for perform_action to avoid collision with the dispatch "action"
             var mapped = newInput
             if let axAction = mapped["ax_action"] as? String {
