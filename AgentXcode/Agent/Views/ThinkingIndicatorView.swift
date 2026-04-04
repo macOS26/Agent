@@ -574,9 +574,14 @@ private struct LLMOutputBox: View {
                             proxy.scrollTo("bottom", anchor: .bottom)
                         }
                     }
-                    .layerEffect(
-                        ShaderLibrary.crtScanline(.float(Date().timeIntervalSince1970)),
-                        maxSampleOffset: .zero
+                    .overlay(
+                        Canvas { context, size in
+                            for y in stride(from: 0, through: size.height, by: 4) {
+                                let rect = CGRect(x: 0, y: y, width: size.width, height: 2)
+                                context.fill(Path(rect), with: .color(.black.opacity(0.08)))
+                            }
+                        }
+                        .allowsHitTesting(false)
                     )
                     .frame(height: min(height, maxHeight))
                 } else {
