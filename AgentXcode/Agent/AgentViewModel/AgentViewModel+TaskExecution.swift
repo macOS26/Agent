@@ -391,16 +391,7 @@ extension AgentViewModel {
                     guard let type = block["type"] as? String else { continue }
 
                     if type == "text" {
-                        // Include LLM text in activity log if it has substance (skip duplicates)
-                        if let text = block["text"] as? String {
-                            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-                            let hash = trimmed.hashValue
-                            if !trimmed.isEmpty && trimmed.count > 1 && !recentOutputHashes.contains(hash) {
-                                recentOutputHashes.insert(hash)
-                                appendLog(trimmed)
-                                flushLog()
-                            }
-                        }
+                        // Text goes to LLM output only — streaming delta already shows it there
                     } else if type == "server_tool_use" {
                         // Server-side tool (web search) — executed by the API, just log it
                         hasToolUse = true
