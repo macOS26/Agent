@@ -578,7 +578,7 @@ private struct LLMOutputBox: View {
                         Canvas { context, size in
                             for y in stride(from: 0, through: size.height, by: 4) {
                                 let rect = CGRect(x: 0, y: y, width: size.width, height: 2)
-                                context.fill(Path(rect), with: .color(.black.opacity(0.08)))
+                                context.fill(Path(rect), with: .color(.green.opacity(0.08)))
                             }
                         }
                         .allowsHitTesting(false)
@@ -587,14 +587,14 @@ private struct LLMOutputBox: View {
                 } else {
                     HStack(spacing: 0) {
                         Text("> ")
-                            .font(.system(size: 16.5, design: .monospaced))
+                            .font(.system(size: 14, design: .monospaced))
                             .foregroundColor(termText)
-                        Text(isStreaming ? (cursorVisible ? "█" : " ") : "awaiting output...")
-                            .font(.system(size: 16.5, design: .monospaced))
-                            .foregroundColor(isStreaming ? termText : termDim)
+                        Text(cursorVisible ? "█" : " ")
+                            .font(.system(size: 14, design: .monospaced))
+                            .foregroundColor(termText)
                         Spacer()
                     }
-                    .padding(5)
+                    .padding(10)
                     .frame(maxWidth: .infinity, minHeight: 60, alignment: .topLeading)
                 }
 
@@ -656,7 +656,7 @@ private struct ScanlineOverlay: View {
         Canvas { context, size in
             for y in stride(from: 0, to: size.height, by: 2) {
                 let rect = CGRect(x: 0, y: y, width: size.width, height: 1)
-                context.fill(Path(rect), with: .color(.black.opacity(0.35)))
+                context.fill(Path(rect), with: .color(.white.opacity(0.35)))
             }
         }
     }
