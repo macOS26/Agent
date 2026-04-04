@@ -82,12 +82,13 @@ Securely runs root-level commands via a dedicated macOS Launch Daemon. The user 
 63	### 🖥 Desktop Automation (AXorcist)
 64	Control any Mac app through the Accessibility API. Click buttons, type into fields, navigate menus, scroll, drag -- all programmatically. Powered by [AXorcist](https://github.com/steipete/AXorcist) for reliable, fuzzy-matched element finding.
 65	
-### 🤖 11 AI Providers
+### 🤖 12 AI Providers
 | Provider | Cost | Best For |
 |---|---|---|
 | **GLM-5 / GLM-5.1** (Ollama) | Low Cost | Recommended starting point |
 | **Claude** (Anthropic) | Paid | Complex tasks |
 | **ChatGPT** (OpenAI) | Paid | General purpose |
+| **Google Gemini** | Paid/Free | High performance, long context |
 | **Apple Intelligence** | Free | On-device, private |
 | **DeepSeek** | Paid | Budget cloud AI |
 | **Grok-2** (xAI) | Paid | Real-time info |
