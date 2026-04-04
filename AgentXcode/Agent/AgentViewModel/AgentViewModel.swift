@@ -658,7 +658,7 @@ final class AgentViewModel {
             // Ollama vision models (from ollama.com/search?c=vision)
             "llava", "llava-llama3", "bakllava", "minicpm-v",
             "gemma3", "gemma4", "gemma-3", "gemma-4",
-            "qwen2.5vl", "qwen2.5-vl", "qwen3-vl", "qwen3.5",
+            "qwen-vl", "qwen2.5vl", "qwen2.5-vl", "qwen3-vl", "qwen3.5",
             "llama3.2-vision", "llama-3.2-vision", "llama4",
             "mistral-small3.1", "mistral-small3.2", "mistral-large-3",
             "kimi-k2.5", "gemini-3-flash", "glm-ocr", "deepseek-ocr",
