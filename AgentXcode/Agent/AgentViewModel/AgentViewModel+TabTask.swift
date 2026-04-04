@@ -459,13 +459,7 @@ extension AgentViewModel {
                     guard let type = block["type"] as? String else { continue }
 
                     if type == "text" {
-                        if let text = block["text"] as? String {
-                            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-                            if !trimmed.isEmpty && trimmed.count > 1 {
-                                tab.appendLog(trimmed)
-                                tab.flush()
-                            }
-                        }
+                        // Text goes to LLM output only — streaming delta already shows it there
                     } else if type == "tool_use" {
                         hasToolUse = true
                         guard let toolId = block["id"] as? String,
