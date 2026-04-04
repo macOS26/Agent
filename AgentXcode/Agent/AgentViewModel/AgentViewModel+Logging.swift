@@ -479,11 +479,7 @@ extension AgentViewModel {
                 activityLog += "\n"
             }
             streamingTextStarted = false
-            // Drain remaining characters immediately
-            if dripDisplayIndex < rawLLMOutput.count {
-                displayedLLMOutput = rawLLMOutput
-                dripDisplayIndex = rawLLMOutput.count
-            }
+            // Let drip task finish naturally — no instant dump
         }
     }
 

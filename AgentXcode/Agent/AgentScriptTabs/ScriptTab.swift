@@ -286,11 +286,7 @@ final class ScriptTab: Identifiable {
         // Stream text goes to LLM output only — not the activity log
         llmStreamBuffer = ""
         llmStreamingStarted = false
-        // Drain remaining characters immediately
-        if dripDisplayIndex < rawLLMOutput.count {
-            displayedLLMOutput = rawLLMOutput
-            dripDisplayIndex = rawLLMOutput.count
-        }
+        // Let drip task finish naturally — no instant dump
     }
 
     private func scheduleLLMStreamFlush() {
