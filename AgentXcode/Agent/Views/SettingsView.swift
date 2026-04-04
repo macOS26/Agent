@@ -264,8 +264,31 @@ struct SettingsView: View {
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Model").font(.caption).foregroundStyle(.secondary)
-                        TextField("Model name", text: $viewModel.qwenModel)
-                            .textFieldStyle(.roundedBorder)
+                        HStack {
+                            if viewModel.qwenModels.isEmpty {
+                                TextField("Model name", text: $viewModel.qwenModel)
+                                    .textFieldStyle(.roundedBorder)
+                            } else {
+                                Picker("Model", selection: $viewModel.qwenModel) {
+                                    ForEach(viewModel.qwenModels) { model in
+                                        Text(model.name).tag(model.id)
+                                    }
+                                }
+                                .labelsHidden()
+                            }
+
+                            Button {
+                                viewModel.fetchQwenModels()
+                            } label: {
+                                if viewModel.isFetchingQwenModels {
+                                    ProgressView().controlSize(.small)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                            }
+                            .buttonStyle(.borderless)
+                            .disabled(viewModel.isFetchingQwenModels)
+                        }
                     }
                 }
             } else if viewModel.selectedProvider == .gemini {
@@ -802,7 +825,7 @@ struct SettingsView: View {
         case .lmStudio: viewModel.fetchLMStudioModels()
         case .zAI: viewModel.fetchZAIModels()
         case .bigModel: break
-        case .qwen: break
+        case .qwen: viewModel.fetchQwenModels()
         case .gemini: viewModel.fetchGeminiModels()
         case .grok: viewModel.fetchGrokModels()
         case .mistral: viewModel.fetchMistralModels()

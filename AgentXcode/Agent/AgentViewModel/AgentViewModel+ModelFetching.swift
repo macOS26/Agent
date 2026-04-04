@@ -399,6 +399,33 @@ extension AgentViewModel {
         }.sorted { $0.name < $1.name }
     }
 
+    // MARK: - Qwen (DashScope) Models
+
+    func fetchQwenModels() {
+        isFetchingQwenModels = true
+        let key = qwenAPIKey
+        Task {
+            defer { isFetchingQwenModels = false }
+            guard !key.isEmpty else {
+                qwenModels = Self.defaultQwenModels
+                return
+            }
+            do {
+                let models = try await Self.fetchOpenAICompatibleModels(
+                    apiKey: key,
+                    endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1/models"
+                )
+                qwenModels = models.isEmpty ? Self.defaultQwenModels : models
+                if qwenModel.isEmpty || !qwenModels.contains(where: { $0.id == qwenModel }) {
+                    qwenModel = qwenModels.first?.id ?? "qwen-plus"
+                }
+            } catch {
+                appendLog("Failed to fetch Qwen models: \(error.localizedDescription)")
+                qwenModels = Self.defaultQwenModels
+            }
+        }
+    }
+
     // MARK: - Google Gemini Models
 
     func fetchGeminiModels() {

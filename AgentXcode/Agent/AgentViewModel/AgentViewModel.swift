@@ -526,6 +526,19 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(qwenModel, forKey: "qwenModel") }
     }
 
+    nonisolated static let defaultQwenModels: [OpenAIModelInfo] = [
+        OpenAIModelInfo(id: "qwen-plus", name: "Qwen Plus"),
+        OpenAIModelInfo(id: "qwen-max", name: "Qwen Max"),
+        OpenAIModelInfo(id: "qwen-turbo", name: "Qwen Turbo"),
+        OpenAIModelInfo(id: "qwen-long", name: "Qwen Long"),
+        OpenAIModelInfo(id: "qwen-vl-plus", name: "Qwen VL Plus"),
+        OpenAIModelInfo(id: "qwen-vl-max", name: "Qwen VL Max"),
+        OpenAIModelInfo(id: "qwen-coder-plus", name: "Qwen Coder Plus"),
+    ]
+
+    var qwenModels: [OpenAIModelInfo] = []
+    var isFetchingQwenModels = false
+
     // MARK: - Google Gemini
 
     var geminiAPIKey: String = KeychainService.shared.getGeminiAPIKey() ?? "" {
