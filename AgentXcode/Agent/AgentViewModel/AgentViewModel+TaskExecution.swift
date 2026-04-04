@@ -569,6 +569,9 @@ extension AgentViewModel {
                     let capped = Self.truncateToolResults(toolResults)
                     messages.append(["role": "user", "content": capped])
                 } else if !hasToolUse {
+                    // Check if model wrote task_complete as text instead of a tool call
+                    let responseText = response.content.compactMap { $0["text"] as? String }.joined()
+                    if responseText.contains("task_complete") { break }
                     // LLM responded with text only — nudge it to continue or finish
                     textOnlyCount += 1
                     if textOnlyCount >= 3 { break }
@@ -576,7 +579,7 @@ extension AgentViewModel {
                 } else {
                     // Check if LLM signaled it's done via text even though it made tool calls
                     let allText = response.content.compactMap { $0["text"] as? String }.joined().lowercased()
-                    let stopPhrases = ["no more content", "no further action", "task is complete", "nothing more to do"]
+                    let stopPhrases = ["no more content", "no further action", "task is complete", "nothing more to do", "task_complete"]
                     if stopPhrases.contains(where: { allText.contains($0) }) {
                         break
                     }
