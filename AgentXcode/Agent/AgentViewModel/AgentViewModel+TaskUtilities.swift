@@ -574,8 +574,8 @@ extension AgentViewModel {
     // MARK: - Direct Agent Execution (no LLM)
 
     /// Run an agent script directly — skips the LLM entirely.
-    /// Compiles only if the dylib is out of date, then executes.
-    /// Returns true on success, false on error (caller should fall through to LLM).
+    /// Opens a fresh tab and kicks off execution without blocking the main tab.
+    /// Returns true if the agent was found and launched, false if not found.
     @discardableResult
     func runAgentDirect(name: String, arguments: String = "", switchToTab: Bool = true) async -> Bool {
         let resolved = await Self.offMain { [ss = scriptService] in ss.resolveScriptName(name) }
@@ -588,49 +588,54 @@ extension AgentViewModel {
 
         // Close any existing tab for this agent and open fresh
         if let existing = scriptTabs.first(where: { $0.scriptName == resolved }) {
-            AuditLog.log(.agentScript, "runAgentDirect: closing old tab \(existing.id)")
             closeScriptTab(id: existing.id)
         }
         let tab = openScriptTab(scriptName: resolved, selectTab: switchToTab)
-        AuditLog.log(.agentScript, "runAgentDirect: opened tab \(tab.id)")
 
-        // Log on main tab so user sees something
+        // Log on main tab so user sees something — main tab is now free
         appendLog("🏃 \(resolved)... (see tab)")
         flushLog()
+        isRunning = false
 
-        // Add to tab's prompt history for up-arrow recall
-        let prompt = arguments.isEmpty ? "run \(resolved)" : "run \(resolved) \(arguments)"
+        // Fire and forget — run in the tab's own Task, main tab doesn't wait
+        Task { [weak self] in
+            guard let self else { return }
+            await self.executeAgentInTab(tab: tab, name: resolved, arguments: arguments, compileCmd: compileCmd)
+        }
+        return true
+    }
+
+    /// Execute the agent script inside its tab — called from a detached Task so main tab is free.
+    private func executeAgentInTab(tab: ScriptTab, name: String, arguments: String, compileCmd: String) async {
+
+        let prompt = arguments.isEmpty ? "run \(name)" : "run \(name) \(arguments)"
         tab.addToHistory(prompt)
 
-        // Mark tab as running (not LLM — direct execution)
         tab.isRunning = true
         tab.isLLMRunning = false
         tab.isLLMThinking = false
         tab.appendLog("--- Direct Run ---")
 
         // Compile only if needed
-        AuditLog.log(.agentScript, "runAgentDirect: checking dylib")
-        if await Self.offMain({ [ss = scriptService] in !ss.isDylibCurrent(name: resolved) }) {
-            tab.appendLog("🦾 Compiling: \(resolved)")
+        if await Self.offMain({ [ss = scriptService] in !ss.isDylibCurrent(name: name) }) {
+            tab.appendLog("🦾 Compiling: \(name)")
             tab.flush()
-            AuditLog.log(.agentScript, "runAgentDirect: compiling")
             let compileResult = await userService.execute(command: compileCmd)
             if compileResult.status != 0 {
                 tab.appendLog("❌ Compile error:\n\(compileResult.output)")
                 tab.flush()
                 tab.isRunning = false
-                return false
+                return
             }
         }
 
-        AuditLog.log(.agentScript, "runAgentDirect: executing")
-        tab.appendLog("🦾 Running: \(resolved)")
+        tab.appendLog("🦾 Running: \(name)")
         tab.flush()
-        RecentAgentsService.shared.recordRun(agentName: resolved, arguments: arguments, prompt: "run \(resolved) \(arguments)")
+        RecentAgentsService.shared.recordRun(agentName: name, arguments: arguments, prompt: prompt)
 
         let cancelFlag = tab._cancelFlag
         let runResult = await scriptService.loadAndRunScriptViaProcess(
-            name: resolved,
+            name: name,
             arguments: arguments,
             isCancelled: { cancelFlag.value }
         ) { [weak tab] chunk in
@@ -643,22 +648,18 @@ extension AgentViewModel {
         let success = runResult.status == 0
         let isUsageOutput = runResult.output.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("Usage:")
         let statusNote = success ? "completed" : (isUsageOutput ? "usage" : "exit code: \(runResult.status)")
-        tab.appendLog("\(resolved) \(statusNote)")
+        tab.appendLog("\(name) \(statusNote)")
         tab.flush()
         tab.isRunning = false
 
-        // Update agent menu status based on outcome
         let wasCancelled = tab.isCancelled || runResult.status == 15
         if wasCancelled {
-            RecentAgentsService.shared.updateStatus(agentName: resolved, arguments: arguments, status: .cancelled)
+            RecentAgentsService.shared.updateStatus(agentName: name, arguments: arguments, status: .cancelled)
         } else if isUsageOutput || !success {
-            RecentAgentsService.shared.updateStatus(agentName: resolved, arguments: arguments, status: .failed)
+            RecentAgentsService.shared.updateStatus(agentName: name, arguments: arguments, status: .failed)
         } else {
-            RecentAgentsService.shared.updateStatus(agentName: resolved, arguments: arguments, status: .success)
+            RecentAgentsService.shared.updateStatus(agentName: name, arguments: arguments, status: .success)
         }
-
-        // User-initiated run — output is visible in tab, no alert needed
-        return success || isUsageOutput
     }
 }
 
