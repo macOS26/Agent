@@ -575,7 +575,7 @@ private struct LLMOutputBox: View {
                         }
                     }
                     .overlay(
-                        ScanlineOverlay()
+                        ScanlineOverlay(spacing: 2, color: .black, opacity: 0.5, blurRadius: 0)
                         .allowsHitTesting(false)
                     )
                     .frame(height: min(height, maxHeight))
