@@ -562,11 +562,9 @@ private struct LLMOutputBox: View {
                             }
                         })
 
-                        // CRT scanline overlay
-                        if isStreaming {
-                            ScanlineOverlay()
-                                .allowsHitTesting(false)
-                        }
+                        // CRT scanline overlay — always on like a real CRT
+                        ScanlineOverlay()
+                            .allowsHitTesting(false)
                     }
                     .frame(height: min(height, maxHeight))
                     .animation(.easeInOut(duration: 0.3), value: height)
@@ -642,7 +640,7 @@ private struct ScanlineOverlay: View {
         Canvas { context, size in
             for y in stride(from: 0, to: size.height, by: 2) {
                 let rect = CGRect(x: 0, y: y, width: size.width, height: 1)
-                context.fill(Path(rect), with: .color(.black.opacity(0.15)))
+                context.fill(Path(rect), with: .color(.black.opacity(0.35)))
             }
         }
     }
