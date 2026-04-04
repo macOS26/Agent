@@ -216,16 +216,6 @@ struct ThinkingIndicatorView: View {
                         }
                         .foregroundStyle(.secondary)
 
-                        // Message count
-                        if messageCount > 0 {
-                            HStack(spacing: 3) {
-                                Image(systemName: "bubble.left.and.bubble.right").font(.caption)
-                                Text("\(messageCount)").font(.caption)
-                            }
-                            .foregroundStyle(.secondary)
-                        }
-
-                        // Tokens (↑ input / ↓ output)
                         if inputTokens > 0 || outputTokens > 0 {
                             HStack(spacing: 2) {
                                 Text("↑").font(.caption).foregroundStyle(.blue)
@@ -575,12 +565,9 @@ private struct LLMOutputBox: View {
                         }
                     }
                     .overlay(
-                        ScanlineOverlay(spacing: 1, color: .black, opacity: 0.5, blurRadius: 1)
-                        .allowsHitTesting(false)
-                    )
-                    .overlay(
-                        ScanlineOverlay(spacing: 2, color: .green, opacity: 0.25, blurRadius: 0)
-                        .allowsHitTesting(false)
+                        ScanlineOverlay(spacing: 2, color: .black, opacity: 0.375, blurRadius: 0.005)
+                    ).overlay(
+                        ScanlineOverlay(spacing: 4, color: .green, opacity: 0.112, blurRadius: 0.25)
                     )
                     .frame(height: min(height, maxHeight))
                 } else {
@@ -593,6 +580,11 @@ private struct LLMOutputBox: View {
                             .foregroundColor(termText)
                         Spacer()
                     }
+                    .overlay(
+                        ScanlineOverlay(spacing: 2, color: .black, opacity: 0.375, blurRadius: 0.005)
+                    ).overlay(
+                        ScanlineOverlay(spacing: 4, color: .green, opacity: 0.112, blurRadius: 0.25)
+                    )
                     .padding(10)
                     .frame(maxWidth: .infinity, minHeight: 60, alignment: .topLeading)
                 }
@@ -664,6 +656,7 @@ private struct ScanlineOverlay: View {
             }
         }
         .blur(radius: blurRadius)
+        .allowsHitTesting(false)
     }
 }
 
