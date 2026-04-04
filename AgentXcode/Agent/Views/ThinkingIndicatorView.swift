@@ -152,7 +152,7 @@ struct ThinkingIndicatorView: View {
                     }
 
                     Text("(\(Self.formatElapsed(elapsed)))")
-                        .font(.system(size: 11, design: .monospaced))
+                        .font(.system(size: 16.5, design: .monospaced))
                         .foregroundStyle(.secondary)
 
                     if isActive {
@@ -566,10 +566,10 @@ private struct LLMOutputBox: View {
                 } else {
                     HStack(spacing: 0) {
                         Text("> ")
-                            .font(.system(size: 11, design: .monospaced))
+                            .font(.system(size: 16.5, design: .monospaced))
                             .foregroundColor(termText)
                         Text(isStreaming ? (cursorVisible ? "█" : " ") : "awaiting output...")
-                            .font(.system(size: 11, design: .monospaced))
+                            .font(.system(size: 16.5, design: .monospaced))
                             .foregroundColor(isStreaming ? termText : termDim)
                         Spacer()
                     }
