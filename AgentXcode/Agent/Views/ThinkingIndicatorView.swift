@@ -636,17 +636,15 @@ private struct LLMOutputBox: View {
     }
 }
 
-/// CRT scanline overlay — subtle horizontal lines like a 1980s phosphor monitor
+/// CRT scanline overlay — horizontal lines like a 1980s phosphor monitor
 private struct ScanlineOverlay: View {
     var body: some View {
         Canvas { context, size in
-            // Draw subtle horizontal lines every 3 pixels
-            for y in stride(from: 0, to: size.height, by: 3) {
+            for y in stride(from: 0, to: size.height, by: 2) {
                 let rect = CGRect(x: 0, y: y, width: size.width, height: 1)
-                context.fill(Path(rect), with: .color(.black.opacity(0.08)))
+                context.fill(Path(rect), with: .color(.black.opacity(0.15)))
             }
         }
-        .opacity(0.6)
     }
 }
 

@@ -600,14 +600,28 @@ extension AgentViewModel {
                         flushLog()
                         break
                     }
-                    // LLM responded with text only — nudge it to continue or finish
+                    // Check if model signaled completion via natural language
+                    let lower = responseText.lowercased()
+                    let doneSignals = ["conclude this task", "i'll conclude", "task is complete",
+                                       "no further action", "nothing more to do", "no more content",
+                                       "feel free to ask", "let me know if", "hope this helps",
+                                       "is there anything else", "any other questions"]
+                    if doneSignals.contains(where: { lower.contains($0) }) {
+                        let summary = String(responseText.prefix(300))
+                        appendLog("✅ Completed: \(summary)")
+                        flushLog()
+                        break
+                    }
+                    // LLM responded with text only — nudge it once, then stop
                     textOnlyCount += 1
-                    if textOnlyCount >= 3 { break }
-                    messages.append(["role": "user", "content": "Continue with the next step. When you are completely done, call task_complete(summary: \"...\")."])
+                    if textOnlyCount >= 2 { break }
+                    messages.append(["role": "user", "content": "Call done(summary: \"...\") now."])
                 } else {
                     // Check if LLM signaled it's done via text even though it made tool calls
                     let allText = response.content.compactMap { $0["text"] as? String }.joined().lowercased()
-                    let stopPhrases = ["no more content", "no further action", "task is complete", "nothing more to do", "task_complete"]
+                    let stopPhrases = ["no more content", "no further action", "task is complete",
+                                       "nothing more to do", "task_complete", "conclude this task",
+                                       "i'll conclude", "feel free to ask", "let me know if"]
                     if stopPhrases.contains(where: { allText.contains($0) }) {
                         break
                     }
