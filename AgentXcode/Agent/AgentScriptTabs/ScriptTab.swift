@@ -230,12 +230,8 @@ final class ScriptTab: Identifiable {
     func flushStreamBuffer() {
         llmStreamFlushTask?.cancel()
         llmStreamFlushTask = nil
-        if !llmStreamBuffer.isEmpty {
-            // Collapse excessive newlines from chatty models, then write to logBuffer
-            logBuffer += AgentViewModel.collapseNewlines(llmStreamBuffer)
-            llmStreamBuffer = ""
-            scheduleFlush()
-        }
+        // Stream text goes to LLM output only — not the activity log
+        llmStreamBuffer = ""
         llmStreamingStarted = false
     }
 
