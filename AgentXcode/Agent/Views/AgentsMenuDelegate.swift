@@ -140,7 +140,10 @@ final class AgentsMenuDelegate: NSObject, NSMenuDelegate {
         let parts = prompt.components(separatedBy: " ")
         let name = parts.count > 1 ? parts[1] : prompt
         let args = parts.count > 2 ? parts.dropFirst(2).joined(separator: " ") : ""
-        Task { await vm.runAgentDirect(name: name, arguments: args) }
+        // Defer to next run loop so the menu closes immediately — no spinner
+        DispatchQueue.main.async {
+            Task { await vm.runAgentDirect(name: name, arguments: args) }
+        }
     }
 
     @objc private func editAgent(_ sender: NSMenuItem) {
