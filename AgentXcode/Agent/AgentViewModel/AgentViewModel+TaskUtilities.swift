@@ -612,6 +612,8 @@ extension AgentViewModel {
         tab.addToHistory(prompt)
 
         tab.isRunning = true
+        tab.taskStartDate = Date()
+        tab._taskElapsedFrozen = 0
         tab.isLLMRunning = false
         tab.isLLMThinking = false
         tab.appendLog("--- Direct Run ---")
@@ -624,6 +626,8 @@ extension AgentViewModel {
             if compileResult.status != 0 {
                 tab.appendLog("❌ Compile error:\n\(compileResult.output)")
                 tab.flush()
+                tab._taskElapsedFrozen = tab.taskElapsed
+                tab.taskStartDate = nil
                 tab.isRunning = false
                 return
             }
@@ -650,6 +654,8 @@ extension AgentViewModel {
         let statusNote = success ? "completed" : (isUsageOutput ? "usage" : "exit code: \(runResult.status)")
         tab.appendLog("\(name) \(statusNote)")
         tab.flush()
+        tab._taskElapsedFrozen = tab.taskElapsed
+        tab.taskStartDate = nil
         tab.isRunning = false
 
         let wasCancelled = tab.isCancelled || runResult.status == 15

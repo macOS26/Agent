@@ -37,14 +37,6 @@ struct DependencyOverlay: View {
 
                     Text("Agent!")
                         .font(.system(size: 22, weight: .black, design: .monospaced))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: colorScheme == .dark ? [.white, .blue] : [.black, .blue],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .shadow(color: .blue, radius: colorScheme == .dark ? 6 : 0)
                         .opacity(showIcon ? 1 : 0)
 
                     Text("Agentic AI for your \u{F8FF} Mac Desktop")
