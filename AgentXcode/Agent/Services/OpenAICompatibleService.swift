@@ -719,6 +719,7 @@ final class OpenAICompatibleService {
                 if !toolCallAccum.isEmpty { continue }
 
                 // Buffer text and flush on newlines to filter JSON tool calls
+                // Only buffer lines starting with '{' (potential JSON) — flush normal text immediately
                 for ch in cleaned {
                     if ch == "\n" {
                         let suppressed = isToolCallJSON(lineBuffer)
@@ -728,6 +729,9 @@ final class OpenAICompatibleService {
                         }
                     } else {
                         lineBuffer.append(ch)
+                        if !lineBuffer.hasPrefix("{") {
+                            flushLineBuffer()
+                        }
                     }
                 }
             }
