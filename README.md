@@ -84,7 +84,7 @@ Securely runs root-level commands via a dedicated macOS Launch Daemon. The user 
 Control any Mac app through the Accessibility API. Click buttons, type into fields, navigate menus, scroll, drag -- all programmatically. Powered by [AXorcist](https://github.com/steipete/AXorcist) for reliable, fuzzy-matched element finding.
 
 ### 🤖 12 AI Providers
-| Provider | Verdict | Best For |
+| Provider | Note | Best For |
 |---|---|---|
 | **Z.ai** | GLM5.1 | Recommended starting point |
 | **Claude** (Anthropic) | Paid | Complex tasks |
