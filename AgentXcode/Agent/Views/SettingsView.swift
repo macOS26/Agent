@@ -208,7 +208,7 @@ struct SettingsView: View {
                                     ForEach(viewModel.zAIModels) { model in
                                         HStack(spacing: 4) {
                                             Text(model.name)
-                                            if model.id.lowercased().contains("4.5v") || model.id.lowercased().contains("4.6v") || model.id.lowercased().contains("4.7") {
+                                            if model.id.lowercased().contains("4.5v") || model.id.lowercased().contains("4.6v") || model.id.lowercased().contains("5v") {
                                                 Image(systemName: "eye")
                                                     .foregroundStyle(.blue)
                                                     .font(.caption2)
@@ -748,7 +748,7 @@ struct SettingsView: View {
         let visionKeywords = [
             "-vl-", "-vl ", "vl-", "-vision",
             "pixtral", "llava", "minicpm-v",
-            "glm-4.5v", "glm-4.6v", "glm-4.7",
+            "glm-4.5v", "glm-4.6v", "glm-5v",
             "gemma-3", "gemma-4", "gemma3", "gemma4",
             "llama-4", "llama4", "mimo",
             "aya-vision", "command-a-vision",
