@@ -381,12 +381,15 @@ extension AgentViewModel {
                 flushStreamBuffer()
                 isThinking = false
                 timeoutRetryCount = 0 // Reset on successful response
-                // Strip done/task_complete from LLM Output — never show in the indicator
+                // Strip done/task_complete from LLM Output — let drip continue naturally
                 Self.stripCompletionText(&rawLLMOutput)
-                dripTask?.cancel(); dripTask = nil
-                Self.stripCompletionText(&displayedLLMOutput)
-                dripDisplayIndex = displayedLLMOutput.count
-                // Pause 3 seconds between iterations so user can read the LLM Output
+                if dripDisplayIndex > rawLLMOutput.count {
+                    dripDisplayIndex = rawLLMOutput.count
+                }
+                // Wait for drip to finish, then pause 3 seconds so user can read
+                while dripTask != nil {
+                    try? await Task.sleep(for: .milliseconds(50))
+                }
                 if !rawLLMOutput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     try? await Task.sleep(for: .seconds(3))
                 }

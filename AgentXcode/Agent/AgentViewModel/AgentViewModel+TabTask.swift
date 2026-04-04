@@ -431,12 +431,15 @@ extension AgentViewModel {
                 } else {
                     throw AgentError.noAPIKey
                 }
-                // Strip done/task_complete from LLM Output — never show in the indicator
+                // Strip done/task_complete from LLM Output — let drip continue naturally
                 Self.stripCompletionText(&tab.rawLLMOutput)
-                tab.dripTask?.cancel(); tab.dripTask = nil
-                Self.stripCompletionText(&tab.displayedLLMOutput)
-                tab.dripDisplayIndex = tab.displayedLLMOutput.count
-                // Pause 3 seconds between iterations so user can read the LLM Output
+                if tab.dripDisplayIndex > tab.rawLLMOutput.count {
+                    tab.dripDisplayIndex = tab.rawLLMOutput.count
+                }
+                // Wait for drip to finish, then pause 3 seconds so user can read
+                while tab.dripTask != nil {
+                    try? await Task.sleep(for: .milliseconds(50))
+                }
                 if !tab.rawLLMOutput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     try? await Task.sleep(for: .seconds(3))
                 }
