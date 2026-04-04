@@ -29,14 +29,14 @@ final class ToolPreferencesService {
 
     /// Tool group definitions - maps group name to tool name prefixes
     static let toolGroups: [String: Set<String>] = [
-        "Coding": Set(["xc", "xcode", "file", "file_manager", "folder", "project_folder", "code", "coding_mode", "sh", "run_shell_script"]),
-        "Automation": Set(["as", "applescript_tool", "ax", "accessibility", "jxa", "javascript_tool", "sdef", "lookup_sdef"]),
-        "Experimental": Set(["sel", "selenium", "ax_screenshot"]),
+        "Code": Set(["xc", "xcode", "file", "file_manager", "folder", "project_folder", "code", "coding_mode", "sh", "run_shell_script"]),
+        "Auto": Set(["as", "applescript_tool", "ax", "accessibility", "jxa", "javascript_tool", "sdef", "lookup_sdef"]),
+        "Exp": Set(["sel", "selenium", "ax_screenshot"]),
         "Core": Set(["done", "task_complete", "tools", "list_tools", "search", "web_search"]),
-        "Conversation": Set(["chat", "conversation"]),
-        "Workflow": Set(["agent", "plan", "plan_mode", "git", "msg", "send_message", "batch", "batch_commands", "multi", "batch_tools"]),
-        "User Agent": Set(["user", "execute_agent_command"]),
-        "Launch Daemon": Set(["root", "execute_daemon_command"]),
+        "Chat": Set(["chat", "conversation"]),
+        "Work": Set(["agent", "plan", "plan_mode", "git", "msg", "send_message", "batch", "batch_commands", "multi", "batch_tools"]),
+        "User": Set(["user", "execute_agent_command"]),
+        "Root": Set(["root", "execute_daemon_command"]),
         "Web": Set(["web"]),
     ]
 
@@ -61,8 +61,7 @@ final class ToolPreferencesService {
     private func seedDefaultDisabledGroups() {
         guard !UserDefaults.standard.bool(forKey: Self.groupSeededKey) else { return }
         UserDefaults.standard.set(true, forKey: Self.groupSeededKey)
-        disabledGroups.insert("Accessibility")
-        disabledGroups.insert("Experimental")
+        disabledGroups.insert(Tool.Group.exp)
     }
 
     /// On first launch, disable all Apple AI tools not in the core default set.

@@ -10,17 +10,17 @@ struct ToolsView: View {
     // Group definitions — use actual consolidated tool names from AgentTools.Name
     static let groups: [String: (filter: (AgentTools.ToolDef) -> Bool, icon: String)] = [
         "Core": ({ ["done", "tools", "search", "folder", "memory"].contains($0.name) }, "checkmark.circle"),
-        "Conversation": ({ ["chat", "msg"].contains($0.name) }, "text.bubble"),
-        "Workflow": ({ ["agent", "plan", "git", "batch", "multi"].contains($0.name) }, "flowchart"),
-        "Coding": ({ ["file", "xc", "code"].contains($0.name) }, "chevron.left.forwardslash.chevron.right"),
-        "Automation": ({ ["as", "ax", "jxa", "sdef"].contains($0.name) }, "gearshape.2"),
-        "User Agent": ({ $0.name == "user" }, "person"),
-        "Launch Daemon": ({ $0.name == "root" }, "lock.shield"),
+        "Chat": ({ ["chat", "msg"].contains($0.name) }, "text.bubble"),
+        "Work": ({ ["agent", "plan", "git", "batch", "multi"].contains($0.name) }, "flowchart"),
+        "Code": ({ ["file", "xc", "code", "sh"].contains($0.name) }, "chevron.left.forwardslash.chevron.right"),
+        "Auto": ({ ["as", "ax", "jxa", "sdef"].contains($0.name) }, "gearshape.2"),
+        "User": ({ $0.name == "user" }, "person"),
+        "Root": ({ $0.name == "root" }, "lock.shield"),
         "Web": ({ $0.name == "web" }, "globe"),
-        "Experimental": ({ $0.name == "sel" }, "flask"),
+        "Exp": ({ $0.name == "sel" }, "flask"),
     ]
 
-    static let groupOrder: [String] = ["Core", "Conversation", "Workflow", "Coding", "Automation", "User Agent", "Launch Daemon", "Web", "Experimental"]
+    static let groupOrder = Tool.allGroups
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -73,14 +73,14 @@ struct ToolsView: View {
                                         }
                                         // Sync service group toggles with launch agent/daemon
                                         if let vm = viewModel {
-                                            if groupName == "User Agent" {
+                                            if groupName == Tool.Group.user {
                                                 vm.userEnabled = enabled
-                                            } else if groupName == "Launch Daemon" {
+                                            } else if groupName == Tool.Group.root {
                                                 vm.rootEnabled = enabled
                                             }
                                         }
                                     },
-                                    onToolToggled: (groupName == "User Agent" || groupName == "Launch Daemon") ? { toolName, enabled in
+                                    onToolToggled: (groupName == Tool.Group.user || groupName == Tool.Group.root) ? { toolName, enabled in
                                         guard let vm = viewModel else { return }
                                         if toolName == "execute_agent_command" {
                                             vm.userEnabled = enabled
@@ -151,7 +151,7 @@ struct GroupRowView: View {
 
     var body: some View {
         let groupEnabled = prefs.isGroupEnabled(groupName)
-        let isServiceGroup: Bool = groupName == "User Agent" || groupName == "Launch Daemon"
+        let isServiceGroup: Bool = groupName == Tool.Group.user || groupName == Tool.Group.root
         let offColor: Color = isServiceGroup ? .yellow : .red
 
         VStack(alignment: .leading, spacing: 4) {

@@ -111,8 +111,8 @@ final class AgentViewModel {
     /// When true, only focused tool groups sent to LLM
     var codingModeEnabled = false
     var automationModeEnabled = false
-    static let codingModeGroups: Set<String> = ["Core", "Workflow", "Coding", "User Agent"]
-    static let automationModeGroups: Set<String> = ["Core", "Workflow", "Automation", "User Agent"]
+    static let codingModeGroups = Tool.codingGroups
+    static let automationModeGroups = Tool.automationGroups
     var thinkingDismissed: Bool = UserDefaults.standard.object(forKey: "thinkingDismissed") as? Bool ?? true {
         didSet { UserDefaults.standard.set(thinkingDismissed, forKey: "thinkingDismissed") }
     }
@@ -192,15 +192,15 @@ final class AgentViewModel {
     private func syncServicesGroup() {
         let prefs = ToolPreferencesService.shared
         // Sync User Agent group
-        let agentGroupOn = prefs.isGroupEnabled("User Agent")
-        if userEnabled != agentGroupOn { prefs.toggleGroup("User Agent") }
+        let agentGroupOn = prefs.isGroupEnabled(Tool.Group.user)
+        if userEnabled != agentGroupOn { prefs.toggleGroup(Tool.Group.user) }
         // Sync individual tool — re-enable if service turned on
         if userEnabled && !prefs.isEnabled(selectedProvider, "execute_agent_command") {
             prefs.toggle(selectedProvider, "execute_agent_command")
         }
         // Sync Launch Daemon group
-        let daemonGroupOn = prefs.isGroupEnabled("Launch Daemon")
-        if rootEnabled != daemonGroupOn { prefs.toggleGroup("Launch Daemon") }
+        let daemonGroupOn = prefs.isGroupEnabled(Tool.Group.root)
+        if rootEnabled != daemonGroupOn { prefs.toggleGroup(Tool.Group.root) }
         // Sync individual tool — re-enable if service turned on
         if rootEnabled && !prefs.isEnabled(selectedProvider, "execute_daemon_command") {
             prefs.toggle(selectedProvider, "execute_daemon_command")

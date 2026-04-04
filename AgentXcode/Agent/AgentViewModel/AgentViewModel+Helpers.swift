@@ -132,23 +132,7 @@ extension AgentViewModel {
     /// Expands consolidated CRUDL tool names (git, agent, applescript_tool, javascript_tool)
     /// into legacy tool names so existing handlers work unchanged.
     /// Maps short tool names to their handler names. Supports both old and new names.
-    private static let toolAliases: [String: String] = [
-        // New short names → old handler names
-        "user": "execute_agent_command",
-        "sh": "run_shell_script",
-        "root": "execute_daemon_command",
-        "batch": "batch_commands",
-        "multi": "batch_tools",
-        "done": "task_complete",
-        "search": "web_search",
-        "chat": "conversation",
-        "msg": "send_message",
-        "plan": "plan_mode",
-        "folder": "project_folder",
-        "code": "coding_mode",
-        "tools": "list_tools",
-        "sdef": "lookup_sdef",
-    ]
+    private static let toolAliases = Tool.aliases
 
     static func expandConsolidatedTool(name: String, input: [String: Any]) -> (String, [String: Any]) {
         let action = input["action"] as? String ?? ""
