@@ -386,6 +386,10 @@ extension AgentViewModel {
                 dripTask?.cancel(); dripTask = nil
                 Self.stripCompletionText(&displayedLLMOutput)
                 dripDisplayIndex = displayedLLMOutput.count
+                // Pause 3 seconds between iterations so user can read the LLM Output
+                if !rawLLMOutput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    try? await Task.sleep(for: .seconds(3))
+                }
                 guard !Task.isCancelled else { break }
 
                 var toolResults: [[String: Any]] = []
