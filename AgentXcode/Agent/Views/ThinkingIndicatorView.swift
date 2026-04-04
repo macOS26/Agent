@@ -142,9 +142,11 @@ struct ThinkingIndicatorView: View {
                             .foregroundStyle(.green)
                     }
 
-                    Text("(\(Self.formatElapsed(elapsed)))")
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundStyle(.secondary)
+                    if isActive || elapsed > 0 {
+                        Text("(\(Self.formatElapsed(elapsed)))")
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                    }
 
                     if isActive {
                         if isScriptOnly {
@@ -329,7 +331,9 @@ struct ThinkingIndicatorView: View {
         .onChange(of: tab?.isLLMRunning) { _, newValue in
             guard let tab else { return }
             if newValue == true {
-                // Auto-expand both chevrons when LLM starts on any tab
+                // Reset timer and auto-expand when LLM starts
+                elapsed = 0
+                tab.taskElapsed = 0
                 withAnimation(.easeInOut(duration: 0.2)) {
                     isExpanded = true
                     showStreamText = true
@@ -344,6 +348,7 @@ struct ThinkingIndicatorView: View {
             // Auto-expand on main tab when task starts
             guard tab == nil else { return }
             if newValue {
+                elapsed = 0
                 withAnimation(.easeInOut(duration: 0.2)) {
                     isExpanded = true
                     showStreamText = true
