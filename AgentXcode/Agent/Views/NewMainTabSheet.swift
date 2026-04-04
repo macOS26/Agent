@@ -141,6 +141,10 @@ struct NewMainTabSheet: View {
                 fetch: { viewModel.fetchZAIModels() }
             )
 
+        case .bigModel:
+            TextField("Model (e.g. glm-4.7)", text: $selectedModelId)
+                .textFieldStyle(.roundedBorder)
+
         case .gemini:
             modelPickerWithFetch(
                 models: viewModel.geminiModels,
@@ -269,6 +273,7 @@ struct NewMainTabSheet: View {
         case .vLLM: return viewModel.vLLMModel
         case .lmStudio: return viewModel.lmStudioModel
         case .zAI: return viewModel.zAIModel
+        case .bigModel: return "glm-4.7"
         case .gemini: return viewModel.geminiModel
         case .grok: return viewModel.grokModel
         case .mistral: return "mistral-large-latest"
@@ -300,6 +305,8 @@ struct NewMainTabSheet: View {
             if viewModel.lmStudioModels.isEmpty { viewModel.fetchLMStudioModels() }
         case .zAI:
             if viewModel.zAIModels.isEmpty { viewModel.fetchZAIModels() }
+        case .bigModel:
+            break
         case .gemini:
             if viewModel.geminiModels.isEmpty { viewModel.fetchGeminiModels() }
         case .grok:

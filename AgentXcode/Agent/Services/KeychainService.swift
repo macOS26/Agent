@@ -62,6 +62,10 @@ final class KeychainService: Sendable {
     func setVibeAPIKey(_ key: String) { set(key: Self.vibeAPIKeyId, value: key) }
     func getVibeAPIKey() -> String? { get(key: Self.vibeAPIKeyId) }
 
+    private static let bigModelAPIKeyId = "com.agent.bigmodel-api-key"
+    func setBigModelAPIKey(_ key: String) { set(key: Self.bigModelAPIKeyId, value: key) }
+    func getBigModelAPIKey() -> String? { get(key: Self.bigModelAPIKeyId) }
+
     private func set(key: String, value: String) {
         guard let data = value.data(using: .utf8) else { return }
         delete(key: key)

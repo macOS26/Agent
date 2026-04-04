@@ -69,7 +69,10 @@ extension AgentViewModel {
             isVision = Self.isVisionModel(lmStudioModel)
         case .zAI:
             modelName = zAIModel
-            isVision = true  // GLM-5 supports vision
+            isVision = true
+        case .bigModel:
+            modelName = bigModelModel
+            isVision = true
         case .gemini:
             modelName = geminiModel
             isVision = true  // Gemini supports vision

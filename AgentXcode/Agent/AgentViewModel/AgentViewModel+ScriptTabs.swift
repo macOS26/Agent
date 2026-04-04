@@ -65,6 +65,7 @@ extension AgentViewModel {
         case .vLLM: return vLLMModel
         case .lmStudio: return lmStudioModel
         case .zAI: return zAIModel
+        case .bigModel: return bigModelModel
         case .gemini: return geminiModel
         case .grok: return grokModel
         case .mistral: return mistralModel
@@ -86,6 +87,7 @@ extension AgentViewModel {
         case .vLLM: return vLLMAPIKey
         case .lmStudio: return lmStudioAPIKey
         case .zAI: return zAIAPIKey
+        case .bigModel: return bigModelAPIKey
         case .gemini: return geminiAPIKey
         case .grok: return grokAPIKey
         case .mistral: return mistralAPIKey
@@ -96,8 +98,18 @@ extension AgentViewModel {
     }
 
     /// Return the chat URL for the given provider from the LLM registry (single source of truth).
+    /// Z.ai and BigModel swap to coding endpoint for non-vision models.
     func chatURLForProvider(_ provider: APIProvider) -> String {
-        LLMRegistry.shared.provider(provider.rawValue)?.endpoint.chatURL ?? ""
+        guard let url = LLMRegistry.shared.provider(provider.rawValue)?.endpoint.chatURL else { return "" }
+        // Z.ai/BigModel: use coding endpoint for non-vision text models (GLM-5, GLM-5.1, etc.)
+        if provider == .zAI || provider == .bigModel {
+            let model = globalModelForProvider(provider).lowercased()
+            let isVisionModel = model.contains("4.5v") || model.contains("4.6v") || model.contains("5v")
+            if !isVisionModel {
+                return url.replacingOccurrences(of: "/api/paas/", with: "/api/coding/paas/")
+            }
+        }
+        return url
     }
 
     /// Return a human-readable display name for a model ID given its provider.
@@ -125,6 +137,8 @@ extension AgentViewModel {
         case .zAI:
             return zAIModels.first(where: { $0.id == modelId })?.name
                 ?? Self.defaultZAIModels.first(where: { $0.id == modelId })?.name ?? modelId
+        case .bigModel:
+            return modelId
         case .gemini:
             return geminiModels.first(where: { $0.id == modelId })?.name
                 ?? Self.defaultGeminiModels.first(where: { $0.id == modelId })?.name ?? modelId

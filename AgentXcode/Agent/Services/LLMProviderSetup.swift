@@ -7,7 +7,7 @@ enum LLMProviderSetup {
 
     static func registerAllProviders() {
         LLMRegistry.shared.registerAll([
-            claude, openAI, gemini, grok, mistral, codestral, vibe, deepSeek, huggingFace, zAI,
+            claude, openAI, gemini, grok, mistral, codestral, vibe, deepSeek, huggingFace, zAI, bigModel,
             ollama, localOllama, vLLM, lmStudio, appleIntelligence
         ])
     }
@@ -57,12 +57,26 @@ enum LLMProviderSetup {
         capabilities: [.streaming, .tools, .systemPrompt]
     )
 
+    // Z.ai — general endpoint supports vision, coding endpoint for text-only models
+    // URL is swapped at runtime based on model name (V suffix = general, else = coding)
     static let zAI = LLMProviderConfig(
         id: "zAI", displayName: "Z.ai",
         kind: .cloudAPI, apiProtocol: .openAI,
         endpoint: LLMEndpoint(
-            chatURL: "https://api.z.ai/api/coding/paas/v4/chat/completions",
-            modelsURL: "https://api.z.ai/api/coding/paas/v4/models"
+            chatURL: "https://api.z.ai/api/paas/v4/chat/completions",
+            modelsURL: "https://api.z.ai/api/paas/v4/models"
+        ),
+        capabilities: [.streaming, .tools, .systemPrompt, .vision],
+        temperature: 0.7
+    )
+
+    // BigModel.cn — China mainland mirror of Z.ai, same model lineup
+    static let bigModel = LLMProviderConfig(
+        id: "bigModel", displayName: "BigModel",
+        kind: .cloudAPI, apiProtocol: .openAI,
+        endpoint: LLMEndpoint(
+            chatURL: "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+            modelsURL: "https://open.bigmodel.cn/api/paas/v4/models"
         ),
         capabilities: [.streaming, .tools, .systemPrompt, .vision],
         temperature: 0.7

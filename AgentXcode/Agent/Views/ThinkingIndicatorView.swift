@@ -117,6 +117,7 @@ struct ThinkingIndicatorView: View {
         case .gemini: return 2_000_000
         case .grok: return 2_000_000
         case .zAI: return 128_000
+        case .bigModel: return 128_000
         case .mistral: return 256_000
         case .codestral: return 256_000
         case .vibe: return 128_000

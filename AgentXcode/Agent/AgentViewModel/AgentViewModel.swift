@@ -506,6 +506,16 @@ final class AgentViewModel {
     var zAIModels: [OpenAIModelInfo] = []
     var isFetchingZAIModels = false
 
+    // MARK: - BigModel (China)
+
+    var bigModelAPIKey: String = KeychainService.shared.getBigModelAPIKey() ?? "" {
+        didSet { KeychainService.shared.setBigModelAPIKey(bigModelAPIKey) }
+    }
+
+    var bigModelModel: String = UserDefaults.standard.string(forKey: "bigModelModel") ?? "glm-4.7" {
+        didSet { UserDefaults.standard.set(bigModelModel, forKey: "bigModelModel") }
+    }
+
     // MARK: - Google Gemini
 
     var geminiAPIKey: String = KeychainService.shared.getGeminiAPIKey() ?? "" {
@@ -714,6 +724,7 @@ final class AgentViewModel {
         case .vLLM: return vLLMTemperature
         case .lmStudio: return lmStudioTemperature
         case .zAI: return zAITemperature
+        case .bigModel: return zAITemperature
         case .gemini: return geminiTemperature
         case .grok: return grokTemperature
         case .mistral: return openAITemperature
