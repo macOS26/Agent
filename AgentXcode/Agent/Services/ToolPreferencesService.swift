@@ -29,15 +29,13 @@ final class ToolPreferencesService {
 
     /// Tool group definitions - maps group name to tool name prefixes
     static let toolGroups: [String: Set<String>] = [
-        "Code": Set(["xc", "xcode", "file", "file_manager", "folder", "project_folder", "code", "coding_mode", "sh", "run_shell_script"]),
-        "Auto": Set(["as", "applescript_tool", "ax", "accessibility", "jxa", "javascript_tool", "sdef", "lookup_sdef"]),
-        "Exp": Set(["sel", "selenium", "ax_screenshot"]),
-        "Core": Set(["done", "task_complete", "tools", "list_tools", "search", "web_search"]),
-        "Chat": Set(["chat", "conversation"]),
-        "Work": Set(["agent", "plan", "plan_mode", "git", "msg", "send_message", "batch", "batch_commands", "multi", "batch_tools"]),
+        "Core": Set(["done", "task_complete", "tools", "list_tools", "search", "web_search", "chat", "conversation", "msg", "send_message", "sh", "run_shell_script"]),
+        "Work": Set(["agent", "plan", "plan_mode", "git", "batch", "batch_commands", "multi", "batch_tools"]),
+        "Code": Set(["xc", "xcode", "file", "file_manager", "dir", "project_folder", "code", "coding_mode"]),
+        "Auto": Set(["as", "applescript_tool", "ax", "accessibility", "js", "jxa", "javascript_tool", "sdef", "lookup_sdef", "web"]),
         "User": Set(["user", "execute_agent_command"]),
         "Root": Set(["root", "execute_daemon_command"]),
-        "Web": Set(["web"]),
+        "Exp": Set(["sel", "selenium", "ax_screenshot"]),
     ]
 
     /// Tools enabled by default for Apple Intelligence (small context window).

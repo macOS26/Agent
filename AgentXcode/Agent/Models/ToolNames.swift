@@ -12,7 +12,7 @@ enum Tool {
     static let folder = "dir"
     static let code = "code"
 
-    // Chat
+    // Core (also)
     static let chat = "chat"
     static let msg = "msg"
 
@@ -31,7 +31,7 @@ enum Tool {
     // Auto
     static let `as` = "as"
     static let ax = "ax"
-    static let jxa = "jxa"
+    static let js = "js"
     static let sdef = "sdef"
 
     // User / Root
@@ -51,13 +51,11 @@ enum Tool {
 
     enum Group {
         static let core = "Core"
-        static let chat = "Chat"
         static let work = "Work"
         static let code = "Code"
         static let auto = "Auto"
         static let user = "User"
         static let root = "Root"
-        static let web = "Web"
         static let exp = "Exp"
     }
 
@@ -65,7 +63,7 @@ enum Tool {
 
     static let codingGroups: Set<String> = [Group.core, Group.work, Group.code, Group.user]
     static let automationGroups: Set<String> = [Group.core, Group.work, Group.auto, Group.user]
-    static let allGroups: [String] = [Group.core, Group.chat, Group.work, Group.code, Group.auto, Group.user, Group.root, Group.web, Group.exp]
+    static let allGroups: [String] = [Group.core, Group.work, Group.code, Group.auto, Group.user, Group.root, Group.exp]
 
     // MARK: - Legacy Aliases (old name → handler name)
     // LLM sends short name, alias resolves to the handler the app uses
@@ -85,6 +83,7 @@ enum Tool {
         "code": "coding_mode",
         "tools": "list_tools",
         "sdef": "lookup_sdef",
+        "js": "execute_javascript",
         "mem": "memory",
     ]
 }

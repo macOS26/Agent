@@ -181,7 +181,7 @@ extension AgentViewModel {
             default:            return ("list_apple_scripts", newInput)
             }
 
-        case "javascript_tool", "jxa":
+        case "javascript_tool", "jxa", "js":
             switch action {
             case "execute": return ("execute_javascript", newInput)
             case "list":    return ("list_javascript", newInput)

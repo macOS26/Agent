@@ -9,14 +9,12 @@ struct ToolsView: View {
     
     // Group definitions — use actual consolidated tool names from AgentTools.Name
     static let groups: [String: (filter: (AgentTools.ToolDef) -> Bool, icon: String)] = [
-        "Core": ({ ["done", "tools", "search", "folder", "memory"].contains($0.name) }, "checkmark.circle"),
-        "Chat": ({ ["chat", "msg"].contains($0.name) }, "text.bubble"),
+        "Core": ({ ["done", "tools", "search", "dir", "mem", "chat", "msg", "sh"].contains($0.name) }, "checkmark.circle"),
         "Work": ({ ["agent", "plan", "git", "batch", "multi"].contains($0.name) }, "flowchart"),
-        "Code": ({ ["file", "xc", "code", "sh"].contains($0.name) }, "chevron.left.forwardslash.chevron.right"),
-        "Auto": ({ ["as", "ax", "jxa", "sdef"].contains($0.name) }, "gearshape.2"),
+        "Code": ({ ["file", "xc", "code"].contains($0.name) }, "chevron.left.forwardslash.chevron.right"),
+        "Auto": ({ ["as", "ax", "js", "sdef", "web"].contains($0.name) }, "gearshape.2"),
         "User": ({ $0.name == "user" }, "person"),
         "Root": ({ $0.name == "root" }, "lock.shield"),
-        "Web": ({ $0.name == "web" }, "globe"),
         "Exp": ({ $0.name == "sel" }, "flask"),
     ]
 
