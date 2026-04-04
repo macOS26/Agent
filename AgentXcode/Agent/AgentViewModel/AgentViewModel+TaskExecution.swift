@@ -391,11 +391,12 @@ extension AgentViewModel {
                     guard let type = block["type"] as? String else { continue }
 
                     if type == "text" {
-                        // Log LLM text to activity log (skip duplicates across iterations)
+                        // Log LLM text to activity log (skip duplicates and done/task_complete text)
                         if let text = block["text"] as? String {
                             let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
                             let hash = trimmed.hashValue
-                            if !trimmed.isEmpty && trimmed.count > 1 && !recentOutputHashes.contains(hash) {
+                            let isDoneText = trimmed.contains("done(summary") || trimmed.contains("task_complete(summary")
+                            if !trimmed.isEmpty && trimmed.count > 1 && !isDoneText && !recentOutputHashes.contains(hash) {
                                 recentOutputHashes.insert(hash)
                                 appendLog(trimmed)
                                 flushLog()
