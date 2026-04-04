@@ -42,3 +42,8 @@ AgentMCP/
 AgentSwift/
 AgentTerminalNeo/
 AgentTools/
+
+# Ignore specific files mentioned in task
+.gitignore~
+*.tmp
+*.log
