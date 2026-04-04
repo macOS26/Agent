@@ -553,11 +553,38 @@ private struct LLMOutputBox: View {
         VStack(spacing: 0) {
             ZStack(alignment: .bottomTrailing) {
                 if !displayText.isEmpty {
-                    TerminalNeoTextView(text: displayText, onContentHeight: { h in
-                        if !userDragged {
-                            height = min(max(minHeight, h), maxHeight)
+                    ZStack {
+                        ScrollViewReader { proxy in
+                            ScrollView {
+                                Text(displayText)
+                                    .font(.system(size: 14, design: .monospaced))
+                                    .foregroundColor(termText)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(10)
+                                    .background(GeometryReader { geo in
+                                        Color.clear.preference(key: ContentHeightKey.self, value: geo.size.height)
+                                    })
+                                    .id("bottom")
+                            }
+                            .onPreferenceChange(ContentHeightKey.self) { h in
+                                if !userDragged {
+                                    height = min(max(minHeight, h + 4), maxHeight)
+                                }
+                            }
+                            .onChange(of: displayText) {
+                                proxy.scrollTo("bottom", anchor: .bottom)
+                            }
                         }
-                    })
+
+                        // CRT scanline overlay
+                        Canvas { context, size in
+                            for y in stride(from: 0, through: size.height, by: 4) {
+                                let rect = CGRect(x: 0, y: y, width: size.width, height: 2)
+                                context.fill(Path(rect), with: .color(.black.opacity(0.12)))
+                            }
+                        }
+                        .allowsHitTesting(false)
+                    }
                     .frame(height: min(height, maxHeight))
                 } else {
                     HStack(spacing: 0) {
