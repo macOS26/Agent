@@ -90,7 +90,7 @@ Control any Mac app through the Accessibility API. Click buttons, type into fiel
 | **Claude** (Anthropic) | Paid | Complex tasks |
 | **ChatGPT** (OpenAI) | Paid | General purpose |
 | **Google Gemini** | Paid/Free | High performance, long context |
-| **Apple Intelligence** | Free | On-device, private |
+| **Apple Intelligence** | Free | On-device, assistant |
 | **DeepSeek** | Paid | Budget cloud AI |
 | **Grok-2** (xAI) | Paid | Real-time info |
 | **Local Ollama** | Free | Full privacy, offline |
