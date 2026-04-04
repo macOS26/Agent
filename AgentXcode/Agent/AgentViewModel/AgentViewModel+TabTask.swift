@@ -344,6 +344,7 @@ extension AgentViewModel {
         var textOnlyCount = 0
         var timeoutRetryCount = 0
         let maxTimeoutRetries = maxRetries
+        var recentToolCalls: [String] = []  // Track recent tool calls to detect loops
 
         while !Task.isCancelled {
             iterations += 1
@@ -467,6 +468,18 @@ extension AgentViewModel {
                         let (name, input) = Self.expandConsolidatedTool(name: rawName, input: rawInput)
 
                         commandsRun.append(name)
+
+                        // Loop detection — if same tool+input called 3+ times, break
+                        let callKey = "\(name):\(input["file_path"] as? String ?? input["path"] as? String ?? input["command"] as? String ?? "")"
+                        recentToolCalls.append(callKey)
+                        let dupeCount = recentToolCalls.suffix(10).filter { $0 == callKey }.count
+                        if dupeCount >= 3 {
+                            tab.appendLog("⚠️ Loop detected — \(name) called 3+ times with same input. Stopping.")
+                            tab.flush()
+                            completionSummary = "Stopped: repeated tool call loop detected"
+                            break
+                        }
+
                         if name == "task_complete" {
                             completionSummary = input["summary"] as? String ?? "Done"
                         }

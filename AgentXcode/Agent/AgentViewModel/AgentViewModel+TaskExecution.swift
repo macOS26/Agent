@@ -274,6 +274,7 @@ extension AgentViewModel {
 
         var iterations = 0
         var textOnlyCount = 0
+        var recentToolCalls: [String] = []
 
         while !Task.isCancelled {
             iterations += 1
