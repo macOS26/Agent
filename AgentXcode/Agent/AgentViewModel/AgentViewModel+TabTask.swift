@@ -270,7 +270,8 @@ extension AgentViewModel {
             openAICompatible = OpenAICompatibleService(apiKey: apiKeyForProvider(provider), model: modelId, baseURL: vLLMEndpoint, historyContext: tabHistoryContext, projectFolder: projectFolder, provider: provider, maxTokens: mt)
         default:
             let url = chatURLForProvider(provider)
-            openAICompatible = url.isEmpty ? nil : OpenAICompatibleService(apiKey: apiKeyForProvider(provider), model: modelId, baseURL: url, historyContext: tabHistoryContext, projectFolder: projectFolder, provider: provider, maxTokens: mt)
+            let vision = LLMRegistry.shared.provider(provider.rawValue)?.capabilities.contains(.vision) ?? false
+            openAICompatible = url.isEmpty ? nil : OpenAICompatibleService(apiKey: apiKeyForProvider(provider), model: modelId, baseURL: url, supportsVision: vision || forceVision, historyContext: tabHistoryContext, projectFolder: projectFolder, provider: provider, maxTokens: mt)
         }
         let ollama: OllamaService?
         switch provider {
