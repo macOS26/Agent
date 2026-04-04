@@ -97,7 +97,7 @@ struct AgentApp: App {
                 Button("Toggle LLM Chevrons") {}
                     .keyboardShortcut("d", modifiers: .command)
                 Button("Toggle LLM Overlay") {}
-                    .keyboardShortcut("d", modifiers: [.command, .shift])
+                    .keyboardShortcut("b", modifiers: .command)
                 Divider()
                 Button("Run Task") {}
                     .keyboardShortcut(.return, modifiers: .command)
