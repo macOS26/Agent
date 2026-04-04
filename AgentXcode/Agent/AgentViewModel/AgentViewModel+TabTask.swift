@@ -379,6 +379,10 @@ extension AgentViewModel {
             }
 
             do {
+                // Save LLM output before streaming — restore if task_complete replaces it with boilerplate
+                let preStreamOutput = tab.rawLLMOutput
+                let preStreamDisplayed = tab.displayedLLMOutput
+                let preStreamDripIndex = tab.dripDisplayIndex
                 tab.isLLMThinking = true
                 tab.thinkingDismissed = false
                 let response: (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int)
@@ -491,6 +495,11 @@ extension AgentViewModel {
 
                         if name == "task_complete" {
                             completionSummary = input["summary"] as? String ?? "Done"
+                            // Restore previous LLM output — don't show completion boilerplate
+                            tab.dripTask?.cancel(); tab.dripTask = nil
+                            tab.rawLLMOutput = preStreamOutput
+                            tab.displayedLLMOutput = preStreamDisplayed
+                            tab.dripDisplayIndex = preStreamDripIndex
                         }
                         let toolStart = CFAbsoluteTimeGetCurrent()
                         let result = await handleTabToolCall(

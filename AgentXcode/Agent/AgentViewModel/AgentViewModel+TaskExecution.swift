@@ -321,6 +321,10 @@ extension AgentViewModel {
             }
 
             do {
+                // Save LLM output before streaming — restore if task_complete replaces it with boilerplate
+                let preStreamOutput = rawLLMOutput
+                let preStreamDisplayed = displayedLLMOutput
+                let preStreamDripIndex = dripDisplayIndex
                 isThinking = true
                 thinkingDismissed = false
 
@@ -437,10 +441,15 @@ extension AgentViewModel {
                             // If model sent a placeholder summary like "...", use the last LLM text instead
                             let stripped = summary.trimmingCharacters(in: CharacterSet(charactersIn: ". "))
                             if stripped.isEmpty || summary == "..." {
-                                let lastText = rawLLMOutput.trimmingCharacters(in: .whitespacesAndNewlines)
+                                let lastText = preStreamOutput.trimmingCharacters(in: .whitespacesAndNewlines)
                                 if !lastText.isEmpty { summary = String(lastText.prefix(300)) }
                             }
                             completionSummary = summary
+                            // Restore previous LLM output — don't show completion boilerplate
+                            dripTask?.cancel(); dripTask = nil
+                            rawLLMOutput = preStreamOutput
+                            displayedLLMOutput = preStreamDisplayed
+                            dripDisplayIndex = preStreamDripIndex
 
                             // Apple Intelligence summary annotation
                             if mediator.isEnabled && mediator.showAnnotationsToUser && !commandsRun.isEmpty {
