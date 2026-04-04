@@ -579,12 +579,12 @@ extension AgentViewModel {
                     let capped = Self.truncateToolResults(toolResults)
                     messages.append(["role": "user", "content": capped])
                 } else if !hasToolUse {
-                    // Check if model wrote task_complete as text instead of a tool call
+                    // Check if model wrote task_complete/done as text instead of a tool call
                     let responseText = response.content.compactMap { $0["text"] as? String }.joined()
-                    if responseText.contains("task_complete") {
-                        if let match = responseText.range(of: #"task_complete\(summary[=:]\s*"([^"]+)""#, options: .regularExpression) {
+                    if responseText.contains("task_complete") || responseText.contains("done(summary") {
+                        if let match = responseText.range(of: #"(?:task_complete|done)\(summary[=:]\s*"([^"]+)""#, options: .regularExpression) {
                             let raw = String(responseText[match])
-                            let summary = raw.replacingOccurrences(of: #"task_complete\(summary[=:]\s*""#, with: "", options: .regularExpression).replacingOccurrences(of: "\"", with: "")
+                            let summary = raw.replacingOccurrences(of: #"(?:task_complete|done)\(summary[=:]\s*""#, with: "", options: .regularExpression).replacingOccurrences(of: "\"", with: "")
                             appendLog("✅ Completed: \(summary)")
                         }
                         flushLog()
