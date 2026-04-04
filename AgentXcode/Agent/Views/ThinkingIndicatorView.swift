@@ -575,7 +575,11 @@ private struct LLMOutputBox: View {
                         }
                     }
                     .overlay(
-                        ScanlineOverlay(spacing: 2, color: .black, opacity: 0.5, blurRadius: 0)
+                        ScanlineOverlay(spacing: 1, color: .black, opacity: 0.5, blurRadius: 1)
+                        .allowsHitTesting(false)
+                    )
+                    .overlay(
+                        ScanlineOverlay(spacing: 2, color: .green, opacity: 0.25, blurRadius: 0)
                         .allowsHitTesting(false)
                     )
                     .frame(height: min(height, maxHeight))
@@ -603,7 +607,7 @@ private struct LLMOutputBox: View {
                             .foregroundColor(dismissEnabled ? termText : termDim)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 4)
-                            .background(termBg)
+                            .background(Color.black.opacity(0.8))
                             .overlay(RoundedRectangle(cornerRadius: 4).stroke(termBorder, lineWidth: 1))
                     }
                     .buttonStyle(.plain)
