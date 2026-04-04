@@ -303,6 +303,7 @@ struct ThinkingIndicatorView: View {
                             text: streamText,
                             height: $outputHeight,
                             userDragged: $userDragged,
+                            isStreaming: isActive,
                             showDismiss: true,
                             dismissEnabled: !isActive,
                             onDismiss: {
@@ -377,9 +378,11 @@ private struct LLMOutputBox: View {
     let text: String
     @Binding var height: CGFloat
     @Binding var userDragged: Bool
+    var isStreaming: Bool = false
     var showDismiss: Bool = false
     var dismissEnabled: Bool = true
     var onDismiss: (() -> Void)?
+    @State private var cursorVisible = true
 
     private var termBg: Color {
         colorScheme == .dark
@@ -543,23 +546,38 @@ private struct LLMOutputBox: View {
 
     var body: some View {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Append blinking block cursor while streaming (WOPR style)
+        let displayText = isStreaming && !trimmed.isEmpty
+            ? trimmed + (cursorVisible ? "█" : " ")
+            : trimmed
         VStack(spacing: 0) {
             ZStack(alignment: .bottomTrailing) {
-                if !trimmed.isEmpty {
-                    TerminalNeoTextView(text: trimmed, onContentHeight: { h in
-                        if !userDragged {
-                            height = min(max(minHeight, h), maxHeight)
+                if !displayText.isEmpty {
+                    ZStack {
+                        TerminalNeoTextView(text: displayText, onContentHeight: { h in
+                            if !userDragged {
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    height = min(max(minHeight, h), maxHeight)
+                                }
+                            }
+                        })
+
+                        // CRT scanline overlay
+                        if isStreaming {
+                            ScanlineOverlay()
+                                .allowsHitTesting(false)
                         }
-                    })
+                    }
                     .frame(height: min(height, maxHeight))
+                    .animation(.easeInOut(duration: 0.3), value: height)
                 } else {
                     HStack(spacing: 0) {
                         Text("> ")
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundColor(termText)
-                        Text("awaiting output...")
+                        Text(isStreaming ? (cursorVisible ? "█" : " ") : "awaiting output...")
                             .font(.system(size: 11, design: .monospaced))
-                            .foregroundColor(termDim)
+                            .foregroundColor(isStreaming ? termText : termDim)
                         Spacer()
                     }
                     .padding(5)
@@ -608,6 +626,27 @@ private struct LLMOutputBox: View {
         .background(termBg)
         .cornerRadius(6)
         .overlay(RoundedRectangle(cornerRadius: 6).stroke(termBorder, lineWidth: 1))
+        .task {
+            // Blink cursor at ~2Hz (WOPR speed)
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(500))
+                cursorVisible.toggle()
+            }
+        }
+    }
+}
+
+/// CRT scanline overlay — subtle horizontal lines like a 1980s phosphor monitor
+private struct ScanlineOverlay: View {
+    var body: some View {
+        Canvas { context, size in
+            // Draw subtle horizontal lines every 3 pixels
+            for y in stride(from: 0, to: size.height, by: 3) {
+                let rect = CGRect(x: 0, y: y, width: size.width, height: 1)
+                context.fill(Path(rect), with: .color(.black.opacity(0.08)))
+            }
+        }
+        .opacity(0.6)
     }
 }
 
