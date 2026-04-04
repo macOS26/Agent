@@ -134,7 +134,8 @@ extension AgentViewModel {
     /// Maps short tool names to their handler names. Supports both old and new names.
     private static let toolAliases: [String: String] = [
         // New short names → old handler names
-        "sh": "execute_agent_command",
+        "user": "execute_agent_command",
+        "sh": "run_shell_script",
         "root": "execute_daemon_command",
         "batch": "batch_commands",
         "multi": "batch_tools",
