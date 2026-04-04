@@ -575,14 +575,15 @@ extension AgentViewModel {
             return false
         }
 
-        // Open or reuse a tab for this agent
-        let tab: ScriptTab
+        AuditLog.log(.agentScript, "runAgentDirect: start \(resolved)")
+
+        // Close any existing tab for this agent and open fresh
         if let existing = scriptTabs.first(where: { $0.scriptName == resolved }) {
-            tab = existing
-            if switchToTab { selectedTabId = tab.id }
-        } else {
-            tab = openScriptTab(scriptName: resolved, selectTab: switchToTab)
+            AuditLog.log(.agentScript, "runAgentDirect: closing old tab \(existing.id)")
+            closeScriptTab(id: existing.id)
         }
+        let tab = openScriptTab(scriptName: resolved, selectTab: switchToTab)
+        AuditLog.log(.agentScript, "runAgentDirect: opened tab \(tab.id)")
 
         // Log on main tab so user sees something
         appendLog("🏃 \(resolved)... (see tab)")
@@ -599,9 +600,11 @@ extension AgentViewModel {
         tab.appendLog("--- Direct Run ---")
 
         // Compile only if needed
+        AuditLog.log(.agentScript, "runAgentDirect: checking dylib")
         if await Self.offMain({ [ss = scriptService] in !ss.isDylibCurrent(name: resolved) }) {
             tab.appendLog("🦾 Compiling: \(resolved)")
             tab.flush()
+            AuditLog.log(.agentScript, "runAgentDirect: compiling")
             let compileResult = await userService.execute(command: compileCmd)
             if compileResult.status != 0 {
                 tab.appendLog("❌ Compile error:\n\(compileResult.output)")
@@ -611,6 +614,7 @@ extension AgentViewModel {
             }
         }
 
+        AuditLog.log(.agentScript, "runAgentDirect: executing")
         tab.appendLog("🦾 Running: \(resolved)")
         tab.flush()
         RecentAgentsService.shared.recordRun(agentName: resolved, arguments: arguments, prompt: "run \(resolved) \(arguments)")
