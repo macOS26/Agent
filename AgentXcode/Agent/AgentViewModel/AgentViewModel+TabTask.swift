@@ -113,7 +113,8 @@ extension AgentViewModel {
         tab.dripDisplayIndex = 0
 
         if !tab.activityLog.isEmpty {
-            tab.logBuffer += "\n\n\n\n\n"
+            let lineCount = tab.activityLog.components(separatedBy: "\n").count
+            tab.logBuffer += lineCount <= 2 ? "\n\n\n\n\n" : "\n"
         }
         tab.appendLog("--- Tab Task ---")
         tab.appendLog("👤 \(prompt)")
@@ -440,15 +441,14 @@ extension AgentViewModel {
                 } else {
                     throw AgentError.noAPIKey
                 }
-                // Strip done/task_complete from LLM Output — let drip continue naturally
+                // Strip done/task_complete from LLM Output
                 Self.stripCompletionText(&tab.rawLLMOutput)
-                if tab.dripDisplayIndex > tab.rawLLMOutput.count {
-                    tab.dripDisplayIndex = tab.rawLLMOutput.count
-                }
-                // Wait for drip to finish, then pause 3 seconds so user can read
+                // Wait for drip to finish, then show full stripped text
                 while tab.dripTask != nil {
                     try? await Task.sleep(for: .milliseconds(50))
                 }
+                tab.displayedLLMOutput = tab.rawLLMOutput
+                tab.dripDisplayIndex = tab.rawLLMOutput.count
                 if !tab.rawLLMOutput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     try? await Task.sleep(for: .seconds(3))
                 }

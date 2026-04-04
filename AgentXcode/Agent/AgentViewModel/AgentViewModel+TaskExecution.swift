@@ -30,8 +30,10 @@ extension AgentViewModel {
         displayedLLMOutput = ""
         dripDisplayIndex = 0
 
+        // Add spacing before new task — 5 blank lines if log is nearly empty, 1 otherwise
         if !activityLog.isEmpty {
-            logBuffer += "\n\n\n\n\n"
+            let lineCount = activityLog.components(separatedBy: "\n").count
+            logBuffer += lineCount <= 2 ? "\n\n\n\n\n" : "\n"
         }
         trimToRecentTasks()
         taskInputTokens = 0
@@ -387,15 +389,14 @@ extension AgentViewModel {
                 flushStreamBuffer()
                 isThinking = false
                 timeoutRetryCount = 0 // Reset on successful response
-                // Strip done/task_complete from LLM Output — let drip continue naturally
+                // Strip done/task_complete from LLM Output
                 Self.stripCompletionText(&rawLLMOutput)
-                if dripDisplayIndex > rawLLMOutput.count {
-                    dripDisplayIndex = rawLLMOutput.count
-                }
-                // Wait for drip to finish, then pause 3 seconds so user can read
+                // Wait for drip to finish, then show full stripped text
                 while dripTask != nil {
                     try? await Task.sleep(for: .milliseconds(50))
                 }
+                displayedLLMOutput = rawLLMOutput
+                dripDisplayIndex = rawLLMOutput.count
                 if !rawLLMOutput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     try? await Task.sleep(for: .seconds(3))
                 }
