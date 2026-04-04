@@ -575,12 +575,7 @@ private struct LLMOutputBox: View {
                         }
                     }
                     .overlay(
-                        Canvas { context, size in
-                            for y in stride(from: 0, through: size.height, by: 4) {
-                                let rect = CGRect(x: 0, y: y, width: size.width, height: 2)
-                                context.fill(Path(rect), with: .color(.green.opacity(0.08)))
-                            }
-                        }
+                        ScanlineOverlay()
                         .allowsHitTesting(false)
                     )
                     .frame(height: min(height, maxHeight))
@@ -652,13 +647,19 @@ private struct LLMOutputBox: View {
 
 /// CRT scanline overlay — horizontal lines like a 1980s phosphor monitor
 private struct ScanlineOverlay: View {
+    var spacing: CGFloat = 2.5
+    var color: Color = .black
+    var opacity: Double = 0.5
+    var blurRadius: CGFloat = 0
+
     var body: some View {
         Canvas { context, size in
-            for y in stride(from: 0, to: size.height, by: 2) {
+            for y in stride(from: 0, to: size.height, by: spacing) {
                 let rect = CGRect(x: 0, y: y, width: size.width, height: 1)
-                context.fill(Path(rect), with: .color(.white.opacity(0.35)))
+                context.fill(Path(rect), with: .color(color.opacity(opacity)))
             }
         }
+        .blur(radius: blurRadius)
     }
 }
 
