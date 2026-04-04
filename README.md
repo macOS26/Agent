@@ -170,7 +170,114 @@ Go to Settings → MCP Servers → Add Server, paste this JSON:
 
 Toggle ON and Playwright tools appear automatically. The AI can now control browsers directly.
 
----
+### Project & Configuration Tools
+
+These tools manage project settings and coding mode:
+
+| Tool | What It Does |
+|---|---|
+| **project_folder** | Get or change the working directory for this tab — use `set`, `home`, `documents`, `library`, or `none` |
+| **coding_mode** | Toggle coding mode on/off — when ON, only Core+Workflow+Coding+UserAgent tools are available for faster responses |
+| **plan_mode** | Create, update, read, list, or delete step-by-step plans with status tracking — ideal for complex tasks |
+| **memory** | Read/write persistent user preferences — use `append` to remember things across sessions |
+
+> 💡 **Pro Tip:** Use `coding_mode(true)` when working on code — it removes unnecessary tools and speeds up responses.
+
+These tools interact with macOS UI and web pages:
+
+| Tool | What It Does |
+|---|---|
+| **accessibility** | Control any app — click buttons, type text, read elements, manage windows, navigate menus, capture screenshots |
+| **web** | Automate Safari — open URLs, click elements, type text, execute JS, search, navigate tabs |
+| **mcp_playwright_browser_*** | Advanced browser automation via Playwright — snapshot, click, hover, drag, fill forms, upload files, etc. |
+| **web_search** | Search the web for current information — returns relevant page titles, URLs, and content snippets |
+
+> 💡 **Pro Tip:** Use `accessibility` for macOS UI automation — it’s faster and more reliable than screenshots.
+
+These tools manage Swift and AppleScript automation scripts:
+
+| Tool | What It Does |
+|---|---|
+| **agent** | Create, read, update, run, delete, or combine Swift automation scripts with TCC permissions |
+| **applescript_tool** | Execute, save, delete, or list AppleScript scripts — use `lookup_sdef` to inspect app dictionaries |
+| **javascript_tool** | Run JXA (JavaScript for Automation) scripts — ideal for lightweight automation tasks |
+| **batch_tools** | Run multiple tool calls in one batch with progress tracking — no round-trips, ideal for complex workflows |
+
+> 💡 **Pro Tip:** Use `agent` for Swift scripts that need TCC permissions — it’s the most powerful scripting tool.
+
+These tools execute shell commands and system-level operations:
+
+| Tool | What It Does |
+|---|---|
+| **execute_agent_command** | Run shell commands as current user — use for git, ls, grep, find, homebrew, scripts |
+| **execute_daemon_command** | Run shell commands as ROOT via Launch Daemon — no sudo needed, use for system logs, disk ops, network debug |
+| **run_shell_script** | Execute shell scripts with automatic fallback to in-process when User Agent is off |
+| **batch_commands** | Run multiple shell commands in one call — no round-trips, ideal for setup scripts |
+
+> 💡 **Pro Tip:** Use `execute_daemon_command` instead of `sudo` — it’s safer and doesn’t require password prompts.
+
+These tools handle file operations and version control:
+
+| Tool | What It Does |
+|---|---|
+| **file_manager** | Read/write/edit/list/search files — use `diff_apply` for code changes, `edit` for single-line fixes |
+| **git** | Git operations: status, diff, log, commit, branch — always use this instead of shell git commands |
+| **xcode** | Build/run Xcode projects, analyze/snippet Swift code, add/remove files, grant permissions |
+
+> 💡 **Pro Tip:** Always use `file_manager` for file operations — it’s safer and more reliable than shell commands.
+
+These tools help manage the agent's workflow and state:
+
+| Tool | What It Does |
+|---|---|
+| **plan_mode** | Create, update, read, list, or delete step-by-step plans with status tracking |
+| **memory** | Read/write persistent user preferences — store notes, settings, or context across sessions |
+| **coding_mode** | Toggle coding mode on/off to restrict available tools for focused development |
+| **project_folder** | Get or change the working directory for this tab — set to home, documents, library, or custom path |
+
+> 💡 **Pro Tip:** Use `plan_mode` to break complex tasks into manageable steps and track progress.
+
+These are the foundational tools that every agent needs:
+
+| Tool | What It Does |
+|---|---|
+| **task_complete** | Signal when a task is finished — always call this at the end of any task |
+| **list_tools** | List all available tools and their descriptions |
+| **web_search** | Search the web for current information or facts you're unsure about |
+
+> 💡 **Pro Tip:** Always call `task_complete` at the end of every task to signal completion and avoid hanging.
+
+These tools enable system automation and UI interaction:
+
+| Tool | What It Does |
+|---|---|
+| **applescript_tool** | Execute AppleScript, list scripts, save/delete, or lookup SDEFs for apps |
+| **accessibility** | Control any macOS app via AX API — click buttons, type text, read elements, manage windows |
+| **javascript_tool** | Run JXA (JavaScript for Automation) scripts, list/save/delete scripts |
+| **lookup_sdef** | Inspect AppleScript dictionary definitions for any app (e.g., Music, Safari) |
+
+> 💡 **Pro Tip:** Use `accessibility` to automate UI interactions across all macOS apps — it’s the most powerful tool for GUI automation.
+
+These tools provide code editing, file management, and Xcode integration capabilities:
+
+| Tool | What It Does |
+|---|---|
+| **read_file** | Read the contents of any file in the project |
+| **write_file** | Write content to a file (creates if doesn't exist) |
+| **edit_file** | Replace exact string matches in a file |
+| **create_diff** | Preview changes before applying them to a file |
+| **apply_diff** | Apply previously previewed changes to a file |
+| **diff_and_apply** | Create and apply changes to a file in one step |
+| **undo_edit** | Revert the last edit made to a file |
+| **list_files** | List files in a directory with optional pattern matching |
+| **search_files** | Search for files containing specific text patterns |
+| **read_dir** | Get detailed information about files in a directory |
+| **file_manager** | Comprehensive file operations including read, write, edit, list, search |
+| **xcode** | Build, run, analyze, and manage Xcode projects |
+| **project_folder** | Set or get the current project directory |
+| **mode** | Toggle coding mode on/off for optimized tool selection |
+
+> 💡 **Pro Tip:** Use `create_diff` to preview changes before applying them with `apply_diff` to avoid accidental edits.
 
 ## Privacy & Safety
 
