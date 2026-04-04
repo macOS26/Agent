@@ -17,7 +17,7 @@ public func scriptMain() -> Int32 {
     }
     
     let releaseVersion = args[0]
-    let releaseNotes = args.count > 1 ? args[1].replacingOccurrences(of: "\\n", with: "\n") : "Release \(releaseVersion)"
+    let releaseNotes = args.count > 1 ? formatReleaseNotes(args[1].replacingOccurrences(of: "\\n", with: "\n")) : "Release \(releaseVersion)"
     let binaryPath = args.count > 2 ? args[2] : ""
     let workingDir = args.count > 3 ? args[3] : FileManager.default.currentDirectoryPath
     
@@ -117,4 +117,24 @@ public func scriptMain() -> Int32 {
         print("Error creating release: \(error)")
         return 1
     }
-}
+    // Format release notes with collapsible sections and organization
+    func formatReleaseNotes(_ rawNotes: String) -> String {
+        var formatted = ""
+        
+        // Split by sections (assuming sections are separated by --- or ###)
+        let sections = rawNotes.components(separatedBy: "---").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+        
+        for section in sections {
+            if section.isEmpty { continue }
+            
+            // Try to extract section title (first line)
+            let lines = section.components(separatedBy: "\n")
+            let title = lines.first?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "Section"
+            let content = lines.dropFirst().joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            // Create collapsible section
+            formatted += "<details>\n<summary>\(title)</summary>\n\n\(content)\n\n</details>\n\n"
+        }
+        
+        return formatted.isEmpty ? rawNotes : formatted
+    }
