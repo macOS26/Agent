@@ -469,15 +469,22 @@ extension AgentViewModel {
 
                         commandsRun.append(name)
 
-                        // Loop detection — if same tool+input called 3+ times, break
-                        let callKey = "\(name):\(input["file_path"] as? String ?? input["path"] as? String ?? input["command"] as? String ?? "")"
-                        recentToolCalls.append(callKey)
-                        let dupeCount = recentToolCalls.suffix(10).filter { $0 == callKey }.count
-                        if dupeCount >= 3 {
-                            tab.appendLog("⚠️ Loop detected — \(name) called 3+ times with same input. Stopping.")
-                            tab.flush()
-                            completionSummary = "Stopped: repeated tool call loop detected"
-                            break
+                        // Loop detection — consecutive identical read with no write in between
+                        let isRead = name == "read_file" || (name == "file_manager" && (input["action"] as? String) == "read")
+                        let isWrite = name == "write_file" || name == "edit_file" || (name == "file_manager" && ["write", "edit", "diff_apply"].contains(input["action"] as? String ?? ""))
+                        if isWrite { recentToolCalls.removeAll() }
+                        if isRead {
+                            let fp = input["file_path"] as? String ?? input["path"] as? String ?? ""
+                            let offset = input["offset"] as? Int ?? 0
+                            let limit = input["limit"] as? Int ?? 0
+                            let callKey = "\(name):\(fp):\(offset):\(limit)"
+                            if recentToolCalls.last == callKey {
+                                tab.appendLog("⚠️ Loop detected — re-reading same lines of \(fp). Stopping.")
+                                tab.flush()
+                                completionSummary = "Stopped: repeated read loop detected"
+                                break
+                            }
+                            recentToolCalls.append(callKey)
                         }
 
                         if name == "task_complete" {
