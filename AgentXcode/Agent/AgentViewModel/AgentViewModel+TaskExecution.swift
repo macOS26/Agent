@@ -287,7 +287,7 @@ extension AgentViewModel {
         // Apple AI still runs on task_complete to summarize results for the user
 
         var iterations = 0
-        var textOnlyCount = 0
+        // textOnlyCount removed — text-only responses complete immediately
 
         while !Task.isCancelled {
             iterations += 1
@@ -613,19 +613,24 @@ extension AgentViewModel {
                     // Check if model signaled completion via natural language
                     let lower = responseText.lowercased()
                     let doneSignals = ["conclude this task", "i'll conclude", "task is complete",
-                                       "no further action", "nothing more to do", "no more content",
-                                       "feel free to ask", "let me know if", "hope this helps",
-                                       "is there anything else", "any other questions"]
+                                       "no further action", "nothing more to do", "no more content"]
                     if doneSignals.contains(where: { lower.contains($0) }) {
+                        // Ensure LLM Output shows the response
+                        displayedLLMOutput = rawLLMOutput
+                        dripDisplayIndex = rawLLMOutput.count
                         let summary = String(responseText.prefix(300))
                         appendLog("✅ Completed: \(summary)")
                         flushLog()
                         break
                     }
-                    // LLM responded with text only — nudge it once, then stop
-                    textOnlyCount += 1
-                    if textOnlyCount >= 2 { break }
-                    messages.append(["role": "user", "content": "Call done(summary: \"...\") now."])
+                    // Text-only response (no tool calls) — treat as conversational answer, complete immediately
+                    // Ensure LLM Output shows the full response
+                    displayedLLMOutput = rawLLMOutput
+                    dripDisplayIndex = rawLLMOutput.count
+                    let summary = String(responseText.prefix(300))
+                    appendLog("✅ Completed: \(summary)")
+                    flushLog()
+                    break
                 } else {
                     // Check if LLM signaled it's done via text even though it made tool calls
                     let allText = response.content.compactMap { $0["text"] as? String }.joined().lowercased()
