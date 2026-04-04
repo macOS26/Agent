@@ -59,6 +59,16 @@ extension AgentViewModel {
         return questionStarters.contains { lower.hasPrefix($0) } || lower.hasSuffix("?")
     }
 
+    /// Strip done(summary:...) and task_complete(summary:...) text from a string
+    static func stripCompletionText(_ text: inout String) {
+        // Remove done(summary: "...") and task_complete(summary: "...")
+        if let regex = try? NSRegularExpression(pattern: #"(?:done|task_complete)\(summary[=:]\s*"[^"]*"\)"#) {
+            text = regex.stringByReplacingMatches(in: text, range: NSRange(location: 0, length: (text as NSString).length), withTemplate: "")
+        }
+        // Trim trailing whitespace left behind
+        while text.hasSuffix("\n\n") { text = String(text.dropLast()) }
+    }
+
     static func truncateToolResults(_ results: [[String: Any]]) -> [[String: Any]] {
         results.map { result in
             guard var content = result["content"] as? String,

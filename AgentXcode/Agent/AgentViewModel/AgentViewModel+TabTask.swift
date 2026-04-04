@@ -379,10 +379,6 @@ extension AgentViewModel {
             }
 
             do {
-                // Save LLM output before streaming — restore if task_complete replaces it with boilerplate
-                let preStreamOutput = tab.rawLLMOutput
-                let preStreamDisplayed = tab.displayedLLMOutput
-                let preStreamDripIndex = tab.dripDisplayIndex
                 tab.isLLMThinking = true
                 tab.thinkingDismissed = false
                 let response: (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int)
@@ -435,6 +431,11 @@ extension AgentViewModel {
                 } else {
                     throw AgentError.noAPIKey
                 }
+                // Strip done/task_complete from LLM Output — never show in the indicator
+                Self.stripCompletionText(&tab.rawLLMOutput)
+                tab.dripTask?.cancel(); tab.dripTask = nil
+                Self.stripCompletionText(&tab.displayedLLMOutput)
+                tab.dripDisplayIndex = tab.displayedLLMOutput.count
                 // Track token usage — use reported counts or estimate from text (~4 chars/token)
                 let inTok = response.inputTokens > 0 ? response.inputTokens : Self.estimateTokens(messages: messages)
                 let outTok = response.outputTokens > 0 ? response.outputTokens : Self.estimateTokens(content: response.content)
@@ -495,11 +496,6 @@ extension AgentViewModel {
 
                         if name == "task_complete" {
                             completionSummary = input["summary"] as? String ?? "Done"
-                            // Restore previous LLM output — don't show completion boilerplate
-                            tab.dripTask?.cancel(); tab.dripTask = nil
-                            tab.rawLLMOutput = preStreamOutput
-                            tab.displayedLLMOutput = preStreamDisplayed
-                            tab.dripDisplayIndex = preStreamDripIndex
                         }
                         let toolStart = CFAbsoluteTimeGetCurrent()
                         let result = await handleTabToolCall(
@@ -539,11 +535,6 @@ extension AgentViewModel {
                     // Check if model wrote task_complete as text instead of a tool call
                     let responseText = response.content.compactMap { $0["text"] as? String }.joined()
                     if responseText.contains("task_complete") || responseText.contains("done(summary") {
-                        // Restore previous LLM output — don't show completion boilerplate
-                        tab.dripTask?.cancel(); tab.dripTask = nil
-                        tab.rawLLMOutput = preStreamOutput
-                        tab.displayedLLMOutput = preStreamDisplayed
-                        tab.dripDisplayIndex = preStreamDripIndex
                         // Extract summary from task_complete/done(summary: "...") or (summary="...")
                         if let match = responseText.range(of: #"(?:task_complete|done)\(summary[=:]\s*"([^"]+)""#, options: .regularExpression) {
                             let raw = String(responseText[match])

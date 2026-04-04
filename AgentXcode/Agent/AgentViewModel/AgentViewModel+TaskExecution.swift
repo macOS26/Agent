@@ -321,10 +321,6 @@ extension AgentViewModel {
             }
 
             do {
-                // Save LLM output before streaming — restore if task_complete replaces it with boilerplate
-                let preStreamOutput = rawLLMOutput
-                let preStreamDisplayed = displayedLLMOutput
-                let preStreamDripIndex = dripDisplayIndex
                 isThinking = true
                 thinkingDismissed = false
 
@@ -385,6 +381,11 @@ extension AgentViewModel {
                 flushStreamBuffer()
                 isThinking = false
                 timeoutRetryCount = 0 // Reset on successful response
+                // Strip done/task_complete from LLM Output — never show in the indicator
+                Self.stripCompletionText(&rawLLMOutput)
+                dripTask?.cancel(); dripTask = nil
+                Self.stripCompletionText(&displayedLLMOutput)
+                dripDisplayIndex = displayedLLMOutput.count
                 guard !Task.isCancelled else { break }
 
                 var toolResults: [[String: Any]] = []
@@ -395,12 +396,13 @@ extension AgentViewModel {
                     guard let type = block["type"] as? String else { continue }
 
                     if type == "text" {
-                        // Log LLM text to activity log (skip duplicates and done/task_complete text)
+                        // Log LLM text to activity log (skip done/task_complete and duplicates)
                         if let text = block["text"] as? String {
-                            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                            var cleaned = text
+                            Self.stripCompletionText(&cleaned)
+                            let trimmed = cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
                             let hash = trimmed.hashValue
-                            let isDoneText = trimmed.contains("done(summary") || trimmed.contains("task_complete(summary")
-                            if !trimmed.isEmpty && trimmed.count > 1 && !isDoneText && !recentOutputHashes.contains(hash) {
+                            if !trimmed.isEmpty && trimmed.count > 1 && !recentOutputHashes.contains(hash) {
                                 recentOutputHashes.insert(hash)
                                 appendLog(trimmed)
                                 flushLog()
@@ -438,18 +440,12 @@ extension AgentViewModel {
 
                         if name == "task_complete" {
                             var summary = input["summary"] as? String ?? "Done"
-                            // If model sent a placeholder summary like "...", use the last LLM text instead
                             let stripped = summary.trimmingCharacters(in: CharacterSet(charactersIn: ". "))
                             if stripped.isEmpty || summary == "..." {
-                                let lastText = preStreamOutput.trimmingCharacters(in: .whitespacesAndNewlines)
+                                let lastText = rawLLMOutput.trimmingCharacters(in: .whitespacesAndNewlines)
                                 if !lastText.isEmpty { summary = String(lastText.prefix(300)) }
                             }
                             completionSummary = summary
-                            // Restore previous LLM output — don't show completion boilerplate
-                            dripTask?.cancel(); dripTask = nil
-                            rawLLMOutput = preStreamOutput
-                            displayedLLMOutput = preStreamDisplayed
-                            dripDisplayIndex = preStreamDripIndex
 
                             // Apple Intelligence summary annotation
                             if mediator.isEnabled && mediator.showAnnotationsToUser && !commandsRun.isEmpty {
@@ -592,11 +588,6 @@ extension AgentViewModel {
                     // Check if model wrote task_complete/done as text instead of a tool call
                     let responseText = response.content.compactMap { $0["text"] as? String }.joined()
                     if responseText.contains("task_complete") || responseText.contains("done(summary") {
-                        // Restore previous LLM output — don't show completion boilerplate
-                        dripTask?.cancel(); dripTask = nil
-                        rawLLMOutput = preStreamOutput
-                        displayedLLMOutput = preStreamDisplayed
-                        dripDisplayIndex = preStreamDripIndex
                         if let match = responseText.range(of: #"(?:task_complete|done)\(summary[=:]\s*"([^"]+)""#, options: .regularExpression) {
                             let raw = String(responseText[match])
                             let summary = raw.replacingOccurrences(of: #"(?:task_complete|done)\(summary[=:]\s*""#, with: "", options: .regularExpression).replacingOccurrences(of: "\"", with: "")
