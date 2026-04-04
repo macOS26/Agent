@@ -355,7 +355,31 @@ The AI automatically uses these when you ask it to build, fix errors, or work wi
 ---
 
 
-## Model Context Protocol (MCP)
+## Messages App Integration
+
+Agent! can be controlled via voice command "Agent!" using the Messages app. This feature allows users to send commands to Agent! through text messages, enabling remote control and automation of tasks on their macOS device.
+
+### How It Works
+
+1. **Voice Command Setup**: Users can set up a voice command in macOS that triggers sending a message to a predefined contact or group chat.
+2. **Message Reception**: Agent! monitors incoming messages for specific keywords or phrases (e.g., "Agent!").
+3. **Command Execution**: Upon detecting the keyword, Agent! parses the message content and executes the corresponding task or command.
+4. **Response**: Agent! sends a reply message back to the sender with the results or status of the executed command.
+
+### Example Use Cases
+
+- **Remote Task Execution**: Send a message like "Agent! open Finder" to remotely open the Finder application.
+- **System Commands**: Execute system commands such as "Agent! restart" to restart the computer.
+- **File Operations**: Perform file operations like "Agent! copy /path/to/file" to copy files to a specified location.
+
+### Configuration
+
+To enable this feature, users need to configure the Messages app to allow Agent! to access and monitor incoming messages. This can be done through the system preferences under Security & Privacy → Privacy → Accessibility.
+
+> **Note**: Ensure that the Messages app is running and that the user has granted the necessary permissions for Agent! to interact with it.
+
+---
+
 
 Agent! supports [MCP](https://modelcontextprotocol.io) servers for extended capabilities. Configure in Settings → MCP Servers.
 
