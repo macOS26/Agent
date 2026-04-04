@@ -517,12 +517,15 @@ extension AgentViewModel {
                     // Check if model wrote task_complete as text instead of a tool call
                     let responseText = response.content.compactMap { $0["text"] as? String }.joined()
                     if responseText.contains("task_complete") {
-                        // Extract summary from task_complete(summary: "...")
-                        if let range = responseText.range(of: #"task_complete\(summary:\s*"([^"]+)""#, options: .regularExpression) {
-                            completionSummary = String(responseText[range]).replacingOccurrences(of: #"task_complete\(summary:\s*""#, with: "", options: .regularExpression).replacingOccurrences(of: "\"", with: "")
+                        // Extract summary from task_complete(summary: "...") or task_complete(summary="...")
+                        if let match = responseText.range(of: #"task_complete\(summary[=:]\s*"([^"]+)""#, options: .regularExpression) {
+                            let raw = String(responseText[match])
+                            completionSummary = raw.replacingOccurrences(of: #"task_complete\(summary[=:]\s*""#, with: "", options: .regularExpression).replacingOccurrences(of: "\"", with: "")
                         } else {
                             completionSummary = String(responseText.prefix(500))
                         }
+                        tab.appendLog("✅ Completed: \(completionSummary)")
+                        tab.flush()
                         break
                     }
                     // LLM responded with text only — nudge it to continue or finish
