@@ -9,10 +9,10 @@ struct ToolsView: View {
     
     // Group definitions — use actual consolidated tool names from AgentTools.Name
     static let groups: [String: (filter: (AgentTools.ToolDef) -> Bool, icon: String)] = [
-        "Core": ({ ["done", "tools", "search", "folder"].contains($0.name) }, "checkmark.circle"),
+        "Core": ({ ["done", "tools", "search", "folder", "memory"].contains($0.name) }, "checkmark.circle"),
         "Conversation": ({ ["chat", "msg"].contains($0.name) }, "text.bubble"),
         "Workflow": ({ ["agent", "plan", "git", "batch", "multi"].contains($0.name) }, "flowchart"),
-        "Coding": ({ ["file", "xc"].contains($0.name) }, "chevron.left.forwardslash.chevron.right"),
+        "Coding": ({ ["file", "xc", "code"].contains($0.name) }, "chevron.left.forwardslash.chevron.right"),
         "Automation": ({ ["as", "ax", "jxa", "sdef"].contains($0.name) }, "gearshape.2"),
         "User Agent": ({ $0.name == "sh" }, "person"),
         "Launch Daemon": ({ $0.name == "root" }, "lock.shield"),
