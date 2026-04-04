@@ -28,7 +28,7 @@
 
 A native macOS AI agent that controls your apps, writes code, automates workflows, and runs tasks from your iPhone via iMessage. All powered by the AI provider of your choice.
 
-<img width="1349" height="1438" alt="Screenshot 2026-04-02 at 12 00 03 PM" src="https://github.com/user-attachments/assets/b0d9346e-f807-4089-bab3-29c7058868d8" />
+<img width="481" height="63" alt="image" src="https://github.com/user-attachments/assets/134ba115-dba3-4734-a2f6-df97d06b5ee4" />
 
 ---
 
@@ -247,6 +247,7 @@ The AI automatically uses these when you ask it to build, fix errors, or work wi
 
 ---
 
+<img width="1349" height="1438" alt="Screenshot 2026-04-02 at 12 00 03 PM" src="https://github.com/user-attachments/assets/b0d9346e-f807-4089-bab3-29c7058868d8" />
 
 ## Model Context Protocol (MCP)
 
