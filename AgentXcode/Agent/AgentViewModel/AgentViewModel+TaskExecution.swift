@@ -149,7 +149,7 @@ extension AgentViewModel {
         // Auto-read project config (.agent.md, AGENT.md, CLAUDE.md) on first iteration
         let projectConfig = Self.readProjectConfig(projectFolder: projectFolder)
         let configPrefix = projectConfig.isEmpty ? "" : "[Project instructions:\n\(projectConfig)]\n\n"
-        let effectivePrompt = folderPrefix + configPrefix + prompt
+        let effectivePrompt = "[NEW TASK — Follow these instructions carefully. This task overrides any previous task context.]\n" + folderPrefix + configPrefix + prompt
 
         if !attachedImagesBase64.isEmpty {
             appendLog("(\(attachedImagesBase64.count) screenshot(s) attached)")
