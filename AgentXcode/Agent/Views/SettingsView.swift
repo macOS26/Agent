@@ -241,7 +241,14 @@ struct SettingsView: View {
                             } else {
                                 Picker("Model", selection: $viewModel.geminiModel) {
                                     ForEach(viewModel.geminiModels) { model in
-                                        Text(model.name).tag(model.id)
+                                        HStack(spacing: 4) {
+                                            Text(model.name)
+                                            if model.id.contains("gemini-") {
+                                                Image(systemName: "eye")
+                                                    .foregroundStyle(.blue)
+                                                    .font(.caption2)
+                                            }
+                                        }.tag(model.id)
                                     }
                                 }
                                 .labelsHidden()

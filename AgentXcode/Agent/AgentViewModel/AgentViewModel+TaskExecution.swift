@@ -121,7 +121,7 @@ extension AgentViewModel {
             openAICompatible = OpenAICompatibleService(apiKey: apiKeyForProvider(provider), model: modelName, baseURL: vLLMEndpoint, historyContext: historyContext, projectFolder: projectFolder, provider: provider, maxTokens: mt)
         default:
             let url = chatURLForProvider(provider)
-            openAICompatible = url.isEmpty ? nil : OpenAICompatibleService(apiKey: apiKeyForProvider(provider), model: modelName, baseURL: url, historyContext: historyContext, projectFolder: projectFolder, provider: provider, maxTokens: mt)
+            openAICompatible = url.isEmpty ? nil : OpenAICompatibleService(apiKey: apiKeyForProvider(provider), model: modelName, baseURL: url, supportsVision: isVision, historyContext: historyContext, projectFolder: projectFolder, provider: provider, maxTokens: mt)
         }
         let ollama: OllamaService?
         switch provider {
