@@ -330,7 +330,14 @@ struct SettingsView: View {
                             } else {
                                 Picker("Model", selection: $viewModel.mistralModel) {
                                     ForEach(viewModel.mistralModels) { model in
-                                        Text(model.name).tag(model.id)
+                                        HStack(spacing: 4) {
+                                            Text(model.name)
+                                            if Self.isMistralVisionModel(model.id) {
+                                                Image(systemName: "eye")
+                                                    .foregroundStyle(.blue)
+                                                    .font(.caption2)
+                                            }
+                                        }.tag(model.id)
                                     }
                                 }
                                 .labelsHidden()
@@ -712,6 +719,13 @@ struct SettingsView: View {
         .onChange(of: viewModel.selectedProvider) { _, _ in
             refreshModelsForCurrentProvider()
         }
+    }
+
+    /// Mistral models with vision support
+    private static func isMistralVisionModel(_ id: String) -> Bool {
+        let lower = id.lowercased()
+        let visionPrefixes = ["pixtral", "mistral-small", "mistral-large", "mistral-medium"]
+        return visionPrefixes.contains { lower.hasPrefix($0) }
     }
 
     private func refreshModelsForCurrentProvider() {
