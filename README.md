@@ -96,7 +96,7 @@ Control any Mac app through the Accessibility API. Click buttons, type into fiel
 | **Local Ollama** | Free | Full privacy, offline |
 | **LM Studio** | Free | Easy local setup |
 | **Hugging Face** | Varies | Open-source models |
-| **Z.ai** | Paid | Fast, versatile |
+| **Z.ai** | Recommended | Fast, versatile |
 | **Mistral Vibe** | Varies | High-performance open models |
 
 ### 🎙 Voice Control
