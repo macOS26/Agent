@@ -478,11 +478,13 @@ extension AgentViewModel {
                             let offset = input["offset"] as? Int ?? 0
                             let limit = input["limit"] as? Int ?? 0
                             let callKey = "\(name):\(fp):\(offset):\(limit)"
-                            if recentToolCalls.last == callKey {
-                                tab.appendLog("⚠️ Loop detected — re-reading same lines of \(fp). Stopping.")
+                            let dupeCount = recentToolCalls.filter { $0 == callKey }.count
+                            if dupeCount >= 2 {
+                                // Already read this file twice with same params — tell LLM to move on
+                                tab.appendLog("⚠️ Already read \((fp as NSString).lastPathComponent) twice — skipping")
                                 tab.flush()
-                                completionSummary = "Stopped: repeated read loop detected"
-                                break
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": "Error: You already read this file twice with the same offset/limit. The content has not changed. Use the content you already have, or try a different approach."])
+                                continue
                             }
                             recentToolCalls.append(callKey)
                         }
