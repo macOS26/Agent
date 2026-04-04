@@ -86,7 +86,7 @@ Control any Mac app through the Accessibility API. Click buttons, type into fiel
 ### 🤖 12 AI Providers
 | Provider | Cost | Best For |
 |---|---|---|
-| **GLM-5 / GLM-5.1** (Ollama) | Low Cost | Recommended starting point |
+| **GLM-5 / GLM-5.1** | Low Cost | Recommended starting point |
 | **Claude** (Anthropic) | Paid | Complex tasks |
 | **ChatGPT** (OpenAI) | Paid | General purpose |
 | **Google Gemini** | Paid/Free | High performance, long context |
