@@ -29,14 +29,14 @@ final class ToolPreferencesService {
 
     /// Tool group definitions - maps group name to tool name prefixes
     static let toolGroups: [String: Set<String>] = [
-        "Coding": Set(["xcode", "file_manager", "project_folder", "mode"]),
-        "Automation": Set(["applescript_tool", "accessibility", "javascript_tool", "lookup_sdef"]),
-        "Experimental": Set(["selenium", "ax_screenshot"]),
-        "Core": Set(["task_complete", "list_tools", "web_search"]),
-        "Conversation": Set(["conversation"]),
-        "Workflow": Set(["agent", "plan_mode", "git", "send_message", "batch_commands", "batch_tools"]),
-        "User Agent": Set(["execute_agent_command"]),
-        "Launch Daemon": Set(["execute_daemon_command"]),
+        "Coding": Set(["xc", "xcode", "file", "file_manager", "folder", "project_folder", "code", "coding_mode", "sh", "run_shell_script"]),
+        "Automation": Set(["as", "applescript_tool", "ax", "accessibility", "jxa", "javascript_tool", "sdef", "lookup_sdef"]),
+        "Experimental": Set(["sel", "selenium", "ax_screenshot"]),
+        "Core": Set(["done", "task_complete", "tools", "list_tools", "search", "web_search"]),
+        "Conversation": Set(["chat", "conversation"]),
+        "Workflow": Set(["agent", "plan", "plan_mode", "git", "msg", "send_message", "batch", "batch_commands", "multi", "batch_tools"]),
+        "User Agent": Set(["user", "execute_agent_command"]),
+        "Launch Daemon": Set(["root", "execute_daemon_command"]),
         "Web": Set(["web"]),
     ]
 

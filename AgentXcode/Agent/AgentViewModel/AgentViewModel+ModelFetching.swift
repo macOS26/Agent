@@ -410,19 +410,33 @@ extension AgentViewModel {
                 qwenModels = Self.defaultQwenModels
                 return
             }
-            do {
-                let models = try await Self.fetchOpenAICompatibleModels(
-                    apiKey: key,
-                    endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1/models"
-                )
-                qwenModels = models.isEmpty ? Self.defaultQwenModels : models
-                if qwenModel.isEmpty || !qwenModels.contains(where: { $0.id == qwenModel }) {
-                    qwenModel = qwenModels.first?.id ?? "qwen-plus"
+            // Try international endpoint first, then China mainland
+            let endpoints = [
+                "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/models",
+                "https://dashscope.aliyuncs.com/compatible-mode/v1/models",
+            ]
+            for endpoint in endpoints {
+                do {
+                    let models = try await Self.fetchOpenAICompatibleModels(apiKey: key, endpoint: endpoint)
+                    if !models.isEmpty {
+                        // Filter to chat/reasoning models (skip embedding, tts, asr, etc.)
+                        let chatModels = models.filter { id in
+                            let lower = id.id.lowercased()
+                            let skip = ["embed", "tts", "asr", "rerank", "paraformer", "sambert",
+                                        "cosyvoice", "sensevoice", "farui", "wanx", "flux"]
+                            return !skip.contains(where: { lower.contains($0) })
+                        }
+                        qwenModels = chatModels.isEmpty ? models : chatModels
+                        if qwenModel.isEmpty || !qwenModels.contains(where: { $0.id == qwenModel }) {
+                            qwenModel = qwenModels.first?.id ?? "qwen-plus"
+                        }
+                        return
+                    }
+                } catch {
+                    AuditLog.log(.api, "Failed to fetch Qwen models from \(endpoint): \(error.localizedDescription)")
                 }
-            } catch {
-                appendLog("Failed to fetch Qwen models: \(error.localizedDescription)")
-                qwenModels = Self.defaultQwenModels
             }
+            qwenModels = Self.defaultQwenModels
         }
     }
 

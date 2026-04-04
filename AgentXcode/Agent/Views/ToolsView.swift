@@ -14,7 +14,7 @@ struct ToolsView: View {
         "Workflow": ({ ["agent", "plan", "git", "batch", "multi"].contains($0.name) }, "flowchart"),
         "Coding": ({ ["file", "xc", "code"].contains($0.name) }, "chevron.left.forwardslash.chevron.right"),
         "Automation": ({ ["as", "ax", "jxa", "sdef"].contains($0.name) }, "gearshape.2"),
-        "User Agent": ({ $0.name == "sh" }, "person"),
+        "User Agent": ({ $0.name == "user" }, "person"),
         "Launch Daemon": ({ $0.name == "root" }, "lock.shield"),
         "Web": ({ $0.name == "web" }, "globe"),
         "Experimental": ({ $0.name == "sel" }, "flask"),
