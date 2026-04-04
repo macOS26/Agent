@@ -391,7 +391,16 @@ extension AgentViewModel {
                     guard let type = block["type"] as? String else { continue }
 
                     if type == "text" {
-                        // Text goes to LLM output only — streaming delta already shows it there
+                        // Log LLM text to activity log (skip duplicates across iterations)
+                        if let text = block["text"] as? String {
+                            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                            let hash = trimmed.hashValue
+                            if !trimmed.isEmpty && trimmed.count > 1 && !recentOutputHashes.contains(hash) {
+                                recentOutputHashes.insert(hash)
+                                appendLog(trimmed)
+                                flushLog()
+                            }
+                        }
                     } else if type == "server_tool_use" {
                         // Server-side tool (web search) — executed by the API, just log it
                         hasToolUse = true
@@ -423,7 +432,13 @@ extension AgentViewModel {
                         (name, input) = Self.expandConsolidatedTool(name: name, input: input)
 
                         if name == "task_complete" {
-                            let summary = input["summary"] as? String ?? "Done"
+                            var summary = input["summary"] as? String ?? "Done"
+                            // If model sent a placeholder summary like "...", use the last LLM text instead
+                            let stripped = summary.trimmingCharacters(in: CharacterSet(charactersIn: ". "))
+                            if stripped.isEmpty || summary == "..." {
+                                let lastText = rawLLMOutput.trimmingCharacters(in: .whitespacesAndNewlines)
+                                if !lastText.isEmpty { summary = String(lastText.prefix(300)) }
+                            }
                             completionSummary = summary
 
                             // Apple Intelligence summary annotation
