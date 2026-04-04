@@ -206,7 +206,14 @@ struct SettingsView: View {
                             } else {
                                 Picker("Model", selection: $viewModel.zAIModel) {
                                     ForEach(viewModel.zAIModels) { model in
-                                        Text(model.name).tag(model.id)
+                                        HStack(spacing: 4) {
+                                            Text(model.name)
+                                            if model.id.lowercased().contains("4.5v") || model.id.lowercased().contains("4.6v") || model.id.lowercased().contains("4.7") {
+                                                Image(systemName: "eye")
+                                                    .foregroundStyle(.blue)
+                                                    .font(.caption2)
+                                            }
+                                        }.tag(model.id)
                                     }
                                 }
                                 .labelsHidden()
