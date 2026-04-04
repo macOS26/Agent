@@ -314,7 +314,7 @@ struct ThinkingIndicatorView: View {
                 .transition(.opacity)
             }
         }
-        .background(.ultraThinMaterial.opacity(0.85))
+        .background(.ultraThinMaterial)
         .onAppear {
             if let tab {
                 elapsed = tab.taskElapsed
