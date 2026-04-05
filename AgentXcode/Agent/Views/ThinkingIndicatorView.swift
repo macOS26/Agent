@@ -562,9 +562,7 @@ private struct LLMOutputBox: View {
                                 .id("bottom")
                         }
                         .onPreferenceChange(ContentHeightKey.self) { h in
-                            if !userDragged {
-                                height = min(max(minHeight, h + 4), maxHeight)
-                            }
+                            height = min(max(minHeight, h + 4), maxHeight)
                         }
                         .onChange(of: displayText) {
                             proxy.scrollTo("bottom", anchor: .bottom)
