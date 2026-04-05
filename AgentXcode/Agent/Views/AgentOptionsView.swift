@@ -217,20 +217,33 @@ struct AgentOptionsView: View {
             row {
                 Text("Token Budget").font(.subheadline)
                 Spacer()
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("Per task limit").font(.caption).foregroundStyle(.secondary)
-                    HStack(spacing: 4) {
-                        TextField("0", text: Binding(
-                            get: { viewModel.tokenBudgetCeiling == 0 ? "" : "\(viewModel.tokenBudgetCeiling)" },
-                            set: { viewModel.tokenBudgetCeiling = Int($0) ?? 0 }
-                        ))
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 80)
-                        .multilineTextAlignment(.trailing)
-                        Text(viewModel.tokenBudgetCeiling == 0 ? "No limit" : "tokens")
+                HStack(spacing: 8) {
+                    Toggle("", isOn: Binding(
+                        get: { viewModel.tokenBudgetCeiling > 0 },
+                        set: { viewModel.tokenBudgetCeiling = $0 ? 100_000 : 0 }
+                    ))
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .labelsHidden()
+
+                    if viewModel.tokenBudgetCeiling > 0 {
+                        Stepper("\(viewModel.tokenBudgetCeiling / 1000)K",
+                            onIncrement: {
+                                let opts = [10_000, 25_000, 50_000, 100_000, 200_000, 500_000, 1_000_000]
+                                if let i = opts.firstIndex(of: viewModel.tokenBudgetCeiling), i + 1 < opts.count {
+                                    viewModel.tokenBudgetCeiling = opts[i + 1]
+                                }
+                            },
+                            onDecrement: {
+                                let opts = [10_000, 25_000, 50_000, 100_000, 200_000, 500_000, 1_000_000]
+                                if let i = opts.firstIndex(of: viewModel.tokenBudgetCeiling), i > 0 {
+                                    viewModel.tokenBudgetCeiling = opts[i - 1]
+                                }
+                            })
+                    } else {
+                        Text("Unlimited")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                            .frame(width: 50, alignment: .leading)
                     }
                 }
             }
