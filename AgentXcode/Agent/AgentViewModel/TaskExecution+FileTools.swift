@@ -76,9 +76,12 @@ extension AgentViewModel {
         case "write_file":
             let filePath = input["file_path"] as? String ?? ""
             let content = input["content"] as? String ?? ""
-            FileBackupService.shared.backup(filePath: (filePath as NSString).expandingTildeInPath, tabID: selectedTabId ?? Self.mainTabID)
+            let expandedWrite = (filePath as NSString).expandingTildeInPath
+            let beforeContent = try? String(contentsOfFile: expandedWrite, encoding: .utf8)
+            FileBackupService.shared.backup(filePath: expandedWrite, tabID: selectedTabId ?? Self.mainTabID)
             appendLog("📝 Write: \(filePath)")
             let output = await Self.offMain { CodingService.writeFile(path: filePath, content: content) }
+            FileChangeJournal.shared.log(action: "write", filePath: expandedWrite, beforeContent: beforeContent, afterContent: content, tool: "write_file")
             appendLog(output)
             let lang = Self.langFromPath(filePath)
             appendLog(Self.codeFence(Self.preview(content, lines: readFilePreviewLines), language: lang))
@@ -123,6 +126,9 @@ extension AgentViewModel {
                 appendLog(d1f)
             }
             appendLog(output)
+            // Log edit to journal
+            let afterEdit = try? String(contentsOfFile: expandedEdit, encoding: .utf8)
+            FileChangeJournal.shared.log(action: "edit", filePath: expandedEdit, beforeContent: originalContent, afterContent: afterEdit, tool: "edit_file")
             commandsRun.append("edit_file: \(filePath)")
             // Post-edit diagnostic: quick syntax check for Swift files in Xcode projects
             let editDiag = await Self.postEditDiagnostic(filePath: expandedEdit, projectFolder: projectFolder)

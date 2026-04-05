@@ -37,6 +37,8 @@ extension AgentViewModel {
         subAgents.removeAll()
         FileBackupService.shared.clearTaskSnapshots()
         TokenUsageStore.shared.resetTaskMetrics()
+        SessionStore.shared.newSession()
+        FallbackChainService.shared.reset()
         Self.clearToolCache()
         // Smart tool prediction — send only tools the prompt needs (saves ~3K tokens)
         var activeGroups: Set<String>? = codingModeEnabled ? Self.codingModeGroups : automationModeEnabled ? Self.automationModeGroups : Self.predictToolGroups(for: prompt)
@@ -700,12 +702,16 @@ extension AgentViewModel {
                 let assistantContent: Any = response.content.isEmpty
                     ? "I'll continue with the task." as Any
                     : response.content as Any
-                messages.append(["role": "assistant", "content": assistantContent])
+                let assistantMsg: [String: Any] = ["role": "assistant", "content": assistantContent]
+                messages.append(assistantMsg)
+                SessionStore.shared.appendMessage(assistantMsg)
 
                 if hasToolUse && !toolResults.isEmpty {
                     // Truncate large tool results to save tokens (cap at 8K chars each)
                     let capped = Self.truncateToolResults(toolResults)
-                    messages.append(["role": "user", "content": capped])
+                    let userMsg: [String: Any] = ["role": "user", "content": capped]
+                    messages.append(userMsg)
+                    SessionStore.shared.appendMessage(userMsg)
                 } else if !hasToolUse {
                     // Check if model wrote task_complete/done as text instead of a tool call
                     let responseText = response.content.compactMap { $0["text"] as? String }.joined()

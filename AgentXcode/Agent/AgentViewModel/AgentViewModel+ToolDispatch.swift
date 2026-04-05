@@ -160,6 +160,15 @@ extension AgentViewModel {
             completeToolStep(id: stepId, status: status)
         }
 
+        // Pre-tool hook — can block tool execution
+        let hookDecision = await HooksService.shared.runPreToolHooks(toolName: name, input: input)
+        if hookDecision.decision == .block {
+            let msg = hookDecision.message ?? "Blocked by hook"
+            toolResults.append(["type": "tool_result", "tool_use_id": ctx.toolId, "content": msg])
+            finishStep(.error)
+            return .alreadyAppended
+        }
+
         // Cache hit for read-only tools — return cached result instantly
         if Self.readOnlyTools.contains(name) {
             let key = Self.cacheKey(name: name, input: input)
