@@ -534,6 +534,28 @@ extension AgentViewModel {
         // Task complete — signal via NativeToolContext so the task loop can detect it
         case "task_complete":
             let summary = input["summary"] as? String ?? "Done"
+
+            // Verification gate: if Xcode project + auto-verify + edits were made,
+            // build must pass before task_complete is allowed
+            let editCommands = commandsRun.filter { $0.hasPrefix("write_file") || $0.hasPrefix("edit_file") || $0.hasPrefix("diff_apply") }
+            if autoVerifyEnabled && Self.isXcodeProject(projectFolder) && !editCommands.isEmpty {
+                appendLog("🔍 Verify gate: building before allowing completion...")
+                flushLog()
+                let buildResult = await Self.offMain { XcodeService.shared.buildProject(projectPath: "") }
+                if buildResult.contains("BUILD FAILED") || buildResult.contains("error:") {
+                    // Extract first 5 errors
+                    let errors = buildResult.components(separatedBy: "\n")
+                        .filter { $0.contains("error:") }
+                        .prefix(5)
+                        .joined(separator: "\n")
+                    appendLog("❌ Verify gate: build failed — sending errors back to LLM")
+                    flushLog()
+                    return "CANNOT COMPLETE — build failed. Fix these errors first:\n\n\(errors)\n\nAfter fixing, call task_complete again."
+                }
+                appendLog("✅ Verify gate: build passed")
+                flushLog()
+            }
+
             NativeToolContext.taskCompleteSummary = summary
             return "Task complete: \(summary)"
         // MARK: - Conversation Tools
