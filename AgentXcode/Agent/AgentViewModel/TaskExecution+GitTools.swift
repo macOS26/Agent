@@ -106,6 +106,27 @@ extension AgentViewModel {
                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": pathErr])
                 return true
             }
+
+            // Git safety guardrails — block dangerous patterns
+            let dangerousFlags = ["--no-verify", "--amend", "--force", "-f", "--no-gpg-sign"]
+            for flag in dangerousFlags where message.contains(flag) {
+                let warning = "⚠️ Blocked: '\(flag)' is not allowed in commit messages. Create a new commit instead."
+                appendLog(warning)
+                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": warning])
+                return true
+            }
+
+            // Warn on files that likely contain secrets
+            let secretPatterns = [".env", "credentials", "secret", ".pem", ".key", "token"]
+            if let filesToCommit = files {
+                let suspectFiles = filesToCommit.filter { f in secretPatterns.contains(where: { f.lowercased().contains($0) }) }
+                if !suspectFiles.isEmpty {
+                    let warning = "⚠️ Warning: committing files that may contain secrets: \(suspectFiles.joined(separator: ", ")). Proceeding anyway — review before pushing."
+                    appendLog(warning)
+                    flushLog()
+                }
+            }
+
             appendLog("🔀 Git commit: \(message)")
             flushLog()
             let dir = CodingService.resolveDir(path)
