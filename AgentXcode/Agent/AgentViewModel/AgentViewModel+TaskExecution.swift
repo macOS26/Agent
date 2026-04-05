@@ -38,8 +38,9 @@ extension AgentViewModel {
         FileBackupService.shared.clearTaskSnapshots()
         TokenUsageStore.shared.resetTaskMetrics()
         Self.clearToolCache()
-        // All tool groups available — user controls via UI toggles
-        var activeGroups: Set<String>? = codingModeEnabled ? Self.codingModeGroups : automationModeEnabled ? Self.automationModeGroups : nil
+        // Smart tool prediction — send only tools the prompt needs (saves ~3K tokens)
+        var activeGroups: Set<String>? = codingModeEnabled ? Self.codingModeGroups : automationModeEnabled ? Self.automationModeGroups : Self.predictToolGroups(for: prompt)
+        let isXcode = Self.isXcodeProject(projectFolder)
         appendLog(Self.newTaskMarker)
         appendLog("👤 \(prompt)")
         flushLog()
@@ -644,16 +645,18 @@ extension AgentViewModel {
                             "content": "⚠️ \(consecutiveReadOnlyCount) consecutive reads without editing or building. Take action or call done."])
                     }
 
-                    // 2. Build enforcement — nudge if edited without building
-                    if hadEdit { unbuiltEditCount += 1 }
-                    if hadBuild { unbuiltEditCount = 0 }
-                    if unbuiltEditCount >= 3 {
-                        toolResults.append(["type": "tool_result", "tool_use_id": "build_nudge",
-                            "content": "⚠️ You've edited \(unbuiltEditCount) times without building. Run xc(action:\"build\") now to catch errors early."])
+                    // 2. Build enforcement — only for Xcode projects
+                    if isXcode {
+                        if hadEdit { unbuiltEditCount += 1 }
+                        if hadBuild { unbuiltEditCount = 0 }
+                        if unbuiltEditCount >= 3 {
+                            toolResults.append(["type": "tool_result", "tool_use_id": "build_nudge",
+                                "content": "⚠️ You've edited \(unbuiltEditCount) times without building. Run xc(action:\"build\") now to catch errors early."])
+                        }
                     }
 
-                    // 3. Error budget — track consecutive build failures
-                    for tool in pendingTools where buildTools.contains(tool.name) {
+                    // 3. Error budget — track consecutive build failures (Xcode only)
+                    for tool in pendingTools where isXcode && buildTools.contains(tool.name) {
                         let buildOutput = toolResults.last?["content"] as? String ?? ""
                         if buildOutput.contains("BUILD FAILED") || buildOutput.contains("error:") {
                             consecutiveBuildFailures += 1
