@@ -615,7 +615,7 @@ private struct LLMOutputBox: View {
                 }
                 .contentShape(Rectangle())
                 .highPriorityGesture(
-                    DragGesture(minimumDistance: 2, coordinateSpace: .local)
+                    DragGesture(minimumDistance: 2, coordinateSpace: .global)
                         .onChanged { value in
                             if dragStartHeight == 0 {
                                 dragStartHeight = height
