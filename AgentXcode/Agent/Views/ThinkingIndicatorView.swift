@@ -604,7 +604,7 @@ private struct LLMOutputBox: View {
                             .foregroundColor(dismissEnabled ? termText : termDim)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 4)
-                            .background(Color.black.opacity(0.8))
+                            .background(termBg.opacity(0.9))
                             .overlay(RoundedRectangle(cornerRadius: 4).stroke(termBorder, lineWidth: 1))
                     }
                     .buttonStyle(.plain)
