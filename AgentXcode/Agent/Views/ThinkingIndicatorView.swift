@@ -532,8 +532,8 @@ private struct LLMOutputBox: View {
     private var maxHeight: CGFloat {
         let windowH = NSApp.keyWindow?.frame.height
             ?? NSScreen.main?.visibleFrame.height
-            ?? 2400
-        return min(windowH * 0.85, 2400)
+            ?? 800
+        return windowH * 0.75
     }
 
     var body: some View {
@@ -546,11 +546,12 @@ private struct LLMOutputBox: View {
         VStack(spacing: 0) {
             ZStack(alignment: .bottomTrailing) {
                 if !displayText.isEmpty {
-                    TerminalNeoTextView(text: displayText) { h in
-                        let proposed = min(max(minHeight, h + 4), maxHeight)
-                        if proposed > height {
-                            height = proposed
-                        }
+                    TerminalNeoTextView(text: displayText) { _ in
+                        // Line-count-based height — avoids NSTextTable usedRect overestimation
+                        let lineCount = CGFloat(displayText.components(separatedBy: "\n").count)
+                        let lineH: CGFloat = 24
+                        let proposed = min(max(minHeight, lineCount * lineH + 24), maxHeight)
+                        height = proposed
                     }
                     .overlay {
                         if showScanlines {
