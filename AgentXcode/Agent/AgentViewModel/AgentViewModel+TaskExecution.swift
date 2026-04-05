@@ -759,7 +759,28 @@ extension AgentViewModel {
             } catch {
                 if !Task.isCancelled {
                     let errMsg = error.localizedDescription
-                    
+
+                    // Context overflow — prune messages aggressively and retry
+                    let isOverflow = errMsg.contains("max_tokens") || errMsg.contains("context_length") || errMsg.contains("too many tokens") || errMsg.contains("prompt is too long")
+                    if isOverflow {
+                        appendLog("⚠️ Context overflow — pruning messages and retrying")
+                        flushLog()
+                        Self.pruneMessages(&messages, keepRecent: 4)
+                        Self.stripOldImages(&messages)
+                        continue
+                    }
+
+                    // Stale connection — retry with fresh request
+                    let isStaleConnection = errMsg.contains("ECONNRESET") || errMsg.contains("EPIPE")
+                        || errMsg.contains("connection reset") || errMsg.contains("broken pipe")
+                    if isStaleConnection && timeoutRetryCount < maxTimeoutRetries {
+                        timeoutRetryCount += 1
+                        appendLog("🔌 Connection reset — retrying (\(timeoutRetryCount)/\(maxTimeoutRetries))")
+                        flushLog()
+                        try? await Task.sleep(for: .seconds(2))
+                        continue
+                    }
+
                     // Detect timeout errors
                     let isNetworkTimeout = errMsg.lowercased().contains("timeout") || errMsg.lowercased().contains("timed out")
                     
