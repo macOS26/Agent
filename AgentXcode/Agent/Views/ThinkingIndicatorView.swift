@@ -547,34 +547,7 @@ private struct LLMOutputBox: View {
         VStack(spacing: 0) {
             ZStack(alignment: .bottomTrailing) {
                 if !displayText.isEmpty {
-                    let chunks = Self.splitByTables(displayText)
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 0) {
-                            ForEach(Array(chunks.enumerated()), id: \.offset) { idx, chunk in
-                                if chunk.isTable {
-                                    NSTextViewWrapper(
-                                        attributedString: TerminalNeoRenderer.render(chunk.text),
-                                        measuredHeight: Binding(
-                                            get: { tableHeights[idx] ?? 100 },
-                                            set: { tableHeights[idx] = $0 }
-                                        )
-                                    )
-                                    .frame(height: (tableHeights[idx] ?? 100) + 70)
-                                    .frame(maxWidth: .infinity)
-                                } else {
-                                    Text(chunk.text)
-                                        .font(.system(size: 14, design: .monospaced))
-                                        .foregroundColor(termText)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                }
-                            }
-                        }
-                        .padding(10)
-                        .background(GeometryReader { geo in
-                            Color.clear.preference(key: ContentHeightKey.self, value: geo.size.height)
-                        })
-                    }
-                    .onPreferenceChange(ContentHeightKey.self) { h in
+                    TerminalNeoTextView(text: displayText) { h in
                         if !userDragged {
                             height = min(max(minHeight, h + 4), maxHeight)
                         }
