@@ -59,6 +59,11 @@ struct PromptEditor: NSViewRepresentable {
     }
 
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
+        guard let textView = scrollView.documentView as? NSTextView else { return }
+        // Only update if the binding changed externally (not from user typing)
+        if textView.string != text {
+            textView.string = text
+        }
     }
 
     class Coordinator: NSObject, NSTextViewDelegate {
