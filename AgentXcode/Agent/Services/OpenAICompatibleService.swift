@@ -87,7 +87,7 @@ final class OpenAICompatibleService {
 
     func tools(activeGroups: Set<String>? = nil, compact: Bool = false) -> [[String: Any]] {
         let groups = isLMStudio ? Tool.codingGroups : activeGroups
-        return AgentTools.ollamaTools(for: provider, activeGroups: groups, compact: compact)
+        return AgentTools.ollamaTools(for: provider, activeGroups: groups, compact: compact, projectFolder: projectFolder)
     }
 
     /// Prepend project folder to the last user message (only on first message).

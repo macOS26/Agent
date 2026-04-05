@@ -54,7 +54,7 @@ final class OllamaService {
         return prompt
     }
 
-    func tools(activeGroups: Set<String>? = nil, compact: Bool = false) -> [[String: Any]] { AgentTools.ollamaTools(for: provider, activeGroups: activeGroups, compact: compact) }
+    func tools(activeGroups: Set<String>? = nil, compact: Bool = false) -> [[String: Any]] { AgentTools.ollamaTools(for: provider, activeGroups: activeGroups, compact: compact, projectFolder: projectFolder) }
 
     /// Prepend project folder to the last user message so it's always visible in context.
     private func withFolderPrefix(_ messages: [[String: Any]]) -> [[String: Any]] {

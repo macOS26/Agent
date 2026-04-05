@@ -54,7 +54,7 @@ final class ClaudeService {
     func tools(activeGroups: Set<String>? = nil, compact: Bool = false) -> [[String: Any]] {
         // Local endpoints (LM Studio etc.) get essential groups only to fit small context windows
         let groups = isLocalEndpoint ? Tool.codingGroups : activeGroups
-        var t = AgentTools.claudeFormat(activeGroups: groups, compact: compact)
+        var t = AgentTools.claudeFormat(activeGroups: groups, compact: compact, projectFolder: projectFolder)
         // Only add native web_search for real Anthropic API — remove Tavily duplicate first
         if !isLocalEndpoint {
             t.removeAll { ($0["name"] as? String) == "web_search" }
