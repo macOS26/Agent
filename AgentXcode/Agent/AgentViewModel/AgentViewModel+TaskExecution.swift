@@ -600,6 +600,15 @@ extension AgentViewModel {
                     ])
                 }
 
+                // Cost alerting — stop if estimated cost exceeds user-configured max
+                if TokenUsageStore.shared.isCostExceeded {
+                    let cost = String(format: "$%.2f", TokenUsageStore.shared.sessionEstimatedCost)
+                    let max = String(format: "$%.2f", TokenUsageStore.shared.maxTaskCost)
+                    appendLog("⚠️ Auto-stopping: estimated cost \(cost) exceeds limit \(max)")
+                    flushLog()
+                    break
+                }
+
                 // MARK: Overnight coding guards
                 if !pendingTools.isEmpty {
                     let editTools: Set<String> = ["write_file", "edit_file", "diff_apply", "apply_diff"]

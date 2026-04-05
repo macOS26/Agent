@@ -182,11 +182,59 @@ final class TokenUsageStore {
         modelUsage.removeAll()
     }
 
+    // MARK: - Per-Provider Cost Rates (USD per 1M tokens)
+
+    /// Input/output cost per million tokens. Approximate — check provider pricing pages.
+    static let costRates: [String: (input: Double, output: Double)] = [
+        // Claude
+        "claude-sonnet-4": (3.0, 15.0), "claude-opus-4": (15.0, 75.0), "claude-haiku-4": (0.80, 4.0),
+        // OpenAI
+        "gpt-4o": (2.50, 10.0), "gpt-4o-mini": (0.15, 0.60), "o3": (10.0, 40.0),
+        // DeepSeek
+        "deepseek-chat": (0.27, 1.10), "deepseek-coder": (0.27, 1.10),
+        // Google
+        "gemini-2.5-pro": (1.25, 10.0), "gemini-2.5-flash": (0.15, 0.60),
+        // Mistral
+        "mistral-large": (2.0, 6.0), "codestral": (0.30, 0.90), "devstral": (0.30, 0.90),
+        // xAI
+        "grok-3": (3.0, 15.0), "grok-3-mini": (0.30, 0.50),
+    ]
+
+    /// Estimate cost for a model. Returns 0 if model not in rate table (local/free).
+    func estimatedCost(model: String, inputTokens: Int, outputTokens: Int) -> Double {
+        // Try exact match, then prefix match
+        let rates = Self.costRates[model] ?? Self.costRates.first(where: { model.hasPrefix($0.key) })?.value
+        guard let r = rates else { return 0 }
+        return (Double(inputTokens) / 1_000_000 * r.input) + (Double(outputTokens) / 1_000_000 * r.output)
+    }
+
+    /// Total estimated cost across all models in the session.
+    var sessionEstimatedCost: Double {
+        modelUsage.reduce(0) { total, entry in
+            total + estimatedCost(model: entry.key, inputTokens: entry.value.inputTokens, outputTokens: entry.value.outputTokens)
+        }
+    }
+
+    /// Max cost per task (USD). 0 = unlimited. Stored in UserDefaults.
+    static let udMaxCostKey = "agent.maxTaskCost"
+    var maxTaskCost: Double {
+        get { UserDefaults.standard.double(forKey: Self.udMaxCostKey) }
+        set { UserDefaults.standard.set(newValue, forKey: Self.udMaxCostKey) }
+    }
+
+    /// Check if cost exceeds the user-configured max.
+    var isCostExceeded: Bool {
+        guard maxTaskCost > 0 else { return false }
+        return sessionEstimatedCost >= maxTaskCost
+    }
+
     /// Summary of model usage for display.
     func modelUsageSummary() -> String {
         guard !modelUsage.isEmpty else { return "No model usage recorded." }
         return modelUsage.sorted { $0.value.totalTokens > $1.value.totalTokens }.map { model, usage in
-            "\(model): \(usage.callCount) calls, \(usage.totalTokens) tokens"
+            let cost = estimatedCost(model: model, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens)
+            let costStr = cost > 0 ? String(format: " ($%.4f)", cost) : ""
+            return "\(model): \(usage.callCount) calls, \(usage.totalTokens) tokens\(costStr)"
         }.joined(separator: "\n")
     }
 
