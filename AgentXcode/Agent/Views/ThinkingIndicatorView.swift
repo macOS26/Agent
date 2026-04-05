@@ -387,6 +387,7 @@ private struct LLMOutputBox: View {
     var maxHeight: CGFloat = 600
     var onDismiss: (() -> Void)?
     @State private var cursorVisible = true
+    @State private var dragStartHeight: CGFloat = 80
 
     private var termBg: Color {
         colorScheme == .dark
@@ -556,16 +557,16 @@ private struct LLMOutputBox: View {
                                 .foregroundColor(termText)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(10)
-                                .onGeometryChange(for: CGFloat.self) { geo in
-                                    geo.size.height
-                                } action: { h in
-                                    let ideal = min(max(minHeight, h + 4), maxHeight)
-                                    // Always grow, only shrink if user hasn't manually dragged
-                                    if ideal > height || !userDragged {
-                                        height = ideal
-                                    }
-                                }
+                                .background(GeometryReader { geo in
+                                    Color.clear.preference(key: ContentHeightKey.self, value: geo.size.height)
+                                })
                                 .id("bottom")
+                        }
+                        .onPreferenceChange(ContentHeightKey.self) { h in
+                            let ideal = min(max(minHeight, h + 4), maxHeight)
+                            if ideal > height || !userDragged {
+                                height = ideal
+                            }
                         }
                         .onChange(of: displayText) {
                             proxy.scrollTo("bottom", anchor: .bottom)
@@ -632,8 +633,14 @@ private struct LLMOutputBox: View {
                 .gesture(
                     DragGesture()
                         .onChanged { value in
-                            userDragged = true
-                            height = min(max(40, height + value.translation.height), maxHeight)
+                            if !userDragged {
+                                userDragged = true
+                                dragStartHeight = height
+                            }
+                            height = min(max(40, dragStartHeight + value.translation.height), maxHeight)
+                        }
+                        .onEnded { _ in
+                            dragStartHeight = height
                         }
                 )
         }
