@@ -213,6 +213,27 @@ struct AgentOptionsView: View {
                 .pickerStyle(.segmented)
                 .frame(width: 120)
             }
+
+            row {
+                Text("Token Budget").font(.subheadline)
+                Spacer()
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("Per task limit").font(.caption).foregroundStyle(.secondary)
+                    HStack(spacing: 4) {
+                        TextField("0", text: Binding(
+                            get: { viewModel.tokenBudgetCeiling == 0 ? "" : "\(viewModel.tokenBudgetCeiling)" },
+                            set: { viewModel.tokenBudgetCeiling = Int($0) ?? 0 }
+                        ))
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 80)
+                        .multilineTextAlignment(.trailing)
+                        Text(viewModel.tokenBudgetCeiling == 0 ? "No limit" : "tokens")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .frame(width: 50, alignment: .leading)
+                    }
+                }
+            }
         }
         .padding(16)
         .padding(.bottom, 15)
