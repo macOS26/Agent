@@ -220,6 +220,7 @@ struct ContentView: View {
             Task { await MCPService.shared.disconnectAll() }
         }
         .onAppear {
+            setupMenuObservers()
             AgentsMenuDelegate.shared.viewModel = viewModel
             DispatchQueue.global(qos: .userInitiated).async {
                 let status = DependencyChecker.check()
@@ -490,6 +491,76 @@ struct ContentView: View {
 
                 return event
             }
+        }
+    }
+
+    // MARK: - Menu Command Observers
+
+    private static let menuNotifications: [Notification.Name] = [
+        .menuToggleChevrons, .menuToggleOverlay, .menuRunTask, .menuCancelTask,
+        .menuFind, .menuNewTab, .menuCloseTab, .menuNextTab, .menuPrevTab,
+        .menuClearAll, .menuClearLog, .menuClearLLM, .menuClearHistory,
+        .menuClearTasks, .menuClearTokens
+    ]
+
+    func setupMenuObservers() {
+        for name in Self.menuNotifications {
+            let menuName = name
+            NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { _ in
+                MainActor.assumeIsolated { [self] in handleMenuCommand(menuName) }
+            }
+        }
+    }
+
+    func handleMenuCommand(_ name: Notification.Name) {
+        switch name {
+        case .menuToggleChevrons:
+            withAnimation(.easeInOut(duration: 0.25)) {
+                if let selId = viewModel.selectedTabId, let tab = viewModel.tab(for: selId) {
+                    let expand = !tab.thinkingExpanded
+                    tab.thinkingExpanded = expand; tab.thinkingOutputExpanded = expand
+                } else {
+                    let expand = !viewModel.thinkingExpanded
+                    viewModel.thinkingExpanded = expand; viewModel.thinkingOutputExpanded = expand
+                }
+            }
+        case .menuToggleOverlay:
+            withAnimation(.easeInOut(duration: 0.2)) {
+                if let selId = viewModel.selectedTabId, let tab = viewModel.tab(for: selId) {
+                    tab.thinkingDismissed.toggle()
+                } else { viewModel.thinkingDismissed.toggle() }
+            }
+        case .menuRunTask:
+            if let selId = viewModel.selectedTabId, let tab = viewModel.tab(for: selId) {
+                if !tab.taskInput.isEmpty && !tab.isLLMRunning { viewModel.runTabTask(tab: tab) }
+            } else if !viewModel.taskInput.isEmpty && !viewModel.isRunning { viewModel.run() }
+        case .menuCancelTask:
+            if let selId = viewModel.selectedTabId, let tab = viewModel.tab(for: selId), tab.isBusy {
+                if tab.isLLMRunning { viewModel.stopTabTask(tab: tab) }
+                else if tab.isRunning { viewModel.cancelScriptTab(id: tab.id) }
+            } else if viewModel.isRunning { viewModel.stop() }
+        case .menuFind:
+            showSearch.toggle()
+            if showSearch { isSearchFieldFocused = true } else { searchText = "" }
+        case .menuNewTab: showNewTabSheet = true
+        case .menuCloseTab:
+            if let selId = viewModel.selectedTabId { viewModel.closeScriptTab(id: selId) }
+        case .menuNextTab: nextTab(viewModel: viewModel)
+        case .menuPrevTab: previousTab(viewModel: viewModel)
+        case .menuClearAll: viewModel.clearAll()
+        case .menuClearLog: viewModel.clearSelectedLog()
+        case .menuClearLLM:
+            viewModel.rawLLMOutput = ""
+            if let selId = viewModel.selectedTabId, let tab = viewModel.tab(for: selId) { tab.rawLLMOutput = "" }
+        case .menuClearHistory:
+            viewModel.promptHistory.removeAll()
+            UserDefaults.standard.removeObject(forKey: "agentPromptHistory")
+            if let selId = viewModel.selectedTabId, let tab = viewModel.tab(for: selId) { tab.promptHistory.removeAll() }
+        case .menuClearTasks: viewModel.history.clearAll()
+        case .menuClearTokens:
+            viewModel.taskInputTokens = 0; viewModel.taskOutputTokens = 0
+            viewModel.sessionInputTokens = 0; viewModel.sessionOutputTokens = 0
+        default: break
         }
     }
 

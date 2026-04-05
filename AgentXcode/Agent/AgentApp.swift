@@ -21,6 +21,27 @@ extension Notification.Name {
     static let appWillQuit = Notification.Name("appWillQuit")
     /// Posted when a tab's or main activityLog changes. object = tab UUID (or nil for main)
     static let activityLogDidChange = Notification.Name("activityLogDidChange")
+
+    // Menu command notifications — posted by Shortcuts menu, handled by ContentView
+    static let menuToggleChevrons = Notification.Name("menuToggleChevrons")
+    static let menuToggleOverlay = Notification.Name("menuToggleOverlay")
+    static let menuRunTask = Notification.Name("menuRunTask")
+    static let menuCancelTask = Notification.Name("menuCancelTask")
+    static let menuFind = Notification.Name("menuFind")
+    static let menuNewTab = Notification.Name("menuNewTab")
+    static let menuCloseTab = Notification.Name("menuCloseTab")
+    static let menuNextTab = Notification.Name("menuNextTab")
+    static let menuPrevTab = Notification.Name("menuPrevTab")
+    static let menuClearAll = Notification.Name("menuClearAll")
+    static let menuClearLog = Notification.Name("menuClearLog")
+    static let menuClearLLM = Notification.Name("menuClearLLM")
+    static let menuClearHistory = Notification.Name("menuClearHistory")
+    static let menuClearTasks = Notification.Name("menuClearTasks")
+    static let menuClearTokens = Notification.Name("menuClearTokens")
+}
+
+private func post(_ name: Notification.Name) {
+    NotificationCenter.default.post(name: name, object: nil)
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -94,39 +115,39 @@ struct AgentApp: App {
                 .keyboardShortcut("p", modifiers: [.command, .shift])
             }
             CommandMenu("Shortcuts") {
-                Button("Toggle LLM Chevrons") {}
+                Button("Toggle LLM Chevrons") { post(.menuToggleChevrons) }
                     .keyboardShortcut("d", modifiers: .command)
-                Button("Toggle LLM Overlay") {}
+                Button("Toggle LLM Overlay") { post(.menuToggleOverlay) }
                     .keyboardShortcut("b", modifiers: .command)
                 Divider()
-                Button("Run Task") {}
+                Button("Run Task") { post(.menuRunTask) }
                     .keyboardShortcut(.return, modifiers: .command)
-                Button("Cancel Task") {}
+                Button("Cancel Task") { post(.menuCancelTask) }
                     .keyboardShortcut(.escape, modifiers: [])
                 Divider()
-                Button("Find") {}
+                Button("Find") { post(.menuFind) }
                     .keyboardShortcut("f", modifiers: .command)
-                Button("New Tab") {}
+                Button("New Tab") { post(.menuNewTab) }
                     .keyboardShortcut("t", modifiers: .command)
-                Button("Close Tab") {}
+                Button("Close Tab") { post(.menuCloseTab) }
                     .keyboardShortcut("w", modifiers: .command)
                 Divider()
-                Button("Next Tab") {}
+                Button("Next Tab") { post(.menuNextTab) }
                     .keyboardShortcut("]", modifiers: .command)
-                Button("Previous Tab") {}
+                Button("Previous Tab") { post(.menuPrevTab) }
                     .keyboardShortcut("[", modifiers: .command)
                 Divider()
-                Button("Clear All (log, LLM, history, tasks, tokens)") {}
+                Button("Clear All (log, LLM, history, tasks, tokens)") { post(.menuClearAll) }
                     .keyboardShortcut("k", modifiers: [.command, .shift])
-                Button("Clear Log") {}
+                Button("Clear Log") { post(.menuClearLog) }
                     .keyboardShortcut("l", modifiers: .command)
-                Button("Clear LLM Output") {}
+                Button("Clear LLM Output") { post(.menuClearLLM) }
                     .keyboardShortcut("l", modifiers: [.command, .shift])
-                Button("Clear History") {}
+                Button("Clear History") { post(.menuClearHistory) }
                     .keyboardShortcut("h", modifiers: [.command, .shift])
-                Button("Clear Tasks") {}
+                Button("Clear Tasks") { post(.menuClearTasks) }
                     .keyboardShortcut("j", modifiers: [.command, .shift])
-                Button("Clear Tokens") {}
+                Button("Clear Tokens") { post(.menuClearTokens) }
                     .keyboardShortcut("u", modifiers: [.command, .shift])
             }
         }
