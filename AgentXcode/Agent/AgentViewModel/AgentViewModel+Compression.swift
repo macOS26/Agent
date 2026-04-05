@@ -163,7 +163,10 @@ extension AgentViewModel {
 
         log?("🗜️ Compacting context (\(tokensBefore) est. tokens, threshold \(state.compactThreshold))...")
 
-        // Strip images first — they're huge and won't summarize well
+        // Microcompact: clear old tool results to "[cleared]" (keeps last 3)
+        microcompact(&messages)
+
+        // Strip images — they're huge and won't summarize well
         stripOldImages(&messages)
 
         // Tier 1: Apple AI summarization (fast, on-device)
@@ -186,6 +189,35 @@ extension AgentViewModel {
             log?("⚠️ Compaction had no effect (\(state.consecutiveFailures)/\(CompactionState.maxFailures) failures)")
         }
         return reduced
+    }
+
+    // MARK: - Microcompaction (clear old tool results)
+
+    /// Clear old tool_result content to save tokens while preserving message structure.
+    /// Keeps only the last `keepRecent` tool results intact; older ones replaced with "[cleared]".
+    static func microcompact(_ messages: inout [[String: Any]], keepRecent: Int = 3) {
+        // Find all tool_result indices
+        var toolResultIndices: [(msgIdx: Int, blockIdx: Int)] = []
+        for (i, msg) in messages.enumerated() {
+            if let blocks = msg["content"] as? [[String: Any]] {
+                for (j, block) in blocks.enumerated() {
+                    if block["type"] as? String == "tool_result",
+                       let content = block["content"] as? String,
+                       content.count > 100 {
+                        toolResultIndices.append((i, j))
+                    }
+                }
+            }
+        }
+        // Clear all but the last keepRecent
+        let clearCount = max(0, toolResultIndices.count - keepRecent)
+        for k in 0..<clearCount {
+            let (i, j) = toolResultIndices[k]
+            if var blocks = messages[i]["content"] as? [[String: Any]] {
+                blocks[j]["content"] = "[cleared]"
+                messages[i]["content"] = blocks
+            }
+        }
     }
 
     // MARK: - Token Estimation (~4 chars per token)
