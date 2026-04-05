@@ -227,19 +227,31 @@ struct AgentOptionsView: View {
                     .labelsHidden()
 
                     if viewModel.tokenBudgetCeiling > 0 {
-                        Stepper("\(viewModel.tokenBudgetCeiling / 1000)K",
+                        Stepper(Self.formatBudget(viewModel.tokenBudgetCeiling),
                             onIncrement: {
-                                let opts = [10_000, 25_000, 50_000, 100_000, 200_000, 500_000, 1_000_000]
+                                let opts = Self.budgetOptions
                                 if let i = opts.firstIndex(of: viewModel.tokenBudgetCeiling), i + 1 < opts.count {
                                     viewModel.tokenBudgetCeiling = opts[i + 1]
+                                } else if let next = opts.first(where: { $0 > viewModel.tokenBudgetCeiling }) {
+                                    viewModel.tokenBudgetCeiling = next
                                 }
                             },
                             onDecrement: {
-                                let opts = [10_000, 25_000, 50_000, 100_000, 200_000, 500_000, 1_000_000]
+                                let opts = Self.budgetOptions
                                 if let i = opts.firstIndex(of: viewModel.tokenBudgetCeiling), i > 0 {
                                     viewModel.tokenBudgetCeiling = opts[i - 1]
+                                } else if let prev = opts.last(where: { $0 < viewModel.tokenBudgetCeiling }) {
+                                    viewModel.tokenBudgetCeiling = prev
                                 }
                             })
+                        Button {
+                            viewModel.budgetUsedFraction = 0
+                        } label: {
+                            Image(systemName: "arrow.counterclockwise")
+                                .font(.caption2)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Reset token usage for current task")
                     } else {
                         Text("Unlimited")
                             .font(.caption)
@@ -251,6 +263,20 @@ struct AgentOptionsView: View {
         .padding(16)
         .padding(.bottom, 15)
         .frame(width: 360)
+    }
+
+    private static let budgetOptions = [
+        10_000, 25_000, 50_000, 100_000, 250_000, 500_000,
+        1_000_000, 2_000_000, 3_000_000, 4_000_000, 5_000_000,
+        6_000_000, 7_000_000, 8_000_000, 9_000_000, 10_000_000
+    ]
+
+    private static func formatBudget(_ value: Int) -> String {
+        if value >= 1_000_000 {
+            let m = Double(value) / 1_000_000
+            return m == Double(Int(m)) ? "\(Int(m))M" : String(format: "%.1fM", m)
+        }
+        return "\(value / 1000)K"
     }
 
     @ViewBuilder
