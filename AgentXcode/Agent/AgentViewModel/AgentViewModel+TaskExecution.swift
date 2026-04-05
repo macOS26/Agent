@@ -292,6 +292,8 @@ extension AgentViewModel {
         var budgetTracker = TokenBudgetTracker(ceiling: tokenBudgetCeiling)
         // Context compaction state — token-aware triggers with circuit breaker
         var compactionState = CompactionState()
+        // Read-tracking guard — detect excessive reads without action
+        var consecutiveReadOnlyCount = 0
 
         while !Task.isCancelled {
             iterations += 1
@@ -590,6 +592,27 @@ extension AgentViewModel {
                         "tool_use_id": "budget_nudge",
                         "content": "⚠️ Approaching token budget limit (\(budgetTracker.statusDescription)). Wrap up your current work and call task_complete with a summary."
                     ])
+                }
+
+                // Read-tracking guard — detect excessive reads without any edits/builds/commits
+                if !pendingTools.isEmpty {
+                    let actionTools: Set<String> = ["write_file", "edit_file", "diff_apply", "apply_diff",
+                        "xcode_build", "xc_build", "git_commit", "run_shell_script",
+                        "execute_agent_command", "execute_daemon_command", "task_complete"]
+                    let hadAction = pendingTools.contains { actionTools.contains($0.name) }
+                    if hadAction {
+                        consecutiveReadOnlyCount = 0
+                    } else {
+                        consecutiveReadOnlyCount += pendingTools.count
+                    }
+                    if consecutiveReadOnlyCount >= 5 {
+                        toolResults.append([
+                            "type": "tool_result",
+                            "tool_use_id": "read_guard",
+                            "content": "⚠️ You have made \(consecutiveReadOnlyCount) consecutive read-only tool calls without editing, building, or committing. Stop reading and take action: edit a file, run a build, or call done."
+                        ])
+                        consecutiveReadOnlyCount = 0
+                    }
                 }
 
                 // Collect completed sub-agent notifications and inject into tool results
