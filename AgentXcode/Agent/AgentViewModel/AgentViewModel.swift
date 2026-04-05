@@ -511,27 +511,37 @@ final class AgentViewModel {
     }
 
     nonisolated static let defaultZAIModels: [OpenAIModelInfo] = [
-        // Coding models (use /api/coding/paas/ endpoint, no vision)
+        // Coding models (use /api/coding/paas/ endpoint)
         OpenAIModelInfo(id: "glm-5.1", name: "GLM-5.1"),
         OpenAIModelInfo(id: "glm-5", name: "GLM-5"),
         OpenAIModelInfo(id: "glm-5-turbo", name: "GLM-5 Turbo"),
         OpenAIModelInfo(id: "glm-4.7", name: "GLM-4.7"),
+        OpenAIModelInfo(id: "glm-4.7-flash", name: "GLM-4.7 Flash"),
         OpenAIModelInfo(id: "glm-4.6", name: "GLM-4.6"),
         OpenAIModelInfo(id: "glm-4.5", name: "GLM-4.5"),
         OpenAIModelInfo(id: "glm-4.5-air", name: "GLM-4.5 Air"),
-        OpenAIModelInfo(id: "glm-4.5-flash", name: "GLM-4.5 Flash (Free)"),
-        OpenAIModelInfo(id: "glm-4.7-flash", name: "GLM-4.7 Flash (Free)"),
-        // Non-coding models (use /api/paas/ endpoint, vision supported)
+        OpenAIModelInfo(id: "glm-4.5-flash", name: "GLM-4.5 Flash"),
+        OpenAIModelInfo(id: "glm-4-32b-0414-128k", name: "GLM-4-32B-128K"),
+        // Non-coding / general models (use /api/paas/ endpoint)
         // Tagged with :v suffix — stripped before sending to API
         OpenAIModelInfo(id: "glm-5.1:v", name: "GLM-5.1"),
         OpenAIModelInfo(id: "glm-5:v", name: "GLM-5"),
         OpenAIModelInfo(id: "glm-5-turbo:v", name: "GLM-5 Turbo"),
         OpenAIModelInfo(id: "glm-4.7:v", name: "GLM-4.7"),
+        OpenAIModelInfo(id: "glm-4.7-flash:v", name: "GLM-4.7 Flash"),
         OpenAIModelInfo(id: "glm-4.6:v", name: "GLM-4.6"),
         OpenAIModelInfo(id: "glm-4.5:v", name: "GLM-4.5"),
         OpenAIModelInfo(id: "glm-4.5-air:v", name: "GLM-4.5 Air"),
         OpenAIModelInfo(id: "glm-4.5-flash:v", name: "GLM-4.5 Flash"),
-        OpenAIModelInfo(id: "glm-4.7-flash:v", name: "GLM-4.7 Flash"),
+        // Vision models (use /api/paas/ endpoint, vision-capable)
+        OpenAIModelInfo(id: "glm-5v-turbo:v", name: "GLM-5V-Turbo (Vision)"),
+        OpenAIModelInfo(id: "glm-4.6v:v", name: "GLM-4.6V (Vision)"),
+        OpenAIModelInfo(id: "glm-4.5v:v", name: "GLM-4.5V (Vision)"),
+        OpenAIModelInfo(id: "glm-ocr:v", name: "GLM-OCR"),
+        // Image/Video/Voice models
+        OpenAIModelInfo(id: "glm-image:v", name: "GLM-Image"),
+        OpenAIModelInfo(id: "cogvideox-3:v", name: "CogVideoX-3"),
+        OpenAIModelInfo(id: "glm-asr-2512:v", name: "GLM-ASR-2512 (Voice)"),
     ]
 
     var zAIModels: [OpenAIModelInfo] = []
