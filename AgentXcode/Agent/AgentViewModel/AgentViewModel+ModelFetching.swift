@@ -362,45 +362,37 @@ extension AgentViewModel {
         let key = zAIAPIKey
         Task {
             defer { isFetchingZAIModels = false }
-            guard !key.isEmpty else {
-                zAIModels = Self.defaultZAIModels
-                return
-            }
-            do {
-                let models = try await Self.fetchZAIModelsFromAPI(apiKey: key)
-                zAIModels = models.isEmpty ? Self.defaultZAIModels : models
+            guard !key.isEmpty else { return }
+            let models = await Self.fetchZAIModelsFromAPI(apiKey: key)
+            if !models.isEmpty {
+                zAIModels = models
                 if zAIModel.isEmpty || !zAIModels.contains(where: { $0.id == zAIModel }) {
-                    zAIModel = zAIModels.first?.id ?? "glm-4-plus"
+                    zAIModel = zAIModels.first?.id ?? ""
                 }
-            } catch {
-                appendLog("Failed to fetch Z.ai models: \(error.localizedDescription)")
-                zAIModels = Self.defaultZAIModels
             }
         }
     }
 
-    private nonisolated static func fetchZAIModelsFromAPI(apiKey: String) async throws -> [OpenAIModelInfo] {
-        // Fetch from both endpoints — coding and general (vision/non-coding)
+    private nonisolated static func fetchZAIModelsFromAPI(apiKey: String) async -> [OpenAIModelInfo] {
+        // Fetch from BOTH endpoints dynamically — no hardcoded defaults
         let coding = (try? await fetchZAIEndpoint(apiKey: apiKey, urlString: "https://api.z.ai/api/coding/paas/v4/models")) ?? []
         let general = (try? await fetchZAIEndpoint(apiKey: apiKey, urlString: "https://api.z.ai/api/paas/v4/models")) ?? []
 
+        var seen = Set<String>()
         var result: [OpenAIModelInfo] = []
-        // Coding models (no suffix)
+
+        // Coding models first (no suffix)
         for m in coding {
-            result.append(m)
-        }
-        // General/vision models (tagged with :v suffix — stripped before sending to API)
-        // Include models from general that aren't already in coding, plus all as :v variants
-        var codingIds = Set(coding.map(\.id))
-        for m in general {
-            if !codingIds.contains(m.id) {
-                // Model only exists in general endpoint — add as :v (vision/general)
-                result.append(OpenAIModelInfo(id: "\(m.id):v", name: m.name))
+            if seen.insert(m.id).inserted {
+                result.append(m)
             }
         }
-        // Also add :v variants of coding models for non-coding use
-        for m in coding {
-            result.append(OpenAIModelInfo(id: "\(m.id):v", name: m.name))
+        // General models tagged with :v (non-coding endpoint)
+        for m in general {
+            let vid = "\(m.id):v"
+            if seen.insert(vid).inserted {
+                result.append(OpenAIModelInfo(id: vid, name: m.name))
+            }
         }
         return result
     }
