@@ -556,13 +556,16 @@ private struct LLMOutputBox: View {
                                 .foregroundColor(termText)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(10)
-                                .background(GeometryReader { geo in
-                                    Color.clear.preference(key: ContentHeightKey.self, value: geo.size.height)
-                                })
+                                .onGeometryChange(for: CGFloat.self) { geo in
+                                    geo.size.height
+                                } action: { h in
+                                    let ideal = min(max(minHeight, h + 4), maxHeight)
+                                    // Always grow, only shrink if user hasn't manually dragged
+                                    if ideal > height || !userDragged {
+                                        height = ideal
+                                    }
+                                }
                                 .id("bottom")
-                        }
-                        .onPreferenceChange(ContentHeightKey.self) { h in
-                            height = min(max(minHeight, h + 4), maxHeight)
                         }
                         .onChange(of: displayText) {
                             proxy.scrollTo("bottom", anchor: .bottom)
