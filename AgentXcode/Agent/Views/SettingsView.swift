@@ -752,13 +752,14 @@ struct SettingsView: View {
             // Terminal Speed
             Divider()
             VStack(alignment: .leading, spacing: 4) {
-                Text("Terminal Speed").font(.caption).foregroundStyle(.secondary)
-                Picker("Speed", selection: $viewModel.terminalSpeed) {
+                Text("Terminal Speed").font(.caption).foregroundStyle(viewModel.temperatureColor(viewModel.currentTemperature))
+                Picker("", selection: $viewModel.terminalSpeed) {
                     ForEach(AgentViewModel.TerminalSpeed.allCases, id: \.self) { speed in
                         Text(speed.label).tag(speed)
                     }
                 }
                 .pickerStyle(.segmented)
+                .tint(viewModel.temperatureColor(viewModel.currentTemperature))
             }
 
             // Web Search (Tavily) — available for all providers

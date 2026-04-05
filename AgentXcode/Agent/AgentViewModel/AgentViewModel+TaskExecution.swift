@@ -453,7 +453,10 @@ extension AgentViewModel {
                                 if !lastText.isEmpty { summary = String(lastText.prefix(300)) }
                             }
                             completionSummary = summary
-                            // Ensure LLM Output shows the response
+                            // Ensure LLM Output shows the response — use summary if streaming was empty
+                            if rawLLMOutput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                rawLLMOutput = summary
+                            }
                             displayedLLMOutput = rawLLMOutput
                             dripDisplayIndex = rawLLMOutput.count
 
@@ -619,8 +622,10 @@ extension AgentViewModel {
                         flushLog()
                         break
                     }
-                    // Text-only response (no tool calls) — treat as conversational answer, complete immediately
-                    // Ensure LLM Output shows the full response
+                    // Text-only response (no tool calls) — complete immediately
+                    if rawLLMOutput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        rawLLMOutput = responseText
+                    }
                     displayedLLMOutput = rawLLMOutput
                     dripDisplayIndex = rawLLMOutput.count
                     let summary = String(responseText.prefix(300))

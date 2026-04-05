@@ -516,7 +516,10 @@ extension AgentViewModel {
 
                         if name == "task_complete" {
                             completionSummary = input["summary"] as? String ?? "Done"
-                            // Ensure LLM Output shows the response
+                            // Ensure LLM Output shows the response — use summary if empty
+                            if tab.rawLLMOutput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                tab.rawLLMOutput = completionSummary
+                            }
                             tab.displayedLLMOutput = tab.rawLLMOutput
                             tab.dripDisplayIndex = tab.rawLLMOutput.count
                         }

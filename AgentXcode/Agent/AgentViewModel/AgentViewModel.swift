@@ -735,6 +735,9 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(grokTemperature, forKey: "grokTemperature") }
     }
 
+    /// Current provider's temperature value.
+    var currentTemperature: Double { temperatureForProvider(selectedProvider) }
+
     /// Get temperature for the current provider.
     func temperatureForProvider(_ provider: APIProvider) -> Double {
         switch provider {

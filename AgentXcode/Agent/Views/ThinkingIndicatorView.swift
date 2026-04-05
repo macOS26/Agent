@@ -572,7 +572,7 @@ private struct LLMOutputBox: View {
                     .frame(height: min(height, maxHeight))
                 } else {
                     HStack(spacing: 0) {
-                        Text("> ")
+                        Text("AGENT! > ")
                             .font(.system(size: 14, design: .monospaced))
                             .foregroundColor(termText)
                         Text(cursorVisible ? "█" : " ")
