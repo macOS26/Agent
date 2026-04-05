@@ -23,9 +23,8 @@ struct ThinkingIndicatorView: View {
             else { viewModel.thinkingOutputExpanded = newValue }
         }
     }
-    @State private var outputHeight: CGFloat = 80
+    @State private var outputHeight: CGFloat = 40
     @State private var userDragged: Bool = false
-    @State private var windowHeight: CGFloat = 800
     @State private var dots = ""
     @State private var tick = 0
     /// Elapsed time — stored on the tab to survive tab switches
@@ -298,7 +297,6 @@ struct ThinkingIndicatorView: View {
                             showDismiss: true,
                             dismissEnabled: !isActive,
                             showScanlines: viewModel.scanLinesEnabled,
-                            maxHeight: windowHeight * 0.80 - 60,
                             onDismiss: {
                                 withAnimation(.easeInOut(duration: 0.2)) {
                                     showStreamText = false
@@ -325,7 +323,6 @@ struct ThinkingIndicatorView: View {
                 // Reset timer and auto-expand when LLM starts
                 tab.taskStartDate = Date()
                 tab._taskElapsedFrozen = 0
-                userDragged = false  // Reset so auto-grow works on new task
                 withAnimation(.easeInOut(duration: 0.2)) {
                     isExpanded = true
                     showStreamText = true
@@ -346,7 +343,6 @@ struct ThinkingIndicatorView: View {
             if newValue {
                 viewModel.mainTaskStartDate = Date()
                 viewModel.mainTaskElapsed = 0
-                userDragged = false  // Reset so auto-grow works on new task
                 withAnimation(.easeInOut(duration: 0.2)) {
                     isExpanded = true
                     showStreamText = true
@@ -354,13 +350,6 @@ struct ThinkingIndicatorView: View {
                 }
             }
         }
-        .background(GeometryReader { geo in
-            Color.clear.onChange(of: geo.size.height, initial: true) { _, h in
-                windowHeight = h
-                let cap = h * 0.80 - 60
-                if outputHeight > cap { outputHeight = cap }
-            }
-        })
         .onReceive(refreshTimer) { _ in
             guard isActive else { return }
             tick += 1  // Just refresh UI — elapsed is computed from taskStartDate
@@ -384,7 +373,6 @@ private struct LLMOutputBox: View {
     var showDismiss: Bool = false
     var dismissEnabled: Bool = true
     var showScanlines: Bool = true
-    var maxHeight: CGFloat = 600
     var onDismiss: (() -> Void)?
     @State private var cursorVisible = true
 
@@ -538,6 +526,14 @@ private struct LLMOutputBox: View {
             i += 1
         }
         return result
+    }
+
+    /// Maximum height: leave room for header, status bar, and input area.
+    private var maxHeight: CGFloat {
+        let windowH = NSApp.keyWindow?.frame.height
+            ?? NSScreen.main?.visibleFrame.height
+            ?? 800
+        return windowH * 0.55
     }
 
     var body: some View {
