@@ -536,9 +536,9 @@ private struct LLMOutputBox: View {
 
     var body: some View {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        // Append blinking block cursor while streaming (WOPR style)
+        // Solid cursor during streaming, blink when idle
         let displayText = isStreaming && !trimmed.isEmpty
-            ? trimmed + (cursorVisible ? "█" : " ")
+            ? trimmed + "█"
             : trimmed
         VStack(spacing: 0) {
             ZStack(alignment: .bottomTrailing) {
