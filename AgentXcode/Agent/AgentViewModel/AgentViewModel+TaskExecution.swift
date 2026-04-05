@@ -36,6 +36,7 @@ extension AgentViewModel {
         budgetUsedFraction = 0
         subAgents.removeAll()
         FileBackupService.shared.clearTaskSnapshots()
+        TokenUsageStore.shared.resetTaskMetrics()
         Self.clearToolCache()
         // All tool groups available — user controls via UI toggles
         var activeGroups: Set<String>? = codingModeEnabled ? Self.codingModeGroups : automationModeEnabled ? Self.automationModeGroups : nil
@@ -382,6 +383,7 @@ extension AgentViewModel {
                 TokenUsageStore.shared.record(inputTokens: inTok, outputTokens: outTok)
                 budgetTracker.recordTurn(inputTokens: inTok, outputTokens: outTok)
                 budgetUsedFraction = budgetTracker.usedFraction
+                TokenUsageStore.shared.recordModelUsage(model: modelName, input: inTok, output: outTok)
                 flushStreamBuffer()
                 isThinking = false
                 timeoutRetryCount = 0 // Reset on successful response

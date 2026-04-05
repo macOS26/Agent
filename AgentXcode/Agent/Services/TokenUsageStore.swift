@@ -136,6 +136,57 @@ final class TokenUsageStore {
         sessionCacheCreationTokens = 0
     }
 
+    // MARK: - Per-Model Cost Tracking
+
+    /// Tracks token usage per model within a session.
+    struct ModelUsage {
+        var inputTokens: Int = 0
+        var outputTokens: Int = 0
+        var callCount: Int = 0
+        var totalTokens: Int { inputTokens + outputTokens }
+    }
+
+    /// Per-model usage for the current session.
+    private(set) var modelUsage: [String: ModelUsage] = [:]
+
+    /// Lines of code added/removed in the current task.
+    private(set) var taskLinesAdded: Int = 0
+    private(set) var taskLinesRemoved: Int = 0
+
+    /// Record usage for a specific model.
+    func recordModelUsage(model: String, input: Int, output: Int) {
+        var usage = modelUsage[model, default: ModelUsage()]
+        usage.inputTokens += input
+        usage.outputTokens += output
+        usage.callCount += 1
+        modelUsage[model] = usage
+    }
+
+    /// Record lines changed from a diff/edit.
+    func recordLinesChanged(added: Int, removed: Int) {
+        taskLinesAdded += added
+        taskLinesRemoved += removed
+    }
+
+    /// Reset per-task metrics (call at task start).
+    func resetTaskMetrics() {
+        taskLinesAdded = 0
+        taskLinesRemoved = 0
+    }
+
+    /// Reset session-level model usage.
+    func resetModelUsage() {
+        modelUsage.removeAll()
+    }
+
+    /// Summary of model usage for display.
+    func modelUsageSummary() -> String {
+        guard !modelUsage.isEmpty else { return "No model usage recorded." }
+        return modelUsage.sorted { $0.value.totalTokens > $1.value.totalTokens }.map { model, usage in
+            "\(model): \(usage.callCount) calls, \(usage.totalTokens) tokens"
+        }.joined(separator: "\n")
+    }
+
     private static func dateString(_ date: Date) -> String {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd"
