@@ -559,7 +559,7 @@ private struct LLMOutputBox: View {
                                             set: { tableHeights[idx] = $0 }
                                         )
                                     )
-                                    .frame(height: (tableHeights[idx] ?? 100) + 60)
+                                    .frame(height: (tableHeights[idx] ?? 100) + 70)
                                     .frame(maxWidth: .infinity)
                                 } else {
                                     Text(chunk.text)
