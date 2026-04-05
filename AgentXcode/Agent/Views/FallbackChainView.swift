@@ -55,11 +55,18 @@ struct FallbackChainView: View {
                             VStack(alignment: .leading, spacing: 1) {
                                 Text(APIProvider(rawValue: entry.provider)?.displayName ?? entry.provider)
                                     .font(.subheadline.weight(.medium))
-                                Text(entry.model)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
-                                    .truncationMode(.middle)
+                                HStack(spacing: 4) {
+                                    Text(shortModel(entry.model))
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                        .truncationMode(.middle)
+                                    if entry.model.hasSuffix(":v") {
+                                        Image(systemName: "eye")
+                                            .foregroundStyle(.blue)
+                                            .font(.caption2)
+                                    }
+                                }
                             }
 
                             Spacer()
@@ -123,7 +130,14 @@ struct FallbackChainView: View {
                     } else {
                         Picker("", selection: $selectedModel) {
                             ForEach(models, id: \.self) { model in
-                                Text(shortModel(model)).tag(model)
+                                HStack(spacing: 4) {
+                                    Text(shortModel(model))
+                                    if model.hasSuffix(":v") {
+                                        Image(systemName: "eye")
+                                            .foregroundStyle(.blue)
+                                            .font(.caption2)
+                                    }
+                                }.tag(model)
                             }
                         }
                         .labelsHidden()
@@ -192,11 +206,12 @@ struct FallbackChainView: View {
     }
 
     private func shortModel(_ model: String) -> String {
-        let parts = model.components(separatedBy: "-")
+        let clean = model.replacingOccurrences(of: ":v", with: "")
+        let parts = clean.components(separatedBy: "-")
         if parts.count > 3, let last = parts.last, last.count == 8, Int(last) != nil {
             return parts.dropLast().joined(separator: "-")
         }
-        return model
+        return clean
     }
 
     private func defaultModel(for provider: APIProvider) -> String {
