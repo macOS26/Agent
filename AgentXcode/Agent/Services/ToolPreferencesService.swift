@@ -111,9 +111,11 @@ final class ToolPreferencesService {
         }
     }
     
-    /// Enable all groups
+    /// Enable all groups (except Experimental, which must be toggled explicitly)
     func enableAllGroups() {
+        let keepDisabled = disabledGroups.contains(Tool.Group.exp)
         disabledGroups.removeAll()
+        if keepDisabled { disabledGroups.insert(Tool.Group.exp) }
     }
     
     /// Disable all groups
