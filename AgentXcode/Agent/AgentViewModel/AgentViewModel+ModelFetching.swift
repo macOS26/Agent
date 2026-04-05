@@ -380,13 +380,25 @@ extension AgentViewModel {
     }
 
     private nonisolated static func fetchZAIModelsFromAPI(apiKey: String) async throws -> [OpenAIModelInfo] {
-        // Fetch from coding endpoint
+        // Fetch from both endpoints — coding and general (vision/non-coding)
         let coding = (try? await fetchZAIEndpoint(apiKey: apiKey, urlString: "https://api.z.ai/api/coding/paas/v4/models")) ?? []
-        // Build two sets: coding (as-is) + non-coding/vision (tagged with :v)
+        let general = (try? await fetchZAIEndpoint(apiKey: apiKey, urlString: "https://api.z.ai/api/paas/v4/models")) ?? []
+
         var result: [OpenAIModelInfo] = []
+        // Coding models (no suffix)
         for m in coding {
             result.append(m)
         }
+        // General/vision models (tagged with :v suffix — stripped before sending to API)
+        // Include models from general that aren't already in coding, plus all as :v variants
+        var codingIds = Set(coding.map(\.id))
+        for m in general {
+            if !codingIds.contains(m.id) {
+                // Model only exists in general endpoint — add as :v (vision/general)
+                result.append(OpenAIModelInfo(id: "\(m.id):v", name: m.name))
+            }
+        }
+        // Also add :v variants of coding models for non-coding use
         for m in coding {
             result.append(OpenAIModelInfo(id: "\(m.id):v", name: m.name))
         }
