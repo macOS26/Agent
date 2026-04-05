@@ -30,10 +30,10 @@ extension AgentViewModel {
         displayedLLMOutput = ""
         dripDisplayIndex = 0
 
-        // Add spacing before new task — 5 blank lines if log is nearly empty, 1 otherwise
+        // Add spacing before new task — 5 blank lines if log ends with 0-2 newlines
         if !activityLog.isEmpty {
-            let lineCount = activityLog.components(separatedBy: "\n").count
-            logBuffer += lineCount <= 2 ? "\n\n\n\n\n" : "\n"
+            let trailing = activityLog.reversed().prefix(while: { $0 == "\n" }).count
+            logBuffer += trailing <= 2 ? "\n\n\n\n\n" : "\n"
         }
         trimToRecentTasks()
         taskInputTokens = 0
