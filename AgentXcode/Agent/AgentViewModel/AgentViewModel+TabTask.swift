@@ -447,12 +447,14 @@ extension AgentViewModel {
                 }
                 // Strip done/task_complete from LLM Output
                 Self.stripCompletionText(&tab.rawLLMOutput)
-                // Wait for drip to finish, then show full stripped text
+                // Wait for drip to finish
                 while tab.dripTask != nil {
                     try? await Task.sleep(for: .milliseconds(50))
                 }
-                tab.displayedLLMOutput = tab.rawLLMOutput
-                tab.dripDisplayIndex = tab.rawLLMOutput.count
+                if !tab.rawLLMOutput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    tab.displayedLLMOutput = tab.rawLLMOutput
+                    tab.dripDisplayIndex = tab.rawLLMOutput.count
+                }
                 if !tab.rawLLMOutput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     try? await Task.sleep(for: .seconds(3))
                 }
