@@ -28,7 +28,7 @@
 
 A native macOS AI agent that controls your apps, writes code, automates workflows, and runs tasks from your iPhone via iMessage. All powered by the AI provider of your choice.
 
-<img width="1348" height="966" alt="image" src="https://github.com/user-attachments/assets/e4c1b671-c1b7-4580-8db2-82c9aba1bed7" />
+<img width="1278" height="897" alt="image" src="https://github.com/user-attachments/assets/4bacaeeb-a4c8-4b8c-9bb9-e7ab27fb6cc8" />
 
 ---
 
