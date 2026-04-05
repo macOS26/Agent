@@ -28,8 +28,8 @@ extension AgentViewModel {
                         continuation.resume(returning: nil)
                         return
                     }
-                    // Resize to max 512px to save tokens (~167K → ~10K tokens)
-                    let resized = Self.resizeImageData(data, maxDimension: 512)
+                    // Resize to 50% to save tokens
+                    let resized = Self.resizeImageData(data, scale: 0.5)
                     let base64 = resized.base64EncodedString()
                     try? FileManager.default.removeItem(atPath: tempPath)
                     continuation.resume(returning: base64)
@@ -40,17 +40,14 @@ extension AgentViewModel {
         }
     }
 
-    /// Resize image data to fit within maxDimension, preserving aspect ratio.
-    nonisolated private static func resizeImageData(_ data: Data, maxDimension: CGFloat) -> Data {
-        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+    /// Resize image data by a scale factor (e.g. 0.5 = 50%).
+    nonisolated private static func resizeImageData(_ data: Data, scale: CGFloat) -> Data {
+        guard scale < 1.0,
+              let source = CGImageSourceCreateWithData(data as CFData, nil),
               let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else { return data }
-        let w = CGFloat(image.width)
-        let h = CGFloat(image.height)
-        let maxSide = max(w, h)
-        guard maxSide > maxDimension else { return data }
-        let scale = maxDimension / maxSide
-        let newW = Int(w * scale)
-        let newH = Int(h * scale)
+        let newW = Int(CGFloat(image.width) * scale)
+        let newH = Int(CGFloat(image.height) * scale)
+        guard newW > 0, newH > 0 else { return data }
         guard let ctx = CGContext(data: nil, width: newW, height: newH, bitsPerComponent: 8,
                                   bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
                                   bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return data }
