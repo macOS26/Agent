@@ -78,8 +78,8 @@
       "kind": "remoteSourceControl",
       "location": "https://github.com/macOS26/AgentTerminalNeo.git",
       "state": {
-        "revision": "0d024c5",
-        "version": "1.14.0"
+        "revision": "f6d6caa",
+        "version": "1.15.0"
       }
     },
     {

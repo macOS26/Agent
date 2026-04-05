@@ -541,8 +541,9 @@ private struct LLMOutputBox: View {
 
     var body: some View {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        // Always blink — seamless transition from streaming to idle
-        let cursor = cursorVisible ? "█" : " "
+        // No cursor during table render — prevents scroll jump from cursor below table
+        let hasTable = trimmed.contains("|\n") && trimmed.contains("---")
+        let cursor = hasTable ? "" : (cursorVisible ? "█" : " ")
         let displayText = trimmed.isEmpty ? "" : trimmed + cursor
         VStack(spacing: 0) {
             ZStack(alignment: .bottomTrailing) {
