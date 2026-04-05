@@ -374,24 +374,66 @@ extension AgentViewModel {
     }
 
     private nonisolated static func fetchZAIModelsFromAPI(apiKey: String) async -> [OpenAIModelInfo] {
-        // Fetch from BOTH endpoints dynamically — no hardcoded defaults
+        // Fetch ALL models dynamically from Z.ai's OpenAPI spec
+        // The /models endpoint only returns ~7, but the spec has all model enums
         let coding = (try? await fetchZAIEndpoint(apiKey: apiKey, urlString: "https://api.z.ai/api/coding/paas/v4/models")) ?? []
-        let general = (try? await fetchZAIEndpoint(apiKey: apiKey, urlString: "https://api.z.ai/api/paas/v4/models")) ?? []
+        let specModels = await fetchZAIModelsFromSpec()
 
         var seen = Set<String>()
         var result: [OpenAIModelInfo] = []
 
-        // Coding models first (no suffix)
+        // Coding models first (no suffix — use coding endpoint)
         for m in coding {
-            if seen.insert(m.id).inserted {
-                result.append(m)
+            if seen.insert(m.id).inserted { result.append(m) }
+        }
+        // All spec models — text as coding, vision/image/audio as :v
+        for m in specModels {
+            if seen.insert(m.id).inserted { result.append(m) }
+        }
+        return result
+    }
+
+    /// Fetch all Z.ai model IDs from the OpenAPI spec at docs.z.ai/openapi.json
+    /// Parses enum arrays from schema definitions — fully dynamic, no hardcoding.
+    private nonisolated static func fetchZAIModelsFromSpec() async -> [OpenAIModelInfo] {
+        guard let url = URL(string: "https://docs.z.ai/openapi.json") else { return [] }
+        guard let (data, _) = try? await URLSession.shared.data(from: url),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let components = json["components"] as? [String: Any],
+              let schemas = components["schemas"] as? [String: Any] else { return [] }
+
+        var seen = Set<String>()
+        var result: [OpenAIModelInfo] = []
+
+        // Text models (coding endpoint)
+        let textSchemas = ["ChatCompletionTextRequest"]
+        // Vision/non-coding models (general endpoint, tagged :v)
+        let visionSchemas = ["ChatCompletionVisionRequest", "CreateImageRequest", "AsyncCreateImageRequest",
+                             "LayoutParsingRequest", "AudioTranscriptionRequest"]
+
+        for name in textSchemas {
+            if let schema = schemas[name] as? [String: Any],
+               let props = schema["properties"] as? [String: Any],
+               let model = props["model"] as? [String: Any],
+               let enums = model["enum"] as? [String] {
+                for id in enums {
+                    if seen.insert(id).inserted {
+                        result.append(OpenAIModelInfo(id: id, name: id))
+                    }
+                }
             }
         }
-        // General models tagged with :v (non-coding endpoint)
-        for m in general {
-            let vid = "\(m.id):v"
-            if seen.insert(vid).inserted {
-                result.append(OpenAIModelInfo(id: vid, name: m.name))
+        for name in visionSchemas {
+            if let schema = schemas[name] as? [String: Any],
+               let props = schema["properties"] as? [String: Any],
+               let model = props["model"] as? [String: Any],
+               let enums = model["enum"] as? [String] {
+                for id in enums {
+                    let vid = "\(id):v"
+                    if seen.insert(vid).inserted {
+                        result.append(OpenAIModelInfo(id: vid, name: id))
+                    }
+                }
             }
         }
         return result
