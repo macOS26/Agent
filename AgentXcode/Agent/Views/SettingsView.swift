@@ -749,6 +749,18 @@ struct SettingsView: View {
                 }
             }
 
+            // Terminal Speed
+            Divider()
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Terminal Speed").font(.caption).foregroundStyle(.secondary)
+                Picker("Speed", selection: $viewModel.terminalSpeed) {
+                    ForEach(AgentViewModel.TerminalSpeed.allCases, id: \.self) { speed in
+                        Text(speed.label).tag(speed)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
+
             // Web Search (Tavily) — available for all providers
             VStack(alignment: .leading, spacing: 10) {
                 Text("Web Search")

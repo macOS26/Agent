@@ -1101,6 +1101,30 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(deletionLimit, forKey: "agentDeletionLimit") }
     }
 
+    // MARK: - Terminal Speed
+
+    enum TerminalSpeed: Int, CaseIterable {
+        case current = 22
+        case fast = 15
+        case faster = 10
+        case blazing = 5
+        case ludicrous = 1
+
+        var label: String {
+            switch self {
+            case .current: "Normal"
+            case .fast: "Fast"
+            case .faster: "Faster"
+            case .blazing: "Blazing"
+            case .ludicrous: "Ludicrous"
+            }
+        }
+    }
+
+    var terminalSpeed: TerminalSpeed = TerminalSpeed(rawValue: UserDefaults.standard.integer(forKey: "terminalSpeed")) ?? .current {
+        didSet { UserDefaults.standard.set(terminalSpeed.rawValue, forKey: "terminalSpeed") }
+    }
+
     // LLM streaming state
     var streamBuffer = ""
     @ObservationIgnored var rawLLMOutput: String = UserDefaults.standard.string(forKey: "mainRawLLMOutput") ?? "" {
