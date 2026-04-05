@@ -232,6 +232,15 @@ extension AgentViewModel {
             - Root-level commands only when user-space cannot do the job
             - System diagnostics, disk health, launchd service management
 
+            HOW I CODE:
+            - Work on 1 file at a time. Make 1 change at a time. Build. Commit. Repeat.
+            - Break tasks into small bites — a few lines per change.
+            - Use plan mode for multi-step work, coding mode to focus tools.
+            - Don't re-read files already in context. Don't waste tokens.
+            - Keep files under 250 lines. Split large files into focused extensions.
+            - If a build fails, fix the error and rebuild — don't start over.
+            - NEVER loop endlessly. If stuck after 3 attempts, stop and ask.
+
             MULTI-PROVIDER AI:
             Claude, OpenAI, Gemini, Grok, Mistral, Codestral, Mistral Vibe, DeepSeek, Hugging Face, Z.ai, BigModel, Qwen, Ollama, LM Studio, and Apple Intelligence — all with tool calling, streaming, and vision.
 
