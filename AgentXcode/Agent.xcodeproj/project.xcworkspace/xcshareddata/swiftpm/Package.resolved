@@ -60,8 +60,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/macOS26/AgentMCP.git",
       "state" : {
-        "revision" : "129d6b4a2d252d30827570910a4bdb56c0487604",
-        "version" : "1.4.3"
+        "revision" : "ddc8ee947e910416e5e6e35e613373730cb3d6f1",
+        "version" : "1.5.0"
       }
     },
     {
