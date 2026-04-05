@@ -540,8 +540,8 @@ private struct LLMOutputBox: View {
 
     var body: some View {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        // Solid cursor during streaming, blink when idle
-        let cursor = isStreaming ? "█" : (cursorVisible ? "█" : " ")
+        // Always blink — seamless transition from streaming to idle
+        let cursor = cursorVisible ? "█" : " "
         let displayText = trimmed.isEmpty ? "" : trimmed + cursor
         VStack(spacing: 0) {
             ZStack(alignment: .bottomTrailing) {
@@ -642,17 +642,11 @@ private struct LLMOutputBox: View {
         .background(termBg)
         .cornerRadius(6)
         .overlay(RoundedRectangle(cornerRadius: 6).stroke(termBorder, lineWidth: 1))
-        .onChange(of: isStreaming) { _, streaming in
-            if !streaming {
-                cursorVisible = true
-                blinkEpoch += 1  // restart blink timer immediately
-            }
-        }
-        .task(id: blinkEpoch) {
-            // Blink at ~2Hz — restarts instantly when blinkEpoch changes
+        .task {
+            // Blink cursor at ~2Hz — always running, seamless streaming→idle
             while !Task.isCancelled {
                 try? await Task.sleep(for: .milliseconds(500))
-                if !isStreaming { cursorVisible.toggle() }
+                cursorVisible.toggle()
             }
         }
     }
