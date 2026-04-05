@@ -78,11 +78,11 @@ extension AgentViewModel {
             modelName = lmStudioModel
             isVision = Self.isVisionModel(lmStudioModel)
         case .zAI:
-            modelName = zAIModel
-            isVision = true
+            isVision = zAIModel.hasSuffix(":v")
+            modelName = zAIModel.replacingOccurrences(of: ":v", with: "")
         case .bigModel:
-            modelName = bigModelModel
-            isVision = true
+            isVision = bigModelModel.hasSuffix(":v")
+            modelName = bigModelModel.replacingOccurrences(of: ":v", with: "")
         case .qwen:
             modelName = qwenModel
             isVision = Self.isVisionModel(qwenModel)

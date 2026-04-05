@@ -64,8 +64,8 @@ extension AgentViewModel {
         case .localOllama: return localOllamaModel
         case .vLLM: return vLLMModel
         case .lmStudio: return lmStudioModel
-        case .zAI: return zAIModel
-        case .bigModel: return bigModelModel
+        case .zAI: return zAIModel.replacingOccurrences(of: ":v", with: "")
+        case .bigModel: return bigModelModel.replacingOccurrences(of: ":v", with: "")
         case .qwen: return qwenModel
         case .gemini: return geminiModel
         case .grok: return grokModel
@@ -104,10 +104,10 @@ extension AgentViewModel {
     func chatURLForProvider(_ provider: APIProvider) -> String {
         guard let url = LLMRegistry.shared.provider(provider.rawValue)?.endpoint.chatURL else { return "" }
         // Z.ai/BigModel: coding endpoint for text models, general endpoint for vision models
-        // Vision models have "v" after version number (e.g. glm-4.5v, glm-4.6v-flash)
+        // Non-coding (vision) models are tagged with ":v" suffix in their stored ID
         if provider == .zAI || provider == .bigModel {
-            let model = globalModelForProvider(provider).lowercased()
-            let isVisionModel = model.range(of: #"\d+\.?\d*v"#, options: .regularExpression) != nil
+            let raw = provider == .zAI ? zAIModel : bigModelModel
+            let isVisionModel = raw.hasSuffix(":v")
             if !isVisionModel {
                 return url.replacingOccurrences(of: "/api/paas/", with: "/api/coding/paas/")
             }

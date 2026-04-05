@@ -379,20 +379,17 @@ extension AgentViewModel {
     }
 
     private nonisolated static func fetchZAIModelsFromAPI(apiKey: String) async throws -> [OpenAIModelInfo] {
-        // Fetch from both coding and general (vision) endpoints, merge results
-        async let codingModels = fetchZAIEndpoint(apiKey: apiKey, urlString: "https://api.z.ai/api/coding/paas/v4/models")
-        async let generalModels = fetchZAIEndpoint(apiKey: apiKey, urlString: "https://api.z.ai/api/paas/v4/models")
-        let coding = (try? await codingModels) ?? []
-        let general = (try? await generalModels) ?? []
-        // Merge and deduplicate — general endpoint has vision models
-        var seen = Set<String>()
-        var merged: [OpenAIModelInfo] = []
-        for model in coding + general {
-            if seen.insert(model.id).inserted {
-                merged.append(model)
-            }
+        // Fetch from coding endpoint
+        let coding = (try? await fetchZAIEndpoint(apiKey: apiKey, urlString: "https://api.z.ai/api/coding/paas/v4/models")) ?? []
+        // Build two sets: coding (as-is) + non-coding/vision (tagged with :v)
+        var result: [OpenAIModelInfo] = []
+        for m in coding {
+            result.append(m)
         }
-        return merged.sorted { $0.name < $1.name }
+        for m in coding {
+            result.append(OpenAIModelInfo(id: "\(m.id):v", name: "\(m.name) 👁"))
+        }
+        return result
     }
 
     private nonisolated static func fetchZAIEndpoint(apiKey: String, urlString: String) async throws -> [OpenAIModelInfo] {
@@ -411,7 +408,7 @@ extension AgentViewModel {
         return modelsData.compactMap { model -> OpenAIModelInfo? in
             guard let id = model["id"] as? String else { return nil }
             return OpenAIModelInfo(id: id, name: id)
-        }
+        }.sorted { $0.name < $1.name }
     }
 
     // MARK: - Qwen (DashScope) Models

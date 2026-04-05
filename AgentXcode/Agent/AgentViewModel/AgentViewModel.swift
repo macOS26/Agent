@@ -492,26 +492,27 @@ final class AgentViewModel {
     }
 
     nonisolated static let defaultZAIModels: [OpenAIModelInfo] = [
-        // Text models
+        // Coding models (use /api/coding/paas/ endpoint, no vision)
         OpenAIModelInfo(id: "glm-5.1", name: "GLM-5.1"),
         OpenAIModelInfo(id: "glm-5", name: "GLM-5"),
         OpenAIModelInfo(id: "glm-5-turbo", name: "GLM-5 Turbo"),
-        OpenAIModelInfo(id: "glm-5-code", name: "GLM-5 Code"),
         OpenAIModelInfo(id: "glm-4.7", name: "GLM-4.7"),
-        OpenAIModelInfo(id: "glm-4.7-flashx", name: "GLM-4.7 FlashX"),
         OpenAIModelInfo(id: "glm-4.6", name: "GLM-4.6"),
         OpenAIModelInfo(id: "glm-4.5", name: "GLM-4.5"),
-        OpenAIModelInfo(id: "glm-4.5-x", name: "GLM-4.5 X"),
         OpenAIModelInfo(id: "glm-4.5-air", name: "GLM-4.5 Air"),
-        OpenAIModelInfo(id: "glm-4.5-airx", name: "GLM-4.5 AirX"),
         OpenAIModelInfo(id: "glm-4.5-flash", name: "GLM-4.5 Flash (Free)"),
         OpenAIModelInfo(id: "glm-4.7-flash", name: "GLM-4.7 Flash (Free)"),
-        // Vision models (use general endpoint, not coding)
-        OpenAIModelInfo(id: "glm-5v-turbo", name: "GLM-5V Turbo (Vision)"),
-        OpenAIModelInfo(id: "glm-4.6v", name: "GLM-4.6V (Vision)"),
-        OpenAIModelInfo(id: "glm-4.5v", name: "GLM-4.5V (Vision)"),
-        OpenAIModelInfo(id: "glm-4.6v-flashx", name: "GLM-4.6V FlashX"),
-        OpenAIModelInfo(id: "glm-4.6v-flash", name: "GLM-4.6V Flash (Free)"),
+        // Non-coding models (use /api/paas/ endpoint, vision supported)
+        // Tagged with :v suffix — stripped before sending to API
+        OpenAIModelInfo(id: "glm-5.1:v", name: "GLM-5.1 👁"),
+        OpenAIModelInfo(id: "glm-5:v", name: "GLM-5 👁"),
+        OpenAIModelInfo(id: "glm-5-turbo:v", name: "GLM-5 Turbo 👁"),
+        OpenAIModelInfo(id: "glm-4.7:v", name: "GLM-4.7 👁"),
+        OpenAIModelInfo(id: "glm-4.6:v", name: "GLM-4.6 👁"),
+        OpenAIModelInfo(id: "glm-4.5:v", name: "GLM-4.5 👁"),
+        OpenAIModelInfo(id: "glm-4.5-air:v", name: "GLM-4.5 Air 👁"),
+        OpenAIModelInfo(id: "glm-4.5-flash:v", name: "GLM-4.5 Flash 👁"),
+        OpenAIModelInfo(id: "glm-4.7-flash:v", name: "GLM-4.7 Flash 👁"),
     ]
 
     var zAIModels: [OpenAIModelInfo] = []

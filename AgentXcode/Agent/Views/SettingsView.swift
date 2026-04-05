@@ -208,7 +208,7 @@ struct SettingsView: View {
                                     ForEach(viewModel.zAIModels) { model in
                                         HStack(spacing: 4) {
                                             Text(model.name)
-                                            if model.id.range(of: #"\d+\.?\d*v"#, options: [.regularExpression, .caseInsensitive]) != nil {
+                                            if model.id.hasSuffix(":v") {
                                                 Image(systemName: "eye")
                                                     .foregroundStyle(.blue)
                                                     .font(.caption2)
