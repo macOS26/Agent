@@ -547,7 +547,10 @@ private struct LLMOutputBox: View {
             ZStack(alignment: .bottomTrailing) {
                 if !displayText.isEmpty {
                     TerminalNeoTextView(text: displayText) { h in
-                        height = min(max(minHeight, h + 4), maxHeight)
+                        let proposed = min(max(minHeight, h + 4), maxHeight)
+                        if proposed > height {
+                            height = proposed
+                        }
                     }
                     .overlay {
                         if showScanlines {
