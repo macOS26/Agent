@@ -38,14 +38,18 @@ struct TokenBudgetTracker {
     }
 
     /// True when the task should auto-stop: budget exhausted or diminishing returns detected.
+    /// Only active when a budget ceiling is set (ceiling > 0).
     var shouldStop: Bool {
-        if ceiling > 0 && usedFraction >= 1.0 { return true }
+        guard ceiling > 0 else { return false }
+        if usedFraction >= 1.0 { return true }
         return isDiminishing
     }
 
     /// Diminishing returns: 3+ turns where the last two each produced < 500 output tokens.
+    /// Only meaningful when a budget ceiling is set.
     var isDiminishing: Bool {
-        turnCount >= 3 && lastDeltaTokens < 500 && prevDeltaTokens < 500
+        guard ceiling > 0 else { return false }
+        return turnCount >= 3 && lastDeltaTokens < 500 && prevDeltaTokens < 500
     }
 
     /// Human-readable budget status for logging.
