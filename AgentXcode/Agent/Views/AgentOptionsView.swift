@@ -230,18 +230,18 @@ struct AgentOptionsView: View {
                         Stepper(Self.formatBudget(viewModel.tokenBudgetCeiling),
                             onIncrement: {
                                 let opts = Self.budgetOptions
-                                if let i = opts.firstIndex(of: viewModel.tokenBudgetCeiling), i + 1 < opts.count {
-                                    viewModel.tokenBudgetCeiling = opts[i + 1]
-                                } else if let next = opts.first(where: { $0 > viewModel.tokenBudgetCeiling }) {
-                                    viewModel.tokenBudgetCeiling = next
-                                }
-                            },
-                            onDecrement: {
-                                let opts = Self.budgetOptions
                                 if let i = opts.firstIndex(of: viewModel.tokenBudgetCeiling), i > 0 {
                                     viewModel.tokenBudgetCeiling = opts[i - 1]
                                 } else if let prev = opts.last(where: { $0 < viewModel.tokenBudgetCeiling }) {
                                     viewModel.tokenBudgetCeiling = prev
+                                }
+                            },
+                            onDecrement: {
+                                let opts = Self.budgetOptions
+                                if let i = opts.firstIndex(of: viewModel.tokenBudgetCeiling), i + 1 < opts.count {
+                                    viewModel.tokenBudgetCeiling = opts[i + 1]
+                                } else if let next = opts.first(where: { $0 > viewModel.tokenBudgetCeiling }) {
+                                    viewModel.tokenBudgetCeiling = next
                                 }
                             })
                         Button {
