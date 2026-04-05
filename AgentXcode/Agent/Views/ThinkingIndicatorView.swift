@@ -546,9 +546,19 @@ private struct LLMOutputBox: View {
         VStack(spacing: 0) {
             ZStack(alignment: .bottomTrailing) {
                 if !displayText.isEmpty {
-                    TerminalNeoTextView(text: displayText) { contentHeight in
+                    ScrollView {
+                        Text(displayText)
+                            .font(.system(size: 14, design: .monospaced))
+                            .foregroundColor(termText)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(10)
+                            .background(GeometryReader { geo in
+                                Color.clear.preference(key: ContentHeightKey.self, value: geo.size.height)
+                            })
+                    }
+                    .onPreferenceChange(ContentHeightKey.self) { h in
                         if !userDragged {
-                            height = min(max(minHeight, contentHeight + 4), maxHeight)
+                            height = min(max(minHeight, h + 4), maxHeight)
                         }
                     }
                     .overlay {
