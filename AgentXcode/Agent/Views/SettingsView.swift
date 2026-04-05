@@ -749,28 +749,6 @@ struct SettingsView: View {
                 }
             }
 
-            // Token Budget — per-task limit with diminishing returns detection
-            Divider()
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Token Budget (per task)").font(.caption).foregroundStyle(.secondary)
-                HStack {
-                    TextField("0 = unlimited", text: Binding(
-                        get: { viewModel.tokenBudgetCeiling == 0 ? "" : "\(viewModel.tokenBudgetCeiling)" },
-                        set: { viewModel.tokenBudgetCeiling = Int($0) ?? 0 }
-                    ))
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: 100)
-
-                    Text(viewModel.tokenBudgetCeiling == 0 ? "No limit" : "\(viewModel.tokenBudgetCeiling) tokens — nudge at 90%, stop at 100%")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                if viewModel.tokenBudgetCeiling > 0 {
-                    Text("Also stops on diminishing returns (3+ turns with <500 output tokens each)")
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                }
-            }
 
             // Terminal Speed
             Divider()
