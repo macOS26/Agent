@@ -149,4 +149,45 @@ final class ToolPreferencesService {
     func enableAll(for provider: APIProvider) {
         disabledTools = disabledTools.filter { !$0.hasPrefix("\(provider.rawValue).") }
     }
+
+    // MARK: - Auto-Mode (auto-approve rules)
+
+    /// Tools that are auto-approved without user confirmation.
+    /// Read-only tools are always auto-approved. Write tools require explicit opt-in.
+    private static let udAutoApproveKey = "agent.autoApproveTools"
+
+    /// Default auto-approved tools (read-only, safe operations).
+    static let defaultAutoApprove: Set<String> = [
+        "read_file", "list_files", "search_files", "read_dir",
+        "git_status", "git_diff", "git_log",
+        "list_tools", "web_search", "plan_mode",
+    ]
+
+    /// User-configured auto-approve set (persisted).
+    private(set) var autoApproveTools: Set<String> = {
+        let arr = UserDefaults.standard.stringArray(forKey: udAutoApproveKey) ?? []
+        return arr.isEmpty ? defaultAutoApprove : Set(arr)
+    }() {
+        didSet { UserDefaults.standard.set(Array(autoApproveTools), forKey: Self.udAutoApproveKey) }
+    }
+
+    /// Check if a tool call should be auto-approved.
+    func isAutoApproved(_ toolName: String) -> Bool {
+        autoApproveTools.contains(toolName)
+    }
+
+    /// Add a tool to the auto-approve list.
+    func addAutoApprove(_ toolName: String) {
+        autoApproveTools.insert(toolName)
+    }
+
+    /// Remove a tool from the auto-approve list.
+    func removeAutoApprove(_ toolName: String) {
+        autoApproveTools.remove(toolName)
+    }
+
+    /// Reset auto-approve to defaults.
+    func resetAutoApprove() {
+        autoApproveTools = Self.defaultAutoApprove
+    }
 }
