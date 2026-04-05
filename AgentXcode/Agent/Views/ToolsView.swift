@@ -193,7 +193,14 @@ struct ToolsView: View {
         } else {
             Picker("Model", selection: modelBinding) {
                 ForEach(options, id: \.id) { option in
-                    Text(option.name).tag(option.id)
+                    HStack(spacing: 4) {
+                        Text(option.name)
+                        if option.id.hasSuffix(":v") {
+                            Image(systemName: "eye")
+                                .foregroundStyle(.blue)
+                                .font(.caption2)
+                        }
+                    }.tag(option.id)
                 }
             }
             .pickerStyle(.menu)

@@ -204,7 +204,14 @@ struct NewMainTabSheet: View {
             } else {
                 Picker("Model", selection: $selectedModelId) {
                     ForEach(models) { model in
-                        Text(model.name).tag(model.id)
+                        HStack(spacing: 4) {
+                            Text(model.name)
+                            if model.id.hasSuffix(":v") {
+                                Image(systemName: "eye")
+                                    .foregroundStyle(.blue)
+                                    .font(.caption2)
+                            }
+                        }.tag(model.id)
                     }
                 }
                 .labelsHidden()
