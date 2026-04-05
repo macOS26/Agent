@@ -34,6 +34,7 @@ extension AgentViewModel {
         taskInputTokens = 0
         taskOutputTokens = 0
         budgetUsedFraction = 0
+        subAgents.removeAll()
         Self.clearToolCache()
         // All tool groups available — user controls via UI toggles
         var activeGroups: Set<String>? = codingModeEnabled ? Self.codingModeGroups : automationModeEnabled ? Self.automationModeGroups : nil
@@ -588,6 +589,16 @@ extension AgentViewModel {
                         "type": "tool_result",
                         "tool_use_id": "budget_nudge",
                         "content": "⚠️ Approaching token budget limit (\(budgetTracker.statusDescription)). Wrap up your current work and call task_complete with a summary."
+                    ])
+                }
+
+                // Collect completed sub-agent notifications and inject into tool results
+                let subAgentNotifs = collectSubAgentNotifications()
+                for notif in subAgentNotifs {
+                    toolResults.append([
+                        "type": "tool_result",
+                        "tool_use_id": "subagent_notification",
+                        "content": notif
                     ])
                 }
 

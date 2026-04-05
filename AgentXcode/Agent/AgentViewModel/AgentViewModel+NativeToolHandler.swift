@@ -390,6 +390,12 @@ extension AgentViewModel {
             default:
                 return "Unknown skill action. Use: list, invoke, save, delete."
             }
+        // Sub-agent spawning — isolated concurrent task execution
+        case "spawn_agent":
+            let name = input["name"] as? String ?? "agent-\(subAgents.count + 1)"
+            let prompt = input["prompt"] as? String ?? ""
+            guard !prompt.isEmpty else { return "Error: prompt is required for spawn_agent." }
+            return spawnSubAgent(name: name, prompt: prompt)
         // Task complete — signal via NativeToolContext so the task loop can detect it
         case "task_complete":
             let summary = input["summary"] as? String ?? "Done"

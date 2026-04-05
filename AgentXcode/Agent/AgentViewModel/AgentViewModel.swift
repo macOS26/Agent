@@ -162,6 +162,9 @@ final class AgentViewModel {
 
     /// Live budget usage fraction for UI display (updated by task loop)
     var budgetUsedFraction: Double = 0
+
+    /// Active sub-agents spawned by the current task
+    var subAgents: [SubAgent] = []
     var userServiceActive = false
     var rootServiceActive = false
     var userWasActive = false

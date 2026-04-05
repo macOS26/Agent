@@ -50,6 +50,9 @@ enum Tool {
     // Skills
     static let skill = "skill"
 
+    // Sub-agents
+    static let spawn = "spawn"
+
     // MARK: - Group Names
 
     enum Group {
@@ -89,5 +92,6 @@ enum Tool {
         "js": "execute_javascript",
         "mem": "memory",
         "skill": "invoke_skill",
+        "spawn": "spawn_agent",
     ]
 }
