@@ -322,6 +322,13 @@ extension AgentViewModel {
                 flushLog()
             }
 
+            // Token fix 5: compact tool descriptions after first iteration (saves ~4K tokens/turn)
+            if iterations == 2 {
+                claude?.compactTools = true
+                ollama?.compactTools = true
+                openAICompatible?.compactTools = true
+            }
+
             // Token-aware context compaction — replaces fixed iteration-based triggers
             if iterations > 1 {
                 _ = await Self.tieredCompact(&messages, state: &compactionState) { [weak self] msg in
