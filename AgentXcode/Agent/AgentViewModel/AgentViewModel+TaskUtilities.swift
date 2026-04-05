@@ -11,7 +11,10 @@ import Cocoa
 
 // MARK: - Task Utilities
 
-private let maxToolResultChars = 4_000
+/// Max chars per individual tool result. Head+tail kept, middle truncated.
+private let maxToolResultChars = 8_000
+/// Max total chars across all tool results in one user message.
+private let maxToolResultsPerMessage = 50_000
 
 extension AgentViewModel {
 
@@ -70,7 +73,8 @@ extension AgentViewModel {
     }
 
     static func truncateToolResults(_ results: [[String: Any]]) -> [[String: Any]] {
-        results.map { result in
+        // Step 1: truncate individual results
+        var truncated = results.map { result -> [String: Any] in
             guard var content = result["content"] as? String,
                   content.count > maxToolResultChars else { return result }
             let keepChars = maxToolResultChars / 2
@@ -82,6 +86,19 @@ extension AgentViewModel {
             updated["content"] = content
             return updated
         }
+        // Step 2: enforce per-message budget — drop largest results first
+        var totalChars = truncated.reduce(0) { $0 + ((($1["content"] as? String)?.count) ?? 0) }
+        while totalChars > maxToolResultsPerMessage && truncated.count > 1 {
+            // Find largest result and truncate it further
+            if let maxIdx = truncated.enumerated().max(by: { (($0.element["content"] as? String)?.count ?? 0) < (($1.element["content"] as? String)?.count ?? 0) })?.offset {
+                let content = truncated[maxIdx]["content"] as? String ?? ""
+                truncated[maxIdx]["content"] = String(content.prefix(2000)) + "\n\n... [budget-truncated from \(content.count) chars]"
+                totalChars = truncated.reduce(0) { $0 + ((($1["content"] as? String)?.count) ?? 0) }
+            } else {
+                break
+            }
+        }
+        return truncated
     }
 
     // MARK: - Message Pruning

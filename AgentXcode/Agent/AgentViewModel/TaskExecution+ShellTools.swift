@@ -1,4 +1,6 @@
 @preconcurrency import Foundation
+import CoreGraphics
+import ImageIO
 
 
 // MARK: - Vision Verification
@@ -26,8 +28,9 @@ extension AgentViewModel {
                         continuation.resume(returning: nil)
                         return
                     }
-                    // Resize to max 1024px wide to save tokens
-                    let base64 = data.base64EncodedString()
+                    // Resize to max 512px to save tokens (~167K → ~10K tokens)
+                    let resized = Self.resizeImageData(data, maxDimension: 512)
+                    let base64 = resized.base64EncodedString()
                     try? FileManager.default.removeItem(atPath: tempPath)
                     continuation.resume(returning: base64)
                 } catch {
@@ -35,6 +38,30 @@ extension AgentViewModel {
                 }
             }
         }
+    }
+
+    /// Resize image data to fit within maxDimension, preserving aspect ratio.
+    nonisolated private static func resizeImageData(_ data: Data, maxDimension: CGFloat) -> Data {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else { return data }
+        let w = CGFloat(image.width)
+        let h = CGFloat(image.height)
+        let maxSide = max(w, h)
+        guard maxSide > maxDimension else { return data }
+        let scale = maxDimension / maxSide
+        let newW = Int(w * scale)
+        let newH = Int(h * scale)
+        guard let ctx = CGContext(data: nil, width: newW, height: newH, bitsPerComponent: 8,
+                                  bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
+                                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return data }
+        ctx.interpolationQuality = .high
+        ctx.draw(image, in: CGRect(x: 0, y: 0, width: newW, height: newH))
+        guard let resized = ctx.makeImage() else { return data }
+        let mutableData = NSMutableData()
+        guard let dest = CGImageDestinationCreateWithData(mutableData, "public.png" as CFString, 1, nil) else { return data }
+        CGImageDestinationAddImage(dest, resized, nil)
+        CGImageDestinationFinalize(dest)
+        return mutableData as Data
     }
 }
 
