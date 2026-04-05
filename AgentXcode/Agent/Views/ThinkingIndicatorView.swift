@@ -541,8 +541,7 @@ private struct LLMOutputBox: View {
 
     var body: some View {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        // Cursor: solid during streaming, blink when idle. NSTextView handles the rendering.
-        let cursor = isStreaming ? "█" : (cursorVisible ? "█" : " ")
+        let cursor = cursorVisible ? "█" : " "
         let displayText = trimmed.isEmpty ? "" : trimmed + cursor
         VStack(spacing: 0) {
             ZStack(alignment: .bottomTrailing) {
