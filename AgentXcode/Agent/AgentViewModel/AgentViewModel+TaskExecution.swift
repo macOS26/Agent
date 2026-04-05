@@ -267,7 +267,11 @@ extension AgentViewModel {
             isThinking = false
             return
         case .answered(let reply):
-            appendLog(reply)
+            // Show in LLM Output, not LogView
+            rawLLMOutput = reply
+            displayedLLMOutput = reply
+            dripDisplayIndex = reply.count
+            appendLog("✅ Completed: \(String(reply.prefix(200)))")
             flushLog()
             completionSummary = String(reply.prefix(200))
             history.add(TaskRecord(prompt: prompt, summary: completionSummary, commandsRun: []), maxBeforeSummary: maxHistoryBeforeSummary, apiKey: apiKey, model: selectedModel)
