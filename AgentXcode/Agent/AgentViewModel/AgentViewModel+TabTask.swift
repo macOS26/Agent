@@ -112,7 +112,7 @@ extension AgentViewModel {
         tab.displayedLLMOutput = ""
         tab.dripDisplayIndex = 0
 
-        if !tab.activityLog.contains("New Task") {
+        if !tab.activityLog.contains("New Task") && tab.activityLog.contains("Warming up") {
             tab.logBuffer += "\n\n\n\n\n"
         } else if !tab.activityLog.isEmpty {
             tab.logBuffer += "\n"

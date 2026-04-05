@@ -31,7 +31,7 @@ extension AgentViewModel {
         dripDisplayIndex = 0
 
         // Add 5 blank lines before first task only (pushes startup messages up)
-        if !activityLog.contains("New Task") {
+        if !activityLog.contains("New Task") && activityLog.contains("Warming up") {
             logBuffer += "\n\n\n\n\n"
         } else if !activityLog.isEmpty {
             logBuffer += "\n"
