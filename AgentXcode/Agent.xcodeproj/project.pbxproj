@@ -28,6 +28,7 @@
 		5B3EF64DF70464280E48CDD3 /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEE1650F0113717BD0597714 /* SessionStore.swift */; };
 		5B4FF75EF80575390F59DEE4 /* FileChangeJournal.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEF2760F1224828CE1698825 /* FileChangeJournal.swift */; };
 		5B5006F0F90686401060EFF5 /* TaskQueueStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF03871F2335939DF27A9936 /* TaskQueueStore.swift */; };
+		5B6117F1FA0797512171F006 /* LLMUsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF14982F3446A4AEF38BA047 /* LLMUsageView.swift */; };
 		5C2EF53DF60353170D36ACC1 /* AgentViewModel+SubAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFC0549F9001505AC8375592 /* AgentViewModel+SubAgent.swift */; };
 		78EBD1F124AB2D7D38E70E8E /* AgentViewModel+TaskExecution+AboutSelf.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878ED6B87793FE4A12844669 /* AgentViewModel+TaskExecution+AboutSelf.swift */; };
 		7FA36E1A9CC0DFA5A3ECB9AD /* AgentViewModel+NativeToolHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C673DDB50E956B2E5FD610 /* AgentViewModel+NativeToolHandler.swift */; };
@@ -339,6 +340,7 @@
 		DEE1650F0113717BD0597714 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		DEF2760F1224828CE1698825 /* FileChangeJournal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileChangeJournal.swift; sourceTree = "<group>"; };
 		DF03871F2335939DF27A9936 /* TaskQueueStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskQueueStore.swift; sourceTree = "<group>"; };
+		DF14982F3446A4AEF38BA047 /* LLMUsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMUsageView.swift; sourceTree = "<group>"; };
 		DF0C04DFB19BC4AA0E4F96EF /* ProjectFolderSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectFolderSectionView.swift; sourceTree = "<group>"; };
 		EA60000000000000000002 /* SDEFs */ = {isa = PBXFileReference; lastKnownFileType = folder; path = SDEFs; sourceTree = "<group>"; };
 		EA6EA3802F6E35CF003FDB6C /* send_image_input.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = send_image_input.json; sourceTree = "<group>"; };
@@ -583,6 +585,7 @@
 			children = (
 				AA1000000000000000007D /* AccessibilitySettingsView.swift */,
 				4B0C57073F5C4305AF673454 /* RollbackView.swift */,
+				DF14982F3446A4AEF38BA047 /* LLMUsageView.swift */,
 				AA10000000000000000078 /* MessagesView.swift */,
 				AA1000000000000000005D /* SettingsView.swift */,
 				AA100000000000000000BE /* LoRASettingsView.swift */,
@@ -927,6 +930,7 @@
 				23D4A25EAF30497598063A0D /* TokenUsageStore.swift in Sources */,
 				3E8B8A7B5C4F4DD0B9DA34BC /* FileBackupService.swift in Sources */,
 				E5CBD1143D2B44B8B9A209FE /* RollbackView.swift in Sources */,
+				5B6117F1FA0797512171F006 /* LLMUsageView.swift in Sources */,
 				5A9DE31CE50141059B14FAA9 /* MemoryStore.swift in Sources */,
 				5B1DE42CF50242069C25FBB0 /* SkillsService.swift in Sources */,
 				EAAI000000000000000001 /* AppleIntelligenceMediator.swift in Sources */,

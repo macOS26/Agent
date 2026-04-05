@@ -63,6 +63,7 @@ struct HeaderToolbarButtons: View {
     @Binding var showOptions: Bool
     @Binding var showHistory: Bool
     @Binding var showClearConfirm: Bool
+    @State private var showLLMUsage = false
     @ObservedObject var aiMediator = AppleIntelligenceMediator.shared
 
     var currentTabColor: Color {
@@ -161,6 +162,16 @@ struct HeaderToolbarButtons: View {
         .accessibilityLabel("Options")
         .popover(isPresented: $showOptions) {
             AgentOptionsView(viewModel: viewModel)
+        }
+
+        Button { showLLMUsage.toggle() } label: {
+            Image(systemName: "chart.bar.fill")
+                .foregroundStyle(TokenUsageStore.shared.modelUsage.isEmpty ? Color.secondary : Color.orange)
+        }
+        .help("LLM Usage & Costs")
+        .accessibilityLabel("LLM Usage")
+        .popover(isPresented: $showLLMUsage) {
+            LLMUsageView(viewModel: viewModel)
         }
 
         Button { showRollback.toggle() } label: {
