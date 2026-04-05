@@ -512,6 +512,9 @@ extension AgentViewModel {
 
                         if name == "task_complete" {
                             completionSummary = input["summary"] as? String ?? "Done"
+                            // Ensure LLM Output shows the response
+                            tab.displayedLLMOutput = tab.rawLLMOutput
+                            tab.dripDisplayIndex = tab.rawLLMOutput.count
                         }
                         let toolStart = CFAbsoluteTimeGetCurrent()
                         let result = await handleTabToolCall(

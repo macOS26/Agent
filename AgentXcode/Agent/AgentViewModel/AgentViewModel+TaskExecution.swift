@@ -460,6 +460,9 @@ extension AgentViewModel {
                                 if !lastText.isEmpty { summary = String(lastText.prefix(300)) }
                             }
                             completionSummary = summary
+                            // Ensure LLM Output shows the response
+                            displayedLLMOutput = rawLLMOutput
+                            dripDisplayIndex = rawLLMOutput.count
 
                             // Apple Intelligence summary annotation
                             if mediator.isEnabled && mediator.showAnnotationsToUser && !commandsRun.isEmpty {
