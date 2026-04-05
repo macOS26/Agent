@@ -27,6 +27,7 @@
 		5B2DE53CF60353170D37BCC2 /* HooksService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEC0549E9002606BC9486603 /* HooksService.swift */; };
 		5B3EF64DF70464280E48CDD3 /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEE1650F0113717BD0597714 /* SessionStore.swift */; };
 		5B4FF75EF80575390F59DEE4 /* FileChangeJournal.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEF2760F1224828CE1698825 /* FileChangeJournal.swift */; };
+		5B5006F0F90686401060EFF5 /* TaskQueueStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF03871F2335939DF27A9936 /* TaskQueueStore.swift */; };
 		5C2EF53DF60353170D36ACC1 /* AgentViewModel+SubAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFC0549F9001505AC8375592 /* AgentViewModel+SubAgent.swift */; };
 		78EBD1F124AB2D7D38E70E8E /* AgentViewModel+TaskExecution+AboutSelf.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878ED6B87793FE4A12844669 /* AgentViewModel+TaskExecution+AboutSelf.swift */; };
 		7FA36E1A9CC0DFA5A3ECB9AD /* AgentViewModel+NativeToolHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C673DDB50E956B2E5FD610 /* AgentViewModel+NativeToolHandler.swift */; };
@@ -337,6 +338,7 @@
 		DEC0549E9002606BC9486603 /* HooksService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HooksService.swift; sourceTree = "<group>"; };
 		DEE1650F0113717BD0597714 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		DEF2760F1224828CE1698825 /* FileChangeJournal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileChangeJournal.swift; sourceTree = "<group>"; };
+		DF03871F2335939DF27A9936 /* TaskQueueStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskQueueStore.swift; sourceTree = "<group>"; };
 		DF0C04DFB19BC4AA0E4F96EF /* ProjectFolderSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectFolderSectionView.swift; sourceTree = "<group>"; };
 		EA60000000000000000002 /* SDEFs */ = {isa = PBXFileReference; lastKnownFileType = folder; path = SDEFs; sourceTree = "<group>"; };
 		EA6EA3802F6E35CF003FDB6C /* send_image_input.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = send_image_input.json; sourceTree = "<group>"; };
@@ -565,6 +567,7 @@
 				DEC0549E9002606BC9486603 /* HooksService.swift */,
 				DEE1650F0113717BD0597714 /* SessionStore.swift */,
 				DEF2760F1224828CE1698825 /* FileChangeJournal.swift */,
+				DF03871F2335939DF27A9936 /* TaskQueueStore.swift */,
 				EAAI000000000000000002 /* AppleIntelligenceMediator.swift */,
 				EASP000000000000000002 /* SystemPromptService.swift */,
 				AA100000000000000000B0 /* SoundPlayerService.swift */,
@@ -1008,6 +1011,7 @@
 				5B2DE53CF60353170D37BCC2 /* HooksService.swift in Sources */,
 				5B3EF64DF70464280E48CDD3 /* SessionStore.swift in Sources */,
 				5B4FF75EF80575390F59DEE4 /* FileChangeJournal.swift in Sources */,
+				5B5006F0F90686401060EFF5 /* TaskQueueStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
