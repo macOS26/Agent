@@ -80,25 +80,25 @@ Automatically detects and uses available tools (Xcode, Playwright, Shell, etc.) 
 ### 🛡 Privileged Execution
 Securely runs root-level commands via a dedicated macOS Launch Daemon. The user approves the daemon once, then the agent can execute commands autonomously via XPC.
 
-62	
-63	### 🖥 Desktop Automation (AXorcist)
-64	Control any Mac app through the Accessibility API. Click buttons, type into fields, navigate menus, scroll, drag -- all programmatically. Powered by [AXorcist](https://github.com/steipete/AXorcist) for reliable, fuzzy-matched element finding.
-65	
+### 🖥 Desktop Automation (AXorcist)
+Control any Mac app through the Accessibility API. Click buttons, type into fields, navigate menus, scroll, drag -- all programmatically. Powered by [AXorcist](https://github.com/steipete/AXorcist) for reliable, fuzzy-matched element finding.
+
 ### 🤖 12 AI Providers
 | Provider | Cost | Best For |
 |---|---|---|
-| **GLM-5 / GLM-5.1** (Ollama) | Low Cost | Recommended starting point |
+| **Z.ai/GLM-5.1** | Paid | Recommended starting point |
 | **Claude** (Anthropic) | Paid | Complex tasks |
 | **ChatGPT** (OpenAI) | Paid | General purpose |
 | **Google Gemini** | Paid/Free | High performance, long context |
-| **Apple Intelligence** | Free | On-device, private |
+| **Apple Intelligence** | Free | On-device, assistant |
 | **DeepSeek** | Paid | Budget cloud AI |
 | **Grok-2** (xAI) | Paid | Real-time info |
 | **Local Ollama** | Free | Full privacy, offline |
 | **LM Studio** | Free | Easy local setup |
 | **Hugging Face** | Varies | Open-source models |
-| **Z.ai** | Paid | Fast, versatile |
-| **Mistral Vibe** | Varies | High-performance open models |
+| **vLLM** | Free | Local or Cloud |
+| **Mistral** | AI Studio | High-performance open models |
+| **Mistral Vibe** | Le Chat | High-performance open models |
 
 ### 🎙 Voice Control
 Click the microphone and speak. Agent! transcribes in real time and executes your request.
@@ -447,6 +447,5 @@ MIT - free and open source.
 <div align="center">
 
 ### **Agent! for macOS 26 - Agentic AI for your  Mac Desktop**
-> Note: Claude refers to the Anthropic AI model integrated into Agent! for LLM functionality. It is not a human contributor to this repository.
-
+> Note: Claude refers to the Anthropic AI model integrated into Agent! for LLM functionality. It is not a human contributor Agent!
 </div>
