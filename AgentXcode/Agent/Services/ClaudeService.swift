@@ -251,6 +251,14 @@ final class ClaudeService {
                 if let message = event["message"] as? [String: Any],
                    let usage = message["usage"] as? [String: Any] {
                     inputTokens = usage["input_tokens"] as? Int ?? 0
+                    // Track prompt cache metrics
+                    let cacheRead = usage["cache_read_input_tokens"] as? Int ?? 0
+                    let cacheCreation = usage["cache_creation_input_tokens"] as? Int ?? 0
+                    if cacheRead > 0 || cacheCreation > 0 {
+                        Task { @MainActor in
+                            TokenUsageStore.shared.recordCacheMetrics(read: cacheRead, creation: cacheCreation)
+                        }
+                    }
                 }
 
             case "content_block_start":

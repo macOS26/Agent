@@ -71,6 +71,10 @@ final class TokenUsageStore {
     private(set) var days: [DayRecord] = []
     private let fileURL: URL
 
+    // Prompt cache metrics (per-session, not persisted)
+    private(set) var sessionCacheReadTokens: Int = 0
+    private(set) var sessionCacheCreationTokens: Int = 0
+
     private init() {
         let urls = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
         let appSupport = urls.first ?? FileManager.default.temporaryDirectory
@@ -109,6 +113,27 @@ final class TokenUsageStore {
     /// Last N days of records for charting.
     func recentDays(_ count: Int = 30) -> [DayRecord] {
         Array(days.suffix(count))
+    }
+
+    // MARK: - Prompt Cache Metrics
+
+    /// Record cache metrics from Claude API response.
+    func recordCacheMetrics(read: Int, creation: Int) {
+        sessionCacheReadTokens += read
+        sessionCacheCreationTokens += creation
+    }
+
+    /// Cache hit rate as a percentage (0-100). Returns 0 if no cache activity.
+    var cacheHitRate: Int {
+        let total = sessionCacheReadTokens + sessionCacheCreationTokens
+        guard total > 0 else { return 0 }
+        return Int(Double(sessionCacheReadTokens) / Double(total) * 100)
+    }
+
+    /// Reset session-level cache metrics.
+    func resetCacheMetrics() {
+        sessionCacheReadTokens = 0
+        sessionCacheCreationTokens = 0
     }
 
     private static func dateString(_ date: Date) -> String {
