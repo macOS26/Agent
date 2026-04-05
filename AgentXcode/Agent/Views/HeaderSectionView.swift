@@ -166,7 +166,7 @@ struct HeaderToolbarButtons: View {
 
         Button { showLLMUsage.toggle() } label: {
             Image(systemName: "chart.bar.fill")
-                .foregroundStyle(TokenUsageStore.shared.modelUsage.isEmpty ? Color.secondary : Color.orange)
+                .foregroundStyle(TokenUsageStore.shared.modelUsage.isEmpty ? Color.secondary : Color.green)
         }
         .help("LLM Usage & Costs")
         .accessibilityLabel("LLM Usage")
