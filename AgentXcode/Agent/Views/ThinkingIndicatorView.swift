@@ -528,12 +528,12 @@ private struct LLMOutputBox: View {
         return result
     }
 
-    /// Maximum height: 95% of the window.
+    /// Maximum height: leave room for header, status bar, and input area.
     private var maxHeight: CGFloat {
         let windowH = NSApp.keyWindow?.frame.height
             ?? NSScreen.main?.visibleFrame.height
             ?? 800
-        return windowH * 0.80
+        return windowH * 0.55
     }
 
     var body: some View {
