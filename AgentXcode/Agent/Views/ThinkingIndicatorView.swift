@@ -580,13 +580,14 @@ private struct LLMOutputBox: View {
                             .foregroundColor(termText)
                         Spacer()
                     }
+                    .padding(10)
                     .overlay(
                         ScanlineOverlay(spacing: 2, color: .black, opacity: 0.375, blurRadius: 0.005)
                     ).overlay(
                         ScanlineOverlay(spacing: 4, color: .green, opacity: 0.112, blurRadius: 0.25)
                     )
-                    .padding(10)
-                    .frame(maxWidth: .infinity, minHeight: 60, alignment: .topLeading)
+                    .frame(maxWidth: .infinity, minHeight: 40, alignment: .topLeading)
+                    .onAppear { height = minHeight }
                 }
 
                 // Dismiss button — overlaid bottom right, no extra space
