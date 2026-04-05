@@ -1128,6 +1128,10 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(terminalSpeed.rawValue, forKey: "terminalSpeed") }
     }
 
+    var scanLinesEnabled: Bool = UserDefaults.standard.object(forKey: "scanLinesEnabled") as? Bool ?? true {
+        didSet { UserDefaults.standard.set(scanLinesEnabled, forKey: "scanLinesEnabled") }
+    }
+
     // LLM streaming state
     var streamBuffer = ""
     @ObservationIgnored var rawLLMOutput: String = UserDefaults.standard.string(forKey: "mainRawLLMOutput") ?? "" {

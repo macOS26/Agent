@@ -762,6 +762,14 @@ struct SettingsView: View {
                 .tint(viewModel.temperatureColor(viewModel.currentTemperature))
             }
 
+            HStack {
+                Text("Scan Lines").font(.caption)
+                Spacer()
+                Toggle("", isOn: $viewModel.scanLinesEnabled)
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+            }
+
             // Web Search (Tavily) — available for all providers
             VStack(alignment: .leading, spacing: 10) {
                 Text("Web Search")

@@ -296,6 +296,7 @@ struct ThinkingIndicatorView: View {
                             isStreaming: isActive,
                             showDismiss: true,
                             dismissEnabled: !isActive,
+                            showScanlines: viewModel.scanLinesEnabled,
                             onDismiss: {
                                 withAnimation(.easeInOut(duration: 0.2)) {
                                     showStreamText = false
@@ -371,6 +372,7 @@ private struct LLMOutputBox: View {
     var isStreaming: Bool = false
     var showDismiss: Bool = false
     var dismissEnabled: Bool = true
+    var showScanlines: Bool = true
     var onDismiss: (() -> Void)?
     @State private var cursorVisible = true
 
@@ -564,11 +566,12 @@ private struct LLMOutputBox: View {
                             proxy.scrollTo("bottom", anchor: .bottom)
                         }
                     }
-                    .overlay(
-                        ScanlineOverlay(spacing: 2, color: .black, opacity: 0.375, blurRadius: 0.005)
-                    ).overlay(
-                        ScanlineOverlay(spacing: 4, color: .green, opacity: 0.112, blurRadius: 0.25)
-                    )
+                    .overlay {
+                        if showScanlines {
+                            ScanlineOverlay(spacing: 2, color: .black, opacity: 0.375, blurRadius: 0.005)
+                            ScanlineOverlay(spacing: 4, color: .green, opacity: 0.112, blurRadius: 0.25)
+                        }
+                    }
                     .frame(height: min(height, maxHeight))
                 } else {
                     HStack(spacing: 0) {
@@ -581,11 +584,12 @@ private struct LLMOutputBox: View {
                         Spacer()
                     }
                     .padding(10)
-                    .overlay(
-                        ScanlineOverlay(spacing: 2, color: .black, opacity: 0.375, blurRadius: 0.005)
-                    ).overlay(
-                        ScanlineOverlay(spacing: 4, color: .green, opacity: 0.112, blurRadius: 0.25)
-                    )
+                    .overlay {
+                        if showScanlines {
+                            ScanlineOverlay(spacing: 2, color: .black, opacity: 0.375, blurRadius: 0.005)
+                            ScanlineOverlay(spacing: 4, color: .green, opacity: 0.112, blurRadius: 0.25)
+                        }
+                    }
                     .frame(maxWidth: .infinity, minHeight: 40, alignment: .topLeading)
                     .onAppear { height = minHeight }
                 }
