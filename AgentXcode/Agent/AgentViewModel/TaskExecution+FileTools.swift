@@ -83,7 +83,9 @@ extension AgentViewModel {
             let lang = Self.langFromPath(filePath)
             appendLog(Self.codeFence(Self.preview(content, lines: readFilePreviewLines), language: lang))
             commandsRun.append("write_file: \(filePath)")
-            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+            let writeDiag = await Self.postEditDiagnostic(filePath: (filePath as NSString).expandingTildeInPath, projectFolder: projectFolder)
+            let writeResult = writeDiag.isEmpty ? output : output + "\n\n⚠️ Diagnostics:\n" + writeDiag
+            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": writeResult])
             return true
 
         // MARK: edit_file — uses CodingService for replacement logic, D1F for preview
@@ -122,7 +124,10 @@ extension AgentViewModel {
             }
             appendLog(output)
             commandsRun.append("edit_file: \(filePath)")
-            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+            // Post-edit diagnostic: quick syntax check for Swift files in Xcode projects
+            let editDiag = await Self.postEditDiagnostic(filePath: expandedEdit, projectFolder: projectFolder)
+            let editResult = editDiag.isEmpty ? output : output + "\n\n⚠️ Diagnostics:\n" + editDiag
+            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": editResult])
             return true
 
         // MARK: create_diff — reads file from disk, requires line range
@@ -356,6 +361,52 @@ extension AgentViewModel {
 
         default:
         return false
+        }
+    }
+
+    // MARK: - Post-Edit Diagnostics
+
+    /// Quick syntax check after editing a Swift file. Returns error lines or empty string.
+    /// Only runs for .swift files in Xcode project folders.
+    nonisolated static func postEditDiagnostic(filePath: String, projectFolder: String) async -> String {
+        // Only check Swift files in Xcode projects
+        guard filePath.hasSuffix(".swift") else { return "" }
+        // Quick check for .xcodeproj without MainActor
+        let hasXcodeProj = (try? FileManager.default.contentsOfDirectory(atPath: projectFolder))?
+            .contains(where: { $0.hasSuffix(".xcodeproj") || $0.hasSuffix(".xcworkspace") }) ?? false
+        guard hasXcodeProj else { return "" }
+
+        return await withCheckedContinuation { continuation in
+            DispatchQueue.global().async {
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: "/usr/bin/xcrun")
+                process.arguments = ["swiftc", "-parse", filePath]
+                process.currentDirectoryURL = URL(fileURLWithPath: projectFolder)
+                let pipe = Pipe()
+                process.standardOutput = pipe
+                process.standardError = pipe
+                var env = ProcessInfo.processInfo.environment
+                env["HOME"] = NSHomeDirectory()
+                process.environment = env
+                do {
+                    try process.run()
+                    process.waitUntilExit()
+                    let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                    let output = String(data: data, encoding: .utf8) ?? ""
+                    if process.terminationStatus != 0 && !output.isEmpty {
+                        // Return first 5 error lines to avoid bloating context
+                        let errors = output.components(separatedBy: "\n")
+                            .filter { $0.contains("error:") }
+                            .prefix(5)
+                            .joined(separator: "\n")
+                        continuation.resume(returning: errors)
+                    } else {
+                        continuation.resume(returning: "")
+                    }
+                } catch {
+                    continuation.resume(returning: "")
+                }
+            }
         }
     }
 }
