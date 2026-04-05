@@ -597,12 +597,21 @@ extension AgentViewModel {
                     ])
                 }
 
-                // Read-tracking guard — detect excessive reads without any edits/builds/commits
+                // Read-tracking guard — detect excessive file reads without edits/builds
+                // Only applies to coding tasks — accessibility/automation tools are excluded
                 if !pendingTools.isEmpty {
                     let actionTools: Set<String> = ["write_file", "edit_file", "diff_apply", "apply_diff",
                         "xcode_build", "xc_build", "git_commit", "run_shell_script",
                         "execute_agent_command", "execute_daemon_command", "task_complete"]
-                    let hadAction = pendingTools.contains { actionTools.contains($0.name) }
+                    // Accessibility, automation, and web tools are always "action" — never trigger read guard
+                    let automationPrefixes = ["ax_", "web_", "selenium_"]
+                    let automationTools: Set<String> = ["accessibility", "run_applescript", "run_osascript",
+                        "execute_javascript", "lookup_sdef", "ax", "web", "sel"]
+                    let hadAction = pendingTools.contains { tool in
+                        actionTools.contains(tool.name)
+                        || automationPrefixes.contains(where: { tool.name.hasPrefix($0) })
+                        || automationTools.contains(tool.name)
+                    }
                     if hadAction {
                         consecutiveReadOnlyCount = 0
                     } else {
