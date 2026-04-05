@@ -19,10 +19,14 @@ private let maxToolResultsPerMessage = 50_000
 extension AgentViewModel {
 
     /// Read project-specific instructions from config files in the project folder.
-    /// Checks: .agent.md, AGENT.md, .claude/CLAUDE.md (for Claude Code compat)
+    /// Checks: .agent.md, AGENT.md, .claude/CLAUDE.md, .claude/rules/*.md
+    /// Supports @include directives: @path, @./relative, @~/home, @/absolute
     nonisolated static func readProjectConfig(projectFolder: String) -> String {
         guard !projectFolder.isEmpty else { return "" }
         let fm = FileManager.default
+        var parts: [String] = []
+
+        // Main config file (first found wins)
         let candidates = [
             "\(projectFolder)/.agent.md",
             "\(projectFolder)/AGENT.md",
@@ -32,12 +36,63 @@ extension AgentViewModel {
             if fm.fileExists(atPath: path),
                let content = try? String(contentsOfFile: path, encoding: .utf8),
                !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                // Cap at 2000 chars to avoid bloating the prompt
-                let trimmed = String(content.prefix(2000))
-                return trimmed
+                parts.append(processIncludes(content, basePath: projectFolder))
+                break
             }
         }
-        return ""
+
+        // Additional rules from .claude/rules/*.md
+        let rulesDir = "\(projectFolder)/.claude/rules"
+        if let ruleFiles = try? fm.contentsOfDirectory(atPath: rulesDir) {
+            for file in ruleFiles.sorted() where file.hasSuffix(".md") {
+                let path = "\(rulesDir)/\(file)"
+                if let content = try? String(contentsOfFile: path, encoding: .utf8),
+                   !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    parts.append(content)
+                }
+            }
+        }
+
+        let combined = parts.joined(separator: "\n\n")
+        // Cap at 4000 chars to avoid bloating the prompt
+        return String(combined.prefix(4000))
+    }
+
+    /// Process @include directives in config content.
+    /// Supports: @path, @./relative, @~/home, @/absolute
+    private nonisolated static func processIncludes(_ content: String, basePath: String, processed: Set<String> = []) -> String {
+        let allowedExtensions = Set(["md", "txt", "json", "yaml", "yml", "toml", "swift", "py", "js", "ts", "rs", "go", "java", "c", "cpp", "h"])
+        var result: [String] = []
+        var seen = processed
+
+        for line in content.components(separatedBy: "\n") {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            // Skip @include inside code blocks
+            guard trimmed.hasPrefix("@") && !trimmed.hasPrefix("@_") && !trimmed.hasPrefix("@@") else {
+                result.append(line)
+                continue
+            }
+            var path = String(trimmed.dropFirst()) // remove @
+            // Resolve path
+            if path.hasPrefix("~/") {
+                path = (path as NSString).expandingTildeInPath
+            } else if path.hasPrefix("./") || !path.hasPrefix("/") {
+                path = (basePath as NSString).appendingPathComponent(path)
+            }
+            // Safety: check extension, prevent circular refs, check existence
+            let ext = (path as NSString).pathExtension.lowercased()
+            guard allowedExtensions.contains(ext),
+                  !seen.contains(path),
+                  let included = try? String(contentsOfFile: path, encoding: .utf8) else {
+                result.append(line) // keep original line if can't include
+                continue
+            }
+            seen.insert(path)
+            // Recursively process includes in the included file
+            let processed = processIncludes(included, basePath: (path as NSString).deletingLastPathComponent, processed: seen)
+            result.append(processed)
+        }
+        return result.joined(separator: "\n")
     }
 
     /// Build the prompt prefix for a new task — shared between main task and tab task.
