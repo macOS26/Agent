@@ -410,18 +410,7 @@ extension AgentViewModel {
                     guard let type = block["type"] as? String else { continue }
 
                     if type == "text" {
-                        // Log LLM text to activity log (skip done/task_complete and duplicates)
-                        if let text = block["text"] as? String {
-                            var cleaned = text
-                            Self.stripCompletionText(&cleaned)
-                            let trimmed = cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
-                            let hash = trimmed.hashValue
-                            if !trimmed.isEmpty && trimmed.count > 1 && !recentOutputHashes.contains(hash) {
-                                recentOutputHashes.insert(hash)
-                                appendLog(trimmed)
-                                flushLog()
-                            }
-                        }
+                        // LLM text goes to LLM Output only — LogView is for user status
                     } else if type == "server_tool_use" {
                         // Server-side tool (web search) — executed by the API, just log it
                         hasToolUse = true
