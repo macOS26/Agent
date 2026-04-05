@@ -279,10 +279,22 @@ extension AgentViewModel {
             case "screenshot":        return ("ax_screenshot", mapped)
             case "set_properties":    return ("ax_set_properties", mapped)
             case "find_element":      return ("ax_find_element", mapped)
+            case "click_element":     return ("ax_click_element", mapped)
+            case "type_into_element": return ("ax_type_into_element", mapped)
             case "get_children":      return ("ax_get_children", mapped)
+            case "inspect_element":   return ("ax_inspect_element", mapped)
+            case "get_focused_element": return ("ax_get_focused_element", mapped)
+            case "drag":              return ("ax_drag", mapped)
+            case "wait":              return ("ax_wait_for_element", mapped)
+            case "scroll":            return ("ax_scroll", mapped)
+            case "highlight_element": return ("ax_highlight_element", mapped)
+            case "scroll_to_element": return ("ax_scroll_to_element", mapped)
+            case "manage_app":        return ("ax_manage_app", mapped)
+            case "show_menu":         return ("ax_show_menu", mapped)
+            case "click_menu_item":   return ("ax_click_menu_item", mapped)
             case "check_permission":  return ("ax_check_permission", mapped)
             case "request_permission": return ("ax_request_permission", mapped)
-            default:                  return ("ax_list_windows", mapped)
+            default:                  return ("ax_\(action)", mapped)
             }
 
         case "conversation":
