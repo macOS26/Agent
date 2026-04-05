@@ -30,10 +30,11 @@ extension AgentViewModel {
         displayedLLMOutput = ""
         dripDisplayIndex = 0
 
-        // Add spacing before new task — 5 blank lines if log ends with 0-2 newlines
-        if !activityLog.isEmpty {
-            let trailing = activityLog.reversed().prefix(while: { $0 == "\n" }).count
-            logBuffer += trailing <= 2 ? "\n\n\n\n\n" : "\n"
+        // Add 5 blank lines before first task only (pushes startup messages up)
+        if !activityLog.contains("New Task") {
+            logBuffer += "\n\n\n\n\n"
+        } else if !activityLog.isEmpty {
+            logBuffer += "\n"
         }
         trimToRecentTasks()
         taskInputTokens = 0

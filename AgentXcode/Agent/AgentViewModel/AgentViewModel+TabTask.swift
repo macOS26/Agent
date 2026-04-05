@@ -112,9 +112,10 @@ extension AgentViewModel {
         tab.displayedLLMOutput = ""
         tab.dripDisplayIndex = 0
 
-        if !tab.activityLog.isEmpty {
-            let trailing = tab.activityLog.reversed().prefix(while: { $0 == "\n" }).count
-            tab.logBuffer += trailing <= 2 ? "\n\n\n\n\n" : "\n"
+        if !tab.activityLog.contains("New Task") {
+            tab.logBuffer += "\n\n\n\n\n"
+        } else if !tab.activityLog.isEmpty {
+            tab.logBuffer += "\n"
         }
         tab.appendLog("--- Tab Task ---")
         tab.appendLog("👤 \(prompt)")
