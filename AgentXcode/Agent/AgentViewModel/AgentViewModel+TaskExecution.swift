@@ -504,67 +504,63 @@ extension AgentViewModel {
                     }
                 }
 
-                // Execute pending tools — parallel if all read-only, sequential otherwise
+                // Execute pending tools — partition into read/write batches
+                // Consecutive read-only tools run in parallel; write tools serialize
                 if !pendingTools.isEmpty {
-                    let allReadOnly = pendingTools.allSatisfy { Self.readOnlyTools.contains($0.name) }
+                    let maxConcurrency = 10
+                    // Partition into batches: consecutive read-only = parallel batch, write = serial batch
+                    var batches: [(parallel: Bool, tools: [(toolId: String, name: String, input: [String: Any])])] = []
+                    for tool in pendingTools {
+                        let isReadOnly = Self.readOnlyTools.contains(tool.name)
+                        if isReadOnly, let last = batches.last, last.parallel {
+                            batches[batches.count - 1].tools.append(tool)
+                        } else {
+                            batches.append((parallel: isReadOnly, tools: [tool]))
+                        }
+                    }
 
-                    if allReadOnly && pendingTools.count > 1 {
-                        // Parallel execution for read-only tools
-                        // Pre-execute shell-based tools concurrently off MainActor, then dispatch results on MainActor
-                        let shellTools: Set<String> = ["read_file", "list_files", "search_files", "read_dir", "git_status", "git_diff", "git_log", "git_diff_patch"]
-                        let shellPending = pendingTools.filter { shellTools.contains($0.name) }
-
-                        // Pre-warm shell results concurrently off MainActor
-                        if shellPending.count > 1 {
-                            // Capture Sendable values before entering TaskGroup
-                            let capturedPF = projectFolder
-                            let cmds: [(id: String, cmd: String)] = shellPending.map { tool in
-                                (tool.toolId, Self.buildReadOnlyCommand(name: tool.name, input: tool.input, projectFolder: capturedPF))
-                            }
-                            var preResults: [String: String] = [:]
-                            await withTaskGroup(of: (String, String).self) { group in
-                                for (id, cmd) in cmds {
-                                    let capturedId = id
-                                    let capturedCmd = cmd
-                                    let workDir = capturedPF.isEmpty ? NSHomeDirectory() : capturedPF
-                                    group.addTask {
-                                        guard !capturedCmd.isEmpty else { return (capturedId, "") }
-                                        let pipe = Pipe()
-                                        let process = Process()
-                                        process.executableURL = URL(fileURLWithPath: "/bin/zsh")
-                                        process.arguments = ["-c", capturedCmd]
-                                        process.currentDirectoryURL = URL(fileURLWithPath: workDir)
-                                        var env = ProcessInfo.processInfo.environment
-                                        env["HOME"] = NSHomeDirectory()
-                                        let extraPaths = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-                                        env["PATH"] = extraPaths + ":" + (env["PATH"] ?? "")
-                                        process.environment = env
-                                        process.standardOutput = pipe
-                                        process.standardError = pipe
-                                        try? process.run()
-                                        process.waitUntilExit()
-                                        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-                                        return (capturedId, String(data: data, encoding: .utf8) ?? "")
+                    for batch in batches {
+                        if batch.parallel && batch.tools.count > 1 {
+                            // Parallel batch: pre-execute shell tools off MainActor
+                            let shellTools: Set<String> = ["read_file", "list_files", "search_files", "read_dir", "git_status", "git_diff", "git_log", "git_diff_patch"]
+                            let shellBatch = batch.tools.filter { shellTools.contains($0.name) }
+                            if shellBatch.count > 1 {
+                                let capturedPF = projectFolder
+                                let cmds = shellBatch.map { ($0.toolId, Self.buildReadOnlyCommand(name: $0.name, input: $0.input, projectFolder: capturedPF)) }
+                                var preResults: [String: String] = [:]
+                                await withTaskGroup(of: (String, String).self) { group in
+                                    for (i, (id, cmd)) in cmds.enumerated() where i < maxConcurrency {
+                                        let cid = id; let ccmd = cmd
+                                        let workDir = capturedPF.isEmpty ? NSHomeDirectory() : capturedPF
+                                        group.addTask {
+                                            guard !ccmd.isEmpty else { return (cid, "") }
+                                            let pipe = Pipe(); let p = Process()
+                                            p.executableURL = URL(fileURLWithPath: "/bin/zsh")
+                                            p.arguments = ["-c", ccmd]
+                                            p.currentDirectoryURL = URL(fileURLWithPath: workDir)
+                                            var env = ProcessInfo.processInfo.environment
+                                            env["HOME"] = NSHomeDirectory()
+                                            env["PATH"] = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:" + (env["PATH"] ?? "")
+                                            p.environment = env; p.standardOutput = pipe; p.standardError = pipe
+                                            try? p.run(); p.waitUntilExit()
+                                            return (cid, String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? "")
+                                        }
                                     }
+                                    for await (id, result) in group { preResults[id] = result }
                                 }
-                                for await (id, result) in group {
-                                    preResults[id] = result
-                                }
+                                Self.precomputedResults = preResults
                             }
-                            Self.precomputedResults = preResults
-                        }
-
-                        // Dispatch all tools sequentially on MainActor (logging etc.) but shell tools use cached results
-                        for tool in pendingTools {
-                            let ctx = ToolContext(toolId: tool.toolId, projectFolder: projectFolder, selectedProvider: selectedProvider, tavilyAPIKey: tavilyAPIKey)
-                            _ = await dispatchTool(name: tool.name, input: tool.input, ctx: ctx, toolResults: &toolResults)
-                        }
-                        Self.precomputedResults = nil
-                    } else {
-                        // Sequential execution
-                        for tool in pendingTools {
-                            let ctx = ToolContext(toolId: tool.toolId, projectFolder: projectFolder, selectedProvider: selectedProvider, tavilyAPIKey: tavilyAPIKey)
-                            _ = await dispatchTool(name: tool.name, input: tool.input, ctx: ctx, toolResults: &toolResults)
+                            for tool in batch.tools {
+                                let ctx = ToolContext(toolId: tool.toolId, projectFolder: projectFolder, selectedProvider: selectedProvider, tavilyAPIKey: tavilyAPIKey)
+                                _ = await dispatchTool(name: tool.name, input: tool.input, ctx: ctx, toolResults: &toolResults)
+                            }
+                            Self.precomputedResults = nil
+                        } else {
+                            // Serial batch: execute one by one
+                            for tool in batch.tools {
+                                let ctx = ToolContext(toolId: tool.toolId, projectFolder: projectFolder, selectedProvider: selectedProvider, tavilyAPIKey: tavilyAPIKey)
+                                _ = await dispatchTool(name: tool.name, input: tool.input, ctx: ctx, toolResults: &toolResults)
+                            }
                         }
                     }
                 }
