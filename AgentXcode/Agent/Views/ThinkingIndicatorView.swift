@@ -24,7 +24,6 @@ struct ThinkingIndicatorView: View {
         }
     }
     @State private var outputHeight: CGFloat = 40
-    @State private var userDragged: Bool = false
     @State private var dots = ""
     @State private var tick = 0
     /// Elapsed time — stored on the tab to survive tab switches
@@ -292,7 +291,6 @@ struct ThinkingIndicatorView: View {
                         LLMOutputBox(
                             text: streamText,
                             height: $outputHeight,
-                            userDragged: $userDragged,
                             isStreaming: isActive,
                             showDismiss: true,
                             dismissEnabled: !isActive,
@@ -368,7 +366,6 @@ private struct LLMOutputBox: View {
     @Environment(\.colorScheme) private var colorScheme
     let text: String
     @Binding var height: CGFloat
-    @Binding var userDragged: Bool
     var isStreaming: Bool = false
     var showDismiss: Bool = false
     var dismissEnabled: Bool = true
@@ -535,8 +532,8 @@ private struct LLMOutputBox: View {
     private var maxHeight: CGFloat {
         let windowH = NSApp.keyWindow?.frame.height
             ?? NSScreen.main?.visibleFrame.height
-            ?? 800
-        return min(windowH * 0.60, 400)
+            ?? 2400
+        return min(windowH * 0.85, 2400)
     }
 
     var body: some View {
@@ -550,9 +547,7 @@ private struct LLMOutputBox: View {
             ZStack(alignment: .bottomTrailing) {
                 if !displayText.isEmpty {
                     TerminalNeoTextView(text: displayText) { h in
-                        if !userDragged {
-                            height = min(max(minHeight, h + 4), maxHeight)
-                        }
+                        height = min(max(minHeight, h + 4), maxHeight)
                     }
                     .overlay {
                         if showScanlines {
@@ -617,13 +612,12 @@ private struct LLMOutputBox: View {
                 .highPriorityGesture(
                     DragGesture(minimumDistance: 2, coordinateSpace: .local)
                         .onChanged { value in
-                            if !userDragged {
-                                userDragged = true
+                            if dragStartHeight == 0 {
                                 dragStartHeight = height
                             }
                             height = min(max(40, dragStartHeight + value.translation.height), maxHeight)
                         }
-                        .onEnded { _ in }
+                        .onEnded { _ in dragStartHeight = 0 }
                 )
         }
         .background(termBg)
