@@ -1,6 +1,6 @@
 import Foundation
 
-/// Memory types matching Claude Code's 4-type taxonomy.
+/// Memory types — user, feedback, project, reference.
 enum MemoryType: String, CaseIterable {
     case user       // role, goals, preferences, knowledge
     case feedback   // approach guidance — what to avoid or repeat

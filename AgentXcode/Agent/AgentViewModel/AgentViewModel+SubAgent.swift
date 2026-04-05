@@ -36,7 +36,7 @@ final class SubAgent: Identifiable {
         Date().timeIntervalSince(startTime)
     }
 
-    /// XML notification for parent context (matches Claude Code pattern).
+    /// XML notification for parent context.
     var notification: String {
         """
         <task-notification>
