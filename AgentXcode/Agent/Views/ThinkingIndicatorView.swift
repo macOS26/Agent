@@ -574,7 +574,7 @@ private struct LLMOutputBox: View {
                             ScanlineOverlay(spacing: 4, color: .green, opacity: 0.112, blurRadius: 0.25)
                         }
                     }
-                    .frame(height: min(height, maxHeight))
+                    .frame(height: max(minHeight, min(height, maxHeight)))
                 } else {
                     HStack(spacing: 0) {
                         Text("AGENT! > ")
