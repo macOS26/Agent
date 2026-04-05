@@ -376,6 +376,7 @@ private struct LLMOutputBox: View {
     var onDismiss: (() -> Void)?
     @State private var cursorVisible = true
     @State private var dragStartHeight: CGFloat = 0
+    @State private var blinkEpoch = 0
 
     private var termBg: Color {
         colorScheme == .dark
@@ -642,11 +643,13 @@ private struct LLMOutputBox: View {
         .cornerRadius(6)
         .overlay(RoundedRectangle(cornerRadius: 6).stroke(termBorder, lineWidth: 1))
         .onChange(of: isStreaming) { _, streaming in
-            // Reset cursor visible when streaming stops — no gap
-            if !streaming { cursorVisible = true }
+            if !streaming {
+                cursorVisible = true
+                blinkEpoch += 1  // restart blink timer immediately
+            }
         }
-        .task {
-            // Blink cursor at ~2Hz (WOPR speed)
+        .task(id: blinkEpoch) {
+            // Blink at ~2Hz — restarts instantly when blinkEpoch changes
             while !Task.isCancelled {
                 try? await Task.sleep(for: .milliseconds(500))
                 if !isStreaming { cursorVisible.toggle() }
