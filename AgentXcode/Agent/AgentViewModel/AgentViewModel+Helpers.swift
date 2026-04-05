@@ -155,6 +155,7 @@ extension AgentViewModel {
             case "commit":     return ("git_commit", newInput)
             case "diff_patch": return ("git_diff_patch", newInput)
             case "branch":     return ("git_branch", newInput)
+            case "worktree":   return ("git_worktree", newInput)
             default:           return ("git_status", newInput)
             }
 

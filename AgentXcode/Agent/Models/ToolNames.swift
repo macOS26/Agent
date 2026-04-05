@@ -92,6 +92,9 @@ enum Tool {
         "js": "execute_javascript",
         "mem": "memory",
         "skill": "invoke_skill",
+        "fetch": "web_fetch",
+        "ask": "ask_user_question",
+        "message_agent": "send_message_to_agent",
         "spawn": "spawn_agent",
     ]
 }
