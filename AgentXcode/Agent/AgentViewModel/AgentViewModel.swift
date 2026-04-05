@@ -751,7 +751,7 @@ final class AgentViewModel {
         case .lmStudio: return lmStudioTemperature
         case .zAI: return zAITemperature
         case .bigModel: return zAITemperature
-        case .qwen: return 0.7
+        case .qwen: return openAITemperature
         case .gemini: return geminiTemperature
         case .grok: return grokTemperature
         case .mistral: return openAITemperature
