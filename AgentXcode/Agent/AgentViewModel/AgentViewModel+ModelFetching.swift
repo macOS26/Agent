@@ -387,7 +387,7 @@ extension AgentViewModel {
             result.append(m)
         }
         for m in coding {
-            result.append(OpenAIModelInfo(id: "\(m.id):v", name: "\(m.name) 👁"))
+            result.append(OpenAIModelInfo(id: "\(m.id):v", name: m.name))
         }
         return result
     }
