@@ -47,9 +47,29 @@ extension AgentViewModel {
                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": suggestion])
                 return true
             }
+            // Token optimization: "file unchanged" stub if already read this task
+            let expandedRead = (filePath as NSString).expandingTildeInPath
+            if let cached = Self.taskFileReadCache[expandedRead],
+               cached == output.hashValue {
+                let stub = "File unchanged since last read (\(output.count) chars). Use the content from your earlier read — don't re-read."
+                appendLog("📖 (unchanged)")
+                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": stub])
+                return true
+            }
+            Self.taskFileReadCache[expandedRead] = output.hashValue
+
+            // Token optimization: cap file output at 8K chars for LLM context
+            let maxChars = 8_000
+            let capped: String
+            let lineCount = output.components(separatedBy: "\n").count
+            if output.count > maxChars {
+                capped = String(output.prefix(maxChars)) + "\n\n... [truncated — \(output.count) chars total, \(lineCount) lines. Use offset/limit to read specific sections.]"
+            } else {
+                capped = output
+            }
             let lang = Self.langFromPath(filePath)
             appendLog(Self.codeFence(Self.preview(output, lines: readFilePreviewLines), language: lang))
-            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": capped])
             return true
 
         // MARK: write_file

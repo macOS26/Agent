@@ -119,9 +119,13 @@ extension AgentViewModel {
     /// Cache for read-only tool results within a task. Cleared on new task.
     @MainActor static var toolResultCache: [String: String] = [:]
 
+    /// Cache of file content hashes — detects unchanged files to return stub instead of full content.
+    @MainActor static var taskFileReadCache: [String: Int] = [:]
+
     /// Clear tool result cache — call at start of each task.
     @MainActor static func clearToolCache() {
         toolResultCache.removeAll()
+        taskFileReadCache.removeAll()
     }
 
     /// Build cache key from tool name + input.
