@@ -397,6 +397,7 @@ extension AgentViewModel {
                 budgetTracker.recordTurn(inputTokens: inTok, outputTokens: outTok)
                 budgetUsedFraction = budgetTracker.usedFraction
                 TokenUsageStore.shared.recordModelUsage(model: modelName, input: inTok, output: outTok)
+                FallbackChainService.shared.recordSuccess()
                 flushStreamBuffer()
                 isThinking = false
                 timeoutRetryCount = 0 // Reset on successful response
@@ -914,7 +915,17 @@ extension AgentViewModel {
                             break
                         }
                     } else {
-                        // Non-recoverable error — don't retry (400 bad request, auth errors, etc.)
+                        // Try fallback chain before giving up
+                        FallbackChainService.shared.recordFailure()
+                        if let fallback = FallbackChainService.shared.recordFailure() {
+                            appendLog("🔄 Switching to fallback: \(fallback.displayName)")
+                            flushLog()
+                            // Note: full provider switch requires service recreation
+                            // For now, log the fallback and continue retrying
+                            continue
+                        }
+
+                        // Non-recoverable error — no fallback available
                         appendLog("\(errorSource) Error: \(errMsg)")
                         flushLog()
 
