@@ -35,6 +35,7 @@ extension AgentViewModel {
         taskOutputTokens = 0
         budgetUsedFraction = 0
         subAgents.removeAll()
+        FileBackupService.shared.clearTaskSnapshots()
         Self.clearToolCache()
         // All tool groups available — user controls via UI toggles
         var activeGroups: Set<String>? = codingModeEnabled ? Self.codingModeGroups : automationModeEnabled ? Self.automationModeGroups : nil

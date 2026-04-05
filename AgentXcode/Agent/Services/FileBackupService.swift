@@ -184,4 +184,58 @@ final class FileBackupService {
         }
         return count
     }
+
+    // MARK: - Per-Task Edit Snapshots
+
+    /// Tracks file versions within a single task for diff/rollback.
+    /// Key = file path, Value = ordered list of backup paths (oldest first).
+    private var taskSnapshots: [String: [String]] = [:]
+
+    /// Maximum snapshots per file per task (circular buffer).
+    private let maxSnapshots = 100
+
+    /// Record a snapshot for the current task. Call before each edit.
+    /// Returns the version number (1-based).
+    @discardableResult
+    func snapshot(filePath: String, tabID: UUID) -> Int {
+        let backupPath = backup(filePath: filePath, tabID: tabID)
+        guard let path = backupPath else { return 0 }
+
+        var versions = taskSnapshots[filePath, default: []]
+        if versions.count >= maxSnapshots {
+            // Remove oldest, circular buffer style
+            let removed = versions.removeFirst()
+            try? FileManager.default.removeItem(atPath: removed)
+        }
+        versions.append(path)
+        taskSnapshots[filePath] = versions
+        return versions.count
+    }
+
+    /// Get the version count for a file in the current task.
+    func versionCount(for filePath: String) -> Int {
+        taskSnapshots[filePath]?.count ?? 0
+    }
+
+    /// Rollback a file to a specific version (1-based). Returns true on success.
+    func rollback(filePath: String, toVersion: Int) -> Bool {
+        guard let versions = taskSnapshots[filePath],
+              toVersion >= 1 && toVersion <= versions.count else { return false }
+        let backupPath = versions[toVersion - 1]
+        return restore(backupPath: backupPath, to: filePath)
+    }
+
+    /// Get a summary of all files edited in the current task with version counts.
+    func taskEditSummary() -> String {
+        guard !taskSnapshots.isEmpty else { return "No files edited in this task." }
+        return taskSnapshots.map { path, versions in
+            let name = (path as NSString).lastPathComponent
+            return "\(name): \(versions.count) version(s)"
+        }.sorted().joined(separator: "\n")
+    }
+
+    /// Clear task snapshots (call at task start).
+    func clearTaskSnapshots() {
+        taskSnapshots.removeAll()
+    }
 }
