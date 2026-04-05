@@ -541,9 +541,10 @@ private struct LLMOutputBox: View {
 
     var body: some View {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        // No cursor during table render — prevents scroll jump from cursor below table
-        let hasTable = trimmed.contains("|\n") && trimmed.contains("---")
-        let cursor = hasTable ? "" : (cursorVisible ? "█" : " ")
+        // Hide cursor only while actively inside a table (last line starts with |)
+        let lastLine = trimmed.components(separatedBy: "\n").last?.trimmingCharacters(in: .whitespaces) ?? ""
+        let inTable = lastLine.hasPrefix("|") || lastLine.allSatisfy({ $0 == "-" || $0 == ":" || $0 == "|" || $0 == " " }) && lastLine.contains("-")
+        let cursor = inTable ? "" : (cursorVisible ? "█" : " ")
         let displayText = trimmed.isEmpty ? "" : trimmed + cursor
         VStack(spacing: 0) {
             ZStack(alignment: .bottomTrailing) {
