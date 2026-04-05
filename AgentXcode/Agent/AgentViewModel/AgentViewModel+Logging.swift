@@ -262,7 +262,7 @@ extension AgentViewModel {
     static func prepareLogBuffer(message: String, buffer: inout String, existingLog: String) {
         let combined = existingLog + buffer
         if message.contains(newTaskMarker) && !combined.contains(newTaskMarker) {
-            buffer += String(repeating: "\n", count: 8)
+            buffer += String(repeating: "\n", count: 1)
         }
         if message.contains("Cancelled") {
             while buffer.hasSuffix("\n\n") { buffer.removeLast() }
@@ -431,8 +431,25 @@ extension AgentViewModel {
             while !Task.isCancelled {
                 if self.dripDisplayIndex < self.rawLLMOutput.count {
                     let idx = self.rawLLMOutput.index(self.rawLLMOutput.startIndex, offsetBy: self.dripDisplayIndex)
-                    self.displayedLLMOutput.append(self.rawLLMOutput[idx])
-                    self.dripDisplayIndex += 1
+                    let ch = self.rawLLMOutput[idx]
+
+                    // Table lines: dump entire line at once (no drip) to avoid partial pipe renders
+                    if ch == "|" || (ch == "\n" && self.dripDisplayIndex + 1 < self.rawLLMOutput.count && self.rawLLMOutput[self.rawLLMOutput.index(after: idx)] == "|") {
+                        // Find end of current line
+                        let remaining = self.rawLLMOutput[idx...]
+                        if let nlRange = remaining.firstIndex(of: "\n") {
+                            let line = String(remaining[idx...nlRange])
+                            self.displayedLLMOutput.append(contentsOf: line)
+                            self.dripDisplayIndex += line.count
+                        } else {
+                            // Line not complete yet — wait for more data
+                            try? await Task.sleep(for: .milliseconds(max(5, self.terminalSpeed.rawValue / 2)))
+                            continue
+                        }
+                    } else {
+                        self.displayedLLMOutput.append(ch)
+                        self.dripDisplayIndex += 1
+                    }
                     try? await Task.sleep(for: .milliseconds(self.terminalSpeed.rawValue))
                 } else if !self.streamingTextStarted {
                     break // Stream ended and all chars dripped
