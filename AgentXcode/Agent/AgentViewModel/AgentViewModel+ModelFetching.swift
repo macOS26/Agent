@@ -687,7 +687,18 @@ extension AgentViewModel {
         case .openAI: if openAIModels.isEmpty { fetchOpenAIModels() }
         case .ollama: if ollamaModels.isEmpty { fetchOllamaModels() }
         case .localOllama: if localOllamaModels.isEmpty { fetchLocalOllamaModels() }
-        default: break // Other providers fetch on demand via their settings UI
+        case .deepSeek: if deepSeekModels.isEmpty { fetchDeepSeekModels() }
+        case .huggingFace: if huggingFaceModels.isEmpty { fetchHuggingFaceModels() }
+        case .vLLM: if vLLMModels.isEmpty { fetchVLLMModels() }
+        case .lmStudio: if lmStudioModels.isEmpty { fetchLMStudioModels() }
+        case .zAI: if zAIModels.isEmpty { fetchZAIModels() }
+        case .qwen: if qwenModels.isEmpty { fetchQwenModels() }
+        case .gemini: if geminiModels.isEmpty { fetchGeminiModels() }
+        case .grok: if grokModels.isEmpty { fetchGrokModels() }
+        case .mistral: if mistralModels.isEmpty { fetchMistralModels() }
+        case .codestral: if mistralModels.isEmpty { fetchCodestralModels() }
+        case .vibe: if mistralModels.isEmpty { fetchVibeModels() }
+        default: break
         }
     }
 }
