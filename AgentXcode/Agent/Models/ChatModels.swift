@@ -495,7 +495,7 @@ final class ChatHistoryStore {
             return
         }
         
-        let marker = "--- New Task ---"
+        let marker = AgentViewModel.newTaskMarker
         let sections = saved.components(separatedBy: marker)
         
         let timestampPattern = #"^\[(\d{2}:\d{2}:\d{2})\]\s*(.*)$"#

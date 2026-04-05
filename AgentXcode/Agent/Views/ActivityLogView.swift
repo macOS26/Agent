@@ -246,7 +246,7 @@ struct ActivityLogView: NSViewRepresentable {
                     let prevLen = lastLength
                     let newText = (text as NSString).substring(from: prevLen)
                     // Auto-scroll to bottom when a new task starts
-                    if newText.contains("--- New Task ---") {
+                    if newText.contains(AgentViewModel.newTaskMarker) {
                         userIsAtBottom = true
                     }
                     let newLines = newText.components(separatedBy: "\n")

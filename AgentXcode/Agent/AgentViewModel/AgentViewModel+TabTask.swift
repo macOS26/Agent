@@ -112,7 +112,7 @@ extension AgentViewModel {
         tab.displayedLLMOutput = ""
         tab.dripDisplayIndex = 0
 
-        tab.appendLog("--- New Task ---")
+        tab.appendLog(AgentViewModel.newTaskMarker)
         tab.appendLog("👤 \(prompt)")
         tab.flush()
 

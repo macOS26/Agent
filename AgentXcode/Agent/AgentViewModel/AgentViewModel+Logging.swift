@@ -256,6 +256,20 @@ extension AgentViewModel {
         return result
     }
 
+    static let newTaskMarker = "--- New Task ---"
+
+    /// Shared log formatting — prepends spacing for first task, strips blank lines before Cancelled.
+    static func prepareLogBuffer(message: String, buffer: inout String, existingLog: String) {
+        let combined = existingLog + buffer
+        if message.contains(newTaskMarker) && !combined.contains(newTaskMarker) {
+            buffer += "\n\n\n\n\n"
+        }
+        if message.contains("Cancelled") {
+            while buffer.hasSuffix("\n\n") { buffer.removeLast() }
+        }
+        if !buffer.isEmpty && !buffer.hasSuffix("\n") { buffer += "\n" }
+    }
+
     func appendLog(_ message: String) {
         let timestamp = Self.timestampFormatter.string(from: Date())
         let cached = snapshotImages(in: message)
@@ -264,23 +278,7 @@ extension AgentViewModel {
         // Store in SwiftData
         ChatHistoryStore.shared.appendMessage(formattedMessage)
 
-        // First "New Task" in this log — push startup messages up with 5 blank lines
-        let log = activityLog + logBuffer
-        if message.contains("New Task") && !log.contains("New Task") {
-            logBuffer += "\n\n\n\n\n"
-        }
-
-        // Strip trailing blank lines before Cancelled (no double-spacing)
-        if message.contains("Cancelled") {
-            while logBuffer.hasSuffix("\n\n") {
-                logBuffer.removeLast()
-            }
-        }
-
-        // Ensure timestamp always starts on a new line
-        if !logBuffer.isEmpty && !logBuffer.hasSuffix("\n") {
-            logBuffer += "\n"
-        }
+        Self.prepareLogBuffer(message: message, buffer: &logBuffer, existingLog: activityLog)
         logBuffer += formattedMessage + "\n"
         scheduleLogFlush()
     }
@@ -550,7 +548,7 @@ extension AgentViewModel {
 
     /// Keep only the last N tasks visible in the chat (controlled by visibleTaskCount preference)
     func trimToRecentTasks() {
-        let marker = "--- New Task ---"
+        let marker = Self.newTaskMarker
         let parts = activityLog.components(separatedBy: marker)
         let limit = visibleTaskCount
         guard parts.count > limit + 1 else { return }

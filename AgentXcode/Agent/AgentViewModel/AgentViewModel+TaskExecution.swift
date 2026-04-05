@@ -36,7 +36,7 @@ extension AgentViewModel {
         Self.clearToolCache()
         // All tool groups available — user controls via UI toggles
         var activeGroups: Set<String>? = codingModeEnabled ? Self.codingModeGroups : automationModeEnabled ? Self.automationModeGroups : nil
-        appendLog("--- New Task ---")
+        appendLog(Self.newTaskMarker)
         appendLog("👤 \(prompt)")
         flushLog()
 
