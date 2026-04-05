@@ -916,7 +916,6 @@ extension AgentViewModel {
                         }
                     } else {
                         // Try fallback chain before giving up
-                        FallbackChainService.shared.recordFailure()
                         if let fallback = FallbackChainService.shared.recordFailure() {
                             appendLog("🔄 Switching to fallback: \(fallback.displayName)")
                             flushLog()
