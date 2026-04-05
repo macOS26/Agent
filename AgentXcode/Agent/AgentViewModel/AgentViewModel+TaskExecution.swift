@@ -294,8 +294,11 @@ extension AgentViewModel {
         var budgetTracker = TokenBudgetTracker(ceiling: tokenBudgetCeiling)
         // Context compaction state — token-aware triggers with circuit breaker
         var compactionState = CompactionState()
-        // Read-tracking guard — detect excessive reads without action
-        var consecutiveReadOnlyCount = 0
+        // Overnight coding guards
+        var consecutiveReadOnlyCount = 0      // read guard — force stop after 10
+        var unbuiltEditCount = 0              // build enforcement — nudge after edit without build
+        var consecutiveBuildFailures = 0      // error budget — stop after 5
+        var stuckFiles: [String: Int] = [:]   // stuck detection — skip after 5 failures per file
 
         while !Task.isCancelled {
             iterations += 1
@@ -597,13 +600,12 @@ extension AgentViewModel {
                     ])
                 }
 
-                // Read-tracking guard — detect excessive file reads without edits/builds
-                // Only applies to coding tasks — accessibility/automation tools are excluded
+                // MARK: Overnight coding guards
                 if !pendingTools.isEmpty {
-                    let actionTools: Set<String> = ["write_file", "edit_file", "diff_apply", "apply_diff",
-                        "xcode_build", "xc_build", "git_commit", "run_shell_script",
-                        "execute_agent_command", "execute_daemon_command", "task_complete"]
-                    // Accessibility, automation, and web tools are always "action" — never trigger read guard
+                    let editTools: Set<String> = ["write_file", "edit_file", "diff_apply", "apply_diff"]
+                    let buildTools: Set<String> = ["xcode_build", "xc_build"]
+                    let actionTools: Set<String> = editTools.union(buildTools).union(["git_commit", "run_shell_script",
+                        "execute_agent_command", "execute_daemon_command", "task_complete"])
                     let automationPrefixes = ["ax_", "web_", "selenium_"]
                     let automationTools: Set<String> = ["accessibility", "run_applescript", "run_osascript",
                         "execute_javascript", "lookup_sdef", "ax", "web", "sel"]
@@ -612,18 +614,59 @@ extension AgentViewModel {
                         || automationPrefixes.contains(where: { tool.name.hasPrefix($0) })
                         || automationTools.contains(tool.name)
                     }
-                    if hadAction {
-                        consecutiveReadOnlyCount = 0
-                    } else {
-                        consecutiveReadOnlyCount += pendingTools.count
+                    let hadEdit = pendingTools.contains { editTools.contains($0.name) }
+                    let hadBuild = pendingTools.contains { buildTools.contains($0.name) }
+
+                    // 1. Read guard — nudge at 5, force stop at 10
+                    if hadAction { consecutiveReadOnlyCount = 0 } else { consecutiveReadOnlyCount += pendingTools.count }
+                    if consecutiveReadOnlyCount >= 10 {
+                        appendLog("⚠️ Auto-stopping: 10 consecutive reads without action")
+                        flushLog()
+                        break
+                    } else if consecutiveReadOnlyCount >= 5 {
+                        toolResults.append(["type": "tool_result", "tool_use_id": "read_guard",
+                            "content": "⚠️ \(consecutiveReadOnlyCount) consecutive reads without editing or building. Take action or call done."])
                     }
-                    if consecutiveReadOnlyCount >= 5 {
-                        toolResults.append([
-                            "type": "tool_result",
-                            "tool_use_id": "read_guard",
-                            "content": "⚠️ You have made \(consecutiveReadOnlyCount) consecutive read-only tool calls without editing, building, or committing. Stop reading and take action: edit a file, run a build, or call done."
-                        ])
-                        consecutiveReadOnlyCount = 0
+
+                    // 2. Build enforcement — nudge if edited without building
+                    if hadEdit { unbuiltEditCount += 1 }
+                    if hadBuild { unbuiltEditCount = 0 }
+                    if unbuiltEditCount >= 3 {
+                        toolResults.append(["type": "tool_result", "tool_use_id": "build_nudge",
+                            "content": "⚠️ You've edited \(unbuiltEditCount) times without building. Run xc(action:\"build\") now to catch errors early."])
+                    }
+
+                    // 3. Error budget — track consecutive build failures
+                    for tool in pendingTools where buildTools.contains(tool.name) {
+                        let buildOutput = toolResults.last?["content"] as? String ?? ""
+                        if buildOutput.contains("BUILD FAILED") || buildOutput.contains("error:") {
+                            consecutiveBuildFailures += 1
+                            if consecutiveBuildFailures >= 5 {
+                                appendLog("⚠️ Auto-stopping: 5 consecutive build failures")
+                                flushLog()
+                                break
+                            }
+                        } else {
+                            consecutiveBuildFailures = 0
+                        }
+                    }
+                    if consecutiveBuildFailures >= 5 { break }
+
+                    // 4. Stuck detection — track failures per file
+                    for tool in pendingTools where editTools.contains(tool.name) {
+                        if let path = tool.input["file_path"] as? String ?? tool.input["path"] as? String {
+                            let output = toolResults.last?["content"] as? String ?? ""
+                            if output.lowercased().contains("error") || output.lowercased().contains("failed") {
+                                stuckFiles[path, default: 0] += 1
+                                if stuckFiles[path]! >= 5 {
+                                    toolResults.append(["type": "tool_result", "tool_use_id": "stuck_guard",
+                                        "content": "⚠️ 5 failures on \(path). Skip this file and move to the next task in your plan."])
+                                    stuckFiles[path] = 0
+                                }
+                            } else {
+                                stuckFiles[path] = 0
+                            }
+                        }
                     }
                 }
 
