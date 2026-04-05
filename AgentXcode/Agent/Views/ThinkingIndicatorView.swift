@@ -540,7 +540,7 @@ private struct LLMOutputBox: View {
     var body: some View {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         // Solid cursor during streaming, blink when idle
-        let cursor = isStreaming ? "█" : (cursorVisible ? "█" : " ")
+        let cursor = isStreaming ? "▮" : (cursorVisible ? "▮" : " ")
         let displayText = trimmed.isEmpty ? "" : trimmed + cursor
         VStack(spacing: 0) {
             ZStack(alignment: .bottomTrailing) {
@@ -578,7 +578,7 @@ private struct LLMOutputBox: View {
                         Text("AGENT! > ")
                             .font(.system(size: 14, design: .monospaced))
                             .foregroundColor(termText)
-                        Text(cursorVisible ? "█" : " ")
+                        Text(cursorVisible ? "▮" : " ")
                             .font(.system(size: 14, design: .monospaced))
                             .foregroundColor(termText)
                         Spacer()
