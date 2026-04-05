@@ -407,6 +407,28 @@ extension AgentViewModel {
             }
             let maxIter = input["max_iterations"] as? Int ?? 15
             return spawnSubAgent(name: name, prompt: prompt, toolGroups: toolGroups, maxIterations: maxIter)
+        // WebFetch — read content from any URL
+        case "web_fetch":
+            let urlStr = input["url"] as? String ?? ""
+            guard let url = URL(string: urlStr) else { return "Error: invalid URL '\(urlStr)'" }
+            appendLog("🌐 Fetch: \(urlStr)")
+            flushLog()
+            do {
+                let (data, response) = try await URLSession.shared.data(from: url)
+                let httpResponse = response as? HTTPURLResponse
+                let statusCode = httpResponse?.statusCode ?? 0
+                guard (200..<400).contains(statusCode) else {
+                    return "Error: HTTP \(statusCode) for \(urlStr)"
+                }
+                let text = String(data: data, encoding: .utf8) ?? "(binary data, \(data.count) bytes)"
+                // Strip HTML tags for cleaner output
+                let stripped = text.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+                let capped = String(stripped.prefix(8000))
+                let truncNote = stripped.count > 8000 ? "\n\n... [truncated — \(stripped.count) chars total]" : ""
+                return capped + truncNote
+            } catch {
+                return "Error fetching \(urlStr): \(error.localizedDescription)"
+            }
         // Inter-agent messaging — send message to a running sub-agent
         case "send_message_to_agent":
             let to = input["to"] as? String ?? ""
