@@ -325,6 +325,7 @@ struct ThinkingIndicatorView: View {
                 // Reset timer and auto-expand when LLM starts
                 tab.taskStartDate = Date()
                 tab._taskElapsedFrozen = 0
+                userDragged = false  // Reset so auto-grow works on new task
                 withAnimation(.easeInOut(duration: 0.2)) {
                     isExpanded = true
                     showStreamText = true
@@ -345,6 +346,7 @@ struct ThinkingIndicatorView: View {
             if newValue {
                 viewModel.mainTaskStartDate = Date()
                 viewModel.mainTaskElapsed = 0
+                userDragged = false  // Reset so auto-grow works on new task
                 withAnimation(.easeInOut(duration: 0.2)) {
                     isExpanded = true
                     showStreamText = true
