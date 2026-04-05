@@ -626,8 +626,9 @@ private struct LLMOutputBox: View {
                 .onHover { inside in
                     if inside { NSCursor.resizeUpDown.push() } else { NSCursor.pop() }
                 }
-                .gesture(
-                    DragGesture(minimumDistance: 2)
+                .contentShape(Rectangle())
+                .highPriorityGesture(
+                    DragGesture(minimumDistance: 2, coordinateSpace: .local)
                         .onChanged { value in
                             if !userDragged {
                                 userDragged = true
