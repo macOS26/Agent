@@ -127,7 +127,7 @@ struct HeaderToolbarButtons: View {
 
         Button { showCodingPrefs.toggle() } label: {
             Image(systemName: "chevron.left.forwardslash.chevron.right")
-                .foregroundStyle(viewModel.autoVerifyEnabled || viewModel.visualTestsEnabled ? Color.cyan : Color.secondary)
+                .foregroundStyle(viewModel.autoVerifyEnabled || viewModel.visualTestsEnabled || viewModel.autoPREnabled || viewModel.autoScaffoldEnabled ? Color.green : Color.secondary)
         }
         .help("Coding Preferences")
         .accessibilityLabel("Coding Preferences")
