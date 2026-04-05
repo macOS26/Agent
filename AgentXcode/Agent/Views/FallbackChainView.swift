@@ -109,11 +109,24 @@ struct FallbackChainView: View {
                     .labelsHidden()
                     .frame(width: 110)
 
-                    TextField("Model name", text: $selectedModel)
-                        .textFieldStyle(.roundedBorder)
+                    let models = modelsForProvider(selectedProvider)
+                    if models.isEmpty {
+                        TextField("Model name", text: $selectedModel)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 140)
+                            .onAppear { selectedModel = defaultModel(for: selectedProvider) }
+                            .onChange(of: selectedProvider) { _, newP in selectedModel = defaultModel(for: newP) }
+                    } else {
+                        Picker("", selection: $selectedModel) {
+                            ForEach(models, id: \.self) { model in
+                                Text(shortModel(model)).tag(model)
+                            }
+                        }
+                        .labelsHidden()
                         .frame(width: 140)
-                        .onAppear { selectedModel = defaultModel(for: selectedProvider) }
-                        .onChange(of: selectedProvider) { _, newP in selectedModel = defaultModel(for: newP) }
+                        .onAppear { if selectedModel.isEmpty { selectedModel = models.first ?? "" } }
+                        .onChange(of: selectedProvider) { _, _ in selectedModel = modelsForProvider(selectedProvider).first ?? defaultModel(for: selectedProvider) }
+                    }
 
                     Button {
                         guard !selectedModel.isEmpty else { return }
@@ -152,6 +165,25 @@ struct FallbackChainView: View {
         }
         .padding(.bottom, 15)
         .frame(width: 380)
+    }
+
+    /// Get available models for a provider from the ViewModel's fetched lists.
+    private func modelsForProvider(_ provider: APIProvider) -> [String] {
+        switch provider {
+        case .claude: return viewModel.availableClaudeModels.map(\.id)
+        case .openAI: return viewModel.openAIModels.map(\.id)
+        case .ollama: return viewModel.ollamaModels.map(\.name)
+        case .localOllama: return viewModel.localOllamaModels.map(\.name)
+        default: return []  // Other providers use text field
+        }
+    }
+
+    private func shortModel(_ model: String) -> String {
+        let parts = model.components(separatedBy: "-")
+        if parts.count > 3, let last = parts.last, last.count == 8, Int(last) != nil {
+            return parts.dropLast().joined(separator: "-")
+        }
+        return model
     }
 
     private func defaultModel(for provider: APIProvider) -> String {
