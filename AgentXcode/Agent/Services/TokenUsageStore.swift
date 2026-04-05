@@ -45,11 +45,11 @@ struct TokenBudgetTracker {
         return isDiminishing
     }
 
-    /// Diminishing returns: 3+ turns where the last two each produced < 500 output tokens.
+    /// Diminishing returns: 5+ turns where the last two each produced < 100 output tokens.
     /// Only meaningful when a budget ceiling is set.
     var isDiminishing: Bool {
         guard ceiling > 0 else { return false }
-        return turnCount >= 3 && lastDeltaTokens < 500 && prevDeltaTokens < 500
+        return turnCount >= 5 && lastDeltaTokens < 100 && prevDeltaTokens < 100
     }
 
     /// Human-readable budget status for logging.
