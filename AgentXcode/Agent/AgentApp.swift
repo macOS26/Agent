@@ -54,10 +54,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // This ensures the UserDefaults keys exist before any isRestricted() checks
         _ = AccessibilityEnabled.shared
 
-        // Insert 🦾 Agents menu before File (position 1, after app menu)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-            self?.insertAgentsMenu()
+        // Insert 🦾 Agents menu — retry up to 5 times in case menu isn't ready
+        func tryInsert(attempt: Int = 0) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(attempt + 1) * 0.2) { [weak self] in
+                self?.insertAgentsMenu()
+                // Verify it was inserted, retry if not
+                if attempt < 4,
+                   let menu = NSApplication.shared.mainMenu,
+                   !menu.items.contains(where: { $0.title.contains("Agents") }) {
+                    tryInsert(attempt: attempt + 1)
+                }
+            }
         }
+        tryInsert()
     }
 
     @MainActor private func insertAgentsMenu() {
