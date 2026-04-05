@@ -30,12 +30,6 @@ extension AgentViewModel {
         displayedLLMOutput = ""
         dripDisplayIndex = 0
 
-        // Add 5 blank lines before first task only (pushes startup messages up)
-        if !activityLog.contains("New Task") && activityLog.contains("Warming up") {
-            logBuffer += "\n\n\n\n\n"
-        } else if !activityLog.isEmpty {
-            logBuffer += "\n"
-        }
         trimToRecentTasks()
         taskInputTokens = 0
         taskOutputTokens = 0

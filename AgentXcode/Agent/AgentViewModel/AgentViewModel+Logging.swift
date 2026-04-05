@@ -264,6 +264,19 @@ extension AgentViewModel {
         // Store in SwiftData
         ChatHistoryStore.shared.appendMessage(formattedMessage)
 
+        // First "New Task" in this log — push startup messages up with 5 blank lines
+        let log = activityLog + logBuffer
+        if message.contains("New Task") && !log.contains("New Task") {
+            logBuffer += "\n\n\n\n\n"
+        }
+
+        // Strip trailing blank lines before Cancelled (no double-spacing)
+        if message.contains("Cancelled") {
+            while logBuffer.hasSuffix("\n\n") {
+                logBuffer.removeLast()
+            }
+        }
+
         // Ensure timestamp always starts on a new line
         if !logBuffer.isEmpty && !logBuffer.hasSuffix("\n") {
             logBuffer += "\n"

@@ -204,6 +204,20 @@ final class ScriptTab: Identifiable {
 
     func appendLog(_ message: String) {
         let timestamp = AgentViewModel.timestampFormatter.string(from: Date())
+
+        // First "New Task" in this tab — push startup messages up
+        let log = activityLog + logBuffer
+        if message.contains("New Task") && !log.contains("New Task") {
+            logBuffer += "\n\n\n\n\n"
+        }
+
+        // Strip trailing blank lines before Cancelled
+        if message.contains("Cancelled") {
+            while logBuffer.hasSuffix("\n\n") {
+                logBuffer.removeLast()
+            }
+        }
+
         // Ensure timestamp always starts on a new line
         if !logBuffer.isEmpty && !logBuffer.hasSuffix("\n") {
             logBuffer += "\n"
