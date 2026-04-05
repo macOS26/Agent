@@ -3,7 +3,7 @@ import AgentTools
 
 struct ToolsView: View {
     @Binding var selectedProvider: APIProvider
-    var viewModel: AgentViewModel?
+    @Bindable var viewModel: AgentViewModel
     @Bindable var prefs = ToolPreferencesService.shared
     @State private var collapsedGroups: Set<String> = []
     
@@ -37,6 +37,8 @@ struct ToolsView: View {
                     }
                 }
                 .pickerStyle(.menu)
+
+                modelPicker
             }
             .padding()
             .padding(.bottom, 4)
@@ -70,20 +72,17 @@ struct ToolsView: View {
                                             }
                                         }
                                         // Sync service group toggles with launch agent/daemon
-                                        if let vm = viewModel {
-                                            if groupName == Tool.Group.user {
-                                                vm.userEnabled = enabled
-                                            } else if groupName == Tool.Group.root {
-                                                vm.rootEnabled = enabled
-                                            }
+                                        if groupName == Tool.Group.user {
+                                            viewModel.userEnabled = enabled
+                                        } else if groupName == Tool.Group.root {
+                                            viewModel.rootEnabled = enabled
                                         }
                                     },
                                     onToolToggled: (groupName == Tool.Group.user || groupName == Tool.Group.root) ? { toolName, enabled in
-                                        guard let vm = viewModel else { return }
                                         if toolName == "execute_agent_command" {
-                                            vm.userEnabled = enabled
+                                            viewModel.userEnabled = enabled
                                         } else if toolName == "execute_daemon_command" {
-                                            vm.rootEnabled = enabled
+                                            viewModel.rootEnabled = enabled
                                         }
                                     } : nil
                                 )
@@ -123,6 +122,82 @@ struct ToolsView: View {
         .frame(maxHeight: 660)
     }
     
+    // MARK: - Model Picker
+
+    private var modelBinding: Binding<String> {
+        switch selectedProvider {
+        case .claude: return $viewModel.selectedModel
+        case .openAI: return $viewModel.openAIModel
+        case .deepSeek: return $viewModel.deepSeekModel
+        case .huggingFace: return $viewModel.huggingFaceModel
+        case .ollama: return $viewModel.ollamaModel
+        case .localOllama: return $viewModel.localOllamaModel
+        case .vLLM: return $viewModel.vLLMModel
+        case .lmStudio: return $viewModel.lmStudioModel
+        case .zAI: return $viewModel.zAIModel
+        case .bigModel: return $viewModel.bigModelModel
+        case .qwen: return $viewModel.qwenModel
+        case .gemini: return $viewModel.geminiModel
+        case .grok: return $viewModel.grokModel
+        case .mistral: return $viewModel.mistralModel
+        case .codestral: return $viewModel.codestralModel
+        case .vibe: return $viewModel.vibeModel
+        case .foundationModel: return .constant("Apple Intelligence")
+        }
+    }
+
+    /// Normalized (id, name) list for the current provider's models.
+    private var modelOptions: [(id: String, name: String)] {
+        func oai(_ fetched: [AgentViewModel.OpenAIModelInfo], _ defaults: [AgentViewModel.OpenAIModelInfo]) -> [(id: String, name: String)] {
+            let models = fetched.isEmpty ? defaults : fetched
+            return models.map { ($0.id, $0.name) }
+        }
+        switch selectedProvider {
+        case .claude:
+            let models = viewModel.availableClaudeModels.isEmpty ? AgentViewModel.defaultClaudeModels : viewModel.availableClaudeModels
+            return models.map { ($0.id, $0.formattedDisplayName) }
+        case .openAI:     return oai(viewModel.openAIModels, AgentViewModel.defaultOpenAIModels)
+        case .deepSeek:   return oai(viewModel.deepSeekModels, AgentViewModel.defaultDeepSeekModels)
+        case .huggingFace: return oai(viewModel.huggingFaceModels, AgentViewModel.defaultHuggingFaceModels)
+        case .zAI:        return oai(viewModel.zAIModels, AgentViewModel.defaultZAIModels)
+        case .qwen:       return oai(viewModel.qwenModels, AgentViewModel.defaultQwenModels)
+        case .gemini:     return oai(viewModel.geminiModels, AgentViewModel.defaultGeminiModels)
+        case .grok:       return oai(viewModel.grokModels, AgentViewModel.defaultGrokModels)
+        case .mistral:    return oai(viewModel.mistralModels, AgentViewModel.defaultMistralModels)
+        case .codestral:  return oai(viewModel.codestralModels, AgentViewModel.defaultCodestralModels)
+        case .vibe:       return oai(viewModel.vibeModels, AgentViewModel.defaultVibeModels)
+        case .ollama:
+            let models = viewModel.ollamaModels.isEmpty ? AgentViewModel.defaultOllamaModels : viewModel.ollamaModels
+            return models.map { ($0.name, $0.name) }
+        case .localOllama:
+            return viewModel.localOllamaModels.map { ($0.name, $0.name) }
+        case .vLLM:       return viewModel.vLLMModels.map { ($0.id, $0.name) }
+        case .lmStudio:   return viewModel.lmStudioModels.map { ($0.id, $0.name) }
+        case .bigModel:   return []
+        case .foundationModel:
+            return [("Apple Intelligence", "Apple Intelligence")]
+        }
+    }
+
+    @ViewBuilder
+    private var modelPicker: some View {
+        let options = modelOptions
+        if options.isEmpty {
+            Picker("Model", selection: modelBinding) {
+                Text(modelBinding.wrappedValue.isEmpty ? "No model" : modelBinding.wrappedValue)
+                    .tag(modelBinding.wrappedValue)
+            }
+            .pickerStyle(.menu)
+        } else {
+            Picker("Model", selection: modelBinding) {
+                ForEach(options, id: \.id) { option in
+                    Text(option.name).tag(option.id)
+                }
+            }
+            .pickerStyle(.menu)
+        }
+    }
+
     private func toggleGroup(_ groupName: String) {
         withAnimation(.easeInOut(duration: 0.15)) {
             if collapsedGroups.contains(groupName) {
