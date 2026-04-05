@@ -46,12 +46,12 @@ extension AgentViewModel {
             WEB (action-based):
             - web (action: search, open, find, click, type, read_content, navigate, etc.): Browser automation
 
-            DIRECT TOOLS (no action parameter):
-            - execute_agent_command: Run shell commands as current user
-            - execute_daemon_command: Run shell commands as root (troubleshooting, diagnostics)
-            - batch_commands: Run multiple shell commands in one call
-            - batch_tools: Run multiple tool calls in one batch
-            - plan_mode (action: create, update, read, list, delete): Task planning
+            SHELL & PLANNING:
+            - sh: Run shell commands via User Space Launch Agent (prefer this)
+            - root: Run as root via privileged daemon (LAST RESORT)
+            - batch: Run multiple shell commands in one call
+            - multi: Run multiple tool calls in one batch
+            - plan (action: create, update, read, list, delete): Task planning
 
             CONVERSATION (action-based):
             - conversation (action: write, transform, fix, about): Text generation, formatting, corrections, self-description
@@ -159,13 +159,14 @@ extension AgentViewModel {
             - read_content: Extract page content
             - execute_js: Run JavaScript in browser
 
-            SYSTEM TROUBLESHOOTING:
-            - execute_agent_command: Shell commands as current user
-            - execute_daemon_command: Root-level diagnostics (system logs, disk health, network, launchd services)
+            SHELL (LEAST PRIVILEGE):
+            - sh: Shell commands via User Space Launch Agent (always try this first)
+            - root: Privileged daemon — LAST RESORT only when user-space cannot do the job
 
             SECURITY:
             All automation inherits Agent!'s TCC permissions
             No additional permission prompts needed
+            Always operate under least privilege — escalate only when necessary
             """
             
         case "coding":
@@ -201,34 +202,37 @@ extension AgentViewModel {
             aboutText = """
             \(detailPrefix) Agent! for macOS 26
 
-            I'm Agent! — an open-source autonomous AI that lives on your Mac. I don't just answer questions. I act. Give me a goal and I'll figure out the tools, the steps, and the execution. No hand-holding required.
+            I'm Agent! — an open-source autonomous AI that lives on your Mac. I act autonomously under least privilege. I use my User Space Launch Agent for shell commands, Accessibility API for UI automation, AppleScript and ScriptingBridge for app control, and Swift AgentScripts for complex workflows. Root access via the privileged Launch Daemon is a last resort — only for operations that truly require it.
 
-            I THINK, PLAN, AND EXECUTE:
-            - Break complex tasks into steps and work through them
-            - Choose the right tool for each job automatically
-            - Recover from errors and try alternative approaches
-            - Chain multiple operations without stopping
+            USER SPACE LAUNCH AGENT (primary):
+            - Shell commands (find, grep, git, build tools) run as the current user
+            - No privilege escalation needed for everyday development tasks
+            - Full TCC permissions inherited from Agent!
 
-            I WRITE AND SHIP CODE:
-            - Read, edit, and create files across your entire project
-            - Build Xcode projects and fix compiler errors in a loop
-            - Manage git — branches, commits, diffs, patches
-            - Run shell commands as you or as root via privileged daemon
+            AUTOMATION & SCRIPTING:
+            - Accessibility API: click, type, navigate any app's UI elements
+            - AppleScript: in-process NSAppleScript with full TCC permissions
+            - JavaScript for Automation (JXA): scriptable apps via OSA
+            - ScriptingBridge: native Swift bridges to 50+ macOS apps (Xcode, Safari, Finder, Mail, etc.)
+            - AgentScripts: compiled Swift dylibs at ~/Documents/AgentScript/agents/
 
-            I CONTROL YOUR MAC:
-            - Drive any app through Accessibility (click, type, navigate)
-            - Run AppleScript and JavaScript for Automation with full TCC
-            - Automate Safari — search, click, fill forms, extract data
-            - Send iMessages, read calendars, play music, control system settings
+            CODE & BUILD:
+            - Read, edit, and create files with automatic backup and undo
+            - Build and run Xcode projects, fix compiler errors in a loop
+            - Git version control — branches, commits, diffs, patches
+            - Code analysis, refactoring, and snippet extraction
 
-            I WORK WITH 13 AI PROVIDERS:
-            Claude, OpenAI, Gemini, Grok, Mistral, Codestral, Mistral Vibe, DeepSeek, Hugging Face, Z.ai, Ollama, LM Studio, and Apple Intelligence — all with tool calling, streaming, and vision support.
+            WEB & RESEARCH:
+            - Safari automation — search, click, fill forms, extract content
+            - Web search via Tavily or Claude native search
+            - MCP server integration for extended capabilities
 
-            I PROTECT YOUR WORK:
-            - File backups before every edit (automatic restore)
-            - Full audit logging via OSLog (Console.app)
-            - All data stays on your Mac — no telemetry, no uploads
-            - API keys stored in macOS Keychain
+            PRIVILEGED DAEMON (last resort):
+            - Root-level commands only when user-space cannot do the job
+            - System diagnostics, disk health, launchd service management
+
+            MULTI-PROVIDER AI:
+            Claude, OpenAI, Gemini, Grok, Mistral, Codestral, Mistral Vibe, DeepSeek, Hugging Face, Z.ai, BigModel, Qwen, Ollama, LM Studio, and Apple Intelligence — all with tool calling, streaming, and vision.
 
             RIGHT NOW:
             - Project: \(projectFolder.isEmpty ? "(none)" : projectFolder)
