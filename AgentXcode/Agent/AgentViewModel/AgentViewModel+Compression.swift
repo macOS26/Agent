@@ -14,11 +14,12 @@ struct CompactionState {
 
     /// Max consecutive failures before circuit breaker trips.
     static let maxFailures = 3
-    /// Default buffer — compact when estimated tokens exceed (contextWindow - buffer).
-    static let defaultBuffer = 13_000
+    /// Compact when accumulated messages exceed this token estimate.
+    /// Lower = more aggressive compaction = fewer input tokens wasted.
+    static let defaultThreshold = 30_000
 
     init(contextWindow: Int = 200_000) {
-        self.compactThreshold = contextWindow - Self.defaultBuffer
+        self.compactThreshold = Self.defaultThreshold
     }
 
     /// True if we should attempt compaction for the given estimated token count.
