@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AgentOptionsView: View {
     @Bindable var viewModel: AgentViewModel
+    @State private var showFallbackChain = false
 
     private var temperatureBinding: Binding<Double> {
         switch viewModel.selectedProvider {
@@ -271,14 +272,17 @@ struct AgentOptionsView: View {
                     .controlSize(.small)
                     .labelsHidden()
 
-                    if FallbackChainService.shared.enabled {
-                        Text("\(FallbackChainService.shared.chain.filter(\.enabled).count) providers")
+                    Button {
+                        showFallbackChain = true
+                    } label: {
+                        let count = FallbackChainService.shared.chain.filter(\.enabled).count
+                        Text(count > 0 ? "\(count) providers" : "Configure")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Text("Off")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(count > 0 ? Color.secondary : Color.blue)
+                    }
+                    .buttonStyle(.plain)
+                    .popover(isPresented: $showFallbackChain) {
+                        FallbackChainView(viewModel: viewModel)
                     }
                 }
             }

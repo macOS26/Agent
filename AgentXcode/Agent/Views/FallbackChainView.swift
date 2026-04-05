@@ -1,0 +1,170 @@
+import SwiftUI
+import AgentTools
+
+/// Editor for the model fallback chain — users pick ordered provider/model pairs.
+struct FallbackChainView: View {
+    @Bindable var viewModel: AgentViewModel
+    @State private var selectedProvider: APIProvider = .claude
+    @State private var selectedModel: String = ""
+
+    private var service: FallbackChainService { FallbackChainService.shared }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Header
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Fallback Chain")
+                        .font(.headline)
+                    Spacer()
+                    Toggle("", isOn: Binding(
+                        get: { service.enabled },
+                        set: { service.enabled = $0 }
+                    ))
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .labelsHidden()
+                }
+                Text("When the primary LLM fails 3 times, auto-switch to the next provider. Drag to reorder.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding()
+
+            Divider()
+
+            // Chain entries
+            if service.chain.isEmpty {
+                VStack(spacing: 8) {
+                    Text("No fallback providers configured.")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 20)
+                }
+            } else {
+                ForEach(Array(service.chain.enumerated()), id: \.element.id) { index, entry in
+                    VStack(spacing: 0) {
+                        Divider()
+                        HStack(spacing: 8) {
+                            Text("\(index + 1).")
+                                .font(.caption.monospacedDigit())
+                                .foregroundStyle(.secondary)
+                                .frame(width: 20)
+
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(APIProvider(rawValue: entry.provider)?.displayName ?? entry.provider)
+                                    .font(.subheadline.weight(.medium))
+                                Text(entry.model)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                            }
+
+                            Spacer()
+
+                            // Active indicator
+                            if service.currentIndex == index {
+                                Text("active")
+                                    .font(.caption2)
+                                    .foregroundStyle(.green)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.green.opacity(0.15))
+                                    .clipShape(Capsule())
+                            }
+
+                            Toggle("", isOn: Binding(
+                                get: { entry.enabled },
+                                set: { _ in service.toggle(id: entry.id) }
+                            ))
+                            .toggleStyle(.switch)
+                            .controlSize(.mini)
+                            .labelsHidden()
+
+                            Button {
+                                service.remove(id: entry.id)
+                            } label: {
+                                Image(systemName: "minus.circle.fill")
+                                    .foregroundStyle(.red.opacity(0.7))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.vertical, 6)
+                        .padding(.horizontal)
+                    }
+                }
+            }
+
+            // Add new entry
+            VStack(spacing: 0) {
+                Divider()
+                HStack(spacing: 8) {
+                    Picker("", selection: $selectedProvider) {
+                        ForEach(APIProvider.selectableProviders, id: \.self) { p in
+                            Text(p.displayName).tag(p)
+                        }
+                    }
+                    .labelsHidden()
+                    .frame(width: 110)
+
+                    TextField("Model name", text: $selectedModel)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 140)
+                        .onAppear { selectedModel = defaultModel(for: selectedProvider) }
+                        .onChange(of: selectedProvider) { _, newP in selectedModel = defaultModel(for: newP) }
+
+                    Button {
+                        guard !selectedModel.isEmpty else { return }
+                        service.add(provider: selectedProvider.rawValue, model: selectedModel)
+                        selectedModel = ""
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundStyle(.green)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.vertical, 8)
+                .padding(.horizontal)
+            }
+
+            // Footer
+            if !service.chain.isEmpty {
+                VStack(spacing: 0) {
+                    Divider()
+                    HStack {
+                        Text("\(service.chain.filter(\.enabled).count) of \(service.chain.count) enabled")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Clear All") {
+                            service.clear()
+                        }
+                        .font(.caption)
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.red.opacity(0.7))
+                    }
+                    .padding(.vertical, 6)
+                    .padding(.horizontal)
+                }
+            }
+        }
+        .padding(.bottom, 15)
+        .frame(width: 380)
+    }
+
+    private func defaultModel(for provider: APIProvider) -> String {
+        switch provider {
+        case .claude: return "claude-sonnet-4-20250514"
+        case .openAI: return "gpt-4o"
+        case .ollama, .localOllama: return "llama3"
+        case .deepSeek: return "deepseek-chat"
+        case .gemini: return "gemini-2.5-flash"
+        case .grok: return "grok-3"
+        case .mistral: return "mistral-large-latest"
+        case .zAI: return "glm-4-plus"
+        default: return ""
+        }
+    }
+}

@@ -64,6 +64,12 @@ final class FallbackChainService {
         chain.removeAll { $0.id == id }
     }
 
+    func toggle(id: UUID) {
+        if let idx = chain.firstIndex(where: { $0.id == id }) {
+            chain[idx].enabled.toggle()
+        }
+    }
+
     func move(from: IndexSet, to: Int) {
         chain.move(fromOffsets: from, toOffset: to)
     }
