@@ -449,3 +449,29 @@ MIT - free and open source.
 ### **Agent! for macOS 26 - Agentic AI for your  Mac Desktop**
 > Note: Claude refers to the Anthropic AI model integrated into Agent! for LLM functionality. It is not a human contributor Agent!
 </div>
+
+---
+
+## Agent! vs Claude Code — Architectural Comparison
+
+Agent! is a 100% original pure Swift macOS application. It is not a port, fork, or derivative of any other project.
+
+| | Claude Code | Agent! |
+|---|---|---|
+| **Language** | TypeScript/JavaScript | Pure Swift 6.2 |
+| **UI Framework** | Ink (terminal React) | SwiftUI (native macOS) |
+| **Platform** | CLI — Linux, macOS, Windows | Native macOS 26 only |
+| **Runtime** | Node.js/Bun | Native compiled binary |
+| **Architecture** | Terminal REPL with streaming | Desktop app with XPC daemons |
+| **Accessibility** | None (CLI) | Full macOS AX via AXorcist (30+ actions) |
+| **AppleScript** | None | Full NSAppleScript + JXA |
+| **Xcode Integration** | None | Native build/run/analyze |
+| **Apple Intelligence** | None | FoundationModels on-device |
+| **ScriptingBridge** | None | Full SDEF + event bridges |
+| **Vision/Screenshots** | None | Auto-verification after UI actions |
+| **iMessage** | None | Remote agent via Messages |
+| **UI** | Terminal text | Native SwiftUI with CRT shader |
+| **Privilege Model** | User sandbox | XPC Launch Agent + Daemon |
+| **Sub-agents** | Fork-based with shared cache | Independent tasks with mailbox |
+| **MCP** | Node.js stdio/SSE | Swift AgentMCP package |
+| **Scripts** | None | Swift dylib compilation at runtime |
