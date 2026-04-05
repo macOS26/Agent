@@ -548,6 +548,7 @@ private struct LLMOutputBox: View {
                 if !displayText.isEmpty {
                     TerminalNeoTextView(text: displayText) { _ in
                         // Line-count-based height — avoids NSTextTable usedRect overestimation
+                        guard dragStartHeight == 0 else { return }
                         let lineCount = CGFloat(displayText.components(separatedBy: "\n").count)
                         let lineH: CGFloat = 24
                         let proposed = min(max(minHeight, lineCount * lineH + 24), maxHeight)
