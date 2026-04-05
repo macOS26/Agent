@@ -192,6 +192,63 @@ extension AgentViewModel {
 
             return true
 
+        // MARK: git_worktree
+        case "git_worktree":
+            let path = input["path"] as? String
+            let action = input["action"] as? String ?? "list"
+            let branchName = input["name"] as? String ?? ""
+            if let pathErr = Self.checkPath(path) {
+                appendLog(pathErr)
+                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": pathErr])
+                return true
+            }
+            let dir = CodingService.resolveDir(path)
+
+            switch action {
+            case "create":
+                guard !branchName.isEmpty else {
+                    let err = "Error: 'name' is required to create a worktree."
+                    toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
+                    return true
+                }
+                // Sanitize branch name
+                let sanitized = branchName.replacingOccurrences(of: "[^a-zA-Z0-9._-]", with: "-", options: .regularExpression)
+                let wtPath = "\(dir)/.agent-worktrees/\(sanitized)"
+                appendLog("🌳 Creating worktree: \(sanitized)")
+                flushLog()
+                let cmd = "mkdir -p \"\(dir)/.agent-worktrees\" && git worktree add -b \"\(sanitized)\" \"\(wtPath)\" 2>&1"
+                let result = await executeViaUserAgent(command: cmd, workingDirectory: dir)
+                let output = result.status == 0 ? "Worktree created at \(wtPath) on branch \(sanitized)" : result.output
+                commandsRun.append("git_worktree: create \(sanitized)")
+                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                return true
+
+            case "remove":
+                guard !branchName.isEmpty else {
+                    let err = "Error: 'name' is required to remove a worktree."
+                    toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
+                    return true
+                }
+                let wtPath = "\(dir)/.agent-worktrees/\(branchName)"
+                appendLog("🌳 Removing worktree: \(branchName)")
+                flushLog()
+                let cmd = "git worktree remove \"\(wtPath)\" --force 2>&1"
+                let result = await executeViaUserAgent(command: cmd, workingDirectory: dir)
+                let output = result.status == 0 ? "Worktree '\(branchName)' removed" : result.output
+                commandsRun.append("git_worktree: remove \(branchName)")
+                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                return true
+
+            default: // list
+                appendLog("🌳 Listing worktrees")
+                flushLog()
+                let cmd = "git worktree list 2>&1"
+                let result = await executeViaUserAgent(command: cmd, workingDirectory: dir)
+                let output = result.output.isEmpty ? "No worktrees" : result.output
+                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+                return true
+            }
+
         default:
         return false
         }
