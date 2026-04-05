@@ -208,7 +208,7 @@ struct SettingsView: View {
                                     ForEach(viewModel.zAIModels) { model in
                                         HStack(spacing: 4) {
                                             Text(model.name)
-                                            if model.id.lowercased().contains("4.5v") || model.id.lowercased().contains("4.6v") || model.id.lowercased().contains("5v") {
+                                            if model.id.range(of: #"\d+\.?\d*v"#, options: [.regularExpression, .caseInsensitive]) != nil {
                                                 Image(systemName: "eye")
                                                     .foregroundStyle(.blue)
                                                     .font(.caption2)

@@ -506,7 +506,8 @@ final class AgentViewModel {
         OpenAIModelInfo(id: "glm-4.5-airx", name: "GLM-4.5 AirX"),
         OpenAIModelInfo(id: "glm-4.5-flash", name: "GLM-4.5 Flash (Free)"),
         OpenAIModelInfo(id: "glm-4.7-flash", name: "GLM-4.7 Flash (Free)"),
-        // Vision models
+        // Vision models (use general endpoint, not coding)
+        OpenAIModelInfo(id: "glm-5v-turbo", name: "GLM-5V Turbo (Vision)"),
         OpenAIModelInfo(id: "glm-4.6v", name: "GLM-4.6V (Vision)"),
         OpenAIModelInfo(id: "glm-4.5v", name: "GLM-4.5V (Vision)"),
         OpenAIModelInfo(id: "glm-4.6v-flashx", name: "GLM-4.6V FlashX"),

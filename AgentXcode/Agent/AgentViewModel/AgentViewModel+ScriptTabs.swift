@@ -103,10 +103,11 @@ extension AgentViewModel {
     /// Z.ai and BigModel swap to coding endpoint for non-vision models.
     func chatURLForProvider(_ provider: APIProvider) -> String {
         guard let url = LLMRegistry.shared.provider(provider.rawValue)?.endpoint.chatURL else { return "" }
-        // Z.ai/BigModel: use coding endpoint for non-vision text models (GLM-5, GLM-5.1, etc.)
+        // Z.ai/BigModel: coding endpoint for text models, general endpoint for vision models
+        // Vision models have "v" after version number (e.g. glm-4.5v, glm-4.6v-flash)
         if provider == .zAI || provider == .bigModel {
             let model = globalModelForProvider(provider).lowercased()
-            let isVisionModel = model.contains("4.5v") || model.contains("4.6v") || model.contains("5v")
+            let isVisionModel = model.range(of: #"\d+\.?\d*v"#, options: .regularExpression) != nil
             if !isVisionModel {
                 return url.replacingOccurrences(of: "/api/paas/", with: "/api/coding/paas/")
             }

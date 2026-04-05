@@ -379,9 +379,24 @@ extension AgentViewModel {
     }
 
     private nonisolated static func fetchZAIModelsFromAPI(apiKey: String) async throws -> [OpenAIModelInfo] {
-        guard let url = URL(string: "https://api.z.ai/api/coding/paas/v4/models") else {
-            throw AgentError.invalidURL
+        // Fetch from both coding and general (vision) endpoints, merge results
+        async let codingModels = fetchZAIEndpoint(apiKey: apiKey, urlString: "https://api.z.ai/api/coding/paas/v4/models")
+        async let generalModels = fetchZAIEndpoint(apiKey: apiKey, urlString: "https://api.z.ai/api/paas/v4/models")
+        let coding = (try? await codingModels) ?? []
+        let general = (try? await generalModels) ?? []
+        // Merge and deduplicate — general endpoint has vision models
+        var seen = Set<String>()
+        var merged: [OpenAIModelInfo] = []
+        for model in coding + general {
+            if seen.insert(model.id).inserted {
+                merged.append(model)
+            }
         }
+        return merged.sorted { $0.name < $1.name }
+    }
+
+    private nonisolated static func fetchZAIEndpoint(apiKey: String, urlString: String) async throws -> [OpenAIModelInfo] {
+        guard let url = URL(string: urlString) else { return [] }
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
@@ -390,13 +405,13 @@ extension AgentViewModel {
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else { return [] }
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { return [] }
         let modelsData: [[String: Any]]
-        if let data = json["data"] as? [[String: Any]] { modelsData = data }
-        else if let models = json["models"] as? [[String: Any]] { modelsData = models }
+        if let d = json["data"] as? [[String: Any]] { modelsData = d }
+        else if let m = json["models"] as? [[String: Any]] { modelsData = m }
         else { return [] }
         return modelsData.compactMap { model -> OpenAIModelInfo? in
             guard let id = model["id"] as? String else { return nil }
             return OpenAIModelInfo(id: id, name: id)
-        }.sorted { $0.name < $1.name }
+        }
     }
 
     // MARK: - Qwen (DashScope) Models
