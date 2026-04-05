@@ -116,7 +116,7 @@ struct AgentApp: App {
                     }
                 }
         }
-        .windowResizability(.contentMinSize)
+        .windowResizability(.automatic)
         .windowToolbarStyle(.unified(showsTitle: false))
         .commands {
             // Remove system Cmd+N so our shortcuts aren't hidden
