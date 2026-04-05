@@ -317,7 +317,7 @@ extension AgentViewModel {
 
             // Token-aware context compaction — replaces fixed iteration-based triggers
             if iterations > 1 {
-                await Self.tieredCompact(&messages, state: &compactionState) { [weak self] msg in
+                _ = await Self.tieredCompact(&messages, state: &compactionState) { [weak self] msg in
                     self?.appendLog(msg)
                     self?.flushLog()
                 }
