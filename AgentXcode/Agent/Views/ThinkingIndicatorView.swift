@@ -546,15 +546,27 @@ private struct LLMOutputBox: View {
         VStack(spacing: 0) {
             ZStack(alignment: .bottomTrailing) {
                 if !displayText.isEmpty {
+                    let hasTable = displayText.contains("|") && displayText.contains("---")
                     ScrollView {
-                        Text(displayText)
-                            .font(.system(size: 14, design: .monospaced))
-                            .foregroundColor(termText)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(10)
-                            .background(GeometryReader { geo in
-                                Color.clear.preference(key: ContentHeightKey.self, value: geo.size.height)
-                            })
+                        if hasTable {
+                            // NSTextView for NSTextTable rendering
+                            NSTextViewWrapper(
+                                attributedString: TerminalNeoRenderer.render(displayText),
+                                onContentHeight: { h in
+                                    if !userDragged { height = min(max(minHeight, h + 4), maxHeight) }
+                                }
+                            )
+                            .frame(maxWidth: .infinity)
+                        } else {
+                            Text(displayText)
+                                .font(.system(size: 14, design: .monospaced))
+                                .foregroundColor(termText)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(10)
+                                .background(GeometryReader { geo in
+                                    Color.clear.preference(key: ContentHeightKey.self, value: geo.size.height)
+                                })
+                        }
                     }
                     .onPreferenceChange(ContentHeightKey.self) { h in
                         if !userDragged {
@@ -746,5 +758,35 @@ struct ToolStepsView: View {
             }
         }
         .padding(.vertical, 4)
+    }
+}
+
+// MARK: - NSTextView wrapper for NSTextTable rendering
+
+private struct NSTextViewWrapper: NSViewRepresentable {
+    let attributedString: NSAttributedString
+    var onContentHeight: ((CGFloat) -> Void)?
+
+    func makeNSView(context: Context) -> NSTextView {
+        let tv = NSTextView()
+        tv.isEditable = false
+        tv.isSelectable = true
+        tv.drawsBackground = false
+        tv.isVerticallyResizable = true
+        tv.isHorizontallyResizable = false
+        tv.textContainerInset = NSSize(width: 10, height: 10)
+        tv.textContainer?.widthTracksTextView = true
+        tv.textContainer?.lineFragmentPadding = 0
+        return tv
+    }
+
+    func updateNSView(_ tv: NSTextView, context: Context) {
+        tv.textStorage?.setAttributedString(attributedString)
+        tv.layoutManager?.ensureLayout(for: tv.textContainer!)
+        let h = tv.layoutManager?.usedRect(for: tv.textContainer!).height ?? 0
+        let total = h + tv.textContainerInset.height * 2
+        tv.frame.size.height = total
+        tv.invalidateIntrinsicContentSize()
+        onContentHeight?(total)
     }
 }
