@@ -31,14 +31,16 @@ struct ToolsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 
-                Picker("Provider", selection: $selectedProvider) {
-                    ForEach(APIProvider.selectableProviders, id: \.self) { p in
-                        Text(p.displayName).tag(p)
+                HStack {
+                    Picker("Provider", selection: $selectedProvider) {
+                        ForEach(APIProvider.selectableProviders, id: \.self) { p in
+                            Text(p.displayName).tag(p)
+                        }
                     }
-                }
-                .pickerStyle(.menu)
+                    .pickerStyle(.menu)
 
-                modelPicker
+                    modelPicker
+                }
             }
             .padding()
             .padding(.bottom, 4)
