@@ -37,12 +37,11 @@ struct TokenBudgetTracker {
         ceiling > 0 && usedFraction >= 0.9 && usedFraction < 1.0
     }
 
-    /// True when the task should auto-stop: budget exhausted or diminishing returns detected.
-    /// Only active when a budget ceiling is set (ceiling > 0).
+    /// True when the task should auto-stop: only when budget is fully exhausted.
+    /// Diminishing returns is informational only — does NOT auto-stop.
     var shouldStop: Bool {
         guard ceiling > 0 else { return false }
-        if usedFraction >= 1.0 { return true }
-        return isDiminishing
+        return usedFraction >= 1.0
     }
 
     /// Diminishing returns: 5+ turns where the last two each produced < 100 output tokens.
