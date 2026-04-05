@@ -362,6 +362,34 @@ extension AgentViewModel {
             default:
                 return "Unknown memory action. Use: read, write, append, clear, list, save, load, delete."
             }
+        // Skills — reusable prompt templates
+        case "invoke_skill":
+            let action = input["action"] as? String ?? "invoke"
+            switch action {
+            case "list":
+                return SkillsService.shared.manifest()
+            case "invoke":
+                let name = input["name"] as? String ?? ""
+                guard let skill = SkillsService.shared.load(name: name) else {
+                    return "Skill '\(name)' not found. Use action=list to see available skills."
+                }
+                return "SKILL PROMPT [\(skill.name)]:\n\(skill.content)"
+            case "save":
+                let id = input["id"] as? String ?? input["name"] as? String ?? "untitled"
+                let name = input["name"] as? String ?? id
+                let desc = input["description"] as? String ?? ""
+                let whenToUse = input["when_to_use"] as? String ?? ""
+                let content = input["content"] as? String ?? ""
+                let skill = Skill(id: id, name: name, description: desc, whenToUse: whenToUse, content: content)
+                SkillsService.shared.save(skill)
+                return "Saved skill '\(name)'."
+            case "delete":
+                let id = input["id"] as? String ?? ""
+                SkillsService.shared.delete(id: id)
+                return "Deleted skill '\(id)'."
+            default:
+                return "Unknown skill action. Use: list, invoke, save, delete."
+            }
         // Task complete — signal via NativeToolContext so the task loop can detect it
         case "task_complete":
             let summary = input["summary"] as? String ?? "Done"

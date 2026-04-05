@@ -47,6 +47,9 @@ enum Tool {
     // Memory
     static let mem = "mem"
 
+    // Skills
+    static let skill = "skill"
+
     // MARK: - Group Names
 
     enum Group {
@@ -85,5 +88,6 @@ enum Tool {
         "sdef": "lookup_sdef",
         "js": "execute_javascript",
         "mem": "memory",
+        "skill": "invoke_skill",
     ]
 }
