@@ -382,9 +382,11 @@ extension AgentViewModel {
         var seen = Set<String>()
         var result: [OpenAIModelInfo] = []
 
-        // Coding models first (no suffix — use coding endpoint)
+        // Coding models first (no suffix — use coding endpoint, name tagged -Code)
         for m in coding {
-            if seen.insert(m.id).inserted { result.append(m) }
+            if seen.insert(m.id).inserted {
+                result.append(OpenAIModelInfo(id: m.id, name: "\(m.name)-Code"))
+            }
         }
         // All spec models — text as coding, vision/image/audio as :v
         for m in specModels {
