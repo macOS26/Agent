@@ -431,7 +431,28 @@ extension AgentViewModel {
             while !Task.isCancelled {
                 if self.dripDisplayIndex < self.rawLLMOutput.count {
                     let idx = self.rawLLMOutput.index(self.rawLLMOutput.startIndex, offsetBy: self.dripDisplayIndex)
-                    self.displayedLLMOutput.append(self.rawLLMOutput[idx])
+                    let ch = self.rawLLMOutput[idx]
+
+                    // Table: dump entire table block at once — no drip, no overlap
+                    if ch == "|" {
+                        let remaining = self.rawLLMOutput[idx...]
+                        var endIdx = idx
+                        // Fast-forward through all consecutive table lines (start with |)
+                        for line in remaining.split(separator: "\n", omittingEmptySubsequences: false) {
+                            if line.trimmingCharacters(in: .whitespaces).hasPrefix("|") || line.allSatisfy({ $0 == "-" || $0 == ":" || $0 == "|" || $0 == " " }) {
+                                endIdx = self.rawLLMOutput.index(endIdx, offsetBy: line.count + 1, limitedBy: self.rawLLMOutput.endIndex) ?? self.rawLLMOutput.endIndex
+                            } else {
+                                break
+                            }
+                        }
+                        let chunk = String(self.rawLLMOutput[idx..<endIdx])
+                        self.displayedLLMOutput.append(contentsOf: chunk)
+                        self.dripDisplayIndex += chunk.count
+                        try? await Task.sleep(for: .milliseconds(self.terminalSpeed.rawValue))
+                        continue
+                    }
+
+                    self.displayedLLMOutput.append(ch)
                     self.dripDisplayIndex += 1
                     try? await Task.sleep(for: .milliseconds(self.terminalSpeed.rawValue))
                 } else if !self.streamingTextStarted {
