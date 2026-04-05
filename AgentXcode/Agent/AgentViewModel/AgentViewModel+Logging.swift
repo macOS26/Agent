@@ -262,7 +262,7 @@ extension AgentViewModel {
     static func prepareLogBuffer(message: String, buffer: inout String, existingLog: String) {
         let combined = existingLog + buffer
         if message.contains(newTaskMarker) && !combined.contains(newTaskMarker) {
-            buffer += "\n\n\n\n\n"
+            buffer += String(repeating: "\n", count: 8)
         }
         if message.contains("Cancelled") {
             while buffer.hasSuffix("\n\n") { buffer.removeLast() }
