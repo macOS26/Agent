@@ -535,7 +535,7 @@ private struct LLMOutputBox: View {
         let windowH = NSApp.keyWindow?.frame.height
             ?? NSScreen.main?.visibleFrame.height
             ?? 800
-        return windowH * 0.60
+        return min(windowH * 0.60, 400)
     }
 
     var body: some View {
@@ -548,7 +548,7 @@ private struct LLMOutputBox: View {
                 if !displayText.isEmpty {
                     ScrollViewReader { proxy in
                         ScrollView {
-                            Text(displayText)
+                            Text(Self.richText(displayText, color: termText, dimColor: termDim, headerColor: .white))
                                 .font(.system(size: 14, design: .monospaced))
                                 .foregroundColor(termText)
                                 .frame(maxWidth: .infinity, alignment: .leading)

@@ -224,9 +224,7 @@ extension AgentViewModel {
             || lower.contains("automation")
             || lower.contains("agentscript")
             || lower.contains("appleevent")
-            || lower.contains("tccutil")
             || lower.contains("automator")
-            || lower.contains("/Library/Application Support/com.apple.TCC")
     }
 
 }
