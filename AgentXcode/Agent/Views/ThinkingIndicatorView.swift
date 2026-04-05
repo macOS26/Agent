@@ -387,7 +387,6 @@ private struct LLMOutputBox: View {
     var maxHeight: CGFloat = 600
     var onDismiss: (() -> Void)?
     @State private var cursorVisible = true
-    @State private var dragStartHeight: CGFloat = 80
 
     private var termBg: Color {
         colorScheme == .dark
@@ -563,9 +562,8 @@ private struct LLMOutputBox: View {
                                 .id("bottom")
                         }
                         .onPreferenceChange(ContentHeightKey.self) { h in
-                            let ideal = min(max(minHeight, h + 4), maxHeight)
-                            if ideal > height || !userDragged {
-                                height = ideal
+                            if !userDragged {
+                                height = min(max(minHeight, h + 4), maxHeight)
                             }
                         }
                         .onChange(of: displayText) {
@@ -578,7 +576,7 @@ private struct LLMOutputBox: View {
                             ScanlineOverlay(spacing: 4, color: .green, opacity: 0.112, blurRadius: 0.25)
                         }
                     }
-                    .frame(height: max(minHeight, min(height, maxHeight)))
+                    .frame(height: min(height, maxHeight))
                 } else {
                     HStack(spacing: 0) {
                         Text("AGENT! > ")
@@ -597,6 +595,7 @@ private struct LLMOutputBox: View {
                         }
                     }
                     .frame(maxWidth: .infinity, minHeight: 40, alignment: .topLeading)
+                    .onAppear { height = minHeight }
                 }
 
                 // Dismiss button — overlaid bottom right, no extra space
@@ -633,14 +632,8 @@ private struct LLMOutputBox: View {
                 .gesture(
                     DragGesture()
                         .onChanged { value in
-                            if !userDragged {
-                                userDragged = true
-                                dragStartHeight = height
-                            }
-                            height = min(max(40, dragStartHeight + value.translation.height), maxHeight)
-                        }
-                        .onEnded { _ in
-                            dragStartHeight = height
+                            userDragged = true
+                            height = min(max(40, height + value.translation.height), maxHeight)
                         }
                 )
         }
