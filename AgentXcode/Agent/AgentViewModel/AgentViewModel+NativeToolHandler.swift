@@ -316,7 +316,7 @@ extension AgentViewModel {
                 .map { "mcp_\($0.serverName)_\($0.name)" }
             let all = builtIn + (mcpTools.isEmpty ? [] : ["--- MCP Tools ---"] + mcpTools)
             return all.joined(separator: "\n")
-        // Memory tool — persistent user preferences the LLM reads at task start
+        // Memory tool — persistent typed memories the LLM reads at task start
         case "memory":
             let action = input["action"] as? String ?? "read"
             switch action {
@@ -334,8 +334,33 @@ extension AgentViewModel {
             case "clear":
                 MemoryStore.shared.write("")
                 return "Memory cleared."
+            case "list":
+                let manifest = MemoryStore.shared.manifest()
+                return manifest.isEmpty ? "No memories stored." : manifest
+            case "save":
+                let id = input["id"] as? String ?? "untitled"
+                let name = input["name"] as? String ?? id
+                let desc = input["description"] as? String ?? ""
+                let typeStr = input["type"] as? String ?? "user"
+                let type = MemoryType(rawValue: typeStr) ?? .user
+                let text = input["text"] as? String ?? ""
+                let entry = MemoryEntry(id: id, name: name, description: desc, type: type, content: text)
+                MemoryStore.shared.save(entry)
+                MemoryStore.shared.rebuildIndex()
+                return "Saved memory '\(name)' [\(type.rawValue)]."
+            case "load":
+                let id = input["id"] as? String ?? ""
+                if let entry = MemoryStore.shared.load(id: id) {
+                    return "[\(entry.type.rawValue)] \(entry.name)\n\(entry.content)"
+                }
+                return "Memory '\(id)' not found."
+            case "delete":
+                let id = input["id"] as? String ?? ""
+                MemoryStore.shared.delete(id: id)
+                MemoryStore.shared.rebuildIndex()
+                return "Deleted memory '\(id)'."
             default:
-                return "Unknown memory action. Use: read, write, append, clear."
+                return "Unknown memory action. Use: read, write, append, clear, list, save, load, delete."
             }
         // Task complete — signal via NativeToolContext so the task loop can detect it
         case "task_complete":
