@@ -23,7 +23,7 @@ struct ThinkingIndicatorView: View {
             else { viewModel.thinkingOutputExpanded = newValue }
         }
     }
-    @State private var outputHeight: CGFloat = 40
+    @State private var outputHeight: CGFloat = 80
     @State private var userDragged: Bool = false
     @State private var windowHeight: CGFloat = 800
     @State private var dots = ""
@@ -595,7 +595,6 @@ private struct LLMOutputBox: View {
                         }
                     }
                     .frame(maxWidth: .infinity, minHeight: 40, alignment: .topLeading)
-                    .onAppear { height = minHeight }
                 }
 
                 // Dismiss button — overlaid bottom right, no extra space
