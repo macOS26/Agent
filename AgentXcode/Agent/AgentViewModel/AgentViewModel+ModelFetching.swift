@@ -2,6 +2,7 @@
 import AppKit
 import SwiftUI
 import AgentAudit
+import AgentTools
 
 // MARK: - Model Fetching Extension
 extension AgentViewModel {
@@ -677,5 +678,16 @@ extension AgentViewModel {
             guard let id = model["id"] as? String else { return nil }
             return OpenAIModelInfo(id: id, name: id)
         }.sorted { $0.name < $1.name }
+    }
+
+    /// Trigger model fetch for a provider if its list is empty.
+    func fetchModelsIfNeeded(for provider: APIProvider) {
+        switch provider {
+        case .claude: if availableClaudeModels.isEmpty { Task { await fetchClaudeModels() } }
+        case .openAI: if openAIModels.isEmpty { fetchOpenAIModels() }
+        case .ollama: if ollamaModels.isEmpty { fetchOllamaModels() }
+        case .localOllama: if localOllamaModels.isEmpty { fetchLocalOllamaModels() }
+        default: break // Other providers fetch on demand via their settings UI
+        }
     }
 }

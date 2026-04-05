@@ -65,6 +65,7 @@ struct HeaderToolbarButtons: View {
     @Binding var showClearConfirm: Bool
     @State private var showLLMUsage = false
     @State private var showCodingPrefs = false
+    @State private var showFallbackChain = false
     @ObservedObject var aiMediator = AppleIntelligenceMediator.shared
 
     var currentTabColor: Color {
@@ -173,6 +174,16 @@ struct HeaderToolbarButtons: View {
         .accessibilityLabel("Options")
         .popover(isPresented: $showOptions) {
             AgentOptionsView(viewModel: viewModel)
+        }
+
+        Button { showFallbackChain.toggle() } label: {
+            Image(systemName: "arrow.triangle.2.circlepath")
+                .foregroundStyle(FallbackChainService.shared.enabled ? Color.orange : Color.secondary)
+        }
+        .help("Fallback Chain")
+        .accessibilityLabel("Fallback Chain")
+        .popover(isPresented: $showFallbackChain) {
+            FallbackChainView(viewModel: viewModel)
         }
 
         Button { showLLMUsage.toggle() } label: {

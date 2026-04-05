@@ -2,8 +2,6 @@ import SwiftUI
 
 struct AgentOptionsView: View {
     @Bindable var viewModel: AgentViewModel
-    @State private var showFallbackChain = false
-
     private var temperatureBinding: Binding<Double> {
         switch viewModel.selectedProvider {
         case .claude: return $viewModel.claudeTemperature
@@ -257,32 +255,6 @@ struct AgentOptionsView: View {
                         Text("Unlimited")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                    }
-                }
-            }
-            row {
-                Text("Fallback Chain").font(.subheadline)
-                Spacer()
-                HStack(spacing: 8) {
-                    Toggle("", isOn: Binding(
-                        get: { FallbackChainService.shared.enabled },
-                        set: { FallbackChainService.shared.enabled = $0 }
-                    ))
-                    .toggleStyle(.switch)
-                    .controlSize(.small)
-                    .labelsHidden()
-
-                    Button {
-                        showFallbackChain = true
-                    } label: {
-                        let count = FallbackChainService.shared.chain.filter(\.enabled).count
-                        Text(count > 0 ? "\(count) providers" : "Configure")
-                            .font(.caption)
-                            .foregroundStyle(count > 0 ? Color.secondary : Color.blue)
-                    }
-                    .buttonStyle(.plain)
-                    .popover(isPresented: $showFallbackChain) {
-                        FallbackChainView(viewModel: viewModel)
                     }
                 }
             }

@@ -108,6 +108,10 @@ struct FallbackChainView: View {
                     }
                     .labelsHidden()
                     .frame(width: 110)
+                    .onChange(of: selectedProvider) { _, newP in
+                        // Trigger model fetch if list is empty
+                        Task { @MainActor in viewModel.fetchModelsIfNeeded(for: newP) }
+                    }
 
                     let models = modelsForProvider(selectedProvider)
                     if models.isEmpty {
