@@ -540,9 +540,8 @@ private struct LLMOutputBox: View {
     var body: some View {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         // Solid cursor during streaming, blink when idle
-        let displayText = isStreaming && !trimmed.isEmpty
-            ? trimmed + "█"
-            : trimmed
+        let cursor = isStreaming ? "█" : (cursorVisible ? "█" : " ")
+        let displayText = trimmed.isEmpty ? "" : trimmed + cursor
         VStack(spacing: 0) {
             ZStack(alignment: .bottomTrailing) {
                 if !displayText.isEmpty {
