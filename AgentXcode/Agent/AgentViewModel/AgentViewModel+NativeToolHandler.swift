@@ -826,7 +826,36 @@ extension AgentViewModel {
         // MARK: - Xcode Tools
         case "xcode_build":
             let projectPath = input["project_path"] as? String ?? ""
-            return await Self.offMain { XcodeService.shared.buildProject(projectPath: projectPath) }
+            let buildResult = await Self.offMain { XcodeService.shared.buildProject(projectPath: projectPath) }
+            // Git auto-checkpoint after successful build — saves progress for overnight runs
+            if buildResult.contains("BUILD SUCCEEDED") && !projectFolder.isEmpty {
+                let dir = projectFolder
+                let checkResult = await Self.offMain {
+                    let p = Process()
+                    p.executableURL = URL(fileURLWithPath: "/usr/bin/git")
+                    p.arguments = ["status", "--porcelain"]
+                    p.currentDirectoryURL = URL(fileURLWithPath: dir)
+                    let pipe = Pipe()
+                    p.standardOutput = pipe; p.standardError = pipe
+                    try? p.run(); p.waitUntilExit()
+                    return String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+                }
+                if !checkResult.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    _ = await Self.offMain {
+                        let p = Process()
+                        p.executableURL = URL(fileURLWithPath: "/usr/bin/git")
+                        p.arguments = ["add", "-A"]
+                        p.currentDirectoryURL = URL(fileURLWithPath: dir)
+                        try? p.run(); p.waitUntilExit()
+                        let c = Process()
+                        c.executableURL = URL(fileURLWithPath: "/usr/bin/git")
+                        c.arguments = ["commit", "-m", "WIP: auto-checkpoint after successful build"]
+                        c.currentDirectoryURL = URL(fileURLWithPath: dir)
+                        try? c.run(); c.waitUntilExit()
+                    }
+                }
+            }
+            return buildResult
         case "xcode_run":
             let projectPath = input["project_path"] as? String ?? ""
             return await Self.offMain { XcodeService.shared.runProject(projectPath: projectPath) }
