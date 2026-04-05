@@ -533,7 +533,7 @@ private struct LLMOutputBox: View {
         let windowH = NSApp.keyWindow?.frame.height
             ?? NSScreen.main?.visibleFrame.height
             ?? 800
-        return windowH * 0.55
+        return windowH * 0.60
     }
 
     var body: some View {
