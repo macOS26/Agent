@@ -552,7 +552,7 @@ private struct LLMOutputBox: View {
                         let lineCount = CGFloat(displayText.components(separatedBy: "\n").count)
                         let lineH: CGFloat = 24
                         let proposed = min(max(minHeight, lineCount * lineH + 24), maxHeight)
-                        height = proposed
+                        if abs(proposed - height) > 1 { height = proposed }
                     }
                     .overlay {
                         if showScanlines {
