@@ -289,6 +289,8 @@ extension AgentViewModel {
         var iterations = 0
         // Token budget tracker — detects diminishing returns and prevents runaway costs
         var budgetTracker = TokenBudgetTracker(ceiling: tokenBudgetCeiling)
+        // Context compaction state — token-aware triggers with circuit breaker
+        var compactionState = CompactionState()
 
         while !Task.isCancelled {
             iterations += 1
@@ -312,20 +314,11 @@ extension AgentViewModel {
                 flushLog()
             }
 
-            // Prune old messages every 4 iterations to save tokens
-            if iterations > 1 && iterations % 4 == 0 && messages.count > 10 {
-                Self.pruneMessages(&messages)
-            }
-            // Strip base64 images from older messages
-            if iterations > 2 {
-                Self.stripOldImages(&messages)
-            }
-            // Drop oldest messages after 25 iterations to prevent unbounded growth
-            if iterations >= 25 && messages.count > 12 {
-                let keep = 8 // Keep system + recent 8 messages
-                let drop = messages.count - keep
-                if drop > 1 {
-                    messages.removeSubrange(1..<(1 + drop)) // Keep index 0 (system), drop middle
+            // Token-aware context compaction — replaces fixed iteration-based triggers
+            if iterations > 1 {
+                await Self.tieredCompact(&messages, state: &compactionState) { [weak self] msg in
+                    self?.appendLog(msg)
+                    self?.flushLog()
                 }
             }
 
@@ -333,10 +326,6 @@ extension AgentViewModel {
                 isThinking = true
                 thinkingDismissed = false
 
-                // Summarize old messages with Apple AI every 10 iterations
-                if iterations > 0 && iterations % 10 == 0 {
-                    await Self.summarizeOldMessages(&messages)
-                }
                 let sendMessages = iterations > 1 ? Self.compressMessages(messages) : messages
 
                 let response: (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int)

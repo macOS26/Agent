@@ -1,6 +1,47 @@
 import Foundation
 import FoundationModels
 
+/// Tracks compaction state across iterations to avoid redundant or runaway compaction attempts.
+struct CompactionState {
+    /// Estimated tokens at which compaction should trigger (leave buffer for response).
+    var compactThreshold: Int
+    /// Consecutive compaction failures — stops retrying after 3.
+    var consecutiveFailures: Int = 0
+    /// Whether the last compaction attempt succeeded.
+    var lastCompactSucceeded: Bool = true
+    /// Total tokens estimated before the last compaction attempt.
+    var tokensBeforeLastCompact: Int = 0
+
+    /// Max consecutive failures before circuit breaker trips.
+    static let maxFailures = 3
+    /// Default buffer — compact when estimated tokens exceed (contextWindow - buffer).
+    static let defaultBuffer = 13_000
+
+    init(contextWindow: Int = 200_000) {
+        self.compactThreshold = contextWindow - Self.defaultBuffer
+    }
+
+    /// True if we should attempt compaction for the given estimated token count.
+    func shouldCompact(estimatedTokens: Int) -> Bool {
+        guard consecutiveFailures < Self.maxFailures else { return false }
+        return estimatedTokens > compactThreshold
+    }
+
+    /// Record a compaction attempt result. Returns true if compaction actually reduced tokens.
+    mutating func recordAttempt(tokensBefore: Int, tokensAfter: Int) -> Bool {
+        tokensBeforeLastCompact = tokensBefore
+        let reduced = tokensAfter < tokensBefore
+        if reduced {
+            consecutiveFailures = 0
+            lastCompactSucceeded = true
+        } else {
+            consecutiveFailures += 1
+            lastCompactSucceeded = false
+        }
+        return reduced
+    }
+}
+
 extension AgentViewModel {
     // MARK: - Message History Compression
 
@@ -109,6 +150,41 @@ extension AgentViewModel {
                 }
             }
         }
+    }
+
+    // MARK: - Tiered Compaction (token-budget-aware)
+
+    /// Two-tier compaction: try Apple AI summarization first (fast), fall back to aggressive pruning.
+    /// Returns true if tokens were meaningfully reduced.
+    static func tieredCompact(_ messages: inout [[String: Any]], state: inout CompactionState, log: ((String) -> Void)? = nil) async -> Bool {
+        let tokensBefore = estimateTokens(messages: messages)
+        guard state.shouldCompact(estimatedTokens: tokensBefore) else { return false }
+
+        log?("🗜️ Compacting context (\(tokensBefore) est. tokens, threshold \(state.compactThreshold))...")
+
+        // Strip images first — they're huge and won't summarize well
+        stripOldImages(&messages)
+
+        // Tier 1: Apple AI summarization (fast, on-device)
+        if FoundationModelService.isAvailable {
+            await summarizeOldMessages(&messages)
+            let tokensAfterT1 = estimateTokens(messages: messages)
+            if state.recordAttempt(tokensBefore: tokensBefore, tokensAfter: tokensAfterT1) {
+                log?("🗜️ Apple AI compaction: \(tokensBefore) → \(tokensAfterT1) tokens")
+                if tokensAfterT1 <= state.compactThreshold { return true }
+            }
+        }
+
+        // Tier 2: Aggressive prune (drops middle messages into summary)
+        pruneMessages(&messages)
+        let tokensAfterT2 = estimateTokens(messages: messages)
+        let reduced = state.recordAttempt(tokensBefore: tokensBefore, tokensAfter: tokensAfterT2)
+        if reduced {
+            log?("🗜️ Pruned context: \(tokensBefore) → \(tokensAfterT2) tokens")
+        } else {
+            log?("⚠️ Compaction had no effect (\(state.consecutiveFailures)/\(CompactionState.maxFailures) failures)")
+        }
+        return reduced
     }
 
     // MARK: - Token Estimation (~4 chars per token)
