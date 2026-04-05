@@ -47,8 +47,9 @@ extension AgentViewModel {
             - web (action: search, open, find, click, type, read_content, navigate, etc.): Browser automation
 
             SHELL & PLANNING:
-            - sh: Run shell commands via User Space Launch Agent (prefer this)
-            - root: Run as root via privileged daemon (LAST RESORT)
+            - user: Run shell commands via User Space Launch Agent (preferred)
+            - sh: Run shell scripts in-process (fallback when launch agent unavailable)
+            - root: Run as root via privileged daemon (for admin tasks only)
             - batch: Run multiple shell commands in one call
             - multi: Run multiple tool calls in one batch
             - plan (action: create, update, read, list, delete): Task planning
@@ -161,7 +162,7 @@ extension AgentViewModel {
 
             SHELL (LEAST PRIVILEGE):
             - sh: Shell commands via User Space Launch Agent (always try this first)
-            - root: Privileged daemon — LAST RESORT only when user-space cannot do the job
+            - root: Privileged daemon — for admin tasks only only when user-space cannot do the job
 
             SECURITY:
             All automation inherits Agent!'s TCC permissions
