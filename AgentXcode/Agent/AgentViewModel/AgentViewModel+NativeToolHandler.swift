@@ -407,6 +407,12 @@ extension AgentViewModel {
             }
             let maxIter = input["max_iterations"] as? Int ?? 15
             return spawnSubAgent(name: name, prompt: prompt, toolGroups: toolGroups, maxIterations: maxIter)
+        // Inter-agent messaging — send message to a running sub-agent
+        case "send_message_to_agent":
+            let to = input["to"] as? String ?? ""
+            let message = input["message"] as? String ?? ""
+            guard !to.isEmpty && !message.isEmpty else { return "Error: 'to' and 'message' are required." }
+            return sendMessageToAgent(name: to, message: message)
         // Task complete — signal via NativeToolContext so the task loop can detect it
         case "task_complete":
             let summary = input["summary"] as? String ?? "Done"

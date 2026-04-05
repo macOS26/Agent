@@ -19,6 +19,8 @@ final class SubAgent: Identifiable {
     var inputTokens: Int = 0
     var outputTokens: Int = 0
     let startTime = Date()
+    /// Mailbox for inter-agent messages. Parent can inject messages mid-task.
+    var mailbox: [String] = []
 
     enum Status: String {
         case running, completed, failed
@@ -192,6 +194,17 @@ extension AgentViewModel {
                 let assistantContent: Any = response.content.isEmpty ? "Continuing." as Any : response.content as Any
                 messages.append(["role": "assistant", "content": assistantContent])
 
+                // Check mailbox for messages from parent/other agents
+                if !agent.mailbox.isEmpty {
+                    let incoming = agent.mailbox.joined(separator: "\n")
+                    agent.mailbox.removeAll()
+                    toolResults.append([
+                        "type": "tool_result",
+                        "tool_use_id": "agent_message",
+                        "content": "<message from coordinator>\n\(incoming)\n</message>"
+                    ])
+                }
+
                 if hasToolUse && !toolResults.isEmpty {
                     let capped = Self.truncateToolResults(toolResults)
                     messages.append(["role": "user", "content": capped])
@@ -213,6 +226,20 @@ extension AgentViewModel {
         appendLog("🔀 Sub-agent '\(agent.name)' completed (\(agent.inputTokens + agent.outputTokens) tokens, \(String(format: "%.1f", agent.duration))s)")
         flushLog()
         return agent.notification
+    }
+
+    /// Send a message to a running sub-agent by name. Returns status.
+    func sendMessageToAgent(name: String, message: String) -> String {
+        guard let agent = subAgents.first(where: { $0.name == name && $0.status == .running }) else {
+            // Try by ID prefix
+            if let agent = subAgents.first(where: { $0.id.uuidString.hasPrefix(name) && $0.status == .running }) {
+                agent.mailbox.append(message)
+                return "Message delivered to '\(agent.name)'."
+            }
+            return "Error: No running sub-agent named '\(name)'. Active agents: \(activeSubAgents.map(\.name).joined(separator: ", "))"
+        }
+        agent.mailbox.append(message)
+        return "Message delivered to '\(agent.name)'."
     }
 
     /// Collect notifications from completed sub-agents and clear them.
