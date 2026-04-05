@@ -546,27 +546,25 @@ private struct LLMOutputBox: View {
         VStack(spacing: 0) {
             ZStack(alignment: .bottomTrailing) {
                 if !displayText.isEmpty {
-                    let hasTable = displayText.contains("|") && displayText.contains("---")
+                    let chunks = Self.splitByTables(displayText)
                     ScrollView {
-                        if hasTable {
-                            // NSTextView for NSTextTable rendering
-                            NSTextViewWrapper(
-                                attributedString: TerminalNeoRenderer.render(displayText),
-                                onContentHeight: { h in
-                                    if !userDragged { height = min(max(minHeight, h + 4), maxHeight) }
+                        VStack(alignment: .leading, spacing: 0) {
+                            ForEach(Array(chunks.enumerated()), id: \.offset) { _, chunk in
+                                if chunk.isTable {
+                                    NSTextViewWrapper(attributedString: TerminalNeoRenderer.render(chunk.text))
+                                        .frame(maxWidth: .infinity)
+                                } else {
+                                    Text(chunk.text)
+                                        .font(.system(size: 14, design: .monospaced))
+                                        .foregroundColor(termText)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
                                 }
-                            )
-                            .frame(maxWidth: .infinity)
-                        } else {
-                            Text(displayText)
-                                .font(.system(size: 14, design: .monospaced))
-                                .foregroundColor(termText)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(10)
-                                .background(GeometryReader { geo in
-                                    Color.clear.preference(key: ContentHeightKey.self, value: geo.size.height)
-                                })
+                            }
                         }
+                        .padding(10)
+                        .background(GeometryReader { geo in
+                            Color.clear.preference(key: ContentHeightKey.self, value: geo.size.height)
+                        })
                     }
                     .onPreferenceChange(ContentHeightKey.self) { h in
                         if !userDragged {
@@ -761,11 +759,58 @@ struct ToolStepsView: View {
     }
 }
 
-// MARK: - NSTextView wrapper for NSTextTable rendering
+// MARK: - Split text into plain chunks and table blocks
+
+extension LLMOutputBox {
+    struct TextChunk {
+        let text: String
+        let isTable: Bool
+    }
+
+    static func splitByTables(_ text: String) -> [TextChunk] {
+        let lines = text.components(separatedBy: "\n")
+        var chunks: [TextChunk] = []
+        var plainLines: [String] = []
+        var i = 0
+
+        while i < lines.count {
+            let trimmed = lines[i].trimmingCharacters(in: .whitespaces)
+            // Detect table: line starts with |, next line is separator
+            if i + 2 < lines.count,
+               trimmed.hasPrefix("|"),
+               TerminalNeoRenderer.isTableSeparator(lines[i + 1]) {
+                // Flush plain text
+                if !plainLines.isEmpty {
+                    chunks.append(TextChunk(text: plainLines.joined(separator: "\n"), isTable: false))
+                    plainLines = []
+                }
+                // Collect table lines
+                var tableLines: [String] = [lines[i], lines[i + 1]]
+                var j = i + 2
+                while j < lines.count,
+                      lines[j].trimmingCharacters(in: .whitespaces).hasPrefix("|"),
+                      !TerminalNeoRenderer.isTableSeparator(lines[j]) {
+                    tableLines.append(lines[j])
+                    j += 1
+                }
+                chunks.append(TextChunk(text: tableLines.joined(separator: "\n"), isTable: true))
+                i = j
+            } else {
+                plainLines.append(lines[i])
+                i += 1
+            }
+        }
+        if !plainLines.isEmpty {
+            chunks.append(TextChunk(text: plainLines.joined(separator: "\n"), isTable: false))
+        }
+        return chunks
+    }
+}
+
+// MARK: - NSTextView wrapper for inline NSTextTable
 
 private struct NSTextViewWrapper: NSViewRepresentable {
     let attributedString: NSAttributedString
-    var onContentHeight: ((CGFloat) -> Void)?
 
     func makeNSView(context: Context) -> NSTextView {
         let tv = NSTextView()
@@ -774,7 +819,7 @@ private struct NSTextViewWrapper: NSViewRepresentable {
         tv.drawsBackground = false
         tv.isVerticallyResizable = true
         tv.isHorizontallyResizable = false
-        tv.textContainerInset = NSSize(width: 10, height: 10)
+        tv.textContainerInset = NSSize(width: 0, height: 4)
         tv.textContainer?.widthTracksTextView = true
         tv.textContainer?.lineFragmentPadding = 0
         return tv
@@ -784,9 +829,7 @@ private struct NSTextViewWrapper: NSViewRepresentable {
         tv.textStorage?.setAttributedString(attributedString)
         tv.layoutManager?.ensureLayout(for: tv.textContainer!)
         let h = tv.layoutManager?.usedRect(for: tv.textContainer!).height ?? 0
-        let total = h + tv.textContainerInset.height * 2
-        tv.frame.size.height = total
+        tv.frame.size.height = h + 8
         tv.invalidateIntrinsicContentSize()
-        onContentHeight?(total)
     }
 }
