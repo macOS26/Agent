@@ -641,11 +641,15 @@ private struct LLMOutputBox: View {
         .background(termBg)
         .cornerRadius(6)
         .overlay(RoundedRectangle(cornerRadius: 6).stroke(termBorder, lineWidth: 1))
+        .onChange(of: isStreaming) { _, streaming in
+            // Reset cursor visible when streaming stops — no gap
+            if !streaming { cursorVisible = true }
+        }
         .task {
             // Blink cursor at ~2Hz (WOPR speed)
             while !Task.isCancelled {
                 try? await Task.sleep(for: .milliseconds(500))
-                cursorVisible.toggle()
+                if !isStreaming { cursorVisible.toggle() }
             }
         }
     }
