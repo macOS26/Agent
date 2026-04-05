@@ -267,9 +267,9 @@ final class AgentViewModel {
 
     /// Color for temperature value: 0–0.3 green, 0.3–1.0 yellow, 1.0–1.5 orange, 1.5–2.0 red
     func temperatureColor(_ temp: Double) -> Color {
-        if temp >= 1.5 { return .red }
+        if temp >= 1.5 { return .pink }
         if temp >= 1.0 { return .orange }
-        if temp > 0.3 { return .yellow }
+        if temp >= 0.5 { return .yellow }
         return .green
     }
 
@@ -725,13 +725,13 @@ final class AgentViewModel {
     var lmStudioTemperature: Double = UserDefaults.standard.object(forKey: "lmStudioTemperature") as? Double ?? 0.2 {
         didSet { UserDefaults.standard.set(lmStudioTemperature, forKey: "lmStudioTemperature") }
     }
-    var zAITemperature: Double = UserDefaults.standard.object(forKey: "zAITemperature") as? Double ?? 0.7 {
+    var zAITemperature: Double = UserDefaults.standard.object(forKey: "zAITemperature") as? Double ?? 0.2 {
         didSet { UserDefaults.standard.set(zAITemperature, forKey: "zAITemperature") }
     }
-    var geminiTemperature: Double = UserDefaults.standard.object(forKey: "geminiTemperature") as? Double ?? 0.7 {
+    var geminiTemperature: Double = UserDefaults.standard.object(forKey: "geminiTemperature") as? Double ?? 0.2 {
         didSet { UserDefaults.standard.set(geminiTemperature, forKey: "geminiTemperature") }
     }
-    var grokTemperature: Double = UserDefaults.standard.object(forKey: "grokTemperature") as? Double ?? 0.7 {
+    var grokTemperature: Double = UserDefaults.standard.object(forKey: "grokTemperature") as? Double ?? 0.2 {
         didSet { UserDefaults.standard.set(grokTemperature, forKey: "grokTemperature") }
     }
 
@@ -755,7 +755,7 @@ final class AgentViewModel {
         case .gemini: return geminiTemperature
         case .grok: return grokTemperature
         case .mistral: return openAITemperature
-        case .codestral: return 0.2
+        case .codestral: return openAITemperature
         case .vibe: return openAITemperature
         case .foundationModel: return claudeTemperature
         }
