@@ -375,6 +375,7 @@ private struct LLMOutputBox: View {
     var showScanlines: Bool = true
     var onDismiss: (() -> Void)?
     @State private var cursorVisible = true
+    @State private var dragStartHeight: CGFloat = 0
 
     private var termBg: Color {
         colorScheme == .dark
@@ -626,11 +627,15 @@ private struct LLMOutputBox: View {
                     if inside { NSCursor.resizeUpDown.push() } else { NSCursor.pop() }
                 }
                 .gesture(
-                    DragGesture()
+                    DragGesture(minimumDistance: 2)
                         .onChanged { value in
-                            userDragged = true
-                            height = min(max(40, height + value.translation.height), maxHeight)
+                            if !userDragged {
+                                userDragged = true
+                                dragStartHeight = height
+                            }
+                            height = min(max(40, dragStartHeight + value.translation.height), maxHeight)
                         }
+                        .onEnded { _ in }
                 )
         }
         .background(termBg)
