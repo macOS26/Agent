@@ -54,6 +54,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // This ensures the UserDefaults keys exist before any isRestricted() checks
         _ = AccessibilityEnabled.shared
 
+        // Persist window frame across launches and tiling
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            if let window = NSApplication.shared.windows.first {
+                window.setFrameAutosaveName("AgentMainWindow")
+            }
+        }
+
         // Insert 🦾 Agents menu — retry up to 5 times in case menu isn't ready
         func tryInsert(attempt: Int = 0) {
             DispatchQueue.main.asyncAfter(deadline: .now() + Double(attempt + 1) * 0.2) { [weak self] in
