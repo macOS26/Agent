@@ -152,7 +152,7 @@ struct ThinkingIndicatorView: View {
                     }
 
                     Text("(\(Self.formatElapsed(elapsed)))")
-                        .font(.system(size: 16.5, design: .monospaced))
+                        .font(.caption.monospaced())
                         .foregroundStyle(.secondary)
 
                     if isActive {
