@@ -22,9 +22,10 @@
 		4992CD23A14EED92AB5B902A /* KeyboardShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = F03E40CE4E05384C443BA8A9 /* KeyboardShortcuts.swift */; };
 		5276D54C0C7BAB0F9F5DE24A /* AgentViewModel+TabHandlers+AgentScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CDC0CB629A59A0594ED17DA /* AgentViewModel+TabHandlers+AgentScript.swift */; };
 		5A9DE31CE50141059B14FAA9 /* MemoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDB8327F7EE04EFBB6153380 /* MemoryStore.swift */; };
-		5B1DE42CF50242069C25FBB0 /* SkillsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEB9438E8FF14FA5B7264491 /* SkillsService.swift */; };
-		5C2EF53DF60353170D36ACC1 /* AgentViewModel+SubAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFC0549F9001505AC8375592 /* AgentViewModel+SubAgent.swift */; };
 		5AA4A8B9EB5423A782B9D469 /* ScreenshotPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21810D90659A7DAD10CFA17A /* ScreenshotPreviewView.swift */; };
+		5B1DE42CF50242069C25FBB0 /* SkillsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEB9438E8FF14FA5B7264491 /* SkillsService.swift */; };
+		5B2DE53CF60353170D37BCC2 /* HooksService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEC0549E9002606BC9486603 /* HooksService.swift */; };
+		5C2EF53DF60353170D36ACC1 /* AgentViewModel+SubAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFC0549F9001505AC8375592 /* AgentViewModel+SubAgent.swift */; };
 		78EBD1F124AB2D7D38E70E8E /* AgentViewModel+TaskExecution+AboutSelf.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878ED6B87793FE4A12844669 /* AgentViewModel+TaskExecution+AboutSelf.swift */; };
 		7FA36E1A9CC0DFA5A3ECB9AD /* AgentViewModel+NativeToolHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C673DDB50E956B2E5FD610 /* AgentViewModel+NativeToolHandler.swift */; };
 		8375A8F4BB60859635722350 /* TaskExecution+WebTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F1A988F00C4E7050FED023 /* TaskExecution+WebTools.swift */; };
@@ -107,6 +108,8 @@
 		CS110000000000000000001 /* CodingService+ShellCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = CS110000000000000000002 /* CodingService+ShellCommands.swift */; };
 		CS110000000000000000003 /* CodingService+SplitFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = CS110000000000000000004 /* CodingService+SplitFile.swift */; };
 		CS110000000000000000005 /* CodingService+Refactoring.swift in Sources */ = {isa = PBXBuildFile; fileRef = CS110000000000000000006 /* CodingService+Refactoring.swift */; };
+		DC10000000000000000001 /* DaemonCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC10000000000000000000 /* DaemonCore.swift */; };
+		DC10000000000000000002 /* DaemonCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC10000000000000000000 /* DaemonCore.swift */; };
 		DE0C6B19A80C218E670D6C69 /* AgentViewModel+TabHandlers+Web.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05EEC654A3A0762D24BE1901 /* AgentViewModel+TabHandlers+Web.swift */; };
 		E3E55709254183FE587097A8 /* DiffStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E185ABB626D6FCD3D74523A /* DiffStore.swift */; };
 		E5CBD1143D2B44B8B9A209FE /* RollbackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B0C57073F5C4305AF673454 /* RollbackView.swift */; };
@@ -145,14 +148,11 @@
 		SS110000000000000000001 /* ScriptService+Metadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = SS110000000000000000002 /* ScriptService+Metadata.swift */; };
 		SS110000000000000000003 /* ScriptService+Execution.swift in Sources */ = {isa = PBXBuildFile; fileRef = SS110000000000000000004 /* ScriptService+Execution.swift */; };
 		SS110000000000000000005 /* ScriptService+SavedScripts.swift in Sources */ = {isa = PBXBuildFile; fileRef = SS110000000000000000006 /* ScriptService+SavedScripts.swift */; };
+		TN10000000000000000001 /* ToolNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = TN10000000000000000000 /* ToolNames.swift */; };
 		WEB1000000000000000001 /* WebAutomationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = WEB1000000000000000002 /* WebAutomationService.swift */; };
 		WEB1000000000000000003 /* WebAutomationService+Navigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = WEB1000000000000000004 /* WebAutomationService+Navigation.swift */; };
 		WEB1000000000000000005 /* WebAutomationService+Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = WEB1000000000000000006 /* WebAutomationService+Utilities.swift */; };
 		WEB1000000000000000007 /* WebAutomationService+Search.swift in Sources */ = {isa = PBXBuildFile; fileRef = WEB1000000000000000008 /* WebAutomationService+Search.swift */; };
-
-		DC10000000000000000001 /* DaemonCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC10000000000000000000 /* DaemonCore.swift */; };
-		DC10000000000000000002 /* DaemonCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC10000000000000000000 /* DaemonCore.swift */; };
-		TN10000000000000000001 /* ToolNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = TN10000000000000000000 /* ToolNames.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -324,14 +324,15 @@
 		CC1000000000000000001B /* UserProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProtocol.swift; sourceTree = "<group>"; };
 		CC1000000000000000001C /* AgentUser */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = AgentUser; sourceTree = BUILT_PRODUCTS_DIR; };
 		CDB8327F7EE04EFBB6153380 /* MemoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryStore.swift; sourceTree = "<group>"; };
-		DEB9438E8FF14FA5B7264491 /* SkillsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkillsService.swift; sourceTree = "<group>"; };
-		EFC0549F9001505AC8375592 /* AgentViewModel+SubAgent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+SubAgent.swift"; sourceTree = "<group>"; };
 		CEBEFF49533F8BC00811AE5C /* AgentViewModel+TaskUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TaskUtilities.swift"; sourceTree = "<group>"; };
 		CF8C3DA5A80E9774D8FE8E51 /* AgentViewModel+TabHandlers+Shell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Shell.swift"; sourceTree = "<group>"; };
 		CS110000000000000000002 /* CodingService+ShellCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CodingService+ShellCommands.swift"; sourceTree = "<group>"; };
 		CS110000000000000000004 /* CodingService+SplitFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CodingService+SplitFile.swift"; sourceTree = "<group>"; };
 		CS110000000000000000006 /* CodingService+Refactoring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CodingService+Refactoring.swift"; sourceTree = "<group>"; };
+		DC10000000000000000000 /* DaemonCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DaemonCore.swift; sourceTree = "<group>"; };
 		DD10000000000000000004 /* AgentTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AgentTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DEB9438E8FF14FA5B7264491 /* SkillsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkillsService.swift; sourceTree = "<group>"; };
+		DEC0549E9002606BC9486603 /* HooksService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HooksService.swift; sourceTree = "<group>"; };
 		DF0C04DFB19BC4AA0E4F96EF /* ProjectFolderSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectFolderSectionView.swift; sourceTree = "<group>"; };
 		EA60000000000000000002 /* SDEFs */ = {isa = PBXFileReference; lastKnownFileType = folder; path = SDEFs; sourceTree = "<group>"; };
 		EA6EA3802F6E35CF003FDB6C /* send_image_input.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = send_image_input.json; sourceTree = "<group>"; };
@@ -349,6 +350,7 @@
 		EASP000000000000000004 /* SystemPromptEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemPromptEditor.swift; sourceTree = "<group>"; };
 		EATD000000000000000002 /* TrainingData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingData.swift; sourceTree = "<group>"; };
 		EF914BA393B97296A51A534F /* AgentViewModel+TabHandlers+Git.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+TabHandlers+Git.swift"; sourceTree = "<group>"; };
+		EFC0549F9001505AC8375592 /* AgentViewModel+SubAgent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+SubAgent.swift"; sourceTree = "<group>"; };
 		F03E40CE4E05384C443BA8A9 /* KeyboardShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardShortcuts.swift; sourceTree = "<group>"; };
 		FEA10A5913CDA508518F6EDA /* HeaderSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeaderSectionView.swift; sourceTree = "<group>"; };
 		FF10000000000000000010 /* AgentViewModel+Speech.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentViewModel+Speech.swift"; sourceTree = "<group>"; };
@@ -357,12 +359,11 @@
 		SS110000000000000000002 /* ScriptService+Metadata.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ScriptService+Metadata.swift"; sourceTree = "<group>"; };
 		SS110000000000000000004 /* ScriptService+Execution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ScriptService+Execution.swift"; sourceTree = "<group>"; };
 		SS110000000000000000006 /* ScriptService+SavedScripts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ScriptService+SavedScripts.swift"; sourceTree = "<group>"; };
+		TN10000000000000000000 /* ToolNames.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolNames.swift; sourceTree = "<group>"; };
 		WEB1000000000000000002 /* WebAutomationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebAutomationService.swift; sourceTree = "<group>"; };
 		WEB1000000000000000004 /* WebAutomationService+Navigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WebAutomationService+Navigation.swift"; sourceTree = "<group>"; };
 		WEB1000000000000000006 /* WebAutomationService+Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WebAutomationService+Utilities.swift"; sourceTree = "<group>"; };
 		WEB1000000000000000008 /* WebAutomationService+Search.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WebAutomationService+Search.swift"; sourceTree = "<group>"; };
-		DC10000000000000000000 /* DaemonCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DaemonCore.swift; sourceTree = "<group>"; };
-		TN10000000000000000000 /* ToolNames.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolNames.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -497,6 +498,14 @@
 			path = LaunchAgents;
 			sourceTree = "<group>";
 		};
+		DC10000000000000000040 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				DC10000000000000000000 /* DaemonCore.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
 		DD10000000000000000040 /* AgentTests */ = {
 			isa = PBXGroup;
 			children = (
@@ -549,6 +558,7 @@
 				2AFB0612717E44BF8818651B /* FileBackupService.swift */,
 				CDB8327F7EE04EFBB6153380 /* MemoryStore.swift */,
 				DEB9438E8FF14FA5B7264491 /* SkillsService.swift */,
+				DEC0549E9002606BC9486603 /* HooksService.swift */,
 				EAAI000000000000000002 /* AppleIntelligenceMediator.swift */,
 				EASP000000000000000002 /* SystemPromptService.swift */,
 				AA100000000000000000B0 /* SoundPlayerService.swift */,
@@ -644,7 +654,7 @@
 				AB1100000000000000000008 /* AgentViewModel+RunStop.swift */,
 				AB110000000000000000000C /* AgentViewModel+ToolDispatch.swift */,
 				EFC0549F9001505AC8375592 /* AgentViewModel+SubAgent.swift */,
-);
+			);
 			path = AgentViewModel;
 			sourceTree = "<group>";
 		};
@@ -701,14 +711,6 @@
 				AA100000000000000000B2 /* StartupTwentiethAnniversaryMac.wav */,
 			);
 			path = Sound;
-			sourceTree = "<group>";
-		};
-		DC10000000000000000040 /* Shared */ = {
-			isa = PBXGroup;
-			children = (
-				DC10000000000000000000 /* DaemonCore.swift */,
-			);
-			path = Shared;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -997,7 +999,8 @@
 				AB1100000000000000000007 /* AgentViewModel+RunStop.swift in Sources */,
 				AB110000000000000000000B /* AgentViewModel+ToolDispatch.swift in Sources */,
 				5C2EF53DF60353170D36ACC1 /* AgentViewModel+SubAgent.swift in Sources */,
-);
+				5B2DE53CF60353170D37BCC2 /* HooksService.swift in Sources */,
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		BB10000000000000000050 /* Sources */ = {
@@ -1467,7 +1470,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/macOS26/AgentLLM.git";
 			requirement = {
-				kind = upToNextMajorVersion;
+				kind = versionRange;
+				maximumVersion = 10.0.0;
 				minimumVersion = 1.0.0;
 			};
 		};
@@ -1475,63 +1479,71 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/macOS26/AgentTerminalNeo.git";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.7.0;
+				kind = versionRange;
+				maximumVersion = 10.0.0;
+				minimumVersion = 1.0.0;
 			};
 		};
 		EAE1E7042F7BF5470079432C /* XCRemoteSwiftPackageReference "AgentTools" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/macOS26/AgentTools.git";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.0.0;
+				kind = versionRange;
+				maximumVersion = 10.0.0;
+				minimumVersion = 1.0.0;
 			};
 		};
 		EAE1E7072F7BF5590079432C /* XCRemoteSwiftPackageReference "AgentColorSyntax" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/macOS26/AgentColorSyntax.git";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.2.0;
+				kind = versionRange;
+				maximumVersion = 10.0.0;
+				minimumVersion = 1.0.0;
 			};
 		};
 		EAE1E70A2F7BF5780079432C /* XCRemoteSwiftPackageReference "AgentMCP" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/macOS26/AgentMCP.git";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.3.0;
+				kind = versionRange;
+				maximumVersion = 10.0.0;
+				minimumVersion = 1.0.0;
 			};
 		};
 		EAE1E7102F7BF6290079432C /* XCRemoteSwiftPackageReference "AgentD1F" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/macOS26/AgentD1F.git";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.1;
+				kind = versionRange;
+				maximumVersion = 10.0.0;
+				minimumVersion = 1.0.0;
 			};
 		};
 		EAE1E7132F7BF6880079432C /* XCRemoteSwiftPackageReference "AgentSwift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/macOS26/AgentSwift.git";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.1;
+				kind = versionRange;
+				maximumVersion = 10.0.0;
+				minimumVersion = 1.0.0;
 			};
 		};
 		EAE1E7162F7BF6E70079432C /* XCRemoteSwiftPackageReference "AgentEventBridges" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/macOS26/AgentEventBridges.git";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.1.0;
+				kind = versionRange;
+				maximumVersion = 10.0.0;
+				minimumVersion = 1.0.0;
 			};
 		};
 		EAE1E7192F7BF7000079432C /* XCRemoteSwiftPackageReference "AgentAudit" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/macOS26/AgentAudit.git";
 			requirement = {
-				kind = upToNextMajorVersion;
+				kind = versionRange;
+				maximumVersion = 10.0.0;
 				minimumVersion = 1.0.0;
 			};
 		};
@@ -1539,8 +1551,9 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/macOS26/AgentAccess.git";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.0.0;
+				kind = versionRange;
+				maximumVersion = 10.0.0;
+				minimumVersion = 1.0.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
