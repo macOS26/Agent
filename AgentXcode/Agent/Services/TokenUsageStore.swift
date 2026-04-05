@@ -1,5 +1,61 @@
 import Foundation
 
+/// Tracks per-task token budget to detect diminishing returns and prevent runaway costs.
+/// Create one at task start, call `recordTurn` after each LLM response, then check `shouldStop` or `shouldNudge`.
+struct TokenBudgetTracker {
+    /// Max total tokens (input+output) for this task. 0 = unlimited.
+    var ceiling: Int
+    /// Number of LLM round-trips completed.
+    private(set) var turnCount: Int = 0
+    /// Output tokens produced in the most recent turn.
+    private(set) var lastDeltaTokens: Int = 0
+    /// Output tokens produced in the turn before that.
+    private(set) var prevDeltaTokens: Int = 0
+    /// Cumulative tokens used so far (input + output).
+    private(set) var totalUsed: Int = 0
+
+    init(ceiling: Int = 0) {
+        self.ceiling = ceiling
+    }
+
+    /// Call after each LLM response with the tokens consumed in that turn.
+    mutating func recordTurn(inputTokens: Int, outputTokens: Int) {
+        turnCount += 1
+        prevDeltaTokens = lastDeltaTokens
+        lastDeltaTokens = outputTokens
+        totalUsed += inputTokens + outputTokens
+    }
+
+    /// Fraction of budget consumed (0.0–1.0). Returns 0 if no ceiling set.
+    var usedFraction: Double {
+        guard ceiling > 0 else { return 0 }
+        return min(1.0, Double(totalUsed) / Double(ceiling))
+    }
+
+    /// True when 90%+ of budget consumed — inject a nudge message to the LLM.
+    var shouldNudge: Bool {
+        ceiling > 0 && usedFraction >= 0.9 && usedFraction < 1.0
+    }
+
+    /// True when the task should auto-stop: budget exhausted or diminishing returns detected.
+    var shouldStop: Bool {
+        if ceiling > 0 && usedFraction >= 1.0 { return true }
+        return isDiminishing
+    }
+
+    /// Diminishing returns: 3+ turns where the last two each produced < 500 output tokens.
+    var isDiminishing: Bool {
+        turnCount >= 3 && lastDeltaTokens < 500 && prevDeltaTokens < 500
+    }
+
+    /// Human-readable budget status for logging.
+    var statusDescription: String {
+        guard ceiling > 0 else { return "\(totalUsed) tokens used (no budget limit)" }
+        let pct = Int(usedFraction * 100)
+        return "\(totalUsed)/\(ceiling) tokens (\(pct)%)"
+    }
+}
+
 /// Persists daily token usage to ~/Library/Application Support/Agent/token_usage.json
 @MainActor
 final class TokenUsageStore {

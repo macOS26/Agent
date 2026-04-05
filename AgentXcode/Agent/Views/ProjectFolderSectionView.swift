@@ -21,7 +21,8 @@ struct ProjectFolderSectionView: View {
                     sessionIn: viewModel.sessionInputTokens,
                     sessionOut: viewModel.sessionOutputTokens,
                     providerName: viewModel.selectedProvider.displayName,
-                    modelName: viewModel.globalModelForProvider(viewModel.selectedProvider)
+                    modelName: viewModel.globalModelForProvider(viewModel.selectedProvider),
+                    budgetUsedFraction: viewModel.budgetUsedFraction
                 )
             }
             .id(tab.id)
@@ -37,7 +38,8 @@ struct ProjectFolderSectionView: View {
                     sessionIn: viewModel.sessionInputTokens,
                     sessionOut: viewModel.sessionOutputTokens,
                     providerName: viewModel.selectedProvider.displayName,
-                    modelName: viewModel.globalModelForProvider(viewModel.selectedProvider)
+                    modelName: viewModel.globalModelForProvider(viewModel.selectedProvider),
+                    budgetUsedFraction: viewModel.budgetUsedFraction
                 )
             }
             .padding(.horizontal, 12)

@@ -8,6 +8,8 @@ struct TokenBadge: View {
     let sessionOut: Int
     var providerName: String = ""
     var modelName: String = ""
+    /// Fraction of per-task token budget used (0.0–1.0). 0 = no budget set.
+    var budgetUsedFraction: Double = 0
 
     @State private var showDetail: Bool = false
 
@@ -16,13 +18,20 @@ struct TokenBadge: View {
             showDetail.toggle()
         } label: {
             let total = TokenUsageStore.shared.todayInput + TokenUsageStore.shared.todayOutput
-            Text(formatTokens(total))
-                .font(.caption2.monospacedDigit())
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 5)
-                .padding(.vertical, 2)
-                .background(Color.secondary.opacity(0.1))
-                .clipShape(Capsule())
+            HStack(spacing: 4) {
+                Text(formatTokens(total))
+                    .font(.caption2.monospacedDigit())
+                    .foregroundStyle(.secondary)
+                if budgetUsedFraction > 0 {
+                    Text("\(Int(budgetUsedFraction * 100))%")
+                        .font(.caption2.monospacedDigit())
+                        .foregroundStyle(budgetUsedFraction >= 0.9 ? .red : budgetUsedFraction >= 0.7 ? .orange : .secondary)
+                }
+            }
+            .padding(.horizontal, 5)
+            .padding(.vertical, 2)
+            .background(Color.secondary.opacity(0.1))
+            .clipShape(Capsule())
         }
         .buttonStyle(.plain)
         .popover(isPresented: $showDetail) {

@@ -159,6 +159,9 @@ final class AgentViewModel {
     var taskOutputTokens: Int = 0
     var sessionInputTokens: Int = 0
     var sessionOutputTokens: Int = 0
+
+    /// Live budget usage fraction for UI display (updated by task loop)
+    var budgetUsedFraction: Double = 0
     var userServiceActive = false
     var rootServiceActive = false
     var userWasActive = false
@@ -765,6 +768,12 @@ final class AgentViewModel {
     /// Claude API requires max_tokens so 0 defaults to 16384 at the service level.
     var maxTokens: Int = UserDefaults.standard.object(forKey: "maxTokens") as? Int ?? 0 {
         didSet { UserDefaults.standard.set(maxTokens, forKey: "maxTokens") }
+    }
+
+    /// Per-task token budget ceiling (input+output). 0 = unlimited (default).
+    /// When set, the task loop will nudge the LLM at 90% and auto-stop at 100% or on diminishing returns.
+    var tokenBudgetCeiling: Int = UserDefaults.standard.object(forKey: "tokenBudgetCeiling") as? Int ?? 0 {
+        didSet { UserDefaults.standard.set(tokenBudgetCeiling, forKey: "tokenBudgetCeiling") }
     }
 
     var ollamaModel: String = UserDefaults.standard.string(forKey: "ollamaModel") ?? "" {

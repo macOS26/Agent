@@ -33,6 +33,7 @@ extension AgentViewModel {
         trimToRecentTasks()
         taskInputTokens = 0
         taskOutputTokens = 0
+        budgetUsedFraction = 0
         Self.clearToolCache()
         // All tool groups available — user controls via UI toggles
         var activeGroups: Set<String>? = codingModeEnabled ? Self.codingModeGroups : automationModeEnabled ? Self.automationModeGroups : nil
@@ -286,7 +287,8 @@ extension AgentViewModel {
         // Apple AI still runs on task_complete to summarize results for the user
 
         var iterations = 0
-        // textOnlyCount removed — text-only responses complete immediately
+        // Token budget tracker — detects diminishing returns and prevents runaway costs
+        var budgetTracker = TokenBudgetTracker(ceiling: tokenBudgetCeiling)
 
         while !Task.isCancelled {
             iterations += 1
@@ -385,6 +387,8 @@ extension AgentViewModel {
                 sessionInputTokens += inTok
                 sessionOutputTokens += outTok
                 TokenUsageStore.shared.record(inputTokens: inTok, outputTokens: outTok)
+                budgetTracker.recordTurn(inputTokens: inTok, outputTokens: outTok)
+                budgetUsedFraction = budgetTracker.usedFraction
                 flushStreamBuffer()
                 isThinking = false
                 timeoutRetryCount = 0 // Reset on successful response
@@ -581,6 +585,21 @@ extension AgentViewModel {
                             appendLog("📸 Vision: auto-screenshot for verification")
                         }
                     }
+                }
+
+                // Token budget checks — nudge LLM or auto-stop if budget exhausted / diminishing returns
+                if budgetTracker.shouldStop {
+                    let reason = budgetTracker.isDiminishing ? "diminishing returns detected" : "token budget exhausted"
+                    appendLog("⚠️ Auto-stopping: \(reason) (\(budgetTracker.statusDescription))")
+                    flushLog()
+                    break
+                }
+                if budgetTracker.shouldNudge && !toolResults.isEmpty {
+                    toolResults.append([
+                        "type": "tool_result",
+                        "tool_use_id": "budget_nudge",
+                        "content": "⚠️ Approaching token budget limit (\(budgetTracker.statusDescription)). Wrap up your current work and call task_complete with a summary."
+                    ])
                 }
 
                 // Add assistant response to conversation
