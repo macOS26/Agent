@@ -395,7 +395,18 @@ extension AgentViewModel {
             let name = input["name"] as? String ?? "agent-\(subAgents.count + 1)"
             let prompt = input["prompt"] as? String ?? ""
             guard !prompt.isEmpty else { return "Error: prompt is required for spawn_agent." }
-            return spawnSubAgent(name: name, prompt: prompt)
+            // Configurable tool groups: "all", "coding", "automation", or comma-separated group names
+            var toolGroups: Set<String>? = nil
+            if let mode = input["tools"] as? String {
+                switch mode {
+                case "all": toolGroups = Set(Tool.allGroups)
+                case "coding": toolGroups = Self.codingModeGroups
+                case "automation": toolGroups = Self.automationModeGroups
+                default: toolGroups = Set(mode.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) })
+                }
+            }
+            let maxIter = input["max_iterations"] as? Int ?? 15
+            return spawnSubAgent(name: name, prompt: prompt, toolGroups: toolGroups, maxIterations: maxIter)
         // Task complete — signal via NativeToolContext so the task loop can detect it
         case "task_complete":
             let summary = input["summary"] as? String ?? "Done"

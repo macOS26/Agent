@@ -11,6 +11,8 @@ final class SubAgent: Identifiable {
     let name: String
     let prompt: String
     let projectFolder: String
+    var toolGroups: Set<String>?  // nil = default (Core+Work+Code)
+    var maxIterations: Int = 15
     var status: Status = .running
     var result: String = ""
     var task: Task<String, Never>?
@@ -62,12 +64,14 @@ extension AgentViewModel {
 
     /// Spawn an isolated sub-agent that runs concurrently with the parent task.
     /// Returns immediately with the agent ID. Results arrive via notification.
-    func spawnSubAgent(name: String, prompt: String) -> String {
+    func spawnSubAgent(name: String, prompt: String, toolGroups: Set<String>? = nil, maxIterations: Int = 15) -> String {
         guard activeSubAgents.count < Self.maxSubAgents else {
             return "Error: Maximum \(Self.maxSubAgents) concurrent sub-agents reached. Wait for one to complete."
         }
 
         let agent = SubAgent(name: name, prompt: prompt, projectFolder: projectFolder)
+        agent.toolGroups = toolGroups
+        agent.maxIterations = maxIterations
         subAgents.append(agent)
         appendLog("🔀 Sub-agent '\(name)' spawned [\(agent.id.uuidString.prefix(8))]")
         flushLog()
@@ -124,15 +128,15 @@ extension AgentViewModel {
         ollama?.temperature = temperatureForProvider(provider)
         openAICompatible?.temperature = temperatureForProvider(provider)
 
-        // Sub-agent gets read-only tools only (safe for parallel execution)
-        let activeGroups: Set<String> = [Tool.Group.core, Tool.Group.work, Tool.Group.code]
+        // Sub-agent tool groups — configurable by parent, defaults to Core+Work+Code
+        let activeGroups: Set<String> = agent.toolGroups ?? [Tool.Group.core, Tool.Group.work, Tool.Group.code]
 
         var messages: [[String: Any]] = [
             ["role": "user", "content": agent.prompt]
         ]
 
         var iterations = 0
-        let maxIterations = 15  // Sub-agents have a tighter iteration limit
+        let maxIterations = agent.maxIterations
         var finalResult = ""
 
         while !Task.isCancelled && iterations < maxIterations {
