@@ -174,7 +174,16 @@ struct FallbackChainView: View {
         case .openAI: return viewModel.openAIModels.map(\.id)
         case .ollama: return viewModel.ollamaModels.map(\.name)
         case .localOllama: return viewModel.localOllamaModels.map(\.name)
-        default: return []  // Other providers use text field
+        case .deepSeek: return viewModel.deepSeekModels.map(\.id)
+        case .huggingFace: return viewModel.huggingFaceModels.map(\.id)
+        case .vLLM: return viewModel.vLLMModels.map(\.id)
+        case .lmStudio: return viewModel.lmStudioModels.map(\.id)
+        case .zAI: return viewModel.zAIModels.map(\.id)
+        case .qwen: return viewModel.qwenModels.map(\.id)
+        case .gemini: return viewModel.geminiModels.map(\.id)
+        case .grok: return viewModel.grokModels.map(\.id)
+        case .mistral: return viewModel.mistralModels.map(\.id)
+        default: return []
         }
     }
 
