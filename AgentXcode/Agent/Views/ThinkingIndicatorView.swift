@@ -377,6 +377,7 @@ private struct LLMOutputBox: View {
     @State private var cursorVisible = true
     @State private var dragStartHeight: CGFloat = 0
     @State private var blinkEpoch = 0
+    @State private var tableHeights: [Int: CGFloat] = [:]
 
     private var termBg: Color {
         colorScheme == .dark
@@ -549,10 +550,17 @@ private struct LLMOutputBox: View {
                     let chunks = Self.splitByTables(displayText)
                     ScrollView {
                         VStack(alignment: .leading, spacing: 0) {
-                            ForEach(Array(chunks.enumerated()), id: \.offset) { _, chunk in
+                            ForEach(Array(chunks.enumerated()), id: \.offset) { idx, chunk in
                                 if chunk.isTable {
-                                    NSTextViewWrapper(attributedString: TerminalNeoRenderer.render(chunk.text))
-                                        .frame(maxWidth: .infinity)
+                                    NSTextViewWrapper(
+                                        attributedString: TerminalNeoRenderer.render(chunk.text),
+                                        measuredHeight: Binding(
+                                            get: { tableHeights[idx] ?? 100 },
+                                            set: { tableHeights[idx] = $0 }
+                                        )
+                                    )
+                                    .frame(height: tableHeights[idx] ?? 100)
+                                    .frame(maxWidth: .infinity)
                                 } else {
                                     Text(chunk.text)
                                         .font(.system(size: 14, design: .monospaced))
@@ -811,13 +819,20 @@ extension LLMOutputBox {
 
 private struct NSTextViewWrapper: NSViewRepresentable {
     let attributedString: NSAttributedString
+    @Binding var measuredHeight: CGFloat
+
+    final class Coordinator {
+        var lastLength = 0
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
 
     func makeNSView(context: Context) -> NSTextView {
         let tv = NSTextView()
         tv.isEditable = false
         tv.isSelectable = true
         tv.drawsBackground = false
-        tv.isVerticallyResizable = true
+        tv.isVerticallyResizable = false
         tv.isHorizontallyResizable = false
         tv.textContainerInset = NSSize(width: 0, height: 4)
         tv.textContainer?.widthTracksTextView = true
@@ -826,10 +841,16 @@ private struct NSTextViewWrapper: NSViewRepresentable {
     }
 
     func updateNSView(_ tv: NSTextView, context: Context) {
+        let len = attributedString.length
+        guard len != context.coordinator.lastLength else { return }
+        context.coordinator.lastLength = len
+
         tv.textStorage?.setAttributedString(attributedString)
         tv.layoutManager?.ensureLayout(for: tv.textContainer!)
-        let h = tv.layoutManager?.usedRect(for: tv.textContainer!).height ?? 0
-        tv.frame.size.height = h + 8
-        tv.invalidateIntrinsicContentSize()
+        let h = tv.layoutManager?.usedRect(for: tv.textContainer!).height ?? 40
+        let total = h + 8
+        DispatchQueue.main.async {
+            measuredHeight = total
+        }
     }
 }
