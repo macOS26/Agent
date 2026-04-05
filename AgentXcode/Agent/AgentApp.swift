@@ -22,6 +22,10 @@ extension Notification.Name {
     /// Posted when a tab's or main activityLog changes. object = tab UUID (or nil for main)
     static let activityLogDidChange = Notification.Name("activityLogDidChange")
 
+    // AskUserQuestion — mid-task dialog
+    static let askUserQuestion = Notification.Name("askUserQuestion")
+    static let userQuestionAnswered = Notification.Name("userQuestionAnswered")
+
     // Menu command notifications — posted by Shortcuts menu, handled by ContentView
     static let menuToggleChevrons = Notification.Name("menuToggleChevrons")
     static let menuToggleOverlay = Notification.Name("menuToggleOverlay")

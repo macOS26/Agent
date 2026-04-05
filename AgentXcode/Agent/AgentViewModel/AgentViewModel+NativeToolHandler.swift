@@ -407,6 +407,26 @@ extension AgentViewModel {
             }
             let maxIter = input["max_iterations"] as? Int ?? 15
             return spawnSubAgent(name: name, prompt: prompt, toolGroups: toolGroups, maxIterations: maxIter)
+        // AskUserQuestion — mid-task dialog, waits for user answer
+        case "ask_user_question":
+            let question = input["question"] as? String ?? ""
+            guard !question.isEmpty else { return "Error: 'question' is required." }
+            appendLog("❓ \(question)")
+            flushLog()
+            // Post question and wait for answer (up to 5 minutes)
+            pendingQuestion = question
+            pendingAnswer = nil
+            NotificationCenter.default.post(name: .askUserQuestion, object: question)
+            let deadline = Date().addingTimeInterval(300)
+            while pendingAnswer == nil && Date() < deadline && !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(500))
+            }
+            let answer = pendingAnswer ?? "(no answer — timed out after 5 minutes)"
+            pendingQuestion = ""
+            pendingAnswer = nil
+            appendLog("💬 \(answer)")
+            flushLog()
+            return "User answered: \(answer)"
         // WebFetch — read content from any URL
         case "web_fetch":
             let urlStr = input["url"] as? String ?? ""

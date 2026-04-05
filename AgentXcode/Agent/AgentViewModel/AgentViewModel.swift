@@ -165,6 +165,10 @@ final class AgentViewModel {
 
     /// Active sub-agents spawned by the current task
     var subAgents: [SubAgent] = []
+
+    /// AskUserQuestion — pending question for mid-task dialog
+    var pendingQuestion: String = ""
+    var pendingAnswer: String? = nil
     var userServiceActive = false
     var rootServiceActive = false
     var userWasActive = false

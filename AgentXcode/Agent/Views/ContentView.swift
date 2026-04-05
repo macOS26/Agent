@@ -27,6 +27,9 @@ struct ContentView: View {
     @State private var showNewTabSheet = false
     @State private var showServices = false
     @State private var showAppleAIBanner = false
+    @State private var showUserQuestion = false
+    @State private var userQuestionText = ""
+    @State private var userAnswerText = ""
 
     var body: some View {
         VStack(spacing: 0) {
@@ -508,6 +511,26 @@ struct ContentView: View {
             let menuName = name
             NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { _ in
                 MainActor.assumeIsolated { [self] in handleMenuCommand(menuName) }
+            }
+        }
+        // AskUserQuestion observer — shows NSAlert dialog
+        NotificationCenter.default.addObserver(forName: .askUserQuestion, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { [self] in
+                let question = viewModel.pendingQuestion
+                guard !question.isEmpty else { return }
+                let alert = NSAlert()
+                alert.messageText = "Agent Question"
+                alert.informativeText = question
+                alert.alertStyle = .informational
+                let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
+                input.placeholderString = "Your answer"
+                alert.accessoryView = input
+                alert.addButton(withTitle: "Send")
+                alert.addButton(withTitle: "Skip")
+                let response = alert.runModal()
+                viewModel.pendingAnswer = response == .alertFirstButtonReturn
+                    ? (input.stringValue.isEmpty ? "(no answer)" : input.stringValue)
+                    : "(skipped)"
             }
         }
     }
