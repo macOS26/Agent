@@ -64,6 +64,7 @@ struct HeaderToolbarButtons: View {
     @Binding var showHistory: Bool
     @Binding var showClearConfirm: Bool
     @State private var showLLMUsage = false
+    @State private var showCodingPrefs = false
     @ObservedObject var aiMediator = AppleIntelligenceMediator.shared
 
     var currentTabColor: Color {
@@ -122,6 +123,16 @@ struct HeaderToolbarButtons: View {
         .accessibilityLabel("MCP Servers")
         .popover(isPresented: $showMCPServers) {
             MCPServersView()
+        }
+
+        Button { showCodingPrefs.toggle() } label: {
+            Image(systemName: "chevron.left.forwardslash.chevron.right")
+                .foregroundStyle(viewModel.autoVerifyEnabled || viewModel.visualTestsEnabled ? Color.cyan : Color.secondary)
+        }
+        .help("Coding Preferences")
+        .accessibilityLabel("Coding Preferences")
+        .popover(isPresented: $showCodingPrefs) {
+            CodingPreferencesView(viewModel: viewModel)
         }
 
         Button { showTools.toggle() } label: {

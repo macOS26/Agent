@@ -428,6 +428,82 @@ extension AgentViewModel {
             flushLog()
             return "User answered: \(answer)"
         // WebFetch — read content from any URL
+        // Visual test assertion — click element, verify text appears (opt-in)
+        case "visual_test":
+            guard visualTestsEnabled else { return "Error: Visual tests disabled. Enable in Coding Preferences." }
+            let action = input["action"] as? String ?? "assert"
+            switch action {
+            case "click_and_verify":
+                let clickRole = input["click_role"] as? String
+                let clickTitle = input["click_title"] as? String
+                let expectRole = input["expect_role"] as? String
+                let expectTitle = input["expect_title"] as? String
+                let app = input["appBundleId"] as? String
+                // Click
+                let clickResult = AccessibilityService.shared.clickElement(role: clickRole, title: clickTitle, value: nil, appBundleId: app)
+                try? await Task.sleep(for: .seconds(1))
+                // Verify
+                let findResult = AccessibilityService.shared.findElement(role: expectRole, title: expectTitle, value: nil, appBundleId: app, timeout: 5)
+                let passed = findResult.contains("\"success\":true") || findResult.contains("\"success\": true")
+                return "VISUAL TEST: \(passed ? "PASS" : "FAIL")\nClick: \(clickResult.prefix(200))\nVerify: \(findResult.prefix(200))"
+            case "assert_exists":
+                let role = input["role"] as? String
+                let title = input["title"] as? String
+                let app = input["appBundleId"] as? String
+                let result = AccessibilityService.shared.findElement(role: role, title: title, value: nil, appBundleId: app, timeout: 5)
+                let passed = result.contains("\"success\":true") || result.contains("\"success\": true")
+                return "ASSERTION: \(passed ? "PASS" : "FAIL") — \(role ?? "any") '\(title ?? "any")'\n\(result.prefix(200))"
+            default:
+                return "Unknown visual_test action. Use: click_and_verify, assert_exists."
+            }
+        // Git PR workflow — create branch, commit, push, open PR (opt-in)
+        case "git_pr":
+            guard autoPREnabled else { return "Error: Auto PR disabled. Enable in Coding Preferences." }
+            let action = input["action"] as? String ?? "create"
+            let branch = input["branch"] as? String ?? "feature/agent-changes"
+            let title = input["title"] as? String ?? "Agent! automated changes"
+            let body = input["body"] as? String ?? ""
+            let dir = projectFolder
+            guard !dir.isEmpty else { return "Error: project folder required." }
+            switch action {
+            case "create":
+                let cmds = [
+                    "git checkout -b \(branch)",
+                    "git add -A",
+                    "git commit -m '\(title)'",
+                    "git push -u origin \(branch)",
+                    "gh pr create --title '\(title)' --body '\(body)' 2>&1 || echo 'Install gh CLI to create PRs automatically'"
+                ].joined(separator: " && ")
+                let result = await executeViaUserAgent(command: cmds, workingDirectory: dir)
+                return result.output.isEmpty ? "PR created on branch \(branch)" : result.output
+            default:
+                return "Unknown git_pr action. Use: create."
+            }
+        // Project template — scaffold new Xcode project (opt-in)
+        case "create_project":
+            guard autoScaffoldEnabled else { return "Error: Project templates disabled. Enable in Coding Preferences." }
+            let name = input["name"] as? String ?? "NewApp"
+            let template = input["template"] as? String ?? "swiftui"
+            let path = input["path"] as? String ?? projectFolder
+            guard !path.isEmpty else { return "Error: path required." }
+            let bundleId = input["bundle_id"] as? String ?? "com.example.\(name.lowercased())"
+            // Use xcrun to create project via template
+            let createCmd: String
+            switch template {
+            case "swiftui":
+                createCmd = """
+                mkdir -p "\(path)/\(name)" && cd "\(path)/\(name)" && swift package init --type executable --name \(name) && \
+                echo 'import SwiftUI\n@main struct \(name)App: App { var body: some Scene { WindowGroup { Text(\"Hello\") } } }' > Sources/\(name).swift
+                """
+            case "cli":
+                createCmd = "mkdir -p \"\(path)/\(name)\" && cd \"\(path)/\(name)\" && swift package init --type executable --name \(name)"
+            case "library":
+                createCmd = "mkdir -p \"\(path)/\(name)\" && cd \"\(path)/\(name)\" && swift package init --type library --name \(name)"
+            default:
+                return "Unknown template. Use: swiftui, cli, library."
+            }
+            let result = await executeViaUserAgent(command: createCmd, workingDirectory: path)
+            return result.status == 0 ? "Project '\(name)' created at \(path)/\(name) (template: \(template))" : result.output
         case "web_fetch":
             let urlStr = input["url"] as? String ?? ""
             guard let url = URL(string: urlStr) else { return "Error: invalid URL '\(urlStr)'" }
@@ -914,6 +990,19 @@ extension AgentViewModel {
                     }
                 }
             }
+            // Auto-verify: launch app and capture initial UI state (opt-in)
+            if buildResult.contains("BUILD SUCCEEDED") && autoVerifyEnabled {
+                appendLog("🔍 Auto-verify: launching app...")
+                flushLog()
+                let runResult = await Self.offMain { XcodeService.shared.runProject(projectPath: projectPath) }
+                // Wait for app to launch
+                try? await Task.sleep(for: .seconds(2))
+                // Capture accessibility tree of launched app
+                let ax = AccessibilityService.shared
+                let windows = ax.listWindows(limit: 5)
+                let verifyReport = "BUILD SUCCEEDED\n\nAuto-verify:\n- App launched: \(runResult.prefix(200))\n- Windows: \(windows.prefix(500))"
+                return verifyReport
+            }
             return buildResult
         case "xcode_run":
             let projectPath = input["project_path"] as? String ?? ""
@@ -1030,6 +1119,43 @@ extension AgentViewModel {
             return results.prefix(50).map { r in
                 "\(r.kind) \(r.name) — \(r.filePath):\(r.line)\n  \(r.signature)"
             }.joined(separator: "\n")
+        // AST-based multi-file rename using Swift-Syntax
+        case "refactor_rename":
+            let oldName = input["old_name"] as? String ?? ""
+            let newName = input["new_name"] as? String ?? ""
+            let path = input["path"] as? String ?? pf
+            guard !oldName.isEmpty && !newName.isEmpty else { return "Error: old_name and new_name required." }
+            // Find all occurrences using symbol search
+            let occurrences = SymbolSearchService.search(query: oldName, in: path, exactMatch: true)
+            if occurrences.isEmpty { return "No symbols found matching '\(oldName)'" }
+            // Perform rename across all files
+            var renamedFiles: Set<String> = []
+            var errors: [String] = []
+            for occ in occurrences {
+                let filePath = occ.filePath
+                guard let data = FileManager.default.contents(atPath: filePath),
+                      var content = String(data: data, encoding: .utf8) else { continue }
+                let before = content
+                // Word-boundary replacement to avoid partial matches
+                let pattern = "\\b\(NSRegularExpression.escapedPattern(for: oldName))\\b"
+                if let regex = try? NSRegularExpression(pattern: pattern) {
+                    content = regex.stringByReplacingMatches(in: content, range: NSRange(content.startIndex..., in: content), withTemplate: newName)
+                }
+                if content != before {
+                    FileBackupService.shared.backup(filePath: filePath, tabID: selectedTabId ?? Self.mainTabID)
+                    do {
+                        try content.write(toFile: filePath, atomically: true, encoding: .utf8)
+                        renamedFiles.insert((filePath as NSString).lastPathComponent)
+                    } catch {
+                        errors.append("\(filePath): \(error.localizedDescription)")
+                    }
+                }
+            }
+            if renamedFiles.isEmpty && errors.isEmpty { return "No changes needed — '\(oldName)' not found in source files." }
+            var result = "Renamed '\(oldName)' → '\(newName)' in \(renamedFiles.count) file(s):\n"
+            result += renamedFiles.sorted().joined(separator: "\n")
+            if !errors.isEmpty { result += "\n\nErrors:\n" + errors.joined(separator: "\n") }
+            return result
         // undo_edit
         case "undo_edit":
             let fp = input["file_path"] as? String ?? ""

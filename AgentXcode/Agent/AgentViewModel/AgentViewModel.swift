@@ -113,6 +113,25 @@ final class AgentViewModel {
     var automationModeEnabled = false
     static let codingModeGroups = Tool.codingGroups
     static let automationModeGroups = Tool.automationGroups
+
+    // MARK: - Coding Preferences (opt-in features)
+
+    /// Auto-verify: after successful build, launch app and run accessibility checks
+    var autoVerifyEnabled: Bool = UserDefaults.standard.bool(forKey: "codingAutoVerify") {
+        didSet { UserDefaults.standard.set(autoVerifyEnabled, forKey: "codingAutoVerify") }
+    }
+    /// Visual test assertions: allow LLM to define click/verify UI tests
+    var visualTestsEnabled: Bool = UserDefaults.standard.bool(forKey: "codingVisualTests") {
+        didSet { UserDefaults.standard.set(visualTestsEnabled, forKey: "codingVisualTests") }
+    }
+    /// Auto PR: create branch, commit, push, open PR after task complete
+    var autoPREnabled: Bool = UserDefaults.standard.bool(forKey: "codingAutoPR") {
+        didSet { UserDefaults.standard.set(autoPREnabled, forKey: "codingAutoPR") }
+    }
+    /// Auto-scaffold: allow LLM to create new Xcode projects from templates
+    var autoScaffoldEnabled: Bool = UserDefaults.standard.bool(forKey: "codingAutoScaffold") {
+        didSet { UserDefaults.standard.set(autoScaffoldEnabled, forKey: "codingAutoScaffold") }
+    }
     var thinkingDismissed: Bool = UserDefaults.standard.object(forKey: "thinkingDismissed") as? Bool ?? true {
         didSet { UserDefaults.standard.set(thinkingDismissed, forKey: "thinkingDismissed") }
     }
