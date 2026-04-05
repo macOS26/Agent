@@ -259,6 +259,29 @@ struct AgentOptionsView: View {
                     }
                 }
             }
+            row {
+                Text("Fallback Chain").font(.subheadline)
+                Spacer()
+                HStack(spacing: 8) {
+                    Toggle("", isOn: Binding(
+                        get: { FallbackChainService.shared.enabled },
+                        set: { FallbackChainService.shared.enabled = $0 }
+                    ))
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .labelsHidden()
+
+                    if FallbackChainService.shared.enabled {
+                        Text("\(FallbackChainService.shared.chain.filter(\.enabled).count) providers")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("Off")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
         }
         .padding(16)
         .padding(.bottom, 15)

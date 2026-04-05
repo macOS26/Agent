@@ -631,6 +631,8 @@ extension AgentViewModel {
                     return "Error: could not resolve plan file path."
                 }
                 try md.write(toFile: path, atomically: true, encoding: .utf8)
+                // Sync to persistent task queue for crash recovery
+                TaskQueueStore.shared.setTasks(steps)
                 return "Plan created: \(title) (\(steps.count) steps)\nplan_id: \(planId)\nFile: \(path)"
             } catch {
                 return "Error writing plan: \(error.localizedDescription)"
@@ -726,6 +728,17 @@ extension AgentViewModel {
 
             do {
                 try lines.joined(separator: "\n").write(toFile: path, atomically: true, encoding: .utf8)
+                // Sync task queue status for crash recovery
+                let queue = TaskQueueStore.shared
+                if stepNum - 1 < queue.tasks.count {
+                    let taskId = queue.tasks[stepNum - 1].id
+                    switch status.lowercased() {
+                    case "in_progress": queue.start(taskId)
+                    case "completed": queue.complete(taskId)
+                    case "failed": queue.fail(taskId)
+                    default: break
+                    }
+                }
                 return "[\(planId)] Step \(stepNum) → \(status)"
             } catch {
                 return "Error writing plan: \(error.localizedDescription)"
