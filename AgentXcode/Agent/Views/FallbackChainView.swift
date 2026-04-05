@@ -115,20 +115,19 @@ struct FallbackChainView: View {
                     }
                     .labelsHidden()
                     .frame(width: 110)
+                    .onAppear { viewModel.fetchModelsIfNeeded(for: selectedProvider) }
                     .onChange(of: selectedProvider) { _, newP in
-                        // Trigger model fetch if list is empty
-                        Task { @MainActor in viewModel.fetchModelsIfNeeded(for: newP) }
+                        viewModel.fetchModelsIfNeeded(for: newP)
+                        selectedModel = modelsForProvider(newP).first ?? defaultModel(for: newP)
                     }
 
-                    let models = modelsForProvider(selectedProvider)
-                    if models.isEmpty {
-                        TextField("Model name", text: $selectedModel)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 140)
-                            .onAppear { selectedModel = defaultModel(for: selectedProvider) }
-                            .onChange(of: selectedProvider) { _, newP in selectedModel = defaultModel(for: newP) }
-                    } else {
-                        Picker("", selection: $selectedModel) {
+                    Picker("", selection: $selectedModel) {
+                        let models = modelsForProvider(selectedProvider)
+                        if models.isEmpty {
+                            // Show default as only option until models load
+                            let def = defaultModel(for: selectedProvider)
+                            Text(shortModel(def)).tag(def)
+                        } else {
                             ForEach(models, id: \.self) { model in
                                 HStack(spacing: 4) {
                                     Text(shortModel(model))
@@ -140,11 +139,10 @@ struct FallbackChainView: View {
                                 }.tag(model)
                             }
                         }
-                        .labelsHidden()
-                        .frame(width: 140)
-                        .onAppear { if selectedModel.isEmpty { selectedModel = models.first ?? "" } }
-                        .onChange(of: selectedProvider) { _, _ in selectedModel = modelsForProvider(selectedProvider).first ?? defaultModel(for: selectedProvider) }
                     }
+                    .labelsHidden()
+                    .frame(width: 160)
+                    .onAppear { if selectedModel.isEmpty { selectedModel = modelsForProvider(selectedProvider).first ?? defaultModel(for: selectedProvider) } }
 
                     Button {
                         guard !selectedModel.isEmpty else { return }
