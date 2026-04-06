@@ -64,6 +64,13 @@ struct ThinkingIndicatorView: View {
         return viewModel.displayedLLMOutput
     }
 
+    private var rawStreamText: String {
+        if let tab {
+            return tab.rawLLMOutput
+        }
+        return viewModel.rawLLMOutput
+    }
+
     private var modelName: String {
         if let tab {
             let (provider, model) = viewModel.resolvedLLMConfig(for: tab)
@@ -283,6 +290,7 @@ struct ThinkingIndicatorView: View {
                     if showStreamText {
                         LLMOutputBox(
                             text: streamText,
+                            rawText: rawStreamText,
                             height: $outputHeight,
                             isStreaming: isActive,
                             showDismiss: true,
@@ -364,6 +372,7 @@ struct ThinkingIndicatorView: View {
 private struct LLMOutputBox: View {
     @Environment(\.colorScheme) private var colorScheme
     let text: String
+    var rawText: String = ""
     @Binding var height: CGFloat
     var isStreaming: Bool = false
     var showDismiss: Bool = false
@@ -545,9 +554,11 @@ private struct LLMOutputBox: View {
         VStack(spacing: 0) {
             ZStack(alignment: .bottomTrailing) {
                 if !displayText.isEmpty {
-                    TerminalNeoTextView(text: displayText) { h in
+                    TerminalNeoTextView(text: displayText) { _ in
                         guard dragStartHeight == 0 else { return }
-                        let proposed = min(max(minHeight, h + 4), maxHeight)
+                        // Pre-size from raw stream (ahead of drip) to prevent stutter
+                        let lineCount = CGFloat(rawText.components(separatedBy: "\n").count)
+                        let proposed = min(max(minHeight, lineCount * 24 + 24), maxHeight)
                         if proposed > height {
                             height = proposed
                         }
