@@ -789,34 +789,6 @@ struct SettingsView: View {
                     .tint(viewModel.temperatureColor(llmTemperatureBinding.wrappedValue))
             }
 
-            // HUD (Heads-Up Display) — terminal/scanline appearance for the LLM Output overlay
-            VStack(alignment: .leading, spacing: 10) {
-                Text("HUD")
-                    .font(.headline)
-                Text("Heads-Up Display for LLM Output. Press ⌘B to show/hide during a task.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Terminal Speed").font(.caption).foregroundStyle(viewModel.temperatureColor(viewModel.currentTemperature))
-                    Picker("", selection: $viewModel.terminalSpeed) {
-                        ForEach(AgentViewModel.TerminalSpeed.allCases, id: \.self) { speed in
-                            Text(speed.label).tag(speed)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .tint(viewModel.temperatureColor(viewModel.currentTemperature))
-                }
-
-                HStack {
-                    Text("Scan Lines").font(.caption)
-                    Spacer()
-                    Toggle("", isOn: $viewModel.scanLinesEnabled)
-                        .toggleStyle(.switch)
-                        .controlSize(.small)
-                }
-            }
-
             // Web Search (Tavily) — available for all providers
             VStack(alignment: .leading, spacing: 10) {
                 Text("Web Search")

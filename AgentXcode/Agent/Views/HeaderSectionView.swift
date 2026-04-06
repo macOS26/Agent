@@ -66,7 +66,17 @@ struct HeaderToolbarButtons: View {
     @State private var showLLMUsage = false
     @State private var showCodingPrefs = false
     @State private var showFallbackChain = false
+    @State private var showHUDOptions = false
     @ObservedObject var aiMediator = AppleIntelligenceMediator.shared
+
+    /// Fallback chain icon color: green when configured (enabled + has ≥1 enabled entry),
+    /// orange when enabled but empty, gray when disabled.
+    private var fallbackIconColor: Color {
+        let svc = FallbackChainService.shared
+        guard svc.enabled else { return .secondary }
+        let hasEnabledEntry = svc.chain.contains { $0.enabled }
+        return hasEnabledEntry ? .green : .orange
+    }
 
     var currentTabColor: Color {
         guard let selectedId = viewModel.selectedTabId,
@@ -178,12 +188,22 @@ struct HeaderToolbarButtons: View {
 
         Button { showFallbackChain.toggle() } label: {
             Image(systemName: "arrow.triangle.2.circlepath")
-                .foregroundStyle(FallbackChainService.shared.enabled ? Color.orange : Color.secondary)
+                .foregroundStyle(fallbackIconColor)
         }
         .help("Fallback Chain")
         .accessibilityLabel("Fallback Chain")
         .popover(isPresented: $showFallbackChain) {
             FallbackChainView(viewModel: viewModel)
+        }
+
+        Button { showHUDOptions.toggle() } label: {
+            Image(systemName: "viewfinder")
+                .foregroundStyle(viewModel.scanLinesEnabled ? Color.green : Color.secondary)
+        }
+        .help("HUD (Heads-Up Display)")
+        .accessibilityLabel("HUD")
+        .popover(isPresented: $showHUDOptions) {
+            HUDOptionsView(viewModel: viewModel)
         }
 
         Button { showLLMUsage.toggle() } label: {

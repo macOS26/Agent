@@ -31,6 +31,7 @@
 		5B7228F2FB0898623282F117 /* FallbackChainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF2598304557B5BFF49CB148 /* FallbackChainService.swift */; };
 		5B6117F1FA0797512171F006 /* LLMUsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF14982F3446A4AEF38BA047 /* LLMUsageView.swift */; };
 		5B8339F2FC0A98734393F228 /* FallbackChainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF369840556805C0F5ABC259 /* FallbackChainView.swift */; };
+		5BHUDA001FC0A98734393F229 /* HUDOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFHUDA001556805C0F5ABC260 /* HUDOptionsView.swift */; };
 		5B944AF3FD1B09845404A339 /* CodingPreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF47A951667916D1F6BCD360 /* CodingPreferencesView.swift */; };
 		5C2EF53DF60353170D36ACC1 /* AgentViewModel+SubAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFC0549F9001505AC8375592 /* AgentViewModel+SubAgent.swift */; };
 		78EBD1F124AB2D7D38E70E8E /* AgentViewModel+TaskExecution+AboutSelf.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878ED6B87793FE4A12844669 /* AgentViewModel+TaskExecution+AboutSelf.swift */; };
@@ -346,6 +347,7 @@
 		DF2598304557B5BFF49CB148 /* FallbackChainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FallbackChainService.swift; sourceTree = "<group>"; };
 		DF14982F3446A4AEF38BA047 /* LLMUsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMUsageView.swift; sourceTree = "<group>"; };
 		DF369840556805C0F5ABC259 /* FallbackChainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FallbackChainView.swift; sourceTree = "<group>"; };
+		DFHUDA001556805C0F5ABC260 /* HUDOptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HUDOptionsView.swift; sourceTree = "<group>"; };
 		DF47A951667916D1F6BCD360 /* CodingPreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodingPreferencesView.swift; sourceTree = "<group>"; };
 		DF0C04DFB19BC4AA0E4F96EF /* ProjectFolderSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectFolderSectionView.swift; sourceTree = "<group>"; };
 		EA60000000000000000002 /* SDEFs */ = {isa = PBXFileReference; lastKnownFileType = folder; path = SDEFs; sourceTree = "<group>"; };
@@ -594,6 +596,7 @@
 				4B0C57073F5C4305AF673454 /* RollbackView.swift */,
 				DF14982F3446A4AEF38BA047 /* LLMUsageView.swift */,
 				DF369840556805C0F5ABC259 /* FallbackChainView.swift */,
+				DFHUDA001556805C0F5ABC260 /* HUDOptionsView.swift */,
 				DF47A951667916D1F6BCD360 /* CodingPreferencesView.swift */,
 				AA10000000000000000078 /* MessagesView.swift */,
 				AA1000000000000000005D /* SettingsView.swift */,
@@ -941,6 +944,7 @@
 				E5CBD1143D2B44B8B9A209FE /* RollbackView.swift in Sources */,
 				5B6117F1FA0797512171F006 /* LLMUsageView.swift in Sources */,
 				5B8339F2FC0A98734393F228 /* FallbackChainView.swift in Sources */,
+				5BHUDA001FC0A98734393F229 /* HUDOptionsView.swift in Sources */,
 				5B944AF3FD1B09845404A339 /* CodingPreferencesView.swift in Sources */,
 				5A9DE31CE50141059B14FAA9 /* MemoryStore.swift in Sources */,
 				5B1DE42CF50242069C25FBB0 /* SkillsService.swift in Sources */,
