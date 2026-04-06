@@ -2,14 +2,31 @@ import SwiftUI
 import AppKit
 import AgentTerminalNeo
 
+/// NSTextView subclass that refuses to auto-scroll. The stock NSTextView calls
+/// scrollRangeToVisible() on every text mutation to keep the insertion point
+/// visible — we override every entry point so only the user (mouse wheel,
+/// trackpad, scroller drag) can move the clip view.
+final class NoAutoScrollTextView: NSTextView {
+    override func scrollRangeToVisible(_ range: NSRange) { /* no-op */ }
+    override func scroll(_ point: NSPoint) { /* no-op */ }
+    override func scrollToVisible(_ rect: NSRect) -> Bool { false }
+}
+
+/// NSClipView subclass that ignores programmatic scroll requests originating
+/// from subviews (NSTextView's layout manager will call scrollToVisible on the
+/// clip view directly during layout). User scrolling still works because the
+/// scroller and wheel events drive the clip view via setBoundsOrigin, which
+/// we leave alone.
+final class NoAutoScrollClipView: NSClipView {
+    override func scrollToVisible(_ rect: NSRect) -> Bool { false }
+}
+
 /// Local NSScrollView/NSTextView wrapper for the LLM Output HUD.
 /// Renders text via TerminalNeoRenderer for markdown/table styling.
 ///
 /// Scroll policy: USER OWNS THE SCROLL POSITION, ALWAYS.
-/// We never auto-scroll. NSTextView wants to scroll the insertion point into
-/// view on every setAttributedString / replaceCharacters call — we defeat that
-/// by snapshotting the clip view origin before any mutation and restoring it
-/// after. Mouse-wheel scrolling still works through the underlying NSScrollView.
+/// All auto-scroll paths are disabled via NoAutoScrollTextView and
+/// NoAutoScrollClipView. Mouse wheel / trackpad / scroller drag still work.
 struct LLMOutputTextView: NSViewRepresentable {
     let text: String
     var onContentHeight: ((CGFloat) -> Void)?
@@ -17,8 +34,28 @@ struct LLMOutputTextView: NSViewRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator() }
 
     func makeNSView(context: Context) -> NSScrollView {
-        let scrollView = NSTextView.scrollableTextView()
-        guard let textView = scrollView.documentView as? NSTextView else { return scrollView }
+        let scrollView = NSScrollView()
+        scrollView.hasVerticalScroller = true
+        scrollView.hasHorizontalScroller = false
+        scrollView.autohidesScrollers = true
+        scrollView.drawsBackground = false
+        scrollView.borderType = .noBorder
+
+        // Swap in our no-auto-scroll clip view
+        let clipView = NoAutoScrollClipView()
+        clipView.drawsBackground = false
+        scrollView.contentView = clipView
+
+        let contentSize = scrollView.contentSize
+        let textView = NoAutoScrollTextView(frame: NSRect(x: 0, y: 0, width: contentSize.width, height: contentSize.height))
+        textView.minSize = NSSize(width: 0, height: 0)
+        textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+        textView.isVerticallyResizable = true
+        textView.isHorizontallyResizable = false
+        textView.autoresizingMask = [.width]
+        textView.textContainer?.containerSize = NSSize(width: contentSize.width, height: CGFloat.greatestFiniteMagnitude)
+        textView.textContainer?.widthTracksTextView = true
+
         textView.isEditable = false
         textView.isSelectable = true
         textView.backgroundColor = .clear
@@ -33,6 +70,8 @@ struct LLMOutputTextView: NSViewRepresentable {
         textView.allowsUndo = false
         textView.layoutManager?.allowsNonContiguousLayout = true
 
+        scrollView.documentView = textView
+
         context.coordinator.textView = textView
         context.coordinator.onContentHeight = onContentHeight
         return scrollView
@@ -43,13 +82,6 @@ struct LLMOutputTextView: NSViewRepresentable {
         coord.onContentHeight = onContentHeight
         guard let tv = coord.textView, let storage = tv.textStorage else { return }
 
-        // Capture scroll position BEFORE any text mutation. NSTextView implicitly
-        // scrolls the insertion point into view on setAttributedString and on
-        // replaceCharacters — we have to snapshot the clip view origin and
-        // restore it after the edit so the user's scroll position is preserved.
-        let clipView = scrollView.contentView
-        let savedOrigin = clipView.bounds.origin
-
         // Strip cursor char to detect content changes vs cursor blink
         let contentText = text.hasSuffix("█") ? String(text.dropLast()) : (text.hasSuffix(" ") ? String(text.dropLast()) : text)
         let contentLen = contentText.count
@@ -59,7 +91,7 @@ struct LLMOutputTextView: NSViewRepresentable {
             coord.lastContentLength = contentLen
             tv.layoutManager?.ensureLayout(for: tv.textContainer!)
         } else {
-            // Cursor blink — swap last char only, no scroll
+            // Cursor blink — swap last char only
             let attrLen = storage.length
             if attrLen > 0 {
                 let cursorChar = text.hasSuffix("█") ? "█" : " "
@@ -79,11 +111,6 @@ struct LLMOutputTextView: NSViewRepresentable {
                 }
             }
         }
-
-        // Restore the user's scroll position. Use scroll() (not scrollToPoint:)
-        // because it bypasses the animator and lands instantly with no jitter.
-        clipView.scroll(to: savedOrigin)
-        scrollView.reflectScrolledClipView(clipView)
 
         // Report content height back to SwiftUI for box sizing
         let h = (tv.layoutManager?.usedRect(for: tv.textContainer!).height ?? 40) + tv.textContainerInset.height * 2
