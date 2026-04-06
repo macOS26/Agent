@@ -788,13 +788,16 @@ struct SettingsView: View {
                     .id(viewModel.selectedProvider)
                     .tint(viewModel.temperatureColor(llmTemperatureBinding.wrappedValue))
                     .onAppear {
-                        // Force the slider thumb + tint color to redraw on first appear
+                        // Force the slider thumb + tint color to redraw on first appear.
+                        // Each nudge needs ~0.1s to let SwiftUI commit the change before the next.
                         let current = llmTemperatureBinding.wrappedValue
-                        llmTemperatureBinding.wrappedValue = current - 0.01
-                        DispatchQueue.main.async {
-                            llmTemperatureBinding.wrappedValue = current + 0.01
-                            DispatchQueue.main.async {
-                                llmTemperatureBinding.wrappedValue = current
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            llmTemperatureBinding.wrappedValue = max(0, current - 0.01)
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                llmTemperatureBinding.wrappedValue = min(2, current + 0.01)
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                    llmTemperatureBinding.wrappedValue = current
+                                }
                             }
                         }
                     }
