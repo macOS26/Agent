@@ -61,25 +61,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
-        // Insert 🦾 Agents menu — retry up to 10 times in case menu isn't ready
-        func tryInsert(attempt: Int = 0) {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5 + Double(attempt) * 0.3) { [weak self] in
-                self?.insertAgentsMenu()
-                // Verify it was inserted, retry if not
-                if attempt < 9,
-                   let menu = NSApplication.shared.mainMenu,
-                   !menu.items.contains(where: { $0.title.contains("Agents") }) {
-                    tryInsert(attempt: attempt + 1)
-                }
-            }
-        }
-        tryInsert()
+        // Insert 🦾 Agents menu immediately + every time the app becomes active.
+        // Why both: SwiftUI's Commands modifier rebuilds the main menu AFTER
+        // applicationDidFinishLaunching, so a single insert here can be stomped
+        // on. didBecomeActive fires after SwiftUI's menu setup completes AND
+        // every time the user switches back to the app — guaranteed reinsert.
+        insertAgentsMenu()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(reinsertAgentsMenuIfMissing),
+            name: NSApplication.didBecomeActiveNotification,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(reinsertAgentsMenuIfMissing),
+            name: NSApplication.didUpdateNotification,
+            object: nil
+        )
+    }
+
+    @MainActor @objc private func reinsertAgentsMenuIfMissing() {
+        guard let menu = NSApplication.shared.mainMenu,
+              !menu.items.contains(where: { $0.title.contains("Agents") }) else { return }
+        insertAgentsMenu()
     }
 
     @MainActor private func insertAgentsMenu() {
         guard let mainMenu = NSApplication.shared.mainMenu else { return }
-        // Remove the SwiftUI-added "🦾 Agents" menu if it exists
-        if let idx = mainMenu.items.firstIndex(where: { $0.title.contains("Agents") }) {
+        // Remove any existing Agents menu (SwiftUI-added or stale)
+        while let idx = mainMenu.items.firstIndex(where: { $0.title.contains("Agents") }) {
             mainMenu.removeItem(at: idx)
         }
         // Create NSMenu version and insert at position 1 (after app menu, before File)
