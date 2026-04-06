@@ -34,7 +34,7 @@ struct ThinkingIndicatorView: View {
             else { viewModel.mainTaskElapsed = newValue }
         }
     }
-    private let refreshTimer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
+    private let refreshTimer = Timer.publish(every: 0.25, on: .main, in: .common).autoconnect()
 
     private var isActive: Bool {
         if let tab {
@@ -271,10 +271,10 @@ struct ThinkingIndicatorView: View {
                             .foregroundStyle(.green)
                         } else {
                             HStack(spacing: 3) {
-                                Image(systemName: "ellipsis.circle").font(.caption)
-                                Text("Waiting").font(.caption)
+                                Image(systemName: "brain").font(.caption)
+                                Text("Thinking").font(.caption)
                             }
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.green)
                         }
 
                         Spacer()
@@ -346,6 +346,11 @@ struct ThinkingIndicatorView: View {
                     isExpanded = true
                     showStreamText = true
                     viewModel.thinkingDismissed = false
+                }
+            } else {
+                // Freeze elapsed when task stops/cancels
+                if let start = viewModel.mainTaskStartDate {
+                    viewModel.mainTaskElapsed = Date().timeIntervalSince(start)
                 }
             }
         }
