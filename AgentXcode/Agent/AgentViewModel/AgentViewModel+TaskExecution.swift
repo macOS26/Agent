@@ -521,9 +521,13 @@ extension AgentViewModel {
                                 if !lastText.isEmpty { summary = String(lastText.prefix(300)) }
                             }
                             completionSummary = summary
-                            // Ensure LLM Output shows the response — use summary if streaming was empty
-                            if rawLLMOutput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                rawLLMOutput = summary
+                            // Show task complete in the LLM Output HUD so the user sees the result
+                            let trimmedRaw = rawLLMOutput.trimmingCharacters(in: .whitespacesAndNewlines)
+                            if trimmedRaw.isEmpty {
+                                rawLLMOutput = "✅ \(summary)"
+                            } else if !trimmedRaw.contains(summary) {
+                                // Append completion banner if not already part of the streamed text
+                                rawLLMOutput += "\n\n✅ \(summary)"
                             }
                             displayedLLMOutput = rawLLMOutput
                             dripDisplayIndex = rawLLMOutput.count
