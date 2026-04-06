@@ -1106,13 +1106,13 @@ extension AgentViewModel {
                 var subName = task["tool"] as? String ?? ""
                 var subInput = task["input"] as? [String: Any] ?? [:]
                 if subName == "batch_tools" || subName == "batch_commands" || subName == "task_complete" {
-                    batchOutput += "[\(idx + 1)] \(subName): skipped (not allowed in batch)\n\n"
+                    batchOutput += "[\(idx + 1)] \(subName): skipped (not allowed in batch)\n"
                     continue
                 }
                 (subName, subInput) = Self.expandConsolidatedTool(name: subName, input: subInput)
                 let output = await executeNativeTool(subName, input: subInput)
                 completed += 1
-                batchOutput += "[\(idx + 1)] \(subName): \(output)\n\n"
+                batchOutput += "[\(idx + 1)] \(subName): \(output)\n"
             }
             batchOutput += "● \(completed)/\(tasks.count) tasks completed"
             return batchOutput
