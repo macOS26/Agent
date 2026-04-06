@@ -623,7 +623,8 @@ struct ContentView: View {
     @ViewBuilder
     private var thinkingIndicator: some View {
         if let selId = viewModel.selectedTabId,
-           let tab = viewModel.tab(for: selId) {
+           let tab = viewModel.tab(for: selId),
+           (tab.isRunning || tab.isLLMRunning || !tab.thinkingDismissed) {
             ThinkingIndicatorView(viewModel: viewModel, tab: tab)
         } else if viewModel.showThinkingIndicator && (isActiveRunning || !isActiveDismissed) {
             ThinkingIndicatorView(viewModel: viewModel)
