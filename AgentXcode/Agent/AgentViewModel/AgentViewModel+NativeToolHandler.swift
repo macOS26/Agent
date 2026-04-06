@@ -288,6 +288,14 @@ extension AgentViewModel {
             let result = await executeViaUserAgent(command: cmd, workingDirectory: rawDir, silent: !detail)
             let raw = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
             return raw.isEmpty ? "Directory not found or empty" : "[project folder: \(displayDir)]\n\(raw)"
+        case "mkdir":
+            let rawPath = input["path"] as? String ?? ""
+            guard !rawPath.isEmpty else { return "Error: path is required" }
+            let resolved = rawPath.hasPrefix("/") || rawPath.hasPrefix("~") ? rawPath : (pf as NSString).appendingPathComponent(rawPath)
+            let escaped = CodingService.shellEscape(resolved)
+            let result = await executeViaUserAgent(command: "mkdir -p \(escaped) && echo 'Created: \(resolved)'")
+            let out = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
+            return out.isEmpty ? "Error creating directory" : out
         case "if_to_switch":
             let filePath = input["file_path"] as? String ?? ""
             return await Self.offMain { CodingService.convertIfToSwitch(path: filePath) }

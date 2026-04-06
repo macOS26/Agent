@@ -206,6 +206,7 @@ extension AgentViewModel {
             case "extract_function": return ("extract_function", newInput)
             case "undo":             return ("undo_edit", newInput)
             case "diff_apply":       return ("diff_and_apply", newInput)
+            case "mkdir":            return ("mkdir", newInput)
             default:                 return ("read_file", newInput)
             }
 

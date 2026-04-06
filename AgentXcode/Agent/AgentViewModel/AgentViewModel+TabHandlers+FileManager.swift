@@ -302,6 +302,23 @@ extension AgentViewModel {
                 isComplete: false
             )
 
+        case "mkdir":
+            let rawPath = input["path"] as? String ?? ""
+            guard !rawPath.isEmpty else {
+                let err = "Error: path is required"
+                tab.appendLog(err); tab.flush()
+                return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": err], isComplete: false)
+            }
+            let tabFolder = Self.resolvedWorkingDirectory(tab.projectFolder.isEmpty ? projectFolder : tab.projectFolder)
+            let resolved = rawPath.hasPrefix("/") || rawPath.hasPrefix("~") ? rawPath : (tabFolder as NSString).appendingPathComponent(rawPath)
+            tab.appendLog("📁 mkdir -p \(CodingService.trimHome(resolved))")
+            tab.flush()
+            let result = await executeForTab(command: "mkdir -p \(CodingService.shellEscape(resolved)) && echo 'Created: \(resolved)'", projectFolder: tabFolder)
+            let out = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
+            let output = out.isEmpty ? "Error creating directory" : out
+            tab.appendLog(output); tab.flush()
+            return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
+
         default:
         let output = await executeNativeTool(name, input: input)
         tab.appendLog(output); tab.flush()
