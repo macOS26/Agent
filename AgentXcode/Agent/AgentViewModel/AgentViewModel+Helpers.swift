@@ -252,7 +252,7 @@ extension AgentViewModel {
             default:              return ("web_open", newInput)
             }
 
-        case "selenium", "sel":
+        case "selenium_tool", "selenium", "sel":
             switch action {
             case "start":      return ("selenium_start", newInput)
             case "stop":       return ("selenium_stop", newInput)
