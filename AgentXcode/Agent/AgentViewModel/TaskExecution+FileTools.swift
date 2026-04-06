@@ -36,6 +36,21 @@ extension AgentViewModel {
             }
             let offset = input["offset"] as? Int
             let limit = input["limit"] as? Int
+            let expandedRead = (filePath as NSString).expandingTildeInPath
+            let cacheKey = Self.fileReadCacheKey(path: expandedRead, offset: offset, limit: limit)
+
+            // Mtime-based dedup: if we've read this exact range and the file hasn't changed,
+            // return a stub WITHOUT doing disk I/O. The earlier tool_result is still in context.
+            if let cached = Self.taskFileReadCache[cacheKey],
+               let attrs = try? FileManager.default.attributesOfItem(atPath: expandedRead),
+               let currentMtime = attrs[.modificationDate] as? Date,
+               cached.mtime == currentMtime {
+                let stub = "File unchanged since last read (\(cached.outputCharCount) chars). The content from the earlier Read tool_result in this conversation is still current — refer to that instead of re-reading."
+                appendLog("📖 (unchanged) \(filePath)")
+                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": stub])
+                return true
+            }
+
             appendLog("📖 Read: \(filePath)")
             let output = await Self.offMain { CodingService.readFile(path: filePath, offset: offset, limit: limit) }
             // If file not found, suggest listing files first
@@ -47,16 +62,12 @@ extension AgentViewModel {
                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": suggestion])
                 return true
             }
-            // Token optimization: "file unchanged" stub if already read this task
-            let expandedRead = (filePath as NSString).expandingTildeInPath
-            if let cached = Self.taskFileReadCache[expandedRead],
-               cached == output.hashValue {
-                let stub = "File unchanged since last read (\(output.count) chars). Use the content from your earlier read — don't re-read."
-                appendLog("📖 (unchanged)")
-                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": stub])
-                return true
+
+            // Store mtime + size in cache so the next read of the same range can short-circuit
+            if let attrs = try? FileManager.default.attributesOfItem(atPath: expandedRead),
+               let mtime = attrs[.modificationDate] as? Date {
+                Self.taskFileReadCache[cacheKey] = FileReadCacheEntry(mtime: mtime, outputCharCount: output.count)
             }
-            Self.taskFileReadCache[expandedRead] = output.hashValue
 
             // Token optimization: cap file output at 8K chars for LLM context
             let maxChars = 8_000

@@ -119,8 +119,21 @@ extension AgentViewModel {
     /// Cache for read-only tool results within a task. Cleared on new task.
     @MainActor static var toolResultCache: [String: String] = [:]
 
-    /// Cache of file content hashes — detects unchanged files to return stub instead of full content.
-    @MainActor static var taskFileReadCache: [String: Int] = [:]
+    /// Per-read cache entry: tracks file mtime + range so we can short-circuit re-reads
+    /// without doing disk I/O. Modeled after Claude Code's FileStateCache.
+    struct FileReadCacheEntry {
+        let mtime: Date
+        let outputCharCount: Int
+    }
+
+    /// Cache of file mtime + range — detects unchanged files to return stub instead of full content.
+    /// Key format: "path:offset:limit" so different ranges don't collide.
+    @MainActor static var taskFileReadCache: [String: FileReadCacheEntry] = [:]
+
+    /// Build cache key for read_file dedup. Include offset/limit so partial reads don't collide.
+    @MainActor static func fileReadCacheKey(path: String, offset: Int?, limit: Int?) -> String {
+        "\(path):\(offset ?? -1):\(limit ?? -1)"
+    }
 
     /// Clear tool result cache — call at start of each task.
     @MainActor static func clearToolCache() {

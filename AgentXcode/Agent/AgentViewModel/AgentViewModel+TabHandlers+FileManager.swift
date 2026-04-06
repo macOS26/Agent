@@ -22,8 +22,30 @@ extension AgentViewModel {
             let filePath = input["file_path"] as? String ?? ""
             let offset = input["offset"] as? Int
             let limit = input["limit"] as? Int
+            let expandedRead = (filePath as NSString).expandingTildeInPath
+            let cacheKey = Self.fileReadCacheKey(path: expandedRead, offset: offset, limit: limit)
+
+            // Mtime-based dedup: skip disk I/O if same range read and file unchanged
+            if let cached = Self.taskFileReadCache[cacheKey],
+               let attrs = try? FileManager.default.attributesOfItem(atPath: expandedRead),
+               let currentMtime = attrs[.modificationDate] as? Date,
+               cached.mtime == currentMtime {
+                let stub = "File unchanged since last read (\(cached.outputCharCount) chars). The content from the earlier Read tool_result in this conversation is still current — refer to that instead of re-reading."
+                tab.appendLog("📖 (unchanged) \(filePath)")
+                tab.flush()
+                return TabToolResult(
+                    toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": stub],
+                    isComplete: false
+                )
+            }
+
             tab.appendLog("📖 Read: \(filePath)")
             let output = await Self.offMain { CodingService.readFile(path: filePath, offset: offset, limit: limit) }
+            // Store mtime for next dedup check
+            if let attrs = try? FileManager.default.attributesOfItem(atPath: expandedRead),
+               let mtime = attrs[.modificationDate] as? Date {
+                Self.taskFileReadCache[cacheKey] = FileReadCacheEntry(mtime: mtime, outputCharCount: output.count)
+            }
             let lang = Self.langFromPath(filePath)
             tab.appendLog(Self.codeFence(Self.preview(output, lines: readFilePreviewLines), language: lang))
             tab.flush()
