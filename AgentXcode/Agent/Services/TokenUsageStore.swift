@@ -61,6 +61,7 @@ struct TokenBudgetTracker {
 
 /// Persists daily token usage to ~/Library/Application Support/Agent/token_usage.json
 @MainActor
+@Observable
 final class TokenUsageStore {
     static let shared = TokenUsageStore()
 
