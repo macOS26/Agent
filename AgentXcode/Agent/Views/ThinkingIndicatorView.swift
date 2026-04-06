@@ -156,27 +156,42 @@ struct ThinkingIndicatorView: View {
 
                     if isActive {
                         if isScriptOnly {
-                            ShimmerText("Running\(dots)", color: .green)
+                            HStack(spacing: 3) {
+                                Image(systemName: "play.fill").font(.caption).foregroundStyle(.green)
+                                ShimmerText("Running\(dots)", color: .green)
+                            }
                         } else if isExecuting {
                             if viewModel.rootServiceActive {
-                                ShimmerText("Root\(dots)", color: .red)
+                                HStack(spacing: 3) {
+                                    Image(systemName: "lock.shield").font(.caption).foregroundStyle(.red)
+                                    ShimmerText("Root\(dots)", color: .red)
+                                }
                             } else if viewModel.userServiceActive {
-                                ShimmerText("Executing\(dots)", color: .orange)
+                                HStack(spacing: 3) {
+                                    Image(systemName: "terminal").font(.caption).foregroundStyle(.orange)
+                                    ShimmerText("Executing\(dots)", color: .orange)
+                                }
                             } else {
-                                ShimmerText("Executing\(dots)", color: .green)
+                                HStack(spacing: 3) {
+                                    Image(systemName: "terminal").font(.caption).foregroundStyle(.orange)
+                                    ShimmerText("Executing\(dots)", color: .orange)
+                                }
                             }
                         } else if let t = tab, t.isLLMThinking {
                             HStack(spacing: 3) {
-                                Image(systemName: "brain").font(.caption).foregroundStyle(.green)
-                                ShimmerText("Thinking\(dots)", color: .green)
+                                Image(systemName: "brain").font(.caption).foregroundStyle(.blue)
+                                ShimmerText("Thinking\(dots)", color: .blue)
                             }
                         } else if tab == nil && viewModel.isThinking {
                             HStack(spacing: 3) {
-                                Image(systemName: "brain").font(.caption).foregroundStyle(.green)
-                                ShimmerText("Thinking\(dots)", color: .green)
+                                Image(systemName: "brain").font(.caption).foregroundStyle(.blue)
+                                ShimmerText("Thinking\(dots)", color: .blue)
                             }
                         } else {
-                            ShimmerText("Running\(dots)", color: .yellow)
+                            HStack(spacing: 3) {
+                                Image(systemName: "play.fill").font(.caption).foregroundStyle(.green)
+                                ShimmerText("Running\(dots)", color: .green)
+                            }
                         }
                     } else {
                         Text("Done")
