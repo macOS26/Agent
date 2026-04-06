@@ -29,9 +29,9 @@ final class ToolPreferencesService {
 
     /// Tool group definitions - maps group name to tool name prefixes
     static let toolGroups: [String: Set<String>] = [
-        Tool.Group.core: Set([Tool.done, "task_complete", Tool.tools, "list_tools", Tool.search, "web_search", Tool.chat, "conversation", Tool.msg, "send_message", Tool.sh, "run_shell_script"]),
-        Tool.Group.work: Set([Tool.agent, Tool.plan, "plan_mode", Tool.git, Tool.batch, "batch_commands", Tool.multi, "batch_tools"]),
-        Tool.Group.code: Set([Tool.xc, "xcode", Tool.file, "file_manager", Tool.folder, "project_folder", Tool.code, "coding_mode"]),
+        Tool.Group.core: Set([Tool.done, "task_complete", Tool.tools, "list_tools", Tool.search, "web_search", Tool.chat, "conversation", Tool.msg, "send_message", Tool.sh, "run_shell_script", Tool.code, "coding_mode", "mode_tool", Tool.plan, "plan_mode"]),
+        Tool.Group.work: Set([Tool.agent, Tool.git, Tool.batch, "batch_commands", Tool.multi, "batch_tools"]),
+        Tool.Group.code: Set([Tool.xc, "xcode", Tool.file, "file_manager", Tool.folder, "project_folder"]),
         Tool.Group.auto: Set([Tool.as, "applescript_tool", Tool.ax, "accessibility", Tool.js, "jxa", "javascript_tool", Tool.sdef, "lookup_sdef", Tool.web]),
         Tool.Group.user: Set([Tool.user, "execute_agent_command"]),
         Tool.Group.root: Set([Tool.root, "execute_daemon_command"]),
