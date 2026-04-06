@@ -103,7 +103,7 @@ struct HeaderToolbarButtons: View {
         }
         .help(viewModel.servicesGearHelp)
         .accessibilityLabel("Services")
-        .popover(isPresented: $showServices) {
+        .popover(isPresented: $showServices, attachmentAnchor: .rect(.bounds), arrowEdge: .top) {
             ServicesPopover(viewModel: viewModel)
         }
 
@@ -114,7 +114,7 @@ struct HeaderToolbarButtons: View {
         .help(viewModel.messagesMonitorEnabled ? "Messages Monitor: ON" : "Messages Monitor: OFF")
         .accessibilityLabel("Messages Monitor")
         .accessibilityValue(viewModel.messagesMonitorEnabled ? "On" : "Off")
-        .popover(isPresented: $showMessages) {
+        .popover(isPresented: $showMessages, attachmentAnchor: .rect(.bounds), arrowEdge: .top) {
             MessagesView(viewModel: viewModel)
         }
 
@@ -123,7 +123,7 @@ struct HeaderToolbarButtons: View {
                 .foregroundStyle(viewModel.accessibilityIconColor)
         }
         .accessibilityLabel("Accessibility")
-        .popover(isPresented: $showAccessibility) {
+        .popover(isPresented: $showAccessibility, attachmentAnchor: .rect(.bounds), arrowEdge: .top) {
             AccessibilitySettingsView()
         }
 
@@ -132,7 +132,7 @@ struct HeaderToolbarButtons: View {
                 .foregroundStyle(viewModel.mcpIconColor)
         }
         .accessibilityLabel("MCP Servers")
-        .popover(isPresented: $showMCPServers) {
+        .popover(isPresented: $showMCPServers, attachmentAnchor: .rect(.bounds), arrowEdge: .top) {
             MCPServersView()
         }
 
@@ -142,7 +142,7 @@ struct HeaderToolbarButtons: View {
         }
         .help("Coding Preferences")
         .accessibilityLabel("Coding Preferences")
-        .popover(isPresented: $showCodingPrefs) {
+        .popover(isPresented: $showCodingPrefs, attachmentAnchor: .rect(.bounds), arrowEdge: .top) {
             CodingPreferencesView(viewModel: viewModel)
         }
 
@@ -151,7 +151,7 @@ struct HeaderToolbarButtons: View {
                 .foregroundStyle(viewModel.toolsIconColor)
         }
         .accessibilityLabel("Tools")
-        .popover(isPresented: $showTools) {
+        .popover(isPresented: $showTools, attachmentAnchor: .rect(.bounds), arrowEdge: .top) {
             ToolsView(selectedProvider: $viewModel.selectedProvider, viewModel: viewModel)
         }
 
@@ -162,7 +162,7 @@ struct HeaderToolbarButtons: View {
         }
         .accessibilityLabel("LLM Settings")
         .accessibilityValue(isLLMActive ? "Active" : "Idle")
-        .popover(isPresented: $showSettings) {
+        .popover(isPresented: $showSettings, attachmentAnchor: .rect(.bounds), arrowEdge: .top) {
             SettingsView(viewModel: viewModel)
         }
 
@@ -173,7 +173,7 @@ struct HeaderToolbarButtons: View {
         .help("Apple Intelligence Settings")
         .accessibilityLabel("Apple Intelligence")
         .accessibilityValue(AppleIntelligenceMediator.isAvailable ? "Available" : "Unavailable")
-        .popover(isPresented: $showAIPopover) {
+        .popover(isPresented: $showAIPopover, attachmentAnchor: .rect(.bounds), arrowEdge: .top) {
             AppleIntelligencePopover()
         }
 
@@ -182,7 +182,7 @@ struct HeaderToolbarButtons: View {
                 .foregroundStyle(.green)
         }
         .accessibilityLabel("Options")
-        .popover(isPresented: $showOptions) {
+        .popover(isPresented: $showOptions, attachmentAnchor: .rect(.bounds), arrowEdge: .top) {
             AgentOptionsView(viewModel: viewModel)
         }
 
@@ -192,7 +192,7 @@ struct HeaderToolbarButtons: View {
         }
         .help("Fallback Chain")
         .accessibilityLabel("Fallback Chain")
-        .popover(isPresented: $showFallbackChain) {
+        .popover(isPresented: $showFallbackChain, attachmentAnchor: .rect(.bounds), arrowEdge: .top) {
             FallbackChainView(viewModel: viewModel)
         }
 
@@ -202,7 +202,7 @@ struct HeaderToolbarButtons: View {
         }
         .help("HUD (Heads-Up Display)")
         .accessibilityLabel("HUD")
-        .popover(isPresented: $showHUDOptions) {
+        .popover(isPresented: $showHUDOptions, attachmentAnchor: .rect(.bounds), arrowEdge: .top) {
             HUDOptionsView(viewModel: viewModel)
         }
 
@@ -212,7 +212,7 @@ struct HeaderToolbarButtons: View {
         }
         .help("LLM Usage & Costs")
         .accessibilityLabel("LLM Usage")
-        .popover(isPresented: $showLLMUsage) {
+        .popover(isPresented: $showLLMUsage, attachmentAnchor: .rect(.bounds), arrowEdge: .top) {
             LLMUsageView(viewModel: viewModel)
         }
 
@@ -223,7 +223,7 @@ struct HeaderToolbarButtons: View {
         .help("File Backups & Rollback")
         .accessibilityLabel("Rollback")
         .accessibilityValue("\(FileBackupService.shared.totalBackupCount()) backups")
-        .popover(isPresented: $showRollback) {
+        .popover(isPresented: $showRollback, attachmentAnchor: .rect(.bounds), arrowEdge: .top) {
             RollbackView(viewModel: viewModel)
         }
 
@@ -232,7 +232,7 @@ struct HeaderToolbarButtons: View {
                 .foregroundStyle(viewModel.historyIconColor)
         }
         .accessibilityLabel("History")
-        .popover(isPresented: $showHistory) {
+        .popover(isPresented: $showHistory, attachmentAnchor: .rect(.bounds), arrowEdge: .top) {
             HistoryView(
                 prompts: viewModel.currentTabPromptHistory,
                 errorHistory: viewModel.errorHistory,
