@@ -45,13 +45,16 @@ enum Tool {
     static let sel = "selenium_tool"
 
     // Memory
-    static let mem = "mem"
+    static let mem = "memory"
 
     // Skills
-    static let skill = "skill"
+    static let skill = "invoke_skill"
 
     // Sub-agents
-    static let spawn = "spawn"
+    static let spawn = "spawn_agent"
+    static let messageAgent = "send_message_to_agent"
+    static let ask = "ask_user_question"
+    static let webFetch = "web_fetch"
 
     // MARK: - Group Names
 
@@ -75,7 +78,7 @@ enum Tool {
     // LLM sends short name, alias resolves to the handler the app uses
 
     static let aliases: [String: String] = [
-        // New _tool names
+        // _tool suffixed (LLM-facing canonical names)
         "user_shell_tool": "execute_agent_command",
         "shell_tool": "run_shell_script",
         "root_shell_tool": "execute_daemon_command",
@@ -88,31 +91,45 @@ enum Tool {
         "directory_tool": "project_folder",
         "code_tool": "coding_mode",
         "mode_tool": "coding_mode",
-        "mode": "coding_mode",
         "list_tools_tool": "list_tools",
         "sdef_tool": "lookup_sdef",
         "javascript_tool": "execute_javascript",
+        // Bare names (drop _tool suffix) — used in condensed prompt
+        "user_shell": "execute_agent_command",
+        "root_shell": "execute_daemon_command",
+        "batch_shell": "batch_commands",
+        "shell": "run_shell_script",
+        "done": "task_complete",
+        "search": "web_search",
+        "chat": "conversation",
+        "plan": "plan_mode",
+        "directory": "project_folder",
+        "mode": "coding_mode",
+        "list_tools": "list_tools",
+        "sdef": "lookup_sdef",
+        "javascript": "execute_javascript",
+        "memory": "memory",
+        "skill_tool": "invoke_skill",
+        "skill": "invoke_skill",
+        "web_fetch_tool": "web_fetch",
+        "fetch": "web_fetch",
+        "ask_tool": "ask_user_question",
+        "ask": "ask_user_question",
+        "spawn_agent_tool": "spawn_agent",
+        "spawn": "spawn_agent",
+        "send_message_tool": "send_message_to_agent",
+        "message_agent": "send_message_to_agent",
         // Legacy short names (still accepted)
         "user": "execute_agent_command",
         "sh": "run_shell_script",
         "root": "execute_daemon_command",
         "batch": "batch_commands",
         "multi": "batch_tools",
-        "done": "task_complete",
-        "search": "web_search",
-        "chat": "conversation",
         "msg": "send_message",
-        "plan": "plan_mode",
         "dir": "project_folder",
         "code": "coding_mode",
         "tools": "list_tools",
-        "sdef": "lookup_sdef",
         "js": "execute_javascript",
         "mem": "memory",
-        "skill": "invoke_skill",
-        "fetch": "web_fetch",
-        "ask": "ask_user_question",
-        "message_agent": "send_message_to_agent",
-        "spawn": "spawn_agent",
     ]
 }

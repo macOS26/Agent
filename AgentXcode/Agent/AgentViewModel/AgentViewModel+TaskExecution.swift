@@ -7,6 +7,13 @@ import AgentSwift
 import Cocoa
 
 
+// MARK: - Prompt Tiering
+
+enum PromptTier {
+    case full       // Iter 1 — full system prompt with all rules and examples
+    case condensed  // Iter 2+ — condensed prompt (same rules, fewer words)
+}
+
 // MARK: - Task Execution Loop
 
 extension AgentViewModel {
@@ -302,9 +309,37 @@ extension AgentViewModel {
         var unbuiltEditCount = 0              // build enforcement — nudge after edit without build
         var consecutiveBuildFailures = 0      // error budget — stop after 5
         var stuckFiles: [String: Int] = [:]   // stuck detection — skip after 5 failures per file
+        // Three-tier prompt strategy: full → condensed (iter 2+) → revert to full on confusion
+        var promptTier: PromptTier = .full
+        let userName = NSFullUserName()
+        let userHome = NSHomeDirectory()
 
         while !Task.isCancelled {
             iterations += 1
+
+            // Iter 2+: switch from full prompt to condensed (same rules, ~24% smaller)
+            if iterations == 2 && promptTier == .full {
+                promptTier = .condensed
+                let condensed = AgentTools.condensedSystemPrompt(userName: userName, userHome: userHome, projectFolder: projectFolder)
+                claude?.overrideSystemPrompt = condensed
+                ollama?.overrideSystemPrompt = condensed
+                openAICompatible?.overrideSystemPrompt = condensed
+                appendLog("📐 Switched to condensed system prompt (iter 2+)")
+                flushLog()
+            }
+
+            // Confusion detection: revert to full prompt if LLM is stuck
+            // Triggers: 3+ consecutive build failures, 5+ read-only iters, or stuck file count
+            let isConfused = consecutiveBuildFailures >= 3 || consecutiveReadOnlyCount >= 5 || stuckFiles.values.contains(where: { $0 >= 3 })
+            if isConfused && promptTier == .condensed {
+                promptTier = .full
+                let fullPrompt = AgentTools.systemPrompt(userName: userName, userHome: userHome, projectFolder: projectFolder)
+                claude?.overrideSystemPrompt = fullPrompt
+                ollama?.overrideSystemPrompt = fullPrompt
+                openAICompatible?.overrideSystemPrompt = fullPrompt
+                appendLog("⚠️ Reverted to full system prompt — LLM appears stuck")
+                flushLog()
+            }
 
             // Auto-enable coding mode after iteration 1 if tool calls were made
             // Skip if user is doing automation (accessibility, applescript, javascript)
@@ -313,13 +348,8 @@ extension AgentViewModel {
             if iterations == 2 && !codingModeEnabled && !commandsRun.isEmpty {
                 codingModeEnabled = true
                 activeGroups = isAutomation ? Self.automationModeGroups : Self.codingModeGroups
-                // Switch to minimal system prompt for faster iterations
-                let minPrompt = AgentTools.codingModePrompt(projectFolder: projectFolder)
-                claude?.overrideSystemPrompt = minPrompt
                 claude?.compactTools = true
-                ollama?.overrideSystemPrompt = minPrompt
                 ollama?.compactTools = true
-                openAICompatible?.overrideSystemPrompt = minPrompt
                 openAICompatible?.compactTools = true
                 appendLog(isAutomation ? "⚡ Automation mode auto-enabled" : "⚡ Coding mode auto-enabled")
                 flushLog()
