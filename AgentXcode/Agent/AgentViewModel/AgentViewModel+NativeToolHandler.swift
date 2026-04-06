@@ -494,7 +494,7 @@ extension AgentViewModel {
             let template = input["template"] as? String ?? "swiftui"
             let path = input["path"] as? String ?? projectFolder
             guard !path.isEmpty else { return "Error: path required." }
-            let _ = input["bundle_id"] as? String ?? "com.example.\(name.lowercased())"
+
             // Use xcrun to create project via template
             let createCmd: String
             switch template {
