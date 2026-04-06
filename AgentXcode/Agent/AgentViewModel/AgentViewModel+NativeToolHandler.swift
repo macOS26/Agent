@@ -550,7 +550,7 @@ extension AgentViewModel {
                 return "Error fetching \(urlStr): \(error.localizedDescription)"
             }
         // Inter-agent messaging — send message to a running sub-agent
-        case "send_message_to_agent":
+        case "tell_agent":
             let to = input["to"] as? String ?? ""
             let message = input["message"] as? String ?? ""
             guard !to.isEmpty && !message.isEmpty else { return "Error: 'to' and 'message' are required." }
