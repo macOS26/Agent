@@ -253,8 +253,6 @@ final class ScriptTab: Identifiable {
             dripDisplayIndex = 0
         }
         rawLLMOutput += delta
-        // Live output token estimate (~4 chars per token)
-        tabOutputTokens = max(tabOutputTokens, rawLLMOutput.count / 4)
         startDripIfNeeded()
     }
 

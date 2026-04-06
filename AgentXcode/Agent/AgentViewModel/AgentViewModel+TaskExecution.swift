@@ -345,8 +345,6 @@ extension AgentViewModel {
                 thinkingDismissed = false
 
                 let sendMessages = iterations > 1 ? Self.compressMessages(messages) : messages
-                // Live input token estimate before response arrives
-                taskInputTokens = max(taskInputTokens, Self.estimateTokens(messages: sendMessages))
 
                 let response: (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int)
                 flushLog()
