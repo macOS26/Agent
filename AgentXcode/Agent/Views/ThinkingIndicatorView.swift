@@ -23,16 +23,10 @@ struct ThinkingIndicatorView: View {
             else { viewModel.thinkingOutputExpanded = newValue }
         }
     }
-    /// Persisted LLM Output HUD height — per-tab on script tabs, per-app on main tab.
-    private var outputHeightBinding: Binding<CGFloat> {
-        Binding(
-            get: { CGFloat(tab?.llmOutputHeight ?? viewModel.llmOutputHeight) },
-            set: { newValue in
-                if let tab { tab.llmOutputHeight = Double(newValue) }
-                else { viewModel.llmOutputHeight = Double(newValue) }
-            }
-        )
-    }
+    /// Live LLM Output HUD height — synced from/to the tab (or main viewModel) on appear and on change.
+    /// Using @State here keeps the Binding identity stable across renders, which avoids drip
+    /// stuttering caused by closure-based bindings creating new identities each frame.
+    @State private var outputHeight: CGFloat = 80
     @State private var dots = ""
     @State private var tick = 0
     /// Elapsed time — stored on the tab to survive tab switches
@@ -306,7 +300,7 @@ struct ThinkingIndicatorView: View {
                         LLMOutputBox(
                             text: streamText,
                             rawText: rawStreamText,
-                            height: outputHeightBinding,
+                            height: $outputHeight,
                             isStreaming: isActive,
                             showDismiss: true,
                             dismissEnabled: !isActive,
@@ -331,6 +325,19 @@ struct ThinkingIndicatorView: View {
         }
         .background(colorScheme == .dark ? Color.clear : Color.white.opacity(0.53))
         .background(.ultraThinMaterial.opacity(colorScheme == .dark ? 0.95 : 0.97))
+        .onAppear {
+            // Restore persisted height for the active context (tab or main viewModel)
+            outputHeight = CGFloat(tab?.llmOutputHeight ?? viewModel.llmOutputHeight)
+        }
+        .onChange(of: tab?.id) { _, _ in
+            // Tab switched — reload the new tab's persisted height
+            outputHeight = CGFloat(tab?.llmOutputHeight ?? viewModel.llmOutputHeight)
+        }
+        .onChange(of: outputHeight) { _, newHeight in
+            // Persist the live height to the active context
+            if let tab { tab.llmOutputHeight = Double(newHeight) }
+            else { viewModel.llmOutputHeight = Double(newHeight) }
+        }
         .onChange(of: tab?.isLLMRunning) { oldValue, newValue in
             // Only fire on actual transitions, not tab swaps. The auto-expand of the
             // chevron + dismiss is handled at the run-start sites in executeTabTask
