@@ -144,6 +144,10 @@ final class AgentViewModel {
     var thinkingOutputExpanded: Bool = UserDefaults.standard.object(forKey: "thinkingOutputExpanded") as? Bool ?? false {
         didSet { UserDefaults.standard.set(thinkingOutputExpanded, forKey: "thinkingOutputExpanded") }
     }
+    /// User's drag-resized height for the LLM Output HUD on the main tab. Persisted across launches.
+    var llmOutputHeight: Double = UserDefaults.standard.object(forKey: "llmOutputHeight") as? Double ?? 80 {
+        didSet { UserDefaults.standard.set(llmOutputHeight, forKey: "llmOutputHeight") }
+    }
     var isListening = false
     var mainTaskStartDate: Date?
     var _mainTaskElapsedFrozen: TimeInterval = 0

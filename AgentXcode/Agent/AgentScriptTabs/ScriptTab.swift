@@ -63,6 +63,8 @@ final class ScriptTab: Identifiable {
     var thinkingDismissed: Bool = true
     var thinkingExpanded: Bool = false
     var thinkingOutputExpanded: Bool = false
+    /// User's drag-resized height for the LLM Output HUD on this tab. Persisted across tab switches.
+    var llmOutputHeight: Double = 80
 
     /// Unified busy check — true when the tab is doing anything (running, LLM, thinking).
     var isBusy: Bool { isRunning || isLLMRunning || isLLMThinking }

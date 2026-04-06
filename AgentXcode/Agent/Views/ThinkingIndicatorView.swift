@@ -23,7 +23,16 @@ struct ThinkingIndicatorView: View {
             else { viewModel.thinkingOutputExpanded = newValue }
         }
     }
-    @State private var outputHeight: CGFloat = 40
+    /// Persisted LLM Output HUD height — per-tab on script tabs, per-app on main tab.
+    private var outputHeightBinding: Binding<CGFloat> {
+        Binding(
+            get: { CGFloat(tab?.llmOutputHeight ?? viewModel.llmOutputHeight) },
+            set: { newValue in
+                if let tab { tab.llmOutputHeight = Double(newValue) }
+                else { viewModel.llmOutputHeight = Double(newValue) }
+            }
+        )
+    }
     @State private var dots = ""
     @State private var tick = 0
     /// Elapsed time — stored on the tab to survive tab switches
@@ -297,7 +306,7 @@ struct ThinkingIndicatorView: View {
                         LLMOutputBox(
                             text: streamText,
                             rawText: rawStreamText,
-                            height: $outputHeight,
+                            height: outputHeightBinding,
                             isStreaming: isActive,
                             showDismiss: true,
                             dismissEnabled: !isActive,
