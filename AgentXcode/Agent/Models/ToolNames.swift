@@ -6,40 +6,40 @@ enum Tool {
     // MARK: - Tool Names (what the LLM calls)
 
     // Core
-    static let done = "done"
-    static let tools = "tools"
-    static let search = "search"
-    static let folder = "dir"
-    static let code = "code"
+    static let done = "done_tool"
+    static let tools = "list_tools_tool"
+    static let search = "search_tool"
+    static let folder = "directory_tool"
+    static let code = "code_tool"
 
     // Core (also)
-    static let chat = "chat"
+    static let chat = "chat_tool"
     static let msg = "msg"
 
     // Work
-    static let agent = "agent"
-    static let plan = "plan"
-    static let git = "git"
-    static let batch = "batch"
-    static let multi = "multi"
+    static let agent = "agent_script_tool"
+    static let plan = "plan_tool"
+    static let git = "git_tool"
+    static let batch = "batch_shell_tool"
+    static let multi = "multi_tool"
 
     // Code
-    static let file = "file"
-    static let xc = "xc"
-    static let sh = "sh"
+    static let file = "file_tool"
+    static let xc = "xcode_tool"
+    static let sh = "shell_tool"
 
     // Auto
-    static let `as` = "as"
-    static let ax = "ax"
-    static let js = "js"
-    static let sdef = "sdef"
+    static let `as` = "applescript_tool"
+    static let ax = "accessibility_tool"
+    static let js = "javascript_tool"
+    static let sdef = "sdef_tool"
 
     // User / Root
-    static let user = "user"
-    static let root = "root"
+    static let user = "user_shell_tool"
+    static let root = "root_shell_tool"
 
     // Web
-    static let web = "web"
+    static let web = "safari_tool"
 
     // Exp
     static let sel = "sel"
@@ -75,6 +75,22 @@ enum Tool {
     // LLM sends short name, alias resolves to the handler the app uses
 
     static let aliases: [String: String] = [
+        // New _tool names
+        "user_shell_tool": "execute_agent_command",
+        "shell_tool": "run_shell_script",
+        "root_shell_tool": "execute_daemon_command",
+        "batch_shell_tool": "batch_commands",
+        "multi_tool": "batch_tools",
+        "done_tool": "task_complete",
+        "search_tool": "web_search",
+        "chat_tool": "conversation",
+        "plan_tool": "plan_mode",
+        "directory_tool": "project_folder",
+        "code_tool": "coding_mode",
+        "list_tools_tool": "list_tools",
+        "sdef_tool": "lookup_sdef",
+        "javascript_tool": "execute_javascript",
+        // Legacy short names (still accepted)
         "user": "execute_agent_command",
         "sh": "run_shell_script",
         "root": "execute_daemon_command",

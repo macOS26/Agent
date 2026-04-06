@@ -147,7 +147,7 @@ extension AgentViewModel {
         }
 
         switch name {
-        case "git":
+        case "git_tool", "git":
             switch action {
             case "status":     return ("git_status", newInput)
             case "diff":       return ("git_diff", newInput)
@@ -159,7 +159,7 @@ extension AgentViewModel {
             default:           return ("git_status", newInput)
             }
 
-        case "agent":
+        case "agent_script_tool", "agent":
             switch action {
             case "list":    return ("list_agents", newInput)
             case "read":    return ("read_agent", newInput)
@@ -192,7 +192,7 @@ extension AgentViewModel {
             default:        return ("list_javascript", newInput)
             }
 
-        case "file_manager", "file":
+        case "file_tool", "file_manager", "file":
             switch action {
             case "read":             return ("read_file", newInput)
             case "write":            return ("write_file", newInput)
@@ -211,7 +211,7 @@ extension AgentViewModel {
             default:                 return ("read_file", newInput)
             }
 
-        case "xcode", "xc":
+        case "xcode_tool", "xcode", "xc":
             switch action {
             case "build":            return ("xcode_build", newInput)
             case "run":              return ("xcode_run", newInput)
@@ -229,7 +229,7 @@ extension AgentViewModel {
             default:                return ("xcode_build", newInput)
             }
 
-        case "safari", "web", "w":
+        case "safari_tool", "safari", "web", "w":
             switch action {
             case "open":          return ("web_open", newInput)
             case "find":          return ("web_find", newInput)
@@ -266,7 +266,7 @@ extension AgentViewModel {
             default:           return ("selenium_start", newInput)
             }
 
-        case "accessibility", "ax":
+        case "accessibility_tool", "accessibility", "ax":
             // Remap "action" for perform_action to avoid collision with the dispatch "action"
             var mapped = newInput
             if let axAction = mapped["ax_action"] as? String {
