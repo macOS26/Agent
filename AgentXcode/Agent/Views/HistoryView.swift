@@ -64,7 +64,7 @@ struct HistoryView: View {
                     .padding(.horizontal)
                 }
             }
-            .frame(height: 560)
+            .frame(height: 380)
 
             Divider()
 
