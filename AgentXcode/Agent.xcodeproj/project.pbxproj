@@ -33,6 +33,7 @@
 		5B8339F2FC0A98734393F228 /* FallbackChainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF369840556805C0F5ABC259 /* FallbackChainView.swift */; };
 		5B944AF3FD1B09845404A339 /* CodingPreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF47A951667916D1F6BCD360 /* CodingPreferencesView.swift */; };
 		5BHUDA001FC0A98734393F229 /* HUDOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFHUDA001556805C0F5ABC260 /* HUDOptionsView.swift */; };
+		5BLLMOUT01FC0A98734393F230 /* LLMOutputTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFLLMOUT01556805C0F5ABC261 /* LLMOutputTextView.swift */; };
 		5C2EF53DF60353170D36ACC1 /* AgentViewModel+SubAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFC0549F9001505AC8375592 /* AgentViewModel+SubAgent.swift */; };
 		78EBD1F124AB2D7D38E70E8E /* AgentViewModel+TaskExecution+AboutSelf.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878ED6B87793FE4A12844669 /* AgentViewModel+TaskExecution+AboutSelf.swift */; };
 		7FA36E1A9CC0DFA5A3ECB9AD /* AgentViewModel+NativeToolHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C673DDB50E956B2E5FD610 /* AgentViewModel+NativeToolHandler.swift */; };
@@ -350,6 +351,7 @@
 		DF369840556805C0F5ABC259 /* FallbackChainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FallbackChainView.swift; sourceTree = "<group>"; };
 		DF47A951667916D1F6BCD360 /* CodingPreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodingPreferencesView.swift; sourceTree = "<group>"; };
 		DFHUDA001556805C0F5ABC260 /* HUDOptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HUDOptionsView.swift; sourceTree = "<group>"; };
+		DFLLMOUT01556805C0F5ABC261 /* LLMOutputTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMOutputTextView.swift; sourceTree = "<group>"; };
 		EA60000000000000000002 /* SDEFs */ = {isa = PBXFileReference; lastKnownFileType = folder; path = SDEFs; sourceTree = "<group>"; };
 		EA6EA3802F6E35CF003FDB6C /* send_image_input.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = send_image_input.json; sourceTree = "<group>"; };
 		EA6EA3812F6E35CF003FDB6C /* send_image_output.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = send_image_output.json; sourceTree = "<group>"; };
@@ -597,6 +599,7 @@
 				DF14982F3446A4AEF38BA047 /* LLMUsageView.swift */,
 				DF369840556805C0F5ABC259 /* FallbackChainView.swift */,
 				DFHUDA001556805C0F5ABC260 /* HUDOptionsView.swift */,
+				DFLLMOUT01556805C0F5ABC261 /* LLMOutputTextView.swift */,
 				DF47A951667916D1F6BCD360 /* CodingPreferencesView.swift */,
 				AA10000000000000000078 /* MessagesView.swift */,
 				AA1000000000000000005D /* SettingsView.swift */,
@@ -945,6 +948,7 @@
 				5B6117F1FA0797512171F006 /* LLMUsageView.swift in Sources */,
 				5B8339F2FC0A98734393F228 /* FallbackChainView.swift in Sources */,
 				5BHUDA001FC0A98734393F229 /* HUDOptionsView.swift in Sources */,
+				5BLLMOUT01FC0A98734393F230 /* LLMOutputTextView.swift in Sources */,
 				5B944AF3FD1B09845404A339 /* CodingPreferencesView.swift in Sources */,
 				5A9DE31CE50141059B14FAA9 /* MemoryStore.swift in Sources */,
 				5B1DE42CF50242069C25FBB0 /* SkillsService.swift in Sources */,
