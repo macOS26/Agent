@@ -340,7 +340,10 @@ extension AgentViewModel {
 
         case "read_agent":
             guard let content = await Self.offMain({ [ss = scriptService] in ss.readScript(name: name) }) else {
-                let err = "Error: agent '\(name)' not found."
+                let available = await Self.offMain { [ss = scriptService] in ss.compactNameList() }
+                let err = available.isEmpty
+                    ? "Error: agent '\(name)' not found. No agents exist yet."
+                    : "Error: agent '\(name)' not found. Available agents: \(available). Retry with the exact name (no 'script' or 'agent' prefix)."
                 log(err)
                 return err
             }
@@ -356,7 +359,10 @@ extension AgentViewModel {
         case "run_agent":
             // Only called when canRunDirectly returned true (no args needed)
             guard let compileCmd = await Self.offMain({ [ss = scriptService] in ss.compileCommand(name: name) }) else {
-                let err = "Error: agent '\(name)' not found."
+                let available = await Self.offMain { [ss = scriptService] in ss.compactNameList() }
+                let err = available.isEmpty
+                    ? "Error: agent '\(name)' not found. No agents exist yet — use agent_script(action:create) first."
+                    : "Error: agent '\(name)' not found. Available agents: \(available). Retry with the exact name (no 'script' or 'agent' prefix)."
                 log(err)
                 return err
             }

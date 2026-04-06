@@ -548,9 +548,13 @@ private struct LLMOutputBox: View {
     }
 
     /// Maximum height: leave room for header, status bar, and input area.
+    /// IMPORTANT: keyWindow/mainWindow return nil when the app deactivates — must
+    /// fall back to our own visible window, NOT NSScreen, otherwise the cap balloons
+    /// to screen size and the view fills the entire window on focus loss.
     private var maxHeight: CGFloat {
         let windowH = NSApp.keyWindow?.frame.height
-            ?? NSScreen.main?.visibleFrame.height
+            ?? NSApp.mainWindow?.frame.height
+            ?? NSApp.windows.first(where: { $0.isVisible && $0.contentView != nil && !$0.isFloatingPanel })?.frame.height
             ?? 800
         return windowH * 0.50 - 100
     }
