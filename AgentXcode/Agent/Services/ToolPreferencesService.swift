@@ -55,8 +55,14 @@ final class ToolPreferencesService {
         seedAppleAIDefaults()
     }
 
-    /// On first launch, disable Accessibility and Web groups by default.
+    /// On first launch, disable Experimental group by default. Migrate old "Exp" name.
     private func seedDefaultDisabledGroups() {
+        // Migrate old "Exp" → "Experimental"
+        if disabledGroups.contains("Exp") {
+            disabledGroups.remove("Exp")
+            disabledGroups.insert(Tool.Group.exp)
+            persistGroups()
+        }
         guard !UserDefaults.standard.bool(forKey: Self.groupSeededKey) else { return }
         UserDefaults.standard.set(true, forKey: Self.groupSeededKey)
         disabledGroups.insert(Tool.Group.exp)

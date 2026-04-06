@@ -42,7 +42,7 @@ enum Tool {
     static let web = "safari_tool"
 
     // Exp
-    static let sel = "sel"
+    static let sel = "selenium_tool"
 
     // Memory
     static let mem = "mem"
@@ -62,7 +62,7 @@ enum Tool {
         static let auto = "Auto"
         static let user = "User"
         static let root = "Root"
-        static let exp = "Exp"
+        static let exp = "Experimental"
     }
 
     // MARK: - Mode Groups
