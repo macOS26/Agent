@@ -355,22 +355,37 @@ extension AgentViewModel {
         var timeoutRetryCount = 0
         let maxTimeoutRetries = maxRetries
         var recentToolCalls: [String] = []  // Track recent tool calls to detect loops
+        // Plan-mode enforcement + coding-mode auto-trigger state
+        var filesEditedThisTask: Set<String> = []
+        var planActive = false
+        var iter1UsedTools = false
+        // Three-tier prompt strategy: full → condensed (iter 2+) → revert to full on confusion
+        var promptTier: PromptTier = .full
+        let userName = NSFullUserName()
+        let userHome = NSHomeDirectory()
 
         while !Task.isCancelled {
             iterations += 1
 
+            // Iter 2+: switch from full prompt to condensed (same rules, ~24% smaller)
+            if iterations == 2 && promptTier == .full {
+                promptTier = .condensed
+                let condensed = AgentTools.condensedSystemPrompt(userName: userName, userHome: userHome, projectFolder: rawFolder)
+                claude?.overrideSystemPrompt = condensed
+                ollama?.overrideSystemPrompt = condensed
+                openAICompatible?.overrideSystemPrompt = condensed
+                tab.appendLog("📐 Switched to condensed system prompt (iter 2+)")
+                tab.flush()
+            }
+
             // Auto-enable coding mode after iteration 1 — skip if using automation tools
             let automationTools: Set<String> = ["accessibility", "run_applescript", "run_osascript", "execute_javascript", "lookup_sdef"]
             let isAutomation = commandsRun.contains(where: { cmd in cmd.hasPrefix("ax_") || automationTools.contains(where: { cmd.contains($0) }) })
-            if iterations == 2 && !codingModeEnabled && !commandsRun.isEmpty {
+            if iterations == 2 && !codingModeEnabled && iter1UsedTools {
                 codingModeEnabled = true
                 activeGroups = isAutomation ? Self.automationModeGroups : Self.codingModeGroups
-                let minPrompt = AgentTools.codingModePrompt(projectFolder: rawFolder)
-                claude?.overrideSystemPrompt = minPrompt
                 claude?.compactTools = true
-                ollama?.overrideSystemPrompt = minPrompt
                 ollama?.compactTools = true
-                openAICompatible?.overrideSystemPrompt = minPrompt
                 openAICompatible?.compactTools = true
                 tab.appendLog(isAutomation ? "⚡ Automation mode auto-enabled" : "⚡ Coding mode auto-enabled")
                 tab.flush()
@@ -482,6 +497,7 @@ extension AgentViewModel {
                         // Text goes to LLM output only — streaming delta already shows it there
                     } else if type == "tool_use" {
                         hasToolUse = true
+                        if iterations == 1 { iter1UsedTools = true }
                         guard let toolId = block["id"] as? String,
                               let rawName = block["name"] as? String,
                               let rawInput = block["input"] as? [String: Any] else { continue }
@@ -490,6 +506,27 @@ extension AgentViewModel {
                         let (name, input) = Self.expandConsolidatedTool(name: rawName, input: rawInput)
 
                         commandsRun.append(name)
+
+                        // Plan-mode enforcement: 3+ unique files edited without an active plan → block
+                        let editTools: Set<String> = ["write_file", "edit_file", "diff_apply", "diff_and_apply", "create_diff", "apply_diff"]
+                        if editTools.contains(name), let filePath = input["file_path"] as? String, !filePath.isEmpty {
+                            let willBeNewFile = !filesEditedThisTask.contains(filePath)
+                            if willBeNewFile && !planActive && filesEditedThisTask.count >= 2 {
+                                let alreadyEdited = filesEditedThisTask.sorted().joined(separator: ", ")
+                                let nudge = "BLOCKED: This is the 3rd unique file you're editing in this task. You MUST create a plan first via plan_tool(action:create, name:..., steps:...). Already edited: " + alreadyEdited
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": nudge, "is_error": true])
+                                tab.appendLog("🚫 Plan required — blocked edit on \(filePath)")
+                                tab.flush()
+                                continue
+                            }
+                            filesEditedThisTask.insert(filePath)
+                        }
+                        // Track plan creation
+                        if name == "plan_mode" || name == "plan_tool" {
+                            if let act = input["action"] as? String, act == "create" || act == "update" {
+                                planActive = true
+                            }
+                        }
 
                         // Loop detection — consecutive identical read with no write in between
                         let isRead = name == "read_file" || (name == "file_manager" && (input["action"] as? String) == "read")

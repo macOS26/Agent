@@ -313,6 +313,12 @@ extension AgentViewModel {
         var promptTier: PromptTier = .full
         let userName = NSFullUserName()
         let userHome = NSHomeDirectory()
+        // Track unique files edited (write_file/edit_file/diff_apply/create_diff/apply_diff) for plan-mode enforcement
+        var filesEditedThisTask: Set<String> = []
+        // Track if a plan exists for this task (created via plan_mode tool)
+        var planActive = false
+        // Track if iter 1 used any tool calls (including read-only) — for auto-coding-mode trigger
+        var iter1UsedTools = false
 
         while !Task.isCancelled {
             iterations += 1
@@ -341,11 +347,11 @@ extension AgentViewModel {
                 flushLog()
             }
 
-            // Auto-enable coding mode after iteration 1 if tool calls were made
+            // Auto-enable coding mode after iteration 1 if ANY tool calls were made (including reads)
             // Skip if user is doing automation (accessibility, applescript, javascript)
             let automationTools: Set<String> = ["accessibility", "run_applescript", "run_osascript", "execute_javascript", "lookup_sdef"]
             let isAutomation = commandsRun.contains(where: { cmd in cmd.hasPrefix("ax_") || automationTools.contains(where: { cmd.contains($0) }) })
-            if iterations == 2 && !codingModeEnabled && !commandsRun.isEmpty {
+            if iterations == 2 && !codingModeEnabled && iter1UsedTools {
                 codingModeEnabled = true
                 activeGroups = isAutomation ? Self.automationModeGroups : Self.codingModeGroups
                 claude?.compactTools = true
@@ -478,12 +484,35 @@ extension AgentViewModel {
                         flushLog()
                     } else if type == "tool_use" {
                         hasToolUse = true
+                        if iterations == 1 { iter1UsedTools = true }
                         guard let toolId = block["id"] as? String,
                               var name = block["name"] as? String,
                               var input = block["input"] as? [String: Any] else { continue }
 
                         // Expand consolidated CRUDL tools into legacy tool names
                         (name, input) = Self.expandConsolidatedTool(name: name, input: input)
+
+                        // Plan-mode enforcement: 3+ unique files edited without an active plan → block, instruct create plan
+                        let editTools: Set<String> = ["write_file", "edit_file", "diff_apply", "diff_and_apply", "create_diff", "apply_diff"]
+                        if editTools.contains(name), let filePath = input["file_path"] as? String, !filePath.isEmpty {
+                            let willBeNewFile = !filesEditedThisTask.contains(filePath)
+                            if willBeNewFile && !planActive && filesEditedThisTask.count >= 2 {
+                                // About to be the 3rd unique file with no plan — block and instruct
+                                let alreadyEdited = filesEditedThisTask.sorted().joined(separator: ", ")
+                                let nudge = "BLOCKED: This is the 3rd unique file you're editing in this task. You MUST create a plan first via plan_tool(action:create, name:..., steps:...). Already edited: " + alreadyEdited
+                                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": nudge, "is_error": true])
+                                appendLog("🚫 Plan required — blocked edit on \(filePath)")
+                                flushLog()
+                                continue
+                            }
+                            filesEditedThisTask.insert(filePath)
+                        }
+                        // Track plan creation
+                        if name == "plan_mode" || name == "plan_tool" {
+                            if let act = input["action"] as? String, act == "create" || act == "update" {
+                                planActive = true
+                            }
+                        }
 
                         if name == "task_complete" {
                             var summary = input["summary"] as? String ?? "Done"
