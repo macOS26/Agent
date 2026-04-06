@@ -250,32 +250,6 @@ struct ThinkingIndicatorView: View {
                             .accessibilityValue("\(Int(fraction * 100)) percent, \(Self.fmtTokens(used)) of \(Self.fmtTokens(contextWindow))")
                         }
 
-                        // Status — show executing alongside LLM status
-                        if isExecuting {
-                            HStack(spacing: 3) {
-                                Image(systemName: "terminal").font(.caption)
-                                Text("Executing").font(.caption)
-                            }
-                            .foregroundStyle(.green)
-                        } else if viewModel.rootServiceActive {
-                            HStack(spacing: 3) {
-                                Image(systemName: "lock.shield").font(.caption)
-                                Text("Root").font(.caption)
-                            }
-                            .foregroundStyle(.orange)
-                        } else if viewModel.userServiceActive {
-                            HStack(spacing: 3) {
-                                Image(systemName: "terminal").font(.caption)
-                                Text("Executing").font(.caption)
-                            }
-                            .foregroundStyle(.green)
-                        } else {
-                            HStack(spacing: 3) {
-                                Image(systemName: "brain").font(.caption)
-                                Text("Thinking").font(.caption)
-                            }
-                            .foregroundStyle(.green)
-                        }
 
                         Spacer()
                     }
