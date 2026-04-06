@@ -25,7 +25,7 @@ struct CodingPreferencesView: View {
                 Spacer()
                 Toggle("", isOn: $viewModel.autoVerifyEnabled)
                     .toggleStyle(.switch)
-                    .controlSize(.small)
+                    .controlSize(.mini)
                     .labelsHidden()
             }
 
@@ -39,7 +39,7 @@ struct CodingPreferencesView: View {
                 Spacer()
                 Toggle("", isOn: $viewModel.visualTestsEnabled)
                     .toggleStyle(.switch)
-                    .controlSize(.small)
+                    .controlSize(.mini)
                     .labelsHidden()
             }
 
@@ -53,7 +53,7 @@ struct CodingPreferencesView: View {
                 Spacer()
                 Toggle("", isOn: $viewModel.autoPREnabled)
                     .toggleStyle(.switch)
-                    .controlSize(.small)
+                    .controlSize(.mini)
                     .labelsHidden()
             }
 
@@ -67,7 +67,7 @@ struct CodingPreferencesView: View {
                 Spacer()
                 Toggle("", isOn: $viewModel.autoScaffoldEnabled)
                     .toggleStyle(.switch)
-                    .controlSize(.small)
+                    .controlSize(.mini)
                     .labelsHidden()
             }
         }

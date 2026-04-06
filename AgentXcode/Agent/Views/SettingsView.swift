@@ -814,7 +814,7 @@ struct SettingsView: View {
                 Spacer()
                 Toggle("", isOn: $viewModel.forceVision)
                     .toggleStyle(.switch)
-                    .controlSize(.small)
+                    .controlSize(.mini)
                     .help("Always send images to LLM, even for non-vision models")
             }
 

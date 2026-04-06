@@ -31,7 +31,7 @@ struct ServicesPopover: View {
                         .font(.caption)
                     Toggle("", isOn: $viewModel.userEnabled)
                         .toggleStyle(.switch)
-                        .controlSize(.small)
+                        .controlSize(.mini)
                         .tint(.green)
                         .labelsHidden()
                 }
@@ -46,7 +46,7 @@ struct ServicesPopover: View {
                         .font(.caption)
                     Toggle("", isOn: $viewModel.rootEnabled)
                         .toggleStyle(.switch)
-                        .controlSize(.small)
+                        .controlSize(.mini)
                         .tint(.green)
                         .labelsHidden()
                 }

@@ -34,7 +34,7 @@ struct HUDOptionsView: View {
                 Spacer()
                 Toggle("", isOn: $viewModel.scanLinesEnabled)
                     .toggleStyle(.switch)
-                    .controlSize(.small)
+                    .controlSize(.mini)
                     .tint(.green)
             }
         }

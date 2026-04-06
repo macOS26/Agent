@@ -121,7 +121,7 @@ struct AgentOptionsView: View {
                 Spacer()
                 Toggle("Capture stderr", isOn: $viewModel.scriptCaptureStderr)
                     .toggleStyle(.switch)
-                    .controlSize(.small)
+                    .controlSize(.mini)
             }
 
             row {
@@ -129,7 +129,7 @@ struct AgentOptionsView: View {
                 Spacer()
                 Toggle("Autocomplete", isOn: $viewModel.taskAutoComplete)
                     .toggleStyle(.switch)
-                    .controlSize(.small)
+                    .controlSize(.mini)
             }
 
             row {
@@ -173,7 +173,7 @@ struct AgentOptionsView: View {
                         set: { viewModel.tokenBudgetCeiling = $0 ? 100_000 : 0 }
                     ))
                     .toggleStyle(.switch)
-                    .controlSize(.small)
+                    .controlSize(.mini)
                     .labelsHidden()
 
                     if viewModel.tokenBudgetCeiling > 0 {

@@ -22,7 +22,7 @@ struct FallbackChainView: View {
                         set: { service.enabled = $0 }
                     ))
                     .toggleStyle(.switch)
-                    .controlSize(.small)
+                    .controlSize(.mini)
                     .labelsHidden()
                 }
                 Text("When the primary LLM fails 3 times, auto-switch to the next provider. Drag to reorder.")

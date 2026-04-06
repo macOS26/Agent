@@ -71,7 +71,7 @@ struct AccessibilitySettingsView: View {
                     }
                 }
                 .toggleStyle(.switch)
-                .controlSize(.small)
+                .controlSize(.mini)
 
                 Divider()
 
