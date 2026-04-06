@@ -35,7 +35,6 @@ struct LLMOutputTextView: NSViewRepresentable {
 
         context.coordinator.textView = textView
         context.coordinator.onContentHeight = onContentHeight
-        context.coordinator.startObservingScroll(scrollView)
         return scrollView
     }
 
@@ -49,32 +48,17 @@ struct LLMOutputTextView: NSViewRepresentable {
         let contentLen = contentText.count
 
         if contentLen != coord.lastContentLength {
-            // CRITICAL: suppress scroll observation for the ENTIRE content update.
-            // setAttributedString triggers layout reflow which fires boundsDidChangeNotification,
-            // and without suppression the observer would wrongly think the user scrolled and
-            // flip userIsAtBottom = false. Wrap the whole content update + scroll restore.
-            coord.isProgrammaticScroll = true
-            let wasAtBottom = coord.userIsAtBottom
-
-            // Snapshot the current scroll position so we can restore it if user is NOT at bottom
+            // Snapshot the user's scroll position BEFORE the content mutation so we can
+            // restore it after layout reflow. ZERO auto-scroll — user owns scroll position.
             let savedY = scrollView.contentView.bounds.origin.y
-
+            coord.isProgrammaticScroll = true
             storage.setAttributedString(TerminalNeoRenderer.render(text))
             coord.lastContentLength = contentLen
             tv.layoutManager?.ensureLayout(for: tv.textContainer!)
-
-            let hasTable = contentText.contains("|\n") && contentText.contains("---")
-            if !hasTable && wasAtBottom {
-                // Auto-scroll to bottom — user was at bottom and content is plain text
-                tv.scrollToEndOfDocument(nil)
-                scrollView.reflectScrolledClipView(scrollView.contentView)
-            } else {
-                // Restore the user's scroll position so layout reflow doesn't move them
-                scrollView.contentView.scroll(to: NSPoint(x: 0, y: savedY))
-                scrollView.reflectScrolledClipView(scrollView.contentView)
-            }
-            // Re-enable observation AFTER layout settles on the next runloop tick,
-            // so any deferred bounds-change notifications from layout get ignored.
+            // Always restore the user's scroll position — never auto-scroll.
+            scrollView.contentView.scroll(to: NSPoint(x: 0, y: savedY))
+            scrollView.reflectScrolledClipView(scrollView.contentView)
+            // Re-enable observation AFTER layout settles on the next runloop tick.
             DispatchQueue.main.async {
                 coord.isProgrammaticScroll = false
             }
@@ -114,46 +98,8 @@ struct LLMOutputTextView: NSViewRepresentable {
         var onContentHeight: ((CGFloat) -> Void)?
         var lastContentLength: Int = 0
         var lastReportedHeight: CGFloat = 0
-        /// True when user is at/near the bottom — drives auto-scroll on content updates
-        var userIsAtBottom: Bool = true
-        /// Suppresses tracking during programmatic scrolls
+        /// Suppresses height-callback during the programmatic scroll restore so SwiftUI
+        /// doesn't see scroll position changes as a reason to re-render.
         var isProgrammaticScroll: Bool = false
-        nonisolated(unsafe) var scrollObserver: NSObjectProtocol?
-        private var scrollThrottled = false
-
-        deinit {
-            if let observer = scrollObserver {
-                NotificationCenter.default.removeObserver(observer)
-            }
-        }
-
-        /// Same pattern as ActivityLogView — observe content view bounds change.
-        func startObservingScroll(_ scrollView: NSScrollView) {
-            scrollView.contentView.postsBoundsChangedNotifications = true
-            scrollObserver = NotificationCenter.default.addObserver(
-                forName: NSView.boundsDidChangeNotification,
-                object: scrollView.contentView,
-                queue: .main
-            ) { [weak self, weak scrollView] _ in
-                MainActor.assumeIsolated {
-                    guard let self, !self.scrollThrottled, let scrollView else { return }
-                    guard !self.isProgrammaticScroll else { return }
-                    guard let textView = scrollView.documentView as? NSTextView else { return }
-                    self.userIsAtBottom = Self.isNearBottom(textView)
-                    self.scrollThrottled = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
-                        self?.scrollThrottled = false
-                    }
-                }
-            }
-        }
-
-        /// Within 60pt of the bottom counts as "at bottom"
-        static func isNearBottom(_ textView: NSTextView) -> Bool {
-            guard let scrollView = textView.enclosingScrollView else { return true }
-            let visibleBottom = scrollView.contentView.bounds.origin.y + scrollView.contentView.bounds.height
-            let contentHeight = textView.frame.height
-            return (contentHeight - visibleBottom) < 60
-        }
     }
 }
