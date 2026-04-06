@@ -398,6 +398,8 @@ extension AgentViewModel {
                     await Self.summarizeOldMessages(&messages)
                 }
                 let sendMessages = iterations > 1 ? Self.compressMessages(messages) : messages
+                // Live input token estimate before response arrives
+                tab.tabInputTokens = max(tab.tabInputTokens, Self.estimateTokens(messages: sendMessages))
 
                 if let claude {
                     response = try await claude.sendStreaming(messages: sendMessages, activeGroups: activeGroups) { [weak tab] delta in

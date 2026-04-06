@@ -420,6 +420,8 @@ extension AgentViewModel {
         }
         streamingTextStarted = true
         rawLLMOutput += delta
+        // Live output token estimate (~4 chars per token)
+        taskOutputTokens = max(taskOutputTokens, rawLLMOutput.count / 4)
         startDripIfNeeded()
     }
 
