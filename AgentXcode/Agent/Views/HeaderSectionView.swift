@@ -179,7 +179,7 @@ struct HeaderToolbarButtons: View {
 
         Button { showOptions.toggle() } label: {
             Image(systemName: "slider.horizontal.3")
-                .foregroundStyle(viewModel.optionsIconColor)
+                .foregroundStyle(.green)
         }
         .accessibilityLabel("Options")
         .popover(isPresented: $showOptions) {
