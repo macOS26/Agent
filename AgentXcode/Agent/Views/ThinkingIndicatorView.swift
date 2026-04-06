@@ -236,13 +236,11 @@ struct ThinkingIndicatorView: View {
                         }
                         .foregroundStyle(.secondary)
 
-                        if inputTokens > 0 || outputTokens > 0 {
-                            HStack(spacing: 2) {
-                                Text("↑").font(.caption).foregroundStyle(.blue)
-                                Text(Self.fmtTokens(inputTokens)).font(.caption).foregroundStyle(.secondary)
-                                Text("↓").font(.caption).foregroundStyle(.green)
-                                Text(Self.fmtTokens(outputTokens)).font(.caption).foregroundStyle(.secondary)
-                            }
+                        HStack(spacing: 2) {
+                            Text("↑").font(.caption).foregroundStyle(.blue)
+                            Text(Self.fmtTokens(inputTokens)).font(.caption).foregroundStyle(.secondary)
+                            Text("↓").font(.caption).foregroundStyle(.green)
+                            Text(Self.fmtTokens(outputTokens)).font(.caption).foregroundStyle(.secondary)
                         }
 
                         // Context budget bar
