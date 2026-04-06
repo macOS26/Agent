@@ -166,9 +166,15 @@ struct ThinkingIndicatorView: View {
                                 ShimmerText("Executing\(dots)", color: .green)
                             }
                         } else if let t = tab, t.isLLMThinking {
-                            ShimmerText("Thinking\(dots)", color: .green)
+                            HStack(spacing: 3) {
+                                Image(systemName: "brain").font(.caption).foregroundStyle(.green)
+                                ShimmerText("Thinking\(dots)", color: .green)
+                            }
                         } else if tab == nil && viewModel.isThinking {
-                            ShimmerText("Thinking\(dots)", color: .green)
+                            HStack(spacing: 3) {
+                                Image(systemName: "brain").font(.caption).foregroundStyle(.green)
+                                ShimmerText("Thinking\(dots)", color: .green)
+                            }
                         } else {
                             ShimmerText("Running\(dots)", color: .yellow)
                         }
