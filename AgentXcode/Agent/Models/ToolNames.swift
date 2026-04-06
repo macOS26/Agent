@@ -53,7 +53,7 @@ enum Tool {
     // Sub-agents
     static let spawn = "spawn_agent"
     static let messageAgent = "tell_agent"
-    static let ask = "ask_user_question"
+    static let ask = "ask_user"
     static let webFetch = "web_fetch"
 
     // MARK: - Group Names
@@ -95,7 +95,8 @@ enum Tool {
         "memory": "memory",
         "skill": "invoke_skill",
         "fetch": "web_fetch",
-        "ask": "ask_user_question",
+        "ask": "ask_user",
+        "ask_user_question": "ask_user",
         "spawn": "spawn_agent",
         "message_agent": "tell_agent",
         "send_message_to_agent": "tell_agent",

@@ -425,7 +425,7 @@ extension AgentViewModel {
             let maxIter = input["max_iterations"] as? Int ?? 15
             return spawnSubAgent(name: name, prompt: prompt, toolGroups: toolGroups, maxIterations: maxIter)
         // AskUserQuestion — mid-task dialog, waits for user answer
-        case "ask_user_question":
+        case "ask_user":
             let question = input["question"] as? String ?? ""
             guard !question.isEmpty else { return "Error: 'question' is required." }
             appendLog("❓ \(question)")

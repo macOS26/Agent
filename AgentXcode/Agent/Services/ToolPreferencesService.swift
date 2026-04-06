@@ -29,8 +29,8 @@ final class ToolPreferencesService {
 
     /// Tool group definitions - maps group name to tool name prefixes
     static let toolGroups: [String: Set<String>] = [
-        Tool.Group.core: Set([Tool.done, "task_complete", Tool.tools, Tool.search, "web_search", Tool.chat, "conversation", Tool.msg, "send_message", Tool.sh, "run_shell_script", Tool.code, "coding_mode", Tool.plan, "plan_mode", Tool.mem, "memory", Tool.skill, "invoke_skill", Tool.file, "file_manager", Tool.folder, "project_folder", Tool.webFetch, "web_fetch"]),
-        Tool.Group.work: Set([Tool.agent, Tool.git, Tool.batch, "batch_commands", Tool.multi, "batch_tools", Tool.spawn, "spawn_agent", Tool.messageAgent, "tell_agent", Tool.ask, "ask_user_question"]),
+        Tool.Group.core: Set([Tool.done, "task_complete", Tool.tools, Tool.search, "web_search", Tool.chat, "conversation", Tool.msg, "send_message", Tool.sh, "run_shell_script", Tool.code, "coding_mode", Tool.plan, "plan_mode", Tool.mem, "memory", Tool.skill, "invoke_skill", Tool.file, "file_manager", Tool.folder, "project_folder", Tool.webFetch, "web_fetch", Tool.ask, "ask_user", Tool.messageAgent, "tell_agent"]),
+        Tool.Group.work: Set([Tool.agent, Tool.git, Tool.batch, "batch_commands", Tool.multi, "batch_tools", Tool.spawn, "spawn_agent"]),
         Tool.Group.code: Set([Tool.xc]),
         Tool.Group.auto: Set([Tool.as, Tool.ax, Tool.js, "jxa", Tool.sdef, "lookup_sdef", Tool.web]),
         Tool.Group.user: Set([Tool.user, "execute_agent_command"]),
