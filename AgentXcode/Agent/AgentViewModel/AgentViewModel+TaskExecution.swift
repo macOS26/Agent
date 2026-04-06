@@ -532,16 +532,17 @@ extension AgentViewModel {
                                 if !lastText.isEmpty { summary = String(lastText.prefix(300)) }
                             }
                             completionSummary = summary
-                            // Show task complete in the LLM Output HUD so the user sees the result
+                            // Show task complete in the LLM Output HUD so the user sees the result.
+                            // Append to rawLLMOutput and let the drip task pick up the new chars
+                            // naturally — DO NOT sync displayedLLMOutput, that would skip the drip.
                             let trimmedRaw = rawLLMOutput.trimmingCharacters(in: .whitespacesAndNewlines)
                             if trimmedRaw.isEmpty {
                                 rawLLMOutput = "✅ \(summary)"
                             } else if !trimmedRaw.contains(summary) {
-                                // Append completion banner if not already part of the streamed text
                                 rawLLMOutput += "\n\n✅ \(summary)"
                             }
-                            displayedLLMOutput = rawLLMOutput
-                            dripDisplayIndex = rawLLMOutput.count
+                            // Make sure the drip task is still running so it picks up the appended chars
+                            startDripIfNeeded()
 
                             // Apple Intelligence summary annotation
                             if mediator.isEnabled && mediator.showAnnotationsToUser && !commandsRun.isEmpty {

@@ -560,15 +560,16 @@ extension AgentViewModel {
 
                         if name == "task_complete" {
                             completionSummary = input["summary"] as? String ?? "Done"
-                            // Show task complete in the LLM Output HUD so the user sees the result
+                            // Show task complete in the LLM Output HUD so the user sees the result.
+                            // Append to rawLLMOutput and let the drip task pick up the new chars
+                            // naturally — DO NOT sync displayedLLMOutput, that would skip the drip.
                             let trimmedRaw = tab.rawLLMOutput.trimmingCharacters(in: .whitespacesAndNewlines)
                             if trimmedRaw.isEmpty {
                                 tab.rawLLMOutput = "✅ \(completionSummary)"
                             } else if !trimmedRaw.contains(completionSummary) {
                                 tab.rawLLMOutput += "\n\n✅ \(completionSummary)"
                             }
-                            tab.displayedLLMOutput = tab.rawLLMOutput
-                            tab.dripDisplayIndex = tab.rawLLMOutput.count
+                            tab.startDripIfNeeded()
                         }
                         let toolStart = CFAbsoluteTimeGetCurrent()
                         let result = await handleTabToolCall(

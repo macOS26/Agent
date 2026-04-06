@@ -424,7 +424,7 @@ extension AgentViewModel {
     }
 
     /// Drip characters from rawLLMOutput into displayedLLMOutput one at a time (terminal effect)
-    private func startDripIfNeeded() {
+    func startDripIfNeeded() {
         guard dripTask == nil else { return }
         dripTask = Task { [weak self] in
             guard let self else { return }
