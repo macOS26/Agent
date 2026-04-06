@@ -112,13 +112,15 @@ extension AgentViewModel {
             guard let cmd = await Self.offMain({ [ss = scriptService] in ss.compileCommand(name: scriptName) }) else {
                 return "Error: script '\(scriptName)' not found"
             }
-            var fullCmd = cmd
-            if !arguments.isEmpty {
-                fullCmd = "AGENT_SCRIPT_ARGS='\(arguments)' \(cmd)"
-            }
             RecentAgentsService.shared.recordRun(agentName: scriptName, arguments: arguments, prompt: "run \(scriptName) \(arguments)")
-            let result = await Self.executeTCC(command: fullCmd)
-            // Update agent menu status based on outcome
+            // Compile first
+            let compileResult = await Self.executeTCC(command: cmd)
+            guard compileResult.status == 0 else {
+                RecentAgentsService.shared.updateStatus(agentName: scriptName, arguments: arguments, status: .failed)
+                return "Build failed:\n\(compileResult.output)"
+            }
+            // Run the compiled dylib in-process via dlopen
+            let result = await scriptService.loadAndRunScript(name: scriptName, arguments: arguments)
             let isUsage = result.output.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("Usage:")
             if isUsage || result.status != 0 {
                 RecentAgentsService.shared.updateStatus(agentName: scriptName, arguments: arguments, status: .failed)
