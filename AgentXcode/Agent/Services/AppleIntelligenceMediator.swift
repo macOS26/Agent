@@ -396,12 +396,14 @@ Suggest the next step in 1 sentence. If none obvious, reply with nothing.
             return DirectCommand(name: "google_search", argument: query)
         }
 
-        // "agent run X" — direct agent execution with explicit "agent run" prefix
+        // "run agent X" or "agent run X" — direct agent execution
+        if lower.hasPrefix("run agent ") {
+            let arg = String(trimmed.dropFirst("run agent ".count)).trimmingCharacters(in: .whitespaces)
+            if !arg.isEmpty { return DirectCommand(name: "run_agent", argument: arg) }
+        }
         if lower.hasPrefix("agent run ") {
             let arg = String(trimmed.dropFirst("agent run ".count)).trimmingCharacters(in: .whitespaces)
-            if !arg.isEmpty {
-                return DirectCommand(name: "run_agent", argument: arg)
-            }
+            if !arg.isEmpty { return DirectCommand(name: "run_agent", argument: arg) }
         }
 
         return nil
