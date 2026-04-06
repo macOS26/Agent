@@ -10,7 +10,7 @@ enum Tool {
     static let tools = "list_tools_tool"
     static let search = "search_tool"
     static let folder = "directory_tool"
-    static let code = "code_tool"
+    static let code = "mode_tool"
 
     // Core (also)
     static let chat = "chat_tool"
@@ -87,6 +87,8 @@ enum Tool {
         "plan_tool": "plan_mode",
         "directory_tool": "project_folder",
         "code_tool": "coding_mode",
+        "mode_tool": "coding_mode",
+        "mode": "coding_mode",
         "list_tools_tool": "list_tools",
         "sdef_tool": "lookup_sdef",
         "javascript_tool": "execute_javascript",

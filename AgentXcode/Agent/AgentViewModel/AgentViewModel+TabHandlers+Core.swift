@@ -55,17 +55,17 @@ extension AgentViewModel {
                 isComplete: false
             )
 
-        case "coding_mode", "mode":
+        case "coding_mode", "mode", "mode_tool":
             let action = input["action"] as? String
             let output: String
             if let action {
                 switch action {
-                case "coding":
+                case "coding", "coding_mode":
                     codingModeEnabled = true; automationModeEnabled = false
                     output = "Coding mode ON — Core+Workflow+Coding+UserAgent tools active."
-                case "automation":
+                case "automation", "workflow", "workflow_mode":
                     automationModeEnabled = true; codingModeEnabled = false
-                    output = "Automation mode ON — Core+Workflow+Automation+UserAgent tools active."
+                    output = "Workflow mode ON — Core+Workflow+Automation+UserAgent tools active."
                 default:
                     codingModeEnabled = false; automationModeEnabled = false
                     output = "Standard mode — all user-enabled tools restored."
