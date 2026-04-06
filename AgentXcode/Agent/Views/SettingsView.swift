@@ -4,6 +4,29 @@ import AgentTools
 struct SettingsView: View {
     @Bindable var viewModel: AgentViewModel
 
+    /// Per-provider temperature binding so the slider always edits the active model's temp.
+    private var llmTemperatureBinding: Binding<Double> {
+        switch viewModel.selectedProvider {
+        case .claude: return $viewModel.claudeTemperature
+        case .ollama: return $viewModel.ollamaTemperature
+        case .openAI: return $viewModel.openAITemperature
+        case .deepSeek: return $viewModel.deepSeekTemperature
+        case .huggingFace: return $viewModel.huggingFaceTemperature
+        case .localOllama: return $viewModel.localOllamaTemperature
+        case .vLLM: return $viewModel.vLLMTemperature
+        case .lmStudio: return $viewModel.lmStudioTemperature
+        case .zAI: return $viewModel.zAITemperature
+        case .bigModel: return $viewModel.zAITemperature
+        case .qwen: return $viewModel.openAITemperature
+        case .gemini: return $viewModel.geminiTemperature
+        case .grok: return $viewModel.grokTemperature
+        case .mistral: return $viewModel.openAITemperature
+        case .codestral: return $viewModel.openAITemperature
+        case .vibe: return $viewModel.openAITemperature
+        case .foundationModel: return $viewModel.claudeTemperature // unused
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Provider toggle
@@ -749,26 +772,49 @@ struct SettingsView: View {
                 }
             }
 
-
-            // Terminal Speed
+            // Temperature — lives with the LLM since it's a per-provider setting
             Divider()
             VStack(alignment: .leading, spacing: 4) {
-                Text("Terminal Speed").font(.caption).foregroundStyle(viewModel.temperatureColor(viewModel.currentTemperature))
-                Picker("", selection: $viewModel.terminalSpeed) {
-                    ForEach(AgentViewModel.TerminalSpeed.allCases, id: \.self) { speed in
-                        Text(speed.label).tag(speed)
-                    }
+                HStack {
+                    Text("Temperature").font(.caption).foregroundStyle(.secondary)
+                    Spacer()
+                    Text(viewModel.selectedProvider.displayName).font(.caption).foregroundStyle(.secondary)
+                    Text(String(format: "%.1f", llmTemperatureBinding.wrappedValue))
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(viewModel.temperatureColor(llmTemperatureBinding.wrappedValue))
+                        .frame(width: 28, alignment: .trailing)
                 }
-                .pickerStyle(.segmented)
-                .tint(viewModel.temperatureColor(viewModel.currentTemperature))
+                Slider(value: llmTemperatureBinding, in: 0...2, step: 0.1)
+                    .id(viewModel.selectedProvider)
+                    .tint(viewModel.temperatureColor(llmTemperatureBinding.wrappedValue))
             }
 
-            HStack {
-                Text("Scan Lines").font(.caption)
-                Spacer()
-                Toggle("", isOn: $viewModel.scanLinesEnabled)
-                    .toggleStyle(.switch)
-                    .controlSize(.small)
+            // HUD (Heads-Up Display) — terminal/scanline appearance for the LLM Output overlay
+            VStack(alignment: .leading, spacing: 10) {
+                Text("HUD")
+                    .font(.headline)
+                Text("Heads-Up Display for LLM Output. Press ⌘B to show/hide during a task.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Terminal Speed").font(.caption).foregroundStyle(viewModel.temperatureColor(viewModel.currentTemperature))
+                    Picker("", selection: $viewModel.terminalSpeed) {
+                        ForEach(AgentViewModel.TerminalSpeed.allCases, id: \.self) { speed in
+                            Text(speed.label).tag(speed)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .tint(viewModel.temperatureColor(viewModel.currentTemperature))
+                }
+
+                HStack {
+                    Text("Scan Lines").font(.caption)
+                    Spacer()
+                    Toggle("", isOn: $viewModel.scanLinesEnabled)
+                        .toggleStyle(.switch)
+                        .controlSize(.small)
+                }
             }
 
             // Web Search (Tavily) — available for all providers
