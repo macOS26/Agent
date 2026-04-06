@@ -9,10 +9,10 @@ struct ToolsView: View {
     
     // Group definitions — use actual consolidated tool names from AgentTools.Name
     static let groups: [String: (filter: (AgentTools.ToolDef) -> Bool, icon: String)] = [
-        Tool.Group.core: ({ [Tool.done, Tool.tools, Tool.search, Tool.folder, Tool.mem, Tool.chat, Tool.msg, Tool.sh, Tool.code, Tool.plan, Tool.skill, Tool.file, Tool.webFetch].contains($0.name) }, "checkmark.circle"),
-        Tool.Group.work: ({ [Tool.agent, Tool.git, Tool.batch, Tool.multi, Tool.spawn, Tool.messageAgent, Tool.ask].contains($0.name) }, "flowchart"),
+        Tool.Group.core: ({ [Tool.done, Tool.tools, Tool.search, Tool.folder, Tool.mem, Tool.chat, Tool.msg, Tool.sh, Tool.code, Tool.plan, Tool.skill, Tool.file, Tool.webFetch, Tool.ask, Tool.messageAgent].contains($0.name) }, "checkmark.circle"),
+        Tool.Group.work: ({ [Tool.agent, Tool.git, Tool.batch, Tool.multi, Tool.spawn].contains($0.name) }, "flowchart"),
         Tool.Group.code: ({ [Tool.xc].contains($0.name) }, "chevron.left.forwardslash.chevron.right"),
-        Tool.Group.auto: ({ [Tool.as, Tool.ax, Tool.js, Tool.sdef, Tool.web].contains($0.name) }, "gearshape.2"),
+        Tool.Group.auto: ({ [Tool.as, Tool.ax, Tool.js, Tool.web].contains($0.name) }, "gearshape.2"),
         Tool.Group.user: ({ $0.name == Tool.user }, "person"),
         Tool.Group.root: ({ $0.name == Tool.root }, "lock.shield"),
         Tool.Group.exp: ({ $0.name == Tool.sel }, "flask"),

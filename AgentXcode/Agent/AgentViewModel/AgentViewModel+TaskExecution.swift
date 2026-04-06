@@ -327,12 +327,18 @@ extension AgentViewModel {
         var promptTier: PromptTier = .condensed
         let userName = NSFullUserName()
         let userHome = NSHomeDirectory()
-        // Apply the condensed prompt to all services BEFORE the loop so iter 1 already
-        // has the stable prefix that iter 2+ will hit in the cache.
+        // Apply the condensed prompt + compact tools to all services BEFORE the loop so
+        // iter 1 already has the stable prefix that iter 2+ will hit in the cache.
+        // compactTools=true saves ~4K tokens/turn AND keeps the tools array byte-for-byte
+        // identical across iterations. The action enums in the property schemas still tell
+        // the LLM every valid action even when descriptions are truncated.
         let initialCondensed = AgentTools.condensedSystemPrompt(userName: userName, userHome: userHome, projectFolder: projectFolder)
         claude?.overrideSystemPrompt = initialCondensed
         ollama?.overrideSystemPrompt = initialCondensed
         openAICompatible?.overrideSystemPrompt = initialCondensed
+        claude?.compactTools = true
+        ollama?.compactTools = true
+        openAICompatible?.compactTools = true
         // Track unique files edited (write_file/edit_file/diff_apply/create_diff/apply_diff) for plan-mode enforcement
         var filesEditedThisTask: Set<String> = []
         // Track if a plan exists for this task (created via plan_mode tool)
@@ -357,24 +363,20 @@ extension AgentViewModel {
             }
 
             // Auto-enable coding mode after iteration 1 if ANY tool calls were made (including reads)
-            // Skip if user is doing automation (accessibility, applescript, javascript)
-            let automationTools: Set<String> = ["accessibility", "run_applescript", "run_osascript", "execute_javascript", "lookup_sdef"]
-            let isAutomation = commandsRun.contains(where: { cmd in cmd.hasPrefix("ax_") || automationTools.contains(where: { cmd.contains($0) }) })
+            // Skip if user is doing automation (accessibility, applescript, javascript).
+            // NOTE: compactTools is already true from before the loop — no need to flip it here.
+            // We just narrow the activeGroups so the tool LIST shrinks (which is fine for caching
+            // because activeGroups change is the LLM's intent, not a prefix mutation we can avoid).
+            // Substring keywords match every expanded variant: applescript catches run_applescript;
+            // apple_script catches list/run/save/delete_apple_script; javascript catches all 5 JS
+            // handler variants; sdef catches lookup_sdef; osascript catches run_osascript.
+            let automationKeywords: Set<String> = ["applescript", "apple_script", "osascript", "javascript", "sdef"]
+            let isAutomation = commandsRun.contains(where: { cmd in cmd.hasPrefix("ax_") || automationKeywords.contains(where: { cmd.contains($0) }) })
             if iterations == 2 && !codingModeEnabled && iter1UsedTools {
                 codingModeEnabled = true
                 activeGroups = isAutomation ? Self.automationModeGroups : Self.codingModeGroups
-                claude?.compactTools = true
-                ollama?.compactTools = true
-                openAICompatible?.compactTools = true
                 appendLog(isAutomation ? "⚡ Automation mode auto-enabled" : "⚡ Coding mode auto-enabled")
                 flushLog()
-            }
-
-            // Token fix 5: compact tool descriptions after first iteration (saves ~4K tokens/turn)
-            if iterations == 2 {
-                claude?.compactTools = true
-                ollama?.compactTools = true
-                openAICompatible?.compactTools = true
             }
 
             // Token-aware context compaction — replaces fixed iteration-based triggers

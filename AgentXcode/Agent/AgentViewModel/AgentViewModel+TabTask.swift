@@ -374,25 +374,28 @@ extension AgentViewModel {
         // here (only the main task loop has that).
         let userName = NSFullUserName()
         let userHome = NSHomeDirectory()
-        // Apply the condensed prompt to all services BEFORE the loop so iter 1 already
-        // has the stable prefix that iter 2+ will hit in the cache.
+        // Apply the condensed prompt + compact tools to all services BEFORE the loop so
+        // iter 1 already has the stable prefix that iter 2+ will hit in the cache.
         let initialCondensed = AgentTools.condensedSystemPrompt(userName: userName, userHome: userHome, projectFolder: rawFolder)
         claude?.overrideSystemPrompt = initialCondensed
         ollama?.overrideSystemPrompt = initialCondensed
         openAICompatible?.overrideSystemPrompt = initialCondensed
+        claude?.compactTools = true
+        ollama?.compactTools = true
+        openAICompatible?.compactTools = true
 
         while !Task.isCancelled {
             iterations += 1
 
-            // Auto-enable coding mode after iteration 1 — skip if using automation tools
-            let automationTools: Set<String> = ["accessibility", "run_applescript", "run_osascript", "execute_javascript", "lookup_sdef"]
-            let isAutomation = commandsRun.contains(where: { cmd in cmd.hasPrefix("ax_") || automationTools.contains(where: { cmd.contains($0) }) })
+            // Auto-enable coding mode after iteration 1 — skip if using automation tools.
+            // compactTools is already true from before the loop, so we only narrow activeGroups here.
+            // Substring keywords match every expanded variant of the AppleScript / JavaScript /
+            // osascript / sdef handlers; ax_* prefix is checked separately.
+            let automationKeywords: Set<String> = ["applescript", "apple_script", "osascript", "javascript", "sdef"]
+            let isAutomation = commandsRun.contains(where: { cmd in cmd.hasPrefix("ax_") || automationKeywords.contains(where: { cmd.contains($0) }) })
             if iterations == 2 && !codingModeEnabled && iter1UsedTools {
                 codingModeEnabled = true
                 activeGroups = isAutomation ? Self.automationModeGroups : Self.codingModeGroups
-                claude?.compactTools = true
-                ollama?.compactTools = true
-                openAICompatible?.compactTools = true
                 tab.appendLog(isAutomation ? "⚡ Automation mode auto-enabled" : "⚡ Coding mode auto-enabled")
                 tab.flush()
             }

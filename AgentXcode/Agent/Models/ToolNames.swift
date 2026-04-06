@@ -32,7 +32,6 @@ enum Tool {
     static let `as` = "applescript"
     static let ax = "accessibility"
     static let js = "javascript"
-    static let sdef = "sdef"
 
     // User / Root
     static let user = "user_shell"
@@ -78,21 +77,20 @@ enum Tool {
     // LLM sends short name, alias resolves to the handler the app uses
 
     static let aliases: [String: String] = [
-        // Bare canonical names (no _tool suffix) → handler names
+        // Bare canonical names → handler names. ONLY include entries here when the
+        // canonical name maps to a single leaf handler (no action sub-dispatch). For
+        // consolidated tools that need action dispatch (chat, javascript, applescript,
+        // etc.), let expandConsolidatedTool's switch handle them — adding them here
+        // would short-circuit the action routing and break the tool.
         "user_shell": "execute_agent_command",
         "root_shell": "execute_daemon_command",
         "batch_shell": "batch_commands",
         "shell": "run_shell_script",
         "done": "task_complete",
         "search": "web_search",
-        "chat": "conversation",
         "plan": "plan_mode",
         "directory": "project_folder",
         "mode": "coding_mode",
-        "list_tools": "list_tools",
-        "sdef": "lookup_sdef",
-        "javascript": "execute_javascript",
-        "memory": "memory",
         "skill": "invoke_skill",
         "fetch": "web_fetch",
         "ask": "ask_user",
@@ -110,7 +108,6 @@ enum Tool {
         "dir": "project_folder",
         "code": "coding_mode",
         "tools": "list_tools",
-        "js": "execute_javascript",
         "mem": "memory",
     ]
 }

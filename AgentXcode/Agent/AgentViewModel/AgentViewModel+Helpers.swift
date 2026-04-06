@@ -308,7 +308,7 @@ extension AgentViewModel {
             default:                  return ("ax_\(action)", mapped)
             }
 
-        case "conversation":
+        case "conversation", "chat":
             switch action {
             case "write":     return ("write_text", newInput)
             case "transform": return ("transform_text", newInput)

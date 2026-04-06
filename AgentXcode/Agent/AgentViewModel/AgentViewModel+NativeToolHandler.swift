@@ -28,6 +28,16 @@ extension AgentViewModel {
         // Prefix-matched tools
         if let result = await handleWebTool(name: name, input: input) { return result }
         if let result = await handleSeleniumTool(name: name, input: input) { return result }
+        // Saved-script CRUDL tools (list/save/delete/run for AppleScript and JXA).
+        // expandConsolidatedTool maps applescript(action:list) → list_apple_scripts (etc.),
+        // and those leaf names live in handleSavedScriptTool, not the main switch below.
+        let savedScriptNames: Set<String> = [
+            "list_apple_scripts", "run_apple_script", "save_apple_script", "delete_apple_script",
+            "list_javascript", "run_javascript", "save_javascript", "delete_javascript",
+        ]
+        if savedScriptNames.contains(name) {
+            return await handleSavedScriptTool(name: name, input: input)
+        }
         // ax_ accessibility tools — already expanded, handle directly via the accessibility switch below
         // (expandConsolidatedTool maps accessibility(action:X) → ax_X, so ax_ names arrive here already expanded)
 
