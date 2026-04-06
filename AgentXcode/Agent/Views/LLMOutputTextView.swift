@@ -4,9 +4,12 @@ import AgentTerminalNeo
 
 /// Local NSScrollView/NSTextView wrapper for the LLM Output HUD.
 /// Renders text via TerminalNeoRenderer for markdown/table styling.
-/// ZERO scroll machinery — no observers, no auto-scroll, no scroll method calls.
-/// The user owns the scroll position entirely; NSTextView's natural mouse-wheel
-/// scrolling still works via the underlying NSScrollView wrapper.
+///
+/// Scroll policy: USER OWNS THE SCROLL POSITION, ALWAYS.
+/// We never auto-scroll. NSTextView wants to scroll the insertion point into
+/// view on every setAttributedString / replaceCharacters call — we defeat that
+/// by snapshotting the clip view origin before any mutation and restoring it
+/// after. Mouse-wheel scrolling still works through the underlying NSScrollView.
 struct LLMOutputTextView: NSViewRepresentable {
     let text: String
     var onContentHeight: ((CGFloat) -> Void)?
@@ -40,6 +43,13 @@ struct LLMOutputTextView: NSViewRepresentable {
         coord.onContentHeight = onContentHeight
         guard let tv = coord.textView, let storage = tv.textStorage else { return }
 
+        // Capture scroll position BEFORE any text mutation. NSTextView implicitly
+        // scrolls the insertion point into view on setAttributedString and on
+        // replaceCharacters — we have to snapshot the clip view origin and
+        // restore it after the edit so the user's scroll position is preserved.
+        let clipView = scrollView.contentView
+        let savedOrigin = clipView.bounds.origin
+
         // Strip cursor char to detect content changes vs cursor blink
         let contentText = text.hasSuffix("█") ? String(text.dropLast()) : (text.hasSuffix(" ") ? String(text.dropLast()) : text)
         let contentLen = contentText.count
@@ -69,6 +79,11 @@ struct LLMOutputTextView: NSViewRepresentable {
                 }
             }
         }
+
+        // Restore the user's scroll position. Use scroll() (not scrollToPoint:)
+        // because it bypasses the animator and lands instantly with no jitter.
+        clipView.scroll(to: savedOrigin)
+        scrollView.reflectScrolledClipView(clipView)
 
         // Report content height back to SwiftUI for box sizing
         let h = (tv.layoutManager?.usedRect(for: tv.textContainer!).height ?? 40) + tv.textContainerInset.height * 2
