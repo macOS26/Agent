@@ -56,7 +56,8 @@ struct ActivityLogView: NSViewRepresentable {
         let len = (text as NSString).length
         let tabChanged = tabID != coord.latestTabID
         let textChanged = len != coord.updateNSViewLastLength
-        guard tabChanged || textChanged else { return }
+        let searchChanged = searchText != coord.latestSearchText || currentMatchIndex != coord.latestMatchIndex || caseSensitive != coord.latestCaseSensitive
+        guard tabChanged || textChanged || searchChanged else { return }
 
         coord.latestText = text
         coord.updateNSViewLastLength = len

@@ -492,14 +492,11 @@ extension AgentViewModel {
                         // Expand consolidated CRUDL tools into legacy tool names
                         (name, input) = Self.expandConsolidatedTool(name: name, input: input)
 
-                        // Plan-mode enforcement: 3+ unique files edited without an active plan → block, instruct create plan
+                        // Plan-mode enforcement: ALL edits require an active plan first
                         let editTools: Set<String> = ["write_file", "edit_file", "diff_apply", "diff_and_apply", "create_diff", "apply_diff"]
                         if editTools.contains(name), let filePath = input["file_path"] as? String, !filePath.isEmpty {
-                            let willBeNewFile = !filesEditedThisTask.contains(filePath)
-                            if willBeNewFile && !planActive && filesEditedThisTask.count >= 2 {
-                                // About to be the 3rd unique file with no plan — block and instruct
-                                let alreadyEdited = filesEditedThisTask.sorted().joined(separator: ", ")
-                                let nudge = "BLOCKED: This is the 3rd unique file you're editing in this task. You MUST create a plan first via plan_tool(action:create, name:..., steps:...). Already edited: " + alreadyEdited
+                            if !planActive {
+                                let nudge = "BLOCKED: Create a plan FIRST via plan_tool(action:create, name:..., steps:[...]) before editing any files. This prevents wasted token regeneration."
                                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": nudge, "is_error": true])
                                 appendLog("🚫 Plan required — blocked edit on \(filePath)")
                                 flushLog()
@@ -692,12 +689,14 @@ extension AgentViewModel {
                     let hadEdit = pendingTools.contains { editTools.contains($0.name) }
                     let hadBuild = pendingTools.contains { buildTools.contains($0.name) }
 
-                    // 1. Read guard — nudge at 5, force stop at 10
+                    // 1. Read guard — nudge at 5, hard snap-out at 10 (no stop)
                     if hadAction { consecutiveReadOnlyCount = 0 } else { consecutiveReadOnlyCount += pendingTools.count }
                     if consecutiveReadOnlyCount >= 10 {
-                        appendLog("⚠️ Auto-stopping: 10 consecutive reads without action")
+                        toolResults.append(["type": "tool_result", "tool_use_id": "read_snap",
+                            "content": "🛑 SNAP OUT OF IT: \(consecutiveReadOnlyCount) consecutive reads/searches with NO edits, builds, or actions. STOP searching. Pick the most likely file, make an EDIT now, or call done if you can't proceed. NO MORE READS."])
+                        appendLog("🛑 Snap-out nudge: \(consecutiveReadOnlyCount) consecutive reads")
                         flushLog()
-                        break
+                        consecutiveReadOnlyCount = 0  // Reset after snap so we don't loop the nudge
                     } else if consecutiveReadOnlyCount >= 5 {
                         toolResults.append(["type": "tool_result", "tool_use_id": "read_guard",
                             "content": "⚠️ \(consecutiveReadOnlyCount) consecutive reads without editing or building. Take action or call done."])

@@ -259,8 +259,9 @@ struct ThinkingIndicatorView: View {
                         if inputTokens > 0 {
                             let used = inputTokens + outputTokens
                             let rawFraction = min(Double(used) / Double(contextWindow), 1.0)
-                            let fraction = rawFraction > 0.95 ? 1.0 : rawFraction
                             let isRunning = viewModel.isRunning || (tab?.isLLMRunning ?? false)
+                            // Show 100% when task is done, actual usage while running
+                            let fraction: Double = !isRunning ? 1.0 : (rawFraction > 0.95 ? 1.0 : rawFraction)
                             let barColor: Color = isRunning ? .green : .blue
                             HStack(spacing: 4) {
                                 GeometryReader { geo in

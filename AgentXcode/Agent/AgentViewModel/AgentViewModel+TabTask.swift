@@ -507,13 +507,11 @@ extension AgentViewModel {
 
                         commandsRun.append(name)
 
-                        // Plan-mode enforcement: 3+ unique files edited without an active plan → block
+                        // Plan-mode enforcement: ALL edits require an active plan first
                         let editTools: Set<String> = ["write_file", "edit_file", "diff_apply", "diff_and_apply", "create_diff", "apply_diff"]
                         if editTools.contains(name), let filePath = input["file_path"] as? String, !filePath.isEmpty {
-                            let willBeNewFile = !filesEditedThisTask.contains(filePath)
-                            if willBeNewFile && !planActive && filesEditedThisTask.count >= 2 {
-                                let alreadyEdited = filesEditedThisTask.sorted().joined(separator: ", ")
-                                let nudge = "BLOCKED: This is the 3rd unique file you're editing in this task. You MUST create a plan first via plan_tool(action:create, name:..., steps:...). Already edited: " + alreadyEdited
+                            if !planActive {
+                                let nudge = "BLOCKED: Create a plan FIRST via plan_tool(action:create, name:..., steps:[...]) before editing any files. This prevents wasted token regeneration."
                                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": nudge, "is_error": true])
                                 tab.appendLog("🚫 Plan required — blocked edit on \(filePath)")
                                 tab.flush()
