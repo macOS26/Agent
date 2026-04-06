@@ -469,6 +469,8 @@ struct ActivityLogView: NSViewRepresentable {
 
         /// Track previous search highlight ranges so we can remove only those
         var lastSearchRanges: [NSRange] = []
+        /// Saved original foreground colors per highlighted range so we can restore them
+        var savedForegroundColors: [(range: NSRange, color: NSColor?)] = []
         /// Debounce timer for search highlighting during streaming
         var pendingSearchWork: DispatchWorkItem?
 
@@ -482,12 +484,22 @@ struct ActivityLogView: NSViewRepresentable {
             // Batch all attribute changes in a single editing pass
             storage.beginEditing()
 
-            // Remove previous highlights
+            // Remove previous highlights and restore original foreground colors
             for range in lastSearchRanges {
                 if range.location + range.length <= storage.length {
                     storage.removeAttribute(.backgroundColor, range: range)
                 }
             }
+            for entry in savedForegroundColors {
+                if entry.range.location + entry.range.length <= storage.length {
+                    if let color = entry.color {
+                        storage.addAttribute(.foregroundColor, value: color, range: entry.range)
+                    } else {
+                        storage.removeAttribute(.foregroundColor, range: entry.range)
+                    }
+                }
+            }
+            savedForegroundColors.removeAll()
             lastSearchRanges.removeAll()
 
             guard !searchText.isEmpty else {
@@ -521,7 +533,11 @@ struct ActivityLogView: NSViewRepresentable {
 
             for (i, range) in matchRanges.enumerated() {
                 let color = (i == currentMatch) ? currentColor : highlightColor
+                // Save original foreground color for this range so we can restore it later
+                let originalFg = storage.attribute(.foregroundColor, at: range.location, effectiveRange: nil) as? NSColor
+                savedForegroundColors.append((range: range, color: originalFg))
                 storage.addAttribute(.backgroundColor, value: color, range: range)
+                storage.addAttribute(.foregroundColor, value: NSColor.black, range: range)
             }
 
             storage.endEditing()
@@ -1359,6 +1375,7 @@ struct ActivityLogView: NSViewRepresentable {
             lastSearch = ""
             lastMatchIndex = -1
             lastSearchRanges.removeAll()
+            savedForegroundColors.removeAll()
         }
     }
 }
