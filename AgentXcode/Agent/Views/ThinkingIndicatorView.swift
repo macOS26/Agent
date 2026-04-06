@@ -105,7 +105,12 @@ struct ThinkingIndicatorView: View {
     }
 
     private var inputTokens: Int { tab?.tabInputTokens ?? viewModel.taskInputTokens }
-    private var outputTokens: Int { tab?.tabOutputTokens ?? viewModel.taskOutputTokens }
+    private var outputTokens: Int {
+        let real = tab?.tabOutputTokens ?? viewModel.taskOutputTokens
+        // Live estimate from raw stream during streaming (~4 chars per token)
+        let streamEstimate = rawStreamText.count / 4
+        return max(real, streamEstimate)
+    }
     private var toolSteps: [AgentViewModel.ToolStep] { tab?.toolSteps ?? viewModel.toolSteps }
 
     /// Approximate context window for the current provider/model
