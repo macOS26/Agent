@@ -105,6 +105,8 @@ extension AgentViewModel {
         tab.thinkingExpanded = true
         tab.thinkingOutputExpanded = true
         tab.thinkingDismissed = false
+        // Reset fallback chain so this run starts on the primary provider
+        FallbackChainService.shared.reset()
 
         var commandsRun: [String] = []
         var completionSummary = ""
@@ -258,53 +260,57 @@ extension AgentViewModel {
         let rawFolder = tab.projectFolder.isEmpty ? self.projectFolder : tab.projectFolder
         let projectFolder = Self.resolvedWorkingDirectory(rawFolder)
 
-        let (provider, modelId) = resolvedLLMConfig(for: tab)
+        var (provider, modelId) = resolvedLLMConfig(for: tab)
         tab.appendLog("🧠 \(provider.displayName) / \(modelId)")
         tab.flush()
 
         let mt = maxTokens
-        let claude: ClaudeService?
-        if provider == .claude {
-            claude = ClaudeService(apiKey: apiKey, model: modelId, historyContext: tabHistoryContext, projectFolder: projectFolder, maxTokens: mt)
-        } else if provider == .lmStudio && lmStudioProtocol == .anthropic {
-            claude = ClaudeService(apiKey: lmStudioAPIKey, model: modelId, historyContext: tabHistoryContext, projectFolder: projectFolder, baseURL: lmStudioEndpoint, maxTokens: mt)
-        } else {
-            claude = nil
-        }
-        // OpenAI-compatible service — URLs from LLMRegistry (single source of truth)
-        let openAICompatible: OpenAICompatibleService?
-        switch provider {
-        case .claude, .ollama, .localOllama, .foundationModel:
-            openAICompatible = nil
-        case .lmStudio where lmStudioProtocol == .anthropic:
-            openAICompatible = nil
-        case .lmStudio:
-            let key = lmStudioProtocol == .lmStudio ? "input" : "messages"
-            openAICompatible = OpenAICompatibleService(apiKey: apiKeyForProvider(provider), model: modelId, baseURL: lmStudioEndpoint, historyContext: tabHistoryContext, projectFolder: projectFolder, provider: provider, messagesKey: key, maxTokens: mt)
-        case .vLLM:
-            openAICompatible = OpenAICompatibleService(apiKey: apiKeyForProvider(provider), model: modelId, baseURL: vLLMEndpoint, historyContext: tabHistoryContext, projectFolder: projectFolder, provider: provider, maxTokens: mt)
-        default:
-            let url = chatURLForProvider(provider)
-            let vision = LLMRegistry.shared.provider(provider.rawValue)?.capabilities.contains(.vision) ?? false
-            openAICompatible = url.isEmpty ? nil : OpenAICompatibleService(apiKey: apiKeyForProvider(provider), model: modelId, baseURL: url, supportsVision: vision || forceVision, historyContext: tabHistoryContext, projectFolder: projectFolder, provider: provider, maxTokens: mt)
-        }
-        let ollama: OllamaService?
-        switch provider {
-        case .ollama:
-            ollama = OllamaService(apiKey: ollamaAPIKey, model: modelId, endpoint: ollamaEndpoint, supportsVision: selectedOllamaSupportsVision || Self.isVisionModel(modelId), historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .ollama)
-        case .localOllama:
-            ollama = OllamaService(apiKey: "", model: modelId, endpoint: localOllamaEndpoint, supportsVision: selectedLocalOllamaSupportsVision || Self.isVisionModel(modelId), historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .localOllama, contextSize: localOllamaContextSize)
-        default:
-            ollama = nil
-        }
-        
-        let foundationModelService: FoundationModelService? = provider == .foundationModel
-            ? FoundationModelService(historyContext: tabHistoryContext, projectFolder: projectFolder) : nil
+        var claude: ClaudeService?
+        var openAICompatible: OpenAICompatibleService?
+        var ollama: OllamaService?
+        var foundationModelService: FoundationModelService?
 
-        // Set temperature per provider
-        claude?.temperature = temperatureForProvider(.claude)
-        ollama?.temperature = temperatureForProvider(provider)
-        openAICompatible?.temperature = temperatureForProvider(provider)
+        // Build LLM service instances for the current provider/model. Called at task
+        // start and again when the fallback chain swaps providers mid-task.
+        func buildLLMServices() {
+            if provider == .claude {
+                claude = ClaudeService(apiKey: apiKey, model: modelId, historyContext: tabHistoryContext, projectFolder: projectFolder, maxTokens: mt)
+            } else if provider == .lmStudio && lmStudioProtocol == .anthropic {
+                claude = ClaudeService(apiKey: lmStudioAPIKey, model: modelId, historyContext: tabHistoryContext, projectFolder: projectFolder, baseURL: lmStudioEndpoint, maxTokens: mt)
+            } else {
+                claude = nil
+            }
+            switch provider {
+            case .claude, .ollama, .localOllama, .foundationModel:
+                openAICompatible = nil
+            case .lmStudio where lmStudioProtocol == .anthropic:
+                openAICompatible = nil
+            case .lmStudio:
+                let key = lmStudioProtocol == .lmStudio ? "input" : "messages"
+                openAICompatible = OpenAICompatibleService(apiKey: apiKeyForProvider(provider), model: modelId, baseURL: lmStudioEndpoint, historyContext: tabHistoryContext, projectFolder: projectFolder, provider: provider, messagesKey: key, maxTokens: mt)
+            case .vLLM:
+                openAICompatible = OpenAICompatibleService(apiKey: apiKeyForProvider(provider), model: modelId, baseURL: vLLMEndpoint, historyContext: tabHistoryContext, projectFolder: projectFolder, provider: provider, maxTokens: mt)
+            default:
+                let url = chatURLForProvider(provider)
+                let vision = LLMRegistry.shared.provider(provider.rawValue)?.capabilities.contains(.vision) ?? false
+                openAICompatible = url.isEmpty ? nil : OpenAICompatibleService(apiKey: apiKeyForProvider(provider), model: modelId, baseURL: url, supportsVision: vision || forceVision, historyContext: tabHistoryContext, projectFolder: projectFolder, provider: provider, maxTokens: mt)
+            }
+            switch provider {
+            case .ollama:
+                ollama = OllamaService(apiKey: ollamaAPIKey, model: modelId, endpoint: ollamaEndpoint, supportsVision: selectedOllamaSupportsVision || Self.isVisionModel(modelId), historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .ollama)
+            case .localOllama:
+                ollama = OllamaService(apiKey: "", model: modelId, endpoint: localOllamaEndpoint, supportsVision: selectedLocalOllamaSupportsVision || Self.isVisionModel(modelId), historyContext: tabHistoryContext, projectFolder: projectFolder, provider: .localOllama, contextSize: localOllamaContextSize)
+            default:
+                ollama = nil
+            }
+            foundationModelService = provider == .foundationModel
+                ? FoundationModelService(historyContext: tabHistoryContext, projectFolder: projectFolder) : nil
+
+            claude?.temperature = temperatureForProvider(.claude)
+            ollama?.temperature = temperatureForProvider(provider)
+            openAICompatible?.temperature = temperatureForProvider(provider)
+        }
+        buildLLMServices()
 
         // Build on existing conversation or start fresh
         var messages: [[String: Any]] = tab.llmMessages
@@ -481,6 +487,7 @@ extension AgentViewModel {
                 sessionInputTokens += inTok
                 sessionOutputTokens += outTok
                 TokenUsageStore.shared.record(inputTokens: inTok, outputTokens: outTok)
+                FallbackChainService.shared.recordSuccess()
                 let streamElapsed = CFAbsoluteTimeGetCurrent() - streamStart
                 tab.lastElapsed = streamElapsed
                 tab.tabInputTokens += inTok
@@ -762,6 +769,20 @@ extension AgentViewModel {
                             break
                         }
                     } else {
+                        // Try fallback chain before giving up
+                        if let fallback = FallbackChainService.shared.recordFailure() {
+                            tab.appendLog("🔄 Switching to fallback: \(fallback.displayName)")
+                            tab.flush()
+                            if let fbProvider = APIProvider(rawValue: fallback.provider) {
+                                provider = fbProvider
+                                modelId = fallback.model
+                                buildLLMServices()
+                                tab.appendLog("✅ Now using \(provider.displayName) / \(modelId)")
+                                tab.flush()
+                            }
+                            timeoutRetryCount = 0
+                            continue
+                        }
                         // Non-recoverable error — don't retry (400 bad request, auth errors, etc.)
                         tab.appendLog("\(errorSource) Error: \(errMsg)")
                         tab.flush()

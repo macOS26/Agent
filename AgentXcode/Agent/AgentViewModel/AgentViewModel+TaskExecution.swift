@@ -60,8 +60,8 @@ extension AgentViewModel {
 
         // Use ChatHistoryStore for LLM context (summaries for older tasks, full messages for recent)
         let historyContext = ChatHistoryStore.shared.buildLLMContext()
-        let provider = selectedProvider
-        let modelName: String
+        var provider = selectedProvider
+        var modelName: String
         var isVision: Bool
         switch provider {
         case .claude:
@@ -126,46 +126,53 @@ extension AgentViewModel {
         flushLog()
 
         let mt = maxTokens
-        let claude: ClaudeService?
-        if provider == .claude {
-            claude = ClaudeService(apiKey: apiKey, model: selectedModel, historyContext: historyContext, projectFolder: projectFolder, maxTokens: mt)
-        } else if provider == .lmStudio && lmStudioProtocol == .anthropic {
-            claude = ClaudeService(apiKey: lmStudioAPIKey, model: lmStudioModel, historyContext: historyContext, projectFolder: projectFolder, baseURL: lmStudioEndpoint, maxTokens: mt)
-        } else {
-            claude = nil
-        }
-        // OpenAI-compatible service — URLs from LLMRegistry (single source of truth)
-        let openAICompatible: OpenAICompatibleService?
-        switch provider {
-        case .claude, .ollama, .localOllama, .foundationModel:
-            openAICompatible = nil
-        case .lmStudio where lmStudioProtocol == .anthropic:
-            openAICompatible = nil
-        case .lmStudio:
-            let key = lmStudioProtocol == .lmStudio ? "input" : "messages"
-            openAICompatible = OpenAICompatibleService(apiKey: apiKeyForProvider(provider), model: modelName, baseURL: lmStudioEndpoint, historyContext: historyContext, projectFolder: projectFolder, provider: provider, messagesKey: key, maxTokens: mt)
-        case .vLLM:
-            openAICompatible = OpenAICompatibleService(apiKey: apiKeyForProvider(provider), model: modelName, baseURL: vLLMEndpoint, historyContext: historyContext, projectFolder: projectFolder, provider: provider, maxTokens: mt)
-        default:
-            let url = chatURLForProvider(provider)
-            openAICompatible = url.isEmpty ? nil : OpenAICompatibleService(apiKey: apiKeyForProvider(provider), model: modelName, baseURL: url, supportsVision: isVision, historyContext: historyContext, projectFolder: projectFolder, provider: provider, maxTokens: mt)
-        }
-        let ollama: OllamaService?
-        switch provider {
-        case .ollama:
-            ollama = OllamaService(apiKey: ollamaAPIKey, model: ollamaModel, endpoint: ollamaEndpoint, supportsVision: isVision, historyContext: historyContext, projectFolder: projectFolder, provider: .ollama)
-        case .localOllama:
-            ollama = OllamaService(apiKey: "", model: localOllamaModel, endpoint: localOllamaEndpoint, supportsVision: isVision, historyContext: historyContext, projectFolder: projectFolder, provider: .localOllama, contextSize: localOllamaContextSize)
-        default:
-            ollama = nil
-        }
-        let foundationModelService: FoundationModelService? = provider == .foundationModel
-            ? FoundationModelService(historyContext: historyContext, projectFolder: projectFolder) : nil
+        var claude: ClaudeService?
+        var openAICompatible: OpenAICompatibleService?
+        var ollama: OllamaService?
+        var foundationModelService: FoundationModelService?
 
-        // Set temperature per provider
-        claude?.temperature = temperatureForProvider(.claude)
-        ollama?.temperature = temperatureForProvider(provider)
-        openAICompatible?.temperature = temperatureForProvider(provider)
+        // Build LLM service instances for the current provider/model. Called at task start
+        // and again whenever the fallback chain swaps providers mid-task.
+        func buildLLMServices() {
+            if provider == .claude {
+                claude = ClaudeService(apiKey: apiKey, model: modelName, historyContext: historyContext, projectFolder: projectFolder, maxTokens: mt)
+            } else if provider == .lmStudio && lmStudioProtocol == .anthropic {
+                claude = ClaudeService(apiKey: lmStudioAPIKey, model: lmStudioModel, historyContext: historyContext, projectFolder: projectFolder, baseURL: lmStudioEndpoint, maxTokens: mt)
+            } else {
+                claude = nil
+            }
+            // OpenAI-compatible service — URLs from LLMRegistry (single source of truth)
+            switch provider {
+            case .claude, .ollama, .localOllama, .foundationModel:
+                openAICompatible = nil
+            case .lmStudio where lmStudioProtocol == .anthropic:
+                openAICompatible = nil
+            case .lmStudio:
+                let key = lmStudioProtocol == .lmStudio ? "input" : "messages"
+                openAICompatible = OpenAICompatibleService(apiKey: apiKeyForProvider(provider), model: modelName, baseURL: lmStudioEndpoint, historyContext: historyContext, projectFolder: projectFolder, provider: provider, messagesKey: key, maxTokens: mt)
+            case .vLLM:
+                openAICompatible = OpenAICompatibleService(apiKey: apiKeyForProvider(provider), model: modelName, baseURL: vLLMEndpoint, historyContext: historyContext, projectFolder: projectFolder, provider: provider, maxTokens: mt)
+            default:
+                let url = chatURLForProvider(provider)
+                openAICompatible = url.isEmpty ? nil : OpenAICompatibleService(apiKey: apiKeyForProvider(provider), model: modelName, baseURL: url, supportsVision: isVision, historyContext: historyContext, projectFolder: projectFolder, provider: provider, maxTokens: mt)
+            }
+            switch provider {
+            case .ollama:
+                ollama = OllamaService(apiKey: ollamaAPIKey, model: modelName, endpoint: ollamaEndpoint, supportsVision: isVision, historyContext: historyContext, projectFolder: projectFolder, provider: .ollama)
+            case .localOllama:
+                ollama = OllamaService(apiKey: "", model: modelName, endpoint: localOllamaEndpoint, supportsVision: isVision, historyContext: historyContext, projectFolder: projectFolder, provider: .localOllama, contextSize: localOllamaContextSize)
+            default:
+                ollama = nil
+            }
+            foundationModelService = provider == .foundationModel
+                ? FoundationModelService(historyContext: historyContext, projectFolder: projectFolder) : nil
+
+            // Set temperature per provider
+            claude?.temperature = temperatureForProvider(provider == .claude ? .claude : provider)
+            ollama?.temperature = temperatureForProvider(provider)
+            openAICompatible?.temperature = temperatureForProvider(provider)
+        }
+        buildLLMServices()
 
         // Start fresh — no prior conversation context to avoid corrupted messages
         var messages: [[String: Any]] = []
@@ -987,8 +994,17 @@ extension AgentViewModel {
                         if let fallback = FallbackChainService.shared.recordFailure() {
                             appendLog("🔄 Switching to fallback: \(fallback.displayName)")
                             flushLog()
-                            // Note: full provider switch requires service recreation
-                            // For now, log the fallback and continue retrying
+                            // Resolve provider+model from the fallback entry, then rebuild services
+                            if let fbProvider = APIProvider(rawValue: fallback.provider) {
+                                provider = fbProvider
+                                modelName = fallback.model
+                                isVision = Self.isVisionModel(modelName)
+                                if forceVision { isVision = true }
+                                buildLLMServices()
+                                appendLog("✅ Now using \(provider.displayName) / \(modelName)")
+                                flushLog()
+                            }
+                            timeoutRetryCount = 0
                             continue
                         }
 

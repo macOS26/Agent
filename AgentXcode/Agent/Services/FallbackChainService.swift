@@ -82,9 +82,13 @@ final class FallbackChainService {
 
     // MARK: - Fallback Logic
 
-    /// Record a successful API call — resets failure count.
+    /// Record a successful API call — resets failure count AND chain position so the
+    /// next call goes back to the primary provider. This allows the chain to recover
+    /// from a transient failure (e.g., temporary rate limit) instead of being stuck
+    /// on the fallback provider for the rest of the session.
     func recordSuccess() {
         consecutiveFailures = 0
+        currentIndex = -1
     }
 
     /// Record a failure. Returns the next fallback entry if threshold reached, nil if no more fallbacks.
