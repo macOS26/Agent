@@ -53,8 +53,12 @@ struct LLMOutputTextView: NSViewRepresentable {
             storage.setAttributedString(TerminalNeoRenderer.render(text))
             coord.lastContentLength = contentLen
 
-            // Auto-scroll to bottom only if user hasn't scrolled away
-            if coord.userIsAtBottom {
+            // Auto-scroll behavior:
+            // - If content contains tables (| ... ---), DO NOT auto-scroll. Tables cause
+            //   layout reflow that fights with user scrolling, so leave the user in control.
+            // - Otherwise auto-scroll to bottom only if user hasn't scrolled away.
+            let hasTable = contentText.contains("|\n") && contentText.contains("---")
+            if !hasTable && coord.userIsAtBottom {
                 coord.isProgrammaticScroll = true
                 tv.layoutManager?.ensureLayout(for: tv.textContainer!)
                 tv.scrollToEndOfDocument(nil)
