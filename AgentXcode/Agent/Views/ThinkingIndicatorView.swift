@@ -571,24 +571,28 @@ private struct LLMOutputBox: View {
                     }
                     .frame(height: min(height, maxHeight))
                 } else {
-                    HStack(spacing: 0) {
-                        Text("AGENT! > ")
-                            .font(.system(size: 14, design: .monospaced))
-                            .foregroundColor(termText)
-                        Text(cursorVisible ? "█" : " ")
-                            .font(.system(size: 14, design: .monospaced))
-                            .foregroundColor(termText)
-                        Spacer()
+                    VStack(spacing: 0) {
+                        HStack(spacing: 0) {
+                            Text("AGENT! > ")
+                                .font(.system(size: 14, design: .monospaced))
+                                .foregroundColor(termText)
+                            Text(cursorVisible ? "█" : " ")
+                                .font(.system(size: 14, design: .monospaced))
+                                .foregroundColor(termText)
+                            Spacer()
+                        }
+                        .padding(10)
+                        Spacer(minLength: 0)
                     }
-                    .padding(10)
                     .overlay {
                         if showScanlines {
                             ScanlineOverlay(spacing: 2, color: .black, opacity: 0.375, blurRadius: 0.005)
                             ScanlineOverlay(spacing: 4, color: .green, opacity: 0.112, blurRadius: 0.25)
                         }
                     }
-                    .frame(maxWidth: .infinity, minHeight: 40, alignment: .topLeading)
-                    .onAppear { height = minHeight }
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
+                    .frame(height: min(max(height, 40), maxHeight))
+                    .onAppear { if height < 40 { height = max(40, minHeight) } }
                 }
 
                 // Dismiss button — overlaid bottom right, no extra space
