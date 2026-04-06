@@ -3,9 +3,8 @@ import AppKit
 import AgentTerminalNeo
 
 /// Local NSScrollView/NSTextView wrapper for the LLM Output HUD.
-/// Renders text via TerminalNeoRenderer for markdown/table styling, but handles
-/// auto-scroll with a user-respect pattern copied from ActivityLogView so the
-/// user can scroll freely during streaming without the view fighting back.
+/// Renders text via TerminalNeoRenderer for markdown/table styling.
+/// ZERO scroll machinery — caller owns the scroll position entirely.
 struct LLMOutputTextView: NSViewRepresentable {
     let text: String
     var onContentHeight: ((CGFloat) -> Void)?
@@ -28,10 +27,6 @@ struct LLMOutputTextView: NSViewRepresentable {
         textView.isRichText = true
         textView.allowsUndo = false
         textView.layoutManager?.allowsNonContiguousLayout = true
-        scrollView.hasVerticalScroller = true
-        scrollView.autohidesScrollers = true
-        scrollView.scrollerStyle = .overlay
-        scrollView.drawsBackground = false
 
         context.coordinator.textView = textView
         context.coordinator.onContentHeight = onContentHeight
@@ -48,20 +43,9 @@ struct LLMOutputTextView: NSViewRepresentable {
         let contentLen = contentText.count
 
         if contentLen != coord.lastContentLength {
-            // Snapshot the user's scroll position BEFORE the content mutation so we can
-            // restore it after layout reflow. ZERO auto-scroll — user owns scroll position.
-            let savedY = scrollView.contentView.bounds.origin.y
-            coord.isProgrammaticScroll = true
             storage.setAttributedString(TerminalNeoRenderer.render(text))
             coord.lastContentLength = contentLen
             tv.layoutManager?.ensureLayout(for: tv.textContainer!)
-            // Always restore the user's scroll position — never auto-scroll.
-            scrollView.contentView.scroll(to: NSPoint(x: 0, y: savedY))
-            scrollView.reflectScrolledClipView(scrollView.contentView)
-            // Re-enable observation AFTER layout settles on the next runloop tick.
-            DispatchQueue.main.async {
-                coord.isProgrammaticScroll = false
-            }
         } else {
             // Cursor blink — swap last char only, no scroll
             let attrLen = storage.length
@@ -98,8 +82,5 @@ struct LLMOutputTextView: NSViewRepresentable {
         var onContentHeight: ((CGFloat) -> Void)?
         var lastContentLength: Int = 0
         var lastReportedHeight: CGFloat = 0
-        /// Suppresses height-callback during the programmatic scroll restore so SwiftUI
-        /// doesn't see scroll position changes as a reason to re-render.
-        var isProgrammaticScroll: Bool = false
     }
 }
