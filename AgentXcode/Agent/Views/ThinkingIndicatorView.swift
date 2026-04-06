@@ -387,6 +387,7 @@ private struct LLMOutputBox: View {
     @State private var cursorVisible = true
     @State private var dragStartHeight: CGFloat = 0
     @State private var blinkEpoch = 0
+    @State private var scrollKick = false
     @State private var tableHeights: [Int: CGFloat] = [:]
 
     private var termBg: Color {
@@ -556,10 +557,12 @@ private struct LLMOutputBox: View {
         let inTable = lastLine.hasPrefix("|") || lastLine.allSatisfy({ $0 == "-" || $0 == ":" || $0 == "|" || $0 == " " }) && lastLine.contains("-")
         let cursor = inTable ? "" : (cursorVisible ? "█" : " ")
         let displayText = trimmed.isEmpty ? "" : trimmed + cursor
+        // Kick: append zero-width space on first render, then remove to force scroll
+        let kickedText = scrollKick ? displayText : displayText + "\u{200B}"
         VStack(spacing: 0) {
             ZStack(alignment: .bottomTrailing) {
                 if !displayText.isEmpty {
-                    TerminalNeoTextView(text: displayText) { _ in
+                    TerminalNeoTextView(text: kickedText) { _ in
                         guard dragStartHeight == 0 else { return }
                         // Pre-size from raw stream (ahead of drip) to prevent stutter
                         let lineCount = CGFloat(rawText.components(separatedBy: "\n").count)
@@ -642,6 +645,12 @@ private struct LLMOutputBox: View {
         .background(termBg)
         .cornerRadius(6)
         .overlay(RoundedRectangle(cornerRadius: 6).stroke(termBorder, lineWidth: 1))
+        .onAppear {
+            // Force a second render so TerminalNeoTextView scrolls to bottom after layout
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                scrollKick = true
+            }
+        }
         .task {
             // Blink cursor at ~2Hz — always running, seamless streaming→idle
             while !Task.isCancelled {
