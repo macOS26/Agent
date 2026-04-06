@@ -25,7 +25,15 @@ extension AgentViewModel {
             guard let path = input["path"] as? String, !path.isEmpty else {
                 return "Error: path is required for project_folder set"
             }
-            let expanded = (path as NSString).expandingTildeInPath
+            // Resolve relative paths against current project folder (so `set xox4` works like `cd ./xox4`)
+            let current = (tab != nil ? (tab!.projectFolder.isEmpty ? projectFolder : tab!.projectFolder) : projectFolder)
+            let expanded: String
+            if path.hasPrefix("/") || path.hasPrefix("~") {
+                expanded = (path as NSString).expandingTildeInPath
+            } else {
+                let stripped = path.hasPrefix("./") ? String(path.dropFirst(2)) : path
+                expanded = (current as NSString).appendingPathComponent(stripped)
+            }
             let fm = FileManager.default
             var isDir: ObjCBool = false
             guard fm.fileExists(atPath: expanded, isDirectory: &isDir), isDir.boolValue else {
@@ -147,7 +155,7 @@ extension AgentViewModel {
         }
 
         switch name {
-        case "git_tool", "git":
+        case "git":
             switch action {
             case "status":     return ("git_status", newInput)
             case "diff":       return ("git_diff", newInput)
@@ -159,7 +167,7 @@ extension AgentViewModel {
             default:           return ("git_status", newInput)
             }
 
-        case "agent_script_tool", "agent":
+        case "agent_script", "agent":
             switch action {
             case "list":    return ("list_agents", newInput)
             case "read":    return ("read_agent", newInput)
@@ -171,7 +179,7 @@ extension AgentViewModel {
             default:        return ("list_agents", newInput)
             }
 
-        case "applescript_tool", "as":
+        case "applescript", "as":
             switch action {
             case "execute":     return ("run_applescript", newInput)
             case "lookup_sdef": return ("lookup_sdef", newInput)
@@ -182,7 +190,7 @@ extension AgentViewModel {
             default:            return ("list_apple_scripts", newInput)
             }
 
-        case "javascript_tool", "jxa", "js":
+        case "javascript", "jxa", "js":
             switch action {
             case "execute": return ("execute_javascript", newInput)
             case "list":    return ("list_javascript", newInput)
@@ -192,7 +200,7 @@ extension AgentViewModel {
             default:        return ("list_javascript", newInput)
             }
 
-        case "file_tool", "file_manager", "file":
+        case "file", "file_manager":
             switch action {
             case "read":             return ("read_file", newInput)
             case "write":            return ("write_file", newInput)
@@ -211,7 +219,7 @@ extension AgentViewModel {
             default:                 return ("read_file", newInput)
             }
 
-        case "xcode_tool", "xcode", "xc":
+        case "xcode", "xc":
             switch action {
             case "build":            return ("xcode_build", newInput)
             case "run":              return ("xcode_run", newInput)
@@ -229,7 +237,7 @@ extension AgentViewModel {
             default:                return ("xcode_build", newInput)
             }
 
-        case "safari_tool", "safari", "web", "w":
+        case "safari", "web", "w":
             switch action {
             case "open":          return ("web_open", newInput)
             case "find":          return ("web_find", newInput)
@@ -252,7 +260,7 @@ extension AgentViewModel {
             default:              return ("web_open", newInput)
             }
 
-        case "selenium_tool", "selenium", "sel":
+        case "selenium", "sel":
             switch action {
             case "start":      return ("selenium_start", newInput)
             case "stop":       return ("selenium_stop", newInput)
@@ -266,7 +274,7 @@ extension AgentViewModel {
             default:           return ("selenium_start", newInput)
             }
 
-        case "accessibility_tool", "accessibility", "ax":
+        case "accessibility", "ax":
             // Remap "action" for perform_action to avoid collision with the dispatch "action"
             var mapped = newInput
             if let axAction = mapped["ax_action"] as? String {

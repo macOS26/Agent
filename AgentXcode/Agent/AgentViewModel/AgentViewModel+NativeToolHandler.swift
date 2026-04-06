@@ -293,10 +293,17 @@ extension AgentViewModel {
         case "mkdir":
             let rawPath = input["path"] as? String ?? ""
             guard !rawPath.isEmpty else { return "Error: path is required" }
-            let resolved = rawPath.hasPrefix("/") || rawPath.hasPrefix("~") ? rawPath : (pf as NSString).appendingPathComponent(rawPath)
+            let stripped = rawPath.hasPrefix("./") ? String(rawPath.dropFirst(2)) : rawPath
+            let resolved = stripped.hasPrefix("/") || stripped.hasPrefix("~")
+                ? (stripped as NSString).expandingTildeInPath
+                : (pf as NSString).appendingPathComponent(stripped)
             let escaped = CodingService.shellEscape(resolved)
             let result = await executeViaUserAgent(command: "mkdir -p \(escaped) && echo 'Created: \(resolved)'")
             let out = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
+            if out.hasPrefix("Created:") {
+                projectFolder = resolved
+                return "\(out)\nProject folder set to: \(resolved)"
+            }
             return out.isEmpty ? "Error creating directory" : out
         case "if_to_switch":
             let filePath = input["file_path"] as? String ?? ""
@@ -971,7 +978,7 @@ extension AgentViewModel {
         case "project_folder":
             return handleProjectFolder(tab: nil, input: input)
         // coding_mode
-        case "coding_mode", "mode", "mode_tool":
+        case "coding_mode", "mode":
             let action = input["action"] as? String
             // New: action-based switching
             if let action {
