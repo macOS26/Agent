@@ -19,14 +19,14 @@ struct HUDOptionsView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Terminal Speed")
                     .font(.caption)
-                    .foregroundStyle(viewModel.temperatureColor(viewModel.currentTemperature))
+                    .foregroundStyle(.green)
                 Picker("", selection: $viewModel.terminalSpeed) {
                     ForEach(AgentViewModel.TerminalSpeed.allCases, id: \.self) { speed in
                         Text(speed.label).tag(speed)
                     }
                 }
                 .pickerStyle(.segmented)
-                .tint(viewModel.temperatureColor(viewModel.currentTemperature))
+                .tint(.green)
             }
 
             HStack {
