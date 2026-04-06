@@ -25,6 +25,7 @@ struct FallbackEntry: Codable, Identifiable {
 /// When the primary provider/model fails N times, automatically switches to the next.
 /// Persisted to UserDefaults.
 @MainActor
+@Observable
 final class FallbackChainService {
     static let shared = FallbackChainService()
 
