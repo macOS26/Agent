@@ -787,6 +787,17 @@ struct SettingsView: View {
                 Slider(value: llmTemperatureBinding, in: 0...2, step: 0.1)
                     .id(viewModel.selectedProvider)
                     .tint(viewModel.temperatureColor(llmTemperatureBinding.wrappedValue))
+                    .onAppear {
+                        // Force the slider thumb + tint color to redraw on first appear
+                        let current = llmTemperatureBinding.wrappedValue
+                        llmTemperatureBinding.wrappedValue = current - 0.01
+                        DispatchQueue.main.async {
+                            llmTemperatureBinding.wrappedValue = current + 0.01
+                            DispatchQueue.main.async {
+                                llmTemperatureBinding.wrappedValue = current
+                            }
+                        }
+                    }
             }
 
             // Web Search (Tavily) — available for all providers
