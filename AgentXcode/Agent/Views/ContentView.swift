@@ -627,7 +627,7 @@ struct ContentView: View {
             if !tab.thinkingDismissed {
                 ThinkingIndicatorView(viewModel: viewModel, tab: tab)
             }
-        } else if viewModel.showThinkingIndicator && (isActiveRunning || !isActiveDismissed) {
+        } else if viewModel.showThinkingIndicator && !isActiveDismissed {
             ThinkingIndicatorView(viewModel: viewModel)
         }
     }

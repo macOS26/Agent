@@ -378,7 +378,9 @@ extension AgentViewModel {
 
             do {
                 isThinking = true
-                thinkingDismissed = false
+                // Only auto-show overlay on the FIRST iteration. Subsequent iterations
+                // must respect the user's manual dismiss (Cmd+B during a running task).
+                if iterations == 1 { thinkingDismissed = false }
 
                 let sendMessages = iterations > 1 ? Self.compressMessages(messages) : messages
 

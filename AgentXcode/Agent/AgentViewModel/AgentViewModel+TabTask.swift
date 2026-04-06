@@ -405,7 +405,8 @@ extension AgentViewModel {
 
             do {
                 tab.isLLMThinking = true
-                tab.thinkingDismissed = false
+                // Only auto-show overlay on the FIRST iteration. Respect manual dismiss (Cmd+B).
+                if iterations == 1 { tab.thinkingDismissed = false }
                 let response: (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int)
                 let streamStart = CFAbsoluteTimeGetCurrent()
                 // Summarize old messages every 10 iterations
