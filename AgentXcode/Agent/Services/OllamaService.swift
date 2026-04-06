@@ -174,7 +174,11 @@ final class OllamaService {
             "model": model,
             "messages": chatMessages,
             "tools": tools(activeGroups: activeGroups, compact: compactTools, condensed: !needsFullToolNames && chatMessages.count > 2),
-            "stream": false
+            "stream": false,
+            // Keep the model resident in VRAM for 30 min after each call so the KV cache
+            // survives between Agent's loop iterations. Default is 5 min, which drops
+            // the cache during any user pause and forces a full prefill on resume.
+            "keep_alive": "30m"
         ]
 
         // Only send options for local Ollama; cloud providers manage their own context limits
@@ -291,7 +295,10 @@ final class OllamaService {
             "model": model,
             "messages": chatMessages,
             "tools": tools(activeGroups: activeGroups, compact: compactTools, condensed: !needsFullToolNames && chatMessages.count > 2),
-            "stream": true
+            "stream": true,
+            // Keep model + KV cache resident for 30 min so the loop's stable prefix
+            // (system prompt + tools + earlier history) gets reused across iterations.
+            "keep_alive": "30m"
         ]
 
         // Only send options for local Ollama; cloud providers manage their own context limits

@@ -369,24 +369,20 @@ extension AgentViewModel {
         var filesEditedThisTask: Set<String> = []
         var planActive = false
         var iter1UsedTools = false
-        // Three-tier prompt strategy: full → condensed (iter 2+) → revert to full on confusion
-        var promptTier: PromptTier = .full
+        // Tab tasks always use the condensed prompt — keeps the prefix byte-for-byte stable
+        // across iterations so Ollama / Anthropic KV caches stay hot. No confusion-revert path
+        // here (only the main task loop has that).
         let userName = NSFullUserName()
         let userHome = NSHomeDirectory()
+        // Apply the condensed prompt to all services BEFORE the loop so iter 1 already
+        // has the stable prefix that iter 2+ will hit in the cache.
+        let initialCondensed = AgentTools.condensedSystemPrompt(userName: userName, userHome: userHome, projectFolder: rawFolder)
+        claude?.overrideSystemPrompt = initialCondensed
+        ollama?.overrideSystemPrompt = initialCondensed
+        openAICompatible?.overrideSystemPrompt = initialCondensed
 
         while !Task.isCancelled {
             iterations += 1
-
-            // Iter 2+: switch from full prompt to condensed (same rules, ~24% smaller)
-            if iterations == 2 && promptTier == .full {
-                promptTier = .condensed
-                let condensed = AgentTools.condensedSystemPrompt(userName: userName, userHome: userHome, projectFolder: rawFolder)
-                claude?.overrideSystemPrompt = condensed
-                ollama?.overrideSystemPrompt = condensed
-                openAICompatible?.overrideSystemPrompt = condensed
-                tab.appendLog("📐 Switched to condensed system prompt (iter 2+)")
-                tab.flush()
-            }
 
             // Auto-enable coding mode after iteration 1 — skip if using automation tools
             let automationTools: Set<String> = ["accessibility", "run_applescript", "run_osascript", "execute_javascript", "lookup_sdef"]
@@ -532,7 +528,7 @@ extension AgentViewModel {
                             filesEditedThisTask.insert(filePath)
                         }
                         // Track plan creation
-                        if name == "plan_mode" || name == "plan_tool" {
+                        if name == "plan_mode" || name == "plan" {
                             if let act = input["action"] as? String, act == "create" || act == "update" {
                                 planActive = true
                             }

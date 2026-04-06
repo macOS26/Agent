@@ -320,10 +320,19 @@ extension AgentViewModel {
         var unbuiltEditCount = 0              // build enforcement — nudge after edit without build
         var consecutiveBuildFailures = 0      // error budget — stop after 5
         var stuckFiles: [String: Int] = [:]   // stuck detection — skip after 5 failures per file
-        // Three-tier prompt strategy: full → condensed (iter 2+) → revert to full on confusion
-        var promptTier: PromptTier = .full
+        // Two-tier prompt strategy: condensed (default, max KV cache hits) → full (revert on confusion).
+        // The system prompt MUST stay byte-for-byte stable across iterations or Ollama/Anthropic
+        // KV-cache reuse breaks. We start condensed and only swap to full when the LLM is stuck
+        // (consecutive build failures, read-only stalling, or repeated stuck files).
+        var promptTier: PromptTier = .condensed
         let userName = NSFullUserName()
         let userHome = NSHomeDirectory()
+        // Apply the condensed prompt to all services BEFORE the loop so iter 1 already
+        // has the stable prefix that iter 2+ will hit in the cache.
+        let initialCondensed = AgentTools.condensedSystemPrompt(userName: userName, userHome: userHome, projectFolder: projectFolder)
+        claude?.overrideSystemPrompt = initialCondensed
+        ollama?.overrideSystemPrompt = initialCondensed
+        openAICompatible?.overrideSystemPrompt = initialCondensed
         // Track unique files edited (write_file/edit_file/diff_apply/create_diff/apply_diff) for plan-mode enforcement
         var filesEditedThisTask: Set<String> = []
         // Track if a plan exists for this task (created via plan_mode tool)
@@ -333,17 +342,6 @@ extension AgentViewModel {
 
         while !Task.isCancelled {
             iterations += 1
-
-            // Iter 2+: switch from full prompt to condensed (same rules, ~24% smaller)
-            if iterations == 2 && promptTier == .full {
-                promptTier = .condensed
-                let condensed = AgentTools.condensedSystemPrompt(userName: userName, userHome: userHome, projectFolder: projectFolder)
-                claude?.overrideSystemPrompt = condensed
-                ollama?.overrideSystemPrompt = condensed
-                openAICompatible?.overrideSystemPrompt = condensed
-                appendLog("📐 Switched to condensed system prompt (iter 2+)")
-                flushLog()
-            }
 
             // Confusion detection: revert to full prompt if LLM is stuck
             // Triggers: 3+ consecutive build failures, 5+ read-only iters, or stuck file count
@@ -518,7 +516,7 @@ extension AgentViewModel {
                             filesEditedThisTask.insert(filePath)
                         }
                         // Track plan creation
-                        if name == "plan_mode" || name == "plan_tool" {
+                        if name == "plan_mode" || name == "plan" {
                             if let act = input["action"] as? String, act == "create" || act == "update" {
                                 planActive = true
                             }
