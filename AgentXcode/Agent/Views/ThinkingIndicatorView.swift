@@ -561,16 +561,19 @@ private struct LLMOutputBox: View {
         VStack(spacing: 0) {
             ZStack(alignment: .bottomTrailing) {
                 if !displayText.isEmpty {
-                    TerminalNeoTextView(text: displayText) { _ in
+                    TerminalNeoTextView(text: displayText) { h in
                         guard dragStartHeight == 0 else { return }
                         // Pre-size from raw stream (ahead of drip) to prevent stutter
                         let lineCount = CGFloat(rawText.components(separatedBy: "\n").count)
-                        let proposed = min(max(minHeight, lineCount * 24 + 24), maxHeight)
+                        let lineEstimate = lineCount * 24 + 24
+                        // Use the larger of: line-count estimate (pre-size), or actual rendered
+                        // height from the package (which accounts for word-wrap and tables).
+                        let proposed = min(max(minHeight, max(lineEstimate, h + 4)), maxHeight)
                         if proposed > height {
                             height = proposed
                         }
                     }
-                    .id(scrollKick)  // Toggle on appear → forces full NSView recreate so first scroll runs after layout
+                    .background(ScrollerProbe(trigger: scrollKick))
                     .overlay {
                         if showScanlines {
                             ScanlineOverlay(spacing: 2, color: .black, opacity: 0.375, blurRadius: 0.005)
@@ -658,6 +661,41 @@ private struct LLMOutputBox: View {
                 cursorVisible.toggle()
             }
         }
+    }
+}
+
+/// Walks up the SwiftUI hosting view chain to find the underlying NSScrollView
+/// inside TerminalNeoTextView and scrolls it to the bottom. Used to fix
+/// scroll-on-launch without modifying the text (which would break cursor blink).
+private struct ScrollerProbe: NSViewRepresentable {
+    let trigger: Bool
+    func makeNSView(context: Context) -> NSView {
+        NSView()
+    }
+    func updateNSView(_ nsView: NSView, context: Context) {
+        guard trigger else { return }
+        // Find the sibling NSScrollView in the parent's subviews and scroll to bottom
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            guard let parent = nsView.superview else { return }
+            for sub in parent.subviews {
+                if let scrollView = Self.findScrollView(in: sub) {
+                    if let tv = scrollView.documentView as? NSTextView {
+                        tv.scrollRangeToVisible(NSRange(location: tv.string.count, length: 0))
+                    } else {
+                        scrollView.contentView.scroll(to: NSPoint(x: 0, y: max(0, (scrollView.documentView?.frame.height ?? 0) - scrollView.contentView.bounds.height)))
+                        scrollView.reflectScrolledClipView(scrollView.contentView)
+                    }
+                    return
+                }
+            }
+        }
+    }
+    private static func findScrollView(in view: NSView) -> NSScrollView? {
+        if let s = view as? NSScrollView { return s }
+        for sub in view.subviews {
+            if let s = findScrollView(in: sub) { return s }
+        }
+        return nil
     }
 }
 
