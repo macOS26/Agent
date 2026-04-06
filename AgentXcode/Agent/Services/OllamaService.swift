@@ -54,7 +54,7 @@ final class OllamaService {
         return prompt
     }
 
-    func tools(activeGroups: Set<String>? = nil, compact: Bool = false, condensed: Bool = false) -> [[String: Any]] { AgentTools.ollamaTools(for: provider, activeGroups: activeGroups, compact: compact, condensed: condensed, projectFolder: projectFolder) }
+    func tools(activeGroups: Set<String>? = nil, compact: Bool = false) -> [[String: Any]] { AgentTools.ollamaTools(for: provider, activeGroups: activeGroups, compact: compact, projectFolder: projectFolder) }
 
     /// Set to true when a tool call fails — next turn sends full _tool names, then resets.
     var needsFullToolNames: Bool = false
@@ -173,7 +173,7 @@ final class OllamaService {
         var body: [String: Any] = [
             "model": model,
             "messages": chatMessages,
-            "tools": tools(activeGroups: activeGroups, compact: compactTools, condensed: !needsFullToolNames && chatMessages.count > 2),
+            "tools": tools(activeGroups: activeGroups, compact: compactTools),
             "stream": false,
             // Keep the model resident in VRAM for 30 min after each call so the KV cache
             // survives between Agent's loop iterations. Default is 5 min, which drops
@@ -294,7 +294,7 @@ final class OllamaService {
         var body: [String: Any] = [
             "model": model,
             "messages": chatMessages,
-            "tools": tools(activeGroups: activeGroups, compact: compactTools, condensed: !needsFullToolNames && chatMessages.count > 2),
+            "tools": tools(activeGroups: activeGroups, compact: compactTools),
             "stream": true,
             // Keep model + KV cache resident for 30 min so the loop's stable prefix
             // (system prompt + tools + earlier history) gets reused across iterations.
