@@ -477,7 +477,7 @@ struct ActivityLogView: NSViewRepresentable {
             guard let storage = textView.textStorage else { return }
 
             let highlightColor = NSColor.systemYellow.withAlphaComponent(0.3)
-            let currentColor = NSColor.systemYellow.withAlphaComponent(0.5)
+            let currentColor = NSColor.systemYellow.withAlphaComponent(0.8)
 
             // Batch all attribute changes in a single editing pass
             storage.beginEditing()
