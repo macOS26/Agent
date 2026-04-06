@@ -327,9 +327,10 @@ struct ThinkingIndicatorView: View {
                     tab.thinkingDismissed = false
                 }
             } else {
-                // Freeze elapsed when LLM stops
-                tab._taskElapsedFrozen = tab.taskElapsed
-                tab.taskStartDate = nil
+                // Freeze elapsed when LLM stops — keep time visible
+                if let start = tab.taskStartDate {
+                    tab._taskElapsedFrozen = Date().timeIntervalSince(start)
+                }
                 if tab.isRunning && !tab.rawLLMOutput.isEmpty {
                     tab.thinkingDismissed = false
                 }
