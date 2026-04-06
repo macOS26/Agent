@@ -1252,15 +1252,16 @@ extension AgentViewModel {
         // Batch commands
         case "batch_commands":
             let commands = (input["commands"] as? String ?? "").components(separatedBy: "\n").filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
-            var output = ""
+            guard !commands.isEmpty else { return "(no commands)" }
             for (idx, cmd) in commands.enumerated() {
-                let fullCmd = Self.prependWorkingDirectory(cmd, projectFolder: pf)
                 appendLog("🔧 [\(idx+1)/\(commands.count)] $ \(cmd)")
-                flushLog()
-                let result = await executeViaUserAgent(command: fullCmd)
-                output += "[\(idx+1)] \(result.output)\n"
             }
-            return output.isEmpty ? "(no output)" : output
+            flushLog()
+            // Run all commands in a single shell session so variables persist
+            let joined = commands.joined(separator: " && ")
+            let fullCmd = Self.prependWorkingDirectory(joined, projectFolder: pf)
+            let result = await executeViaUserAgent(command: fullCmd)
+            return result.output.isEmpty ? "(no output)" : result.output
         // Wait/pause for accessibility automation
         case "wait", "sleep", "pause":
             let seconds = input["seconds"] as? Double ?? input["duration"] as? Double ?? 3
