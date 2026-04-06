@@ -22,6 +22,10 @@ extension AgentViewModel {
         isRunning = true
         userWasActive = false
         rootWasActive = false
+        // Auto-expand HUD for the main tab's run start (not on tab switches)
+        thinkingExpanded = true
+        thinkingOutputExpanded = true
+        thinkingDismissed = false
         recentOutputHashes.removeAll()
         toolSteps.removeAll()
         DiffStore.shared.clear()

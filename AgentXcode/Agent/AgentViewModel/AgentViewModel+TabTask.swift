@@ -101,6 +101,10 @@ extension AgentViewModel {
     func executeTabTask(tab: ScriptTab, prompt: String) async {
         tab.isLLMRunning = true
         tab.llmMessages = []  // Fresh conversation for each task
+        // Auto-expand HUD for THIS tab's run start (not on tab switches)
+        tab.thinkingExpanded = true
+        tab.thinkingOutputExpanded = true
+        tab.thinkingDismissed = false
 
         var commandsRun: [String] = []
         var completionSummary = ""

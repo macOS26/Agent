@@ -322,38 +322,27 @@ struct ThinkingIndicatorView: View {
         }
         .background(colorScheme == .dark ? Color.clear : Color.white.opacity(0.53))
         .background(.ultraThinMaterial.opacity(colorScheme == .dark ? 0.95 : 0.97))
-        .onChange(of: tab?.isLLMRunning) { _, newValue in
-            guard let tab else { return }
+        .onChange(of: tab?.isLLMRunning) { oldValue, newValue in
+            // Only fire on actual transitions, not tab swaps. The auto-expand of the
+            // chevron + dismiss is handled at the run-start sites in executeTabTask
+            // so it doesn't get applied to the wrong tab during a swap.
+            guard let tab, oldValue != newValue else { return }
             if newValue == true {
-                // Reset timer and auto-expand when LLM starts
                 tab.taskStartDate = Date()
                 tab._taskElapsedFrozen = 0
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    isExpanded = true
-                    showStreamText = true
-                    tab.thinkingDismissed = false
-                }
             } else {
                 // Freeze elapsed when LLM stops — keep time visible
                 if let start = tab.taskStartDate {
                     tab._taskElapsedFrozen = Date().timeIntervalSince(start)
                 }
-                if tab.isRunning && !tab.rawLLMOutput.isEmpty {
-                    tab.thinkingDismissed = false
-                }
             }
         }
-        .onChange(of: viewModel.isRunning) { _, newValue in
-            // Auto-expand on main tab when task starts
-            guard tab == nil else { return }
+        .onChange(of: viewModel.isRunning) { oldValue, newValue in
+            // Only fire on actual transitions on the main tab — auto-expand happens in executeTask.
+            guard tab == nil, oldValue != newValue else { return }
             if newValue {
                 viewModel.mainTaskStartDate = Date()
                 viewModel.mainTaskElapsed = 0
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    isExpanded = true
-                    showStreamText = true
-                    viewModel.thinkingDismissed = false
-                }
             } else {
                 // Freeze elapsed when task stops/cancels
                 if let start = viewModel.mainTaskStartDate {
@@ -667,13 +656,18 @@ private struct LLMOutputBox: View {
 /// Walks up the SwiftUI hosting view chain to find the underlying NSScrollView
 /// inside TerminalNeoTextView and scrolls it to the bottom. Used to fix
 /// scroll-on-launch without modifying the text (which would break cursor blink).
+/// Fires ONCE per view lifetime to avoid fighting with cursor blink renders.
 private struct ScrollerProbe: NSViewRepresentable {
     let trigger: Bool
+    final class ProbeView: NSView {
+        var didScroll = false
+    }
     func makeNSView(context: Context) -> NSView {
-        NSView()
+        ProbeView()
     }
     func updateNSView(_ nsView: NSView, context: Context) {
-        guard trigger else { return }
+        guard trigger, let probe = nsView as? ProbeView, !probe.didScroll else { return }
+        probe.didScroll = true
         // Find the sibling NSScrollView in the parent's subviews and scroll to bottom
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
             guard let parent = nsView.superview else { return }
