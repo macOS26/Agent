@@ -2,27 +2,6 @@ import SwiftUI
 
 struct AgentOptionsView: View {
     @Bindable var viewModel: AgentViewModel
-    private var temperatureBinding: Binding<Double> {
-        switch viewModel.selectedProvider {
-        case .claude: return $viewModel.claudeTemperature
-        case .ollama: return $viewModel.ollamaTemperature
-        case .openAI: return $viewModel.openAITemperature
-        case .deepSeek: return $viewModel.deepSeekTemperature
-        case .huggingFace: return $viewModel.huggingFaceTemperature
-        case .localOllama: return $viewModel.localOllamaTemperature
-        case .vLLM: return $viewModel.vLLMTemperature
-        case .lmStudio: return $viewModel.lmStudioTemperature
-        case .zAI: return $viewModel.zAITemperature
-        case .bigModel: return $viewModel.zAITemperature
-        case .qwen: return $viewModel.openAITemperature
-        case .gemini: return $viewModel.geminiTemperature
-        case .grok: return $viewModel.grokTemperature
-        case .mistral: return $viewModel.openAITemperature
-        case .codestral: return $viewModel.openAITemperature
-        case .vibe: return $viewModel.openAITemperature
-        case .foundationModel: return $viewModel.claudeTemperature // unused
-        }
-    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -136,34 +115,6 @@ struct AgentOptionsView: View {
                 }
             }
 
-
-            row {
-                Text("Temperature").font(.subheadline)
-                Spacer()
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("\(viewModel.selectedProvider.displayName)").font(.caption).foregroundStyle(.secondary)
-                    HStack(spacing: 4) {
-                        Slider(value: temperatureBinding, in: 0...2, step: 0.1)
-                            .id(viewModel.selectedProvider)
-                            .frame(width: 120)
-                            .tint(viewModel.temperatureColor(temperatureBinding.wrappedValue))
-                            .onAppear {
-                                let current = temperatureBinding.wrappedValue
-                                temperatureBinding.wrappedValue = current - 0.01
-                                DispatchQueue.main.async {
-                                    temperatureBinding.wrappedValue = current + 0.01
-                                    DispatchQueue.main.async {
-                                        temperatureBinding.wrappedValue = current
-                                    }
-                                }
-                            }
-                        Text(String(format: "%.1f", temperatureBinding.wrappedValue))
-                            .font(.caption.monospacedDigit())
-                            .foregroundStyle(viewModel.temperatureColor(temperatureBinding.wrappedValue))
-                            .frame(width: 28)
-                    }
-                }
-            }
 
             row {
                 Text("AgentScript").font(.subheadline)
