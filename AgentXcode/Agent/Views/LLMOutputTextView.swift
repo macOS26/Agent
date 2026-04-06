@@ -49,20 +49,33 @@ struct LLMOutputTextView: NSViewRepresentable {
         let contentLen = contentText.count
 
         if contentLen != coord.lastContentLength {
-            // Content changed — re-render via TerminalNeoRenderer for markdown/table styling
+            // CRITICAL: suppress scroll observation for the ENTIRE content update.
+            // setAttributedString triggers layout reflow which fires boundsDidChangeNotification,
+            // and without suppression the observer would wrongly think the user scrolled and
+            // flip userIsAtBottom = false. Wrap the whole content update + scroll restore.
+            coord.isProgrammaticScroll = true
+            let wasAtBottom = coord.userIsAtBottom
+
+            // Snapshot the current scroll position so we can restore it if user is NOT at bottom
+            let savedY = scrollView.contentView.bounds.origin.y
+
             storage.setAttributedString(TerminalNeoRenderer.render(text))
             coord.lastContentLength = contentLen
+            tv.layoutManager?.ensureLayout(for: tv.textContainer!)
 
-            // Auto-scroll behavior:
-            // - If content contains tables (| ... ---), DO NOT auto-scroll. Tables cause
-            //   layout reflow that fights with user scrolling, so leave the user in control.
-            // - Otherwise auto-scroll to bottom only if user hasn't scrolled away.
             let hasTable = contentText.contains("|\n") && contentText.contains("---")
-            if !hasTable && coord.userIsAtBottom {
-                coord.isProgrammaticScroll = true
-                tv.layoutManager?.ensureLayout(for: tv.textContainer!)
+            if !hasTable && wasAtBottom {
+                // Auto-scroll to bottom — user was at bottom and content is plain text
                 tv.scrollToEndOfDocument(nil)
                 scrollView.reflectScrolledClipView(scrollView.contentView)
+            } else {
+                // Restore the user's scroll position so layout reflow doesn't move them
+                scrollView.contentView.scroll(to: NSPoint(x: 0, y: savedY))
+                scrollView.reflectScrolledClipView(scrollView.contentView)
+            }
+            // Re-enable observation AFTER layout settles on the next runloop tick,
+            // so any deferred bounds-change notifications from layout get ignored.
+            DispatchQueue.main.async {
                 coord.isProgrammaticScroll = false
             }
         } else {
