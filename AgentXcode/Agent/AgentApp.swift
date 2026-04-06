@@ -61,12 +61,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
-        // Insert 🦾 Agents menu — retry up to 5 times in case menu isn't ready
+        // Insert 🦾 Agents menu — retry up to 10 times in case menu isn't ready
         func tryInsert(attempt: Int = 0) {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(attempt + 1) * 0.2) { [weak self] in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5 + Double(attempt) * 0.3) { [weak self] in
                 self?.insertAgentsMenu()
                 // Verify it was inserted, retry if not
-                if attempt < 4,
+                if attempt < 9,
                    let menu = NSApplication.shared.mainMenu,
                    !menu.items.contains(where: { $0.title.contains("Agents") }) {
                     tryInsert(attempt: attempt + 1)
