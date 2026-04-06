@@ -207,6 +207,7 @@ extension AgentViewModel {
             case "undo":             return ("undo_edit", newInput)
             case "diff_apply":       return ("diff_and_apply", newInput)
             case "mkdir":            return ("mkdir", newInput)
+            case "cd":               return ("project_folder", ["action": "cd", "path": newInput["path"] as? String ?? "~"])
             default:                 return ("read_file", newInput)
             }
 
