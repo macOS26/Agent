@@ -289,6 +289,19 @@ struct ContentView: View {
                     return nil
                 }
                 
+                // Cmd+B: Toggle LLM Overlay
+                if event.modifierFlags.contains(.command),
+                   event.charactersIgnoringModifiers == "b" {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        if let selId = viewModel.selectedTabId, let tab = viewModel.tab(for: selId) {
+                            tab.thinkingDismissed.toggle()
+                        } else {
+                            viewModel.thinkingDismissed.toggle()
+                        }
+                    }
+                    return nil
+                }
+
                 // Cmd+Return: Run current task
                 if event.modifierFlags.contains(.command),
                    event.keyCode == 36 {
