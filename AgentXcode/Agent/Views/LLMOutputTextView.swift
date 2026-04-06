@@ -46,49 +46,9 @@ struct LLMOutputTextView: NSViewRepresentable {
         let contentLen = contentText.count
 
         if contentLen != coord.lastContentLength {
-            // Use incremental append when new text is a strict prefix-extension of the previous —
-            // NSTextView preserves scroll position on append. setAttributedString resets to top,
-            // which would teleport the user every drip char.
-            let isAppend = contentLen > coord.lastContentLength
-                && coord.lastContentLength > 0
-                && contentText.hasPrefix(coord.lastRenderedContent)
-            if isAppend {
-                // Strip any trailing cursor char from storage before appending the delta
-                let prevAttrLen = storage.length
-                if prevAttrLen > 0 {
-                    let lastChar = String(storage.string.suffix(1))
-                    if lastChar == "█" || lastChar == " " {
-                        storage.beginEditing()
-                        storage.deleteCharacters(in: NSRange(location: prevAttrLen - 1, length: 1))
-                        storage.endEditing()
-                    }
-                }
-                let newPart = String(text.dropFirst(coord.lastRenderedContent.count))
-                let isDark = tv.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-                let color: NSColor = isDark
-                    ? NSColor(red: 0.2, green: 0.9, blue: 0.3, alpha: 1)
-                    : NSColor(red: 0.05, green: 0.35, blue: 0.1, alpha: 1)
-                let appendFont = NSFont.monospacedSystemFont(ofSize: 16.5, weight: .regular)
-                storage.beginEditing()
-                storage.append(NSAttributedString(string: newPart, attributes: [
-                    .font: appendFont, .foregroundColor: color
-                ]))
-                storage.endEditing()
-            } else {
-                // Full re-render path (text shrank or first render). Snapshot scroll position
-                // and restore it after — setAttributedString resets NSTextView to top.
-                let savedY = scrollView.contentView.bounds.origin.y
-                coord.isProgrammaticScroll = true
-                storage.setAttributedString(TerminalNeoRenderer.render(text))
-                tv.layoutManager?.ensureLayout(for: tv.textContainer!)
-                if !coord.userIsAtBottom {
-                    scrollView.contentView.scroll(to: NSPoint(x: 0, y: savedY))
-                    scrollView.reflectScrolledClipView(scrollView.contentView)
-                }
-                coord.isProgrammaticScroll = false
-            }
+            storage.setAttributedString(TerminalNeoRenderer.render(text))
             coord.lastContentLength = contentLen
-            coord.lastRenderedContent = contentText
+            tv.layoutManager?.ensureLayout(for: tv.textContainer!)
             // Auto-scroll to bottom only if user is at the bottom (same as ActivityLogView)
             if coord.userIsAtBottom {
                 coord.snapToEnd(tv)
@@ -129,8 +89,6 @@ struct LLMOutputTextView: NSViewRepresentable {
         var onContentHeight: ((CGFloat) -> Void)?
         var lastContentLength: Int = 0
         var lastReportedHeight: CGFloat = 0
-        /// Last rendered content text (without cursor) — for incremental append diffing
-        var lastRenderedContent: String = ""
         /// Tracks whether user is at/near bottom — drives auto-scroll-to-bottom on content change
         var userIsAtBottom: Bool = true
         /// Suppresses scroll tracking during programmatic scrolls
