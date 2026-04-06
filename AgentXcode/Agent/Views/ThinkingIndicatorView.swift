@@ -558,12 +558,10 @@ private struct LLMOutputBox: View {
         let inTable = lastLine.hasPrefix("|") || lastLine.allSatisfy({ $0 == "-" || $0 == ":" || $0 == "|" || $0 == " " }) && lastLine.contains("-")
         let cursor = inTable ? "" : (cursorVisible ? "█" : " ")
         let displayText = trimmed.isEmpty ? "" : trimmed + cursor
-        // Kick: append zero-width space on first render, then remove to force scroll
-        let kickedText = scrollKick ? displayText : displayText + "\u{200B}"
         VStack(spacing: 0) {
             ZStack(alignment: .bottomTrailing) {
                 if !displayText.isEmpty {
-                    TerminalNeoTextView(text: kickedText) { _ in
+                    TerminalNeoTextView(text: displayText) { _ in
                         guard dragStartHeight == 0 else { return }
                         // Pre-size from raw stream (ahead of drip) to prevent stutter
                         let lineCount = CGFloat(rawText.components(separatedBy: "\n").count)
@@ -572,6 +570,7 @@ private struct LLMOutputBox: View {
                             height = proposed
                         }
                     }
+                    .id(scrollKick)  // Toggle on appear → forces full NSView recreate so first scroll runs after layout
                     .overlay {
                         if showScanlines {
                             ScanlineOverlay(spacing: 2, color: .black, opacity: 0.375, blurRadius: 0.005)
