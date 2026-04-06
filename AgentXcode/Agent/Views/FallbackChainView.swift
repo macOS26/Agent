@@ -4,8 +4,14 @@ import AgentTools
 /// Editor for the model fallback chain — users pick ordered provider/model pairs.
 struct FallbackChainView: View {
     @Bindable var viewModel: AgentViewModel
-    @State private var selectedProvider: APIProvider = .claude
+    @State private var selectedProvider: APIProvider
     @State private var selectedModel: String = ""
+
+    init(viewModel: AgentViewModel) {
+        self.viewModel = viewModel
+        // Default the picker to the user's currently-active provider — never hard-code.
+        _selectedProvider = State(initialValue: viewModel.selectedProvider)
+    }
 
     private var service: FallbackChainService { FallbackChainService.shared }
 
@@ -212,17 +218,31 @@ struct FallbackChainView: View {
         return clean
     }
 
+    /// Default model for a provider — uses the user's currently-selected model for that
+    /// provider (read from the ViewModel), falling back to the first dynamically-fetched
+    /// model. Never hardcoded — model strings change frequently across provider updates.
     private func defaultModel(for provider: APIProvider) -> String {
+        // Prefer the model the user is actively using for that provider
         switch provider {
-        case .claude: return "claude-sonnet-4-20250514"
-        case .openAI: return "gpt-4o"
-        case .ollama, .localOllama: return "llama3"
-        case .deepSeek: return "deepseek-chat"
-        case .gemini: return "gemini-2.5-flash"
-        case .grok: return "grok-3"
-        case .mistral: return "mistral-large-latest"
-        case .zAI: return "glm-4-plus"
-        default: return ""
+        case .claude: if !viewModel.selectedModel.isEmpty { return viewModel.selectedModel }
+        case .openAI: if !viewModel.openAIModel.isEmpty { return viewModel.openAIModel }
+        case .ollama: if !viewModel.ollamaModel.isEmpty { return viewModel.ollamaModel }
+        case .localOllama: if !viewModel.localOllamaModel.isEmpty { return viewModel.localOllamaModel }
+        case .deepSeek: if !viewModel.deepSeekModel.isEmpty { return viewModel.deepSeekModel }
+        case .huggingFace: if !viewModel.huggingFaceModel.isEmpty { return viewModel.huggingFaceModel }
+        case .vLLM: if !viewModel.vLLMModel.isEmpty { return viewModel.vLLMModel }
+        case .lmStudio: if !viewModel.lmStudioModel.isEmpty { return viewModel.lmStudioModel }
+        case .zAI: if !viewModel.zAIModel.isEmpty { return viewModel.zAIModel }
+        case .qwen: if !viewModel.qwenModel.isEmpty { return viewModel.qwenModel }
+        case .gemini: if !viewModel.geminiModel.isEmpty { return viewModel.geminiModel }
+        case .grok: if !viewModel.grokModel.isEmpty { return viewModel.grokModel }
+        case .mistral: if !viewModel.mistralModel.isEmpty { return viewModel.mistralModel }
+        case .codestral: if !viewModel.codestralModel.isEmpty { return viewModel.codestralModel }
+        case .vibe: if !viewModel.vibeModel.isEmpty { return viewModel.vibeModel }
+        case .bigModel: if !viewModel.bigModelModel.isEmpty { return viewModel.bigModelModel }
+        case .foundationModel: return "Apple Intelligence"
         }
+        // Fall back to the first dynamically-fetched model for this provider
+        return modelsForProvider(provider).first ?? ""
     }
 }
