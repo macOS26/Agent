@@ -520,17 +520,24 @@ extension AgentViewModel {
             appendLog("🌐 Fetch: \(urlStr)")
             flushLog()
             do {
-                let (data, response) = try await URLSession.shared.data(from: url)
+                // Use a real browser User-Agent so sites don't 403 / serve weird responses
+                var request = URLRequest(url: url)
+                request.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15", forHTTPHeaderField: "User-Agent")
+                request.setValue("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", forHTTPHeaderField: "Accept")
+                request.setValue("en-US,en;q=0.9", forHTTPHeaderField: "Accept-Language")
+                let (data, response) = try await URLSession.shared.data(for: request)
                 let httpResponse = response as? HTTPURLResponse
                 let statusCode = httpResponse?.statusCode ?? 0
                 guard (200..<400).contains(statusCode) else {
                     return "Error: HTTP \(statusCode) for \(urlStr)"
                 }
-                let text = String(data: data, encoding: .utf8) ?? "(binary data, \(data.count) bytes)"
-                // Strip HTML tags for cleaner output
-                let stripped = text.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
-                let capped = String(stripped.prefix(8000))
-                let truncNote = stripped.count > 8000 ? "\n\n... [truncated — \(stripped.count) chars total]" : ""
+                let raw = String(data: data, encoding: .utf8) ?? "(binary data, \(data.count) bytes)"
+                let cleaned = Self.cleanHTML(raw)
+                if cleaned.isEmpty {
+                    return "(no readable text content at \(urlStr))"
+                }
+                let capped = String(cleaned.prefix(8000))
+                let truncNote = cleaned.count > 8000 ? "\n\n... [truncated — \(cleaned.count) chars total]" : ""
                 return capped + truncNote
             } catch {
                 return "Error fetching \(urlStr): \(error.localizedDescription)"
@@ -1408,5 +1415,62 @@ extension AgentViewModel {
         default:
             return "Unknown accessibility action: \(action)"
         }
+    }
+
+    /// Clean an HTML string down to readable text. Strips script/style/noscript blocks
+    /// (with their contents), HTML comments, all remaining tags, decodes common entities,
+    /// and collapses whitespace. Drops obvious garbage lines (CSS variables, JSON config,
+    /// minified JS).
+    nonisolated static func cleanHTML(_ html: String) -> String {
+        var s = html
+        // Remove script/style/noscript/svg blocks WITH their content
+        let blockTags = ["script", "style", "noscript", "svg", "iframe", "head"]
+        for tag in blockTags {
+            s = s.replacingOccurrences(
+                of: "<\(tag)\\b[^>]*>[\\s\\S]*?</\(tag)>",
+                with: " ",
+                options: .regularExpression
+            )
+        }
+        // Strip HTML comments
+        s = s.replacingOccurrences(of: "<!--[\\s\\S]*?-->", with: " ", options: .regularExpression)
+        // Replace block-level tags with newlines so paragraphs break
+        let blockBreak = "(?i)</(p|div|li|tr|h[1-6]|br|article|section)>"
+        s = s.replacingOccurrences(of: blockBreak, with: "\n", options: .regularExpression)
+        s = s.replacingOccurrences(of: "(?i)<br\\s*/?>", with: "\n", options: .regularExpression)
+        // Strip all remaining tags
+        s = s.replacingOccurrences(of: "<[^>]+>", with: " ", options: .regularExpression)
+        // Decode common HTML entities
+        let entities: [(String, String)] = [
+            ("&nbsp;", " "), ("&amp;", "&"), ("&lt;", "<"), ("&gt;", ">"),
+            ("&quot;", "\""), ("&#39;", "'"), ("&apos;", "'"),
+            ("&mdash;", "—"), ("&ndash;", "–"), ("&hellip;", "…"),
+            ("&rsquo;", "'"), ("&lsquo;", "'"), ("&ldquo;", "\""), ("&rdquo;", "\""),
+        ]
+        for (k, v) in entities { s = s.replacingOccurrences(of: k, with: v) }
+        // Decode numeric entities like &#1234; and &#xABCD;
+        s = s.replacingOccurrences(of: "&#x?[0-9a-fA-F]+;", with: " ", options: .regularExpression)
+        // Filter out garbage lines
+        let lines = s.components(separatedBy: "\n")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { line in
+                guard !line.isEmpty else { return false }
+                // Skip CSS variable declarations and JS/JSON-like junk
+                if line.hasPrefix("--") && line.contains(":") { return false }
+                if line.hasPrefix("{") || line.hasPrefix("[") { return false }
+                if line.hasPrefix(":root") || line.hasPrefix("@media") { return false }
+                // Skip lines that are mostly punctuation/symbols
+                let alphanumCount = line.unicodeScalars.filter { CharacterSet.alphanumerics.contains($0) }.count
+                if alphanumCount * 3 < line.count { return false }
+                return true
+            }
+        // Collapse runs of whitespace within each line
+        let collapsed = lines.map { line -> String in
+            line.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+        }
+        // Collapse runs of 3+ blank lines to 2
+        var result = collapsed.joined(separator: "\n")
+        result = result.replacingOccurrences(of: "\n{3,}", with: "\n\n", options: .regularExpression)
+        return result.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
