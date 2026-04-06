@@ -85,9 +85,9 @@ final class OpenAICompatibleService {
         return prompt
     }
 
-    func tools(activeGroups: Set<String>? = nil, compact: Bool = false) -> [[String: Any]] {
+    func tools(activeGroups: Set<String>? = nil, compact: Bool = false, condensed: Bool = false) -> [[String: Any]] {
         let groups = isLMStudio ? Tool.codingGroups : activeGroups
-        return AgentTools.ollamaTools(for: provider, activeGroups: groups, compact: compact, projectFolder: projectFolder)
+        return AgentTools.ollamaTools(for: provider, activeGroups: groups, compact: compact, condensed: condensed, projectFolder: projectFolder)
     }
 
     /// Prepend project folder to the last user message (only on first message).
@@ -123,8 +123,15 @@ final class OpenAICompatibleService {
 
     /// All tools every iteration — compact descriptions in coding mode.
     func toolsForIteration(_ messages: [[String: Any]], activeGroups: Set<String>? = nil) -> [[String: Any]] {
-        return tools(activeGroups: activeGroups, compact: compactTools)
+        // First turn: full _tool names. Subsequent turns: condensed (no _tool suffix) to save tokens.
+        // If LLM sent an unrecognized tool on the last turn, flip back to full names.
+        let hasToolCalls = messages.contains { ($0["role"] as? String) == "assistant" && $0["tool_calls"] != nil }
+        let condensed = hasToolCalls && !needsFullToolNames
+        return tools(activeGroups: activeGroups, compact: compactTools, condensed: condensed)
     }
+
+    /// Set to true when a tool call fails — next turn sends full _tool names, then resets.
+    var needsFullToolNames: Bool = false
 
     /// Convert Claude-format messages to OpenAI chat messages.
     /// Always sends full system prompt — OpenAI-compatible APIs don't cache.

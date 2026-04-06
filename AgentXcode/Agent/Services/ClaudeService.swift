@@ -51,10 +51,10 @@ final class ClaudeService {
         return prompt
     }
 
-    func tools(activeGroups: Set<String>? = nil, compact: Bool = false) -> [[String: Any]] {
+    func tools(activeGroups: Set<String>? = nil, compact: Bool = false, condensed: Bool = false) -> [[String: Any]] {
         // Local endpoints (LM Studio etc.) get essential groups only to fit small context windows
         let groups = isLocalEndpoint ? Tool.codingGroups : activeGroups
-        var t = AgentTools.claudeFormat(activeGroups: groups, compact: compact, projectFolder: projectFolder)
+        var t = AgentTools.claudeFormat(activeGroups: groups, compact: compact, condensed: condensed, projectFolder: projectFolder)
         // Only add native web_search for real Anthropic API — remove Tavily duplicate first
         if !isLocalEndpoint {
             t.removeAll { ($0["name"] as? String) == "web_search" }
@@ -89,7 +89,7 @@ final class ClaudeService {
     var temperature: Double = 0.2
     var compactTools: Bool = false
 
-    func send(messages: [[String: Any]], activeGroups: Set<String>? = nil) async throws -> (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int) {
+    func send(messages: [[String: Any]], activeGroups: Set<String>? = nil, condensed: Bool = false) async throws -> (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int) {
         guard isLocalEndpoint || !apiKey.isEmpty else { throw AgentError.noAPIKey }
 
         // Use structured system prompt with cache_control for prompt caching
@@ -106,7 +106,7 @@ final class ClaudeService {
         ]
         // Only include tools for real Anthropic API
         if !isLocalEndpoint {
-            var toolDefs = tools(activeGroups: activeGroups, compact: compactTools)
+            var toolDefs = tools(activeGroups: activeGroups, compact: compactTools, condensed: condensed)
             // Mark last tool with cache_control for prompt caching
             if !toolDefs.isEmpty {
                 toolDefs[toolDefs.count - 1]["cache_control"] = ["type": "ephemeral"]
@@ -166,6 +166,7 @@ final class ClaudeService {
     func sendStreaming(
         messages: [[String: Any]],
         activeGroups: Set<String>? = nil,
+        condensed: Bool = false,
         onTextDelta: @escaping @Sendable (String) -> Void
     ) async throws -> (content: [[String: Any]], stopReason: String, inputTokens: Int, outputTokens: Int) {
         guard isLocalEndpoint || !apiKey.isEmpty else { throw AgentError.noAPIKey }
@@ -182,7 +183,7 @@ final class ClaudeService {
             "stream": true
         ]
         if !isLocalEndpoint {
-            var toolDefs = tools(activeGroups: activeGroups, compact: compactTools)
+            var toolDefs = tools(activeGroups: activeGroups, compact: compactTools, condensed: condensed)
             if !toolDefs.isEmpty {
                 toolDefs[toolDefs.count - 1]["cache_control"] = ["type": "ephemeral"]
             }

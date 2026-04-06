@@ -32,20 +32,22 @@ extension AgentTools {
     }
 
     /// Claude format with ToolPreferencesService, MCPService, and Xcode gating.
-    @MainActor static func claudeFormat(activeGroups: Set<String>? = nil, compact: Bool = false, projectFolder: String = "") -> [[String: Any]] {
+    @MainActor static func claudeFormat(activeGroups: Set<String>? = nil, compact: Bool = false, condensed: Bool = false, projectFolder: String = "") -> [[String: Any]] {
         return claudeFormat(
             isEnabled: makeFilter(provider: .claude, activeGroups: activeGroups, projectFolder: projectFolder),
             mcpTools: filteredMCP(projectFolder: projectFolder),
-            compact: compact
+            compact: compact,
+            condensed: condensed
         )
     }
 
     /// Ollama format with ToolPreferencesService, MCPService, and Xcode gating.
-    @MainActor static func ollamaTools(for provider: APIProvider, activeGroups: Set<String>? = nil, compact: Bool = false, projectFolder: String = "") -> [[String: Any]] {
+    @MainActor static func ollamaTools(for provider: APIProvider, activeGroups: Set<String>? = nil, compact: Bool = false, condensed: Bool = false, projectFolder: String = "") -> [[String: Any]] {
         return ollamaTools(
             isEnabled: makeFilter(provider: provider, activeGroups: activeGroups, projectFolder: projectFolder),
             mcpTools: filteredMCP(projectFolder: projectFolder),
-            compact: compact
+            compact: compact,
+            condensed: condensed
         )
     }
 

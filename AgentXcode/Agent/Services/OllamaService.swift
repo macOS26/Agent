@@ -54,7 +54,10 @@ final class OllamaService {
         return prompt
     }
 
-    func tools(activeGroups: Set<String>? = nil, compact: Bool = false) -> [[String: Any]] { AgentTools.ollamaTools(for: provider, activeGroups: activeGroups, compact: compact, projectFolder: projectFolder) }
+    func tools(activeGroups: Set<String>? = nil, compact: Bool = false, condensed: Bool = false) -> [[String: Any]] { AgentTools.ollamaTools(for: provider, activeGroups: activeGroups, compact: compact, condensed: condensed, projectFolder: projectFolder) }
+
+    /// Set to true when a tool call fails — next turn sends full _tool names, then resets.
+    var needsFullToolNames: Bool = false
 
     /// Prepend project folder to the last user message so it's always visible in context.
     private func withFolderPrefix(_ messages: [[String: Any]]) -> [[String: Any]] {
@@ -170,7 +173,7 @@ final class OllamaService {
         var body: [String: Any] = [
             "model": model,
             "messages": chatMessages,
-            "tools": tools(activeGroups: activeGroups, compact: compactTools),
+            "tools": tools(activeGroups: activeGroups, compact: compactTools, condensed: !needsFullToolNames && chatMessages.count > 2),
             "stream": false
         ]
 
@@ -287,7 +290,7 @@ final class OllamaService {
         var body: [String: Any] = [
             "model": model,
             "messages": chatMessages,
-            "tools": tools(activeGroups: activeGroups, compact: compactTools),
+            "tools": tools(activeGroups: activeGroups, compact: compactTools, condensed: !needsFullToolNames && chatMessages.count > 2),
             "stream": true
         ]
 
