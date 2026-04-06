@@ -549,7 +549,12 @@ private struct LLMOutputBox: View {
                 if !displayText.isEmpty {
                     TerminalNeoTextView(text: displayText) { h in
                         guard dragStartHeight == 0 else { return }
-                        height = min(max(minHeight, h + 4), maxHeight)
+                        let proposed = min(max(minHeight, h + 4), maxHeight)
+                        // Grow in line-sized steps to avoid per-character jitter
+                        let step: CGFloat = 22
+                        if proposed > height + step || proposed < height - step {
+                            height = proposed
+                        }
                     }
                     .overlay {
                         if showScanlines {
