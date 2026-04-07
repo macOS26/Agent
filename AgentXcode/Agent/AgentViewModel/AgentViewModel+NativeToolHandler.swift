@@ -987,8 +987,8 @@ extension AgentViewModel {
         // project_folder
         case "project_folder":
             return handleProjectFolder(tab: nil, input: input)
-        // coding_mode
-        case "coding_mode", "mode":
+        // mode tool — switches between coding/automation/workflow/standard
+        case "mode":
             let action = input["action"] as? String
             // New: action-based switching
             if let action {

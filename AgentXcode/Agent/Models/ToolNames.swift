@@ -90,7 +90,6 @@ enum Tool {
         "search": "web_search",
         "plan": "plan_mode",
         "directory": "project_folder",
-        "mode": "coding_mode",
         "skill": "invoke_skill",
         "fetch": "web_fetch",
         "ask": "ask_user",
@@ -106,7 +105,6 @@ enum Tool {
         "multi": "batch_tools",
         "msg": "send_message",
         "dir": "project_folder",
-        "code": "coding_mode",
         "tools": "list_tools",
         "mem": "memory",
     ]

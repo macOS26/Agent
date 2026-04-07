@@ -55,7 +55,7 @@ extension AgentViewModel {
                 isComplete: false
             )
 
-        case "coding_mode", "mode", "mode_tool":
+        case "mode":
             let action = input["action"] as? String
             let output: String
             if let action {
