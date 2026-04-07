@@ -119,15 +119,19 @@ struct LLMOutputTextView: NSViewRepresentable {
         scrollView.onUserScroll = { [weak coord] in
             coord?.autoFollowDisabled = true
         }
-        // Hover over the scroll view also disables auto-follow. On exit, only
-        // re-enable if the user is still parked at the bottom.
+        // Hover over the scroll view disables auto-follow. On mouse-exit,
+        // unconditionally re-enable AND force a snap to the bottom so the
+        // view catches up to whatever streamed in while the user was hovering.
         scrollView.onHoverChange = { [weak coord] hovering in
             guard let coord else { return }
             coord.isHovering = hovering
             if hovering {
                 coord.autoFollowDisabled = true
-            } else if let tv = coord.textView, coord.isAtBottom(tv) {
+            } else {
                 coord.autoFollowDisabled = false
+                if let tv = coord.textView {
+                    coord.snapToEnd(tv, force: true)
+                }
             }
         }
 
@@ -320,15 +324,16 @@ struct LLMOutputTextView: NSViewRepresentable {
         /// Brackets the call with isProgrammaticScroll so the bounds observer
         /// doesn't misread it.
         ///
-        /// BULLETPROOF HOVER CHECK: before scrolling, polls the cursor position
-        /// right now. If the mouse is over the scroll view, the user is
-        /// reading — abort the snap and latch autoFollowDisabled so subsequent
-        /// chunks also skip until the mouse leaves.
-        func snapToEnd(_ textView: NSTextView) {
+        /// HOVER CHECK: before scrolling, polls the cursor position right now.
+        /// If the mouse is over the scroll view the user is reading — skip
+        /// this snap (no latching). The next chunk will re-poll, so as soon
+        /// as the mouse leaves, snaps resume naturally.
+        ///
+        /// `force: true` bypasses the hover check. Used by the mouse-exit
+        /// handler to catch up after the user moves away.
+        func snapToEnd(_ textView: NSTextView, force: Bool = false) {
             guard let scrollView = textView.enclosingScrollView else { return }
-            if isMouseInside(scrollView) {
-                autoFollowDisabled = true
-                isHovering = true
+            if !force && isMouseInside(scrollView) {
                 return
             }
             // Make sure layout is up to date so the document height is correct.
