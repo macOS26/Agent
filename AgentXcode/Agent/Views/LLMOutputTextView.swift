@@ -2,31 +2,16 @@ import SwiftUI
 import AppKit
 import AgentTerminalNeo
 
-/// NSTextView subclass that refuses to auto-scroll. The stock NSTextView calls
-/// scrollRangeToVisible() on every text mutation to keep the insertion point
-/// visible — we override every entry point so only the user (mouse wheel,
-/// trackpad, scroller drag) can move the clip view.
-final class NoAutoScrollTextView: NSTextView {
-    override func scrollRangeToVisible(_ range: NSRange) { /* no-op */ }
-    override func scroll(_ point: NSPoint) { /* no-op */ }
-    override func scrollToVisible(_ rect: NSRect) -> Bool { false }
-}
-
-/// NSClipView subclass that ignores programmatic scroll requests originating
-/// from subviews (NSTextView's layout manager will call scrollToVisible on the
-/// clip view directly during layout). User scrolling still works because the
-/// scroller and wheel events drive the clip view via setBoundsOrigin, which
-/// we leave alone.
-final class NoAutoScrollClipView: NSClipView {
-    override func scrollToVisible(_ rect: NSRect) -> Bool { false }
-}
-
 /// Local NSScrollView/NSTextView wrapper for the LLM Output HUD.
 /// Renders text via TerminalNeoRenderer for markdown/table styling.
 ///
-/// Scroll policy: USER OWNS THE SCROLL POSITION, ALWAYS.
-/// All auto-scroll paths are disabled via NoAutoScrollTextView and
-/// NoAutoScrollClipView. Mouse wheel / trackpad / scroller drag still work.
+/// Scroll policy (mirrors ActivityLogView):
+/// - Track `userIsAtBottom` via boundsDidChangeNotification on the clip view.
+/// - When new content arrives AND the user is at the bottom → snap to end.
+/// - When new content arrives AND the user has scrolled away → restore the
+///   user's saved origin so the view doesn't jump.
+/// - Programmatic scrolls are bracketed with `isProgrammaticScroll` so the
+///   bounds observer doesn't misread them as the user scrolling.
 struct LLMOutputTextView: NSViewRepresentable {
     let text: String
     var onContentHeight: ((CGFloat) -> Void)?
@@ -34,28 +19,8 @@ struct LLMOutputTextView: NSViewRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator() }
 
     func makeNSView(context: Context) -> NSScrollView {
-        let scrollView = NSScrollView()
-        scrollView.hasVerticalScroller = true
-        scrollView.hasHorizontalScroller = false
-        scrollView.autohidesScrollers = true
-        scrollView.drawsBackground = false
-        scrollView.borderType = .noBorder
-
-        // Swap in our no-auto-scroll clip view
-        let clipView = NoAutoScrollClipView()
-        clipView.drawsBackground = false
-        scrollView.contentView = clipView
-
-        let contentSize = scrollView.contentSize
-        let textView = NoAutoScrollTextView(frame: NSRect(x: 0, y: 0, width: contentSize.width, height: contentSize.height))
-        textView.minSize = NSSize(width: 0, height: 0)
-        textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
-        textView.isVerticallyResizable = true
-        textView.isHorizontallyResizable = false
-        textView.autoresizingMask = [.width]
-        textView.textContainer?.containerSize = NSSize(width: contentSize.width, height: CGFloat.greatestFiniteMagnitude)
-        textView.textContainer?.widthTracksTextView = true
-
+        let scrollView = NSTextView.scrollableTextView()
+        guard let textView = scrollView.documentView as? NSTextView else { return scrollView }
         textView.isEditable = false
         textView.isSelectable = true
         textView.backgroundColor = .clear
@@ -70,10 +35,14 @@ struct LLMOutputTextView: NSViewRepresentable {
         textView.allowsUndo = false
         textView.layoutManager?.allowsNonContiguousLayout = true
 
-        scrollView.documentView = textView
+        scrollView.hasVerticalScroller = true
+        scrollView.autohidesScrollers = true
+        scrollView.drawsBackground = false
 
         context.coordinator.textView = textView
+        context.coordinator.scrollView = scrollView
         context.coordinator.onContentHeight = onContentHeight
+        context.coordinator.startObservingScroll(scrollView)
         return scrollView
     }
 
@@ -87,16 +56,34 @@ struct LLMOutputTextView: NSViewRepresentable {
         let contentLen = contentText.count
 
         if contentLen != coord.lastContentLength {
+            // Real content change — snapshot scroll state BEFORE mutation so we
+            // can either follow-to-end or restore the user's position.
+            let wasAtBottom = coord.userIsAtBottom
+            let savedY = scrollView.contentView.bounds.origin.y
+
             storage.setAttributedString(TerminalNeoRenderer.render(text))
             coord.lastContentLength = contentLen
             tv.layoutManager?.ensureLayout(for: tv.textContainer!)
+
+            if wasAtBottom {
+                coord.snapToEnd(tv)
+            } else {
+                coord.isProgrammaticScroll = true
+                scrollView.contentView.scroll(to: NSPoint(x: 0, y: savedY))
+                scrollView.reflectScrolledClipView(scrollView.contentView)
+                coord.isProgrammaticScroll = false
+            }
         } else {
-            // Cursor blink — swap last char only
+            // Cursor blink — swap last char only. Still snapshot+restore so the
+            // implicit insertion-point scroll doesn't yank the view.
             let attrLen = storage.length
             if attrLen > 0 {
                 let cursorChar = text.hasSuffix("█") ? "█" : " "
                 let lastChar = String(storage.string.suffix(1))
                 if lastChar != cursorChar {
+                    let savedY = scrollView.contentView.bounds.origin.y
+                    let wasAtBottom = coord.userIsAtBottom
+
                     let isDark = tv.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
                     let color: NSColor = isDark
                         ? NSColor(red: 0.2, green: 0.9, blue: 0.3, alpha: 1)
@@ -108,6 +95,13 @@ struct LLMOutputTextView: NSViewRepresentable {
                             .font: font, .foregroundColor: color
                         ]))
                     storage.endEditing()
+
+                    if !wasAtBottom {
+                        coord.isProgrammaticScroll = true
+                        scrollView.contentView.scroll(to: NSPoint(x: 0, y: savedY))
+                        scrollView.reflectScrolledClipView(scrollView.contentView)
+                        coord.isProgrammaticScroll = false
+                    }
                 }
             }
         }
@@ -123,8 +117,67 @@ struct LLMOutputTextView: NSViewRepresentable {
 
     @MainActor final class Coordinator: @unchecked Sendable {
         weak var textView: NSTextView?
+        weak var scrollView: NSScrollView?
         var onContentHeight: ((CGFloat) -> Void)?
         var lastContentLength: Int = 0
         var lastReportedHeight: CGFloat = 0
+
+        /// Tracks whether user is at/near bottom — updated via bounds notifications.
+        var userIsAtBottom: Bool = true
+        /// Suppresses tracking during programmatic scrolls.
+        var isProgrammaticScroll: Bool = false
+        /// Throttle for the bounds observer.
+        private var scrollThrottled: Bool = false
+
+        nonisolated(unsafe) var scrollObserver: NSObjectProtocol?
+
+        func startObservingScroll(_ scrollView: NSScrollView) {
+            scrollView.contentView.postsBoundsChangedNotifications = true
+            scrollObserver = NotificationCenter.default.addObserver(
+                forName: NSView.boundsDidChangeNotification,
+                object: scrollView.contentView,
+                queue: .main
+            ) { [weak self, weak scrollView] _ in
+                MainActor.assumeIsolated {
+                    guard let self, !self.scrollThrottled, let scrollView else { return }
+                    guard !self.isProgrammaticScroll else { return }
+                    guard let textView = scrollView.documentView as? NSTextView else { return }
+                    self.userIsAtBottom = self.isNearBottom(textView)
+                    self.scrollThrottled = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                        self?.scrollThrottled = false
+                    }
+                }
+            }
+        }
+
+        deinit {
+            if let observer = scrollObserver {
+                NotificationCenter.default.removeObserver(observer)
+            }
+        }
+
+        /// User is "at bottom" if the visible bottom is within 60pt of content end.
+        func isNearBottom(_ textView: NSTextView) -> Bool {
+            guard let scrollView = textView.enclosingScrollView else { return true }
+            let visibleBottom = scrollView.contentView.bounds.origin.y + scrollView.contentView.bounds.height
+            let contentHeight = textView.frame.height
+            return (contentHeight - visibleBottom) < 60
+        }
+
+        /// Instant scroll to end — no animation.
+        func snapToEnd(_ textView: NSTextView) {
+            guard let scrollView = textView.enclosingScrollView,
+                  let textContainer = textView.textContainer else {
+                textView.scrollToEndOfDocument(nil)
+                return
+            }
+            isProgrammaticScroll = true
+            textView.layoutManager?.ensureLayout(for: textContainer)
+            textView.scrollToEndOfDocument(nil)
+            scrollView.reflectScrolledClipView(scrollView.contentView)
+            isProgrammaticScroll = false
+            userIsAtBottom = true
+        }
     }
 }
