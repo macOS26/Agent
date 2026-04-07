@@ -2,19 +2,59 @@ import SwiftUI
 import AppKit
 import AgentTerminalNeo
 
+/// NSScrollView subclass that fires callbacks on user scroll and on hover
+/// enter/exit. We need this because the boundsDidChangeNotification observer
+/// has a perceptible lag (it fires AFTER the scroll lands), which lets a
+/// streaming chunk's snapToEnd race against the user's in-progress gesture.
+/// Intercepting scrollWheel directly disables auto-follow on the very first
+/// event, before any fight can happen.
+final class FollowScrollView: NSScrollView {
+    var onUserScroll: (() -> Void)?
+    var onHoverChange: ((Bool) -> Void)?
+    private var hoverTrackingArea: NSTrackingArea?
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let area = hoverTrackingArea { removeTrackingArea(area) }
+        let area = NSTrackingArea(
+            rect: bounds,
+            options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+            owner: self,
+            userInfo: nil
+        )
+        addTrackingArea(area)
+        hoverTrackingArea = area
+    }
+
+    override func scrollWheel(with event: NSEvent) {
+        onUserScroll?()
+        super.scrollWheel(with: event)
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        super.mouseEntered(with: event)
+        onHoverChange?(true)
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        super.mouseExited(with: event)
+        onHoverChange?(false)
+    }
+}
+
 /// Local NSScrollView/NSTextView wrapper for the LLM Output HUD.
 /// Renders text via TerminalNeoRenderer for markdown/table styling.
 ///
-/// Scroll policy:
-/// - Track `userIsAtBottom` via boundsDidChangeNotification on the clip view.
-///   The moment the user scrolls away from the bottom, auto-follow is OFF.
-///   When they scroll back to the bottom, auto-follow turns back ON.
-/// - When new content arrives AND user is at the bottom → scroll to end.
-/// - When new content arrives AND user has scrolled away → do nothing; the
-///   appended text extends the document below the visible area, and the clip
-///   view origin stays put on its own.
+/// Scroll policy — hard switch model:
+/// - `autoFollowDisabled` is the single source of truth.
+/// - It flips to TRUE the moment the user does ANY of:
+///     • scrollWheel/trackpad event (caught instantly via FollowScrollView)
+///     • mouse hover-enter over the scroll view
+/// - It flips back to FALSE when:
+///     • user scrolls back to the very bottom AND mouse is not hovering
+///     • text shrinks (new task / reset) — fresh content always follows
 ///
-/// Jitter avoidance (matches the proven path in TerminalNeoTextView):
+/// Jitter avoidance (untouched from the smooth version):
 /// - Incremental append for non-table streaming chunks — no full re-layout.
 /// - CATransaction.setDisableActions(true) wrap suppresses implicit animations.
 /// - Full TerminalNeoRenderer re-render only for tables, shrinks, or first load.
@@ -26,8 +66,23 @@ struct LLMOutputTextView: NSViewRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator() }
 
     func makeNSView(context: Context) -> NSScrollView {
-        let scrollView = NSTextView.scrollableTextView()
-        guard let textView = scrollView.documentView as? NSTextView else { return scrollView }
+        let scrollView = FollowScrollView()
+        scrollView.hasVerticalScroller = true
+        scrollView.hasHorizontalScroller = false
+        scrollView.autohidesScrollers = true
+        scrollView.drawsBackground = false
+        scrollView.borderType = .noBorder
+
+        let contentSize = scrollView.contentSize
+        let textView = NSTextView(frame: NSRect(x: 0, y: 0, width: contentSize.width, height: contentSize.height))
+        textView.minSize = NSSize(width: 0, height: 0)
+        textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+        textView.isVerticallyResizable = true
+        textView.isHorizontallyResizable = false
+        textView.autoresizingMask = [.width]
+        textView.textContainer?.containerSize = NSSize(width: contentSize.width, height: CGFloat.greatestFiniteMagnitude)
+        textView.textContainer?.widthTracksTextView = true
+
         textView.isEditable = false
         textView.isSelectable = true
         textView.backgroundColor = .clear
@@ -42,13 +97,30 @@ struct LLMOutputTextView: NSViewRepresentable {
         textView.allowsUndo = false
         textView.layoutManager?.allowsNonContiguousLayout = true
 
-        scrollView.hasVerticalScroller = true
-        scrollView.autohidesScrollers = true
-        scrollView.drawsBackground = false
+        scrollView.documentView = textView
 
-        context.coordinator.textView = textView
-        context.coordinator.onContentHeight = onContentHeight
-        context.coordinator.startObservingScroll(scrollView)
+        let coord = context.coordinator
+        coord.textView = textView
+        coord.onContentHeight = onContentHeight
+        coord.startObservingScroll(scrollView)
+
+        // Hard switch: any user scroll wheel/trackpad event disables auto-follow
+        // immediately, before the bounds observer would have a chance to fire.
+        scrollView.onUserScroll = { [weak coord] in
+            coord?.autoFollowDisabled = true
+        }
+        // Hover over the scroll view also disables auto-follow. On exit, only
+        // re-enable if the user is still parked at the bottom.
+        scrollView.onHoverChange = { [weak coord] hovering in
+            guard let coord else { return }
+            coord.isHovering = hovering
+            if hovering {
+                coord.autoFollowDisabled = true
+            } else if let tv = coord.textView, coord.isAtBottom(tv) {
+                coord.autoFollowDisabled = false
+            }
+        }
+
         return scrollView
     }
 
@@ -62,7 +134,10 @@ struct LLMOutputTextView: NSViewRepresentable {
         let contentLen = contentText.count
 
         if contentLen != coord.lastContentLength {
-            let wasAtBottom = coord.userIsAtBottom
+            // Text shrank → new task / reset → re-arm auto-follow
+            if contentLen < coord.lastContentLength {
+                coord.autoFollowDisabled = false
+            }
             let isAppend = contentLen > coord.lastContentLength && coord.lastContentLength > 0
             let hasTable = contentText.contains("|\n") && contentText.contains("---")
             if hasTable { coord.needsTableRender = true }
@@ -112,10 +187,11 @@ struct LLMOutputTextView: NSViewRepresentable {
                 coord.needsTableRender = true
             }
 
-            // Follow-bottom: only scroll if the user was already at the bottom.
-            // If they scrolled away, leave the clip view origin alone — the
-            // appended content extends the document below their view naturally.
-            if wasAtBottom {
+            // Follow-bottom: only scroll when the hard switch says we may.
+            // If the user has scrolled away or is hovering, autoFollowDisabled
+            // is true and we leave the clip view origin alone — the appended
+            // content extends the document below their view naturally.
+            if !coord.autoFollowDisabled {
                 coord.snapToEnd(tv)
             }
         } else {
@@ -164,11 +240,15 @@ struct LLMOutputTextView: NSViewRepresentable {
         /// extended by simple character append).
         var needsTableRender: Bool = false
 
-        /// Tracks whether user is at/near bottom — updated via bounds notifications.
-        var userIsAtBottom: Bool = true
-        /// Suppresses tracking during programmatic scrolls.
+        /// HARD SWITCH. When true, no auto-follow regardless of position.
+        /// Set true on: scrollWheel/trackpad event, hover-enter.
+        /// Cleared on: hover-exit while at bottom, text shrink (new task),
+        /// or user scrolling back to the bottom while not hovering.
+        var autoFollowDisabled: Bool = false
+        /// Mouse currently hovering over the scroll view.
+        var isHovering: Bool = false
+        /// Suppresses bounds-tracking during our own programmatic scrolls.
         var isProgrammaticScroll: Bool = false
-        /// Throttle for the bounds observer.
         private var scrollThrottled: Bool = false
 
         nonisolated(unsafe) var scrollObserver: NSObjectProtocol?
@@ -184,7 +264,11 @@ struct LLMOutputTextView: NSViewRepresentable {
                     guard let self, !self.scrollThrottled, let scrollView else { return }
                     guard !self.isProgrammaticScroll else { return }
                     guard let textView = scrollView.documentView as? NSTextView else { return }
-                    self.userIsAtBottom = self.isNearBottom(textView)
+                    // Re-enable auto-follow only when the user has manually
+                    // scrolled all the way back to the bottom AND isn't hovering.
+                    if !self.isHovering && self.isAtBottom(textView) {
+                        self.autoFollowDisabled = false
+                    }
                     self.scrollThrottled = true
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
                         self?.scrollThrottled = false
@@ -199,12 +283,14 @@ struct LLMOutputTextView: NSViewRepresentable {
             }
         }
 
-        /// User is "at bottom" if the visible bottom is within 60pt of content end.
-        func isNearBottom(_ textView: NSTextView) -> Bool {
+        /// True iff the visible bottom is within 5pt of the content end.
+        /// Tight threshold so we only re-engage when the user really lands at
+        /// the bottom — not just somewhere near it.
+        func isAtBottom(_ textView: NSTextView) -> Bool {
             guard let scrollView = textView.enclosingScrollView else { return true }
             let visibleBottom = scrollView.contentView.bounds.origin.y + scrollView.contentView.bounds.height
             let contentHeight = textView.frame.height
-            return (contentHeight - visibleBottom) < 60
+            return (contentHeight - visibleBottom) < 5
         }
 
         /// Instant scroll to end — no animation, brackets the call with
@@ -218,7 +304,6 @@ struct LLMOutputTextView: NSViewRepresentable {
             textView.scrollToEndOfDocument(nil)
             scrollView.reflectScrolledClipView(scrollView.contentView)
             isProgrammaticScroll = false
-            userIsAtBottom = true
         }
     }
 }
