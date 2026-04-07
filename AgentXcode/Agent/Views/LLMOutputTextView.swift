@@ -303,12 +303,34 @@ struct LLMOutputTextView: NSViewRepresentable {
             return (contentHeight - visibleBottom) < 5
         }
 
+        /// True iff the cursor is currently inside the given scroll view's
+        /// frame, polled synchronously via mouseLocationOutsideOfEventStream.
+        /// More reliable than NSTrackingArea callbacks because it doesn't
+        /// depend on AppKit having already delivered a mouseEntered event —
+        /// it just asks "where is the cursor RIGHT NOW?".
+        func isMouseInside(_ scrollView: NSScrollView) -> Bool {
+            guard let window = scrollView.window else { return false }
+            let pointInWindow = window.mouseLocationOutsideOfEventStream
+            let pointInView = scrollView.convert(pointInWindow, from: nil)
+            return scrollView.bounds.contains(pointInView)
+        }
+
         /// Instant scroll to end. Drives the clip view directly so it works
         /// even though FollowTextView's scrollRangeToVisible is a no-op.
         /// Brackets the call with isProgrammaticScroll so the bounds observer
         /// doesn't misread it.
+        ///
+        /// BULLETPROOF HOVER CHECK: before scrolling, polls the cursor position
+        /// right now. If the mouse is over the scroll view, the user is
+        /// reading — abort the snap and latch autoFollowDisabled so subsequent
+        /// chunks also skip until the mouse leaves.
         func snapToEnd(_ textView: NSTextView) {
             guard let scrollView = textView.enclosingScrollView else { return }
+            if isMouseInside(scrollView) {
+                autoFollowDisabled = true
+                isHovering = true
+                return
+            }
             // Make sure layout is up to date so the document height is correct.
             if let container = textView.textContainer {
                 textView.layoutManager?.ensureLayout(for: container)
