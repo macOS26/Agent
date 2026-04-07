@@ -2,6 +2,16 @@ import SwiftUI
 import AppKit
 import AgentTerminalNeo
 
+/// NSTextView subclass whose scrollRangeToVisible is a no-op. Stock NSTextView
+/// implicitly scrolls the new range into view on every text mutation
+/// (storage.append, replaceCharacters, etc.) — that's the source of the
+/// remaining fight when streaming chunks arrive while the user is scrolled up.
+/// We disable that path entirely and drive scroll only via snapToEnd, which
+/// talks to the clip view directly.
+final class FollowTextView: NSTextView {
+    override func scrollRangeToVisible(_ range: NSRange) { /* no-op */ }
+}
+
 /// NSScrollView subclass that fires callbacks on user scroll and on hover
 /// enter/exit. We need this because the boundsDidChangeNotification observer
 /// has a perceptible lag (it fires AFTER the scroll lands), which lets a
@@ -74,7 +84,7 @@ struct LLMOutputTextView: NSViewRepresentable {
         scrollView.borderType = .noBorder
 
         let contentSize = scrollView.contentSize
-        let textView = NSTextView(frame: NSRect(x: 0, y: 0, width: contentSize.width, height: contentSize.height))
+        let textView = FollowTextView(frame: NSRect(x: 0, y: 0, width: contentSize.width, height: contentSize.height))
         textView.minSize = NSSize(width: 0, height: 0)
         textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
         textView.isVerticallyResizable = true
@@ -293,15 +303,21 @@ struct LLMOutputTextView: NSViewRepresentable {
             return (contentHeight - visibleBottom) < 5
         }
 
-        /// Instant scroll to end — no animation, brackets the call with
-        /// isProgrammaticScroll so the bounds observer doesn't misread it.
+        /// Instant scroll to end. Drives the clip view directly so it works
+        /// even though FollowTextView's scrollRangeToVisible is a no-op.
+        /// Brackets the call with isProgrammaticScroll so the bounds observer
+        /// doesn't misread it.
         func snapToEnd(_ textView: NSTextView) {
-            guard let scrollView = textView.enclosingScrollView else {
-                textView.scrollToEndOfDocument(nil)
-                return
+            guard let scrollView = textView.enclosingScrollView else { return }
+            // Make sure layout is up to date so the document height is correct.
+            if let container = textView.textContainer {
+                textView.layoutManager?.ensureLayout(for: container)
             }
+            let docHeight = textView.frame.height
+            let visibleHeight = scrollView.contentView.bounds.height
+            let bottomY = max(0, docHeight - visibleHeight)
             isProgrammaticScroll = true
-            textView.scrollToEndOfDocument(nil)
+            scrollView.contentView.scroll(to: NSPoint(x: 0, y: bottomY))
             scrollView.reflectScrolledClipView(scrollView.contentView)
             isProgrammaticScroll = false
         }
