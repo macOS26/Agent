@@ -204,24 +204,45 @@ extension AgentViewModel {
             return defaultOpenAIModels
         }
 
-        // Accept any chat/reasoning model: `gpt…`, `chatgpt…`, or `o<digit>…`
-        // (with or without a trailing dash — catches `o3`, `o3-mini`, `o5`,
-        // `gpt-5`, future families without code changes). Drop non-chat models
-        // (embeddings, tts, whisper, dall-e, moderation, image) via a blocklist.
+        // Keep only current flagship chat/reasoning families and drop:
+        //  - legacy GPT-3 / GPT-4 (pre-4o) families
+        //  - dated snapshots (e.g. gpt-4o-2024-11-20, gpt-4-0613, gpt-3.5-turbo-1106)
+        //  - non-chat endpoints (embeddings, tts, whisper, dall-e, moderation,
+        //    image-*, audio-*, realtime, transcribe, search-preview, computer-use)
+        // Future-proofed via regex families — new gpt-N / o-N lines come through
+        // automatically.
         let keepRegex = try? NSRegularExpression(pattern: "^(gpt|chatgpt|o\\d+)(-|$|\\.)", options: [])
+        let datedSuffixRegex = try? NSRegularExpression(pattern: "-(\\d{4}-\\d{2}-\\d{2}|\\d{4})$", options: [])
         let blockedSubstrings = [
             "embed", "embedding", "tts", "whisper", "dall-e", "dalle",
             "moderation", "image-", "audio-", "realtime", "transcribe",
             "search-preview", "computer-use"
         ]
+        // Legacy family prefixes — dropped regardless of version.
+        let legacyPrefixes = [
+            "gpt-3",         // gpt-3.5-turbo*, gpt-3-*
+            "gpt-4-turbo",   // gpt-4-turbo, gpt-4-turbo-preview, gpt-4-turbo-YYYY-MM-DD
+            "gpt-4-0",       // gpt-4-0613, gpt-4-0314, gpt-4-0125-preview
+            "gpt-4-1",       // gpt-4-1106-preview (NOT gpt-4.1-*)
+            "gpt-4-32k",
+            "gpt-4-vision"
+        ]
+        // Exact legacy names (bare gpt-4 is legacy; gpt-4.1 / gpt-4o are current).
+        let exactLegacy: Set<String> = ["gpt-4", "gpt-4-preview"]
         let filtered = modelsArray
             .filter { model in
                 let id = (model["id"] as? String ?? "").lowercased()
                 guard !id.isEmpty else { return false }
                 if blockedSubstrings.contains(where: { id.contains($0) }) { return false }
+                if exactLegacy.contains(id) { return false }
+                if legacyPrefixes.contains(where: { id.hasPrefix($0) }) { return false }
+                // Drop dated snapshots (prefer the flagship alias).
+                if let rx = datedSuffixRegex,
+                   rx.firstMatch(in: id, range: NSRange(id.startIndex..., in: id)) != nil {
+                    return false
+                }
                 guard let rx = keepRegex else { return id.hasPrefix("gpt") || id.hasPrefix("chatgpt") }
-                let range = NSRange(id.startIndex..., in: id)
-                return rx.firstMatch(in: id, range: range) != nil
+                return rx.firstMatch(in: id, range: NSRange(id.startIndex..., in: id)) != nil
             }
             .compactMap { model -> OpenAIModelInfo? in
                 guard let id = model["id"] as? String else { return nil }
