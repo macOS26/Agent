@@ -35,8 +35,14 @@ extension AgentViewModel {
 
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
-        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        let clean = ClaudeService.sanitizedCredential(apiKey)
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        if ClaudeService.isOAuthToken(clean) {
+            request.setValue("Bearer \(clean)", forHTTPHeaderField: "Authorization")
+            request.setValue("oauth-2025-04-20", forHTTPHeaderField: "anthropic-beta")
+        } else {
+            request.setValue(clean, forHTTPHeaderField: "x-api-key")
+        }
         request.timeoutInterval = llmAPITimeout
 
         let (data, response) = try await URLSession.shared.data(for: request)

@@ -150,6 +150,7 @@ struct ToolsView: View {
         case .mistral: return $viewModel.mistralModel
         case .codestral: return $viewModel.codestralModel
         case .vibe: return $viewModel.vibeModel
+        case .miniMax: return $viewModel.miniMaxModel
         case .foundationModel: return .constant("Apple Intelligence")
         }
     }
@@ -184,6 +185,7 @@ struct ToolsView: View {
             return viewModel.localOllamaModels.map { ($0.name, $0.name) }
         case .vLLM: return viewModel.vLLMModels.map { ($0.id, $0.name) }
         case .lmStudio: return viewModel.lmStudioModels.map { ($0.id, $0.name) }
+        case .miniMax: return oai(viewModel.miniMaxModels, AgentViewModel.defaultMiniMaxModels)
         case .bigModel: return []
         case .foundationModel:
             return [("Apple Intelligence", "Apple Intelligence")]

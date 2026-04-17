@@ -167,6 +167,13 @@ extension AgentViewModel {
 
     nonisolated static let defaultClaudeModels: [ClaudeModelInfo] = [
         ClaudeModelInfo(
+            id: "claude-opus-4-7",
+            name: "claude-opus-4-7",
+            displayName: "Claude Opus 4.7",
+            createdAt: "2026-04-17",
+            description: nil
+        ),
+        ClaudeModelInfo(
             id: "claude-sonnet-4-6",
             name: "claude-sonnet-4-6",
             displayName: "Claude Sonnet 4.6",

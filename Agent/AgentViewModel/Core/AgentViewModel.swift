@@ -302,7 +302,7 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(miniMaxModel, forKey: "miniMaxModel") }
     }
 
-    var miniMaxModels: [OpenAIModelInfo] = Self.defaultMiniMaxModels
+    var miniMaxModels: [OpenAIModelInfo] = []
     var isFetchingMiniMaxModels = false
 
     // MARK: - Google Gemini
