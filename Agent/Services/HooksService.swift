@@ -163,6 +163,20 @@ final class HooksService {
     // MARK: - Persistence
 
     private func load() {
+        guard FileManager.default.fileExists(atPath: fileURL.path) else { return }
+
+        // Refuse to load if hooks.json is group/world-writable (another user
+        // or process could have injected a malicious hook for persistence).
+        if let attrs = try? FileManager.default.attributesOfItem(atPath: fileURL.path),
+           let perms = attrs[.posixPermissions] as? Int {
+            let groupWrite = (perms & 0o020) != 0
+            let otherWrite = (perms & 0o002) != 0
+            if groupWrite || otherWrite {
+                NSLog("HooksService: hooks.json is group/world-writable (0o%o) — refusing to load. Fix: chmod 600 \(fileURL.path)", perms)
+                return
+            }
+        }
+
         guard let data = try? Data(contentsOf: fileURL),
               let decoded = try? JSONDecoder().decode([Hook].self, from: data) else { return }
         hooks = decoded
@@ -171,6 +185,11 @@ final class HooksService {
     private func save() {
         guard let data = try? JSONEncoder().encode(hooks) else { return }
         try? data.write(to: fileURL, options: .atomic)
+        // Ensure only the owner can read/write hooks.json.
+        try? FileManager.default.setAttributes(
+            [.posixPermissions: 0o600],
+            ofItemAtPath: fileURL.path
+        )
     }
 
     /// List hooks as a summary string for the LLM.

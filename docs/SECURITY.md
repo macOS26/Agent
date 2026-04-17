@@ -2,11 +2,11 @@
 
 # Security Architecture
 
-This document details Agent!'s security model and entitlements.
+This document details Agent!'s security model, entitlements, and defense layers.
 
 ## Entitlements
 
-Agent! requires the following entitlements in `Agent.entitlements`:
+Agent! requires the following entitlements in `Agent.entitlements` (developer-signed builds):
 
 | Entitlement | Purpose |
 |-------------|---------|
@@ -28,6 +28,18 @@ Agent! requires the following entitlements in `Agent.entitlements`:
 | `personal-information.photos-library` | Photos access via PhotosBridge |
 | `keychain-access-groups` | Secure API key storage |
 
+### Ad-hoc Build Entitlements
+
+`build.sh` (the no-developer-account path) uses `Agent.adhoc.entitlements`,
+a deliberately stripped-down subset. The following capabilities are
+**excluded** from ad-hoc builds to reduce the attack surface:
+
+- `cs.allow-unsigned-executable-memory` / `cs.disable-library-validation` (no dylib loading)
+- `network.server` (no inbound MCP HTTP/SSE)
+- Device capabilities: camera, microphone, Bluetooth, USB
+- Personal information: contacts, calendars, location, photos
+- `keychain-access-groups` (requires Team ID)
+
 ## TCC Permissions (Accessibility, Screen Recording, Automation)
 
 Protected macOS APIs require user approval. Agent handles TCC correctly:
@@ -40,11 +52,20 @@ Protected macOS APIs require user approval. Agent handles TCC correctly:
 
 **Rule:** Use `run_agent_script` or `applescript_tool` for Accessibility/Automation tasks, not shell commands.
 
-## Write Protection
+## Write Protection (AppleScript)
 
-- `applescript_tool` blocks destructive operations (`delete`, `close`, `move`, `quit`) by default
-- The AI must explicitly set `allow_writes: true` to permit them
-- This prevents accidental data loss from misinterpreted commands
+`NSAppleScriptService` enforces a runtime write-protection gate:
+
+- AppleScript containing destructive verbs (`delete`, `close`, `move`,
+  `quit`, `shut down`, `restart`, `log out`, `empty trash`,
+  `do shell script`) is **blocked by default**.
+- The LLM must explicitly set `allow_writes: true` to execute these.
+- This is enforced in code at `NSAppleScriptService.writeProtectionCheck()`,
+  not just as a prompt constraint. Both the tab handler
+  (`Automation.swift:run_applescript`) and the native handler
+  (`NTH-Shell.swift:run_applescript`) pass through the gate.
+
+Source: `Agent/Services/NSAppleScriptService.swift`.
 
 ## XPC Sandboxing
 
@@ -75,17 +96,26 @@ could dial in and request `execute(script:)`. To close that path:
    that doesn't match before the delegate is invoked.
 2. The `shouldAcceptNewConnection` delegate *also* validates the peer's
    `audit_token_t` via `SecCodeCopyGuestWithAttributes` +
-   `SecStaticCodeCheckValidity`. This is a belt-and-suspenders fallback.
+   `SecStaticCodeCheckValidity`. Belt-and-suspenders fallback.
 3. The requirement is built at runtime from the daemon's own signing
    identity:
    - **Developer-signed** daemons require
      `anchor apple generic and certificate leaf[subject.OU] = "<TeamID>" and identifier "Agent.app.toddbruss"`.
    - **Ad-hoc signed** local builds fall back to matching the daemon's
-     own `cdhash`, so only the exact same build sitting beside the daemon
-     can connect.
+     own `cdhash`, so only the exact same build can connect.
 
 Source: `Shared/XPCPeerValidator.swift`, `AgentHelper/main.swift`,
 `AgentUser/main.swift`.
+
+### Root Shell Rate Limiting
+
+`HelperService` enforces a per-minute rate limit on root-shell commands
+(default: 20 per 60-second rolling window). This prevents an LLM in an
+unbounded loop from executing hundreds of root commands. When the limit is
+hit, the tool returns an error telling the model to wait or use
+`execute_agent_command` (user shell) instead.
+
+Source: `Agent/Services/HelperService.swift` (`RootShellRateLimiter`).
 
 ### Daemon-side Shell Safety Backstop
 
@@ -104,6 +134,84 @@ the app's `ShellSafetyService` rules and covers:
 Even if the listener validator ever mis-installs (e.g. during development
 with a malformed requirement string), these patterns never reach
 `/bin/zsh -c` as root.
+
+## Shell Safety Service
+
+`ShellSafetyService` is the primary shell guardrail — runs BEFORE every
+execution surface and rejects catastrophic commands without dispatching
+them. LLM system-prompt instructions are backstops, not the enforcement
+layer. Blocked patterns:
+
+| Rule | What it catches |
+|------|-----------------|
+| `rm.dangerous-target` | `rm -rf /`, `rm -rf ~`, system roots, broad globs |
+| `rm.no-preserve-root` | `rm --no-preserve-root` (always blocked) |
+| `find.delete-broad-root` | `find / ... -delete`, `find ~ ... -delete` |
+| `perms.recursive-on-root` | `chmod -R 777 /`, `chown -R root:root /etc` |
+| `dd.raw-disk` | `dd of=/dev/disk2`, `dd of=/dev/sda` |
+| `mkfs` | Any `mkfs.*` command |
+| `diskutil.erase` | `diskutil eraseDisk`, `zeroDisk`, `secureErase`, `eraseVolume` |
+| `redirect.raw-disk` | `> /dev/disk*`, `> /dev/sda` |
+| `fork-bomb` | `:(){ :\|:& };:` and variations |
+| `mv.to-devnull` | `mv ~ /dev/null`, `mv /etc /dev/null` |
+| `sensitive-file-write` | Writes to `/etc/sudoers`, `/etc/passwd`, `~/.ssh/authorized_keys`, `~/.zshrc`, `~/.bashrc`, etc. |
+| `piped-remote-exec` | `curl ... \| sh`, `wget ... \| bash`, `curl ... \| python` |
+| `launchctl-tmp` | `launchctl load /tmp/...` (persistence from temp dirs) |
+
+Compound commands (`cmd1; cmd2 && cmd3 || cmd4 | cmd5`) are split on shell
+separators and each segment is classified independently. Leading
+`sudo`/`exec`/`doas`/`eval` wrappers and env-var assignments are stripped
+before matching.
+
+Source: `Agent/Services/ShellSafetyService.swift`.
+
+## iMessage Remote Execution Restrictions
+
+When a task originates from iMessage, the following tools are **blocked**:
+
+| Blocked tool | Reason |
+|---|---|
+| `execute_daemon_command` | No root shell via remote text |
+| `batch_commands` | No unbounded shell batches |
+| `batch_tools` | No unbounded tool batches |
+| `run_osascript` | No arbitrary osascript (use `run_applescript` with write-protection) |
+| `execute_javascript` | No arbitrary JXA |
+
+This ensures a compromised or spoofed iMessage sender cannot escalate to
+root or drive arbitrary automation. Regular user-shell and file tools
+remain available for legitimate remote use.
+
+Source: `Agent/AgentViewModel/TabHandlers/TabToolHandlers.swift`.
+
+## Hooks Security
+
+User-defined hooks (`~/Documents/AgentScript/hooks.json`) execute shell
+commands on tool events. To prevent persistence attacks:
+
+- **Permission check on load**: if `hooks.json` is group-writable or
+  world-writable, it is **refused** and hooks are not loaded. An NSLog
+  warning is emitted.
+- **Permission enforcement on save**: every write sets `0o600`
+  (owner-only read/write).
+
+Source: `Agent/Services/HooksService.swift`.
+
+## System Prompt Safety Rules
+
+The system prompt includes explicit SAFETY RULES telling the LLM to avoid
+patterns that `ShellSafetyService` would block. This reduces unnecessary
+tool rejections and teaches the model the "why" behind each guardrail:
+
+- No `rm -rf` on system roots or home
+- No `curl | sh` / `wget | bash`
+- No writes to `/etc/sudoers`, `~/.ssh/authorized_keys`, shell profiles
+- No `dd` to raw disks, no `mkfs`, no `diskutil erase`
+- No `launchctl load` from temp dirs
+- AppleScript defaults to read-only; destructive verbs require `allow_writes`
+- Root shell is for admin tasks only and is rate-limited
+- iMessage tasks have a restricted tool set
+
+Source: `Agent/Services/SystemPromptService.swift`.
 
 ## Action Verification (action_not_performed)
 

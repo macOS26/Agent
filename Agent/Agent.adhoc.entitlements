@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Minimal entitlements for ad-hoc signed (no developer account) builds.
+	     The full Agent.entitlements file requires a proper Team ID for
+	     keychain-access-groups and SMAppService. This stripped version keeps
+	     the sandbox OFF (required — ad-hoc can't use App Sandbox) but still
+	     declares the core capabilities the app needs at runtime. -->
+
+	<!-- Network: outbound API calls -->
+	<key>com.apple.security.network.client</key>
+	<true/>
+
+	<!-- Automation + Accessibility -->
+	<key>com.apple.security.automation.apple-events</key>
+	<true/>
+
+	<!-- File access: documents, downloads, user-selected -->
+	<key>com.apple.security.files.documents.read-write</key>
+	<true/>
+	<key>com.apple.security.files.downloads.read-write</key>
+	<true/>
+	<key>com.apple.security.files.user-selected.read-write</key>
+	<true/>
+
+	<!-- NOTE: The following entitlements from Agent.entitlements are
+	     deliberately EXCLUDED in ad-hoc builds to reduce attack surface:
+	       - cs.allow-unsigned-executable-memory  (AgentScript dylibs won't load)
+	       - cs.disable-library-validation        (same)
+	       - network.server                       (MCP HTTP/SSE inbound)
+	       - device.camera / audio-input / bluetooth / usb
+	       - personal-information.* (addressbook, calendars, location, photos)
+	       - keychain-access-groups (requires Team ID)
+
+	     If you need these, sign with a developer account and use the full
+	     Agent.entitlements file via Xcode. -->
+</dict>
+</plist>

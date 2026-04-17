@@ -6,9 +6,39 @@ import Foundation
 final class NSAppleScriptService: @unchecked Sendable {
     static let shared = NSAppleScriptService()
 
+    /// AppleScript verbs considered destructive. Blocked by default unless
+    /// the caller explicitly passes `allowWrites: true`.
+    private static let destructiveVerbs: [String] = [
+        "delete", "remove", "close", "move", "quit",
+        "shut down", "restart", "log out", "empty trash",
+        "do shell script",
+    ]
+
+    /// Returns a human-readable reason when `source` contains a destructive
+    /// verb and `allowWrites` is false, nil otherwise.
+    static func writeProtectionCheck(source: String, allowWrites: Bool) -> String? {
+        guard !allowWrites else { return nil }
+        let lower = source.lowercased()
+        for verb in destructiveVerbs {
+            if lower.contains(verb) {
+                return "AppleScript contains destructive verb \"\(verb)\". "
+                    + "Set allow_writes: true to permit this operation, "
+                    + "or rewrite the script to avoid \(verb)."
+            }
+        }
+        return nil
+    }
+
     /// Execute AppleScript source code and return the result.
     /// Runs synchronously on the calling thread — call from offMain.
-    func execute(source: String) -> (success: Bool, output: String) {
+    /// When `allowWrites` is false (the default), scripts containing
+    /// destructive verbs are refused before execution.
+    func execute(source: String, allowWrites: Bool = false) -> (success: Bool, output: String) {
+        if let blocked = Self.writeProtectionCheck(source: source, allowWrites: allowWrites) {
+            AuditLog.log(.appleScript, "BLOCKED (write-protection): \(source.prefix(100))")
+            return (false, blocked)
+        }
+
         AuditLog.log(.appleScript, "execute: \(source.prefix(100))")
         var errorInfo: NSDictionary?
         let script = NSAppleScript(source: source)
@@ -24,13 +54,13 @@ final class NSAppleScriptService: @unchecked Sendable {
 
     /// Build and execute an AppleScript that targets a specific app by bundle ID.
     /// Automatically wraps the body in `tell application id "bundle.id"`.
-    func executeForApp(bundleID: String, body: String) -> (success: Bool, output: String) {
+    func executeForApp(bundleID: String, body: String, allowWrites: Bool = false) -> (success: Bool, output: String) {
         let source = """
         tell application id "\(bundleID)"
             \(body)
         end tell
         """
-        return execute(source: source)
+        return execute(source: source, allowWrites: allowWrites)
     }
 
     /// Get SDEF summary for an app to help build correct AppleScript.

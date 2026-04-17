@@ -105,11 +105,12 @@ extension AgentViewModel {
 
         case "run_applescript":
             let source = input["source"] as? String ?? ""
+            let allowWrites = input["allow_writes"] as? Bool ?? false
             tab.appendLog("🍎 AppleScript:\n\(source)")
             tab.isRunning = true
             tab.flush()
             let result = await Self.offMain {
-                NSAppleScriptService.shared.execute(source: source)
+                NSAppleScriptService.shared.execute(source: source, allowWrites: allowWrites)
             }
             tab.isRunning = false
             let toolContent: String
