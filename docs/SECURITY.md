@@ -63,6 +63,48 @@ The XPC boundary ensures:
 - Each XPC call is a discrete, auditable transaction
 - File permissions are restored to the user after root operations
 
+### Peer Authentication
+
+Both daemons refuse XPC connections that are not signed by the same Agent!
+bundle. Because the helper runs as root, an unauthenticated Mach listener
+would be a local privilege-escalation path — any process on the machine
+could dial in and request `execute(script:)`. To close that path:
+
+1. On macOS 13+, the listener calls
+   `NSXPCListener.setCodeSigningRequirement(_:)` so the OS drops any peer
+   that doesn't match before the delegate is invoked.
+2. The `shouldAcceptNewConnection` delegate *also* validates the peer's
+   `audit_token_t` via `SecCodeCopyGuestWithAttributes` +
+   `SecStaticCodeCheckValidity`. This is a belt-and-suspenders fallback.
+3. The requirement is built at runtime from the daemon's own signing
+   identity:
+   - **Developer-signed** daemons require
+     `anchor apple generic and certificate leaf[subject.OU] = "<TeamID>" and identifier "Agent.app.toddbruss"`.
+   - **Ad-hoc signed** local builds fall back to matching the daemon's
+     own `cdhash`, so only the exact same build sitting beside the daemon
+     can connect.
+
+Source: `Shared/XPCPeerValidator.swift`, `AgentHelper/main.swift`,
+`AgentUser/main.swift`.
+
+### Daemon-side Shell Safety Backstop
+
+`Shared/DaemonCore.swift` runs a conservative last-mile shell-safety check
+(`DaemonShellGuard`) *inside the daemon*, after the XPC boundary and
+regardless of which caller made the request. This is a strict subset of
+the app's `ShellSafetyService` rules and covers:
+
+- `rm -rf` against `/`, system roots, or `$HOME`
+- `rm --no-preserve-root`
+- `dd of=/dev/disk*` (and friends)
+- `mkfs.*`, `diskutil eraseDisk|zeroDisk|secureErase|eraseVolume`
+- Output redirection `> /dev/disk*`
+- Classic `:(){ :|:& };:` fork bomb
+
+Even if the listener validator ever mis-installs (e.g. during development
+with a malformed requirement string), these patterns never reach
+`/bin/zsh -c` as root.
+
 ## Action Verification (action_not_performed)
 
 Agent! prevents false-action claims — where an AI reports performing an action it never executed — with three independent layers:

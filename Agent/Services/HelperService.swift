@@ -153,7 +153,10 @@ final class HelperService {
     func shutdownDaemon() {
         let kill = Process()
         kill.executableURL = URL(fileURLWithPath: "/usr/bin/pkill")
-        kill.arguments = ["-f", "AgentHelper"]
+        // `-x` matches the exact executable name only (not argv substrings).
+        // Using `-f AgentHelper` would also kill any unrelated process whose
+        // command line happens to contain the string "AgentHelper".
+        kill.arguments = ["-x", "AgentHelper"]
         kill.currentDirectoryURL = URL(fileURLWithPath: NSHomeDirectory())
         try? kill.run()
         kill.waitUntilExit()
@@ -167,7 +170,10 @@ final class HelperService {
         // Kill any lingering processes
         let kill = Process()
         kill.executableURL = URL(fileURLWithPath: "/usr/bin/pkill")
-        kill.arguments = ["-f", "AgentHelper"]
+        // `-x` matches the exact executable name only (not argv substrings).
+        // Using `-f AgentHelper` would also kill any unrelated process whose
+        // command line happens to contain the string "AgentHelper".
+        kill.arguments = ["-x", "AgentHelper"]
         kill.currentDirectoryURL = URL(fileURLWithPath: NSHomeDirectory())
         try? kill.run()
         kill.waitUntilExit()

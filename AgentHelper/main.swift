@@ -26,6 +26,15 @@ final class HelperCommandHandler: NSObject, HelperToolProtocol, @unchecked Senda
 
 final class HelperDelegate: NSObject, NSXPCListenerDelegate {
     func listener(_ listener: NSXPCListener, shouldAcceptNewConnection connection: NSXPCConnection) -> Bool {
+        // SECURITY: the helper runs as root. Any process that can reach the
+        // Mach service must prove it is the Agent.app we shipped alongside
+        // this daemon — otherwise every local binary on the machine has a
+        // path to root shell.
+        guard XPCPeerValidator.accept(connection) else {
+            NSLog("AgentHelper: rejected XPC connection — peer failed code-signing validation")
+            return false
+        }
+
         let handler = HelperCommandHandler()
         handler.connection = connection
         connection.exportedInterface = NSXPCInterface(with: HelperToolProtocol.self)
@@ -39,5 +48,8 @@ final class HelperDelegate: NSObject, NSXPCListenerDelegate {
 let delegate = HelperDelegate()
 let listener = NSXPCListener(machServiceName: "Agent.app.toddbruss.helper")
 listener.delegate = delegate
+// Primary defense: have the OS enforce the requirement before the delegate
+// is even asked. `accept(...)` above is the belt-and-suspenders fallback.
+XPCPeerValidator.install(on: listener)
 listener.resume()
 RunLoop.current.run()
