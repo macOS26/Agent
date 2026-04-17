@@ -82,6 +82,34 @@ final class SystemPromptService {
     instead of fabricating a result.
     """
 
+    /// Safety rules for tool usage. The shell-safety service is the hard
+    /// enforcement layer, but instructing the LLM to avoid these patterns
+    /// in the first place reduces unnecessary rejections and gives the
+    /// model an understanding of WHY the guardrails exist.
+    static let safetyRules = """
+
+    SAFETY RULES (mandatory — Agent! enforces these; following them avoids tool errors):
+    - NEVER run `rm -rf` on `/`, `~`, system directories (`/usr`, `/etc`, \
+    `/System`, `/Library`, `/Applications`, `/Users`), or broad globs like \
+    `*`. Always narrow to a specific subdirectory.
+    - NEVER pipe a URL directly into a shell (`curl ... | sh`, \
+    `wget ... | bash`). Download the script first, inspect it, then run it.
+    - NEVER write to sensitive config files (`/etc/sudoers`, `/etc/passwd`, \
+    `~/.ssh/authorized_keys`, `~/.zshrc`, `~/.bashrc`) unless the user \
+    explicitly asked you to edit that specific file.
+    - NEVER use `dd` to write to raw disk devices (`/dev/disk*`, `/dev/sd*`).
+    - NEVER use `mkfs`, `diskutil eraseDisk`, or similar destructive disk ops.
+    - NEVER load LaunchAgents/LaunchDaemons from `/tmp` or `/var/tmp`.
+    - For AppleScript: destructive verbs (`delete`, `quit`, `close`, `move`, \
+    `shut down`, `do shell script`) require `allow_writes: true`. Default \
+    is read-only.
+    - Root shell (`execute_daemon_command`) is for admin tasks only — prefer \
+    `execute_agent_command` (user shell) for normal work. Root commands are \
+    rate-limited.
+    - iMessage tasks have restricted tools: no root shell, no batch commands, \
+    no osascript/JXA.
+    """
+
     /// / Efficient-action rules. Discourages repeated re-reads and over-analysis
     /// without capping file reads outright. Motivated by observed behavior where
     /// smaller/local models would read the same file 20–50 times before editing.
@@ -104,7 +132,7 @@ final class SystemPromptService {
     /// / Wrap an AgentTools-provided base prompt with the anti-hallucination / rules. Used by both the on-disk
     /// default-prompt seeding and by the local / endpoint code paths in ClaudeService / OpenAICompatibleService that / bypass the on-disk path.
     static func wrapWithRules(_ base: String) -> String {
-        return base + "\n" + antiHallucinationRules + "\n" + efficientActionRules
+        return base + "\n" + antiHallucinationRules + "\n" + safetyRules + "\n" + efficientActionRules
     }
 
     /// Combined version stamp written into each prompt file's first line.

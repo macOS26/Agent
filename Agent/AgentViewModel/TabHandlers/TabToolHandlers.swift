@@ -10,6 +10,17 @@ extension AgentViewModel {
         TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
     }
 
+    /// Tools blocked when the request originates from iMessage. Root shell,
+    /// batch commands, and automation that could be weaponised remotely are
+    /// restricted. The user can still run these from the local UI.
+    private static let iMessageBlockedTools: Set<String> = [
+        "execute_daemon_command",
+        "batch_commands",
+        "batch_tools",
+        "run_osascript",
+        "execute_javascript",
+    ]
+
     /// Dispatch tab tool calls to group handlers.
     func handleTabToolCallBody(
         tab: ScriptTab, name: String, input rawInput: [String: Any], toolId: String
@@ -18,6 +29,13 @@ extension AgentViewModel {
         var input = rawInput
         if let p = input["path"] as? String, (p.isEmpty || p == "." || p == "./") { input["path"] = nil }
         if let p = input["file_path"] as? String, p.isEmpty { input["file_path"] = nil }
+
+        if tab.isMessagesTab && Self.iMessageBlockedTools.contains(name) {
+            let msg = "Tool \"\(name)\" is not available for iMessage-triggered tasks. Use the local Agent UI for privileged operations."
+            tab.appendLog("iMessage restriction: blocked \(name)")
+            tab.flush()
+            return tabResult(msg, toolId: toolId)
+        }
 
         switch name {
         // Core

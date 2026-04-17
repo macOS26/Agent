@@ -153,7 +153,10 @@ final class UserService {
     func shutdownAgent() {
         let kill = Process()
         kill.executableURL = URL(fileURLWithPath: "/usr/bin/pkill")
-        kill.arguments = ["-f", "AgentUser"]
+        // `-x` matches the exact executable name only (not argv substrings).
+        // Using `-f AgentUser` would also kill any unrelated process whose
+        // command line happens to contain "AgentUser".
+        kill.arguments = ["-x", "AgentUser"]
         kill.currentDirectoryURL = URL(fileURLWithPath: NSHomeDirectory())
         try? kill.run()
         kill.waitUntilExit()
@@ -167,7 +170,10 @@ final class UserService {
         // Kill any lingering processes
         let kill = Process()
         kill.executableURL = URL(fileURLWithPath: "/usr/bin/pkill")
-        kill.arguments = ["-f", "AgentUser"]
+        // `-x` matches the exact executable name only (not argv substrings).
+        // Using `-f AgentUser` would also kill any unrelated process whose
+        // command line happens to contain "AgentUser".
+        kill.arguments = ["-x", "AgentUser"]
         kill.currentDirectoryURL = URL(fileURLWithPath: NSHomeDirectory())
         try? kill.run()
         kill.waitUntilExit()

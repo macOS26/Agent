@@ -66,6 +66,15 @@ enum ShellSafetyService {
         // 7. Move home/system to /dev/null
         if let v = checkMoveToDevNull(tokens: tokens), !v.allowed { return v }
 
+        // 8. Sensitive config file overwrites
+        if let v = checkSensitiveFileWrite(stripped: stripped, tokens: tokens), !v.allowed { return v }
+
+        // 9. Piped remote code execution (curl|sh, wget|sh)
+        if let v = checkPipedRemoteExec(stripped: stripped), !v.allowed { return v }
+
+        // 10. launchctl loading from outside the app bundle
+        if let v = checkLaunchctlAbuse(tokens: tokens), !v.allowed { return v }
+
         return .ok
     }
 
@@ -277,6 +286,101 @@ enum ShellSafetyService {
             )
         }
         return .ok
+    }
+
+    // MARK: - Rule: sensitive config file writes
+
+    private static let sensitiveWriteTargets: Set<String> = [
+        "/etc/sudoers", "/etc/passwd", "/etc/shadow", "/etc/master.passwd",
+        "/etc/pam.d", "/etc/ssh/sshd_config", "/etc/hosts.allow",
+        "/private/etc/sudoers", "/private/etc/passwd", "/private/etc/shadow",
+        "/private/etc/master.passwd",
+    ]
+
+    private static let sensitiveHomeTargets: [String] = [
+        ".ssh/authorized_keys", ".ssh/authorized_keys2",
+        ".ssh/config", ".ssh/id_rsa", ".ssh/id_ed25519",
+        ".zshrc", ".bashrc", ".bash_profile", ".profile",
+    ]
+
+    private static func checkSensitiveFileWrite(stripped: String, tokens: [String]) -> Verdict? {
+        let writeCommands: Set<String> = ["tee", "cp", "install", "scp"]
+        let hasRedirect = stripped.contains(">")
+        let hasWriteCmd = tokens.contains(where: { writeCommands.contains($0) })
+
+        guard hasRedirect || hasWriteCmd else { return nil }
+
+        for target in sensitiveWriteTargets {
+            if stripped.contains(target) {
+                return .block(
+                    reason: "Refused: writing to \(target) is blocked. This file controls system authentication or privilege escalation. Edit it manually if needed.",
+                    rule: "sensitive-file-write"
+                )
+            }
+        }
+
+        for suffix in sensitiveHomeTargets {
+            let expanded = ["~/\(suffix)", "$HOME/\(suffix)", "${HOME}/\(suffix)"]
+            for pattern in expanded {
+                if stripped.contains(pattern) {
+                    return .block(
+                        reason: "Refused: writing to ~\(suffix) is blocked. SSH keys and shell profiles are high-value targets for persistence. Edit manually if needed.",
+                        rule: "sensitive-file-write"
+                    )
+                }
+            }
+            let realHome = NSHomeDirectory()
+            if stripped.contains("\(realHome)/\(suffix)") {
+                return .block(
+                    reason: "Refused: writing to ~\(suffix) is blocked. Edit manually if needed.",
+                    rule: "sensitive-file-write"
+                )
+            }
+        }
+        return nil
+    }
+
+    // MARK: - Rule: piped remote code execution
+
+    private static func checkPipedRemoteExec(_ stripped: String) -> Verdict? {
+        let pattern = #"(?:curl|wget)\s+.*\|\s*(?:sudo\s+)?(?:ba)?sh"#
+        if stripped.range(of: pattern, options: .regularExpression) != nil {
+            return .block(
+                reason: "Refused: piping a remote URL directly into a shell (curl|sh / wget|sh) executes unreviewed code. Download the script first, inspect it, then run it.",
+                rule: "piped-remote-exec"
+            )
+        }
+        let pattern2 = #"(?:curl|wget)\s+.*\|\s*(?:sudo\s+)?(?:python|ruby|perl|node|zsh)"#
+        if stripped.range(of: pattern2, options: .regularExpression) != nil {
+            return .block(
+                reason: "Refused: piping a remote URL into an interpreter executes unreviewed code. Download and inspect first.",
+                rule: "piped-remote-exec"
+            )
+        }
+        return nil
+    }
+
+    // MARK: - Rule: launchctl abuse
+
+    private static func checkLaunchctlAbuse(tokens: [String]) -> Verdict? {
+        guard tokens.first == "launchctl" || tokens.contains("launchctl") else { return nil }
+        guard let idx = tokens.firstIndex(of: "launchctl"), idx + 1 < tokens.count else { return nil }
+
+        let verb = tokens[idx + 1]
+        let loadVerbs: Set<String> = ["load", "bootstrap", "enable", "kickstart"]
+        guard loadVerbs.contains(verb) else { return nil }
+
+        for i in (idx + 2)..<tokens.count {
+            let path = tokens[i]
+            if path.hasPrefix("-") { continue }
+            if path.hasPrefix("/tmp") || path.hasPrefix("/var/tmp") || path.hasPrefix("/private/tmp") {
+                return .block(
+                    reason: "Refused: `launchctl \(verb)` from a temp directory (\(path)) is a common persistence technique. Use a proper app-bundle LaunchAgent/Daemon path.",
+                    rule: "launchctl-tmp"
+                )
+            }
+        }
+        return nil
     }
 
     // MARK: - Rule: fork bomb

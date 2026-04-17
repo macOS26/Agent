@@ -80,12 +80,10 @@ extension AgentViewModel {
         // AppleScript (NSAppleScript in-process with TCC)
         case "run_applescript":
             let source = (input["source"] as? String ?? "")
+            let allowWrites = input["allow_writes"] as? Bool ?? false
             let result = await Self.offMain { () -> (String, Bool) in
-                var err: NSDictionary?
-                guard let script = NSAppleScript(source: source) else { return ("Error", false) }
-                let out = script.executeAndReturnError(&err)
-                if let e = err { return ("AppleScript error: \(e)", false) }
-                return (out.stringValue ?? "(no output)", true)
+                let svcResult = NSAppleScriptService.shared.execute(source: source, allowWrites: allowWrites)
+                return (svcResult.output, svcResult.success)
             }
             if result.1 {
                 let autoName = Self.autoScriptName(from: source)

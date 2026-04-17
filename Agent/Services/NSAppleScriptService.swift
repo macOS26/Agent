@@ -6,9 +6,99 @@ import Foundation
 final class NSAppleScriptService: @unchecked Sendable {
     static let shared = NSAppleScriptService()
 
+    /// AppleScript verbs considered destructive. Blocked by default unless
+    /// the caller explicitly passes `allowWrites: true`.
+    /// Single-word verbs are matched on word boundaries to avoid false
+    /// positives like `quitTime` (identifier) or `"Please don't quit"`
+    /// (unrelated string literal). Multi-word verbs are matched literally.
+    private static let destructiveWordVerbs: [String] = [
+        "delete", "remove", "close", "move", "quit", "restart",
+    ]
+    private static let destructivePhraseVerbs: [String] = [
+        "shut down", "log out", "empty trash", "do shell script",
+    ]
+
+    /// Returns a human-readable reason when `source` contains a destructive
+    /// verb and `allowWrites` is false, nil otherwise.
+    static func writeProtectionCheck(source: String, allowWrites: Bool) -> String? {
+        guard !allowWrites else { return nil }
+
+        // Strip AppleScript string literals and line comments so a verb
+        // mentioned in a prompt string or comment doesn't trip the guard.
+        let stripped = stripAppleScriptStringsAndComments(source).lowercased()
+
+        // Word-bounded match for single-word verbs.
+        for verb in destructiveWordVerbs {
+            let pattern = "\\b\(NSRegularExpression.escapedPattern(for: verb))\\b"
+            if stripped.range(of: pattern, options: .regularExpression) != nil {
+                return "AppleScript contains destructive verb \"\(verb)\". "
+                    + "Set allow_writes: true to permit this operation, "
+                    + "or rewrite the script to avoid \(verb)."
+            }
+        }
+
+        // Literal substring for multi-word phrases (they're distinctive).
+        for phrase in destructivePhraseVerbs {
+            if stripped.contains(phrase) {
+                return "AppleScript contains destructive operation \"\(phrase)\". "
+                    + "Set allow_writes: true to permit this operation, "
+                    + "or rewrite the script to avoid \(phrase)."
+            }
+        }
+        return nil
+    }
+
+    /// Remove string literals ("...") and line comments (-- ... to EOL,
+    /// # ... to EOL) from AppleScript source. Not a full parser — good
+    /// enough to avoid trivial false positives from string contents.
+    private static func stripAppleScriptStringsAndComments(_ source: String) -> String {
+        var out = ""
+        var inString = false
+        var iter = source.makeIterator()
+        while let ch = iter.next() {
+            if inString {
+                if ch == "\"" { inString = false }
+                continue
+            }
+            if ch == "\"" { inString = true; continue }
+            if ch == "-" {
+                // lookahead for "--" comment
+                if let next = iter.next() {
+                    if next == "-" {
+                        // skip to end of line
+                        while let c = iter.next(), c != "\n" { continue }
+                        out.append("\n")
+                        continue
+                    } else {
+                        out.append(ch)
+                        out.append(next)
+                        continue
+                    }
+                } else {
+                    out.append(ch)
+                    continue
+                }
+            }
+            if ch == "#" {
+                while let c = iter.next(), c != "\n" { continue }
+                out.append("\n")
+                continue
+            }
+            out.append(ch)
+        }
+        return out
+    }
+
     /// Execute AppleScript source code and return the result.
     /// Runs synchronously on the calling thread — call from offMain.
-    func execute(source: String) -> (success: Bool, output: String) {
+    /// When `allowWrites` is false (the default), scripts containing
+    /// destructive verbs are refused before execution.
+    func execute(source: String, allowWrites: Bool = false) -> (success: Bool, output: String) {
+        if let blocked = Self.writeProtectionCheck(source: source, allowWrites: allowWrites) {
+            AuditLog.log(.appleScript, "BLOCKED (write-protection): \(source.prefix(100))")
+            return (false, blocked)
+        }
+
         AuditLog.log(.appleScript, "execute: \(source.prefix(100))")
         var errorInfo: NSDictionary?
         let script = NSAppleScript(source: source)
@@ -24,13 +114,13 @@ final class NSAppleScriptService: @unchecked Sendable {
 
     /// Build and execute an AppleScript that targets a specific app by bundle ID.
     /// Automatically wraps the body in `tell application id "bundle.id"`.
-    func executeForApp(bundleID: String, body: String) -> (success: Bool, output: String) {
+    func executeForApp(bundleID: String, body: String, allowWrites: Bool = false) -> (success: Bool, output: String) {
         let source = """
         tell application id "\(bundleID)"
             \(body)
         end tell
         """
-        return execute(source: source)
+        return execute(source: source, allowWrites: allowWrites)
     }
 
     /// Get SDEF summary for an app to help build correct AppleScript.

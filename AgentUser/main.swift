@@ -26,6 +26,14 @@ final class UserCommandHandler: NSObject, UserToolProtocol, @unchecked Sendable 
 
 final class UserDelegate: NSObject, NSXPCListenerDelegate {
     func listener(_ listener: NSXPCListener, shouldAcceptNewConnection connection: NSXPCConnection) -> Bool {
+        // SECURITY: the user agent holds the console user's TCC grants
+        // (Accessibility, Automation, Full Disk Access, etc.). Treat this as
+        // sensitive as root — any peer must prove it is Agent.app.
+        guard XPCPeerValidator.accept(connection) else {
+            NSLog("AgentUser: rejected XPC connection — peer failed code-signing validation")
+            return false
+        }
+
         let handler = UserCommandHandler()
         handler.connection = connection
         connection.exportedInterface = NSXPCInterface(with: UserToolProtocol.self)
@@ -39,5 +47,6 @@ final class UserDelegate: NSObject, NSXPCListenerDelegate {
 let delegate = UserDelegate()
 let listener = NSXPCListener(machServiceName: "Agent.app.toddbruss.user")
 listener.delegate = delegate
+XPCPeerValidator.install(on: listener)
 listener.resume()
 RunLoop.current.run()

@@ -27,6 +27,8 @@ fi
 
 echo "Building Agent! ($CONFIG) — no Apple account required..."
 
+ADHOC_ENTITLEMENTS="Agent/Agent.adhoc.entitlements"
+
 xcodebuild \
     -project Agent.xcodeproj \
     -scheme "Agent!" \
@@ -37,7 +39,7 @@ xcodebuild \
     CODE_SIGN_STYLE="Manual" \
     DEVELOPMENT_TEAM="" \
     PROVISIONING_PROFILE_SPECIFIER="" \
-    CODE_SIGN_ENTITLEMENTS="" \
+    CODE_SIGN_ENTITLEMENTS="$ADHOC_ENTITLEMENTS" \
     ENABLE_APP_SANDBOX=NO \
     AD_HOC_CODE_SIGNING_ALLOWED=YES \
     build 2>&1 | tail -20

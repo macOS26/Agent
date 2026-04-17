@@ -130,6 +130,28 @@ final class OutputHandler: NSObject, HelperProgressProtocol, @unchecked Sendable
     }
 }
 
+/// Rate limiter for root-shell commands. Prevents an LLM in an unbounded
+/// loop from executing hundreds of root commands per minute.
+@MainActor
+final class RootShellRateLimiter {
+    static let shared = RootShellRateLimiter()
+
+    private var timestamps: [Date] = []
+    /// Max root-shell executions per rolling window.
+    let maxPerWindow = 20
+    /// Rolling window duration in seconds.
+    let windowSeconds: TimeInterval = 60
+
+    func check() -> Bool {
+        let now = Date()
+        let cutoff = now.addingTimeInterval(-windowSeconds)
+        timestamps.removeAll { $0 < cutoff }
+        guard timestamps.count < maxPerWindow else { return false }
+        timestamps.append(now)
+        return true
+    }
+}
+
 @MainActor @Observable
 final class HelperService {
     nonisolated static let helperID = AppConstants.helperID
@@ -153,7 +175,10 @@ final class HelperService {
     func shutdownDaemon() {
         let kill = Process()
         kill.executableURL = URL(fileURLWithPath: "/usr/bin/pkill")
-        kill.arguments = ["-f", "AgentHelper"]
+        // `-x` matches the exact executable name only (not argv substrings).
+        // Using `-f AgentHelper` would also kill any unrelated process whose
+        // command line happens to contain the string "AgentHelper".
+        kill.arguments = ["-x", "AgentHelper"]
         kill.currentDirectoryURL = URL(fileURLWithPath: NSHomeDirectory())
         try? kill.run()
         kill.waitUntilExit()
@@ -167,7 +192,10 @@ final class HelperService {
         // Kill any lingering processes
         let kill = Process()
         kill.executableURL = URL(fileURLWithPath: "/usr/bin/pkill")
-        kill.arguments = ["-f", "AgentHelper"]
+        // `-x` matches the exact executable name only (not argv substrings).
+        // Using `-f AgentHelper` would also kill any unrelated process whose
+        // command line happens to contain the string "AgentHelper".
+        kill.arguments = ["-x", "AgentHelper"]
         kill.currentDirectoryURL = URL(fileURLWithPath: NSHomeDirectory())
         try? kill.run()
         kill.waitUntilExit()
@@ -190,6 +218,11 @@ final class HelperService {
             }
         }
         AuditLog.log(.launchDaemon, "execute: \(command.prefix(100))")
+        // Rate limit root-shell commands to prevent unbounded LLM loops.
+        guard RootShellRateLimiter.shared.check() else {
+            AuditLog.log(.launchDaemon, "RATE LIMITED: root shell exceeded \(RootShellRateLimiter.shared.maxPerWindow) calls/min")
+            return (-1, "Rate limit exceeded: too many root-shell commands in the last minute. Wait and retry, or use user_shell instead.")
+        }
         // Hard local guardrail — refuse catastrophic commands before they cross the XPC boundary into the privileged
         // daemon. The daemon runs as root, so this is the LAST place we can stop a destructive command from doing maximum damage.
         let verdict = ShellSafetyService.check(command)

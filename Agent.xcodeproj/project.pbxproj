@@ -129,6 +129,8 @@
 		CS110000000000000000005 /* CodingService+Refactoring.swift in Sources */ = {isa = PBXBuildFile; fileRef = CS110000000000000000006 /* CodingService+Refactoring.swift */; };
 		DC10000000000000000001 /* DaemonCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC10000000000000000000 /* DaemonCore.swift */; };
 		DC10000000000000000002 /* DaemonCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC10000000000000000000 /* DaemonCore.swift */; };
+		XP10000000000000000001 /* XPCPeerValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = XP10000000000000000000 /* XPCPeerValidator.swift */; };
+		XP10000000000000000002 /* XPCPeerValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = XP10000000000000000000 /* XPCPeerValidator.swift */; };
 		DE0C6B19A80C218E670D6C69 /* Web.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05EEC654A3A0762D24BE1901 /* Web.swift */; };
 		E3E55709254183FE587097A8 /* DiffStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E185ABB626D6FCD3D74523A /* DiffStore.swift */; };
 		E5CBD1143D2B44B8B9A209FE /* RollbackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B0C57073F5C4305AF673454 /* RollbackView.swift */; };
@@ -397,6 +399,7 @@
 		CS110000000000000000004 /* CodingService+SplitFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CodingService+SplitFile.swift"; sourceTree = "<group>"; };
 		CS110000000000000000006 /* CodingService+Refactoring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CodingService+Refactoring.swift"; sourceTree = "<group>"; };
 		DC10000000000000000000 /* DaemonCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DaemonCore.swift; sourceTree = "<group>"; };
+		XP10000000000000000000 /* XPCPeerValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XPCPeerValidator.swift; sourceTree = "<group>"; };
 		DD10000000000000000004 /* AgentTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AgentTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DEB9438E8FF14FA5B7264491 /* SkillsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkillsService.swift; sourceTree = "<group>"; };
 		DEC0549E9002606BC9486603 /* HooksService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HooksService.swift; sourceTree = "<group>"; };
@@ -602,6 +605,7 @@
 			isa = PBXGroup;
 			children = (
 				DC10000000000000000000 /* DaemonCore.swift */,
+				XP10000000000000000000 /* XPCPeerValidator.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -1338,6 +1342,7 @@
 				BB10000000000000000030 /* main.swift in Sources */,
 				BB10000000000000000031 /* HelperProtocol.swift in Sources */,
 				DC10000000000000000001 /* DaemonCore.swift in Sources */,
+				XP10000000000000000001 /* XPCPeerValidator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1348,6 +1353,7 @@
 				CC10000000000000000030 /* main.swift in Sources */,
 				CC10000000000000000031 /* UserProtocol.swift in Sources */,
 				DC10000000000000000002 /* DaemonCore.swift in Sources */,
+				XP10000000000000000002 /* XPCPeerValidator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
