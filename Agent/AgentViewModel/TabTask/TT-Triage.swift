@@ -1,5 +1,6 @@
 
 @preconcurrency import Foundation
+import AgentAccess
 import AgentTools
 import AgentAudit
 import AgentLLM
@@ -27,6 +28,12 @@ extension AgentViewModel {
         prompt: String,
         completionSummary: inout String
     ) async -> TabTaskTriageOutcome {
+        // Skip Apple triage entirely when Agent! lacks Accessibility permission —
+        // Apple AI's only meaningful tool call here is the accessibility dispatch,
+        // which will fail without the right. Fall straight through to the cloud LLM.
+        guard AccessibilityService.hasAccessibilityPermission() else {
+            return .passThrough
+        }
         // Triage: direct commands, Apple AI conversation, accessibility agent, or pass through to LLM. The axDispatch
         // closure routes Apple AI's tool calls through the same executeNativeTool path the cloud LLM uses. If Apple AI fails, is unavailable, or doesn't call the tool, runAccessibilityAgent returns nil → triage returns .passThrough → we fall through to the cloud LLM loop below.
         let mediator = AppleIntelligenceMediator.shared
