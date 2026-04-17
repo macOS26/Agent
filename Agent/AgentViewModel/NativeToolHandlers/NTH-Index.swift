@@ -37,7 +37,8 @@ extension AgentViewModel {
                     overwrite: false
                 )
                 let file = ProjectIndexService.indexFile(in: pf).path
-                return "✅ Created index at \(file) — \(r.fileCount) files, \(r.bytes) bytes."
+                let body = (try? ProjectIndexService.read(projectFolder: pf, offset: 1, limit: .max)) ?? ""
+                return "✅ Created index at \(file) — \(r.fileCount) files, \(r.bytes) bytes.\n\n\(body)"
             } catch {
                 return "❌ \(error.localizedDescription)"
             }
@@ -51,7 +52,8 @@ extension AgentViewModel {
                     overwrite: true
                 )
                 let file = ProjectIndexService.indexFile(in: pf).path
-                return "✅ Recreated index at \(file) — \(r.fileCount) files, \(r.bytes) bytes."
+                let body = (try? ProjectIndexService.read(projectFolder: pf, offset: 1, limit: .max)) ?? ""
+                return "✅ Recreated index at \(file) — \(r.fileCount) files, \(r.bytes) bytes.\n\n\(body)"
             } catch {
                 return "❌ Recreate failed: \(error.localizedDescription)"
             }
@@ -64,7 +66,8 @@ extension AgentViewModel {
                     maxFileSize: maxFileSize
                 )
                 let verb = name == "index_continue" ? "Resumed" : "Appended"
-                return "✅ \(verb) index — +\(r.added) new, \(r.updated) updated, \(r.total) total."
+                let body = (try? ProjectIndexService.read(projectFolder: pf, offset: 1, limit: .max)) ?? ""
+                return "✅ \(verb) index — +\(r.added) new, \(r.updated) updated, \(r.total) total.\n\n\(body)"
             } catch {
                 return "❌ \(name.replacingOccurrences(of: "index_", with: "")) failed: \(error.localizedDescription)"
             }
