@@ -8,25 +8,85 @@ final class NSAppleScriptService: @unchecked Sendable {
 
     /// AppleScript verbs considered destructive. Blocked by default unless
     /// the caller explicitly passes `allowWrites: true`.
-    private static let destructiveVerbs: [String] = [
-        "delete", "remove", "close", "move", "quit",
-        "shut down", "restart", "log out", "empty trash",
-        "do shell script",
+    /// Single-word verbs are matched on word boundaries to avoid false
+    /// positives like `quitTime` (identifier) or `"Please don't quit"`
+    /// (unrelated string literal). Multi-word verbs are matched literally.
+    private static let destructiveWordVerbs: [String] = [
+        "delete", "remove", "close", "move", "quit", "restart",
+    ]
+    private static let destructivePhraseVerbs: [String] = [
+        "shut down", "log out", "empty trash", "do shell script",
     ]
 
     /// Returns a human-readable reason when `source` contains a destructive
     /// verb and `allowWrites` is false, nil otherwise.
     static func writeProtectionCheck(source: String, allowWrites: Bool) -> String? {
         guard !allowWrites else { return nil }
-        let lower = source.lowercased()
-        for verb in destructiveVerbs {
-            if lower.contains(verb) {
+
+        // Strip AppleScript string literals and line comments so a verb
+        // mentioned in a prompt string or comment doesn't trip the guard.
+        let stripped = stripAppleScriptStringsAndComments(source).lowercased()
+
+        // Word-bounded match for single-word verbs.
+        for verb in destructiveWordVerbs {
+            let pattern = "\\b\(NSRegularExpression.escapedPattern(for: verb))\\b"
+            if stripped.range(of: pattern, options: .regularExpression) != nil {
                 return "AppleScript contains destructive verb \"\(verb)\". "
                     + "Set allow_writes: true to permit this operation, "
                     + "or rewrite the script to avoid \(verb)."
             }
         }
+
+        // Literal substring for multi-word phrases (they're distinctive).
+        for phrase in destructivePhraseVerbs {
+            if stripped.contains(phrase) {
+                return "AppleScript contains destructive operation \"\(phrase)\". "
+                    + "Set allow_writes: true to permit this operation, "
+                    + "or rewrite the script to avoid \(phrase)."
+            }
+        }
         return nil
+    }
+
+    /// Remove string literals ("...") and line comments (-- ... to EOL,
+    /// # ... to EOL) from AppleScript source. Not a full parser — good
+    /// enough to avoid trivial false positives from string contents.
+    private static func stripAppleScriptStringsAndComments(_ source: String) -> String {
+        var out = ""
+        var inString = false
+        var iter = source.makeIterator()
+        while let ch = iter.next() {
+            if inString {
+                if ch == "\"" { inString = false }
+                continue
+            }
+            if ch == "\"" { inString = true; continue }
+            if ch == "-" {
+                // lookahead for "--" comment
+                if let next = iter.next() {
+                    if next == "-" {
+                        // skip to end of line
+                        while let c = iter.next(), c != "\n" { continue }
+                        out.append("\n")
+                        continue
+                    } else {
+                        out.append(ch)
+                        out.append(next)
+                        continue
+                    }
+                } else {
+                    out.append(ch)
+                    continue
+                }
+            }
+            if ch == "#" {
+                while let c = iter.next(), c != "\n" { continue }
+                out.append("\n")
+                continue
+            }
+            out.append(ch)
+        }
+        return out
     }
 
     /// Execute AppleScript source code and return the result.
