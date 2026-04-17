@@ -119,7 +119,8 @@ extension AgentViewModel {
                 if !d1f.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     let startLine = (diff.metadata?.sourceStartLine ?? 0) + 1
                     let numbered = Self.numberDiffLines(d1f, startLine: startLine)
-                    appendLog(numbered)
+                    let lang = Self.langFromPath(filePath)
+                    appendLog(Self.codeFence(numbered, language: lang))
                 }
             }
             let outLines = output.components(separatedBy: "\n")
