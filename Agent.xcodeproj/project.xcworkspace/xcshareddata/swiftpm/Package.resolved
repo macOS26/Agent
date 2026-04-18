@@ -34,7 +34,7 @@
       "location" : "https://github.com/macOS26/AgentD1F.git",
       "state" : {
         "revision" : "2f65032044581b21d8686be9ddbacd1839d3cbb2",
-        "version" : "1.0.2"
+        "version" : "1.0.3"
       }
     },
     {
@@ -70,7 +70,7 @@
       "location" : "https://github.com/macOS26/AgentSwift.git",
       "state" : {
         "revision" : "6e58d69eadfa7e9f72dd6e505aa04c27f2df0f86",
-        "version" : "1.1.0"
+        "version" : "1.1.1"
       }
     },
     {
