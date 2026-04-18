@@ -502,6 +502,13 @@ final class AgentViewModel {
 
     var attachedImages: [NSImage] = []
     var attachedImagesBase64: [String] = []
+
+    /// Last-used scale for the paste-image resolution popup. One of
+    /// 1.0 (full), 0.75, 0.5, 0.25. Persists so the popup's default
+    /// button matches whatever the user picked last time.
+    var pasteImageScale: Double = UserDefaults.standard.object(forKey: "pasteImageScale") as? Double ?? 0.5 {
+        didSet { UserDefaults.standard.set(pasteImageScale, forKey: "pasteImageScale") }
+    }
     /// Snapshot of attachments at task-start time. The input-bar buffers are
     /// cleared before the LLM loop runs, but `copy_image(source:"chat")`
     /// still needs to reach the original images during the task. Tab tasks

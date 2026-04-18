@@ -211,10 +211,15 @@ extension AgentViewModel {
 
         guard let imageData = rawData else { return false }
 
+        // Ask the user which resolution to send — blocks briefly but only on
+        // paste, defaults to whatever they picked last time.
+        let scale = Self.promptForImageScale(defaultScale: pasteImageScale)
+        pasteImageScale = scale
+
         // Encode on a background thread to avoid blocking the main thread
         let currentTabId = selectedTabId
         Task {
-            let base64 = await Self.encodeImageToBase64(imageData)
+            let base64 = await Self.encodeImageToBase64(imageData, userScale: scale)
             guard let base64 else { return }
             if let image = NSImage(data: imageData) {
                 if let tabId = currentTabId, let tab = self.tab(for: tabId) {
@@ -226,12 +231,34 @@ extension AgentViewModel {
                 }
                 if let path = saveHiResAttachment(data: imageData, image: image) {
                     let w = Int(image.size.width), h = Int(image.size.height)
-                    appendLog("📎 Attached: \(path) (\(w)x\(h))")
+                    let pct = Int((scale * 100).rounded())
+                    appendLog("📎 Attached: \(path) (\(w)x\(h), sending at \(pct)%)")
                 }
             }
         }
 
         return true
+    }
+
+    /// Modal alert with four resolution choices. Returns 1.0 / 0.75 / 0.5 / 0.25.
+    /// The button matching `defaultScale` is the default — Enter picks it.
+    static func promptForImageScale(defaultScale: Double) -> Double {
+        let choices: [(label: String, scale: Double)] = [
+            ("Full", 1.0), ("¾", 0.75), ("½", 0.5), ("¼", 0.25)
+        ]
+        let alert = NSAlert()
+        alert.messageText = "Attach image"
+        alert.informativeText = "How much resolution to send to the model?"
+        alert.alertStyle = .informational
+        for choice in choices { alert.addButton(withTitle: choice.label) }
+        // Make the last-used button the default (highlighted / Enter).
+        let defaultIdx = choices.firstIndex { abs($0.scale - defaultScale) < 0.001 } ?? 2
+        for (i, btn) in alert.buttons.enumerated() {
+            btn.keyEquivalent = (i == defaultIdx) ? "\r" : ""
+        }
+        let response = alert.runModal()
+        let idx = response.rawValue - NSApplication.ModalResponse.alertFirstButtonReturn.rawValue
+        return choices.indices.contains(idx) ? choices[idx].scale : defaultScale
     }
 
     /// Threshold above which a pasted string is captured as a chip attachment
@@ -259,18 +286,27 @@ extension AgentViewModel {
     }
 
     /// Encode image data to a base64 PNG string off the main thread.
-    /// Downscales images larger than 2048px to prevent memory issues.
-    private static nonisolated func encodeImageToBase64(_ data: Data) async -> String? {
+    /// `userScale` multiplies the original dimensions (1.0=full, 0.75, 0.5, 0.25).
+    /// Claude's per-image cap is 8000px per side, so we clamp to that when the
+    /// user picks full and the source is huge.
+    private static nonisolated func encodeImageToBase64(_ data: Data, userScale: Double = 0.5) async -> String? {
         guard let bitmap = NSBitmapImageRep(data: data) else { return nil }
 
-        let maxDim = 2048
+        let maxDim = 8000
         let w = bitmap.pixelsWide
         let h = bitmap.pixelsHigh
 
-        if w > maxDim || h > maxDim {
-            let scale = min(Double(maxDim) / Double(w), Double(maxDim) / Double(h))
-            let newW = Int(Double(w) * scale)
-            let newH = Int(Double(h) * scale)
+        // Apply user scale, then clamp to provider cap.
+        let targetW = Int((Double(w) * userScale).rounded())
+        let targetH = Int((Double(h) * userScale).rounded())
+        let scaleClamp = (targetW > maxDim || targetH > maxDim)
+            ? min(Double(maxDim) / Double(targetW), Double(maxDim) / Double(targetH))
+            : 1.0
+        let newW = Int(Double(targetW) * scaleClamp)
+        let newH = Int(Double(targetH) * scaleClamp)
+
+        // Skip the resize entirely when the result equals the original.
+        if newW != w || newH != h {
 
             guard let cgImage = bitmap.cgImage,
                   let ctx = CGContext(
