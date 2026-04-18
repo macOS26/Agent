@@ -463,7 +463,18 @@ extension AgentViewModel {
     func handleTabToolCall(
         tab: ScriptTab, name: String, input: [String: Any], toolId: String
     ) async -> TabToolResult {
-        await handleTabToolCallBody(tab: tab, name: name, input: input, toolId: toolId)
+        let rawDetail = input["path"] as? String
+            ?? input["file_path"] as? String
+            ?? input["command"] as? String
+            ?? input["action"] as? String
+            ?? ""
+        let detail = (rawDetail as NSString).lastPathComponent.isEmpty
+            ? rawDetail
+            : (rawDetail as NSString).lastPathComponent
+        let stepId = tab.recordToolStep(name: name, detail: detail)
+        let result = await handleTabToolCallBody(tab: tab, name: name, input: input, toolId: toolId)
+        tab.completeToolStep(id: stepId, status: .success)
+        return result
     }
 
     // MARK: - Tab Command Execution
