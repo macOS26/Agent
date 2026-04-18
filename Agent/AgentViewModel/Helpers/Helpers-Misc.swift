@@ -190,6 +190,31 @@ extension AgentViewModel {
         return nil
     }
 
+    /// macOS 13+ writes screenshot filenames with U+202F NARROW NO-BREAK SPACE
+    /// between the time and "AM"/"PM" — not an ASCII space. Commands the LLM
+    /// synthesizes from text tend to use ASCII space, which makes every cp/mv/
+    /// ls fail with "No such file" even though the file is right there.
+    /// If the ASCII-space path doesn't exist but the U+202F variant does, swap
+    /// in the narrow space so the shell finds the real file. No-op otherwise.
+    nonisolated static func repairScreenshotNarrowSpaces(_ command: String) -> String {
+        let pattern = #"(/[^"']+?Screenshot \d{4}-\d{2}-\d{2} at \d{1,2}\.\d{2}\.\d{2}) (AM|PM)\.png"#
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return command }
+        let nsCmd = command as NSString
+        var result = command
+        let matches = regex.matches(in: command, range: NSRange(location: 0, length: nsCmd.length))
+        for match in matches.reversed() {
+            let prefix = nsCmd.substring(with: match.range(at: 1))
+            let meridiem = nsCmd.substring(with: match.range(at: 2))
+            let asciiPath = "\(prefix) \(meridiem).png"
+            let narrowPath = "\(prefix)\u{202F}\(meridiem).png"
+            let fm = FileManager.default
+            if !fm.fileExists(atPath: asciiPath), fm.fileExists(atPath: narrowPath) {
+                result = result.replacingOccurrences(of: asciiPath, with: narrowPath)
+            }
+        }
+        return result
+    }
+
     static func preflightCommand(_ command: String) -> String? {
         // Match paths under /Users/ or ~/ — most common source of typos
         guard let regex = try? NSRegularExpression(

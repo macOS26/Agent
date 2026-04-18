@@ -178,7 +178,8 @@ final class UserService {
         return registerUser()
     }
 
-    func execute(command: String, workingDirectory: String = "") async -> (status: Int32, output: String) {
+    func execute(command rawCommand: String, workingDirectory: String = "") async -> (status: Int32, output: String) {
+        let command = AgentViewModel.repairScreenshotNarrowSpaces(rawCommand)
         // Defense-in-depth: if a caller passed a file path as workingDirectory,
         // strip the filename so the daemon doesn't crash with "Not a directory".
         var workingDirectory = workingDirectory

@@ -134,7 +134,8 @@ extension AgentViewModel {
 
     /// Runs a command in the Agent app process to inherit TCC permissions
     /// (Automation, Accessibility, ScreenRecording).
-    nonisolated static func executeTCC(command: String, workingDirectory: String = "") async -> (status: Int32, output: String) {
+    nonisolated static func executeTCC(command rawCommand: String, workingDirectory: String = "") async -> (status: Int32, output: String) {
+        let command = repairScreenshotNarrowSpaces(rawCommand)
         let workingDirectory = normalizeWorkingDirectory(workingDirectory)
         // Hard local guardrail — refuses catastrophic commands like `rm -rf /` BEFORE the Process is even constructed.
         // The verdict string is shaped to be informative to the LLM, so it understands why the command was rejected and can pick a narrower target on the retry instead of looping the same broken request.
