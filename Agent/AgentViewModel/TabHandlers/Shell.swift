@@ -193,6 +193,8 @@ extension AgentViewModel {
             let toolOutput: String
             if result.output.isEmpty {
                 toolOutput = "(no output, exit code: \(result.status))"
+            } else if result.status != 0 {
+                toolOutput = result.output + "\nexit code: \(result.status)"
             } else {
                 toolOutput = result.output
             }
