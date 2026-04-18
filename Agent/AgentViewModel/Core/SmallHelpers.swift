@@ -1,8 +1,20 @@
 @preconcurrency import Foundation
 import AppKit
 import Speech
+import AgentTools
 
 extension AgentViewModel {
+    // MARK: - Subscription billing detection
+
+    /// True when the given provider+credential pair bills against a subscription
+    /// rather than per-token. Codex always uses ChatGPT OAuth; Claude uses OAuth
+    /// only when the credential is an `sk-ant-oat01-…` token.
+    nonisolated static func isSubscriptionCredential(provider: APIProvider, apiKey: String) -> Bool {
+        if provider == .codex { return true }
+        if provider == .claude, ClaudeService.isOAuthToken(apiKey) { return true }
+        return false
+    }
+
     // MARK: - Tool Step Recording
 
     /// Record a tool step starting. Returns the step ID for later completion.

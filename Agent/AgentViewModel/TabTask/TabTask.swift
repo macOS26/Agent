@@ -293,7 +293,8 @@ extension AgentViewModel {
                 TokenUsageStore.shared.record(inputTokens: inTok, outputTokens: outTok)
                 TokenUsageStore.shared.recordModelUsage(
                     model: modelId, input: inTok, output: outTok, provider: provider.displayName,
-                    tabId: tab.id, tabLabel: tab.displayTitle
+                    tabId: tab.id, tabLabel: tab.displayTitle,
+                    subscriptionBilled: Self.isSubscriptionCredential(provider: provider, apiKey: apiKey)
                 )
                 FallbackChainService.shared.recordSuccess()
                 let streamElapsed = CFAbsoluteTimeGetCurrent() - streamStart

@@ -285,7 +285,8 @@ extension AgentViewModel {
                 budgetUsedFraction = budgetTracker.usedFraction
                 TokenUsageStore.shared.recordModelUsage(
                     model: modelName, input: inTok, output: outTok, provider: provider.displayName,
-                    tabId: TokenUsageStore.mainTabKey, tabLabel: "Main"
+                    tabId: TokenUsageStore.mainTabKey, tabLabel: "Main",
+                    subscriptionBilled: Self.isSubscriptionCredential(provider: provider, apiKey: apiKey)
                 )
                 FallbackChainService.shared.recordSuccess()
                 flushStreamBuffer()

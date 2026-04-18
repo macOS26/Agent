@@ -101,13 +101,47 @@ final class TokenUsageStore {
     private(set) var sessionCacheReadTokens: Int = 0
     private(set) var sessionCacheCreationTokens: Int = 0
 
+    private let sessionURL: URL
+
     private init() {
         let urls = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
         let appSupport = urls.first ?? FileManager.default.temporaryDirectory
         let dir = appSupport.appendingPathComponent("Agent")
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         fileURL = dir.appendingPathComponent("token_usage.json")
+        sessionURL = dir.appendingPathComponent("token_usage_session.json")
         load()
+        loadSession()
+    }
+
+    /// Persist the current popover state (per-model + per-tab) so it survives restarts.
+    /// Caller should invoke after any mutation to `modelUsage` / `tabModelUsage`.
+    private func saveSession() {
+        let snapshot = SessionSnapshot(
+            modelUsage: modelUsage,
+            modelProvider: modelProvider,
+            tabModelUsage: Dictionary(uniqueKeysWithValues: tabModelUsage.map { ($0.key.uuidString, $0.value) }),
+            tabLabel: Dictionary(uniqueKeysWithValues: tabLabel.map { ($0.key.uuidString, $0.value) }),
+            subscriptionModels: Array(subscriptionModels)
+        )
+        guard let data = try? JSONEncoder().encode(snapshot) else { return }
+        try? data.write(to: sessionURL, options: .atomic)
+    }
+
+    private func loadSession() {
+        guard let data = try? Data(contentsOf: sessionURL),
+              let snap = try? JSONDecoder().decode(SessionSnapshot.self, from: data) else { return }
+        modelUsage = snap.modelUsage
+        modelProvider = snap.modelProvider
+        subscriptionModels = Set(snap.subscriptionModels ?? [])
+        tabModelUsage = Dictionary(uniqueKeysWithValues: snap.tabModelUsage.compactMap { entry -> (UUID, [String: ModelUsage])? in
+            guard let uuid = UUID(uuidString: entry.key) else { return nil }
+            return (uuid, entry.value)
+        })
+        tabLabel = Dictionary(uniqueKeysWithValues: snap.tabLabel.compactMap { entry -> (UUID, String)? in
+            guard let uuid = UUID(uuidString: entry.key) else { return nil }
+            return (uuid, entry.value)
+        })
     }
 
     /// Record token usage — adds to today's running total.
@@ -178,24 +212,42 @@ final class TokenUsageStore {
     // MARK: - Per-Model Cost Tracking
 
     /// Tracks token usage per model within a session.
-    struct ModelUsage {
+    struct ModelUsage: Codable {
         var inputTokens: Int = 0
         var outputTokens: Int = 0
         var callCount: Int = 0
         var totalTokens: Int { inputTokens + outputTokens }
     }
 
-    /// Per-model usage for the current session.
+    /// Serializable snapshot of everything shown in the LLM Usage popover.
+    /// Persisted to `token_usage_session.json` so the numbers survive restarts.
+    private struct SessionSnapshot: Codable {
+        var modelUsage: [String: ModelUsage]
+        var modelProvider: [String: String]
+        var tabModelUsage: [String: [String: ModelUsage]] // UUID→String for JSON
+        var tabLabel: [String: String]
+        var subscriptionModels: [String]? // set of model keys billed against a subscription
+    }
+
+    /// Per-model usage since the last Reset. Persisted so it survives app
+    /// restarts — the popover now shows cumulative totals rather than a
+    /// per-launch session.
     private(set) var modelUsage: [String: ModelUsage] = [:]
 
-    /// Provider name per model key (for tooltip display).
+    /// Provider name per model key (for tooltip display + subscription detection).
+    /// Persisted alongside `modelUsage`.
     private(set) var modelProvider: [String: String] = [:]
 
-    /// Per-tab × per-model usage for the current session. Outer key is tab UUID
-    /// (`nil`-tab uses `Self.mainTabKey`); inner key is the model ID.
+    /// Models that have been billed against a subscription (Claude OAuth token
+    /// or Codex ChatGPT login) at least once. Recorded at call time so switching
+    /// credentials later doesn't retroactively relabel past usage.
+    private(set) var subscriptionModels: Set<String> = []
+
+    /// Per-tab × per-model usage since last Reset. Outer key is tab UUID
+    /// (`nil`-tab uses `Self.mainTabKey`); inner key is the model ID. Persisted.
     private(set) var tabModelUsage: [UUID: [String: ModelUsage]] = [:]
 
-    /// Human-readable label per tab UUID (for the usage popover picker).
+    /// Human-readable label per tab UUID (for the usage popover picker). Persisted.
     private(set) var tabLabel: [UUID: String] = [:]
 
     /// Sentinel UUID representing the main (non-tab) task context.
@@ -206,9 +258,12 @@ final class TokenUsageStore {
     private(set) var taskLinesRemoved: Int = 0
 
     /// Record usage for a specific model. `tabId` defaults to the main-tab sentinel when omitted.
+    /// Pass `subscriptionBilled: true` when this call was paid for by a subscription
+    /// (Claude OAuth token / Codex ChatGPT login) so the popover shows "Included".
     func recordModelUsage(
         model: String, input: Int, output: Int, provider: String? = nil,
-        tabId: UUID? = nil, tabLabel: String? = nil
+        tabId: UUID? = nil, tabLabel: String? = nil,
+        subscriptionBilled: Bool = false
     ) {
         var usage = modelUsage[model, default: ModelUsage()]
         usage.inputTokens += input
@@ -216,6 +271,7 @@ final class TokenUsageStore {
         usage.callCount += 1
         modelUsage[model] = usage
         if let provider { modelProvider[model] = provider }
+        if subscriptionBilled { subscriptionModels.insert(model) }
 
         let tKey = tabId ?? Self.mainTabKey
         var tabMap = tabModelUsage[tKey] ?? [:]
@@ -227,6 +283,7 @@ final class TokenUsageStore {
         tabModelUsage[tKey] = tabMap
         if let tabLabel { self.tabLabel[tKey] = tabLabel }
         else if self.tabLabel[tKey] == nil, tKey == Self.mainTabKey { self.tabLabel[tKey] = "Main" }
+        saveSession()
     }
 
     /// Record lines changed from a diff/edit.
@@ -241,12 +298,15 @@ final class TokenUsageStore {
         taskLinesRemoved = 0
     }
 
-    /// Reset session-level model usage.
+    /// Reset session-level model usage — clears the popover AND the persisted
+    /// snapshot so the next app launch starts fresh.
     func resetModelUsage() {
         modelUsage.removeAll()
         modelProvider.removeAll()
+        subscriptionModels.removeAll()
         tabModelUsage.removeAll()
         tabLabel.removeAll()
+        saveSession()
     }
 
     // MARK: - Per-Provider Cost Rates (USD per 1M tokens)
