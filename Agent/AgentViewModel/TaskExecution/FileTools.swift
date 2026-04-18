@@ -406,8 +406,10 @@ extension AgentViewModel {
                 let verified = MultiLineDiff.verifyDiff(verifyDiff)
                 let display = MultiLineDiff.displayDiff(diff: verifyDiff, source: source, format: .ai)
                 let newLineCount = finalContent.components(separatedBy: "\n").count
-                appendLog(display)
-                appendLog("")
+                // Trailing newline on display produces a blank row between the
+                // diff block and the status line below (appendLog's timestamp
+                // wrapping makes a naive appendLog("") look like an orphan stamp).
+                appendLog(display + "\n")
                 appendLog("📝 Diff+Apply: \(filePath)\(rangeNote) [verified: \(verified)] (\(newLineCount) lines)")
                 // Invalidate all pending diffs for this file — line numbers have shifted
                 DiffStore.shared.invalidateDiffs(for: expanded)
