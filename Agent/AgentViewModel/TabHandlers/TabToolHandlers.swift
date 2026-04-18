@@ -26,7 +26,7 @@ extension AgentViewModel {
         // File Manager
         case "read_file", "write_file", "edit_file", "create_diff", "apply_diff", "undo_edit", "diff_and_apply", "list_files",
              "search_files", "read_dir", "mkdir",
-             "restore_file", "list_file_backups":
+             "restore_file", "list_file_backups", "copy_image":
             return await handleTabFileManagerTool(tab: tab, name: name, input: input, toolId: toolId)
         // Git
         case "git_status", "git_diff", "git_log", "git_commit", "git_diff_patch", "git_branch":

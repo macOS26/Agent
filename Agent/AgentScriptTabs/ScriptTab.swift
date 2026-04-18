@@ -125,6 +125,9 @@ final class ScriptTab: Identifiable {
 
     var attachedImages: [NSImage] = []
     var attachedImagesBase64: [String] = []
+    /// Snapshot of attachments at task start — survives after the input
+    /// buffers are cleared so copy_image(source:"chat") can still find them.
+    var taskScopeImages: [NSImage] = []
 
     // MARK: - Per-Tab Pasted Text Attachments
 

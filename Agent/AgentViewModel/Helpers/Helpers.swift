@@ -308,6 +308,7 @@ extension AgentViewModel {
             case "mkdir": return ("mkdir", newInput)
             case "restore", "restore_file": return ("restore_file", newInput)
             case "list_backups", "backups": return ("list_file_backups", newInput)
+            case "copy_image", "copy-image", "clipboard_image": return ("copy_image", newInput)
             case "cd": return ("project_folder", ["action": "cd", "path": newInput["path"] as? String ?? "~"])
             default: return ("read_file", newInput)
             }
