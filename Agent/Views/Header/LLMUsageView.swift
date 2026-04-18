@@ -62,7 +62,7 @@ struct LLMUsageView: View {
                         .foregroundStyle(.secondary)
                     }
                 }
-                Text("Token usage per model this session.")
+                Text("Token usage per model since last Reset.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
@@ -140,18 +140,27 @@ struct LLMUsageView: View {
                                 }
                             }
 
-                            // Cost
-                            let cost = store.estimatedCost(model: model, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens)
-                            if cost > 0 {
-                                Text(String(format: "$%.3f", cost))
-                                    .font(.caption.monospacedDigit())
-                                    .foregroundStyle(.orange)
-                                    .frame(width: 50, alignment: .trailing)
-                            } else {
-                                Text("free")
+                            // Cost — "Included" for OAuth (billed against the
+                            // subscription), "free" for local models, $ for API-key.
+                            if isSubscriptionBilled(model: model) {
+                                Text("Included")
                                     .font(.caption)
-                                    .foregroundStyle(.tertiary)
-                                    .frame(width: 50, alignment: .trailing)
+                                    .foregroundStyle(.green)
+                                    .frame(width: 62, alignment: .trailing)
+                                    .help("Billed against your ChatGPT / Claude subscription — no per-token cost.")
+                            } else {
+                                let cost = store.estimatedCost(model: model, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens)
+                                if cost > 0 {
+                                    Text(String(format: "$%.3f", cost))
+                                        .font(.caption.monospacedDigit())
+                                        .foregroundStyle(.orange)
+                                        .frame(width: 62, alignment: .trailing)
+                                } else {
+                                    Text("free")
+                                        .font(.caption)
+                                        .foregroundStyle(.tertiary)
+                                        .frame(width: 62, alignment: .trailing)
+                                }
                             }
                         }
                         .padding(.vertical, 8)
@@ -168,9 +177,10 @@ struct LLMUsageView: View {
                         Spacer()
                         let totalIn = usage.values.reduce(0) { $0 + $1.inputTokens }
                         let totalOut = usage.values.reduce(0) { $0 + $1.outputTokens }
-                        let totalCost = usage.reduce(0.0) { acc, entry in
-                            acc + store.estimatedCost(model: entry.key, inputTokens: entry.value.inputTokens, outputTokens: entry.value.outputTokens)
+                        let nonSubCost = usage.reduce(0.0) { acc, entry in
+                            isSubscriptionBilled(model: entry.key) ? acc : acc + store.estimatedCost(model: entry.key, inputTokens: entry.value.inputTokens, outputTokens: entry.value.outputTokens)
                         }
+                        let hasSub = usage.contains(where: { isSubscriptionBilled(model: $0.key) })
                         HStack(spacing: 8) {
                             Text("↑ \(fmt(totalIn))")
                                 .font(.caption.monospacedDigit())
@@ -178,10 +188,14 @@ struct LLMUsageView: View {
                             Text("↓ \(fmt(totalOut))")
                                 .font(.caption.monospacedDigit())
                                 .foregroundStyle(.green)
-                            if totalCost > 0 {
-                                Text(String(format: "$%.3f", totalCost))
+                            if nonSubCost > 0 {
+                                Text(String(format: "$%.3f", nonSubCost))
                                     .font(.caption.monospacedDigit().weight(.semibold))
                                     .foregroundStyle(.orange)
+                            } else if hasSub {
+                                Text("Included")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.green)
                             }
                         }
                     }
@@ -242,6 +256,19 @@ struct LLMUsageView: View {
         case .current: return "No LLM calls on this tab yet."
         case .tab: return "No LLM calls recorded for this tab."
         }
+    }
+
+    /// True when the model's usage is billed against a subscription (Claude
+    /// OAuth or Codex OAuth) rather than per-token. Renders as "Included"
+    /// instead of a dollar amount in the popover. Prefer the per-call flag
+    /// recorded at usage time; fall back to provider+current-credential
+    /// detection for legacy rows recorded before the flag was added.
+    private func isSubscriptionBilled(model: String) -> Bool {
+        if store.subscriptionModels.contains(model) { return true }
+        let provider = store.modelProvider[model] ?? ""
+        if provider == "Codex" { return true }
+        if provider == "Claude", ClaudeService.isOAuthToken(viewModel.apiKey) { return true }
+        return false
     }
 
     private func fmt(_ count: Int) -> String {
