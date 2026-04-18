@@ -472,6 +472,7 @@ final class AgentViewModel {
     }
 
     var availableClaudeModels: [ClaudeModelInfo] = []
+    var isFetchingClaudeModels = false
 
     var ollamaModels: [OllamaModelInfo] = []
     var isFetchingModels = false

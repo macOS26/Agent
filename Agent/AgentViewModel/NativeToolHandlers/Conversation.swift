@@ -417,9 +417,11 @@ extension AgentViewModel {
         case "plan_mode":
             let action: String = input["action"] as? String ?? "read"
             return Self.handlePlanMode(action: action, input: input, projectFolder: pf, tabName: "main")
-        // project_folder
+        // project_folder — route to the active tab if one is selected so
+        // per-tab folders stay independent. `selectedTab` is nil only on the
+        // main (no-tab) view, in which case viewModel.projectFolder is used.
         case "project_folder":
-            return handleProjectFolder(tab: nil, input: input)
+            return handleProjectFolder(tab: selectedTab, input: input)
         default:
             return nil
         }
