@@ -53,22 +53,19 @@ final class AppleIntelligenceMediator: ObservableObject {
 
     /// Brain icon color encodes which Apple-AI sub-features are active so you can
     /// glance at the toolbar and see what the mediator is allowed to do:
-    ///   • red     — mediator disabled entirely
-    ///   • orange  — accessibility UI automation is on (can click/type/open apps)
-    ///   • pink    — token compression is on but no UI automation (breaks cache)
-    ///   • cyan    — annotations only (observational, nothing active)
-    ///   • yellow  — mediator on but every sub-feature off (odd config)
-    ///   • green   — everything on (default)
+    ///   • red    — mediator off, or mediator on with every sub-feature off
+    ///   • orange — accessibility UI automation is on (can click/type/open)
+    ///   • blue   — accessibility off but compression and/or annotations on (safe)
+    ///   • green  — everything on (default)
     var brainIconColor: Color {
         if !isEnabled { return .red }
         let annot = showAnnotationsToUser
         let compress = tokenCompressionEnabled
         let ax = accessibilityIntentEnabled
+        if !annot && !compress && !ax { return .red }
         if annot && compress && ax { return .green }
         if ax { return .orange }
-        if compress { return .pink }
-        if annot { return Color(red: 0.4, green: 0.8, blue: 1.0) } // light blue / cyan
-        return .yellow
+        return Color(red: 0.4, green: 0.8, blue: 1.0) // light blue — accessibility off, safe mode
     }
 
     // MARK: - Conversation Context (for Apple AI session)
