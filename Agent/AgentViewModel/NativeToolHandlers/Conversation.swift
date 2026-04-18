@@ -263,6 +263,13 @@ extension AgentViewModel {
                     }
                     return "iMessage sent to \(recipient)"
                 }
+                // Mirror outgoing iMessage into the Messages tab so the user sees it.
+                await MainActor.run {
+                    let msgTab = self.ensureMessagesTab()
+                    msgTab.appendLog("→ iMessage to \(recipient): \(cleanContent)")
+                    msgTab.flush()
+                    // flashMessagesDot is private — selecting the tab via appendLog is enough.
+                }
                 return result
 
             case "email":
