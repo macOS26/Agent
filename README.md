@@ -494,7 +494,7 @@ MIT - free and open source.
 
 <div align="center">
 
-### **Agent! for macOS 26.4+ - Agentic AI for your  Mac Desktop**
+### **Agent! for macOS 26.4+ Agentic AI for your  Mac Desktop**
 > Note: Claude refers to the Anthropic AI model integrated into Agent! for LLM functionality. It is not a human contributor Agent!
 </div>
 
