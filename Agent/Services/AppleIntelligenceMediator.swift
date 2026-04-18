@@ -610,6 +610,16 @@ final class AppleIntelligenceMediator: ObservableObject {
         let tool = AccessibilityAppleTool { args in
             tracker.markCalled()
             await appendLog("🍎 accessibility(\(args.action), app: \(args.app ?? "–"), title: \(args.title ?? "–"))")
+            // Destructive-action guard: Apple AI has a tiny context window and has been
+            // observed mis-mapping vague prompts to system-wipe buttons ("Erase All
+            // Content and Settings", etc). Refuse high-risk UI actions here and force a
+            // pass-through to the cloud LLM, which has enough context to sanity-check
+            // the request and can still perform the action under explicit user intent.
+            if let refusal = Self.refuseDestructiveAccessibility(args) {
+                await appendLog("🍎 ⛔ blocked destructive AX action — \(refusal)")
+                tracker.markFailed()
+                return "{\"success\":false,\"error\":\"\(refusal)\"}"
+            }
             let result = await dispatch(args)
             tracker.recordOutput(result)
             await appendLog("🍎 → \(String(result.prefix(300)))")
@@ -884,6 +894,29 @@ final class AppleIntelligenceMediator: ObservableObject {
             parts.append("Transcript entries: \(t.count)")
         }
         return parts.isEmpty ? "No context stored" : parts.joined(separator: "\n")
+    }
+
+    /// Returns a refusal reason when Apple AI tries to invoke a high-risk UI action,
+    /// or nil when the call is safe to dispatch. Triggered only on activating actions
+    /// (clicks, menu-item taps) against known-destructive element titles. Exploratory
+    /// find_element calls and text typing still go through.
+    nonisolated static func refuseDestructiveAccessibility(_ args: AccessibilityArgs) -> String? {
+        let action = args.action.lowercased()
+        let isActivating = action.contains("click") || action.contains("menu") || action.contains("press")
+        guard isActivating else { return nil }
+        guard let rawTitle = args.title, !rawTitle.isEmpty else { return nil }
+        let t = rawTitle.lowercased()
+        let destructive = [
+            "erase all content", "erase all settings", "erase mac",
+            "reset all settings", "reset mac", "factory reset", "factory defaults",
+            "wipe", "destroy", "delete account", "delete user",
+            "remove all data", "empty trash", "shut down", "restart",
+            "log out", "sign out of apple id"
+        ]
+        if destructive.contains(where: { t.contains($0) }) {
+            return "refusing destructive UI action: \(rawTitle)"
+        }
+        return nil
     }
 }
 
