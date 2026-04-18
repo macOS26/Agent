@@ -489,9 +489,14 @@ extension AgentViewModel {
             let digits = tail.prefix { $0.isNumber }
             if let n = Int(digits), n != 0 { return true }
         }
-        // Explicit error prefixes used by our handlers
+        // JSON-shaped failures from native tool handlers, e.g.
+        //   {"success": false, "error": "Unknown action: ..."}
+        if lower.contains("\"success\": false") || lower.contains("\"success\":false") { return true }
+        if lower.contains("\"error\":") || lower.contains("\"error\" :") { return true }
+        // Plain-text error phrases emitted by shell/file tools
         let markers = ["❌", "error: ", "\nerror: ", "no such file", "command not found",
-                       "permission denied", "operation not permitted", "failed: "]
+                       "permission denied", "operation not permitted", "failed: ",
+                       "unknown action", "invalid action"]
         return markers.contains { lower.contains($0) }
     }
 
