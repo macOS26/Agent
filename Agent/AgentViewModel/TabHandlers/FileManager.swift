@@ -251,21 +251,40 @@ extension AgentViewModel {
                 return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": err], isComplete: false)
             }
 
-            // Step 1: Extract source section
+            // LLM-provided snippet wins over line-range extraction. See main-task
+            // handler for the rationale — stale line numbers are what wipe files.
+            let providedSource = sourceInput ?? ""
+            let usedSnippet: Bool
             let source: String
-            if let sl = startLine, let el = endLine {
+            if !providedSource.isEmpty {
+                source = providedSource
+                usedSnippet = true
+            } else if let sl = startLine, let el = endLine {
                 let lines = fullText.components(separatedBy: "\n")
                 let s = max(sl - 1, 0)
                 let e = min(el, lines.count)
                 source = lines[s..<e].joined(separator: "\n")
+                usedSnippet = false
             } else {
                 source = fullText
+                usedSnippet = false
             }
 
             if source == destination {
                 tab.appendLog("❌ source and destination are identical"); tab.flush()
                 return TabToolResult(
                     toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": "Error: source and destination are identical"],
+                    isComplete: false
+                )
+            }
+
+            if usedSnippet, !fullText.contains(source) {
+                let err =
+                    "Error: source snippet not found in \(filePath). Recovery: read_file first "
+                    + "to copy the exact current text, or pass start_line/end_line instead of source."
+                tab.appendLog(err); tab.flush()
+                return TabToolResult(
+                    toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": err],
                     isComplete: false
                 )
             }
@@ -283,20 +302,20 @@ extension AgentViewModel {
 
             // Step 3: Apply diff
             do {
-                let patched = try MultiLineDiff.applyDiff(to: source, diff: diff)
-
-                // No truncation guard — d1f's structural verification + applyDiff already catch malformed
-                // diffs, and undo_edit is always available for recovery if the LLM produces something bad.
-
-                // Splice back into full file if line range
                 let finalContent: String
-                if let sl = startLine, let el = endLine {
+                let patched: String
+                if usedSnippet {
+                    finalContent = try MultiLineDiff.applyDiff(to: fullText, diff: diff)
+                    patched = destination
+                } else if let sl = startLine, let el = endLine {
+                    patched = try MultiLineDiff.applyDiff(to: source, diff: diff)
                     var allLines = fullText.components(separatedBy: "\n")
                     let s = max(sl - 1, 0)
                     let e = min(el, allLines.count)
                     allLines.replaceSubrange(s..<e, with: patched.components(separatedBy: "\n"))
                     finalContent = allLines.joined(separator: "\n")
                 } else {
+                    patched = try MultiLineDiff.applyDiff(to: source, diff: diff)
                     finalContent = patched
                 }
 

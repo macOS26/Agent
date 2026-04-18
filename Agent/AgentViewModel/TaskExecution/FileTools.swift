@@ -350,19 +350,42 @@ extension AgentViewModel {
                 return true
             }
 
-            // Step 1: Extract source section (same as create_diff)
+            // Source resolution — LLM-provided snippet wins over line-range extraction.
+            // D1F's applyDiff auto-detects when a diff was created from a truncated
+            // source and locates it inside the full file at apply time, so a snippet
+            // IS the correct input. Deriving source from possibly-stale line numbers
+            // is what caused the 500→11 line stylesheet wipeout.
+            let providedSource = input["source"] as? String ?? ""
+            let usedSnippet: Bool
             let source: String
-            if let sl = startLine, let el = endLine {
+            if !providedSource.isEmpty {
+                source = providedSource
+                usedSnippet = true
+            } else if let sl = startLine, let el = endLine {
                 let lines = fullText.components(separatedBy: "\n")
                 let s = max(sl - 1, 0)
                 let e = min(el, lines.count)
                 source = lines[s..<e].joined(separator: "\n")
+                usedSnippet = false
             } else {
                 source = fullText
+                usedSnippet = false
             }
 
             if source == destination {
                 let err = "Error: source and destination are identical"
+                appendLog(err)
+                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
+                return true
+            }
+
+            // When the LLM passed a snippet, it must actually appear in the file —
+            // otherwise we'd patch the wrong place. Reject with a recovery hint.
+            if usedSnippet, !fullText.contains(source) {
+                let err =
+                    "Error: source snippet not found in \(filePath). Recovery: read_file first "
+                    + "to copy the exact current text (whitespace and all), or pass start_line/end_line "
+                    + "instead of source. Another edit may have shifted or altered the target."
                 appendLog(err)
                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
                 return true
@@ -379,20 +402,23 @@ extension AgentViewModel {
             )
             let diffId = DiffStore.shared.store(diff: diff, source: source)
 
-            // Step 3: Apply diff (same as apply_diff). No truncation guard — d1f's structural
-            // verification + applyDiff already catch malformed diffs, and undo_edit is always available for recovery.
+            // Step 3: Apply diff.
             do {
-                let patched = try MultiLineDiff.applyDiff(to: source, diff: diff)
-
-                // Splice back into full file if line range was used
                 let finalContent: String
-                if let sl = startLine, let el = endLine {
+                let patched: String
+                if usedSnippet {
+                    // D1F finds the snippet inside the full file and patches there.
+                    finalContent = try MultiLineDiff.applyDiff(to: fullText, diff: diff)
+                    patched = destination
+                } else if let sl = startLine, let el = endLine {
+                    patched = try MultiLineDiff.applyDiff(to: source, diff: diff)
                     var allLines = fullText.components(separatedBy: "\n")
                     let s = max(sl - 1, 0)
                     let e = min(el, allLines.count)
                     allLines.replaceSubrange(s..<e, with: patched.components(separatedBy: "\n"))
                     finalContent = allLines.joined(separator: "\n")
                 } else {
+                    patched = try MultiLineDiff.applyDiff(to: source, diff: diff)
                     finalContent = patched
                 }
 

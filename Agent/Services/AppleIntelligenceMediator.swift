@@ -61,7 +61,9 @@ final class AppleIntelligenceMediator: ObservableObject {
     /// Priority: red > pink > orange > blue > green when more than one is off.
     var brainIconColor: Color {
         if !isEnabled { return .red }
-        if !tokenCompressionEnabled { return .pink }
+        // Explicit hot-pink RGB — system .pink can render near-red on a dark
+        // toolbar background, which defeats the purpose of a distinct color.
+        if !tokenCompressionEnabled { return Color(red: 1.0, green: 0.4, blue: 0.75) }
         if !showAnnotationsToUser { return .orange }
         if !accessibilityIntentEnabled { return .blue }
         return .green
