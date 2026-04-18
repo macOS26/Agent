@@ -34,6 +34,12 @@ extension AgentViewModel {
         guard AccessibilityService.hasAccessibilityPermission() else {
             return .passThrough
         }
+        // Skip Apple AI when the user attached screenshots. Apple AI Foundation
+        // Models are text-only — with no vision it hallucinates UI actions from
+        // prompt text alone ("ticky tacky" → click "Tick Tock"). Screenshots mean
+        // the user wants a vision-capable model to look at the image.
+        let hadAttachments = !tab.attachedImagesBase64.isEmpty || !attachedImagesBase64.isEmpty
+        if hadAttachments { return .passThrough }
         // Triage: direct commands, Apple AI conversation, accessibility agent, or pass through to LLM. The axDispatch
         // closure routes Apple AI's tool calls through the same executeNativeTool path the cloud LLM uses. If Apple AI fails, is unavailable, or doesn't call the tool, runAccessibilityAgent returns nil → triage returns .passThrough → we fall through to the cloud LLM loop below.
         let mediator = AppleIntelligenceMediator.shared

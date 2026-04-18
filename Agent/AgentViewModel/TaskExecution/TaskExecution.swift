@@ -86,7 +86,8 @@ extension AgentViewModel {
 
         let effectivePrompt = Self.newTaskPrefix(projectFolder: projectFolder, prompt: prompt) + prompt
 
-        if !attachedImagesBase64.isEmpty {
+        let hadAttachments = !attachedImagesBase64.isEmpty
+        if hadAttachments {
             appendLog("(\(attachedImagesBase64.count) screenshot(s) attached)")
             var contentBlocks: [[String: Any]] = attachedImagesBase64.map { base64 in
                 [
@@ -123,6 +124,7 @@ extension AgentViewModel {
         let appleBypass = rawPrompt.hasPrefix("\u{F8FF}")
             || rawPrompt.lowercased().hasPrefix("!apple ")
             || !AccessibilityService.hasAccessibilityPermission()
+            || hadAttachments
         if appleBypass {
             appendLog(cloudModelLogLine)
             flushLog()
