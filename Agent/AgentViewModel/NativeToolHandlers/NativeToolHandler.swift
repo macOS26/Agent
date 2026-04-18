@@ -48,10 +48,17 @@ extension AgentViewModel {
         if let result = await handleGitNativeTool(name: name, input: input) { return result }
         if let result = await handleIndexNativeTool(name: name, input: input) { return result }
 
-        // Handle ax_ accessibility tools directly (avoid recursion through executeNativeTool)
+        // Handle ax_ accessibility tools directly (avoid recursion through executeNativeTool).
+        // expandConsolidatedTool rewrites some verbs like accessibility(open_app) into
+        // ax_manage_app with input["action"] = "launch". We must NOT overwrite that "launch"
+        // with the stripped name "manage_app" — otherwise the manage_app switch falls through
+        // to the default "list" and we return the app list instead of launching.
         if name.hasPrefix("ax_") {
             let axAction = String(name.dropFirst(3))
             var axInput = input
+            if let existing = axInput["action"] as? String, existing != axAction {
+                axInput["sub_action"] = axInput["sub_action"] ?? existing
+            }
             axInput["action"] = axAction
             return await handleAccessibilityAction(action: axAction, input: axInput)
         }
