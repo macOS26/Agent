@@ -603,7 +603,7 @@ private struct LLMOutputBox: View {
                             ScanlineOverlay(spacing: 4, color: .green, opacity: 0.112, blurRadius: 0.25)
                         }
                     }
-                    .frame(height: min(height, maxHeight))
+                    .frame(height: min(height + 3, maxHeight))
                 } else {
                     VStack(spacing: 0) {
                         HStack(spacing: 0) {
