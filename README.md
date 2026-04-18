@@ -48,7 +48,7 @@ Download it. Say what you need. Watch it happen.
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/toddbruss/Agent.git
+   git clone https://github.com/macos26/Agent.git
    cd Agent
    ```
 
