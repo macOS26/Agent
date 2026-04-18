@@ -473,8 +473,26 @@ extension AgentViewModel {
             : (rawDetail as NSString).lastPathComponent
         let stepId = tab.recordToolStep(name: name, detail: detail)
         let result = await handleTabToolCallBody(tab: tab, name: name, input: input, toolId: toolId)
-        tab.completeToolStep(id: stepId, status: .success)
+        let status: AgentViewModel.ToolStep.Status = Self.toolResultLooksLikeError(result.toolResult) ? .error : .success
+        tab.completeToolStep(id: stepId, status: status)
         return result
+    }
+
+    /// Heuristic: inspect the tool_result content for signals that the tool failed.
+    /// Used to mark Steps red when a shell/edit/etc. tool returned an error payload.
+    private static func toolResultLooksLikeError(_ toolResult: [String: Any]?) -> Bool {
+        guard let content = toolResult?["content"] as? String else { return false }
+        let lower = content.lowercased()
+        // Non-zero exit codes — match "exit code: 1", "exit code: 127", etc.
+        if let range = lower.range(of: "exit code: ") {
+            let tail = lower[range.upperBound...]
+            let digits = tail.prefix { $0.isNumber }
+            if let n = Int(digits), n != 0 { return true }
+        }
+        // Explicit error prefixes used by our handlers
+        let markers = ["❌", "error: ", "\nerror: ", "no such file", "command not found",
+                       "permission denied", "operation not permitted", "failed: "]
+        return markers.contains { lower.contains($0) }
     }
 
     // MARK: - Tab Command Execution
