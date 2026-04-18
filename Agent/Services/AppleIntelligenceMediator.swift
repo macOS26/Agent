@@ -624,16 +624,27 @@ final class AppleIntelligenceMediator: ObservableObject {
             tracker.recordOutput(result)
             await appendLog("🍎 → \(String(result.prefix(300)))")
             let lower = result.lowercased()
-            // find_element is exploratory — a miss just means "try a different query", not a fatal error.
-            // Only mark the run as failed if a definitive action (click/type/open) failed.
             let isFindAction = args.action.lowercased().contains("find")
             if !isFindAction {
-                if lower.contains("error") || lower.contains("not found") || lower.contains("\"success\":false")
-                    || lower.contains("no element") || lower.contains("timed out") || lower.contains("not running") {
+                // A write action (click/type/open/launch) is only treated as a
+                // success when the tool explicitly says so. Previously the
+                // absence of an error marker was read as success, which let
+                // ax_manage_app's app-list response get reported as "opened
+                // Safari" for an open_app call.
+                let explicitSuccess = lower.contains("\"success\":true")
+                    || lower.contains("\"success\": true")
+                    || lower.contains("launched") || lower.contains("activated")
+                    || lower.contains("opened") || lower.contains("clicked")
+                    || lower.contains("typed")   || lower.contains("performed")
+                let explicitFailure = lower.contains("\"success\":false")
+                    || lower.contains("\"success\": false")
+                    || lower.contains("error") || lower.contains("not found")
+                    || lower.contains("no element") || lower.contains("timed out")
+                    || lower.contains("not running")
+                if explicitFailure || !explicitSuccess {
                     tracker.markFailed()
                 }
             } else {
-                // Even for find_element, track if something is fundamentally broken (app not running)
                 if lower.contains("not running") || lower.contains("not launched") {
                     tracker.markFailed()
                 }
