@@ -660,15 +660,30 @@ final class AppleIntelligenceMediator: ObservableObject {
             return result
         }
 
+        // Explicit "skip" tool — gives Apple AI a clean way to say "not my job"
+        // instead of hallucinating a click target. We mark the run failed so
+        // runAccessibilityAgent returns nil → triage falls through to cloud LLM.
+        let skipTool = SkipAppleTool { args in
+            await appendLog("🍎 ⏭ skip — \(args.reason)")
+            tracker.markCalled()
+            tracker.markFailed()
+            return "skipped"
+        }
+
         // Apple AI's ~4096-token window requires terse instructions. Known apps from SDEFService; unknowns fall back to NSRunningApplications scan.
         let knownApps = SDEFService.shared.allInstalledAppNames().joined(separator: ", ")
         let instructions = Instructions("""
-        You have TWO tools: accessibility (UI clicks/types/opens apps) and run_agent (runs user-defined agent scripts).
+        You have THREE tools: skip, accessibility, run_agent.
+
+        DEFAULT ACTION IS skip. Only pick another tool when the rules below clearly match.
 
         TOOL SELECTION — follow these rules IN ORDER:
         1. ONLY use run_agent when the user LITERALLY says "run agent X", "run the X agent", or "run X agent" — the word "run" must appear with "agent".
-        2. clicking buttons, typing text, opening apps → accessibility tool.
-        3. ALL other requests (editing code, applying diffs, building projects, creating files, searching, git, xcode, writing scripts, etc.) → reply EXACTLY "action not performed" so the cloud LLM handles them. Do NOT try to map tool names to run_agent.
+        2. Use accessibility ONLY when ALL of these are true:
+           a) the prompt contains an explicit UI verb: click, tap, press, open, launch, type, fill, select, toggle;
+           b) the prompt names a specific Mac app (from the known list) OR a specific on-screen button/menu/field; and
+           c) the prompt is NOT about code, files, git, xcode, builds, tests, searches, websites, or analyzing screenshots.
+        3. EVERYTHING ELSE → call `skip` with a one-sentence reason. This includes vague prompts, screenshot-based prompts, code tasks, file edits, git, xcode, builds, web/browsing, chat, and anything you're unsure about. When in doubt, skip.
 
         CRITICAL: "diff_apply", "edit_file", "write_file", "xcode", "git", "search" etc. are CLOUD LLM tools, NOT agent scripts. NEVER pass them to run_agent.
 
@@ -708,7 +723,7 @@ final class AppleIntelligenceMediator: ObservableObject {
             // Two tools exposed to Apple AI: accessibility (UI automation) and run_agent
             // (run user-defined scripts). Shell and AppleScript were removed because
             // Apple AI hallucinated paths and directories.
-            session = LanguageModelSession(model: .default, tools: [tool, runAgentTool], instructions: instructions)
+            session = LanguageModelSession(model: .default, tools: [skipTool, tool, runAgentTool], instructions: instructions)
             accessibilityAgentSession = session
             accessibilityAgentTurnCount = 1
         }
@@ -999,6 +1014,30 @@ struct RunAgentAppleTool: FoundationModels.Tool {
             return "action not performed — no agent script named '\(requested)'"
         }
 
+        return await dispatch(arguments)
+    }
+}
+
+@Generable
+struct SkipArgs: Sendable {
+    @Guide(description: "One short sentence explaining why this prompt isn't a UI automation or agent-script request.")
+    let reason: String
+}
+
+/// Gives Apple AI a discrete \"this isn't my job\" tool. Without it the model
+/// keeps reaching for `accessibility` even on vision prompts / code tasks,
+/// hallucinating click targets. When called, `runAccessibilityAgent` short-
+/// circuits to .passThrough so the cloud LLM takes over.
+struct SkipAppleTool: FoundationModels.Tool {
+    typealias Output = String
+
+    let name = "skip"
+    let description = "Call this when the user's request does NOT contain an explicit UI verb (click/open/type/launch) " +
+        "naming a specific Mac app or button, OR is a code/file/git/vision task. Always prefer skip over guessing."
+
+    let dispatch: @Sendable (SkipArgs) async -> String
+
+    func call(arguments: SkipArgs) async throws -> String {
         return await dispatch(arguments)
     }
 }
