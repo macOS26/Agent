@@ -502,6 +502,11 @@ final class AgentViewModel {
 
     var attachedImages: [NSImage] = []
     var attachedImagesBase64: [String] = []
+    /// Snapshot of attachments at task-start time. The input-bar buffers are
+    /// cleared before the LLM loop runs, but `copy_image(source:"chat")`
+    /// still needs to reach the original images during the task. Tab tasks
+    /// use `ScriptTab.taskScopeImages` for the same reason.
+    var taskScopeImages: [NSImage] = []
 
     /// Long pasted text — captured as chips above the TextField instead of
     /// inlined into SwiftUI's TextField (which stalls on huge content).

@@ -26,6 +26,15 @@ extension AgentViewModel {
         // MARK: read_file
         switch name {
 
+        case "copy_image":
+            let src = (input["source"] as? String ?? input["file_path"] as? String ?? "").trimmingCharacters(in: .whitespaces)
+            let dest = (input["dest"] as? String ?? input["destination"] as? String ?? "clipboard").trimmingCharacters(in: .whitespaces)
+            appendLog("🖼 copy_image: \(src.isEmpty ? "(no source)" : src) → \(dest)")
+            let output = await handleCopyImage(source: src, destination: dest)
+            appendLog(output)
+            toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": output])
+            return true
+
         case "read_file":
             let filePath = input["file_path"] as? String ?? ""
             if filePath.isEmpty {
@@ -90,13 +99,13 @@ extension AgentViewModel {
             let replaceAll = input["replace_all"] as? Bool ?? false
             let context = input["context"] as? String
             FileBackupService.shared.backup(filePath: (filePath as NSString).expandingTildeInPath, tabID: selectedTabId ?? Self.mainTabID)
-            appendLog("📝 Edit: \(filePath)")
             let expandedEdit = (filePath as NSString).expandingTildeInPath
 
             // Single read from disk
             guard let data = FileManager.default.contents(atPath: expandedEdit),
                   let originalContent = String(data: data, encoding: .utf8) else
             {
+                appendLog("📝 Edit: \(filePath)")
                 let err = "Error: cannot read \(filePath)"
                 appendLog(err)
                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": err])
@@ -117,10 +126,16 @@ extension AgentViewModel {
                 let diff = MultiLineDiff.createDiff(source: oldString, destination: newString, includeMetadata: true)
                 let d1f = MultiLineDiff.displayDiff(diff: diff, source: oldString, format: .ai)
                 if !d1f.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    // Raw D1F lines — AgentColorSyntax draws per-line ❌/✅/📎 stripes.
-                    // Matches diff_and_apply rendering exactly (no numbering, no fence).
-                    appendLog(d1f)
+                    // Header + raw D1F lines in ONE appendLog → single timestamp.
+                    // keepInline regex keeps "📝 Edit: …" inline with the timestamp;
+                    // the D1F body flows onto the following lines where AgentColorSyntax
+                    // draws per-line ❌/✅/📎 stripes.
+                    appendLog("📝 Edit: \(filePath)\n\(d1f)")
+                } else {
+                    appendLog("📝 Edit: \(filePath)")
                 }
+            } else {
+                appendLog("📝 Edit: \(filePath)")
             }
             let outLines = output.components(separatedBy: "\n")
             let status = outLines.first ?? output

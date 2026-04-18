@@ -18,6 +18,17 @@ extension AgentViewModel {
         }
 
         switch name {
+        case "copy_image":
+            let src = (input["source"] as? String ?? input["file_path"] as? String ?? "").trimmingCharacters(in: .whitespaces)
+            let dest = (input["dest"] as? String ?? input["destination"] as? String ?? "clipboard").trimmingCharacters(in: .whitespaces)
+            tab.appendLog("🖼 copy_image: \(src.isEmpty ? "(no source)" : src) → \(dest)")
+            let output = await handleCopyImage(source: src, destination: dest)
+            tab.appendLog(output); tab.flush()
+            return TabToolResult(
+                toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
+                isComplete: false
+            )
+
         case "read_file":
             let filePath = input["file_path"] as? String ?? ""
             let offset = input["offset"] as? Int
@@ -56,7 +67,6 @@ extension AgentViewModel {
             let replaceAll = input["replace_all"] as? Bool ?? false
             let context = input["context"] as? String
             FileBackupService.shared.backup(filePath: (filePath as NSString).expandingTildeInPath, tabID: tab.id)
-            tab.appendLog("📝 Edit: \(filePath)")
             // Capture original for undo
             let expandedPath = (filePath as NSString).expandingTildeInPath
             let originalContent: String? = await Self.offMain {
@@ -79,10 +89,13 @@ extension AgentViewModel {
                 let diff = MultiLineDiff.createDiff(source: oldString, destination: newString, includeMetadata: true)
                 let d1f = MultiLineDiff.displayDiff(diff: diff, source: oldString, format: .ai)
                 if !d1f.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    // Raw D1F lines — AgentColorSyntax draws per-line ❌/✅/📎 stripes.
-                    // Matches diff_and_apply rendering exactly (no numbering, no fence).
-                    tab.appendLog(d1f)
+                    // Header + raw D1F in ONE appendLog → single timestamp, like diff_and_apply.
+                    tab.appendLog("📝 Edit: \(filePath)\n\(d1f)")
+                } else {
+                    tab.appendLog("📝 Edit: \(filePath)")
                 }
+            } else {
+                tab.appendLog("📝 Edit: \(filePath)")
             }
             let outLines = output.components(separatedBy: "\n")
             let status = outLines.first ?? output

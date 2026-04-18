@@ -87,6 +87,7 @@ extension AgentViewModel {
         let effectivePrompt = Self.newTaskPrefix(projectFolder: projectFolder, prompt: prompt) + prompt
 
         let hadAttachments = !attachedImagesBase64.isEmpty
+        taskScopeImages = attachedImages
         if hadAttachments {
             appendLog("(\(attachedImagesBase64.count) screenshot(s) attached)")
             var contentBlocks: [[String: Any]] = attachedImagesBase64.map { base64 in

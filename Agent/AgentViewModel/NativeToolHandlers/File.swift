@@ -34,6 +34,13 @@ extension AgentViewModel {
             return await Self.offMain {
                 CodingService.readFile(path: path, offset: offset, limit: limit)
             }
+        // copy_image — copy a PNG/JPEG between any of {file path, clipboard, chat attachment}.
+        //   source: absolute path | "clipboard" | "chat" | "chat:<index>" (0-based)
+        //   dest:   absolute path | "clipboard" (default if omitted)
+        case "copy_image":
+            let src = (input["source"] as? String ?? input["file_path"] as? String ?? "").trimmingCharacters(in: .whitespaces)
+            let destRaw = (input["dest"] as? String ?? input["destination"] as? String ?? "clipboard").trimmingCharacters(in: .whitespaces)
+            return await handleCopyImage(source: src, destination: destRaw)
         case "write_file":
             var path = input["file_path"] as? String ?? ""
             guard !path.isEmpty else { return "Error: file_path is required for write_file. Recovery: pass file_path:\"/path/to/file\"." }
@@ -309,5 +316,80 @@ extension AgentViewModel {
         default:
             return nil
         }
+    }
+
+    /// Resolve `source` to an NSImage. Accepts "clipboard", "chat[:index]", or a file path.
+    private func resolveImageSource(_ source: String) -> (image: NSImage?, label: String) {
+        let s = source.lowercased()
+        if s == "clipboard" || s == "pasteboard" {
+            let img = NSPasteboard.general.readObjects(forClasses: [NSImage.self])?.first as? NSImage
+            return (img, "clipboard")
+        }
+        if s == "chat" || s.hasPrefix("chat:") {
+            var idx = 0
+            if let colon = s.firstIndex(of: ":") {
+                let tail = String(s[s.index(after: colon)...])
+                idx = Int(tail) ?? 0
+            }
+            let imgs = selectedTabId.flatMap { tab(for: $0) }?.taskScopeImages ?? taskScopeImages
+            guard imgs.indices.contains(idx) else {
+                return (nil, "chat[\(idx)] (have \(imgs.count))")
+            }
+            return (imgs[idx], "chat[\(idx)]")
+        }
+        // Treat as a file path
+        var path = (source as NSString).expandingTildeInPath
+        if !path.hasPrefix("/"), !projectFolder.isEmpty {
+            path = (projectFolder as NSString).appendingPathComponent(path)
+        }
+        guard FileManager.default.fileExists(atPath: path) else { return (nil, path) }
+        return (NSImage(contentsOfFile: path), path)
+    }
+
+    /// Write an NSImage out to destination: clipboard or a file path (PNG/JPEG by extension).
+    private func writeImage(_ image: NSImage, to destination: String) -> String {
+        let d = destination.lowercased()
+        if d == "clipboard" || d == "pasteboard" {
+            NSPasteboard.general.clearContents()
+            let ok = NSPasteboard.general.writeObjects([image])
+            if ok { return "" }
+            return "Error: clipboard write failed. Recovery: retry, or write to a file path instead of 'clipboard'."
+        }
+        var destPath = (destination as NSString).expandingTildeInPath
+        if !destPath.hasPrefix("/"), !projectFolder.isEmpty {
+            destPath = (projectFolder as NSString).appendingPathComponent(destPath)
+        }
+        guard let tiff = image.tiffRepresentation,
+              let rep = NSBitmapImageRep(data: tiff) else {
+            return "Error: could not encode source image. Recovery: try a different source or destination."
+        }
+        let ext = (destPath as NSString).pathExtension.lowercased()
+        let fileType: NSBitmapImageRep.FileType = (ext == "jpg" || ext == "jpeg") ? .jpeg : .png
+        guard let data = rep.representation(using: fileType, properties: [:]) else {
+            return "Error: encoding as \(fileType == .jpeg ? "JPEG" : "PNG") failed. Recovery: use a .png or .jpg extension on dest."
+        }
+        let url = URL(fileURLWithPath: destPath)
+        try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        do {
+            try data.write(to: url)
+            return ""
+        } catch {
+            return "Error writing to \(destPath): \(error.localizedDescription). Recovery: check the directory is writable."
+        }
+    }
+
+    /// copy_image dispatch body — used by the native-tool handler above. Returns a human-readable status string.
+    func handleCopyImage(source: String, destination: String) async -> String {
+        guard !source.isEmpty else {
+            return "Error: source is required for copy_image. Pass source:\"clipboard\" | \"chat\" | \"chat:0\" | \"/abs/path.png\"."
+        }
+        let (img, srcLabel) = resolveImageSource(source)
+        guard let image = img else {
+            return "Error: no image available at \(srcLabel). Recovery: for source=\"clipboard\" copy an image first; for source=\"chat\" attach a screenshot; for a file path verify it exists and is PNG/JPEG."
+        }
+        let writeErr = writeImage(image, to: destination)
+        if !writeErr.isEmpty { return writeErr }
+        let destLabel = (destination.lowercased() == "clipboard" || destination.lowercased() == "pasteboard") ? "clipboard" : destination
+        return "Copied image from \(srcLabel) to \(destLabel)."
     }
 }

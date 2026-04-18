@@ -94,6 +94,8 @@ extension AgentViewModel {
             .shell,
             "TabTask images: tab=\(tab.attachedImagesBase64.count) global=\(attachedImagesBase64.count) using=\(tabImages.count)"
         )
+        // Snapshot the NSImages for copy_image(source:"chat") before the input buffers are cleared.
+        tab.taskScopeImages = tab.attachedImages.isEmpty ? attachedImages : tab.attachedImages
         if !tabImages.isEmpty {
             tab.appendLog("(\(tabImages.count) screenshot(s) attached, \(tabImages.map(\.count).reduce(0,+)) bytes)")
             tab.flush()
