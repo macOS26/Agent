@@ -242,34 +242,36 @@ extension AgentViewModel {
                 return "Message copied to clipboard:\n\(cleanContent)"
 
             case "imessage":
-                // Use AppleScript to send iMessage (simplified version)
-                let escapedRecipient = recipient.replacingOccurrences(of: "\"", with: "\\\"")
-                let escapedContent = cleanContent.replacingOccurrences(of: "\"", with: "\\\"")
-
+                // Send via subprocess osascript instead of in-process NSAppleScript.
+                // NSAppleScript on a detached background thread can hang waiting for
+                // an AppleEvent reply from Messages.app, which freezes the task loop
+                // and blocks the incoming-message poller — the "lockup" symptom.
+                let escapedRecipient = recipient
+                    .replacingOccurrences(of: "\\", with: "\\\\")
+                    .replacingOccurrences(of: "\"", with: "\\\"")
+                let escapedContent = cleanContent
+                    .replacingOccurrences(of: "\\", with: "\\\\")
+                    .replacingOccurrences(of: "\"", with: "\\\"")
                 let script = """
                 tell application "Messages"
                     send "\(escapedContent)" to buddy "\(escapedRecipient)"
                 end tell
                 """
-
-                let result = await Self.offMain { () -> String in
-                    var err: NSDictionary?
-                    guard let applescript = NSAppleScript(source: script) else {
-                        return "Error: Failed to create AppleScript"
-                    }
-                    let _ = applescript.executeAndReturnError(&err)
-                    if let e = err {
-                        return "AppleScript error: \(e)"
-                    }
-                    return "iMessage sent to \(recipient)"
+                let shellResult = await Self.executeTCC(
+                    command: "osascript -e '\(script.replacingOccurrences(of: "'", with: "'\\''"))'"
+                )
+                let result: String
+                if shellResult.status == 0 {
+                    result = "iMessage sent to \(recipient)"
+                } else {
+                    result = "AppleScript error: \(shellResult.output.prefix(200))"
                 }
                 // Mirror outgoing iMessage into the Messages tab so the user sees it.
-                await MainActor.run {
-                    let msgTab = self.ensureMessagesTab()
-                    msgTab.appendLog("→ iMessage to \(recipient): \(cleanContent)")
-                    msgTab.flush()
-                    // flashMessagesDot is private — selecting the tab via appendLog is enough.
-                }
+                // AgentViewModel is @MainActor, so this call is already on the main
+                // actor — no MainActor.run hop needed (and no offMain jump).
+                let msgTab = self.ensureMessagesTab()
+                msgTab.appendLog("→ iMessage to \(recipient): \(cleanContent)")
+                msgTab.flush()
                 return result
 
             case "email":
