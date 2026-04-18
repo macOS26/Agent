@@ -74,6 +74,33 @@ Agent! registers its Launch Agent and Launch Daemon via Apple's **SMAppService**
 
 Agent! wraps SMAppService via `SafeSMAppService` and `SafeSMAppServiceDaemon`, which add plist validation safety checks before calling the framework methods.
 
+### Empirical Proof — Re-signing Breaks the XPC Channel
+
+The signing guarantee is not theoretical. If the helper binaries are re-signed after installation — even by the same developer, same Team ID — the bundle hash changes, the SMAppService-registered identity no longer matches, and every client loses access to the Mach services. We verified this directly: Agent! itself attempted to re-sign its own daemons during an experiment and immediately lost the ability to connect. `NSXPCConnection` to `Agent.app.toddbruss.helper` and `Agent.app.toddbruss.user` fails at the launchd layer before a single byte reaches `listener(_:shouldAcceptNewConnection:)`.
+
+This is exactly the behavior a manual `connection.setCodeSigningRequirement(...)` call would enforce — except SMAppService is already enforcing it one layer down, in the kernel's XPC lookup path, and it cannot be bypassed from userland.
+
+### Why Manual `setCodeSigningRequirement` Is Not Required
+
+A common audit finding on XPC services is the absence of `connection.setCodeSigningRequirement(...)` in `listener(_:shouldAcceptNewConnection:)`. That recommendation comes from the **pre-SMAppService SMJobBless era**, where launchd did not validate identity for you and the XPC server had to set a designated-requirement string itself. SMAppService changed that contract:
+
+- The app-bundle-embedded plist plus the signature-gated registration **is** the code-signing requirement.
+- The Mach service name (`Agent.app.toddbruss.helper`, `Agent.app.toddbruss.user`) is namespaced to the signed bundle that registered it — no other bundle can claim it.
+- Any signature mismatch (tampering, re-signing, different Team ID, bundle swap) breaks the XPC channel at the launchd layer — the listener delegate is never even invoked.
+- Therefore `shouldAcceptNewConnection` returning `true` unconditionally is safe: every connection that reaches it has already passed OS-level signature validation.
+
+Adding `setCodeSigningRequirement` explicitly would be reasonable defense-in-depth (useful only if the app were ever ported off SMAppService, or if SIP were disabled on the machine), but it is **not a gap** in the current architecture — merely optional belt-and-braces.
+
+### Trust Anchors Summary
+
+| Enforcement | Mechanism | Bypassable from userland? |
+|---|---|---|
+| Helper must be in signed app bundle | Gatekeeper + SMAppService registration | No |
+| Helper must match app's Team ID (469UCUB275) | Code signing + SMAppService | No |
+| Mach service name bound to signed bundle | launchd / XPC namespace | No |
+| Helper binary hash matches registered identity | SMAppService + kernel XPC lookup | No (re-signing breaks the channel) |
+| User approved the helper | System Settings → Login Items & Extensions | No (user gesture required) |
+
 ## Action Verification (action_not_performed)
 
 Agent! prevents false-action claims — where an AI reports performing an action it never executed — with three independent layers:
