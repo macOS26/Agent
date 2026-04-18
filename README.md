@@ -106,6 +106,28 @@ Automatically detects and uses available tools (Xcode, Playwright, Shell, etc.) 
 ### 🛡 Privileged Execution
 Securely runs root-level commands via a dedicated macOS Launch Daemon. The user approves the daemon once, then the agent can execute commands autonomously via XPC.
 
+#### Why there's no manual `setCodeSigningRequirement` on the XPC listener
+
+Users sometimes ask why `AgentHelper`'s XPC listener accepts connections without a manual `connection.setCodeSigningRequirement(...)` check. The short answer: **SMAppService already enforces signing identity one layer below your code**, so the check would be redundant.
+
+That recommendation is a holdover from the pre-SMAppService **SMJobBless era**, where launchd did not validate identity for you and the XPC server had to set a designated-requirement string itself. SMAppService changed that contract:
+
+- The app-bundle-embedded plist plus signature-gated registration **is** the code-signing requirement.
+- The Mach service names (`Agent.app.toddbruss.helper`, `Agent.app.toddbruss.user`) are namespaced to the signed bundle that registered them — no other bundle can claim them.
+- Any signature mismatch (tampering, re-signing, different Team ID, bundle swap) **breaks the XPC channel at the launchd layer** — `listener(_:shouldAcceptNewConnection:)` is never even invoked.
+
+**Empirical proof:** Agent! itself attempted to re-sign its own daemons during an experiment and immediately lost the ability to connect. `NSXPCConnection` to both Mach services failed at the launchd layer before a single byte reached the listener delegate — exactly the behavior a manual `setCodeSigningRequirement` call would enforce, except SMAppService is doing it in the kernel's XPC lookup path where it cannot be bypassed from userland.
+
+| Enforcement | Mechanism | Bypassable from userland? |
+|---|---|---|
+| Helper must be in signed app bundle | Gatekeeper + SMAppService registration | No |
+| Helper must match app's Team ID (469UCUB275) | Code signing + SMAppService | No |
+| Mach service name bound to signed bundle | launchd / XPC namespace | No |
+| Helper binary hash matches registered identity | SMAppService + kernel XPC lookup | No (re-signing breaks the channel) |
+| User approved the helper | System Settings → Login Items & Extensions | No (user gesture required) |
+
+Adding `setCodeSigningRequirement` explicitly would be reasonable belt-and-braces defense-in-depth (useful only if the app were ever ported off SMAppService, or if SIP were disabled), but it is **not a gap** in the current architecture. See [docs/SECURITY.md](docs/SECURITY.md) for the full trust-anchor write-up.
+
 ### 🖥 Desktop Automation (AXorcist)
 Control any Mac app through the Accessibility API. Click buttons, type into fields, navigate menus, scroll, drag -- all programmatically. Powered by [AXorcist](https://github.com/steipete/AXorcist) for reliable, fuzzy-matched element finding.
 
