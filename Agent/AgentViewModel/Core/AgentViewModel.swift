@@ -674,6 +674,23 @@ final class AgentViewModel {
         return dir
     }()
 
+    /// Hi-res originals for images the user pastes / drops / screenshots.
+    /// Separate from log_images (which caches copies of paths the LLM mentions)
+    /// so we can keep the pristine original around for the full task. ASCII-only
+    /// UUID filenames dodge the U+202F narrow-no-break-space macOS screenshot
+    /// gotcha and every TCC-protected folder (Desktop, Documents, Downloads).
+    static let attachmentsCacheDir: URL = {
+        guard let caches = FileManager.default.urls(
+            for: .cachesDirectory, in: .userDomainMask
+        ).first else {
+            return URL(fileURLWithPath: NSTemporaryDirectory())
+                .appendingPathComponent("Agent/attachments")
+        }
+        let dir = caches.appendingPathComponent("Agent/attachments")
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir
+    }()
+
     static let imagePathRegex: NSRegularExpression? = try? NSRegularExpression(
         pattern: #"(/[^\s"'<>]+\.(?:jpg|jpeg|png|gif|tiff|bmp|webp|heic))"#,
         options: .caseInsensitive

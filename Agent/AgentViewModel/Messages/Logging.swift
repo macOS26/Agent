@@ -67,6 +67,39 @@ extension AgentViewModel {
         appendError(error, context: context)
     }
 
+    // MARK: - Hi-res attachment cache
+
+    /// Persist the full-resolution bytes of a pasted/dropped/screenshot image
+    /// to ~/Library/Caches/Agent/attachments/<uuid>.png. Returns the written
+    /// path so callers can surface it to the LLM (ASCII-only, no TCC).
+    /// Falls back to re-encoding from NSImage when `originalData` is nil.
+    @discardableResult
+    func saveHiResAttachment(data originalData: Data?, image: NSImage) -> String? {
+        let dir = Self.attachmentsCacheDir
+        let url = dir.appendingPathComponent("\(UUID().uuidString).png")
+        // Prefer the raw bytes we already have — they're the pristine original.
+        if let data = originalData {
+            // If it's already PNG we can drop it straight to disk.
+            if data.count >= 8, data.prefix(8) == Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]) {
+                do { try data.write(to: url); return url.path } catch { /* fall through */ }
+            }
+            // Not PNG (could be TIFF/JPEG) — re-encode as PNG without downscaling.
+            if let bitmap = NSBitmapImageRep(data: data),
+               let png = bitmap.representation(using: .png, properties: [:])
+            {
+                do { try png.write(to: url); return url.path } catch { /* fall through */ }
+            }
+        }
+        // Last resort: round-trip through NSImage.tiffRepresentation at native size.
+        if let tiff = image.tiffRepresentation,
+           let bitmap = NSBitmapImageRep(data: tiff),
+           let png = bitmap.representation(using: .png, properties: [:])
+        {
+            do { try png.write(to: url); return url.path } catch { /* fall through */ }
+        }
+        return nil
+    }
+
     // MARK: - Screenshot
 
     func captureScreenshot() {
@@ -111,6 +144,10 @@ extension AgentViewModel {
             } else {
                 attachedImages.append(image)
                 attachedImagesBase64.append(pngData.base64EncodedString())
+            }
+            if let path = saveHiResAttachment(data: pngData, image: image) {
+                let w = Int(image.size.width), h = Int(image.size.height)
+                appendLog("📎 Attached: \(path) (\(w)x\(h))")
             }
             try? FileManager.default.removeItem(atPath: tempPath)
         }
@@ -186,6 +223,10 @@ extension AgentViewModel {
                 } else {
                     attachedImages.append(image)
                     attachedImagesBase64.append(base64)
+                }
+                if let path = saveHiResAttachment(data: imageData, image: image) {
+                    let w = Int(image.size.width), h = Int(image.size.height)
+                    appendLog("📎 Attached: \(path) (\(w)x\(h))")
                 }
             }
         }
