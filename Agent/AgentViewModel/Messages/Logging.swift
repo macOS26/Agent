@@ -138,16 +138,23 @@ extension AgentViewModel {
                 return
             }
 
+            // Ask the user which resolution to send — same picker as paste.
+            let scale = Self.promptForImageScale(defaultScale: pasteImageScale)
+            pasteImageScale = scale
+            let base64 = await Self.encodeImageToBase64(pngData, userScale: scale)
+                ?? pngData.base64EncodedString()
+
             if let tab = selectedTabId.flatMap({ tab(for: $0) }) {
                 tab.attachedImages.append(image)
-                tab.attachedImagesBase64.append(pngData.base64EncodedString())
+                tab.attachedImagesBase64.append(base64)
             } else {
                 attachedImages.append(image)
-                attachedImagesBase64.append(pngData.base64EncodedString())
+                attachedImagesBase64.append(base64)
             }
             if let path = saveHiResAttachment(data: pngData, image: image) {
                 let w = Int(image.size.width), h = Int(image.size.height)
-                appendLog("📎 Attached: \(path) (\(w)x\(h))")
+                let pct = Int((scale * 100).rounded())
+                appendLog("📎 Attached: \(path) (\(w)x\(h), sending at \(pct)%)")
             }
             try? FileManager.default.removeItem(atPath: tempPath)
         }
