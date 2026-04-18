@@ -80,12 +80,29 @@ struct SettingsView: View {
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Model").font(.caption).foregroundStyle(.secondary)
-                        Picker("Model", selection: $viewModel.selectedModel) {
-                            ForEach(viewModel.availableClaudeModels) { model in
-                                Text(model.formattedDisplayName).tag(model.id)
+                        HStack {
+                            Picker("Model", selection: $viewModel.selectedModel) {
+                                ForEach(viewModel.availableClaudeModels) { model in
+                                    Text(model.formattedDisplayName).tag(model.id)
+                                }
                             }
+                            .labelsHidden()
+
+                            Button {
+                                viewModel.fetchModelsIfNeeded(for: .claude, force: true)
+                            } label: {
+                                if viewModel.isFetchingClaudeModels {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(viewModel.isFetchingClaudeModels)
+                            .help("Fetch available models")
                         }
-                        .labelsHidden()
                     }
                 }
             } else if viewModel.selectedProvider == .openAI {

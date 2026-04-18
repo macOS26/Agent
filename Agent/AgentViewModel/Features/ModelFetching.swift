@@ -8,6 +8,9 @@ import AgentTools
 extension AgentViewModel {
 
     func fetchClaudeModels() async {
+        await MainActor.run { self.isFetchingClaudeModels = true }
+        defer { Task { @MainActor in self.isFetchingClaudeModels = false } }
+
         guard !apiKey.isEmpty else {
             await MainActor.run {
                 self.availableClaudeModels = Self.defaultClaudeModels
