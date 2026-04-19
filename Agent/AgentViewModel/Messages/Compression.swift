@@ -49,6 +49,7 @@ extension AgentViewModel {
     /// Compress old tool results — use Apple AI summary if cached, otherwise first 3 lines.
     /// Last 4 messages keep full content. Tool calls (assistant) stay intact.
     static func compressMessages(_ messages: [[String: Any]], keepRecent: Int = 4) -> [[String: Any]] {
+        guard AppleIntelligenceMediator.shared.tokenCompressionEnabled else { return messages }
         guard messages.count > keepRecent + 1 else { return messages }
 
         var result: [[String: Any]] = []
@@ -112,6 +113,7 @@ extension AgentViewModel {
     /// Async version: summarize old messages using Apple AI before sending.
     /// Call this before compressMessages for best results.
     static func summarizeOldMessages(_ messages: inout [[String: Any]], keepRecent: Int = 4) async {
+        guard AppleIntelligenceMediator.shared.tokenCompressionEnabled else { return }
         guard messages.count > keepRecent + 1, FoundationModelService.isAvailable else {
             return
         }
@@ -211,6 +213,7 @@ extension AgentViewModel {
     /// Clear old tool_result content to save tokens while preserving message structure.
     /// Keeps only the last `keepRecent` tool results intact; older ones replaced with "[cleared]".
     static func microcompact(_ messages: inout [[String: Any]], keepRecent: Int = 3) {
+        guard AppleIntelligenceMediator.shared.tokenCompressionEnabled else { return }
         // Find all tool_result indices
         var toolResultIndices: [(msgIdx: Int, blockIdx: Int)] = []
         for (i, msg) in messages.enumerated() {

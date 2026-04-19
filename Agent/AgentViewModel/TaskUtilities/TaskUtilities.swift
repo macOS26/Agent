@@ -241,6 +241,7 @@ extension AgentViewModel {
     /// / Prune old messages to reduce token usage on long tasks. / Keeps the first user message and the most recent
     /// messages. / Middle messages are summarized into a compact text block.
     static func pruneMessages(_ messages: inout [[String: Any]], keepRecent: Int = 6) {
+        guard AppleIntelligenceMediator.shared.tokenCompressionEnabled else { return }
         guard messages.count > keepRecent + 4 else { return }
 
         let firstMsg = messages[0]
@@ -280,6 +281,7 @@ extension AgentViewModel {
 
     /// Strip base64 image data from older messages to save tokens.
     static func stripOldImages(_ messages: inout [[String: Any]], keepRecentCount: Int = 4) {
+        guard AppleIntelligenceMediator.shared.tokenCompressionEnabled else { return }
         let cutoff = max(0, messages.count - keepRecentCount)
         for i in 0..<cutoff {
             guard var blocks = messages[i]["content"] as? [[String: Any]] else { continue }
