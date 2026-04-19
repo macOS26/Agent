@@ -23,10 +23,16 @@ final class AppleIntelligenceMediator: ObservableObject {
         return 4096
     }
 
-    /// Whether Apple Intelligence mediation is enabled
-    @Published var isEnabled: Bool = UserDefaults.standard.object(forKey: "appleIntelligenceMediatorEnabled") as? Bool ?? true {
+    /// Whether Apple Intelligence mediation is enabled.
+    /// Defaults to OFF — on-device triage was failing/misfiring in most real-world
+    /// tasks (misclassifying intents, wasting a turn before the real LLM ran).
+    /// Users can opt back in from the brain-icon popover.
+    ///
+    /// NOTE: new key name (`...EnabledV2`) so this rollout flips existing installs
+    /// back to OFF regardless of what they had stored under the old key.
+    @Published var isEnabled: Bool = UserDefaults.standard.object(forKey: "appleIntelligenceMediatorEnabledV2") as? Bool ?? false {
         didSet {
-            UserDefaults.standard.set(isEnabled, forKey: "appleIntelligenceMediatorEnabled")
+            UserDefaults.standard.set(isEnabled, forKey: "appleIntelligenceMediatorEnabledV2")
         }
     }
 
@@ -53,14 +59,14 @@ final class AppleIntelligenceMediator: ObservableObject {
 
     /// Brain icon color encodes which Apple-AI sub-features are active so you can
     /// glance at the toolbar and see what the mediator is allowed to do:
-    ///   • red    — mediator disabled entirely
+    ///   • gray   — mediator disabled entirely (off — the default)
     ///   • pink   — token compression off
     ///   • orange — annotations off
     ///   • blue   — accessibility intent parsing off
     ///   • green  — all on
-    /// Priority: red > pink > orange > blue > green when more than one is off.
+    /// Priority: gray > pink > orange > blue > green when more than one is off.
     var brainIconColor: Color {
-        if !isEnabled { return .red }
+        if !isEnabled { return .gray }
         // Explicit hot-pink RGB — system .pink can render near-red on a dark
         // toolbar background, which defeats the purpose of a distinct color.
         if !tokenCompressionEnabled { return Color(red: 1.0, green: 0.4, blue: 0.75) }
