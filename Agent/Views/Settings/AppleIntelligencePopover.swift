@@ -13,6 +13,12 @@ struct AppleIntelligencePopover: View {
         .frame(width: 380)
         .onAppear {
             hasAccessibility = AccessibilityService.hasAccessibilityPermission()
+            // Refresh master toggle — flip off/on so downstream sub-features re-evaluate
+            let wasEnabled = aiMediator.isEnabled
+            aiMediator.isEnabled = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                aiMediator.isEnabled = wasEnabled
+            }
         }
     }
 
