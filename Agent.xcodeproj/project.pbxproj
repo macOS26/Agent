@@ -181,6 +181,7 @@
 		EAE1E7242F7C01000079432C /* LLMProviderSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAE1E7232F7C01000079432C /* LLMProviderSetup.swift */; };
 		EAE1E7262F7C02000079432C /* AgentAccess in Frameworks */ = {isa = PBXBuildFile; productRef = EAE1E7252F7C02000079432C /* AgentAccess */; };
 		EAF3666F2F623D6A004B7E38 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = EAF3666E2F623D6A004B7E38 /* AppIcon.icon */; };
+		EAHELP0000000000000001 /* Agent.help in Resources */ = {isa = PBXBuildFile; fileRef = EAHELP0000000000000002 /* Agent.help */; };
 		EAFA000000000000000001 /* FoundationModelService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAFA000000000000000002 /* FoundationModelService.swift */; };
 		EASP000000000000000001 /* SystemPromptService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EASP000000000000000002 /* SystemPromptService.swift */; };
 		EASP000000000000000003 /* SystemPromptEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = EASP000000000000000004 /* SystemPromptEditor.swift */; };
@@ -466,6 +467,7 @@
 		WEB1000000000000000004 /* WebAutomationService+Navigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WebAutomationService+Navigation.swift"; sourceTree = "<group>"; };
 		WEB1000000000000000006 /* WebAutomationService+Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WebAutomationService+Utilities.swift"; sourceTree = "<group>"; };
 		WEB1000000000000000008 /* WebAutomationService+Search.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WebAutomationService+Search.swift"; sourceTree = "<group>"; };
+		EAHELP0000000000000002 /* Agent.help */ = {isa = PBXFileReference; lastKnownFileType = wrapper.cfbundle; path = Resources/Agent.help; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -540,6 +542,7 @@
 				EAE00000000000000001 /* UX */,
 				EA50J00000000000001 /* JSON */,
 				AA10000000000000000022 /* Agent.entitlements */,
+				EAHELP0000000000000002 /* Agent.help */,
 				EA60000000000000000002 /* SDEFs */,
 				BB10000000000000000041 /* LaunchDaemons */,
 				CC10000000000000000041 /* LaunchAgents */,
@@ -1155,6 +1158,7 @@
 				EA6EA3872F6E35CF003FDB6C /* send_message_input.json in Resources */,
 				AA100000000000000000B3 /* StartupTwentiethAnniversaryMac.wav in Resources */,
 				EA60000000000000000001 /* SDEFs in Resources */,
+				EAHELP0000000000000001 /* Agent.help in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1560,36 +1564,8 @@
 				ENABLE_RESOURCE_ACCESS_PRINTING = YES;
 				ENABLE_RESOURCE_ACCESS_USB = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Agent!";
-				INFOPLIST_KEY_CFBundleHelpBookFolder = "Agent.help";
-				INFOPLIST_KEY_CFBundleHelpBookName = "Agent.app.toddbruss.help";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_NSAppleEventsUsageDescription = "Agent! needs to control other apps to run automation scripts on your behalf.";
-				INFOPLIST_KEY_NSAppleMusicUsageDescription = "Agent! needs Apple Music access for scripts that read your music library metadata via the MediaPlayer framework.";
-				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Agent! needs Bluetooth access for scripts that interact with Bluetooth devices.";
-				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Agent! needs calendar access for scripts that read or create events.";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Agent! needs camera access for scripts that capture photos.";
-				INFOPLIST_KEY_NSContactsUsageDescription = "Agent! needs contacts access for scripts that query your address book.";
-				INFOPLIST_KEY_NSDesktopFolderUsageDescription = "Agent! reads and writes files in your Desktop folder for screenshots, downloads, and scripts that operate on Desktop items.";
-				INFOPLIST_KEY_NSDocumentsFolderUsageDescription = "Agent! reads and writes files in your Documents folder to manage agent scripts, system prompts, AppleScripts, journal entries, and the SDEF catalog under ~/Documents/AgentScript.";
-				INFOPLIST_KEY_NSDownloadsFolderUsageDescription = "Agent! reads and writes files in your Downloads folder for scripts that process downloaded files.";
-				INFOPLIST_KEY_NSFaceIDUsageDescription = "Agent! needs biometric authentication for scripts that use Touch ID or Face ID.";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Agent! needs HealthKit read access for scripts that summarize your health and fitness data.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Agent! needs HealthKit write access for scripts that log workouts or add health samples.";
-				INFOPLIST_KEY_NSHomeKitUsageDescription = "Agent! needs HomeKit access for scripts that control smart home accessories and scenes.";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "\U0003© 2026 agent@macos26.app";
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Agent! needs local network access for scripts that discover devices on your network.";
-				INFOPLIST_KEY_NSLocationUsageDescription = "Agent! needs location access for scripts that use GPS data.";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Agent! needs location access for scripts that use GPS data.";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Agent! needs microphone access for speech-to-text dictation and scripts that record audio.";
-				INFOPLIST_KEY_NSNetworkVolumesUsageDescription = "Agent! needs network volume access for scripts that read or write files on SMB and AFP shares.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Agent! needs photo library access for scripts that read or save photos.";
-				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Agent! needs reminders access for scripts that manage reminders.";
-				INFOPLIST_KEY_NSRemovableVolumesUsageDescription = "Agent! needs removable volume access for scripts that read or write files on USB drives, SD cards, and external disks.";
-				INFOPLIST_KEY_NSSiriUsageDescription = "Agent! needs Siri access for scripts that run Shortcuts and donate suggestions.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Agent! needs speech recognition to transcribe your voice into the task input field.";
-				INFOPLIST_KEY_NSSystemAdministrationUsageDescription = "Agent! needs system administration access for scripts that perform privileged system configuration.";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Agent/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -1641,36 +1617,8 @@
 				ENABLE_RESOURCE_ACCESS_PRINTING = YES;
 				ENABLE_RESOURCE_ACCESS_USB = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Agent!";
-				INFOPLIST_KEY_CFBundleHelpBookFolder = "Agent.help";
-				INFOPLIST_KEY_CFBundleHelpBookName = "Agent.app.toddbruss.help";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_NSAppleEventsUsageDescription = "Agent! needs to control other apps to run automation scripts on your behalf.";
-				INFOPLIST_KEY_NSAppleMusicUsageDescription = "Agent! needs Apple Music access for scripts that read your music library metadata via the MediaPlayer framework.";
-				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Agent! needs Bluetooth access for scripts that interact with Bluetooth devices.";
-				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Agent! needs calendar access for scripts that read or create events.";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Agent! needs camera access for scripts that capture photos.";
-				INFOPLIST_KEY_NSContactsUsageDescription = "Agent! needs contacts access for scripts that query your address book.";
-				INFOPLIST_KEY_NSDesktopFolderUsageDescription = "Agent! reads and writes files in your Desktop folder for screenshots, downloads, and scripts that operate on Desktop items.";
-				INFOPLIST_KEY_NSDocumentsFolderUsageDescription = "Agent! reads and writes files in your Documents folder to manage agent scripts, system prompts, AppleScripts, journal entries, and the SDEF catalog under ~/Documents/AgentScript.";
-				INFOPLIST_KEY_NSDownloadsFolderUsageDescription = "Agent! reads and writes files in your Downloads folder for scripts that process downloaded files.";
-				INFOPLIST_KEY_NSFaceIDUsageDescription = "Agent! needs biometric authentication for scripts that use Touch ID or Face ID.";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Agent! needs HealthKit read access for scripts that summarize your health and fitness data.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Agent! needs HealthKit write access for scripts that log workouts or add health samples.";
-				INFOPLIST_KEY_NSHomeKitUsageDescription = "Agent! needs HomeKit access for scripts that control smart home accessories and scenes.";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "\U0003© 2026 agent@macos26.app";
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Agent! needs local network access for scripts that discover devices on your network.";
-				INFOPLIST_KEY_NSLocationUsageDescription = "Agent! needs location access for scripts that use GPS data.";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Agent! needs location access for scripts that use GPS data.";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Agent! needs microphone access for speech-to-text dictation and scripts that record audio.";
-				INFOPLIST_KEY_NSNetworkVolumesUsageDescription = "Agent! needs network volume access for scripts that read or write files on SMB and AFP shares.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Agent! needs photo library access for scripts that read or save photos.";
-				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Agent! needs reminders access for scripts that manage reminders.";
-				INFOPLIST_KEY_NSRemovableVolumesUsageDescription = "Agent! needs removable volume access for scripts that read or write files on USB drives, SD cards, and external disks.";
-				INFOPLIST_KEY_NSSiriUsageDescription = "Agent! needs Siri access for scripts that run Shortcuts and donate suggestions.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Agent! needs speech recognition to transcribe your voice into the task input field.";
-				INFOPLIST_KEY_NSSystemAdministrationUsageDescription = "Agent! needs system administration access for scripts that perform privileged system configuration.";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Agent/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
