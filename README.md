@@ -570,7 +570,7 @@ Agent! is a 100% original pure Swift macOS application. It is not a port, fork, 
 >
 > Compiled binaries, installers, code-signed builds, and release artifacts distributed through this project's GitHub Releases, [agent.macOS26.app](https://agent.macOS26.app), or any other official channel are the copyrighted work of Todd Bruss and are **not** covered by the MIT license that governs the source code. All rights to the official binaries — including the "🦾 Agent!" name, logo, code-signing identity, and Developer ID — are reserved.
 >
-> You are welcome to build your own binaries from source under the MIT license, provided you do not use the "🦾Agent!" name, logo, or branding to identify your build.
+> You are welcome to build your own binaries from source under the MIT license, provided you do not use the "🦾 Agent!" name, logo, or branding to identify your build.
 >
 > ### Warranty Disclaimer
 >
