@@ -1,3 +1,4 @@
+import AgentAccess
 import Foundation
 import FoundationModels
 import SwiftUI
@@ -606,7 +607,11 @@ final class AppleIntelligenceMediator: ObservableObject {
         appendLog: @escaping @Sendable @MainActor (String) -> Void,
         projectFolder: String = ""
     ) async -> String? {
-        guard isEnabled && accessibilityIntentEnabled && Self.isAvailable else { return nil }
+        // Gated on Accessibility permission — the feature drives UI via AXorcist,
+        // so without the system permission it cannot succeed. Fall through to
+        // the cloud LLM instead of running an Apple-AI turn that will fail.
+        guard isEnabled && accessibilityIntentEnabled && Self.isAvailable,
+              AccessibilityService.hasAccessibilityPermission() else { return nil }
 
         // Thread-safe boxes to track tool-call/error state across the Sendable closure.
         final class CallTracker: @unchecked Sendable {
@@ -834,7 +839,9 @@ final class AppleIntelligenceMediator: ObservableObject {
         guard isEnabled && Self.isAvailable else { return .passThrough }
         // Accessibility agent — let Apple AI try to handle UI automation requests locally with full tool-calling
         // support. Pre-filter on action verbs so we don't spend an AI call on every user message.
-        if accessibilityIntentEnabled && (Self.looksLikeAccessibilityRequest(message) || Self.looksLikeRunAgentRequest(message)) {
+        if accessibilityIntentEnabled
+            && AccessibilityService.hasAccessibilityPermission()
+            && (Self.looksLikeAccessibilityRequest(message) || Self.looksLikeRunAgentRequest(message)) {
             // Hard-skip when a project folder is active AND the prompt doesn't
             // explicitly name a first-party system app. Users in a project are
             // overwhelmingly working on code/UI of that project — a match on
