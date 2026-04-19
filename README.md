@@ -555,4 +555,16 @@ Agent! is a 100% original pure Swift macOS application. It is not a port, fork, 
 
 ---
 
-> ⚠️ "🦾 Agent! for macOS26" is a not trademark of Apple Inc. or . It is an independent open source agentic ai exclusive project copyright (c) 2000, 2023-2026 🦾 Agent! for macOS26. All rights reserved. Thank you for taking a look at 🦾 Agent! It is an aweseome application built for Mac Minis, Laptops and Desktops. - Sincerely, Todd Bruss, Creator and Founder of Agent!
+> ⚠️ **Legal Notice & Attribution**
+>
+> "🦾 Agent! for macOS26" is an independent software project and is **not** affiliated with, endorsed by, sponsored by, or otherwise associated with Apple Inc. "Apple," "Mac," "Mac mini," "MacBook," "macOS," and related marks are trademarks of Apple Inc., registered in the U.S. and other countries. All other trademarks, service marks, and trade names referenced herein are the property of their respective owners and are used for identification purposes only.
+>
+> "🦾 Agent! for macOS26" is an independent, open-source, agentic AI project.
+>
+> Copyright © 2000, 2023–2026 Todd Bruss. All rights reserved. Except as expressly permitted under the applicable open-source license accompanying this software, no part of this project may be reproduced, distributed, modified, or transmitted in any form or by any means without the prior written permission of the copyright holder. This software is provided "AS IS," without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and non-infringement. In no event shall the author or copyright holder be liable for any claim, damages, or other liability arising from, out of, or in connection with the software or the use or other dealings in the software.
+>
+> Thank you for your interest in 🦾 Agent! — a application crafted for Mac mini, MacBook, and Mac desktop computers running macOS.
+>
+> Sincerely,
+> **Todd Bruss**
+> Creator and Founder, 🦾 Agent!
