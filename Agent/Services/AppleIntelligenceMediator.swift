@@ -68,23 +68,39 @@ final class AppleIntelligenceMediator: ObservableObject {
         }
     }
 
-    /// Brain icon color encodes which Apple-AI sub-features are active so you can
-    /// glance at the toolbar and see what the mediator is allowed to do:
-    ///   • gray   — mediator disabled entirely (off — the default)
-    ///   • pink   — token compression off
-    ///   • orange — annotations off
-    ///   • blue   — accessibility intent parsing off
-    ///   • green  — all on
-    /// Priority: gray > pink > orange > blue > green when more than one is off.
+    /// Brain icon color is a live blend of every active sub-feature's toggle
+    /// color, so a glance at the toolbar shows what the mediator is allowed to
+    /// do. Toggle colors mirror the popover:
+    ///   • master  → system blue
+    ///   • triage  → green
+    ///   • annot.  → hot pink
+    ///   • compr.  → purple
+    ///   • a11y    → teal (only when Accessibility permission is granted)
+    /// When the master is off, the icon is gray. When only the master is on,
+    /// the icon stays blue. Otherwise the active colors are averaged in RGB
+    /// space — so all-on lands on a balanced multi-hue tint, and turning a
+    /// switch off visibly shifts the blend.
     var brainIconColor: Color {
         if !isEnabled { return .gray }
-        // Explicit hot-pink RGB — system .pink can render near-red on a dark
-        // toolbar background, which defeats the purpose of a distinct color.
-        if !tokenCompressionEnabled { return Color(red: 1.0, green: 0.4, blue: 0.75) }
-        if !showAnnotationsToUser { return .orange }
-        if !accessibilityIntentEnabled { return .blue }
-        return .green
+
+        // (red, green, blue) for each active toggle. Master always contributes
+        // so the icon never drifts away from "Apple-AI blue" entirely.
+        var components: [(Double, Double, Double)] = []
+        components.append((0.0, 0.48, 1.0))                       // system blue (master)
+        if triageEnabled            { components.append((0.20, 0.78, 0.35)) } // system green
+        if showAnnotationsToUser    { components.append((1.00, 0.40, 0.75)) } // hot pink
+        if tokenCompressionEnabled  { components.append((0.69, 0.32, 0.87)) } // system purple
+        if accessibilityIntentEnabled && AccessibilityService.hasAccessibilityPermission() {
+            components.append((0.19, 0.69, 0.78))                 // system teal
+        }
+
+        let count = Double(components.count)
+        let r = components.reduce(0.0) { $0 + $1.0 } / count
+        let g = components.reduce(0.0) { $0 + $1.1 } / count
+        let b = components.reduce(0.0) { $0 + $1.2 } / count
+        return Color(red: r, green: g, blue: b)
     }
+
 
     // MARK: - Conversation Context (for Apple AI session)
 
