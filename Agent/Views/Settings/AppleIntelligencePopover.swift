@@ -118,7 +118,7 @@ struct AppleIntelligencePopover: View {
                             .toggleStyle(.switch)
                             .controlSize(.mini)
                             .labelsHidden()
-                            .tint(hasAccessibility && aiMediator.accessibilityIntentEnabled ? Color.indigo : Color.gray)
+                            .tint(hasAccessibility && aiMediator.accessibilityIntentEnabled ? Color.teal : Color.gray)
                             .disabled(!hasAccessibility)
                     }
                 }

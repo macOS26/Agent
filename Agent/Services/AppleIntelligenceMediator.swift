@@ -68,27 +68,39 @@ final class AppleIntelligenceMediator: ObservableObject {
         }
     }
 
-    /// Active toggle colors, in order, used to render a live gradient on the
-    /// brain icon. Toggle colors mirror the popover:
+    /// Brain icon color is a live blend of every active sub-feature's toggle
+    /// color, so a glance at the toolbar shows what the mediator is allowed to
+    /// do. Toggle colors mirror the popover:
     ///   • master  → system blue
     ///   • triage  → green
     ///   • annot.  → hot pink
     ///   • compr.  → purple
     ///   • a11y    → teal (only when Accessibility permission is granted)
-    /// When the master is off the array is empty (consumer paints gray).
-    /// Master always contributes when enabled so the gradient never drifts
-    /// away from "Apple-AI blue" entirely.
-    var brainIconColors: [Color] {
-        guard isEnabled else { return [] }
-        var colors: [Color] = [.blue]                               // master
-        if triageEnabled            { colors.append(.green) }
-        if showAnnotationsToUser    { colors.append(.pink) }
-        if tokenCompressionEnabled  { colors.append(.purple) }
+    /// When the master is off, the icon is gray. When only the master is on,
+    /// the icon stays blue. Otherwise the active colors are averaged in RGB
+    /// space — so all-on lands on a balanced multi-hue tint, and turning a
+    /// switch off visibly shifts the blend.
+    var brainIconColor: Color {
+        if !isEnabled { return .gray }
+
+        // (red, green, blue) for each active toggle. Master always contributes
+        // so the icon never drifts away from "Apple-AI blue" entirely.
+        var components: [(Double, Double, Double)] = []
+        components.append((0.0, 0.48, 1.0))                       // system blue (master)
+        if triageEnabled            { components.append((0.20, 0.78, 0.35)) } // system green
+        if showAnnotationsToUser    { components.append((1.00, 0.40, 0.75)) } // hot pink
+        if tokenCompressionEnabled  { components.append((0.69, 0.32, 0.87)) } // system purple
         if accessibilityIntentEnabled && AccessibilityService.hasAccessibilityPermission() {
-            colors.append(.teal)
+            components.append((0.19, 0.69, 0.78))                 // system teal
         }
-        return colors
+
+        let count = Double(components.count)
+        let r = components.reduce(0.0) { $0 + $1.0 } / count
+        let g = components.reduce(0.0) { $0 + $1.1 } / count
+        let b = components.reduce(0.0) { $0 + $1.2 } / count
+        return Color(red: r, green: g, blue: b)
     }
+
 
     // MARK: - Conversation Context (for Apple AI session)
 
