@@ -169,6 +169,10 @@ extension AgentViewModel {
         log: ((String) -> Void)? = nil
     ) async -> Bool
     {
+        // Respect the user's Token Compression toggle — when OFF, do nothing.
+        // Covers microcompact, stripOldImages, Apple AI summarization, AND Tier 2 prune.
+        guard AppleIntelligenceMediator.shared.tokenCompressionEnabled else { return false }
+
         let tokensBefore = await preciseTokenCount(messages: messages)
         guard state.shouldCompact(estimatedTokens: tokensBefore) else { return false }
 
@@ -181,8 +185,7 @@ extension AgentViewModel {
         stripOldImages(&messages)
 
         // Tier 1: Apple AI summarization (fast, on-device).
-        // Gated on tokenCompressionEnabled so users can opt out if it's slow on their device or if the summaries are ...
-        if FoundationModelService.isAvailable && AppleIntelligenceMediator.shared.tokenCompressionEnabled {
+        if FoundationModelService.isAvailable {
             await summarizeOldMessages(&messages)
             let tokensAfterT1 = await preciseTokenCount(messages: messages)
             if state.recordAttempt(tokensBefore: tokensBefore, tokensAfter: tokensAfterT1) {
