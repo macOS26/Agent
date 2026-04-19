@@ -72,11 +72,7 @@ Download it. Say what you need. Watch it happen.
 #### Then:
 5. **Configure your AI Provider:** Go to Settings and enter your API key or select a local provider like Ollama.
 
-> 💡 **Cheapest cloud path?** **GLM-5.1** runs on all four cheap providers — **Ollama**, **Hugging Face**, **Z.ai**, **BigModel** — at pennies per million tokens. Pick whichever you already have an account with.
->
-> 💡 **New here?** Start with **Z.ai** — fastest signup, GLM-5.1 is the default, nothing to provision.
->
-> ⚠️ **Local GLM?** Only **GLM-4.7-Turbo** (32B) fits on consumer hardware (M2/M3/M4 Mac, 64-128GB, via Ollama). GLM-5 and GLM-5.1 are too large (~1.6TB) — use them via the cloud providers above.
+> 💡 **Cheap GLM setup:** **GLM-5.1** runs on all four cheap providers — **Ollama**, **Hugging Face**, **Z.ai**, **BigModel** — at pennies per million tokens. New here? Start with **Z.ai** (fastest signup, GLM-5.1 is the default, nothing to provision). Running locally? Only **GLM-4.7-Turbo** (32B) fits on consumer hardware (M2/M3/M4 Mac, 64-128GB, via Ollama) — GLM-5 and GLM-5.1 are too large (~1.6TB), use them via the cloud providers above.
 
 
 ## What Can It Do?
