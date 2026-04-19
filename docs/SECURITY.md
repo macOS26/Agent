@@ -95,6 +95,13 @@ Adding `setCodeSigningRequirement` explicitly would be reasonable defense-in-dep
 | Helper binary hash matches registered identity | SMAppService + kernel XPC lookup | No (re-signing breaks the channel) |
 | User approved the helper | System Settings → Login Items & Extensions | No (user gesture required) |
 
+### Launch Agent vs. Launch Daemon — User Controlled
+
+Agent! ships with two independent XPC backends, and the user can turn the Launch Daemon off at any time:
+
+- **Launch Agent** (runs in user space) — **recommended, always on**. Handles the vast majority of tasks with the user's own TCC grants and file permissions. No root, no admin approval needed.
+- **Launch Daemon** (runs in root space) — **100% optional**. Only needed for admin-level duties (disk cloning, software install, system-wide config). The user approves it once via System Settings → Login Items & Extensions, and can disable or remove it at any time from the same pane. Agent! continues to function fully with only the Launch Agent enabled.
+
 ## Action Verification (action_not_performed)
 
 Agent! prevents false-action claims — where an AI reports performing an action it never executed — with three independent layers:
