@@ -154,12 +154,6 @@ The AI defaults to **user-level execution** and only uses the privileged daemon 
 
 **Rule:** Use `run_agent_script` or `applescript_tool` for Accessibility/Automation tasks, not shell commands.
 
-#### Write Protection
-
-- `applescript_tool` blocks destructive operations (`delete`, `close`, `move`, `quit`) by default
-- The AI must explicitly set `allow_writes: true` to permit them
-- This prevents accidental data loss from misinterpreted commands
-
 #### Full Entitlements List
 
 | Entitlement | Purpose |

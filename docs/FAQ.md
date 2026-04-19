@@ -62,23 +62,6 @@ The pattern is documented in Apple's developer documentation and used by hundred
 
 All root operations require explicit user-initiated tasks. The helper does not accept arbitrary connections.
 
-### What about the "Fabricated Security Features" claim?
-
-**Claim:** "SECURITY.md claims `applescript_tool` blocks destructive operations, but the code has no filtering logic."
-
-**Reality:** The write protection is implemented as a *parameter constraint* in the tool definition sent to the LLM, not as runtime filtering. When the LLM calls `applescript_tool`, the default behavior prevents destructive actions unless explicitly overridden.
-
-The design philosophy is:
-1. The LLM receives tool definitions with safe defaults
-2. Destructive operations require explicit `allow_writes: true`
-3. The user sees a preview of actions before execution
-4. High-risk actions show confirmation dialogs
-
-This is a *layered security* approach -- not just runtime checks, but also:
-- Tool schema constraints (LLM can't invent parameters)
-- User confirmation for dangerous operations
-- Audit logging of all actions
-
 ### What about the "TCC Bypass" concern?
 
 **Claim:** "AgentScript allows arbitrary code execution with inherited TCC permissions."
