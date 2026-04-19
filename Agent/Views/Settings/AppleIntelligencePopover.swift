@@ -51,6 +51,7 @@ struct AppleIntelligencePopover: View {
                         .toggleStyle(.switch)
                         .controlSize(.mini)
                         .labelsHidden()
+                        .tint(aiMediator.isEnabled ? Color.blue : Color.gray)
                 }
 
                 if aiMediator.isEnabled {
@@ -66,6 +67,7 @@ struct AppleIntelligencePopover: View {
                             .toggleStyle(.switch)
                             .controlSize(.mini)
                             .labelsHidden()
+                            .tint(aiMediator.triageEnabled ? Color.green : Color.orange)
                     }
 
                     GridRow {
@@ -80,6 +82,7 @@ struct AppleIntelligencePopover: View {
                             .toggleStyle(.switch)
                             .controlSize(.mini)
                             .labelsHidden()
+                            .tint(aiMediator.showAnnotationsToUser ? Color.pink : Color.orange)
                     }
 
                     GridRow {
@@ -94,6 +97,7 @@ struct AppleIntelligencePopover: View {
                             .toggleStyle(.switch)
                             .controlSize(.mini)
                             .labelsHidden()
+                            .tint(aiMediator.tokenCompressionEnabled ? Color.purple : Color.orange)
                     }
 
                     GridRow {
@@ -114,6 +118,7 @@ struct AppleIntelligencePopover: View {
                             .toggleStyle(.switch)
                             .controlSize(.mini)
                             .labelsHidden()
+                            .tint(hasAccessibility && aiMediator.accessibilityIntentEnabled ? Color.teal : Color.gray)
                             .disabled(!hasAccessibility)
                     }
                 }
