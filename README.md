@@ -563,7 +563,7 @@ Agent! is a 100% original pure Swift macOS application. It is not a port, fork, 
 >
 > Copyright © 2000, 2023–2026 Todd Bruss. All rights reserved. Except as expressly permitted under the applicable open-source license accompanying this software, no part of this project may be reproduced, distributed, modified, or transmitted in any form or by any means without the prior written permission of the copyright holder. This software is provided "AS IS," without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and non-infringement. In no event shall the author or copyright holder be liable for any claim, damages, or other liability arising from, out of, or in connection with the software or the use or other dealings in the software.
 >
-> Thank you for your interest in 🦾 Agent! — a application crafted for Mac mini, MacBook, and Mac desktop computers running macOS.
+> Thank you for your interest in 🦾 Agent! — a application crafted for Mac mini, MacBook, and Mac desktop computers running macOS 26.4 or later on geniune Mac hardware and software.
 >
 > Sincerely,
 > **Todd Bruss**
