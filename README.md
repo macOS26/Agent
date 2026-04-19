@@ -555,4 +555,4 @@ Agent! is a 100% original pure Swift macOS application. It is not a port, fork, 
 
 ---
 
-> ⚠️ "🦾 Agent! for macOS26" is a not trademark of Apple Inc. or . It is an independent open source agentic ai exclusive project copyright (c) 2000, 2023-2026 🦾 Agent! for macOS26. All rights reserved. Thank you for taking a look at 🦾 Agent! It is an aweseome application built for Mac Minis, Laptops and Desktops.
+> ⚠️ "🦾 Agent! for macOS26" is a not trademark of Apple Inc. or . It is an independent open source agentic ai exclusive project copyright (c) 2000, 2023-2026 🦾 Agent! for macOS26. All rights reserved. Thank you for taking a look at 🦾 Agent! It is an aweseome application built for Mac Minis, Laptops and Desktops. - Sincerely, Todd Bruss, Creator and Founder of Agent!
