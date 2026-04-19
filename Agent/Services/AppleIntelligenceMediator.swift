@@ -68,38 +68,40 @@ final class AppleIntelligenceMediator: ObservableObject {
         }
     }
 
-    /// Brain icon color is a live blend of every active sub-feature's toggle
+    /// Brain icon style is a live blend of every active sub-feature's toggle
     /// color, so a glance at the toolbar shows what the mediator is allowed to
-    /// do. Toggle colors mirror the popover:
-    ///   • master  → system blue
-    ///   • triage  → green
-    ///   • annot.  → hot pink
-    ///   • compr.  → purple
-    ///   • a11y    → teal (only when Accessibility permission is granted)
-    /// When the master is off, the icon is gray. When only the master is on,
-    /// the icon stays blue. Otherwise the active colors are averaged in RGB
-    /// space — so all-on lands on a balanced multi-hue tint, and turning a
-    /// switch off visibly shifts the blend.
-    var brainIconColor: Color {
-        if !isEnabled { return .gray }
+    /// do. Disabled master = gray. Only the master on = Apple-AI blue. Otherwise
+    /// the active colors are rendered as an `AngularGradient` so multiple hues
+    /// appear simultaneously instead of averaging into a single muddy tint.
+    var brainIconColor: AnyShapeStyle {
+        if !isEnabled { return AnyShapeStyle(Color.gray) }
 
-        // (red, green, blue) for each active toggle. Master always contributes
-        // so the icon never drifts away from "Apple-AI blue" entirely.
-        var components: [(Double, Double, Double)] = []
-        components.append((0.0, 0.48, 1.0))                       // system blue (master)
-        if triageEnabled            { components.append((0.20, 0.78, 0.35)) } // system green
-        if showAnnotationsToUser    { components.append((1.00, 0.40, 0.75)) } // hot pink
-        if tokenCompressionEnabled  { components.append((0.69, 0.32, 0.87)) } // system purple
+        // Active toggle colors. Master always contributes so the icon never
+        // drifts away from "Apple-AI blue" entirely.
+        var colors: [Color] = []
+        colors.append(Color(red: 0.0,  green: 0.48, blue: 1.00))   // system blue (master)
+        if triageEnabled            { colors.append(Color(red: 0.20, green: 0.78, blue: 0.35)) } // system green
+        if showAnnotationsToUser    { colors.append(Color(red: 1.00, green: 0.40, blue: 0.75)) } // hot pink
+        if tokenCompressionEnabled  { colors.append(Color(red: 0.69, green: 0.32, blue: 0.87)) } // system purple
         if accessibilityIntentEnabled && AccessibilityService.hasAccessibilityPermission() {
-            components.append((0.19, 0.69, 0.78))                 // system teal
+            colors.append(Color(red: 0.19, green: 0.69, blue: 0.78))                             // system teal
         }
 
-        let count = Double(components.count)
-        let r = components.reduce(0.0) { $0 + $1.0 } / count
-        let g = components.reduce(0.0) { $0 + $1.1 } / count
-        let b = components.reduce(0.0) { $0 + $1.2 } / count
-        return Color(red: r, green: g, blue: b)
+        // Only the master is on → flat blue, no gradient.
+        if colors.count == 1 { return AnyShapeStyle(colors[0]) }
+
+        // Multiple toggles → angular gradient that wraps around the icon so
+        // every active color is visible simultaneously.
+        var stops = colors
+        stops.append(colors[0]) // close the loop so the gradient seams cleanly
+        return AnyShapeStyle(
+            AngularGradient(
+                gradient: Gradient(colors: stops),
+                center: .center
+            )
+        )
     }
+
 
 
     // MARK: - Conversation Context (for Apple AI session)
