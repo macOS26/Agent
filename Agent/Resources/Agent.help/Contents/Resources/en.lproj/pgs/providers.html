@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="AppleTitle" content="LLM Providers">
+<meta name="AppleIcon" content="../gfx/icon.png">
+<meta name="robots" content="anchors">
+<title>LLM Providers — Agent Help</title>
+<link rel="stylesheet" href="../shrd/style.css">
+</head>
+<body>
+<nav><a href="../index.html">← Agent Help Home</a></nav>
+<h1>LLM Providers</h1>
+<p>Agent! supports multiple LLM backends. Configure them in <b>Settings → Providers</b>.</p>
+
+<h2>Claude (Anthropic)</h2>
+<ul>
+<li>Paste your API key from <a href="https://console.anthropic.com/">console.anthropic.com</a>.</li>
+<li>Streaming responses via SSE with native tool calling.</li>
+<li>Default model: <code>claude-opus-4</code> or <code>claude-sonnet-4</code>.</li>
+</ul>
+
+<h2>OpenAI-Compatible</h2>
+<ul>
+<li>Works with any endpoint that speaks the OpenAI Chat Completions API.</li>
+<li>Includes OpenAI, Groq, Together, Fireworks, DeepSeek, xAI, and local servers.</li>
+<li>Set the base URL and API key in Settings.</li>
+</ul>
+
+<h2>Ollama (Local)</h2>
+<ul>
+<li>Install <a href="https://ollama.com">Ollama</a> and pull a model (e.g. <code>ollama pull llama3.1</code>).</li>
+<li>Agent! auto-discovers models running at <code>http://localhost:11434</code>.</li>
+<li>100% offline — nothing leaves your Mac.</li>
+</ul>
+
+<h2>Apple Intelligence (Foundation Models)</h2>
+<ul>
+<li>Available on macOS 26+ with Apple Intelligence enabled.</li>
+<li>On-device inference — private and free.</li>
+<li>Smaller context window than Claude/GPT; best for quick tasks.</li>
+</ul>
+
+<h2>Fallback Chain</h2>
+<p>Set a priority order in <b>Settings → Fallback Chain</b>. Agent! will try providers in sequence if one fails or hits a rate limit.</p>
+
+<hr>
+<p><a href="../index.html">← Home</a> · <a href="getting-started.html">Getting Started</a> · <a href="tools.html">Tools</a></p>
+</body>
+</html>

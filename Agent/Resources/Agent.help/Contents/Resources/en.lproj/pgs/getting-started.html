@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="description" content="Getting Started with Agent">
+<meta name="keywords" content="setup, install, permissions, first run, API key">
+<meta name="AppleTitle" content="Getting Started">
+<title>Getting Started — Agent Help</title>
+<link rel="stylesheet" href="../shrd/style.css" type="text/css">
+</head>
+<body>
+<a href="../index.html" class="nav-back">← Agent Help</a>
+<h1>Getting Started</h1>
+
+<h2>First Launch</h2>
+<p>When you first launch Agent!, macOS will ask for several permissions. Grant each one to unlock the full capability surface:</p>
+<ul>
+  <li><strong>Accessibility</strong> — required to click buttons, read UI elements, and automate other apps</li>
+  <li><strong>Automation</strong> — required to send AppleScript commands to apps like Safari, Mail, Finder</li>
+  <li><strong>Full Disk Access</strong> — optional, enables reading files outside the sandbox</li>
+  <li><strong>Screen Recording</strong> — optional, required for screenshot-based tools</li>
+</ul>
+
+<div class="note">
+If you skip a permission, Agent! will prompt again the first time a tool that requires it is used. You can always change permissions later in <strong>System Settings → Privacy &amp; Security</strong>.
+</div>
+
+<h2>Adding an API Key</h2>
+<p>Agent! supports multiple LLM providers. Open <strong>Settings</strong> (<kbd>⌘,</kbd>) and navigate to <strong>Providers</strong>:</p>
+<ul>
+  <li><strong>Anthropic Claude</strong> — paste an API key from <code>console.anthropic.com</code></li>
+  <li><strong>OpenAI</strong> — paste an API key from <code>platform.openai.com</code></li>
+  <li><strong>Ollama</strong> — runs locally, no key required (install from ollama.com)</li>
+  <li><strong>Apple Intelligence</strong> — built in on Apple Silicon with macOS 26+</li>
+</ul>
+
+<h2>Setting a Project Folder</h2>
+<p>Agent! works best when pointed at a specific project. Click the folder icon in the header or drag a folder into the sidebar to set the current project. All file operations and shell commands run relative to this folder.</p>
+
+<h2>Installing the Privileged Helper (optional)</h2>
+<p>For tasks that require root access (disk cloning, software installation, system configuration), install the helper daemon from <strong>Settings → Daemon</strong>. You'll be prompted once to approve it in System Settings.</p>
+
+<p><a href="daemon.html">Learn more about the privileged daemon →</a></p>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="description" content="Giving Agent a Task">
+<meta name="keywords" content="task, prompt, request, input, attachments">
+<meta name="AppleTitle" content="Giving Agent! a Task">
+<title>Giving Agent! a Task — Agent Help</title>
+<link rel="stylesheet" href="../shrd/style.css" type="text/css">
+</head>
+<body>
+<a href="../index.html" class="nav-back">← Agent Help</a>
+<h1>Giving Agent! a Task</h1>
+
+<h2>Writing a Good Prompt</h2>
+<p>Agent! is autonomous — it will pick tools, run commands, and iterate on its own. Write tasks the way you'd write a short instruction to a capable assistant:</p>
+<ul>
+  <li><strong>Be specific about the goal</strong>, not the mechanics: "rename every .jpg in Downloads to lowercase" works better than "loop through files and call mv".</li>
+  <li><strong>Name the target file or folder</strong> when possible: "edit ContentView.swift so the header is centered".</li>
+  <li><strong>State constraints up front</strong>: "don't touch anything in the Tests folder".</li>
+</ul>
+
+<h2>Attaching Files &amp; Screenshots</h2>
+<p>Drop files, folders, or images directly onto the input field. Images become attachments the model can see. Text files are read into context.</p>
+
+<h2>Interrupting a Task</h2>
+<p>Click the <strong>Stop</strong> button in the header, or press <kbd>⌘.</kbd>, to cancel the current task. Agent! will halt at the next tool boundary.</p>
+
+<h2>Follow-up Messages</h2>
+<p>Once a task finishes, type again in the input field to continue the conversation. Agent! remembers everything in the current tab.</p>
+
+<div class="note">
+Each tab is an isolated conversation with its own history, project folder, and provider. Open new tabs with <kbd>⌘T</kbd>.
+</div>
+
+<h2>Task Modes</h2>
+<p>Tabs can run in different modes (set in <strong>Settings → Agent Options</strong>):</p>
+<ul>
+  <li><strong>Full</strong> — every tool group is available</li>
+  <li><strong>Coding</strong> — file, git, xcode, shell only</li>
+  <li><strong>Automation</strong> — AppleScript, JavaScript, Accessibility</li>
+  <li><strong>Web</strong> — Safari, Selenium, web search</li>
+  <li><strong>Plan</strong> — no tools run; Agent! drafts a plan you approve</li>
+</ul>
+</body>
+</html>

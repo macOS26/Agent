@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="description" content="The Privileged Helper Daemon">
+<keywords name="daemon, helper, SMAppService, root, XPC, launchd"></keywords>
+<meta name="AppleTitle" content="Privileged Helper">
+<title>Privileged Helper — Agent Help</title>
+<link rel="stylesheet" href="../shrd/style.css" type="text/css">
+</head>
+<body>
+<a href="../index.html" class="nav-back">← Agent Help</a>
+<h1>The Privileged Helper</h1>
+
+<h2>What It Is</h2>
+<p>Agent! ships with a small command-line tool called <strong>AgentHelper</strong> that runs as a Launch Daemon — meaning it runs as root and survives reboots. Its only job is to execute shell commands on behalf of the main app, over an authenticated XPC connection.</p>
+
+<h2>Why It's Needed</h2>
+<p>Most tasks run as your user account. But some operations — disk cloning, system configuration, installing software to <code>/usr/local</code> — require root. Rather than asking for an admin password every time, Agent! asks once, installs the helper, and the helper does the root-only work on request.</p>
+
+<h2>Installing the Helper</h2>
+<ol>
+  <li>Open <strong>Settings</strong> (<kbd>⌘,</kbd>)</li>
+  <li>Go to the <strong>Daemon</strong> tab</li>
+  <li>Click <strong>Install Helper</strong></li>
+  <li>macOS will show a notification — click <strong>Open System Settings</strong></li>
+  <li>In <strong>Login Items &amp; Extensions</strong>, enable the Agent helper</li>
+</ol>
+
+<h2>Removing the Helper</h2>
+<p>From the same Settings tab, click <strong>Uninstall Helper</strong>. This unloads the daemon and removes its registration.</p>
+
+<div class="warning">
+The helper only accepts connections from the signed Agent! app bundle. It verifies the caller's code signature before executing anything. If Agent! is modified or tampered with, the XPC connection is refused.
+</div>
+
+<h2>What the Helper Will Not Do</h2>
+<p>The same destructive-command guardrails that protect the user shell also protect the root shell. Commands like <code>rm -rf /</code>, writes to raw disk devices, and fork bombs are refused before they reach the shell, no matter which path invokes them.</p>
+
+<h2>Technical Details</h2>
+<ul>
+  <li><strong>Mach service:</strong> <code>Agent.app.toddbruss.helper</code></li>
+  <li><strong>Protocol:</strong> <code>HelperToolProtocol</code> (execute, cancel)</li>
+  <li><strong>Registration:</strong> <code>SMAppService.daemon</code></li>
+  <li><strong>Plist location:</strong> <code>/Library/LaunchDaemons/Agent.app.toddbruss.helper.plist</code> (installed by SMAppService)</li>
+</ul>
+</body>
+</html>

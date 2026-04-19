@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="description" content="App Automation with AppleScript and Accessibility">
+<meta name="keywords" content="applescript, jxa, accessibility, AXorcist, automation, SDEF">
+<meta name="AppleTitle" content="Automating Other Apps">
+<title>Automating Other Apps — Agent Help</title>
+<link rel="stylesheet" href="../shrd/style.css" type="text/css">
+</head>
+<body>
+<a href="../index.html" class="nav-back">← Agent Help</a>
+<h1>Automating Other Apps</h1>
+
+<h2>Accessibility (preferred for UI)</h2>
+<p>The <code>accessibility</code> tool uses AXorcist to find and act on UI elements by role and title — no coordinates, no screenshots. Examples:</p>
+<ul>
+  <li>Click a button: find an <code>AXButton</code> by title and click it</li>
+  <li>Type into a field: find an <code>AXTextField</code> and type into it</li>
+  <li>Invoke a menu: <code>click_menu_item</code> with a path like "File &gt; Save"</li>
+  <li>Read what's on screen: <code>find_element</code> returns the element's property dump</li>
+</ul>
+
+<div class="note">
+Pass either a natural app name ("Photo Booth") or a bundle ID ("com.apple.PhotoBooth") — both resolve correctly.
+</div>
+
+<h2>AppleScript</h2>
+<p>Every Mac app has its own AppleScript vocabulary. Agent! always reads the app's SDEF (Scripting Definition) first, then writes verified code. About 50 SDEFs ship bundled (Music, Mail, Safari, Pages, Finder, System Events, etc.).</p>
+
+<h2>JavaScript for Automation (JXA)</h2>
+<p>JXA is the JavaScript surface over the same scripting dictionaries. Use it when JS syntax is clearer than AppleScript's.</p>
+
+<h2>Agent Scripts</h2>
+<p>For complex automation, Agent! can write Swift dylibs — stored at <code>~/Documents/AgentScript/agents/</code>. These run in-process with full TCC, use ScriptingBridge for strongly-typed app automation, and can mix AppleScript where it's shorter.</p>
+
+<h2>System Events</h2>
+<p><code>com.apple.systemevents</code> is the universal helper. It handles keystrokes, menu invocation, UI element clicks, and process management for apps whose own dictionary doesn't cover what you need.</p>
+</body>
+</html>

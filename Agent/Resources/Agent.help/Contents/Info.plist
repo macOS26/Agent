@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleIdentifier</key>
+	<string>Agent.app.toddbruss.help</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>Agent Help</string>
+	<key>CFBundlePackageType</key>
+	<string>BNDL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleSignature</key>
+	<string>hbwr</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>HPDBookAccessPath</key>
+	<string>index.html</string>
+	<key>HPDBookIconPath</key>
+	<string>gfx/icon.png</string>
+	<key>HPDBookIndexPath</key>
+	<string>Agent.helpindex</string>
+	<key>HPDBookKBProduct</key>
+	<string>Agent</string>
+	<key>HPDBookKBURL</key>
+	<string>https://github.com/toddbruss/Agent</string>
+	<key>HPDBookRemoteURL</key>
+	<string>https://github.com/toddbruss/Agent</string>
+	<key>HPDBookTitle</key>
+	<string>Agent Help</string>
+	<key>HPDBookType</key>
+	<string>3</string>
+</dict>
+</plist>

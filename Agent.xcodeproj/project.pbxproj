@@ -1562,6 +1562,8 @@
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Agent!";
+				INFOPLIST_KEY_CFBundleHelpBookFolder = "Agent.help";
+				INFOPLIST_KEY_CFBundleHelpBookName = "Agent.app.toddbruss.help";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSAppleEventsUsageDescription = "Agent! needs to control other apps to run automation scripts on your behalf.";
 				INFOPLIST_KEY_NSAppleMusicUsageDescription = "Agent! needs Apple Music access for scripts that read your music library metadata via the MediaPlayer framework.";
@@ -1641,6 +1643,8 @@
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Agent!";
+				INFOPLIST_KEY_CFBundleHelpBookFolder = "Agent.help";
+				INFOPLIST_KEY_CFBundleHelpBookName = "Agent.app.toddbruss.help";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSAppleEventsUsageDescription = "Agent! needs to control other apps to run automation scripts on your behalf.";
 				INFOPLIST_KEY_NSAppleMusicUsageDescription = "Agent! needs Apple Music access for scripts that read your music library metadata via the MediaPlayer framework.";

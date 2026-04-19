@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="description" content="Tools and Capabilities">
+<meta name="keywords" content="tools, file, shell, git, xcode, web, automation">
+<meta name="AppleTitle" content="Tools &amp; Capabilities">
+<title>Tools &amp; Capabilities — Agent Help</title>
+<link rel="stylesheet" href="../shrd/style.css" type="text/css">
+</head>
+<body>
+<a href="../index.html" class="nav-back">← Agent Help</a>
+<h1>Tools &amp; Capabilities</h1>
+
+<h2>File Tools</h2>
+<ul>
+  <li><code>read_file</code>, <code>write_file</code>, <code>edit_file</code> — read, create, and modify files</li>
+  <li><code>list_files</code>, <code>search_files</code> — browse and search project contents</li>
+  <li><code>create_diff</code>, <code>apply_diff</code> — multi-line edits with preview</li>
+</ul>
+
+<h2>Git</h2>
+<p>The <code>git</code> tool exposes status, diff, log, commit, branch, and patch operations. Agent! commits after each successful build when working on code.</p>
+
+<h2>Xcode</h2>
+<p>The <code>xcode</code> tool builds Xcode projects, runs targets, adds and removes files from the project structure, bumps version/build numbers, and performs code review on specific line ranges.</p>
+
+<h2>Shell</h2>
+<ul>
+  <li><code>execute_agent_command</code> — runs shell commands as the current user via the Launch Agent (primary)</li>
+  <li><code>execute_daemon_command</code> — runs as root via the Launch Daemon (admin tasks only)</li>
+</ul>
+
+<div class="warning">
+Some destructive commands (<code>rm -rf /</code>, <code>dd of=/dev/disk*</code>, fork bombs, etc.) are blocked before they reach the shell. This guardrail cannot be bypassed with <code>sudo</code> or <code>eval</code>.
+</div>
+
+<h2>Web</h2>
+<ul>
+  <li><code>web</code> — Safari automation: open URLs, click, type, read content</li>
+  <li><code>selenium</code> — Chrome/Firefox automation with WebDriver</li>
+  <li><code>web_search</code> — search the internet via Tavily</li>
+  <li><code>fetch</code> — fetch and strip HTML from a URL</li>
+</ul>
+
+<h2>Automation</h2>
+<ul>
+  <li><code>applescript_tool</code> — NSAppleScript, in-process with TCC</li>
+  <li><code>javascript_tool</code> — JavaScript for Automation (JXA)</li>
+  <li><code>accessibility</code> — element-based UI automation (AXorcist)</li>
+</ul>
+
+<p><a href="automation.html">Details on app automation →</a></p>
+
+<h2>Planning &amp; Memory</h2>
+<ul>
+  <li><code>plan_mode</code> — multi-step plans with progress tracking</li>
+  <li><code>memory</code> — persistent notes across conversations (global or per-project)</li>
+  <li><code>index</code> — repo-map with symbols and docs</li>
+</ul>
+
+<h2>Sub-Agents</h2>
+<p>Agent! can spawn isolated sub-agents for parallel work via <code>spawn_agent</code>, and talk to them via <code>tell_agent</code>. Up to three run concurrently.</p>
+</body>
+</html>

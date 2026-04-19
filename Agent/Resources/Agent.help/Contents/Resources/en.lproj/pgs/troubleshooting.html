@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="description" content="Troubleshooting">
+<meta name="keywords" content="troubleshooting, errors, fix, permissions, reset">
+<meta name="AppleTitle" content="Troubleshooting">
+<title>Troubleshooting — Agent Help</title>
+<link rel="stylesheet" href="../shrd/style.css" type="text/css">
+</head>
+<body>
+<a href="../index.html" class="nav-back">← Agent Help</a>
+<h1>Troubleshooting</h1>
+
+<h2>Agent! Isn't Clicking or Typing</h2>
+<p>Accessibility permission is missing or was denied. Open <strong>System Settings → Privacy &amp; Security → Accessibility</strong>, remove Agent! from the list, then re-run a task that needs it and grant permission when prompted.</p>
+
+<h2>"The helper tool is not installed"</h2>
+<p>Open <strong>Settings → Daemon</strong> and click <strong>Install Helper</strong>. If the install button does nothing, check <strong>System Settings → Login Items &amp; Extensions</strong> — the helper may be waiting for you to enable it.</p>
+
+<h2>Build Fails in Xcode</h2>
+<ul>
+  <li>Make sure <strong>Agent.xcodeproj</strong> is selected, not a nested project</li>
+  <li>Development team must be set to <strong>469UCUB275</strong> (or your own team)</li>
+  <li>Deployment target is <strong>macOS 26.0</strong>, Swift 6.2</li>
+  <li>Clean the build folder (<kbd>⌘⇧K</kbd>) and rebuild</li>
+</ul>
+
+<h2>API Key Errors</h2>
+<p>Open <strong>Settings → Providers</strong> and verify the key is pasted correctly (no leading/trailing spaces). For Claude keys, they begin with <code>sk-ant-</code>.</p>
+
+<h2>Ollama Models Not Listed</h2>
+<p>Make sure Ollama is running (<code>ollama serve</code>) and at least one model is pulled (<code>ollama pull llama3.1</code>). Then click <strong>Refresh Models</strong> in Settings.</p>
+
+<h2>Tasks Get Stuck or Loop</h2>
+<p>Press <kbd>⌘.</kbd> to stop. Agent! has built-in loop detection, but if the model is truly stuck, starting a fresh tab with a clearer prompt usually works better than pushing through.</p>
+
+<h2>Reset Everything</h2>
+<p>To return Agent! to defaults:</p>
+<ol>
+  <li>Quit Agent!</li>
+  <li>Remove <code>~/Library/Preferences/Agent.app.toddbruss.plist</code></li>
+  <li>Remove <code>~/Library/Application Support/Agent/</code></li>
+  <li>Relaunch</li>
+</ol>
+
+<div class="note">
+This does <em>not</em> remove saved scripts in <code>~/Documents/AgentScript/</code>. Delete that folder separately if you want a completely fresh start.
+</div>
+
+<h2>Getting More Help</h2>
+<p>Check the project repository for the latest documentation and to file issues.</p>
+</body>
+</html>

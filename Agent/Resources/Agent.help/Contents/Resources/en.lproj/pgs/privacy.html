@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="AppleTitle" content="Privacy &amp; Security">
+<meta name="AppleIcon" content="../gfx/icon.png">
+<meta name="robots" content="anchors">
+<title>Privacy &amp; Security — Agent Help</title>
+<link rel="stylesheet" href="../shrd/style.css">
+</head>
+<body>
+<nav><a href="../index.html">← Agent Help Home</a></nav>
+<h1>Privacy &amp; Security</h1>
+
+<h2>What Agent! Sends Over the Network</h2>
+<ul>
+<li>Only your prompts and tool results go to the LLM provider you configured.</li>
+<li>Using <b>Ollama</b> or <b>Apple Intelligence</b>? Nothing leaves your Mac.</li>
+<li>Agent! itself has no telemetry, analytics, or phone-home.</li>
+</ul>
+
+<h2>API Keys</h2>
+<ul>
+<li>Stored in the macOS <b>Keychain</b>, never in plain text.</li>
+<li>Scoped per-provider; revoke anytime from the provider's console.</li>
+</ul>
+
+<h2>Privileged Helper (AgentHelper)</h2>
+<ul>
+<li>Installed via <code>SMAppService</code> — you approve once in System Settings.</li>
+<li>Runs as root so Agent! can execute admin tasks (disk operations, installers).</li>
+<li>Communicates over XPC with the <code>.privileged</code> option.</li>
+<li>Remove anytime: <b>System Settings → General → Login Items → Background</b>.</li>
+</ul>
+
+<h2>TCC Permissions</h2>
+<p>Agent! may request:</p>
+<ul>
+<li><b>Accessibility</b> — for UI automation (clicking, typing into other apps).</li>
+<li><b>Automation</b> — per-app prompts when running AppleScript or ScriptingBridge.</li>
+<li><b>Full Disk Access</b> — only if a script reads protected folders.</li>
+<li><b>Screen Recording</b> — only if you ask for screenshots.</li>
+</ul>
+<p>Grant or revoke any of these in <b>System Settings → Privacy &amp; Security</b>.</p>
+
+<h2>Shell Safety Guardrails</h2>
+<p>Agent! refuses destructive shell commands at the tool layer — <code>rm -rf /</code>, <code>dd of=/dev/disk*</code>, fork bombs, raw filesystem writes, and more. The guard runs before XPC, so even a confused LLM can't destroy your machine.</p>
+
+<h2>Local Data</h2>
+<ul>
+<li>Conversations: <code>~/Documents/AgentScript/sessions/</code>.</li>
+<li>Per-project memory: <code>&lt;project&gt;/.agent/memory/</code>.</li>
+<li>Global memory: <code>~/Documents/AgentScript/memory/</code>.</li>
+<li>All files are plain text — inspect or delete anytime.</li>
+</ul>
+
+<hr>
+<p><a href="../index.html">← Home</a> · <a href="daemon.html">Privileged Helper</a> · <a href="troubleshooting.html">Troubleshooting</a></p>
+</body>
+</html>

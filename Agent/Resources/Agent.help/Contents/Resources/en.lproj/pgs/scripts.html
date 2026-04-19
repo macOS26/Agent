@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="AppleTitle" content="Agent Scripts">
+<meta name="AppleIcon" content="../gfx/icon.png">
+<meta name="robots" content="anchors">
+<title>Agent Scripts — Agent Help</title>
+<link rel="stylesheet" href="../shrd/style.css">
+</head>
+<body>
+<nav><a href="../index.html">← Agent Help Home</a></nav>
+<h1>Agent Scripts</h1>
+<p>Agent Scripts are native Swift dylibs that run in-process with full TCC permissions. They're the fastest, most powerful way to extend Agent!.</p>
+
+<h2>Where They Live</h2>
+<p>Scripts are stored in <code>~/Documents/AgentScript/agents/</code>. Each script is a single <code>.swift</code> file compiled on demand into a dylib.</p>
+
+<h2>Entry Point</h2>
+<pre><code>import Foundation
+
+@_cdecl("script_main")
+public func scriptMain() -&gt; Int32 {
+    let folder = ProcessInfo.processInfo.environment["AGENT_PROJECT_FOLDER"]
+              ?? FileManager.default.currentDirectoryPath
+    let args   = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""
+    print("Project: \(folder)")
+    print("Args: \(args)")
+    return 0
+}</code></pre>
+
+<h2>App Automation</h2>
+<ul>
+<li><b>ScriptingBridge</b> (preferred): <code>import MusicBridge</code>, then <code>SBApplication(bundleIdentifier:)</code>.</li>
+<li><b>NSAppleScript</b> (fallback): one-liners when ScriptingBridge is awkward.</li>
+<li>50+ bridges shipped: Safari, Mail, Pages, Numbers, Keynote, Finder, System Events, Music, Notes, Reminders, Calendar, Contacts, Photos, and more.</li>
+</ul>
+
+<h2>Running Scripts</h2>
+<ul>
+<li>From the LLM: <code>agent_script(action:"run", name:"my-script")</code>.</li>
+<li>From the UI: <b>Tools → Agent Scripts</b>.</li>
+<li>Pass data via the <code>arguments</code> parameter — it becomes <code>AGENT_SCRIPT_ARGS</code> in the script.</li>
+</ul>
+
+<h2>Safety</h2>
+<ul>
+<li>Deleting a script always creates a <code>.Trash</code> backup (restorable).</li>
+<li>Scripts inherit Agent!'s TCC — grant permissions once, reuse everywhere.</li>
+<li>Full Swift standard library + Foundation + SwiftUI + AppKit available.</li>
+</ul>
+
+<hr>
+<p><a href="../index.html">← Home</a> · <a href="tools.html">Tools</a> · <a href="automation.html">App Automation</a></p>
+</body>
+</html>
