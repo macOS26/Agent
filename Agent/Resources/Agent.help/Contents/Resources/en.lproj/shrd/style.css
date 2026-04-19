@@ -1,23 +1,20 @@
-/* Agent Help — Apple Help Book stylesheet with dark/light mode support */
+/* Agent Help — Apple Help Book stylesheet with dark/light mode support.
+   Modeled after Logos InkPen Help (which renders correctly in Help Viewer).
+   No <kbd> element — keys use <code class="key"> to sidestep any UA
+   stylesheet interference with the default <kbd> rendering. */
 
-/* Opt the document in to both color schemes so Help Viewer's WebKit engine
-   picks the right defaults. Without color-scheme, form controls and system
-   colors stay locked to light mode even when <kbd>/<code> rules change. */
 :root {
   color-scheme: light dark;
 
   --bg-primary: #ffffff;
   --bg-secondary: #f5f5f7;
-  --bg-accent: #f9f9f9;
   --text-primary: #1d1d1f;
   --text-secondary: #6e6e73;
   --border-color: #d2d2d7;
   --border-subtle: #e5e5ea;
   --link-color: #0066cc;
   --link-visited: #6e40c9;
-  --code-bg: #f5f5f7;
-  --kbd-bg: #f5f5f7;
-  --kbd-border: #d2d2d7;
+  --code-bg: #f0f0f2;
   --note-bg: #fff9e6;
   --note-border: #ffcc00;
   --warning-bg: #ffeeee;
@@ -28,7 +25,6 @@
   :root {
     --bg-primary: #1e1e1e;
     --bg-secondary: #2c2c2e;
-    --bg-accent: #2a2a2a;
     --text-primary: #f5f5f7;
     --text-secondary: #8e8e93;
     --border-color: #3a3a3c;
@@ -36,8 +32,6 @@
     --link-color: #2997ff;
     --link-visited: #bf5af2;
     --code-bg: #2c2c2e;
-    --kbd-bg: #2c2c2e;
-    --kbd-border: #48484a;
     --note-bg: #3a2f00;
     --note-border: #ffd60a;
     --warning-bg: #3a1515;
@@ -73,19 +67,8 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--text-primary);
 }
 
-h2 {
-  font-size: 16px;
-  font-weight: 600;
-  margin-top: 24px;
-  margin-bottom: 8px;
-}
-
-h3 {
-  font-size: 14px;
-  font-weight: 600;
-  margin-top: 18px;
-  margin-bottom: 6px;
-}
+h2 { font-size: 16px; font-weight: 600; margin-top: 24px; margin-bottom: 8px; }
+h3 { font-size: 14px; font-weight: 600; margin-top: 18px; margin-bottom: 6px; }
 
 p, li, td, th, strong, em, span {
   color: var(--text-primary);
@@ -108,29 +91,25 @@ a {
 a:hover { text-decoration: underline; }
 a:visited { color: var(--link-visited); }
 
-/* Keyboard keys — explicit color on every rule so Help Viewer's UA
-   stylesheet can't override the glyphs to white-on-white. */
-kbd, code.key {
-  font-family: "SF Mono", Menlo, Consolas, monospace;
-  font-size: 11px;
-  color: var(--text-primary);
-  background-color: var(--kbd-bg);
-  border: 1px solid var(--kbd-border);
-  border-radius: 3px;
-  padding: 1px 6px;
-  margin: 0 2px;
-  display: inline-block;
-  min-width: 18px;
-  text-align: center;
-}
-
+/* Inline code — Logos pattern, just `<code>`. Uses !important to block
+   any Help Viewer UA stylesheet from winning specificity on color. */
 code {
   font-family: "SF Mono", Menlo, Consolas, monospace;
   font-size: 12px;
-  color: var(--text-primary);
-  background-color: var(--code-bg);
+  color: var(--text-primary) !important;
+  background: var(--code-bg) !important;
+  padding: 2px 6px;
   border-radius: 3px;
-  padding: 1px 5px;
+}
+
+/* Keyboard keys — <code class="key">. Slightly bolder border, centered. */
+code.key {
+  font-size: 11px;
+  padding: 1px 6px;
+  display: inline-block;
+  min-width: 18px;
+  text-align: center;
+  border: 1px solid var(--border-color);
 }
 
 pre {
@@ -141,6 +120,11 @@ pre {
   border-radius: 6px;
   padding: 12px;
   overflow-x: auto;
+}
+pre code {
+  background: transparent !important;
+  padding: 0;
+  border: none;
 }
 
 .topic-list { list-style: none; padding-left: 0; }
