@@ -552,7 +552,7 @@ Agent! is a 100% original pure Swift macOS application. It is not a port, fork, 
 
 ---
 
-> ⚠️**Legal Notice & Attribution**
+> ⚠️ **Legal Notice & Attribution**
 >
 > ### Trademark Notice
 >
