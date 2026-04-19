@@ -43,7 +43,7 @@ struct AppleIntelligencePopover: View {
                     VStack(alignment: .leading) {
                         Text("Enable Mediator")
                             .font(.caption)
-                        Text("Triage greetings, summarize tasks, explain errors via on-device Apple AI")
+                        Text("Master switch for on-device Apple AI — sub-features below are only active when this is on")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
@@ -54,6 +54,20 @@ struct AppleIntelligencePopover: View {
                 }
 
                 if aiMediator.isEnabled {
+                    GridRow {
+                        VStack(alignment: .leading) {
+                            Text("Triage greetings")
+                                .font(.caption)
+                            Text("Answer hi / hello / thanks on-device before the cloud LLM — skip the round-trip for small talk")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        Toggle("", isOn: $aiMediator.triageEnabled)
+                            .toggleStyle(.switch)
+                            .controlSize(.mini)
+                            .labelsHidden()
+                    }
+
                     GridRow {
                         VStack(alignment: .leading) {
                             Text("Show annotations to user")

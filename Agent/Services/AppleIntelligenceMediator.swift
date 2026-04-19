@@ -58,6 +58,16 @@ final class AppleIntelligenceMediator: ObservableObject {
         }
     }
 
+    /// Conversational triage — Apple AI answers greetings / small-talk on-device
+    /// before the cloud LLM is invoked. Independent of the accessibility-intent
+    /// and annotation features so users can turn triage off while still getting
+    /// task summaries or on-device UI automation.
+    @Published var triageEnabled: Bool = UserDefaults.standard.object(forKey: "appleIntelligenceTriage") as? Bool ?? true {
+        didSet {
+            UserDefaults.standard.set(triageEnabled, forKey: "appleIntelligenceTriage")
+        }
+    }
+
     /// Brain icon color encodes which Apple-AI sub-features are active so you can
     /// glance at the toolbar and see what the mediator is allowed to do:
     ///   • gray   — mediator disabled entirely (off — the default)
@@ -853,7 +863,10 @@ final class AppleIntelligenceMediator: ObservableObject {
                 return .accessibilityHandled(result)
             }
         }
-        // Local classification — no AI needed
+        // Local classification — no AI needed. Triage can be disabled separately
+        // from the other Apple-AI features; when off we never spend an on-device
+        // turn answering greetings / small-talk.
+        guard triageEnabled else { return .passThrough }
         guard Self.isConversationalPrompt(message) else { return .passThrough }
         // Ask Apple AI to answer (not classify)
         let session = ensureSession()
