@@ -552,17 +552,35 @@ Agent! is a 100% original pure Swift macOS application. It is not a port, fork, 
 
 ---
 
-> ⚠️ **Legal Notice & Attribution**
+> ⚠️**Legal Notice & Attribution**
 >
-> "🦾 Agent! for macOS26" is an independent software project and is **not** affiliated with, endorsed by, sponsored by, or otherwise associated with Apple Inc. "Apple," "Mac," "Mac mini," "MacBook," "macOS," and related marks are trademarks of Apple Inc., registered in the U.S. and other countries. All other trademarks, service marks, and trade names referenced herein are the property of their respective owners and are used for identification purposes only.
+> ### Trademark Notice
 >
-> "🦾 Agent! for macOS26" is an independent, open-source, agentic AI project.
+> "🦾Agent! for macOS26" is an independent software project and is **not** affiliated with, endorsed by, sponsored by, or otherwise associated with Apple Inc. "Apple," "Mac," "Mac mini," "MacBook," "macOS," and related marks are trademarks of Apple Inc., registered in the U.S. and other countries. All other trademarks, service marks, and trade names referenced herein are the property of their respective owners and are used for identification purposes only.
 >
-> Copyright © 2000, 2023–2026 Todd Bruss. All rights reserved. Except as expressly permitted under the applicable open-source license accompanying this software, no part of this project may be reproduced, distributed, modified, or transmitted in any form or by any means without the prior written permission of the copyright holder. This software is provided "AS IS," without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and non-infringement. In no event shall the author or copyright holder be liable for any claim, damages, or other liability arising from, out of, or in connection with the software or the use or other dealings in the software.
+> "🦾Agent!" and the 🦾Agent! logo are trademarks of Todd Bruss. Use of these marks requires prior written permission. The MIT license below grants rights to the source code only — it does **not** grant any trademark rights.
 >
-> Thank you for your interest in 🦾 Agent! — a application crafted for Mac mini, MacBook, and Mac desktop computers running macOS 26.4 or later on geniune Mac hardware and software.
+> ### Source Code License (MIT)
+>
+> The source code of "🦾Agent! for macOS26" is open source and licensed under the **MIT License**. You are free to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the source code, subject to the conditions in the [LICENSE](./LICENSE) file (retain copyright notice and the MIT permission notice in all copies or substantial portions of the software).
+>
+> Copyright © 2000, 2023–2026 Todd Bruss.
+>
+> ### Compiled Binaries & Releases
+>
+> Compiled binaries, installers, code-signed builds, and release artifacts distributed through this project's GitHub Releases, [agent.macOS26.app](https://agent.macOS26.app), or any other official channel are the copyrighted work of Todd Bruss and are **not** covered by the MIT license that governs the source code. All rights to the official binaries — including the "🦾Agent!" name, logo, code-signing identity, and Developer ID — are reserved.
+>
+> You are welcome to build your own binaries from source under the MIT license, provided you do not use the "🦾Agent!" name, logo, or branding to identify your build.
+>
+> ### Warranty Disclaimer
+>
+> This software is provided **"AS IS,"** without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and non-infringement. In no event shall the author or copyright holder be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.
+>
+> ---
+>
+> Thank you for your interest in 🦾Agent! — an application crafted for Mac mini, MacBook, and Mac desktop computers running macOS 26.4 or later on genuine Mac hardware and software.
 >
 > Sincerely,
 > **Todd Bruss**
-> Creator and Founder, 🦾 Agent! for macOS26
+> Creator and Founder, 🦾Agent! for macOS26
 > https://agent.macOS26.app
