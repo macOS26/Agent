@@ -69,11 +69,15 @@ a:hover { text-decoration: underline; }
 kbd {
   font-family: "SF Mono", Menlo, Consolas, monospace;
   font-size: 11px;
+  color: #1d1d1f;
   background-color: #f5f5f7;
   border: 1px solid #d2d2d7;
   border-radius: 3px;
   padding: 1px 6px;
   margin: 0 2px;
+  display: inline-block;
+  min-width: 18px;
+  text-align: center;
 }
 
 code {
@@ -142,4 +146,25 @@ pre {
 
 @media (prefers-color-scheme: dark) {
   .warning { background-color: #3a1515; border-left-color: #ff453a; }
+}
+
+table.shortcuts {
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+table.shortcuts th {
+  text-align: left;
+  font-weight: 600;
+  padding: 6px 24px 6px 0;
+  border-bottom: 1px solid #d2d2d7;
+}
+table.shortcuts td {
+  padding: 6px 24px 6px 0;
+  vertical-align: middle;
+}
+table.shortcuts td:first-child {
+  white-space: nowrap;
+}
+@media (prefers-color-scheme: dark) {
+  table.shortcuts th { border-bottom-color: #3a3a3c; }
 }
