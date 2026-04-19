@@ -24,15 +24,9 @@
 	<string>gfx/icon.png</string>
 	<key>HPDBookIndexPath</key>
 	<string>Agent.helpindex</string>
-	<key>HPDBookKBProduct</key>
-	<string>Agent</string>
-	<key>HPDBookKBURL</key>
-	<string>https://github.com/macos26/agent</string>
-	<key>HPDBookRemoteURL</key>
-	<string>https://github.com/macos26/agent</string>
 	<key>HPDBookTitle</key>
 	<string>Agent Help</string>
 	<key>HPDBookType</key>
-	<string>3</string>
+	<string>1</string>
 </dict>
 </plist>
