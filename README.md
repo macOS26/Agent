@@ -7,7 +7,7 @@
 <img width="1326" height="1428" alt="image" src="https://github.com/user-attachments/assets/9616193e-ab81-456b-ae8f-6fc182d0d6b0" />
 
 ## **Agentic AI for your  Mac Desktop**
-## Open Source replacement for Claude Code, Cursor and OpenClaw
+## Open Source replacement for Claude Code, Cursor, Cline, OpenClaw
 
 [![Latest Release](https://img.shields.io/github/v/release/macOS26/Agent?label=Download&color=blue&style=for-the-badge)](https://github.com/macOS26/Agent/releases/latest)
 [![GitHub Stars](https://img.shields.io/github/stars/macOS26/Agent?style=for-the-badge&logo=github&label=Stars&color=hotpink)](https://github.com/macOS26/Agent/stargazers)
@@ -48,7 +48,7 @@ Download it. Say what you need. Watch it happen.
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/macos26/Agent.git
+   git clone https://github.com/macos26/agent.git
    cd Agent
    ```
 
@@ -516,7 +516,7 @@ MIT - free and open source.
 
 <div align="center">
 
-### **Agent! for macOS 26.4+ Agentic AI for your  Mac Desktop**
+### **Agent! for macOS 26.4+ - Agentic AI for your  Mac Desktop**
 > Note: Claude refers to the Anthropic AI model integrated into Agent! for LLM functionality. It is not a human contributor Agent!
 </div>
 

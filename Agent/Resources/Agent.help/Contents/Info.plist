@@ -27,9 +27,9 @@
 	<key>HPDBookKBProduct</key>
 	<string>Agent</string>
 	<key>HPDBookKBURL</key>
-	<string>https://github.com/toddbruss/Agent</string>
+	<string>https://github.com/macos26/agent</string>
 	<key>HPDBookRemoteURL</key>
-	<string>https://github.com/toddbruss/Agent</string>
+	<string>https://github.com/macos26/agent</string>
 	<key>HPDBookTitle</key>
 	<string>Agent Help</string>
 	<key>HPDBookType</key>
