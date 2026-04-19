@@ -171,8 +171,34 @@ struct HeaderToolbarButtons: View {
         }
 
         Button { showAIPopover.toggle() } label: {
+            let colors = aiMediator.brainIconColors
+            // Build a smooth, wrap-around blend: repeat the first color at the
+            // end so the angular gradient closes seamlessly, and interleave a
+            // soft midpoint (first⇄second mixed) so two-color blends read as
+            // a true blend rather than two halves.
+            let blended: [Color] = {
+                guard colors.count > 1 else { return colors }
+                var out: [Color] = []
+                for (i, c) in colors.enumerated() {
+                    out.append(c)
+                    let next = colors[(i + 1) % colors.count]
+                    // soft midpoint via opacity overlay blend
+                    out.append(c.mix(with: next, by: 0.5))
+                }
+                out.append(colors[0])  // close the loop
+                return out
+            }()
             Image(systemName: AppleIntelligenceMediator.isAvailable ? "brain.fill" : "brain")
-                .foregroundStyle(aiMediator.brainIconColor)
+                .foregroundStyle(
+                    colors.isEmpty
+                        ? AnyShapeStyle(Color.gray)
+                        : (colors.count == 1
+                            ? AnyShapeStyle(colors[0])
+                            : AnyShapeStyle(AngularGradient(
+                                colors: blended,
+                                center: .center
+                              )))
+                )
         }
         .help("Apple Intelligence Settings")
         .accessibilityLabel("Apple Intelligence")
