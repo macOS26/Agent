@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/macOS26/AgentAccess.git",
       "state" : {
-        "revision" : "cdd67eb7ba84e3155a55d79cad1d3fdceed5558a",
-        "version" : "2.10.2"
+        "revision" : "06a791a516ec8ebd6aaefe10d5ec1c1cc5065323",
+        "version" : "2.10.3"
       }
     },
     {
@@ -34,7 +34,7 @@
       "location" : "https://github.com/macOS26/AgentD1F.git",
       "state" : {
         "revision" : "2f65032044581b21d8686be9ddbacd1839d3cbb2",
-        "version" : "1.0.2"
+        "version" : "1.0.3"
       }
     },
     {
@@ -70,7 +70,7 @@
       "location" : "https://github.com/macOS26/AgentSwift.git",
       "state" : {
         "revision" : "6e58d69eadfa7e9f72dd6e505aa04c27f2df0f86",
-        "version" : "1.1.0"
+        "version" : "1.1.1"
       }
     },
     {
@@ -78,8 +78,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/macOS26/AgentTerminalNeo.git",
       "state" : {
-        "revision" : "39cd40955d235445fdb9a9f8281678c2ae93271a",
-        "version" : "1.37.1"
+        "revision" : "8f94990875c1f680c607c74132eafd63e44e8686",
+        "version" : "1.37.2"
       }
     },
     {
@@ -87,8 +87,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/macOS26/AgentTools.git",
       "state" : {
-        "revision" : "5f5e43142dbb71292af3809c14dae1443c7aa25a",
-        "version" : "2.51.5"
+        "revision" : "f810f7b4d7afaa2ae8d0ab2a7b405aeb521bc587",
+        "version" : "2.51.6"
       }
     },
     {
