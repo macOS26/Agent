@@ -500,7 +500,7 @@ extension AgentViewModel {
             )
 
         case "ax_click_menu_item":
-            let app = input["app"] as? String
+            let app = input["app"] as? String ?? input["appBundleId"] as? String
             let menuPath = input["menu_path"] as? [String] ?? []
             tab.appendLog("👆 menu: \(menuPath.joined(separator: " > "))...")
             tab.flush()
@@ -511,7 +511,7 @@ extension AgentViewModel {
             return TabToolResult(toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output], isComplete: false)
 
         case "ax_set_window_frame":
-            let app = input["app"] as? String
+            let app = input["app"] as? String ?? input["appBundleId"] as? String
             let x = (input["x"] as? Double).map { CGFloat($0) }
             let y = (input["y"] as? Double).map { CGFloat($0) }
             let width = (input["width"] as? Double).map { CGFloat($0) }
@@ -527,7 +527,7 @@ extension AgentViewModel {
         case "ax_manage_app":
             let action = input["sub_action"] as? String
                 ?? { let a = input["action"] as? String ?? "list"; return a == "manage_app" ? "list" : a }()
-            let bundleId = input["bundleId"] as? String
+            let bundleId = input["bundleId"] as? String ?? input["appBundleId"] as? String
             let appName = input["name"] as? String ?? input["app"] as? String
             tab.appendLog("📱 \(action)...")
             tab.flush()
