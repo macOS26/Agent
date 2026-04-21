@@ -561,11 +561,11 @@ Agent! is a 100% original pure Swift macOS application. It is not a port, fork, 
 >
 > The source code of "🦾 Agent! for macOS26" is open source and licensed under the **MIT License**. You are free to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the source code, subject to the conditions in the [LICENSE](./LICENSE) file (retain copyright notice and the MIT permission notice in all copies or substantial portions of the software).
 >
-> Copyright © 2000, 2023–2026 Todd Bruss.
->
 > ### Compiled Binaries & Releases
 >
 > Compiled binaries, installers, code-signed builds, and release artifacts distributed through this project's GitHub Releases, [agent.macOS26.app](https://agent.macOS26.app), or any other official channel are the copyrighted work of Todd Bruss and are **not** covered by the MIT license that governs the source code. All rights to the official binaries — including the "🦾 Agent!" name, logo, code-signing identity, and Developer ID — are reserved.
+>
+> Copyright © 2000, 2023–2026 Todd Brus, All Rights Reserved.
 >
 > You are welcome to build your own binaries from source under the MIT license, provided you do not use the "🦾 Agent!" name, logo, or branding to identify your build.
 >
