@@ -2,7 +2,7 @@
 <div align="center">
 <img width="256" height="256" alt="Agent! icon" src="https://github.com/user-attachments/assets/7a452184-6b31-49fa-9b24-d450d2889f66" />
 
-# 🦾 Agent! for macOS 26.4+
+# 🦾 Agent! for macOS 26.4.1
 
 <img width="1326" height="1428" alt="image" src="https://github.com/user-attachments/assets/9616193e-ab81-456b-ae8f-6fc182d0d6b0" />
 
@@ -10,9 +10,9 @@
 ## Open Source alternative to Claude Code, Cursor and Open Claw
 
 [![Latest Release](https://img.shields.io/github/v/release/macOS26/Agent?label=Download&color=blue&style=for-the-badge)](https://github.com/macOS26/Agent/releases/latest)
-[![GitHub Stars](https://img.shields.io/github/stars/macOS26/Agent?style=for-the-badge&logo=github&label=Stars&color=hotpink)](https://github.com/macOS26/Agent/stargazers)
+[![GitHub Stars](https://img.shields.io/github/stars/macOS26/Agent?style=for-the-badge&logo=github&label=Stars&color=gold)](https://github.com/macOS26/Agent/stargazers)
 [![GitHub Forks](https://img.shields.io/github/forks/macOS26/Agent?style=for-the-badge&logo=github&label=Forks&color=white)](https://github.com/macOS26/Agent/fork)
-[![macOS 26.4+](https://img.shields.io/badge/macOS-26.4%2B-purple?style=for-the-badge)](https://github.com/apple)
+[![macOS 26.4+](https://img.shields.io/badge/macOS-26.4.1-green?style=for-the-badge)](https://github.com/apple)
 [![Swift 6.2](https://img.shields.io/badge/Swift-6.2-orange?style=for-the-badge)](https://www.swift.org)
 <p><a href="https://www.paypal.com/ncp/payment/9C6RY2UAE5M3S"><img src="https://img.shields.io/badge/Donation-PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white" alt="Tip Jar" /></a>
 <p><b>Thank you for your interest and support!</b></p>
@@ -390,7 +390,7 @@ Type these in the input field and press Return — they execute locally without 
 
 **How much does it cost?** The Agent! app itself is free (MIT License). Cloud AI providers charge for API usage — the cheapest options for serious work are GLM-5/5.1 via Z.ai, BigModel, or Hugging Face (pennies per million tokens), or DeepSeek for budget coding. Self-hosted local models (Ollama, vLLM, LM Studio) have no API fees but only make sense if you already own the hardware to run them — see the hardware note below.
 
-**What Mac do I need?** macOS 26.4+. Apple Silicon required. For cloud providers, any modern Mac works fine. For self-hosted local models (Ollama, vLLM, LM Studio): a 7B model fits in 16GB unified memory, a 13B model in 24GB, a 30B model needs 64GB+ (M2/M3/M4 Ultra Mac Studio territory). Apple Intelligence (the on-device mediator for triage / accessibility intent / token compression) needs an Apple Silicon Mac with Apple Intelligence enabled in System Settings.
+**What Mac do I need?** macOS 26.4.1. Apple Silicon required. For cloud providers, any modern Mac works fine. For self-hosted local models (Ollama, vLLM, LM Studio): a 7B model fits in 16GB unified memory, a 13B model in 24GB, a 30B model needs 64GB+ (M2/M3/M4 Ultra Mac Studio territory). Apple Intelligence (the on-device mediator for triage / accessibility intent / token compression) needs an Apple Silicon Mac with Apple Intelligence enabled in System Settings.
 
 **How is this different from Siri?** Siri answers questions. Agent! *performs actions* -- controls apps, manages files, builds code, automates workflows.
 
@@ -513,14 +513,11 @@ MIT - free and open source.
 
 <div align="center">
 
-### **Agent! for macOS 26.4+ - Agentic AI for your  Mac Desktop**
+### **Agent! for macOS 26.4.1 - Agentic AI for your  Mac Desktop**
 > Note: Claude refers to the Anthropic AI model integrated into Agent! for LLM functionality. It is not a human contributor Agent!
 </div>
 
 ---
-
-## Agent's first poem written in Pages
-<img width="1155" height="1416" alt="image" src="https://github.com/user-attachments/assets/e71ceb3d-7ca2-4225-8138-b4b9beefdbd2" />
 
 ## Agent! vs Claude Code — Architectural Comparison
 
@@ -530,7 +527,7 @@ Agent! is a 100% original pure Swift macOS application. It is not a port, fork, 
 |---|---|---|
 | **Language** | TypeScript/JavaScript | Pure Swift 6.2 |
 | **UI Framework** | Ink (terminal React) | SwiftUI (native macOS) |
-| **Platform** | CLI — Linux, macOS, Windows | Native macOS 26.4+ only |
+| **Platform** | CLI — Linux, macOS, Windows | Native macOS 26.4.1 only |
 | **Runtime** | Node.js/Bun | Native compiled binary |
 | **Architecture** | Terminal REPL with streaming | Desktop app with XPC daemons |
 | **Accessibility** | None (CLI) | Full macOS AX via AXorcist (25 top-level actions, 30+ AX subtypes via `perform_action`) |
@@ -564,13 +561,13 @@ Agent! is a 100% original pure Swift macOS application. It is not a port, fork, 
 >
 > The source code of "🦾 Agent! for macOS26" is open source and licensed under the **MIT License**. You are free to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the source code, subject to the conditions in the [LICENSE](./LICENSE) file (retain copyright notice and the MIT permission notice in all copies or substantial portions of the software).
 >
-> Copyright © 2000, 2023–2026 Todd Bruss.
->
 > ### Compiled Binaries & Releases
 >
 > Compiled binaries, installers, code-signed builds, and release artifacts distributed through this project's GitHub Releases, [agent.macOS26.app](https://agent.macOS26.app), or any other official channel are the copyrighted work of Todd Bruss and are **not** covered by the MIT license that governs the source code. All rights to the official binaries — including the "🦾 Agent!" name, logo, code-signing identity, and Developer ID — are reserved.
 >
-> You are welcome to build your own binaries from source under the MIT license, provided you do not use the "🦾 Agent!" name, logo, or branding to identify your build.
+> Copyright © 2000, 2023–2026 Todd Bruss, All Rights Reserved.
+>
+> You are welcome to build your own binaries from source under the MIT license, provided you do not use the "🦾 Agent!" name, logo, or branding to identify your product.
 >
 > ### Warranty Disclaimer
 >
@@ -582,6 +579,6 @@ Agent! is a 100% original pure Swift macOS application. It is not a port, fork, 
 >
 > Sincerely,
 > **Todd Bruss**
-> Creator and Founder, 🦾 Agent! for macOS26
+> Creator and Founder, 🦾 Agent! for macOS26.4.1
 > https://agent.macOS26.app
 > https://github.com/macos26/agent
