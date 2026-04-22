@@ -456,14 +456,19 @@ extension AgentViewModel {
             }
         }
 
-        // Apple Intelligence: suggest next steps after completion (skip for pure conversation)
+        // Apple Intelligence: suggest next steps after completion — fire-and-forget.
+        // Runs after the task is already done; no reason to hold the user on it.
         if mediator.isEnabled && mediator.showAnnotationsToUser && !completionSummary.isEmpty && !commandsRun.isEmpty {
             let context = "Task: \(prompt)\nResult: \(completionSummary)\nCommands: \(commandsRun.joined(separator: ", "))"
-            if let nextSteps = await mediator.suggestNextSteps(context: context) {
-                appendLog(nextSteps.formatted)
-                flushLog()
-                if agentReplyHandle != nil {
-                    sendProgressUpdate(nextSteps.formatted)
+            let capturedHandle = agentReplyHandle
+            Task { [weak self] in
+                guard let self else { return }
+                if let nextSteps = await mediator.suggestNextSteps(context: context) {
+                    self.appendLog(nextSteps.formatted)
+                    self.flushLog()
+                    if capturedHandle != nil {
+                        self.sendProgressUpdate(nextSteps.formatted)
+                    }
                 }
             }
         }

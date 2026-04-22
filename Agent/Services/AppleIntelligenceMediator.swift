@@ -128,6 +128,31 @@ final class AppleIntelligenceMediator: ObservableObject {
     private var accessibilityAgentLastMessage: String?
     private let accessibilityAgentMaxTurns = 7  // Reset after N turns to prevent context bloat
 
+    /// Shared call-state tracker used by the accessibility tool closures. Lives
+    /// on the mediator (not on the stack frame) so that follow-up invocations
+    /// reusing an existing session still point at the same instance. See
+    /// runAccessibilityAgent for the reset-on-entry pattern.
+    final class CallTracker: @unchecked Sendable {
+        private let lock = NSLock()
+        private var _called = false
+        private var _failed = false
+        private var _outputs: [String] = []
+        var called: Bool { lock.lock(); defer { lock.unlock() }; return _called }
+        var failed: Bool { lock.lock(); defer { lock.unlock() }; return _failed }
+        var outputs: [String] { lock.lock(); defer { lock.unlock() }; return _outputs }
+        func markCalled() { lock.lock(); _called = true; lock.unlock() }
+        func markFailed() { lock.lock(); _failed = true; lock.unlock() }
+        func recordOutput(_ s: String) { lock.lock(); _outputs.append(s); lock.unlock() }
+        func reset() {
+            lock.lock()
+            _called = false
+            _failed = false
+            _outputs.removeAll()
+            lock.unlock()
+        }
+    }
+    private let accessibilityTracker = CallTracker()
+
     /// Represents an Apple Intelligence annotation
     struct Annotation {
         enum Target {
@@ -564,53 +589,6 @@ final class AppleIntelligenceMediator: ObservableObject {
         return verbs.contains { lower.contains($0) }
     }
 
-    /// First-party / well-known Mac apps whose presence in a prompt genuinely
-    /// signals a UI automation request. Matching is case-insensitive and
-    /// word-bounded — substring matches against other language are avoided by
-    /// the word-boundary regex in `mentionsSystemApp`.
-    private static let systemAppNames: [String] = [
-        "safari", "photos", "photo booth", "music", "messages", "mail",
-        "finder", "terminal", "iterm", "xcode", "calendar", "reminders",
-        "notes", "maps", "system settings", "system preferences",
-        "app store", "preview", "quicktime", "textedit", "numbers",
-        "pages", "keynote", "contacts", "facetime", "podcasts",
-        "stickies", "calculator", "dictionary", "chess", "grapher",
-        "screenshot", "automator", "shortcuts", "iphone mirroring",
-        "chrome", "firefox", "arc", "brave", "edge",
-        "slack", "discord", "zoom", "teams", "spotify",
-    ]
-
-    /// Word-boundary app name match. Avoids false positives like "maps" → "maps to".
-    private static func mentionsSystemApp(_ message: String) -> Bool {
-        let lower = message.lowercased()
-        for name in systemAppNames {
-            // Simple word-boundary check: the name appears surrounded by non-letter chars or string edges.
-            guard let range = lower.range(of: name) else { continue }
-            let before = range.lowerBound == lower.startIndex ? " " : String(lower[lower.index(before: range.lowerBound)])
-            let after = range.upperBound == lower.endIndex ? " " : String(lower[range.upperBound])
-            let beforeOK = before.rangeOfCharacter(from: .letters) == nil
-            let afterOK = after.rangeOfCharacter(from: .letters) == nil
-            if beforeOK && afterOK { return true }
-        }
-        return false
-    }
-
-    /// Return `true` if the prompt should skip the Apple AI accessibility
-    /// triage because the user is clearly working on project code rather than
-    /// driving a system app. The rule: when a project folder is active, only
-    /// allow Apple AI triage when the prompt explicitly names a system app.
-    static func shouldSkipAccessibilityForProject(_ message: String, projectFolder: String) -> Bool {
-        let pf = projectFolder.trimmingCharacters(in: .whitespaces)
-        guard !pf.isEmpty else { return false }
-        // Don't count the home directory as a real project.
-        let home = NSHomeDirectory()
-        if pf == home || pf == "\(home)/" { return false }
-        if pf == "\(home)/Documents" || pf == "\(home)/Documents/" { return false }
-        // If the prompt names a system app, let Apple AI try.
-        if mentionsSystemApp(message) { return false }
-        return true
-    }
-
     /// Run Apple AI as tool-calling agent with accessibility tool. Returns final text on success, or nil if tool wasn't called/failed/timed out.
     /// Quick pattern check for "run agent X" style requests — strict match only.
     /// Only triggers on "run agent {name}" or "run agent {number}" (with optional "the" / quotes).
@@ -641,20 +619,15 @@ final class AppleIntelligenceMediator: ObservableObject {
         guard isEnabled && accessibilityIntentEnabled && Self.isAvailable,
               AccessibilityService.hasAccessibilityPermission() else { return nil }
 
-        // Thread-safe boxes to track tool-call/error state across the Sendable closure.
-        final class CallTracker: @unchecked Sendable {
-            private let lock = NSLock()
-            private var _called = false
-            private var _failed = false
-            private var _outputs: [String] = []
-            var called: Bool { lock.lock(); defer { lock.unlock() }; return _called }
-            var failed: Bool { lock.lock(); defer { lock.unlock() }; return _failed }
-            var outputs: [String] { lock.lock(); defer { lock.unlock() }; return _outputs }
-            func markCalled() { lock.lock(); _called = true; lock.unlock() }
-            func markFailed() { lock.lock(); _failed = true; lock.unlock() }
-            func recordOutput(_ s: String) { lock.lock(); _outputs.append(s); lock.unlock() }
-        }
-        let tracker = CallTracker()
+        // One shared tracker lives on `self` (via `accessibilityTracker`) so that
+        // reused follow-up sessions keep pointing at the same instance. A fresh
+        // `CallTracker()` per invocation used to break follow-ups: the previous
+        // session's tool closures captured the DEAD tracker and marked it,
+        // while the new invocation watched a different, unmarked tracker and
+        // logged "⏭ No tool called — forwarding to LLM" after Apple AI had in
+        // fact clicked the button successfully.
+        let tracker = self.accessibilityTracker
+        tracker.reset()
 
         let tool = AccessibilityAppleTool { args in
             tracker.markCalled()
@@ -790,7 +763,7 @@ final class AppleIntelligenceMediator: ObservableObject {
         accessibilityAgentLastMessage = message
 
         // Wrap respond(to:) in task-group timeout. The agent loop runs inside respond(to:), so we need a generous timeout for multiple tool calls.
-        let timeoutSeconds: TimeInterval = 30
+        let timeoutSeconds: TimeInterval = 60
         do {
             let content: String = try await withThrowingTaskGroup(of: String.self) { group in
                 group.addTask {
@@ -811,21 +784,37 @@ final class AppleIntelligenceMediator: ObservableObject {
                 appendLog("🍎 ⏭ No tool called — forwarding to LLM")
                 return nil
             }
-            // If any tool call failed, fall through — never claim success without real execution.
-            if tracker.failed {
-                appendLog("🍎 ⏭ Tool failed — forwarding to LLM")
-                return nil
-            }
-            // Verify tool outputs contain real evidence of work, not just empty/exit-0 responses.
+            // Multi-step sequences: Apple AI's session.respond() runs an internal
+            // tool loop that may make several calls. Don't blanket-bail on any
+            // single tool_call failure — the LLM often probes/recovers in a
+            // later step. Trust Apple AI's final text response instead (the
+            // refusal-phrase check below catches self-reported failure). But
+            // still require at least ONE successful call's worth of evidence
+            // so we don't accept a response that was only Apple AI apologizing
+            // about failures.
             let outputs = tracker.outputs
             let hasSubstantiveOutput = outputs.contains { output in
                 let trimmed = output.trimmingCharacters(in: .whitespacesAndNewlines)
-                // Empty, just exit code, or just "ok" are not evidence of real work
                 if trimmed.isEmpty || trimmed == "(exit 0)" || trimmed.count < 3 { return false }
                 return true
             }
             if !hasSubstantiveOutput {
                 appendLog("🍎 ⏭ No substantive tool output — forwarding to LLM")
+                return nil
+            }
+            // If EVERY tool call failed (not just one), bail. One failure in a
+            // multi-step plan is fine; zero successes is not.
+            let anySucceeded = outputs.contains { output in
+                let lower = output.lowercased()
+                return lower.contains("\"success\":true")
+                    || lower.contains("\"success\": true")
+                    || lower.contains("launched") || lower.contains("activated")
+                    || lower.contains("opened") || lower.contains("clicked")
+                    || lower.contains("typed") || lower.contains("performed")
+                    || lower.contains("element found")
+            }
+            if !anySucceeded {
+                appendLog("🍎 ⏭ All tool calls failed — forwarding to LLM")
                 return nil
             }
             // If Apple AI's response indicates refusal/inability/uncertainty, fall through.
@@ -864,22 +853,21 @@ final class AppleIntelligenceMediator: ObservableObject {
     ) async -> TriageResult {
         // Direct command shortcut removed — "run agent X", "list agents", "google for X",
         // etc. all flow through Apple AI (accessibility) or the cloud LLM's tools now.
-        guard isEnabled && Self.isAvailable else { return .passThrough }
+        guard isEnabled && Self.isAvailable else {
+            if !isEnabled { appendLog("🍎 ⏭ Mediator disabled") }
+            else { appendLog("🍎 ⏭ Apple AI unavailable — \(Self.unavailabilityReason)") }
+            return .passThrough
+        }
         // Accessibility agent — let Apple AI try to handle UI automation requests locally with full tool-calling
         // support. Pre-filter on action verbs so we don't spend an AI call on every user message.
-        if accessibilityIntentEnabled
-            && AccessibilityService.hasAccessibilityPermission()
-            && (Self.looksLikeAccessibilityRequest(message) || Self.looksLikeRunAgentRequest(message)) {
-            // Hard-skip when a project folder is active AND the prompt doesn't
-            // explicitly name a first-party system app. Users in a project are
-            // overwhelmingly working on code/UI of that project — a match on
-            // "drag" / "click" / "arrow tool" is almost never about Photos.
-            // Requires an explicit app name to opt in.
-            if Self.shouldSkipAccessibilityForProject(message, projectFolder: projectFolder) {
-                // Silently fall through to the cloud LLM.
-            } else if let result = await runAccessibilityAgent(message, dispatch: axDispatch, runAgent: runAgent, appendLog: appendLog, projectFolder: projectFolder) {
-                return .accessibilityHandled(result)
-            }
+        if !accessibilityIntentEnabled {
+            // User explicitly turned this off — no need to log it on every task.
+        } else if !AccessibilityService.hasAccessibilityPermission() {
+            appendLog("🍎 ⏭ No Accessibility permission — grant in System Settings → Privacy → Accessibility")
+        } else if !(Self.looksLikeAccessibilityRequest(message) || Self.looksLikeRunAgentRequest(message)) {
+            appendLog("🍎 ⏭ Prompt doesn't look like a UI action (no verb like click/type/open/take/...)")
+        } else if let result = await runAccessibilityAgent(message, dispatch: axDispatch, runAgent: runAgent, appendLog: appendLog, projectFolder: projectFolder) {
+            return .accessibilityHandled(result)
         }
         // Local classification — no AI needed. Triage can be disabled separately
         // from the other Apple-AI features; when off we never spend an on-device

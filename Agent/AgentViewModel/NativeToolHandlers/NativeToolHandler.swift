@@ -65,6 +65,82 @@ extension AgentViewModel {
         return "⚠️ Tool '\(rawName)' (expanded: '\(name)') not handled. Recovery: call list_tools to see available tools, or check spelling."
     }
 
+    /// Fuzzy-match rescue for click_element when the LLM's title is close but not
+    /// exact ("Take Picture" vs Photo Booth's actual "take photo"). Returns nil
+    /// if no reasonable match is found so the caller keeps the original error.
+    static func rescueClick(
+        ax: AgentAccess.AccessibilityService,
+        role: String,
+        requestedTitle: String,
+        appBundleId: String,
+        value: String?,
+        timeout: Double,
+        verify: Bool
+    ) -> String? {
+        let candidatesJSON = ax.collectAllElements(
+            appIdentifier: appBundleId,
+            attributes: ["AXTitle", "AXDescription", "AXRole"],
+            maxDepth: 12,
+            filterCriteria: ["AXRole": role]
+        )
+        guard let bestTitle = pickBestTitle(candidatesJSON: candidatesJSON, requested: requestedTitle) else {
+            return nil
+        }
+        let retry = ax.clickElement(role: role, title: bestTitle, value: value,
+                                    appBundleId: appBundleId, timeout: timeout, verify: verify)
+        if axResultIsNotFound(retry) { return nil }
+        let escReq = requestedTitle.replacingOccurrences(of: "\"", with: "\\\"")
+        let escMatch = bestTitle.replacingOccurrences(of: "\"", with: "\\\"")
+        return #"{"auto_retry":{"requested_title":"\#(escReq)","matched_title":"\#(escMatch)"},"result":\#(retry)}"#
+    }
+
+    static func axResultIsNotFound(_ result: String) -> Bool {
+        let lower = result.lowercased()
+        return lower.contains("not found") || lower.contains("no element")
+    }
+
+    /// Walk any AXorcist JSON response, collect every AXTitle/AXDescription, and
+    /// pick the one that best matches `requested`. Threshold is deliberately
+    /// conservative — we'd rather keep the original error than click the wrong button.
+    static func pickBestTitle(candidatesJSON: String, requested: String) -> String? {
+        guard let data = candidatesJSON.data(using: .utf8),
+              let obj = try? JSONSerialization.jsonObject(with: data) else { return nil }
+        var candidates: Set<String> = []
+        func walk(_ any: Any) {
+            if let dict = any as? [String: Any] {
+                if let t = dict["AXTitle"] as? String, !t.isEmpty { candidates.insert(t) }
+                if let d = dict["AXDescription"] as? String, !d.isEmpty { candidates.insert(d) }
+                for v in dict.values { walk(v) }
+            } else if let arr = any as? [Any] {
+                for v in arr { walk(v) }
+            }
+        }
+        walk(obj)
+        let want = requested.lowercased()
+        var bestScore = 0
+        var best: String?
+        for c in candidates {
+            let score = titleFuzzyScore(a: c.lowercased(), b: want)
+            if score > bestScore { bestScore = score; best = c }
+        }
+        return bestScore >= 50 ? best : nil
+    }
+
+    static func titleFuzzyScore(a: String, b: String) -> Int {
+        if a == b { return 1000 }
+        if a.contains(b) || b.contains(a) {
+            let minLen = min(a.count, b.count)
+            let maxLen = max(a.count, b.count)
+            return 500 + (maxLen == 0 ? 0 : Int((Double(minLen) / Double(maxLen)) * 100))
+        }
+        let splitter: (Character) -> Bool = { !$0.isLetter && !$0.isNumber }
+        let aTokens = Set(a.split(whereSeparator: splitter).map(String.init))
+        let bTokens = Set(b.split(whereSeparator: splitter).map(String.init))
+        let overlap = aTokens.intersection(bTokens).count
+        let union = aTokens.union(bTokens).count
+        return union == 0 ? 0 : (overlap * 100 / union)
+    }
+
     /// Read-only accessibility actions that should NOT auto-launch the target app. These are queries — they should fail gracefully if the app isn't running, NOT silently spawn it.
     private static let readOnlyAxActions: Set<String> = [
         "list_windows",
@@ -129,11 +205,19 @@ extension AgentViewModel {
         case "click", "click_element":
             // AXorcist-only. Coordinate-based click is not supported — provide role/title/value (and ideally
             // appBundleId) so the click goes through AXorcist's element-finder.
-            return ax.clickElement(
-                role: role, title: title, value: value,
-                appBundleId: app,
-                timeout: input["timeout"] as? Double ?? 5,
-                verify: input["verify"] as? Bool ?? false)
+            let timeout = input["timeout"] as? Double ?? 5
+            let verify = input["verify"] as? Bool ?? false
+            let first = ax.clickElement(role: role, title: title, value: value,
+                                        appBundleId: app, timeout: timeout, verify: verify)
+            if Self.axResultIsNotFound(first), let role = role, let requested = title, let app = app {
+                if let rescued = Self.rescueClick(ax: ax, role: role,
+                                                   requestedTitle: requested,
+                                                   appBundleId: app, value: value,
+                                                   timeout: timeout, verify: verify) {
+                    return rescued
+                }
+            }
+            return first
         case "scroll", "scroll_to_element":
             // AXorcist-only: scroll to an element by role/title. The old coordinate
             // path through InputDriver was removed.
@@ -199,10 +283,16 @@ extension AgentViewModel {
         case "manage_app":
             let manageAction = input["sub_action"] as? String
                 ?? { let a = input["action"] as? String ?? "list"; return a == "manage_app" ? "list" : a }()
+            // Accept the same param names every other accessibility case accepts.
+            // manageApp itself promotes a non-dotted bundleId → name internally,
+            // so forwarding whichever field the LLM actually set is safe.
+            let rawId = input["appBundleId"] as? String
+                ?? input["bundleId"] as? String
+                ?? input["app"] as? String
             return ax.manageApp(
                 action: manageAction,
-                bundleId: input["bundleId"] as? String,
-                name: input["name"] as? String ?? input["app"] as? String)
+                bundleId: rawId,
+                name: input["name"] as? String)
         case "set_window_frame":
             let sw = (input["width"] as? Double).map { CGFloat($0) }
             let sh = (input["height"] as? Double).map { CGFloat($0) }

@@ -100,14 +100,22 @@ extension AgentViewModel {
                     // Make sure the drip task is still running so it picks up the appended chars
                     startDripIfNeeded()
 
-                    // Apple Intelligence summary annotation
+                    // Apple Intelligence summary annotation — fire-and-forget.
+                    // Blocking on this delayed the ✅ Completed log by ~1-2s for a
+                    // nice-to-have 1-sentence rewrite of a summary the LLM already
+                    // produced. Kick it off in the background; it posts when ready.
                     if mediator.isEnabled && mediator.showAnnotationsToUser && !commandsRun.isEmpty {
-                        if let summaryAnnotation = await mediator.summarizeCompletion(summary: summary, commandsRun: commandsRun) {
-                            appleAIAnnotations.append(summaryAnnotation)
-                            appendLog(summaryAnnotation.formatted)
-                            flushLog()
-                            if agentReplyHandle != nil {
-                                sendProgressUpdate(summaryAnnotation.formatted)
+                        let capturedSummary = summary
+                        let capturedCommands = commandsRun
+                        let capturedHandle = agentReplyHandle
+                        Task { [weak self] in
+                            guard let self else { return }
+                            if let annotation = await mediator.summarizeCompletion(summary: capturedSummary, commandsRun: capturedCommands) {
+                                self.appendLog(annotation.formatted)
+                                self.flushLog()
+                                if capturedHandle != nil {
+                                    self.sendProgressUpdate(annotation.formatted)
+                                }
                             }
                         }
                     }
@@ -130,11 +138,41 @@ extension AgentViewModel {
                     return ResponseParseResult(hasToolUse: hasToolUse, pendingTools: pendingTools, taskCompleted: true)
                 }
 
+                appendLog("🔧 " + Self.formatToolCallForLog(rawName: block["name"] as? String ?? name, rawInput: block["input"] as? [String: Any] ?? input))
+                flushLog()
                 pendingTools.append((toolId: toolId, name: name, input: input))
             }
         }
 
         return ResponseParseResult(hasToolUse: hasToolUse, pendingTools: pendingTools, taskCompleted: false)
+    }
+
+    /// Format a tool call for the activity log in the same shape Apple AI uses:
+    ///   tool_name(action, key: "value", key: "value")
+    /// Prefers the raw (pre-expansion) call so the user sees what the LLM
+    /// actually asked for, not an internal legacy name.
+    static func formatToolCallForLog(rawName: String, rawInput: [String: Any]) -> String {
+        let action = rawInput["action"] as? String
+        let interestingKeys = ["app", "appBundleId", "name", "title", "role", "text",
+                               "file_path", "path", "url", "command", "menuPath"]
+        var parts: [String] = []
+        for key in interestingKeys {
+            guard let raw = rawInput[key] else { continue }
+            let str: String
+            if let s = raw as? String { str = s }
+            else { str = String(describing: raw) }
+            guard !str.isEmpty else { continue }
+            // Collapse the app-pointer fields to a single `app:` label
+            let label = (key == "appBundleId" || key == "name") ? "app" : key
+            parts.append("\(label): \(str.count > 80 ? String(str.prefix(77)) + "…" : str)")
+        }
+        let args = parts.joined(separator: ", ")
+        switch (action, args.isEmpty) {
+        case (.some(let a), true): return "\(rawName)(\(a))"
+        case (.some(let a), false): return "\(rawName)(\(a), \(args))"
+        case (.none, true): return rawName
+        case (.none, false): return "\(rawName)(\(args))"
+        }
     }
 
     /// / Post-tool-dispatch handling: append the assistant turn to the / conversation, append tool results on the user

@@ -378,12 +378,16 @@ extension AgentViewModel {
                 mapped["action"] = subAction
             }
             // Convenience verbs: accessibility(action:"quit_app",name:"X") routes to manage_app.
-            // open/launch are aliases — both call NSWorkspace.openApplication via manageApp.launch.
+            // `open_app` is the dedicated action that launches AND returns the
+            // interactive element tree — keep it routed to ax_open_app so the
+            // LLM sees button titles after one call (no find_element needed).
+            // Bare `open`/`launch`/`launch_app` are the fire-and-forget lifecycle
+            // verbs that only launch and return "Launched X".
             switch action {
             case "quit_app", "quit":
                 mapped["action"] = "quit"
                 return ("ax_manage_app", mapped)
-            case "open_app", "open", "launch_app", "launch":
+            case "open", "launch_app", "launch":
                 mapped["action"] = "launch"
                 return ("ax_manage_app", mapped)
             case "activate_app", "activate":
