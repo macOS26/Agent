@@ -27,6 +27,16 @@
 - **Anti-hallucination prompt rule:** Every system prompt now includes explicit guidance against fabricating findings from incomplete tool reads. The 10-consecutive-reads guard pushes the model toward "narrow or call done()" instead of "guess".
 - **Autonomous task loop, Xcode integration, AXorcist desktop automation, privileged daemon, multi-tab LLM config, Ollama pre-warming via `LLMRegistry`** — all the previously-shipped fundamentals are still there.
 
+## Star History
+
+<a href="https://www.star-history.com/?repos=macos26%2Fagent&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=macos26/agent&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=macos26/agent&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=macos26/agent&type=date&legend=top-left" />
+ </picture>
+</a>
+
 **One app. Any AI. Total command over your Mac.**
 
 Agent! wires **17 LLM providers** — Claude, GPT, Gemini, Grok, Mistral, DeepSeek, Qwen, Z.ai, BigModel, Hugging Face, Ollama (cloud and local), vLLM, LM Studio, Codestral, Mistral Vibe, and on-device **Apple Intelligence** — into a native macOS app that doesn't just talk about doing things. It does them.
