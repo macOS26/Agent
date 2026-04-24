@@ -27,7 +27,7 @@
 - **Anti-hallucination prompt rule:** Every system prompt now includes explicit guidance against fabricating findings from incomplete tool reads. The 10-consecutive-reads guard pushes the model toward "narrow or call done()" instead of "guess".
 - **Autonomous task loop, Xcode integration, AXorcist desktop automation, privileged daemon, multi-tab LLM config, Ollama pre-warming via `LLMRegistry`** — all the previously-shipped fundamentals are still there.
 
-## Star History
+## Star History ⭐️
 
 <a href="https://www.star-history.com/?repos=macos26%2Fagent&type=date&legend=top-left">
  <picture>
