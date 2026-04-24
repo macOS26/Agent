@@ -8,11 +8,10 @@
 extension AgentViewModel {
 
     /// Detect consecutive edit failures on the same file and append a
-    /// recovery nudge (at 3 failures) or give-up nudge (at 8 failures).
+    /// recovery nudge (at 2 failures) or give-up nudge (at 6 failures).
     /// Mirrors the stuck-file block in runOvernightCodingGuards but
-    /// for the tab-task path. Thresholds are unified: nudge at 3,
-    /// give up at 8 (slightly higher than overnight's 6 to give tab
-    /// tasks more room since they have no read-only count guard).
+    /// for the tab-task path. Thresholds are unified: nudge at 2,
+    /// give up at 6.
     func appendStuckFileNudgeIfNeeded(
         tab: ScriptTab,
         name: String,
@@ -32,9 +31,9 @@ extension AgentViewModel {
         if isFailure {
             stuckFiles[path, default: 0] += 1
             let count = stuckFiles[path]!
-            if count == 3 {
+            if count == 2 {
                 let nudge = """
-                ⚠️ 3 consecutive edit failures on \(path). STOP retrying the same approach.
+                ⚠️ 2 consecutive edit failures on \(path). STOP retrying the same approach.
 
                 Recovery checklist (do these in order):
                 1. read_file(file_path:"\(path)") with NO offset/limit to get the FULL fresh content
@@ -45,16 +44,16 @@ extension AgentViewModel {
                 6. If you keep failing, switch tools — write_file to overwrite the whole file is a valid last resort.
                 """
                 toolResults.append(["type": "text", "text": nudge])
-                tab.appendLog("⚠️ Stuck nudge: 3 failures on \((path as NSString).lastPathComponent)")
+                tab.appendLog("⚠️ Stuck nudge: 2 failures on \((path as NSString).lastPathComponent)")
                 tab.flush()
-            } else if count >= 8 {
+            } else if count >= 6 {
                 let nudge = """
-                    🛑 8 failures on \(path). Stop trying to edit \
+                    🛑 6 failures on \(path). Stop trying to edit \
                     this file. Move on to the next part of your task \
                     or call done with what you've completed so far.
                     """
                 toolResults.append(["type": "text", "text": nudge])
-                tab.appendLog("🛑 Stuck-out: 8 failures on \((path as NSString).lastPathComponent)")
+                tab.appendLog("🛑 Stuck-out: 6 failures on \((path as NSString).lastPathComponent)")
                 tab.flush()
                 stuckFiles[path] = 0
             }

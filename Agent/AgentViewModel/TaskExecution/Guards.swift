@@ -119,7 +119,7 @@ extension AgentViewModel {
             }
             if consecutiveBuildFailures >= 5 { return true }
 
-            // Stuck detection — track edit failures per file. Nudge at 3, give up at 6.
+            // Stuck detection — track edit failures per file. Nudge at 2, give up at 4.
             for tool in pendingTools where editTools.contains(tool.name) {
                 guard let path = tool.input["file_path"] as? String ?? tool.input["path"] as? String else { continue }
                 let output = toolResults.last?["content"] as? String ?? ""
@@ -129,10 +129,10 @@ extension AgentViewModel {
                 if isFailure {
                     stuckFiles[path, default: 0] += 1
                     let count = stuckFiles[path]!
-                    if count == 3 {
+                    if count == 2 {
                         // First nudge — actionable recovery guidance
                         let nudge = """
-                        ⚠️ 3 consecutive edit failures on \(path). STOP retrying the same approach.
+                        ⚠️ 2 consecutive edit failures on \(path). STOP retrying the same approach.
 
                         Recovery checklist (do these in order):
                         1. read_file(file_path:"\(path)") with NO offset/limit to get the FULL fresh content
@@ -152,17 +152,17 @@ extension AgentViewModel {
                         the whole file is a valid last resort.
                         """
                         appendNudgeToLastToolResult(&toolResults, nudge: nudge)
-                        appendLog("⚠️ Stuck nudge: 3 failures on \((path as NSString).lastPathComponent)")
+                        appendLog("⚠️ Stuck nudge: 2 failures on \((path as NSString).lastPathComponent)")
                         flushLog()
-                    } else if count >= 6 {
+                    } else if count >= 4 {
                         // Second nudge — give up on this file
                         let nudge = """
-                            🛑 6 failures on \(path). Stop trying to edit \
+                            🛑 4 failures on \(path). Stop trying to edit \
                             this file. Move on to the next part of your task \
                             or call done with what you've completed so far.
                             """
                         appendNudgeToLastToolResult(&toolResults, nudge: nudge)
-                        appendLog("🛑 Stuck-out: 6 failures on \((path as NSString).lastPathComponent)")
+                        appendLog("🛑 Stuck-out: 4 failures on \((path as NSString).lastPathComponent)")
                         flushLog()
                         stuckFiles[path] = 0
                     }
