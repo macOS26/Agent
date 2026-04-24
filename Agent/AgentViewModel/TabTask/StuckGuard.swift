@@ -2,12 +2,17 @@
 @preconcurrency import Foundation
 
 
+
 // MARK: - Tab Task Stuck-File Guard
 
 extension AgentViewModel {
 
-    /// / Detect 3 consecutive edit failures on the same file and append a / recovery nudge as a synthetic tool_result.
-    /// Mirrors the inline stuck-file / block from the legacy monolithic executeTabTask.
+    /// Detect consecutive edit failures on the same file and append a
+    /// recovery nudge (at 3 failures) or give-up nudge (at 8 failures).
+    /// Mirrors the stuck-file block in runOvernightCodingGuards but
+    /// for the tab-task path. Thresholds are unified: nudge at 3,
+    /// give up at 8 (slightly higher than overnight's 6 to give tab
+    /// tasks more room since they have no read-only count guard).
     func appendStuckFileNudgeIfNeeded(
         tab: ScriptTab,
         name: String,
@@ -26,24 +31,32 @@ extension AgentViewModel {
             .contains("not found") || lower.contains("rejected")
         if isFailure {
             stuckFiles[path, default: 0] += 1
-	        if stuckFiles[path]! == 2 {
-	            let nudge = """
-	            ⚠️ 2 consecutive edit failures on \(path). STOP retrying the same approach.
+            let count = stuckFiles[path]!
+            if count == 3 {
+                let nudge = """
+                ⚠️ 3 consecutive edit failures on \(path). STOP retrying the same approach.
 
-	            Recovery checklist (do these in order):
-	            1. read_file(file_path:"\(path)") with NO offset/limit to get the FULL fresh content
-	            2. Find the EXACT lines you want to change in the new output. Do NOT trust the tool_result from earlier reads — the file may have been modified by your previous edits.
-	            3. For edit_file: copy old_string verbatim from the fresh read, including every space, tab, and newline.
-	            4. For diff_and_apply: pass start_line and end_line to scope the section.
-	            5. **REWIND**: file(action:"restore", file_path:"\(path)") recovers the most recent FileBackupService snapshot from before your edits. Backups are auto-created on every write_file/edit_file call.
-	            6. If you keep failing, switch tools — write_file to overwrite the whole file is a valid last resort.
-	            """
-	            // Use `text` block — Anthropic rejects `tool_result` blocks whose
-	            // `tool_use_id` has no matching `tool_use` in the prior assistant message.
-	            toolResults.append(["type": "text", "text": nudge])
-	            tab.appendLog("⚠️ Stuck nudge: 2 failures on \((path as NSString).lastPathComponent)")
-	            tab.flush()
+                Recovery checklist (do these in order):
+                1. read_file(file_path:"\(path)") with NO offset/limit to get the FULL fresh content
+                2. Find the EXACT lines you want to change in the new output. Do NOT trust the tool_result from earlier reads — the file may have been modified by your previous edits.
+                3. For edit_file: copy old_string verbatim from the fresh read, including every space, tab, and newline.
+                4. For diff_and_apply: pass start_line and end_line to scope the section.
+                5. **REWIND**: file(action:"restore", file_path:"\(path)") recovers the most recent FileBackupService snapshot from before your edits. Backups are auto-created on every write_file/edit_file call.
+                6. If you keep failing, switch tools — write_file to overwrite the whole file is a valid last resort.
+                """
+                toolResults.append(["type": "text", "text": nudge])
+                tab.appendLog("⚠️ Stuck nudge: 3 failures on \((path as NSString).lastPathComponent)")
                 tab.flush()
+            } else if count >= 8 {
+                let nudge = """
+                    🛑 8 failures on \(path). Stop trying to edit \
+                    this file. Move on to the next part of your task \
+                    or call done with what you've completed so far.
+                    """
+                toolResults.append(["type": "text", "text": nudge])
+                tab.appendLog("🛑 Stuck-out: 8 failures on \((path as NSString).lastPathComponent)")
+                tab.flush()
+                stuckFiles[path] = 0
             }
         } else {
             stuckFiles[path] = 0

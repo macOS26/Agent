@@ -80,13 +80,31 @@ final class FileBackupService {
     }
 
     /// Restore the most recent backup of a specific file for a tab.
-    func restore(fileName: String, tabID: UUID) -> Bool {
+    /// Searches the project folder to find the full path from the basename.
+    func restore(fileName: String, tabID: UUID, projectFolder: String? = nil) -> Bool {
         let backups = listBackups(tabID: tabID).filter { $0.original == fileName }
         guard let latest = backups.first else { return false }
 
-        // Find the original path by searching common locations The backup only stores the filename, not the full path
-        // This is a limitation — caller should provide the full path
+        // Try to find the file at its original location
         let fm = FileManager.default
+
+        // If projectFolder is provided, search there
+        if let folder = projectFolder, !folder.isEmpty {
+            let candidate = (folder as NSString).appendingPathComponent(fileName)
+            if fm.fileExists(atPath: candidate) {
+                return restore(backupPath: latest.backup, to: candidate)
+            }
+            // BFS up to 4 levels deep
+            let found = CodingService.findFilesByBasename(
+                originalPath: (folder as NSString).appendingPathComponent(fileName),
+                maxResults: 1
+            )
+            if let match = found.first {
+                return restore(backupPath: latest.backup, to: match)
+            }
+        }
+
+        // Last resort: try writing to CWD (preserves old behavior as fallback)
         do {
             try fm.copyItem(atPath: latest.backup, toPath: fileName)
             return true

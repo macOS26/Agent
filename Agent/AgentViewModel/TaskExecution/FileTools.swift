@@ -69,8 +69,21 @@ extension AgentViewModel {
             let content = input["content"] as? String ?? ""
             let expandedWrite = (filePath as NSString).expandingTildeInPath
             let beforeContent = try? String(contentsOfFile: expandedWrite, encoding: .utf8)
+            let beforeLines = beforeContent?.components(separatedBy: "\n").count ?? 0
+            let afterLines = content.components(separatedBy: "\n").count
             FileBackupService.shared.backup(filePath: expandedWrite, tabID: selectedTabId ?? Self.mainTabID)
             appendLog("📝 Write: \(filePath)")
+
+            // Truncation warning: if overwriting an existing file with <50% of its content,
+            // the LLM may have accidentally truncated it. Warn but proceed.
+            var truncationWarning = ""
+            if beforeLines > 20, afterLines > 0, Double(afterLines) < Double(beforeLines) * 0.5 {
+                truncationWarning =
+                    "\n\n⚠️ Warning: new content (\(afterLines) lines) is less than 50% "
+                    + "of the original (\(beforeLines) lines). If this was unintentional, "
+                    + "use undo_edit or file(action:\"restore\") to recover."
+            }
+
             let output = await Self.offMain { CodingService.writeFile(path: filePath, content: content) }
             FileChangeJournal.shared.log(
                 action: "write",
@@ -83,11 +96,7 @@ extension AgentViewModel {
             let lang = Self.langFromPath(filePath)
             appendLog(Self.codeFence(Self.preview(content, lines: readFilePreviewLines), language: lang))
             commandsRun.append("write_file: \(filePath)")
-            let writeDiag = await Self.postEditDiagnostic(
-                filePath: (filePath as NSString).expandingTildeInPath,
-                projectFolder: projectFolder
-            )
-            let writeResult = writeDiag.isEmpty ? output : output + "\n\n⚠️ Diagnostics:\n" + writeDiag
+            let writeResult = output + truncationWarning
             toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": writeResult])
             return true
 
@@ -121,7 +130,8 @@ extension AgentViewModel {
                 context: context
             ) }
 
-            if !output.hasPrefix("Error") {
+            if !output.hasPrefix("Error") && !output.hasPrefix("Warning:") {
+                Self.resetEditFailureCount(filePath: expandedEdit)
                 DiffStore.shared.recordEdit(filePath: expandedEdit, originalContent: originalContent)
                 let diff = MultiLineDiff.createDiff(source: oldString, destination: newString, includeMetadata: true)
                 let d1f = MultiLineDiff.displayDiff(diff: diff, source: oldString, format: .ai)
@@ -135,6 +145,7 @@ extension AgentViewModel {
                     appendLog("📝 Edit: \(filePath)")
                 }
             } else {
+                Self.incrementEditFailureCount(filePath: expandedEdit)
                 appendLog("📝 Edit: \(filePath)")
             }
             let outLines = output.components(separatedBy: "\n")
@@ -489,11 +500,33 @@ extension AgentViewModel {
 
     // MARK: - Post-Edit Diagnostics
 
+    /// Tracks consecutive edit failures per file — postEditDiagnostic only runs
+    /// when a file has 2+ failures, avoiding noisy false positives from `swiftc -parse`
+    /// which lacks SDK context (missing imports, type-check errors that compile fine in
+    /// a full build). The full `xc_build` tool already provides accurate compilation feedback.
+    private static var editFailureCounts: [String: Int] = [:]
+
+    /// Called by edit_file handler after a successful edit — resets the failure counter.
+    static func resetEditFailureCount(filePath: String) {
+        editFailureCounts.removeValue(forKey: filePath)
+    }
+
+    /// Called by edit_file handler after a failed edit — increments the failure counter.
+    static func incrementEditFailureCount(filePath: String) {
+        editFailureCounts[filePath, default: 0] += 1
+    }
+
     /// Quick syntax check after editing a Swift file. Returns error lines or empty string.
-    /// Only runs for .swift files in Xcode project folders.
+    /// Only runs for .swift files in Xcode project folders, AND only after 2+ consecutive
+    /// edit failures on the same file. This avoids false positives from `swiftc -parse`
+    /// which runs without SDK context and flags unresolved identifiers that compile fine
+    /// in the full project build.
     nonisolated static func postEditDiagnostic(filePath: String, projectFolder: String) async -> String {
         // Only check Swift files in Xcode projects
         guard filePath.hasSuffix(".swift") else { return "" }
+        // Only run after 2+ consecutive failures — avoids noisy false positives
+        let failureCount = await MainActor.run(body: { editFailureCounts[filePath] ?? 0 })
+        guard failureCount >= 2 else { return "" }
         // Quick check for .xcodeproj without MainActor
         let hasXcodeProj = (try? FileManager.default.contentsOfDirectory(atPath: projectFolder))?
             .contains(where: { $0.hasSuffix(".xcodeproj") || $0.hasSuffix(".xcworkspace") }) ?? false

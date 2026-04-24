@@ -10,6 +10,42 @@ import Cocoa
 
 extension AgentViewModel {
 
+    /// Tracks the set of files edited in the last N turns for cycle detection.
+    /// When the same 2-3 files keep alternating, the LLM is stuck in an edit cycle.
+    private static var recentEditFiles: [[String]] = []
+    private static let cycleDetectionWindow = 6 // Number of turns to look back
+
+    /// Detect cyclic edit patterns across multiple files. If the same 2-3 files
+    /// keep alternating, emit a nudge to break the cycle.
+    static func detectEditCycle(filePath: String, toolResults: inout [[String: Any]], appendNudge: (String, inout [[String: Any]]) -> Void) {
+        recentEditFiles.append([filePath])
+        if recentEditFiles.count > cycleDetectionWindow {
+            recentEditFiles.removeFirst()
+        }
+        guard recentEditFiles.count >= 4 else { return }
+
+        // Flatten all files edited in the window
+        let allFiles = Set(recentEditFiles.flatMap { $0 })
+        guard allFiles.count >= 2, allFiles.count <= 3 else { return }
+
+        // Check that all files appear at least twice in the window
+        let flatList = recentEditFiles.flatMap { $0 }
+        let counts = Dictionary(flatList.map { ($0, 1) }, uniquingKeysWith: +)
+        let allAppearMultipleTimes = counts.values.allSatisfy { $0 >= 2 }
+        guard allAppearMultipleTimes else { return }
+
+        let fileList = allFiles.sorted().map { ($0 as NSString).lastPathComponent }.joined(separator: ", ")
+        let nudge = """
+            🔄 You've edited \(fileList) in a cycle — alternating between the same \
+            files without making progress. Step back: re-read ALL affected files, \
+            plan your changes holistically, then make targeted edits. If the files \
+            keep conflicting, consider whether the architecture needs a larger change.
+            """
+        appendNudge(nudge, &toolResults)
+        // Reset to avoid repeated nudges
+        recentEditFiles.removeAll()
+    }
+
     /// Overnight coding guardrails — track runaway loops and nudge/stop. Returns true when error budget triggers.
     func runOvernightCodingGuards(
         pendingTools: [(toolId: String, name: String, input: [String: Any])],
@@ -132,6 +168,12 @@ extension AgentViewModel {
                     }
                 } else {
                     stuckFiles[path] = 0
+                    // Cycle detection: track successful edits per file
+                    Self.detectEditCycle(filePath: path, toolResults: &toolResults) { nudge, results in
+                        appendNudgeToLastToolResult(&results, nudge: nudge)
+                        appendLog("🔄 Edit cycle detected")
+                        flushLog()
+                    }
                 }
             }
         }
