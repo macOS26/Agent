@@ -26,37 +26,23 @@ extension AgentViewModel {
             .contains("not found") || lower.contains("rejected")
         if isFailure {
             stuckFiles[path, default: 0] += 1
-            if stuckFiles[path]! == 3 {
-                let nudge = """
-                ⚠️ 3 consecutive edit failures on \(path). STOP retrying the same approach.
+	        if stuckFiles[path]! == 2 {
+	            let nudge = """
+	            ⚠️ 2 consecutive edit failures on \(path). STOP retrying the same approach.
 
-                Recovery checklist (do these in order):
-                1. read_file(file_path:"\(path)") \
-                with NO offset/limit to get the FULL \
-                fresh content
-                2. Find the EXACT lines you want to \
-                change in the new output. Do NOT trust \
-                the tool_result from earlier reads — \
-                the file may have been modified by your \
-                previous edits.
-                3. For edit_file: copy old_string verbatim \
-                from the fresh read, including every space, \
-                tab, and newline.
-                4. For diff_and_apply: pass start_line and \
-                end_line to scope the section.
-                5. **REWIND**: file(action:"restore", \
-                file_path:"\(path)") recovers the most \
-                recent FileBackupService snapshot from \
-                before your edits. Backups are auto-created \
-                on every write_file/edit_file call.
-                6. If you keep failing, switch tools — \
-                write_file to overwrite the whole file is \
-                a valid last resort.
-                """
-                // Use `text` block — Anthropic rejects `tool_result` blocks whose
-                // `tool_use_id` has no matching `tool_use` in the prior assistant message.
-                toolResults.append(["type": "text", "text": nudge])
-                tab.appendLog("⚠️ Stuck nudge: 3 failures on \((path as NSString).lastPathComponent)")
+	            Recovery checklist (do these in order):
+	            1. read_file(file_path:"\(path)") with NO offset/limit to get the FULL fresh content
+	            2. Find the EXACT lines you want to change in the new output. Do NOT trust the tool_result from earlier reads — the file may have been modified by your previous edits.
+	            3. For edit_file: copy old_string verbatim from the fresh read, including every space, tab, and newline.
+	            4. For diff_and_apply: pass start_line and end_line to scope the section.
+	            5. **REWIND**: file(action:"restore", file_path:"\(path)") recovers the most recent FileBackupService snapshot from before your edits. Backups are auto-created on every write_file/edit_file call.
+	            6. If you keep failing, switch tools — write_file to overwrite the whole file is a valid last resort.
+	            """
+	            // Use `text` block — Anthropic rejects `tool_result` blocks whose
+	            // `tool_use_id` has no matching `tool_use` in the prior assistant message.
+	            toolResults.append(["type": "text", "text": nudge])
+	            tab.appendLog("⚠️ Stuck nudge: 2 failures on \((path as NSString).lastPathComponent)")
+	            tab.flush()
                 tab.flush()
             }
         } else {

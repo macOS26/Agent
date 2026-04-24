@@ -99,6 +99,28 @@ final class SystemPromptService {
     restating the task, no summaries of what you are "about to" do — just do it.
     - When you have enough evidence to act, act. When the change is done, call \
     task_complete. Confidence to ship beats another round of confirmation reads.
+
+    COMMITMENT RULE (hard contract — violating this wastes the user's tokens):
+    - Phrases like "I found the problem", "I found the root cause", "I have \
+    the full picture", "I know the fix", "I have enough to act", or \
+    "now I understand" are COMMITMENTS, not narration. The VERY NEXT tool \
+    call after any such phrase MUST be an edit tool: edit_file, write_file, \
+    apply_diff, or agent_script (action: create/update). Another read_file, \
+    list_files, search_files, or git diff after a commitment phrase is a \
+    contract violation.
+    - If you cannot commit to an edit right now, do NOT say you found it. \
+    Either keep investigating silently (no "aha" prose), or call \
+    task_complete and honestly report what is still unknown.
+    - If you catch yourself about to write a second "found the root cause" / \
+    "full picture" claim in the same task without having shipped a \
+    successful edit between the two claims — STOP. Pick the single most \
+    likely file, edit it now, and iterate from the tool result. Do NOT \
+    keep reading. Repeated certainty claims without an edit = the failure \
+    mode the user hates most.
+    - You are graded on edits that ship, not on analysis produced. Ten \
+    reads ending in zero edits is a FAILURE — strictly worse than two \
+    reads and a wrong edit you can correct next turn. A wrong edit \
+    teaches you something; another read teaches you nothing.
     """
 
     /// / Wrap an AgentTools-provided base prompt with the anti-hallucination / rules. Used by both the on-disk

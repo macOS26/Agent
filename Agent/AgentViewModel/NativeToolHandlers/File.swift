@@ -9,7 +9,29 @@ import Cocoa
 
 // MARK: - Native Tool Handler — File Operations
 
+/// Tracks the last edit attempt per tab to detect and reject consecutive duplicate edits.
+/// Prevents the LLM from retrying the exact same old_string on the exact same file — a sign
+/// it's stuck in a loop. The guard fires at the dispatch layer (code-level, not prompt-only).
+struct LastEditAttempt: @unchecked Sendable {
+    let filePath: String
+    let oldString: String
+}
+
 extension AgentViewModel {
+
+    /// State for duplicate edit detection — keyed by tab UUID string.
+    private static var _lastEditAttempts: [String: LastEditAttempt] = [:]
+    private static let _lastEditLock = NSLock()
+
+    private static func checkDuplicateEdit(tabID: UUID, filePath: String, oldString: String) -> Bool {
+        _lastEditLock.lock()
+        defer { _lastEditLock.unlock() }
+        let key = tabID.uuidString
+        let last = _lastEditAttempts[key]
+        _lastEditAttempts[key] = LastEditAttempt(filePath: filePath, oldString: oldString)
+        guard let last else { return false }
+        return last.filePath == filePath && last.oldString == oldString
+    }
 
     /// / Handles file CRUD, diff, list/search, backup/restore, symbol search, / and refactor_rename tool calls. Returns
     /// `nil` if the name is not a / file-group tool so the main dispatcher can fall through.
@@ -80,6 +102,11 @@ extension AgentViewModel {
             let replaceAll = input["replace_all"] as? Bool ?? false
             let context = input["context"] as? String
             let tabID = selectedTabId ?? Self.mainTabID
+            // Duplicate edit rejection — if the exact same (file, old_string) pair was attempted
+            // on the previous turn, the LLM is stuck in a loop. Reject at the code level.
+            if Self.checkDuplicateEdit(tabID: tabID, filePath: expanded, oldString: old) {
+                return "Error: Duplicate edit rejected — you just tried the exact same old_string on this file and it failed. Recovery: re-read the file to get fresh content, then use a different old_string or try diff_and_apply with start_line/end_line instead."
+            }
             FileBackupService.shared.backup(filePath: expanded, tabID: tabID)
             return await Self.offMain {
                 CodingService.editFile(path: expanded, oldString: old, newString: new, replaceAll: replaceAll, context: context)

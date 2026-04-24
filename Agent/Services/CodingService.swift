@@ -187,10 +187,22 @@ enum CodingService {
             return "Error: old_string is empty — refusing to edit (would match every position)"
         }
 
+        // Edit size warning: large edits have much higher failure rates.
+        let needleLines = needle.components(separatedBy: "\n").count
+        if needleLines > 50 {
+            return "Warning: old_string is \(needleLines) lines — large edits fail frequently. Break this into smaller edits of ~10-20 lines each. Edit aborted for safety."
+        }
+
         // 2. Locate the match (exact → fuzzy → context-disambiguated)
         let occurrences = original.components(separatedBy: needle).count - 1
         var matchRange: Range<String.Index>?
         var matchNote = ""
+
+        // replace_all safety: when replacing all occurrences, refuse if the needle is very short
+        // (high risk of corrupting unexpected locations). Require at least 10 chars for replace_all.
+        if replaceAll && needle.count < 10 {
+            return "Error: replace_all refused — old_string is only \(needle.count) characters, which could match unexpected locations. Provide a longer, more specific old_string (minimum 10 characters) to use replace_all safely."
+        }
 
         if occurrences == 0 {
             if let range = fuzzyFindRange(in: original, target: needle) {
@@ -542,6 +554,20 @@ enum CodingService {
 
             guard actualSource != destination else {
                 return ("Error: source and destination are identical", "")
+            }
+
+            // Source verification: if the LLM provided a source parameter, verify it matches
+            // the actual file content at the specified lines. Prevents silent corruption from stale line numbers.
+            if let providedSource = source, !providedSource.isEmpty {
+                let normalizedActual = actualSource.replacingOccurrences(of: "\r\n", with: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+                let normalizedProvided = providedSource.replacingOccurrences(of: "\r\n", with: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+                if normalizedActual != normalizedProvided {
+                    let actualLines = actualSource.components(separatedBy: "\n")
+                    let providedLines = providedSource.components(separatedBy: "\n")
+                    let mismatchLine = zip(actualLines, providedLines).enumerated().first(where: { $0.element.0 != $0.element.1 })
+                    let detail = mismatchLine.map { "First mismatch at line \($0.offset + 1) within the range." } ?? "Line counts differ (actual: \(actualLines.count), provided: \(providedLines.count))."
+                    return ("Error: source verification failed — the file content at lines \(sl+1)–\(e) does not match the provided source parameter. \(detail) The file may have changed since your last read. Recovery: re-read the file, then retry with updated line numbers and source.", "")
+                }
             }
 
             // Splice destination back into the full file
