@@ -198,10 +198,7 @@ extension AgentViewModel {
         Task {
             defer { isFetchingOpenRouterModels = false }
             do {
-                let models = try await Self.fetchOpenAICompatibleModels(
-                    baseURL: "https://openrouter.ai/api/v1",
-                    apiKey: openRouterAPIKey
-                )
+                let models = try await Self.fetchOpenRouterCatalog(apiKey: openRouterAPIKey)
                 openRouterModels = models
                 let ids = models.map(\.id)
                 if openRouterModel.isEmpty || (!ids.isEmpty && !ids.contains(openRouterModel)) {
@@ -212,6 +209,41 @@ extension AgentViewModel {
                 openRouterModels = []
             }
         }
+    }
+
+    /// Fetch OpenRouter's /models catalog and keep only entries Agent! can actually drive:
+    /// nonzero context_length AND supports the "tools" parameter. Strips out preview,
+    /// embedding, image-only, and legacy chat-only entries that would just confuse the picker.
+    /// Display name uses OpenRouter's human-friendly "name" field instead of the raw id.
+    private nonisolated static func fetchOpenRouterCatalog(apiKey: String) async throws -> [OpenAIModelInfo] {
+        guard let url = URL(string: "https://openrouter.ai/api/v1/models") else { throw AgentError.invalidURL }
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        if !apiKey.isEmpty {
+            request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        }
+        request.timeoutInterval = llmAPITimeout
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            throw AgentError.apiError(statusCode: (response as? HTTPURLResponse)?.statusCode ?? 0, message: "OpenRouter /models error")
+        }
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let entries = json["data"] as? [[String: Any]] else { return [] }
+
+        let filtered = entries.compactMap { entry -> OpenAIModelInfo? in
+            guard let id = entry["id"] as? String, !id.isEmpty else { return nil }
+            // Require a real context window — strips preview/placeholder rows.
+            let ctx = entry["context_length"] as? Int ?? 0
+            guard ctx > 0 else { return nil }
+            // Require tool-calling support — Agent!'s loop is tool-driven, so
+            // chat-only / embedding / image-only models would just dead-end.
+            let params = entry["supported_parameters"] as? [String] ?? []
+            guard params.contains("tools") else { return nil }
+            let displayName = (entry["name"] as? String).map { $0.isEmpty ? id : $0 } ?? id
+            return OpenAIModelInfo(id: id, name: displayName)
+        }
+        return filtered.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
     func fetchHuggingFaceModels() {
