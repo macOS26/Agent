@@ -202,8 +202,10 @@ final class ClaudeService {
             "system": systemBlock,
             "messages": withFolderPrefix(stripOrphanToolResults(messages))
         ]
-        // Only include tools for real Anthropic API
-        if !isLocalEndpoint {
+        // Skip tools only for actual localhost servers (LM Studio's Claude-compat
+        // mode often mis-handles native Anthropic tool format). Remote
+        // Anthropic-compat proxies like OpenRouter forward tools correctly.
+        if !isLocalhostEndpoint {
             var toolDefs = tools(activeGroups: activeGroups, compact: compactTools)
             // Mark last tool with cache_control for prompt caching
             if !toolDefs.isEmpty {
@@ -363,7 +365,7 @@ final class ClaudeService {
             "messages": withFolderPrefix(stripOrphanToolResults(messages)),
             "stream": true
         ]
-        if !isLocalEndpoint {
+        if !isLocalhostEndpoint {
             var toolDefs = tools(activeGroups: activeGroups, compact: compactTools)
             if !toolDefs.isEmpty {
                 toolDefs[toolDefs.count - 1]["cache_control"] = ["type": "ephemeral"]
