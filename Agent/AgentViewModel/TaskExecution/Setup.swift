@@ -129,6 +129,13 @@ extension AgentViewModel {
                 projectFolder: projectFolder,
                 baseURL: lmStudioEndpoint, maxTokens: mt
             )
+        } else if provider == .openRouter && openRouterProtocol == .anthropic {
+            claude = ClaudeService(
+                apiKey: openRouterAPIKey, model: modelName,
+                historyContext: historyContext,
+                projectFolder: projectFolder,
+                baseURL: OpenRouterProtocol.anthropic.endpoint, maxTokens: mt
+            )
         } else {
             claude = nil
         }
@@ -137,6 +144,8 @@ extension AgentViewModel {
         case .claude, .codex, .ollama, .localOllama, .foundationModel:
             openAICompatible = nil
         case .lmStudio where lmStudioProtocol == .anthropic:
+            openAICompatible = nil
+        case .openRouter where openRouterProtocol == .anthropic:
             openAICompatible = nil
         case .lmStudio:
             let key = lmStudioProtocol == .lmStudio ? "input" : "messages"

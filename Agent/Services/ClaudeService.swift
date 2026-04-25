@@ -12,6 +12,10 @@ final class ClaudeService {
     private static let defaultBaseURL = URL(string: "https://api.anthropic.com/v1/messages") ?? URL(filePath: "/")
     private static let apiVersion = "2023-06-01"
     private let isLocalEndpoint: Bool
+    /// True only when the endpoint host is localhost — gates the compact-prompt fallback.
+    /// Why: LM Studio runs on tiny context windows so we shrink the system prompt;
+    /// remote Anthropic-compat proxies (OpenRouter) have full Claude context, so they should get the full prompt.
+    private let isLocalhostEndpoint: Bool
 
     // MARK: - Rate Limit Tracking
     // Anthropic 429/529 → capture Retry-After, pad next request. Mirrors OpenAICompatibleService pattern, separate dict for independent tracking.
@@ -58,6 +62,9 @@ final class ClaudeService {
         self.model = model
         self.endpointURL = baseURL.flatMap { URL(string: $0) } ?? Self.defaultBaseURL
         self.isLocalEndpoint = baseURL != nil
+        let host = self.endpointURL.host ?? ""
+        self.isLocalhostEndpoint = baseURL != nil
+            && (host == "localhost" || host == "127.0.0.1" || host == "::1")
         self.maxTokens = maxTokens
         self.historyContext = historyContext
         self.userHome = FileManager.default.homeDirectoryForCurrentUser.path
@@ -70,7 +77,7 @@ final class ClaudeService {
 
     var systemPrompt: String {
         if let override = overrideSystemPrompt { return override }
-        if isLocalEndpoint {
+        if isLocalhostEndpoint {
             // Local Claude-protocol endpoints (LM Studio) bypass SystemPromptService — wrap with anti-hallucination rules to match other providers.
             return SystemPromptService.wrapWithRules(
                 AgentTools.compactSystemPrompt(userName: userName, userHome: userHome, projectFolder: projectFolder)
@@ -281,6 +288,9 @@ final class ClaudeService {
                 "oauth-2025-04-20,prompt-caching-2024-07-31",
                 forHTTPHeaderField: "anthropic-beta"
             )
+        } else if clean.hasPrefix("sk-or-") {
+            // OpenRouter Anthropic-compat endpoint — wants Bearer auth, no Anthropic beta headers.
+            request.setValue("Bearer \(clean)", forHTTPHeaderField: "Authorization")
         } else {
             request.setValue(clean, forHTTPHeaderField: "x-api-key")
             request.setValue("prompt-caching-2024-07-31", forHTTPHeaderField: "anthropic-beta")

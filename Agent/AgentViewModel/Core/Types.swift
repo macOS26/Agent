@@ -33,6 +33,25 @@ enum LMStudioProtocol: String, CaseIterable, Codable {
     }
 }
 
+enum OpenRouterProtocol: String, CaseIterable, Codable {
+    case openAI = "openAI"
+    case anthropic = "anthropic"
+
+    var displayName: String {
+        switch self {
+        case .openAI: "OpenAI Compatible"
+        case .anthropic: "Anthropic Compatible"
+        }
+    }
+
+    var endpoint: String {
+        switch self {
+        case .openAI: "https://openrouter.ai/api/v1/chat/completions"
+        case .anthropic: "https://openrouter.ai/api/v1/messages"
+        }
+    }
+}
+
 enum PromptStyle: String, CaseIterable, Codable {
     case full
     case compact

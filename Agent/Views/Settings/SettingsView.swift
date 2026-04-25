@@ -356,6 +356,16 @@ struct SettingsView: View {
                         .font(.headline)
 
                     VStack(alignment: .leading, spacing: 4) {
+                        Text("API Protocol").font(.caption).foregroundStyle(.secondary)
+                        Picker("Protocol", selection: $viewModel.openRouterProtocol) {
+                            ForEach(OpenRouterProtocol.allCases, id: \.self) { proto in
+                                Text(proto.displayName).tag(proto)
+                            }
+                        }
+                        .labelsHidden()
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
                         Text("API Key").font(.caption).foregroundStyle(.secondary)
                         LockedSecureField(text: $viewModel.openRouterAPIKey, placeholder: "sk-or-...", lockKey: "lock.openRouterAPIKey")
                     }
