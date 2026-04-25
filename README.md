@@ -20,6 +20,7 @@
 
 ## What's New 🚀
 
+- **🌐 OpenRouter provider:** Full integration with OpenRouter's model catalog — one API key, 200+ models. Smart catalog fetches available models, protocol toggle (OpenAI/Anthropic) routes Claude models through the Anthropic protocol and everything else through OpenAI, and ClaudeService auto-routes when OpenRouter is selected.
 - **Apple AI as a real tool-calling agent:** On-device Apple Intelligence (FoundationModels.Tool) handles UI automation requests like *"take a photo using Photo Booth"* locally — multi-step tool calls, zero cloud LLM tokens, falls through to the cloud LLM only on failure.
 - **SDEF + runtime app discovery:** Bundle ID resolution is now zero-hardcoded. Apps in `Agent/SDEFs/` plus every `.app` in `/Applications`, `/System/Applications`, `~/Applications` are discovered at runtime — installing a new app extends what the agent can target with no code edit.
 - **Prompt caching for every OpenAI-format provider:** Z.ai, OpenAI, Grok, Mistral, DeepSeek, Qwen, Gemini, BigModel, Hugging Face — `cached_tokens` is parsed from the response and shown in the LLM Usage panel. JSON request bodies use `.sortedKeys` so byte-stable prefixes actually hit the provider's cache.
@@ -39,7 +40,7 @@
 
 **One app. Any AI. Total command over your Mac.**
 
-Agent! wires **17 LLM providers** — Claude, GPT, Gemini, Grok, Mistral, DeepSeek, Qwen, Z.ai, BigModel, Hugging Face, Ollama (cloud and local), vLLM, LM Studio, Codestral, Mistral Vibe, and on-device **Apple Intelligence** — into a native macOS app that doesn't just talk about doing things. It does them.
+Agent! wires **18 LLM providers** — Claude, GPT, Gemini, Grok, Mistral, DeepSeek, Qwen, Z.ai, BigModel, Hugging Face, **OpenRouter**, Ollama (cloud and local), vLLM, LM Studio, Codestral, Mistral Vibe, and on-device **Apple Intelligence** — into a native macOS app that doesn't just talk about doing things. It does them.
 
 Watch it read your codebase, fix the bug, build the Xcode project, and commit the diff while you make coffee. Tell it to open Safari and text you the price of flights to Tokyo. Say *"Agent!"* from across the room and have it run your test suite by voice. Text your Mac from iMessage and get a polished answer before you reach your car.
 
@@ -138,9 +139,9 @@ Adding `setCodeSigningRequirement` explicitly would be reasonable belt-and-brace
 ### 🖥 Desktop Automation (AXorcist)
 Control any Mac app through the Accessibility API. Click buttons, type into fields, navigate menus, scroll, drag -- all programmatically. Powered by [AXorcist](https://github.com/steipete/AXorcist) for reliable, fuzzy-matched element finding.
 
-### 🤖 17 AI Providers
+### 🤖 18 AI Providers
 
-The provider picker (LLM Settings, toolbar button #7) shows 16 providers; Apple Intelligence is reached via the separate brain icon (#8). Source of truth: `AgentTools.APIProvider`.
+The provider picker (LLM Settings, toolbar button #7) shows 17 providers; Apple Intelligence is reached via the separate brain icon (#8). Source of truth: `AgentTools.APIProvider`.
 
 | Provider | API key | Best for |
 |---|---|---|
@@ -153,6 +154,7 @@ The provider picker (LLM Settings, toolbar button #7) shows 16 providers; Apple 
 | **Mistral Vibe** | Paid | Mistral's chat/agent product |
 | **DeepSeek** | Cheap | Budget cloud, strong coding, prompt cache hit reporting |
 | **Hugging Face** | Varies | Open-source models hosted serverless or on dedicated endpoints |
+| **OpenRouter** | Paid | 200+ models through one API key — Claude, GPT, Gemini, Llama, Mistral, and more. Smart protocol toggle routes Claude models via Anthropic protocol, everything else via OpenAI |
 | **Z.ai** | Cheap | GLM-5.1 via API — recommended starting point |
 | **BigModel** (Zhipu) | Cheap | GLM family via Zhipu's API |
 | **Qwen** (Alibaba) | Cheap | Qwen 2.5 / 3 via Dashscope |
