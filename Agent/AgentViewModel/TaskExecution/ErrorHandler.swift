@@ -210,11 +210,26 @@ extension AgentViewModel {
             timeoutRetryCount += 1
             let apiBody: String
             if case .apiError(_, let msg) = error as? AgentError { apiBody = msg } else { apiBody = errMsg }
+            // OpenRouter free-tier rate limits are shared across all OpenRouter
+            // users and don't recover on the timescale of our retry loop. Bail
+            // to fallback (or break) immediately instead of churning 20×10s.
+            let isFreeQuotaExhausted = apiBody.contains("rate-limited upstream")
+                || apiBody.contains("add your own key to accumulate")
             // Record every 429 with the fallback chain — it fires once its
             // own threshold is met (3 total failures across the task).
             if let fallback = await tryFallbackChain(reason: "429 (\(timeoutRetryCount))") {
                 timeoutRetryCount = 0
                 return fallback
+            }
+            if isFreeQuotaExhausted {
+                appendLog(
+                    """
+                    ⏳ \(errorSource) free-tier upstream exhausted: \(apiBody.prefix(200))
+                    No fallback available — giving up. Pick a paid model (drop the :free suffix) or configure a fallback chain.
+                    """
+                )
+                flushLog()
+                return .breakLoop
             }
             let retryDelay: TimeInterval = 10
             appendLog(
