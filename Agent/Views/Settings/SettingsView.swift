@@ -19,6 +19,7 @@ struct SettingsView: View {
         case .zAI: return $viewModel.zAITemperature
         case .bigModel: return $viewModel.zAITemperature
         case .miniMax: return $viewModel.miniMaxTemperature
+        case .openRouter: return $viewModel.openAITemperature
         case .qwen: return $viewModel.openAITemperature
         case .gemini: return $viewModel.geminiTemperature
         case .grok: return $viewModel.grokTemperature
@@ -345,6 +346,48 @@ struct SettingsView: View {
                             .buttonStyle(.bordered)
                             .controlSize(.small)
                             .disabled(viewModel.isFetchingMiniMaxModels)
+                            .help("Fetch available models")
+                        }
+                    }
+                }
+            } else if viewModel.selectedProvider == .openRouter {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("OpenRouter")
+                        .font(.headline)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("API Key").font(.caption).foregroundStyle(.secondary)
+                        LockedSecureField(text: $viewModel.openRouterAPIKey, placeholder: "sk-or-...", lockKey: "lock.openRouterAPIKey")
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Model").font(.caption).foregroundStyle(.secondary)
+                        HStack {
+                            if viewModel.openRouterModels.isEmpty {
+                                TextField("e.g. anthropic/claude-opus-4", text: $viewModel.openRouterModel)
+                                    .textFieldStyle(.roundedBorder)
+                            } else {
+                                Picker("Model", selection: $viewModel.openRouterModel) {
+                                    ForEach(viewModel.openRouterModels) { model in
+                                        Text(model.name).tag(model.id)
+                                    }
+                                }
+                                .labelsHidden()
+                            }
+
+                            Button {
+                                viewModel.fetchOpenRouterModels()
+                            } label: {
+                                if viewModel.isFetchingOpenRouterModels {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(viewModel.isFetchingOpenRouterModels)
                             .help("Fetch available models")
                         }
                     }

@@ -210,6 +210,7 @@ struct FallbackChainView: View {
         case .gemini: return oai(viewModel.geminiModels)
         case .grok: return oai(viewModel.grokModels)
         case .mistral: return oai(viewModel.mistralModels)
+        case .openRouter: return oai(viewModel.openRouterModels)
         default: return []
         }
     }
@@ -250,6 +251,7 @@ struct FallbackChainView: View {
         case .vibe: if !viewModel.vibeModel.isEmpty { return viewModel.vibeModel }
         case .bigModel: if !viewModel.bigModelModel.isEmpty { return viewModel.bigModelModel }
         case .miniMax: if !viewModel.miniMaxModel.isEmpty { return viewModel.miniMaxModel }
+        case .openRouter: if !viewModel.openRouterModel.isEmpty { return viewModel.openRouterModel }
         case .foundationModel: return "Apple Intelligence"
         }
         // Fall back to the first dynamically-fetched model for this provider

@@ -63,6 +63,9 @@ extension AgentViewModel {
         case .miniMax:
             modelName = miniMaxModel
             isVision = false
+        case .openRouter:
+            modelName = openRouterModel
+            isVision = Self.isVisionModel(openRouterModel)
         case .qwen:
             modelName = qwenModel
             isVision = Self.isVisionModel(qwenModel)

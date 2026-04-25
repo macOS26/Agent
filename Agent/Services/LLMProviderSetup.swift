@@ -7,7 +7,7 @@ enum LLMProviderSetup {
 
     static func registerAllProviders() {
         LLMRegistry.shared.registerAll([
-            claude, codex, openAI, gemini, grok, mistral, codestral, vibe, deepSeek, huggingFace, miniMax, zAI, bigModel, qwen,
+            claude, codex, openAI, gemini, grok, mistral, codestral, vibe, deepSeek, huggingFace, miniMax, zAI, bigModel, qwen, openRouter,
             ollama, localOllama, vLLM, lmStudio, appleIntelligence
         ])
     }
@@ -70,6 +70,16 @@ enum LLMProviderSetup {
             modelsURL: "https://router.huggingface.co/v1/models"
         ),
         capabilities: [.streaming, .tools, .systemPrompt]
+    )
+
+    static let openRouter = LLMProviderConfig(
+        id: "openRouter", displayName: "OpenRouter",
+        kind: .cloudAPI, apiProtocol: .openAI,
+        endpoint: LLMEndpoint(
+            chatURL: "https://openrouter.ai/api/v1/chat/completions",
+            modelsURL: "https://openrouter.ai/api/v1/models"
+        ),
+        capabilities: [.streaming, .tools, .vision, .systemPrompt]
     )
 
     static let miniMax = LLMProviderConfig(

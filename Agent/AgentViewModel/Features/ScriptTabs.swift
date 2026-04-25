@@ -74,6 +74,7 @@ extension AgentViewModel {
         case .zAI: return zAIModel.replacingOccurrences(of: ":v", with: "")
         case .bigModel: return bigModelModel.replacingOccurrences(of: ":v", with: "")
         case .miniMax: return miniMaxModel
+        case .openRouter: return openRouterModel
         case .qwen: return qwenModel
         case .gemini: return geminiModel
         case .grok: return grokModel
@@ -99,6 +100,7 @@ extension AgentViewModel {
         case .zAI: return zAIAPIKey
         case .bigModel: return bigModelAPIKey
         case .miniMax: return miniMaxAPIKey
+        case .openRouter: return openRouterAPIKey
         case .qwen: return qwenAPIKey
         case .gemini: return geminiAPIKey
         case .grok: return grokAPIKey
@@ -150,6 +152,8 @@ extension AgentViewModel {
         case .miniMax:
             return miniMaxModels.first(where: { $0.id == modelId })?.name
                 ?? Self.defaultMiniMaxModels.first(where: { $0.id == modelId })?.name ?? modelId
+        case .openRouter:
+            return openRouterModels.first(where: { $0.id == modelId })?.name ?? modelId
         case .qwen:
             return modelId
         case .gemini:

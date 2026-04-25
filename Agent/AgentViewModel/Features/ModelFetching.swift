@@ -193,6 +193,27 @@ extension AgentViewModel {
         }
     }
 
+    func fetchOpenRouterModels() {
+        isFetchingOpenRouterModels = true
+        Task {
+            defer { isFetchingOpenRouterModels = false }
+            do {
+                let models = try await Self.fetchOpenAICompatibleModels(
+                    baseURL: "https://openrouter.ai/api/v1",
+                    apiKey: openRouterAPIKey
+                )
+                openRouterModels = models
+                let ids = models.map(\.id)
+                if openRouterModel.isEmpty || (!ids.isEmpty && !ids.contains(openRouterModel)) {
+                    openRouterModel = ids.first ?? ""
+                }
+            } catch {
+                appendLog("Failed to fetch OpenRouter models: \(error.localizedDescription)")
+                openRouterModels = []
+            }
+        }
+    }
+
     func fetchHuggingFaceModels() {
         guard !huggingFaceAPIKey.isEmpty else {
             huggingFaceModels = Self.defaultHuggingFaceModels
@@ -834,6 +855,7 @@ extension AgentViewModel {
         case .codestral: if force || codestralModels.isEmpty { fetchCodestralModels() }
         case .vibe: if force || vibeModels.isEmpty { fetchVibeModels() }
         case .miniMax: if force || miniMaxModels.isEmpty { fetchMiniMaxModels() }
+        case .openRouter: if force || openRouterModels.isEmpty { fetchOpenRouterModels() }
         case .bigModel: break
         default: break
         }

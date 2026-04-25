@@ -322,6 +322,19 @@ final class AgentViewModel {
     var miniMaxModels: [OpenAIModelInfo] = []
     var isFetchingMiniMaxModels = false
 
+    // MARK: - OpenRouter
+
+    var openRouterAPIKey: String = KeychainService.shared.getOpenRouterAPIKey() ?? "" {
+        didSet { KeychainService.shared.setOpenRouterAPIKey(openRouterAPIKey) }
+    }
+
+    var openRouterModel: String = UserDefaults.standard.string(forKey: "openRouterModel") ?? "" {
+        didSet { UserDefaults.standard.set(openRouterModel, forKey: "openRouterModel") }
+    }
+
+    var openRouterModels: [OpenAIModelInfo] = []
+    var isFetchingOpenRouterModels = false
+
     // MARK: - Google Gemini
 
     var geminiAPIKey: String = KeychainService.shared.getGeminiAPIKey() ?? "" {

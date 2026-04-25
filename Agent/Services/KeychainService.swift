@@ -74,6 +74,10 @@ final class KeychainService: Sendable {
     func setMiniMaxAPIKey(_ key: String) { set(key: Self.miniMaxAPIKey, value: key) }
     func getMiniMaxAPIKey() -> String? { get(key: Self.miniMaxAPIKey) }
 
+    private static let openRouterAPIKey = "com.agent.openrouter-api-key"
+    func setOpenRouterAPIKey(_ key: String) { set(key: Self.openRouterAPIKey, value: key) }
+    func getOpenRouterAPIKey() -> String? { get(key: Self.openRouterAPIKey) }
+
     private func set(key: String, value: String) {
         guard let data = value.data(using: .utf8) else { return }
         delete(key: key)
