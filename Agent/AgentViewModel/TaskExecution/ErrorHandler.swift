@@ -45,14 +45,38 @@ extension AgentViewModel {
         if Task.isCancelled { return .breakLoop }
         let errMsg = error.localizedDescription
 
-        // Context overflow — prune messages aggressively and retry
-        let isOverflow = errMsg.contains("max_tokens") || errMsg.contains("context_length") || errMsg
-            .contains("too many tokens") || errMsg.contains("prompt is too long")
+        // Context overflow — prune messages aggressively and retry.
+        // Detection narrowed: require an "exceed/too long/too many" phrase alongside
+        // the keyword. Plain "max_tokens" appears in unrelated parameter errors
+        // (e.g. "max_tokens must be a positive integer"), and treating those as
+        // overflow caused infinite same-second prune loops on bogus model ids.
+        let isOverflow = errMsg.contains("context_length_exceeded")
+            || errMsg.contains("prompt is too long")
+            || errMsg.contains("too many tokens")
+            || (errMsg.contains("max_tokens") && (errMsg.contains("exceed") || errMsg.contains("greater than")))
+            || (errMsg.contains("context_length") && (errMsg.contains("exceed") || errMsg.contains("greater than")))
         if isOverflow {
-            appendLog("⚠️ Context overflow — pruning messages and retrying")
-            flushLog()
+            let beforeCount = messages.count
             Self.pruneMessages(&messages, keepRecent: 4)
             Self.stripOldImages(&messages)
+            let didShrink = messages.count < beforeCount
+            // Cap consecutive prune attempts; if pruning didn't actually shrink the
+            // history, the error is misclassified or the model's limit is so small
+            // even pruning can't help — either way, retrying is futile.
+            timeoutRetryCount += 1
+            if !didShrink || timeoutRetryCount > 3 {
+                appendLog(
+                    """
+                    ⚠️ Context overflow — pruning to \(messages.count) messages didn't help. Stopping.
+                    Original error: \(errMsg.prefix(300))
+                    """
+                )
+                flushLog()
+                return .breakLoop
+            }
+            appendLog("⚠️ Context overflow — pruned \(beforeCount) → \(messages.count) messages, retrying (\(timeoutRetryCount)/3)")
+            flushLog()
+            try? await Task.sleep(for: .milliseconds(500))
             return .continueLoop
         }
 
