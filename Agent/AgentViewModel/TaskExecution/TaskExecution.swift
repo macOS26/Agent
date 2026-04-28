@@ -48,7 +48,7 @@ extension AgentViewModel {
         displayedLLMOutput = ""
         dripDisplayIndex = 0
 
-        trimToRecentTasks()
+        activityLog = ScriptTab.capActivityLog(activityLog, keepRecentTasks: visibleTaskCount)
         taskInputTokens = 0
         taskOutputTokens = 0
         budgetUsedFraction = 0

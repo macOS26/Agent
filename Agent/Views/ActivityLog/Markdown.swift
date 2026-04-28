@@ -79,7 +79,7 @@ extension ActivityLogView.Coordinator {
     }
 
     /// / Build attributed string from text. Converts image/HTML paths to clickable links. / Source `activityLog` is
-    /// bounded to `ScriptTab.logCap` (50K) by `ScriptTab.trimLog`, / so this view never trims — it just renders and styles the trim banner literal yellow.
+    /// bounded to `ScriptTab.logCap` (50K) by `ScriptTab.capActivityLog`, / so this view never trims — it just renders and styles the trim banner literal yellow.
     nonisolated func buildAttributedString(from text: String) -> NSAttributedString {
         let baseAttrs: [NSAttributedString.Key: Any] = [
             .font: font,

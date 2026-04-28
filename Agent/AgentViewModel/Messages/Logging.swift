@@ -372,7 +372,7 @@ extension AgentViewModel {
         return result
     }
 
-    static let newTaskMarker = "--- New Task ---"
+    nonisolated static let newTaskMarker = "--- New Task ---"
 
     /// Shared log formatting — prepends spacing for first task, strips blank lines before Cancelled.
     static func prepareLogBuffer(message: String, buffer: inout String, existingLog: String) {
@@ -599,7 +599,7 @@ extension AgentViewModel {
             if !self.streamBuffer.isEmpty {
                 let collapsed = Self.collapseNewlines(self.streamBuffer)
                 ChatHistoryStore.shared.appendStreamingContent(collapsed)
-                self.activityLog = ScriptTab.trimLog(self.activityLog + collapsed)
+                self.activityLog = ScriptTab.capActivityLog(self.activityLog + collapsed)
                 self.streamBuffer = ""
             }
         }
@@ -612,14 +612,14 @@ extension AgentViewModel {
         if !streamBuffer.isEmpty {
             let collapsed = Self.collapseNewlines(streamBuffer)
             ChatHistoryStore.shared.appendStreamingContent(collapsed)
-            activityLog = ScriptTab.trimLog(activityLog + collapsed)
+            activityLog = ScriptTab.capActivityLog(activityLog + collapsed)
             streamBuffer = ""
             didFlush = true
         }
         if streamingTextStarted {
             if didFlush {
                 ChatHistoryStore.shared.appendStreamingContent("\n")
-                activityLog = ScriptTab.trimLog(activityLog + "\n")
+                activityLog = ScriptTab.capActivityLog(activityLog + "\n")
             }
             streamingTextStarted = false
             // Let drip task finish naturally — no instant dump
@@ -662,7 +662,7 @@ extension AgentViewModel {
         }
         // Single mutation of activityLog instead of multiple
         if !combined.isEmpty {
-            activityLog = ScriptTab.trimLog(activityLog + combined)
+            activityLog = ScriptTab.capActivityLog(activityLog + combined)
             NotificationCenter.default.post(name: .activityLogDidChange, object: nil)
         }
     }
@@ -675,16 +675,6 @@ extension AgentViewModel {
             logPersistTask = nil
             ChatHistoryStore.shared.save()
         }
-    }
-
-    /// Keep only the last N tasks visible in the chat (controlled by visibleTaskCount preference)
-    func trimToRecentTasks() {
-        let marker = Self.newTaskMarker
-        let parts = activityLog.components(separatedBy: marker)
-        let limit = visibleTaskCount
-        guard parts.count > limit + 1 else { return }
-        let kept = parts.suffix(limit).joined(separator: marker)
-        activityLog = marker + kept
     }
 
     func persistLogNow() {

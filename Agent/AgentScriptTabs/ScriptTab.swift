@@ -216,7 +216,7 @@ final class ScriptTab: Identifiable {
         self.tabInputTokens = record.tabInputTokens
         self.tabOutputTokens = record.tabOutputTokens
         // Trim main/script tab logs on relaunch (skip Messages/automation tabs)
-        if !isMessagesTab { activityLog = Self.trimLog(activityLog) }
+        if !isMessagesTab { activityLog = Self.capActivityLog(activityLog) }
     }
 
     // MARK: - Logging
@@ -258,11 +258,28 @@ final class ScriptTab: Identifiable {
     /// Banner inserted when the log is trimmed; ActivityLogView styles it with a yellow background.
     nonisolated static let trimBanner = "··· earlier output trimmed ···\n\n"
 
-    /// THE ONE log trim function: hard 50K cap, snaps to next newline, prepends banner. Idempotent.
-    nonisolated static func trimLog(_ log: String) -> String {
-        guard log.count > logCap else { return log }
+    /// Unified activity-log cap: optionally drops oldest task sections, then
+    /// enforces the byte cap. Always idempotent. Prepends `trimBanner` once.
+    /// - Parameter keepRecentTasks: if set, keep only the last N task sections
+    ///   (split by `AgentViewModel.newTaskMarker`). If nil, only byte cap applies.
+    nonisolated static func capActivityLog(_ log: String, keepRecentTasks: Int? = nil) -> String {
+        var result = log
+
+        // Pass 1: task-count cap (when set). Drops oldest whole task sections.
+        if let limit = keepRecentTasks, limit > 0 {
+            let marker = AgentViewModel.newTaskMarker
+            let parts = result.components(separatedBy: marker)
+            // parts[0] is anything before the first marker; tasks live in parts[1...].
+            if parts.count > limit + 1 {
+                let kept = parts.suffix(limit).joined(separator: marker)
+                result = marker + kept
+            }
+        }
+
+        // Pass 2: byte cap. Snaps to next newline so we never start mid-line.
+        guard result.count > logCap else { return result }
         let target = max(0, logCap - trimBanner.count)
-        var trimmed = String(log.dropFirst(log.count - target))
+        var trimmed = String(result.dropFirst(result.count - target))
         if let nl = trimmed.firstIndex(of: "\n") {
             trimmed = String(trimmed[trimmed.index(after: nl)...])
         }
@@ -273,7 +290,7 @@ final class ScriptTab: Identifiable {
         logFlushTask?.cancel()
         logFlushTask = nil
         if !logBuffer.isEmpty {
-            activityLog = Self.trimLog(activityLog + logBuffer)
+            activityLog = Self.capActivityLog(activityLog + logBuffer)
             logBuffer = ""
             NotificationCenter.default.post(name: .activityLogDidChange, object: id)
         }

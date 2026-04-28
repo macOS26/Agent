@@ -12,7 +12,7 @@ extension AgentViewModel {
     func bootstrapThemeAndScripts() {
         activityLog = ChatHistoryStore.shared.buildActivityLogText(maxTasks: 3)
         // Trim main tab log on relaunch
-        activityLog = ScriptTab.trimLog(activityLog)
+        activityLog = ScriptTab.capActivityLog(activityLog)
         CodeBlockTheme.updateAppearance()
         TerminalNeoTheme.updateAppearance()
         // Restore ~/Documents/AgentScript/ folder and bundled resources if missing (off main thread)
