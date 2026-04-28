@@ -104,6 +104,10 @@ extension AgentViewModel {
     func executeTabTask(tab: ScriptTab, prompt: String) async {
         tab.isLLMRunning = true
         tab.llmMessages = [] // Fresh conversation for each task
+        // Reset elapsed timer at the task-start callsite (see executeTask
+        // for the ThinkingIndicatorView .onChange race that this guards against).
+        tab.taskStartDate = Date()
+        tab._taskElapsedFrozen = 0
         // Auto-expand HUD for THIS tab's run start (not on tab switches)
         tab.thinkingExpanded = true
         tab.thinkingOutputExpanded = true

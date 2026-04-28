@@ -23,6 +23,12 @@ extension AgentViewModel {
         isRunning = true
         userWasActive = false
         rootWasActive = false
+        // Reset elapsed timer at the task-start callsite. Pinning this to a
+        // ThinkingIndicatorView .onChange was fragile — if the view wasn't
+        // mounted on the false→true transition, the timer kept the prior
+        // task's frozen value (showed 4h+ on a fresh task).
+        mainTaskStartDate = Date()
+        _mainTaskElapsedFrozen = 0
         // Auto-expand HUD for the main tab's run start (not on tab switches)
         thinkingExpanded = true
         thinkingOutputExpanded = true
