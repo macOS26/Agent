@@ -1,6 +1,7 @@
 
+
 <div align="center">
-<img width="256" height="256" alt="image" src="https://github.com/user-attachments/assets/0122a360-0c18-4069-b614-b8d4fb7abf86" />
+<img width="256" height="256" alt="agent_icon_256" src="https://github.com/user-attachments/assets/20585d64-ea67-4818-8c6c-3435d9bcbf4c" />
 
 
 # 🦾 Agent! for macOS 26.4.1
