@@ -182,6 +182,11 @@ final class AgentViewModel {
         didSet { KeychainService.shared.setTavilyAPIKey(tavilyAPIKey) }
     }
 
+    // Exa web search API key (available for all providers)
+    var exaAPIKey: String = KeychainService.shared.getExaAPIKey() ?? "" {
+        didSet { KeychainService.shared.setExaAPIKey(exaAPIKey) }
+    }
+
     let ollamaEndpoint = "https://ollama.com/api/chat"
 
     // OpenAI settings

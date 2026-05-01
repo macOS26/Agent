@@ -1024,13 +1024,18 @@ struct SettingsView: View {
                     }
             }
 
-            // Web Search (Tavily) — available for all providers
+            // Web Search — available for all providers. Exa is preferred when
+            // configured, then Tavily, with DuckDuckGo as the keyless fallback.
             VStack(alignment: .leading, spacing: 10) {
                 Text("Web Search")
                     .font(.headline)
-                Text("Tavily provides web search for all LLM providers.")
+                Text("Exa or Tavily provides web search for all LLM providers. DuckDuckGo is used when neither key is set.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Exa API Key").font(.caption).foregroundStyle(.secondary)
+                    LockedSecureField(text: $viewModel.exaAPIKey, placeholder: "exa-...", lockKey: "lock.exaAPIKey")
+                }
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Tavily API Key").font(.caption).foregroundStyle(.secondary)
                     LockedSecureField(text: $viewModel.tavilyAPIKey, placeholder: "tvly-...", lockKey: "lock.tavilyAPIKey")
