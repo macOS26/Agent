@@ -82,6 +82,10 @@ final class KeychainService: Sendable {
     func setExaAPIKey(_ key: String) { set(key: Self.exaAPIKey, value: key) }
     func getExaAPIKey() -> String? { get(key: Self.exaAPIKey) }
 
+    private static let lmStudioAPIKey = "com.agent.lmstudio-api-key"
+    func setLMStudioAPIKey(_ key: String) { set(key: Self.lmStudioAPIKey, value: key) }
+    func getLMStudioAPIKey() -> String? { get(key: Self.lmStudioAPIKey) }
+
     private func set(key: String, value: String) {
         guard let data = value.data(using: .utf8) else { return }
         delete(key: key)
