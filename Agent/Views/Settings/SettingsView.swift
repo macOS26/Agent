@@ -723,6 +723,7 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("API Key (optional)").font(.caption).foregroundStyle(.secondary)
                         SecureField("Leave blank if not required", text: $viewModel.lmStudioAPIKey)
+                            .textContentType(.oneTimeCode)
                             .textFieldStyle(.roundedBorder)
                     }
 
@@ -1095,6 +1096,7 @@ struct LockedSecureField: View {
     var body: some View {
         HStack(spacing: 4) {
             SecureField(placeholder, text: $text)
+                .textContentType(.oneTimeCode)
                 .textFieldStyle(.roundedBorder)
                 .disabled(isLocked)
                 .opacity(isLocked ? 0.6 : 1)
