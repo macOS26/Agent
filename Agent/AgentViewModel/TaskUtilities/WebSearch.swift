@@ -19,7 +19,7 @@ extension AgentViewModel {
     /// This delegates to the implementation in AgentViewModel+WebSearch.swift.
     nonisolated static func performWebSearchForTask(query: String, apiKey: String, provider: APIProvider) async -> String {
         // Fallback chain — each step tries a more universal backend: 1. Ollama+key → Ollama Web Search 2.
-        // Z.AI/BigModel+key → Z.AI search-prime 3. Tavily key → Tavily 4. DuckDuckGo HTML scrape (no key, always available)
+        // Z.AI/BigModel+key → Z.AI search-prime 3. Exa key → Exa /search 4. Tavily key → Tavily 5. DuckDuckGo HTML scrape (no key, always available)
         if provider == .ollama || provider == .localOllama {
             if let ollamaKey = KeychainService.shared.getOllamaAPIKey(), !ollamaKey.isEmpty {
                 let ollamaResult = await performOllamaWebSearchInternal(query: query, apiKey: ollamaKey)
@@ -36,6 +36,15 @@ extension AgentViewModel {
                 if !zResult.hasPrefix("Error:") {
                     return zResult
                 }
+            }
+        }
+        // Exa — neural/semantic web search via api.exa.ai. Pulled from
+        // Keychain inside the function (matches Z.AI/Ollama pattern). Falls
+        // through on error so Tavily/DuckDuckGo remain available.
+        if let exaKey = KeychainService.shared.getExaAPIKey(), !exaKey.isEmpty {
+            let exaResult = await performExaSearchInternal(query: query, apiKey: exaKey)
+            if !exaResult.hasPrefix("Error:") {
+                return exaResult
             }
         }
         // Tavily — only attempt if a key is configured. Missing key → skip,
@@ -260,6 +269,102 @@ extension AgentViewModel {
             }
             return "No search results found for '\(query)'"
         } catch { return "Error: \(error.localizedDescription)" }
+    }
+
+    /// Calls Exa's /search endpoint (https://api.exa.ai/search). Exa is a
+    /// neural/semantic web search API; the `auto` type lets the API pick
+    /// neural vs keyword per query. We request both `text` (truncated) and
+    /// `highlights` so the snippet logic can cascade through whichever
+    /// content the API returns. The `x-exa-integration` header tags this
+    /// integration so Exa can attribute usage.
+    nonisolated static func performExaSearchInternal(query: String, apiKey: String) async -> String {
+        guard !apiKey.isEmpty else { return "Error: Exa API key not set. Add it in Settings." }
+        guard let url = URL(string: "https://api.exa.ai/search") else { return "Error: Invalid Exa URL" }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        request.setValue("agent", forHTTPHeaderField: "x-exa-integration")
+        request.timeoutInterval = llmAPITimeout
+        let body: [String: Any] = [
+            "query": query,
+            "type": "auto",
+            "numResults": 5,
+            "contents": [
+                "text": ["maxCharacters": 800],
+                "highlights": ["numSentences": 2, "highlightsPerUrl": 2],
+            ],
+        ]
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse else { return "Error: Invalid response from Exa" }
+            guard httpResponse.statusCode == 200 else {
+                let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
+                return "Error: Exa API returned \(httpResponse.statusCode): \(errorBody)"
+            }
+            return formatExaResponse(data: data, query: query)
+        } catch { return "Error: \(error.localizedDescription)" }
+    }
+
+    /// Decode an Exa /search response and render it in the same multi-line
+    /// format used by the other providers. Exposed for unit tests so we can
+    /// feed in a hardcoded JSON fixture without hitting the network.
+    nonisolated static func formatExaResponse(data: Data, query: String) -> String {
+        struct ExaSearchResponse: Decodable {
+            let results: [ExaResult]
+        }
+        struct ExaResult: Decodable {
+            let title: String?
+            let url: String?
+            let publishedDate: String?
+            let author: String?
+            let text: String?
+            let highlights: [String]?
+            let summary: String?
+        }
+        do {
+            let decoded = try JSONDecoder().decode(ExaSearchResponse.self, from: data)
+            if decoded.results.isEmpty { return "No search results found for '\(query)'" }
+            var output = ""
+            for (i, result) in decoded.results.enumerated() {
+                let title = result.title?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
+                    ? result.title! : "Untitled"
+                let resultUrl = result.url ?? ""
+                output += "\(i + 1). \(title)\n   \(resultUrl)\n"
+                let metaParts = [result.author, result.publishedDate].compactMap { $0 }.filter { !$0.isEmpty }
+                if !metaParts.isEmpty {
+                    output += "   [\(metaParts.joined(separator: " · "))]\n"
+                }
+                let snippet = exaSnippet(highlights: result.highlights, summary: result.summary, text: result.text)
+                if !snippet.isEmpty { output += "   \(snippet)\n" }
+                output += "\n"
+            }
+            return output.trimmingCharacters(in: .whitespacesAndNewlines)
+        } catch {
+            return "Error: Failed to parse Exa response: \(error.localizedDescription)"
+        }
+    }
+
+    /// Cascade through the content modes Exa may return. The API may return
+    /// any combination of highlights/summary/text depending on the request
+    /// and what was indexed for the page; pick the first one that's actually
+    /// populated rather than assuming exactly one will be present.
+    nonisolated static func exaSnippet(highlights: [String]?, summary: String?, text: String?) -> String {
+        if let highlights, !highlights.isEmpty {
+            let joined = highlights
+                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+                .joined(separator: " … ")
+            if !joined.isEmpty { return joined }
+        }
+        if let summary = summary?.trimmingCharacters(in: .whitespacesAndNewlines), !summary.isEmpty {
+            return summary
+        }
+        if let text = text?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty {
+            return text
+        }
+        return ""
     }
 
     nonisolated private static func performTavilySearchForTask(query: String, apiKey: String) async -> String {

@@ -78,6 +78,10 @@ final class KeychainService: Sendable {
     func setOpenRouterAPIKey(_ key: String) { set(key: Self.openRouterAPIKey, value: key) }
     func getOpenRouterAPIKey() -> String? { get(key: Self.openRouterAPIKey) }
 
+    private static let exaAPIKey = "com.agent.exa-api-key"
+    func setExaAPIKey(_ key: String) { set(key: Self.exaAPIKey, value: key) }
+    func getExaAPIKey() -> String? { get(key: Self.exaAPIKey) }
+
     private func set(key: String, value: String) {
         guard let data = value.data(using: .utf8) else { return }
         delete(key: key)

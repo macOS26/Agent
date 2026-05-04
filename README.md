@@ -1,6 +1,8 @@
 
+
 <div align="center">
-<img width="256" height="256" alt="Agent! icon" src="https://github.com/user-attachments/assets/7a452184-6b31-49fa-9b24-d450d2889f66" />
+<img width="256" height="256" alt="agent_icon_256" src="https://github.com/user-attachments/assets/20585d64-ea67-4818-8c6c-3435d9bcbf4c" />
+
 
 # 🦾 Agent! for macOS 26.4.1
 
@@ -270,7 +272,7 @@ These are the canonical tool names defined in `AgentTools.Name.*` and exposed to
 |---|---|---|
 | **done** | `summary` | Signal task complete. Required at end of every task |
 | **list_tools** | — | Returns the live tool list for the current provider (built-in + MCP) |
-| **search** | `query` | Web search via Tavily |
+| **search** | `query` | Web search via Exa, Tavily, or DuckDuckGo (whichever key is configured) |
 | **chat** | `write` / `transform` / `fix` / `about` | Write prose, transform/fix text, describe Agent capabilities |
 | **memory** | `read` / `write` / `append` / `clear` | Persistent user preferences. "remember X" → `append` |
 | **plan** | `create` / `update` / `read` / `list` / `delete` | Multi-plan CRUD with per-step status tracking |

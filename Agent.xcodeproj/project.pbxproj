@@ -197,6 +197,7 @@
 		FF10000000000000000011 /* Speech.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF10000000000000000010 /* Speech.swift */; };
 		FF20000000000000000002 /* SafariWebAutomationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF20000000000000000001 /* SafariWebAutomationTests.swift */; };
 		FF20000000000000000004 /* DiffToolsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF20000000000000000003 /* DiffToolsTests.swift */; };
+		FF20000000000000000006 /* ExaSearchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF20000000000000000005 /* ExaSearchTests.swift */; };
 		SS110000000000000000001 /* ScriptService+Metadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = SS110000000000000000002 /* ScriptService+Metadata.swift */; };
 		SS110000000000000000003 /* ScriptService+Execution.swift in Sources */ = {isa = PBXBuildFile; fileRef = SS110000000000000000004 /* ScriptService+Execution.swift */; };
 		SS110000000000000000005 /* ScriptService+SavedScripts.swift in Sources */ = {isa = PBXBuildFile; fileRef = SS110000000000000000006 /* ScriptService+SavedScripts.swift */; };
@@ -459,6 +460,7 @@
 		FF10000000000000000010 /* Speech.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Speech.swift"; sourceTree = "<group>"; };
 		FF20000000000000000001 /* SafariWebAutomationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafariWebAutomationTests.swift; sourceTree = "<group>"; };
 		FF20000000000000000003 /* DiffToolsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffToolsTests.swift; sourceTree = "<group>"; };
+		FF20000000000000000005 /* ExaSearchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExaSearchTests.swift; sourceTree = "<group>"; };
 		SS110000000000000000002 /* ScriptService+Metadata.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ScriptService+Metadata.swift"; sourceTree = "<group>"; };
 		SS110000000000000000004 /* ScriptService+Execution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ScriptService+Execution.swift"; sourceTree = "<group>"; };
 		SS110000000000000000006 /* ScriptService+SavedScripts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ScriptService+SavedScripts.swift"; sourceTree = "<group>"; };
@@ -616,6 +618,7 @@
 			children = (
 				FF20000000000000000001 /* SafariWebAutomationTests.swift */,
 				FF20000000000000000003 /* DiffToolsTests.swift */,
+				FF20000000000000000005 /* ExaSearchTests.swift */,
 			);
 			path = AgentTests;
 			sourceTree = "<group>";
@@ -1385,6 +1388,7 @@
 			files = (
 				FF20000000000000000002 /* SafariWebAutomationTests.swift in Sources */,
 				FF20000000000000000004 /* DiffToolsTests.swift in Sources */,
+				FF20000000000000000006 /* ExaSearchTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
