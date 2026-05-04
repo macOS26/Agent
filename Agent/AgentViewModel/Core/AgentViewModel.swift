@@ -272,14 +272,7 @@ final class AgentViewModel {
         didSet { UserDefaults.standard.set(lmStudioModel, forKey: "lmStudioModel") }
     }
 
-    var lmStudioAPIKey: String = {
-        if let migrated = UserDefaults.standard.string(forKey: "lmStudioAPIKey"), !migrated.isEmpty {
-            KeychainService.shared.setLMStudioAPIKey(migrated)
-            UserDefaults.standard.removeObject(forKey: "lmStudioAPIKey")
-            return migrated
-        }
-        return KeychainService.shared.getLMStudioAPIKey() ?? ""
-    }() {
+    var lmStudioAPIKey: String = KeychainService.shared.getLMStudioAPIKey() ?? "" {
         didSet { KeychainService.shared.setLMStudioAPIKey(lmStudioAPIKey) }
     }
 
