@@ -4,6 +4,15 @@ import Foundation
 /// without dispatching them. Primary defense; / LLM system prompts are backstops, not the enforcement layer.
 enum ShellSafetyService {
 
+    /// Where the command is being dispatched from. `.rootDaemon` skips disk-write
+    /// rules because the daemon's whole reason for existing is privileged disk ops
+    /// (SD-card flashing, disk cloning, mkfs). Universally bad commands
+    /// (rm -rf /, fork bomb, mv to /dev/null) stay blocked everywhere.
+    enum Context {
+        case userAgent
+        case rootDaemon
+    }
+
     struct Verdict {
         /// True when the command is permitted to run.
         let allowed: Bool
@@ -22,7 +31,7 @@ enum ShellSafetyService {
 
     /// / Inspect a shell command and return whether it's safe to dispatch. / Splits compound commands on shell
     /// separators (`;`, `&&`, `||`, `|`, / newline) and checks each segment independently — so `ls; rm -rf /` / is blocked even though the first half is harmless.
-    static func check(_ command: String) -> Verdict {
+    static func check(_ command: String, context: Context = .userAgent) -> Verdict {
         // Whole-command checks (fork bomb relies on `;` and `|` which are exactly what splitOnShellSeparators tears
         // apart, so it has to run BEFORE splitting).
         let forkVerdict = checkForkBomb(command)
@@ -31,7 +40,7 @@ enum ShellSafetyService {
         for segment in splitOnShellSeparators(command) {
             let trimmed = segment.trimmingCharacters(in: .whitespacesAndNewlines)
             if trimmed.isEmpty { continue }
-            let verdict = checkSingleSegment(trimmed)
+            let verdict = checkSingleSegment(trimmed, context: context)
             if !verdict.allowed { return verdict }
         }
         return .ok
@@ -39,7 +48,7 @@ enum ShellSafetyService {
 
     // MARK: - Single segment
 
-    private static func checkSingleSegment(_ command: String) -> Verdict {
+    private static func checkSingleSegment(_ command: String, context: Context) -> Verdict {
         // Strip leading sudo/exec wrappers so they can't disguise the payload.
         let stripped = stripPrefixWrappers(command)
         let tokens = tokenize(stripped)
@@ -54,12 +63,15 @@ enum ShellSafetyService {
         // 3. chmod / chown -R against system roots
         if let v = checkRecursivePermsOnRoot(tokens: tokens), !v.allowed { return v }
 
-        // 4. dd / mkfs / diskutil eraseDisk
-        if let v = checkDiskWipe(stripped: stripped, tokens: tokens), !v.allowed { return v }
+        // 4. dd / mkfs / diskutil eraseDisk — skipped for the root daemon, whose
+        // explicit purpose is disk cloning / SD-card flashing / mkfs.
+        if context == .userAgent {
+            if let v = checkDiskWipe(stripped: stripped, tokens: tokens), !v.allowed { return v }
 
-        // 5. Output redirection to a raw disk device
-        let redirectVerdict = checkRedirectToDisk(stripped)
-        if !redirectVerdict.allowed { return redirectVerdict }
+            // 5. Output redirection to a raw disk device
+            let redirectVerdict = checkRedirectToDisk(stripped)
+            if !redirectVerdict.allowed { return redirectVerdict }
+        }
 
         // 6. (fork bomb checked at the top of check() before splitting)
 
