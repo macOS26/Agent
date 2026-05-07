@@ -32,6 +32,20 @@ enum ShellSafetyService {
     /// / Inspect a shell command and return whether it's safe to dispatch. / Splits compound commands on shell
     /// separators (`;`, `&&`, `||`, `|`, / newline) and checks each segment independently — so `ls; rm -rf /` / is blocked even though the first half is harmless.
     static func check(_ command: String, context: Context = .userAgent) -> Verdict {
+        // Root daemon: only block the three catastrophic rm patterns
+        // (rm -rf /, rm -rf *, rm -rf ~). Everything else — including system
+        // dirs, fork bombs, find -delete, mv to /dev/null — is the operator's
+        // call. The daemon exists to do system-level work; it shouldn't fight us.
+        if context == .rootDaemon {
+            for segment in splitOnShellSeparators(command) {
+                let trimmed = segment.trimmingCharacters(in: .whitespacesAndNewlines)
+                if trimmed.isEmpty { continue }
+                if let v = checkCatastrophicRm(trimmed), !v.allowed { return v }
+            }
+            return .ok
+        }
+
+        // User agent / in-process: full guardrail.
         // Whole-command checks (fork bomb relies on `;` and `|` which are exactly what splitOnShellSeparators tears
         // apart, so it has to run BEFORE splitting).
         let forkVerdict = checkForkBomb(command)
@@ -46,9 +60,93 @@ enum ShellSafetyService {
         return .ok
     }
 
+    // MARK: - Root daemon — minimal rm guardrail
+
+    /// Only the three catastrophic `rm -rf` patterns the user explicitly
+    /// wants blocked even from root: `/`, `*`, and `~` (and close variants).
+    /// `rm -rf /etc`, `/usr`, etc. are allowed — the daemon is for system admin.
+    private static func checkCatastrophicRm(_ command: String) -> Verdict? {
+        let stripped = stripPrefixWrappers(command)
+        let tokens = tokenize(stripped)
+        guard let rmIdx = tokens.firstIndex(of: "rm") else { return nil }
+
+        var hasR = false
+        var hasF = false
+        var positionals: [String] = []
+        var i = rmIdx + 1
+        while i < tokens.count {
+            let t = tokens[i]
+            if t == "--recursive" { hasR = true }
+            else if t == "--force" { hasF = true }
+            else if t == "--no-preserve-root" {
+                return .block(
+                    reason: "Refused: `rm --no-preserve-root` is the explicit bypass for `/` protection. Blocked even via the root daemon.",
+                    rule: "rm.no-preserve-root"
+                )
+            }
+            else if t.hasPrefix("--") {
+                // ignore other long flags
+            } else if t.hasPrefix("-") && t.count >= 2 {
+                let chars = t.dropFirst()
+                if chars.contains("r") || chars.contains("R") { hasR = true }
+                if chars.contains("f") || chars.contains("F") { hasF = true }
+            } else {
+                positionals.append(t)
+            }
+            i += 1
+        }
+        guard hasR && hasF else { return nil }
+
+        for target in positionals {
+            if let reason = catastrophicRmReason(target) {
+                return .block(
+                    reason: "Refused: `rm -rf \(target)` — \(reason). This is one of the three patterns blocked even from the root daemon.",
+                    rule: "rm.catastrophic"
+                )
+            }
+        }
+        return nil
+    }
+
+    /// The narrow catastrophic-rm matcher for the root daemon: only `/`, `*`, `~`
+    /// and their immediate variants. Everything else (including `/etc`, `/usr`,
+    /// `.`, `..`) is left to the operator.
+    private static func catastrophicRmReason(_ target: String) -> String? {
+        var t = target
+        if (t.hasPrefix("\"") && t.hasSuffix("\"")) || (t.hasPrefix("'") && t.hasSuffix("'")) {
+            t = String(t.dropFirst().dropLast())
+        }
+        // /
+        if t == "/" || t == "/*" || t == "/.*" || t == "/." || t == "/.." {
+            return "this would erase the entire filesystem"
+        }
+        // * (wild glob — expands to whatever the cwd happens to be)
+        if t == "*" || t == "*.*" || t == "./*" || t == ".*" {
+            return "this glob expands to every file in the current directory, which could be anywhere"
+        }
+        // ~ (home, all written forms)
+        let homeForms: Set<String> = [
+            "~", "~/", "~/*", "~/.*",
+            "$HOME", "${HOME}", "$HOME/", "${HOME}/",
+            "$HOME/*", "${HOME}/*", "$HOME/.*", "${HOME}/.*",
+        ]
+        if homeForms.contains(t) {
+            return "this is your home directory"
+        }
+        let realHome = NSHomeDirectory()
+        if t == realHome || t == realHome + "/" || t == realHome + "/*" {
+            return "this is your home directory"
+        }
+        return nil
+    }
+
     // MARK: - Single segment
 
     private static func checkSingleSegment(_ command: String, context: Context) -> Verdict {
+        // This path only runs for `.userAgent`; `.rootDaemon` short-circuits in
+        // `check(_:context:)` to the minimal catastrophic-rm matcher.
+        _ = context
+
         // Strip leading sudo/exec wrappers so they can't disguise the payload.
         let stripped = stripPrefixWrappers(command)
         let tokens = tokenize(stripped)
@@ -63,15 +161,12 @@ enum ShellSafetyService {
         // 3. chmod / chown -R against system roots
         if let v = checkRecursivePermsOnRoot(tokens: tokens), !v.allowed { return v }
 
-        // 4. dd / mkfs / diskutil eraseDisk — skipped for the root daemon, whose
-        // explicit purpose is disk cloning / SD-card flashing / mkfs.
-        if context == .userAgent {
-            if let v = checkDiskWipe(stripped: stripped, tokens: tokens), !v.allowed { return v }
+        // 4. dd / mkfs / diskutil eraseDisk
+        if let v = checkDiskWipe(stripped: stripped, tokens: tokens), !v.allowed { return v }
 
-            // 5. Output redirection to a raw disk device
-            let redirectVerdict = checkRedirectToDisk(stripped)
-            if !redirectVerdict.allowed { return redirectVerdict }
-        }
+        // 5. Output redirection to a raw disk device
+        let redirectVerdict = checkRedirectToDisk(stripped)
+        if !redirectVerdict.allowed { return redirectVerdict }
 
         // 6. (fork bomb checked at the top of check() before splitting)
 
