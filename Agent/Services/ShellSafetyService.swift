@@ -324,6 +324,14 @@ enum ShellSafetyService {
     }
 
     // MARK: - Rule: disk wipes
+    //
+    // These are blocked on the user-agent path because they need root anyway —
+    // even if we let them through, the call would fail without privileges.
+    // The error message points the LLM at `execute_daemon_command` so it
+    // doesn't churn through alternative routes (scripts, character devices, etc.).
+
+    private static let useDaemonHint =
+        "Use `execute_daemon_command` (the root daemon) for this — that path allows raw disk writes."
 
     private static func checkDiskWipe(stripped: String, tokens: [String]) -> Verdict? {
         // dd ... of=/dev/disk*  or  of=/dev/sd*  or  of=/dev/rdisk*
@@ -332,7 +340,7 @@ enum ShellSafetyService {
                 let dest = String(t.dropFirst(3))
                 if isRawDiskDevice(dest) {
                     return .block(
-                        reason: "Refused: `dd of=\(dest)` writes raw bytes to a physical disk device, which destroys the partition table and any filesystem on it.",
+                        reason: "Refused on the user-agent path: `dd of=\(dest)` writes to a physical disk and needs root. \(useDaemonHint)",
                         rule: "dd.raw-disk"
                     )
                 }
@@ -342,7 +350,7 @@ enum ShellSafetyService {
         // mkfs.* — formatting a filesystem.
         if let first = tokens.first, first.hasPrefix("mkfs") {
             return .block(
-                reason: "Refused: `\(first)` formats a filesystem and erases everything on the target device.",
+                reason: "Refused on the user-agent path: `\(first)` formats a filesystem and needs root. \(useDaemonHint)",
                 rule: "mkfs"
             )
         }
@@ -352,7 +360,7 @@ enum ShellSafetyService {
             let verb = tokens[1].lowercased()
             if verb == "erasedisk" || verb == "zerodisk" || verb == "secureerase" || verb == "erasevolume" {
                 return .block(
-                    reason: "Refused: `diskutil \(tokens[1])` erases a physical disk or volume. Mount/list operations are fine, but erase verbs are blocked.",
+                    reason: "Refused on the user-agent path: `diskutil \(tokens[1])` erases a physical disk/volume and needs root. \(useDaemonHint)",
                     rule: "diskutil.erase"
                 )
             }
@@ -379,7 +387,7 @@ enum ShellSafetyService {
         let pattern = #">+\s*/dev/(?:r?disk[0-9]|sd[a-z]|hd[a-z]|nvme[0-9])"#
         if command.range(of: pattern, options: .regularExpression) != nil {
             return .block(
-                reason: "Refused: redirecting output to a raw disk device (`> /dev/disk*`, `> /dev/sd*`) destroys the disk's filesystem.",
+                reason: "Refused on the user-agent path: redirecting output to a raw disk device (`> /dev/disk*`, `> /dev/sd*`) needs root. \(useDaemonHint)",
                 rule: "redirect.raw-disk"
             )
         }
