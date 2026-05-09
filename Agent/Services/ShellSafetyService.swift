@@ -161,16 +161,14 @@ enum ShellSafetyService {
         // 3. chmod / chown -R against system roots
         if let v = checkRecursivePermsOnRoot(tokens: tokens), !v.allowed { return v }
 
-        // 4. dd / mkfs / diskutil eraseDisk
-        if let v = checkDiskWipe(stripped: stripped, tokens: tokens), !v.allowed { return v }
+        // 4. (dd / mkfs / diskutil eraseDisk / > /dev/disk* are NOT blocked — they
+        // need root anyway, so they fail naturally on the user-agent path.
+        // The LLM is told to route disk writes through root_shell via the
+        // system prompt, not via a synthetic guardrail message.)
 
-        // 5. Output redirection to a raw disk device
-        let redirectVerdict = checkRedirectToDisk(stripped)
-        if !redirectVerdict.allowed { return redirectVerdict }
+        // 5. (fork bomb checked at the top of check() before splitting)
 
-        // 6. (fork bomb checked at the top of check() before splitting)
-
-        // 7. Move home/system to /dev/null
+        // 6. Move home/system to /dev/null
         if let v = checkMoveToDevNull(tokens: tokens), !v.allowed { return v }
 
         return .ok
@@ -321,77 +319,6 @@ enum ShellSafetyService {
             }
         }
         return nil
-    }
-
-    // MARK: - Rule: disk wipes
-    //
-    // These are blocked on the user-agent path because they need root anyway —
-    // even if we let them through, the call would fail without privileges.
-    // The error message points the LLM at `execute_daemon_command` so it
-    // doesn't churn through alternative routes (scripts, character devices, etc.).
-
-    private static let useDaemonHint =
-        "Use `execute_daemon_command` (the root daemon) for this — that path allows raw disk writes."
-
-    private static func checkDiskWipe(stripped: String, tokens: [String]) -> Verdict? {
-        // dd ... of=/dev/disk*  or  of=/dev/sd*  or  of=/dev/rdisk*
-        if tokens.contains("dd") {
-            for t in tokens where t.hasPrefix("of=/dev/") {
-                let dest = String(t.dropFirst(3))
-                if isRawDiskDevice(dest) {
-                    return .block(
-                        reason: "Refused on the user-agent path: `dd of=\(dest)` writes to a physical disk and needs root. \(useDaemonHint)",
-                        rule: "dd.raw-disk"
-                    )
-                }
-            }
-        }
-
-        // mkfs.* — formatting a filesystem.
-        if let first = tokens.first, first.hasPrefix("mkfs") {
-            return .block(
-                reason: "Refused on the user-agent path: `\(first)` formats a filesystem and needs root. \(useDaemonHint)",
-                rule: "mkfs"
-            )
-        }
-
-        // diskutil eraseDisk / zeroDisk / secureErase / eraseVolume
-        if tokens.first == "diskutil" && tokens.count >= 2 {
-            let verb = tokens[1].lowercased()
-            if verb == "erasedisk" || verb == "zerodisk" || verb == "secureerase" || verb == "erasevolume" {
-                return .block(
-                    reason: "Refused on the user-agent path: `diskutil \(tokens[1])` erases a physical disk/volume and needs root. \(useDaemonHint)",
-                    rule: "diskutil.erase"
-                )
-            }
-        }
-
-        return nil
-    }
-
-    private static func isRawDiskDevice(_ path: String) -> Bool {
-        // /dev/disk2, /dev/rdisk2, /dev/sda, /dev/nvme0n1, /dev/hd0
-        let lower = path.lowercased()
-        return lower.hasPrefix("/dev/disk")
-            || lower.hasPrefix("/dev/rdisk")
-            || lower.hasPrefix("/dev/sd")
-            || lower.hasPrefix("/dev/hd")
-            || lower.hasPrefix("/dev/nvme")
-    }
-
-    // MARK: - Rule: redirect to disk device
-
-    /// / Catches `> /dev/disk2` or `cat foo > /dev/sda` even when the rest of / the command is a different binary. Done
-    /// as a regex on the raw segment / because the redirect operator can sit anywhere.
-    private static func checkRedirectToDisk(_ command: String) -> Verdict {
-        let pattern = #">+\s*/dev/(?:r?disk[0-9]|sd[a-z]|hd[a-z]|nvme[0-9])"#
-        if command.range(of: pattern, options: .regularExpression) != nil {
-            return .block(
-                reason: "Refused on the user-agent path: redirecting output to a raw disk device (`> /dev/disk*`, `> /dev/sd*`) needs root. \(useDaemonHint)",
-                rule: "redirect.raw-disk"
-            )
-        }
-        return .ok
     }
 
     // MARK: - Rule: fork bomb
