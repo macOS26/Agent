@@ -442,8 +442,8 @@ final class CodexService {
     /// without these, /models returns 400 and /responses may reject the body.
     /// Bump to match the published Codex CLI version periodically.
     /// `nonisolated` so it's reachable from `performRequest` (off main actor).
-    nonisolated static let clientVersion = "0.21.0"
-    nonisolated static let userAgent = "codex_cli_rs/0.21.0"
+    nonisolated static let clientVersion = "1.0.0"
+    nonisolated static let userAgent = "codex_cli_rs/1.0.0"
 
     /// OpenAI's published identity instruction. Codex's OAuth gate rejects
     /// requests whose `instructions` don't start with this exact prefix —
