@@ -22,7 +22,7 @@
 
 ## Cadence
 ### Release Schedule:
-This Summer, Agent! may not be updated due to family medical leave. Approved pull requests are tested and implemented on most weekends. Milestone releases such as X number of stars, or X number of downloads will raise a new monthly release. For instance, when we reach 500 stars, a new release will be queued. If the current release becomes the #1 download (see https://macos26.app), will also queue up a new release. The only exception will be this Summer where I will be limited to reach a computer. Early adopters, as bug fixes are created, pull requests are approved, and new features are implemented, the main branch will always contain the latest and greatest code.
+This Summer, Agent! may not be updated due to family medical leave. Approved pull requests are tested and implemented on most weekends. Milestone releases such as X number of stars, or X number of downloads will raise a new monthly release. For instance, when we reach 500 stars, a new release will be queued. If the current release becomes the #1 download (see https://macos26.app), will also queue up a new release. The only exception will be this Summer where I will be limited to reach a computer. Early adopters, as bug fixes are created, pull requests are approved, and new features are implemented, the main branch will always be the latest code base.
 
 ## What's New 🚀
 
