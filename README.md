@@ -25,7 +25,7 @@
 This Summer, Agent! may not be updated due to family medical leave.
 Approved pull requests are tested and implemented on most weekends.
 Milestone releases such as X number of stars, or X number of downloads will raise a new monthly release.
-Early adopters, as bug fixes, pull requests are approved, and new features are implemented, the main branch will always be the latest and greatest code.
+Early adopters, as bug fixes are created, pull requests are approved, and new features are implemented, the main branch will always contain the latest and greatest code.
 
 ## What's New 🚀
 
