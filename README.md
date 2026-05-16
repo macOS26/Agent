@@ -24,9 +24,6 @@
 ### Release Schedule and My Situation:
 Approved pull requests are tested and implemented on coresponding weekends. Milestone releases, such as reaching a certain number of stars or downloads, will trigger a new monthly release. For instance, when we reach 500 stars, a new release will be queued. If the current release becomes the #1 download (see https://macos26.app), that will also queue a new release. Early adopters, as bug fixes are created, pull requests are approved, and new features are implemented, the main branch will have the latest code. This summer, Agent! may see reduced updates due to Family Medical Leave and will have limited access to a computer.
 
-Sincerely,
-Todd Bruss
-
 ## What made Agent!
 Agent! is a result of 3 years of creating Agentic AI apps; it is a combination of about a dozen AI apps created during that time. Some of those apps were published under ANIE, Game Changer, BattleScript, XCF MCP Server and Client, D1F, and about 8 original Swift Packages. The missing piece was achieving an intelligent autonomous time loop, which, once figured out, did not take long to bring the best of the best of all my other AI apps. The resulting app is Agent! for macOS. The original goal was to create a Cursor killer. The result is an Agent AI with legs. Agent! is only limited by your imagination. It can code, it can write poetry, it can create disk images and GitHub releases. Agent! can automate most tasks on your Mac. Ask it what you want in plain English or your native language; Agent!, after some initial configuration and user approvals, will do everything it can to carry out your wish. Agent! is relentless, but it is not evil. I have huge plans for the app. It will be improved over time. It's not perfect, but it's a product that's here to stay.
 
