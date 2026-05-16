@@ -308,9 +308,6 @@ extension AgentViewModel {
                     displayedLLMOutput = rawLLMOutput
                     dripDisplayIndex = rawLLMOutput.count
                 }
-                if !rawLLMOutput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    try? await Task.sleep(for: .seconds(3))
-                }
                 guard !Task.isCancelled else { break }
 
                 var toolResults: [[String: Any]] = []

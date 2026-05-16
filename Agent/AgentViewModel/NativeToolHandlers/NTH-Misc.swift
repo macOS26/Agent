@@ -121,8 +121,7 @@ extension AgentViewModel {
                 let app = input["appBundleId"] as? String
                 // Click
                 let clickResult = AccessibilityService.shared.clickElement(role: clickRole, title: clickTitle, value: nil, appBundleId: app)
-                try? await Task.sleep(for: .seconds(1))
-                // Verify
+                // Verify (AccessibilityService.findElement retries internally up to timeout)
                 let findResult = AccessibilityService.shared.findElement(
                     role: expectRole, title: expectTitle,
                     value: nil, appBundleId: app, timeout: 5)
