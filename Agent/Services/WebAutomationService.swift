@@ -89,7 +89,7 @@ final class WebAutomationService: @unchecked Sendable {
         // Fallback to opening via NSWorkspace
         NSWorkspace.shared.open(url)
         if waitForLoad {
-            try? await Task.sleep(for: .seconds(1))
+            await waitForPageReady(browser: browser.rawValue, timeout: 3)
         }
         return "Opened \(url.absoluteString) in default browser"
     }

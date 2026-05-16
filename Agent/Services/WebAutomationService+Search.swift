@@ -187,7 +187,7 @@ extension WebAutomationService {
         """)
 
         // Wait for results page to load
-        try? await Task.sleep(for: .seconds(2))
+        await waitForPageReady(browser: "com.apple.Safari", timeout: 3)
 
         let url = await getPageURL()
         let title = await getPageTitle()

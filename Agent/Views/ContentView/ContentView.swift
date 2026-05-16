@@ -215,6 +215,11 @@ struct ContentView: View {
             viewModel.stopMessagesMonitor()
             Task { await MCPService.shared.disconnectAll() }
         }
+        .onChange(of: viewModel.pendingQuestion) { _, question in
+            if !question.isEmpty {
+                showAskUserDialog(question: question)
+            }
+        }
         .onAppear {
             setupMenuObservers()
             AgentsMenuDelegate.shared.viewModel = viewModel
@@ -548,26 +553,27 @@ struct ContentView: View {
                 MainActor.assumeIsolated { [self] in handleMenuCommand(menuName) }
             }
         }
-        // AskUserQuestion observer — shows NSAlert dialog
-        NotificationCenter.default.addObserver(forName: .askUserQuestion, object: nil, queue: .main) { _ in
-            MainActor.assumeIsolated { [self] in
-                let question = viewModel.pendingQuestion
-                guard !question.isEmpty else { return }
-                let alert = NSAlert()
-                alert.messageText = "Agent Question"
-                alert.informativeText = question
-                alert.alertStyle = .informational
-                let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
-                input.placeholderString = "Your answer"
-                alert.accessoryView = input
-                alert.addButton(withTitle: "Send")
-                alert.addButton(withTitle: "Skip")
-                let response = alert.runModal()
-                viewModel.pendingAnswer = response == .alertFirstButtonReturn
-                    ? (input.stringValue.isEmpty ? "(no answer)" : input.stringValue)
-                    : "(skipped)"
-            }
-        }
+    }
+
+    /// Show the ask_user NSAlert and pass the result back through the view model's
+    /// continuation. Driven by `.onChange(of: viewModel.pendingQuestion)` — no
+    /// NotificationCenter, no polling.
+    func showAskUserDialog(question: String) {
+        guard !question.isEmpty else { return }
+        let alert = NSAlert()
+        alert.messageText = "Agent Question"
+        alert.informativeText = question
+        alert.alertStyle = .informational
+        let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
+        input.placeholderString = "Your answer"
+        alert.accessoryView = input
+        alert.addButton(withTitle: "Send")
+        alert.addButton(withTitle: "Skip")
+        let response = alert.runModal()
+        let answer: String = response == .alertFirstButtonReturn
+            ? (input.stringValue.isEmpty ? "(no answer)" : input.stringValue)
+            : "(skipped)"
+        viewModel.provideAnswer(answer)
     }
 
     func handleMenuCommand(_ name: Notification.Name) {

@@ -93,17 +93,7 @@ extension AgentViewModel {
             guard !question.isEmpty else { return "Error: 'question' is required." }
             appendLog("❓ \(question)")
             flushLog()
-            // Post question and wait for answer (up to 5 minutes)
-            pendingQuestion = question
-            pendingAnswer = nil
-            NotificationCenter.default.post(name: .askUserQuestion, object: question)
-            let deadline = Date().addingTimeInterval(300)
-            while pendingAnswer == nil && Date() < deadline && !Task.isCancelled {
-                try? await Task.sleep(for: .milliseconds(500))
-            }
-            let answer = pendingAnswer ?? "(no answer — timed out after 5 minutes)"
-            pendingQuestion = ""
-            pendingAnswer = nil
+            let answer = await awaitUserAnswer(question)
             appendLog("💬 \(answer)")
             flushLog()
             return "User answered: \(answer)"

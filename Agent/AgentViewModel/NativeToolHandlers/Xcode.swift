@@ -108,8 +108,10 @@ extension AgentViewModel {
                 appendLog("🔍 Auto-verify: launching app...")
                 flushLog()
                 let runResult = await Self.offMain { XcodeService.shared.runProject(projectPath: projectPath) }
-                // Wait for app to launch
-                try? await Task.sleep(for: .seconds(2))
+                // Wait for app launch by polling NSWorkspace's runningApplications — bail out
+                // immediately when the first matching app appears, with a 5s ceiling so a
+                // failed launch doesn't stall the auto-verify report.
+                await Self.awaitAppLaunch(projectPath: projectPath, timeout: 5)
                 // Capture accessibility tree of launched app
                 let ax = AccessibilityService.shared
                 let windows = ax.listWindows(limit: 5)
@@ -270,6 +272,32 @@ extension AgentViewModel {
             return blocks.joined(separator: "\n\n")
         default:
             return nil
+        }
+    }
+
+    /// Poll NSWorkspace.runningApplications for an app matching `projectPath`'s basename,
+    /// returning as soon as it shows up. Used by xcode_build auto-verify so the AX capture
+    /// doesn't race the launching app. A short fixed wait (300ms) lets the window finish
+    /// rendering once the process is running.
+    nonisolated static func awaitAppLaunch(projectPath: String, timeout: TimeInterval) async {
+        let target = ((projectPath as NSString).lastPathComponent as NSString).deletingPathExtension.lowercased()
+        guard !target.isEmpty else {
+            try? await Task.sleep(for: .seconds(min(timeout, 2)))
+            return
+        }
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            let running = await MainActor.run {
+                NSWorkspace.shared.runningApplications.contains { app in
+                    (app.localizedName?.lowercased() ?? "").contains(target) ||
+                    (app.bundleIdentifier?.lowercased() ?? "").contains(target)
+                }
+            }
+            if running {
+                try? await Task.sleep(for: .milliseconds(300))
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(150))
         }
     }
 }

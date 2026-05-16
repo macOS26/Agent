@@ -301,9 +301,7 @@ extension AgentViewModel {
                 // Strip done/task_complete from LLM Output
                 Self.stripCompletionText(&rawLLMOutput)
                 // Wait for drip to finish
-                while dripTask != nil {
-                    try? await Task.sleep(for: .milliseconds(50))
-                }
+                await dripTask?.value
                 if !rawLLMOutput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     displayedLLMOutput = rawLLMOutput
                     dripDisplayIndex = rawLLMOutput.count

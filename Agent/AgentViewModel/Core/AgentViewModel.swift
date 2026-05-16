@@ -114,9 +114,41 @@ final class AgentViewModel {
     /// Active sub-agents spawned by the current task
     var subAgents: [SubAgent] = []
 
-    /// AskUserQuestion — pending question for mid-task dialog
+    /// AskUserQuestion — pending question for mid-task dialog. ContentView observes
+    /// `pendingQuestion` via @Observable and presents an NSAlert when it becomes non-empty.
+    /// The alert's button handler then calls `provideAnswer(_:)`, which resumes the
+    /// continuation stored when ask_user started waiting. No polling, no NotificationCenter.
     var pendingQuestion: String = ""
-    var pendingAnswer: String? = nil
+    @ObservationIgnored
+    private var pendingAnswerContinuation: CheckedContinuation<String, Never>?
+
+    /// Wait for the user to answer `question`, or for `timeout` seconds to elapse.
+    /// Sets `pendingQuestion` so the UI can present the dialog; resumes when
+    /// `provideAnswer(_:)` is called or the timeout fires.
+    func awaitUserAnswer(_ question: String, timeout: TimeInterval = 300) async -> String {
+        pendingQuestion = question
+        let answer = await withCheckedContinuation { (cont: CheckedContinuation<String, Never>) in
+            pendingAnswerContinuation = cont
+            // Timeout fallback — only fires if provideAnswer wasn't called in time.
+            Task { [weak self] in
+                try? await Task.sleep(for: .seconds(timeout))
+                guard let self else { return }
+                if let pending = self.pendingAnswerContinuation {
+                    self.pendingAnswerContinuation = nil
+                    pending.resume(returning: "(no answer — timed out after \(Int(timeout / 60)) minutes)")
+                }
+            }
+        }
+        pendingQuestion = ""
+        return answer
+    }
+
+    /// Called by the UI when the user submits or skips the ask_user dialog.
+    func provideAnswer(_ answer: String) {
+        guard let cont = pendingAnswerContinuation else { return }
+        pendingAnswerContinuation = nil
+        cont.resume(returning: answer)
+    }
     var userServiceActive = false
     var rootServiceActive = false
     var userWasActive = false
