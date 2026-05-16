@@ -1,6 +1,56 @@
 import Foundation
 import AppKit
 import SQLite3
+import CoreServices
+
+/// Watches `~/Library/Messages/` via FSEventStream and fires `onChange` on the main thread
+/// when chat.db / chat.db-wal / chat.db-shm is touched. Replaces the legacy 5-second poll
+/// loop — the WAL file is appended every time a new iMessage arrives.
+final class ChatDBWatcher: @unchecked Sendable {
+    private var stream: FSEventStreamRef?
+    private let onChange: @MainActor @Sendable () -> Void
+
+    init(onChange: @escaping @MainActor @Sendable () -> Void) {
+        self.onChange = onChange
+    }
+
+    func start() {
+        guard stream == nil else { return }
+        let path = NSHomeDirectory() + "/Library/Messages"
+        var context = FSEventStreamContext(
+            version: 0,
+            info: Unmanaged.passUnretained(self).toOpaque(),
+            retain: nil, release: nil, copyDescription: nil
+        )
+        let callback: FSEventStreamCallback = { (_, info, _, _, _, _) in
+            guard let info else { return }
+            let watcher = Unmanaged<ChatDBWatcher>.fromOpaque(info).takeUnretainedValue()
+            let handler = watcher.onChange
+            Task { @MainActor in handler() }
+        }
+        let paths = [path] as CFArray
+        let flags = UInt32(kFSEventStreamCreateFlagFileEvents | kFSEventStreamCreateFlagNoDefer)
+        stream = FSEventStreamCreate(
+            kCFAllocatorDefault, callback, &context, paths,
+            FSEventStreamEventId(kFSEventStreamEventIdSinceNow),
+            0.5, // 500ms coalescing latency
+            flags
+        )
+        guard let stream else { return }
+        FSEventStreamSetDispatchQueue(stream, DispatchQueue.global(qos: .userInitiated))
+        FSEventStreamStart(stream)
+    }
+
+    func stop() {
+        guard let stream else { return }
+        FSEventStreamStop(stream)
+        FSEventStreamInvalidate(stream)
+        FSEventStreamRelease(stream)
+        self.stream = nil
+    }
+
+    deinit { stop() }
+}
 
 extension AgentViewModel {
     // MARK: - Messages Monitor
@@ -22,7 +72,7 @@ extension AgentViewModel {
     func startMessagesMonitor() {
         stopMessagesMonitor()
 
-        // Gate on Full Disk Access — don't poll without it
+        // Gate on Full Disk Access — don't watch without it
         guard Self.checkFullDiskAccess() else {
             appendLog("⚠️ Messages: Full Disk Access required. Enable in System Settings > Privacy & Security > Full Disk Access.")
             flushLog()
@@ -34,25 +84,29 @@ extension AgentViewModel {
         appendLog("💬 Messages: ON")
         flushLog()
 
+        // Seed the last-seen ROWID and pulse on startup before arming the watcher.
         messagesMonitorTask = Task { [weak self] in
             guard let self else { return }
-            // Seed the last-seen ROWID so we only act on NEW messages
             await self.seedLastSeenROWID()
-
-            // Pulse on startup
             self.flashMessagesDot()
-
-            while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 5_000_000_000) // poll every 5s
-                guard !Task.isCancelled else { break }
-                await self.pollMessages()
-            }
         }
+
+        // Replace the 5s poll loop with an FSEventStream on the Messages directory.
+        // The WAL file is touched every time iMessage commits a new row, so chat.db
+        // changes wake us within FSEvents' coalescing latency (~500ms) instead of
+        // up to 5 seconds late.
+        let watcher = ChatDBWatcher { [weak self] in
+            Task { [weak self] in await self?.pollMessages() }
+        }
+        watcher.start()
+        messagesDBWatcher = watcher
     }
 
     func stopMessagesMonitor() {
         messagesMonitorTask?.cancel()
         messagesMonitorTask = nil
+        messagesDBWatcher?.stop()
+        messagesDBWatcher = nil
         messagesPolling = false
     }
 

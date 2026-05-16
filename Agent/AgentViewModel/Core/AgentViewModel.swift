@@ -610,6 +610,10 @@ final class AgentViewModel {
         }
     }
     var messagesMonitorTask: Task<Void, Never>?
+    /// FSEventStream watcher on ~/Library/Messages/ — wakes pollMessages when chat.db-wal changes
+    /// instead of running on a 5-second tick.
+    @ObservationIgnored
+    var messagesDBWatcher: ChatDBWatcher?
     /// ROWID of the last message we've already processed
     var lastSeenMessageROWID: Int = 0
     /// Briefly true during each poll cycle so the StatusDot pulses on the timer
