@@ -31,7 +31,6 @@ Early adopters, please note that as bug fixes are created, pull requests are app
 This summer, Agent! may see reduced updates due to Family Medical Leave and will have limited access to a computer.
 
 Sincerely,
-
 Todd Bruss
 
 ## What made Agent!
