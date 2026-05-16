@@ -11,13 +11,6 @@
 ## **Agentic AI for your  Mac Desktop**
 ## Open Source alternative to Claude Code, Cursor and Open Claw
 
-## Cadence
-### Release Schedule:
-This Summer, Agent! may not be updated due to family medical leave.
-Approved pull requests are tested and implemented on most weekends.
-Milestone releases such as X number of stars, or X number of downloads will raise a new monthly release.
-Early adopters, as bug fixes, pull requests are approved, and new features are implemented, the main branch will always be the latest and greatest code.
-
 [![Latest Release](https://img.shields.io/github/v/release/macOS26/Agent?label=Download&color=blue&style=for-the-badge)](https://github.com/macOS26/Agent/releases/latest)
 [![GitHub Stars](https://img.shields.io/github/stars/macOS26/Agent?style=for-the-badge&logo=github&label=Stars&color=gold)](https://github.com/macOS26/Agent/stargazers)
 [![GitHub Forks](https://img.shields.io/github/forks/macOS26/Agent?style=for-the-badge&logo=github&label=Forks&color=white)](https://github.com/macOS26/Agent/fork)
@@ -26,6 +19,13 @@ Early adopters, as bug fixes, pull requests are approved, and new features are i
 <p><a href="https://www.paypal.com/ncp/payment/9C6RY2UAE5M3S"><img src="https://img.shields.io/badge/Donation-PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white" alt="Tip Jar" /></a>
 <p><b>Thank you for your interest and support!</b></p>
 </div>
+
+## Cadence
+### Release Schedule:
+This Summer, Agent! may not be updated due to family medical leave.
+Approved pull requests are tested and implemented on most weekends.
+Milestone releases such as X number of stars, or X number of downloads will raise a new monthly release.
+Early adopters, as bug fixes, pull requests are approved, and new features are implemented, the main branch will always be the latest and greatest code.
 
 ## What's New 🚀
 
