@@ -120,7 +120,6 @@
 		AA10000000000000000322 /* LLMServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000323 /* LLMServices.swift */; };
 		AA10000000000000000324 /* ToolLoop.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000325 /* ToolLoop.swift */; };
 		AA10000000000000000326 /* StuckGuard.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000327 /* StuckGuard.swift */; };
-		AA10000000000000000328 /* ErrorHandling.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000329 /* ErrorHandling.swift */; };
 		AA10000000000000000350 /* WebToolHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000351 /* WebToolHandler.swift */; };
 		AA10000000000000000E01 /* ShimmerText.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000E00 /* ShimmerText.swift */; };
 		AA10000000000000000F01 /* ThinkingIndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000F00 /* ThinkingIndicatorView.swift */; };
@@ -382,7 +381,6 @@
 		AA10000000000000000323 /* LLMServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMServices.swift; sourceTree = "<group>"; };
 		AA10000000000000000325 /* ToolLoop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolLoop.swift; sourceTree = "<group>"; };
 		AA10000000000000000327 /* StuckGuard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StuckGuard.swift; sourceTree = "<group>"; };
-		AA10000000000000000329 /* ErrorHandling.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorHandling.swift; sourceTree = "<group>"; };
 		AA10000000000000000351 /* WebToolHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebToolHandler.swift; sourceTree = "<group>"; };
 		AA10000000000000000E00 /* ShimmerText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShimmerText.swift; sourceTree = "<group>"; };
 		AA10000000000000000F00 /* ThinkingIndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThinkingIndicatorView.swift; sourceTree = "<group>"; };
@@ -647,7 +645,6 @@
 			isa = PBXGroup;
 			children = (
 				AA100000000000000000A0 /* TabTask.swift */,
-				AA10000000000000000329 /* ErrorHandling.swift */,
 				AA10000000000000000323 /* LLMServices.swift */,
 				AA10000000000000000327 /* StuckGuard.swift */,
 				AA10000000000000000325 /* ToolLoop.swift */,
@@ -1297,7 +1294,6 @@
 				AA10000000000000000322 /* LLMServices.swift in Sources */,
 				AA10000000000000000324 /* ToolLoop.swift in Sources */,
 				AA10000000000000000326 /* StuckGuard.swift in Sources */,
-				AA10000000000000000328 /* ErrorHandling.swift in Sources */,
 				BB10000000000000000015 /* Helpers.swift in Sources */,
 				AA10000000000000000281 /* Errors.swift in Sources */,
 				AA10000000000000000283 /* Helpers-Misc.swift in Sources */,

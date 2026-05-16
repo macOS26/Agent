@@ -32,16 +32,24 @@ extension AgentViewModel {
         case none
     }
 
-    /// / Handles an error from LLM streaming: context-overflow pruning, stale connection / retries, timeouts (with
-    /// Ollama health-check/restart), 429 rate-limits, / recoverable AgentErrors, network loss, and fallback-chain switching. / Mutates `messages` and `timeoutRetryCount` inout. Returns TaskLoopErrorOutcome.
+    /// Handles an error from LLM streaming: context-overflow pruning, stale connection retries, timeouts (with
+    /// Ollama health-check/restart), 429 rate-limits, recoverable AgentErrors, network loss, and fallback-chain
+    /// switching. Mutates `messages` and `timeoutRetryCount` inout. Returns TaskLoopErrorOutcome.
+    ///
+    /// `appendLogFn`/`flushFn` route log lines: nil = self.appendLog/flushLog (main task), non-nil = a tab's
+    /// log writer (used by handleTabTaskError shim).
     func handleTaskLoopError(
         _ error: Error,
         activeService: ActiveLLMService,
         providerDisplayName: String,
         messages: inout [[String: Any]],
         timeoutRetryCount: inout Int,
-        maxTimeoutRetries: Int
+        maxTimeoutRetries: Int,
+        appendLogFn: ((String) -> Void)? = nil,
+        flushFn: (() -> Void)? = nil
     ) async -> TaskLoopErrorOutcome {
+        let appendLog: (String) -> Void = appendLogFn ?? { [weak self] s in self?.appendLog(s) }
+        let flushLog: () -> Void = flushFn ?? { [weak self] in self?.flushLog() }
         if Task.isCancelled { return .breakLoop }
         let errMsg = error.localizedDescription
 

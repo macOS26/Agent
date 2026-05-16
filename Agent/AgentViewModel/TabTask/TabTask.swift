@@ -389,35 +389,39 @@ extension AgentViewModel {
                 }
 
             } catch {
-                let action = await handleTabTaskError(
-                    tab: tab,
-                    error: error,
-                    hasClaude: services.claude != nil,
-                    hasOpenAICompatible: services.openAICompatible != nil,
-                    hasOllama: services.ollama != nil,
-                    hasFoundationModel: services.foundationModel != nil,
-                    provider: provider,
-                    timeoutRetryCount: &timeoutRetryCount
+                let active: ActiveLLMService
+                if services.claude != nil { active = .claude }
+                else if services.openAICompatible != nil { active = .openAICompatible }
+                else if services.ollama != nil { active = .ollama }
+                else if services.foundationModel != nil { active = .foundationModel }
+                else { active = .none }
+                let outcome = await handleTaskLoopError(
+                    error,
+                    activeService: active,
+                    providerDisplayName: provider.displayName,
+                    messages: &messages,
+                    timeoutRetryCount: &timeoutRetryCount,
+                    maxTimeoutRetries: maxRetries,
+                    appendLogFn: { [weak tab] s in tab?.appendLog(s) },
+                    flushFn: { [weak tab] in tab?.flush() }
                 )
-                switch action {
-                case .retry:
+                switch outcome {
+                case .continueLoop:
                     continue
-                case .giveUp:
+                case .breakLoop:
                     break mainLoop
-                case .fallback(let fbProvider, let fbModel):
-                    if let fbProvider, let fbModel {
-                        provider = fbProvider
-                        modelId = fbModel
-                        services = buildTabLLMServices(
-                            provider: provider,
-                            modelId: modelId,
-                            historyContext: tabHistoryContext,
-                            projectFolder: projectFolder,
-                            maxTokens: mt
-                        )
-                        tab.appendLog("✅ Now using \(provider.displayName) / \(modelId)")
-                        tab.flush()
-                    }
+                case .fallbackRequested(let fbProvider, let fbModel, _):
+                    provider = fbProvider
+                    modelId = fbModel
+                    services = buildTabLLMServices(
+                        provider: provider,
+                        modelId: modelId,
+                        historyContext: tabHistoryContext,
+                        projectFolder: projectFolder,
+                        maxTokens: mt
+                    )
+                    tab.appendLog("✅ Now using \(provider.displayName) / \(modelId)")
+                    tab.flush()
                     timeoutRetryCount = 0
                     continue
                 }
