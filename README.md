@@ -4,7 +4,7 @@
 <img width="256" height="256" alt="agent_icon_256" src="https://github.com/user-attachments/assets/20585d64-ea67-4818-8c6c-3435d9bcbf4c" />
 
 
-# 🦾 Agent! for macOS 26.4.1
+# 🦾 Agent! for macOS 26.4.1 or later
 
 <img width="1326" height="1428" alt="image" src="https://github.com/user-attachments/assets/9616193e-ab81-456b-ae8f-6fc182d0d6b0" />
 
