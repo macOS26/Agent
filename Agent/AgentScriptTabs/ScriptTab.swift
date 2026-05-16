@@ -246,9 +246,32 @@ final class ScriptTab: Identifiable {
     private func scheduleFlush() {
         guard logFlushTask == nil else { return }
         logFlushTask = Task {
-            try? await Task.sleep(for: .milliseconds(50))
+            await Self.logFlushDebounce()
             flush()
         }
+    }
+
+    // MARK: - Shared timing helpers
+    // Shared by ScriptTab + AgentViewModel/Logging.swift so the terminal-drip and
+    // log-debounce timings live in one place. Both callers had byte-identical sleeps;
+    // routing them through these helpers keeps the cadence consistent.
+
+    /// One char emission tick during the terminal drip animation.
+    /// Reads `terminalSpeed` from UserDefaults; defaults to 22ms.
+    nonisolated static func dripEmitTick() async {
+        let speed = UserDefaults.standard.integer(forKey: "terminalSpeed")
+        try? await Task.sleep(for: .milliseconds(speed > 0 ? speed : 22))
+    }
+
+    /// Idle tick while the drip task is waiting for more streamed chars (half speed, min 5ms).
+    nonisolated static func dripIdleTick() async {
+        let speed = UserDefaults.standard.integer(forKey: "terminalSpeed")
+        try? await Task.sleep(for: .milliseconds(max(5, (speed > 0 ? speed : 22) / 2)))
+    }
+
+    /// 50ms debounce window for log-buffer flush — coalesces bursty appends.
+    nonisolated static func logFlushDebounce() async {
+        try? await Task.sleep(for: .milliseconds(50))
     }
 
     /// Hard cap for activityLog — applied at every mutation site.
@@ -320,11 +343,9 @@ final class ScriptTab: Identifiable {
                     let idx = self.rawLLMOutput.index(self.rawLLMOutput.startIndex, offsetBy: self.dripDisplayIndex)
                     self.displayedLLMOutput.append(self.rawLLMOutput[idx])
                     self.dripDisplayIndex += 1
-                    let speed = UserDefaults.standard.integer(forKey: "terminalSpeed")
-                    try? await Task.sleep(for: .milliseconds(speed > 0 ? speed : 22))
+                    await Self.dripEmitTick()
                 } else if self.llmStreamingStarted {
-                    let speed = UserDefaults.standard.integer(forKey: "terminalSpeed")
-                    try? await Task.sleep(for: .milliseconds(max(5, (speed > 0 ? speed : 22) / 2)))
+                    await Self.dripIdleTick()
                 } else {
                     break
                 }

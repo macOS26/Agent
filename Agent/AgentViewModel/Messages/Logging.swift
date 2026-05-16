@@ -582,11 +582,11 @@ extension AgentViewModel {
                     let idx = self.rawLLMOutput.index(self.rawLLMOutput.startIndex, offsetBy: self.dripDisplayIndex)
                     self.displayedLLMOutput.append(self.rawLLMOutput[idx])
                     self.dripDisplayIndex += 1
-                    try? await Task.sleep(for: .milliseconds(self.terminalSpeed.rawValue))
+                    await ScriptTab.dripEmitTick()
                 } else if !self.streamingTextStarted {
                     break // Stream ended and all chars dripped
                 } else {
-                    try? await Task.sleep(for: .milliseconds(max(5, self.terminalSpeed.rawValue / 2))) // Wait for more
+                    await ScriptTab.dripIdleTick()
                 }
             }
             self.dripTask = nil
@@ -646,7 +646,7 @@ extension AgentViewModel {
     private func scheduleLogFlush() {
         guard logFlushTask == nil else { return }
         logFlushTask = Task {
-            try? await Task.sleep(for: .milliseconds(50))
+            await ScriptTab.logFlushDebounce()
             flushLog()
         }
     }
