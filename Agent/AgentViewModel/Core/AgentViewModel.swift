@@ -795,62 +795,10 @@ final class AgentViewModel {
             }
         }
 
-        // Restore messages monitor state
-        if messagesMonitorEnabled {
-            refreshMessageRecipients()
-        }
-
         // No auto-fetch on launch — avoids wasting API calls for inactive LLMs.
+        // Xcode Command Line Tools check is handled by DependencyOverlay in ContentView.
 
-        // Xcode Command Line Tools check is handled by DependencyOverlay in ContentView
-
-        // Resume Messages monitor if it was enabled
-        if messagesMonitorEnabled {
-            // Delay start so UserService is connected first
-            Task {
-                try? await Task.sleep(nanoseconds: 3_000_000_000)
-                startMessagesMonitor()
-            }
-        }
-
-        // Test daemon connectivity on startup — auto-fix if not responding
-        Task {
-            try? await Task.sleep(nanoseconds: 500_000_000)
-            appendLog("🔥 Warming up...")
-            var userOK = await userService.ping()
-            userPingOK = userOK
-            appendLog("⚙️ User agent: \(userOK ? "ping OK" : "no response")")
-            var daemonOK = false
-            if rootEnabled {
-                daemonOK = await helperService.ping()
-                daemonPingOK = daemonOK
-                appendLog("⚙️ Launch Daemon: \(daemonOK ? "ping OK" : "no response")")
-            } else {
-                daemonPingOK = false
-                appendLog("⚙️ Launch Daemon: disabled")
-            }
-            if !userOK {
-                appendLog("🔄 User agent: mending...")
-                _ = userService.restartAgent()
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
-                userOK = await userService.ping()
-                userPingOK = userOK
-                appendLog("⚙️ User agent: \(userOK ? "mended — ping OK" : "still NOT responding")")
-            }
-            if rootEnabled && !daemonOK {
-                appendLog("🔄 Launch Daemon: mending...")
-                _ = helperService.restartDaemon()
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
-                daemonOK = await helperService.ping()
-                daemonPingOK = daemonOK
-                appendLog("⚙️ Launch Daemon: \(daemonOK ? "mended — ping OK" : "still NOT responding")")
-            }
-            if !userOK || (rootEnabled && !daemonOK) {
-                appendLog("⚠️ Click Register to restart services")
-            }
-
-            // Pre-warm Ollama model to avoid cold-start delay on first task
-            await self.preWarmOllama()
-        }
+        restoreMessagesMonitor()
+        startupPingWarmup()
     }
 }

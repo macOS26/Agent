@@ -29,17 +29,12 @@ extension AgentViewModel {
 
     /// Messages monitor restoration on startup (called from init)
     func restoreMessagesMonitor() {
-        if messagesMonitorEnabled {
-            refreshMessageRecipients()
-        }
-
-        // Resume Messages monitor if it was enabled
-        if messagesMonitorEnabled {
-            // Delay start so UserService is connected first
-            Task {
-                try? await Task.sleep(nanoseconds: 3_000_000_000)
-                startMessagesMonitor()
-            }
+        guard messagesMonitorEnabled else { return }
+        refreshMessageRecipients()
+        Task {
+            // Wait for UserService to be ready instead of a blind 3s sleep.
+            _ = await Self.awaitServiceReady(ping: { [userService] in await userService.ping() }, timeout: 5)
+            startMessagesMonitor()
         }
     }
 
@@ -63,16 +58,14 @@ extension AgentViewModel {
             if !userOK {
                 appendLog("🔄 User agent: mending...")
                 _ = userService.restartAgent()
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
-                userOK = await userService.ping()
+                userOK = await Self.awaitServiceReady(ping: { [userService] in await userService.ping() }, timeout: 5)
                 userPingOK = userOK
                 appendLog("⚙️ User agent: \(userOK ? "mended — ping OK" : "still NOT responding")")
             }
             if rootEnabled && !daemonOK {
                 appendLog("🔄 Launch Daemon: mending...")
                 _ = helperService.restartDaemon()
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
-                daemonOK = await helperService.ping()
+                daemonOK = await Self.awaitServiceReady(ping: { [helperService] in await helperService.ping() }, timeout: 5)
                 daemonPingOK = daemonOK
                 appendLog("⚙️ Launch Daemon: \(daemonOK ? "mended — ping OK" : "still NOT responding")")
             }
@@ -83,6 +76,22 @@ extension AgentViewModel {
             // Pre-warm Ollama model to avoid cold-start delay on first task
             await self.preWarmOllama()
         }
+    }
+
+    /// Poll an async ping function until it returns true or `timeout` elapses.
+    /// Replaces the "sleep N seconds then ping once" anti-pattern: if the service
+    /// comes up before the timeout we return immediately; if not, we don't miss it.
+    static func awaitServiceReady(
+        ping: @escaping @Sendable () async -> Bool,
+        timeout: TimeInterval,
+        interval: TimeInterval = 0.25
+    ) async -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if await ping() { return true }
+            try? await Task.sleep(for: .seconds(interval))
+        }
+        return await ping()
     }
 
     // MARK: - Provider selection dispatch

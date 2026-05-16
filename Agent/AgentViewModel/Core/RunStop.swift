@@ -39,16 +39,14 @@ extension AgentViewModel {
             if !userOK {
                 appendLog("🔄 User agent: mending...")
                 _ = userService.restartAgent()
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
-                userOK = await userService.ping()
+                userOK = await Self.awaitServiceReady(ping: { [userService] in await userService.ping() }, timeout: 5)
                 userPingOK = userOK
                 appendLog("⚙️ User agent: \(userOK ? "mended — ping OK" : "still NOT responding")")
             }
             if !daemonOK {
                 appendLog("🔄 Launch Daemon: mending...")
                 _ = helperService.restartDaemon()
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
-                daemonOK = await helperService.ping()
+                daemonOK = await Self.awaitServiceReady(ping: { [helperService] in await helperService.ping() }, timeout: 5)
                 daemonPingOK = daemonOK
                 appendLog("⚙️ Launch Daemon: \(daemonOK ? "mended — ping OK" : "still NOT responding")")
             }
