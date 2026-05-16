@@ -22,13 +22,7 @@
 
 ## Cadence
 ### Release Schedule and My Situation:
-Approved pull requests are tested and implemented on most weekends.
-
-Milestone releases, such as reaching a certain number of stars or downloads, will trigger a new monthly release. For instance, when we reach 500 stars, a new release will be queued. If the current release becomes the #1 download (see https://macos26.app), that will also queue a new release. 
-
-Early adopters, as bug fixes are created, pull requests are approved, and new features are implemented, the main branch will have the latest code.
-
-This summer, Agent! may see reduced updates due to Family Medical Leave and will have limited access to a computer.
+Approved pull requests are tested and implemented on coresponding weekends. Milestone releases, such as reaching a certain number of stars or downloads, will trigger a new monthly release. For instance, when we reach 500 stars, a new release will be queued. If the current release becomes the #1 download (see https://macos26.app), that will also queue a new release. Early adopters, as bug fixes are created, pull requests are approved, and new features are implemented, the main branch will have the latest code. This summer, Agent! may see reduced updates due to Family Medical Leave and will have limited access to a computer.
 
 Sincerely,
 Todd Bruss
