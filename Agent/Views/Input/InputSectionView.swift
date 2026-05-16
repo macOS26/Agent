@@ -267,7 +267,7 @@ struct InputSectionView: View {
             $0.lowercased().contains(query) && $0.lowercased() != query
         }
         var seen = Set<String>()
-        return matches.filter { seen.insert($0).inserted }.prefix(6).map { $0 }
+        return matches.filter { seen.insert($0).inserted }.prefix(1).map { $0 }
     }
 
     @ViewBuilder
@@ -275,33 +275,22 @@ struct InputSectionView: View {
         let items = suggestions
         if showSuggestions && !items.isEmpty {
             VStack(alignment: .leading, spacing: 0) {
-                // Dismiss bar — tap anywhere on it to close
-                Button {
-                    showSuggestions = false
-                } label: {
-                    HStack {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.caption)
-                        Text("Dismiss")
-                            .font(.caption2)
-                        Spacer()
-                    }
-                    .foregroundStyle(.red.opacity(0.6))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
                 ForEach(Array(items.enumerated()), id: \.offset) { idx, suggestion in
                     Button {
                         currentInput.wrappedValue = suggestion
                         showSuggestions = false
                     } label: {
                         HStack(spacing: 6) {
-                            Image(systemName: "clock.arrow.circlepath")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                                .frame(width: 14)
+                            Button {
+                                showSuggestions = false
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.caption2)
+                                    .foregroundStyle(.red.opacity(0.7))
+                            }
+                            .buttonStyle(.plain)
+                            .help("Dismiss suggestions")
+                            .frame(width: 14)
                             Text(suggestion)
                                 .font(.system(size: 11))
                                 .lineLimit(1)
@@ -491,10 +480,11 @@ struct InputSectionView: View {
             HStack(spacing: 4) {
                 Button { viewModel.toggleDictation() } label: {
                     Image(systemName: viewModel.isListening ? "mic.fill" : "mic")
-                        .foregroundStyle(viewModel.isListening ? Color.blue : .primary)
+                        .foregroundStyle(viewModel.isListening ? Color.white : .primary)
                         .frame(width: buttonWidth)
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.borderedProminent)
+                .tint(viewModel.isListening ? Color.orange : Color.gray.opacity(0.25))
                 .clipShape(Capsule())
                 .controlSize(.small)
                 .help(viewModel.isListening ? "Stop dictation" : "Start dictation")
@@ -510,7 +500,8 @@ struct InputSectionView: View {
                         )
                         .frame(width: buttonWidth)
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.borderedProminent)
+                .tint(viewModel.isHotwordListening ? Color(white: 0.2) : Color.gray.opacity(0.25))
                 .clipShape(Capsule())
                 .controlSize(.small)
                 .help(

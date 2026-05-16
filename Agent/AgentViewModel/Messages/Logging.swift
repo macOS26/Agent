@@ -141,8 +141,9 @@ extension AgentViewModel {
             // Ask the user which resolution to send — same picker as paste.
             let scale = Self.promptForImageScale(defaultScale: pasteImageScale)
             pasteImageScale = scale
-            let base64 = await Self.encodeImageToBase64(pngData, userScale: scale)
-                ?? pngData.base64EncodedString()
+            let encoded = await Self.encodeImageToBase64(pngData, userScale: scale)
+            let base64 = encoded?.base64 ?? pngData.base64EncodedString()
+            let payloadData = encoded?.pngData ?? pngData
 
             if let tab = selectedTabId.flatMap({ tab(for: $0) }) {
                 tab.attachedImages.append(image)
@@ -151,8 +152,9 @@ extension AgentViewModel {
                 attachedImages.append(image)
                 attachedImagesBase64.append(base64)
             }
-            if let path = saveHiResAttachment(data: pngData, image: image) {
-                let w = Int(image.size.width), h = Int(image.size.height)
+            if let path = saveHiResAttachment(data: payloadData, image: image) {
+                let w = encoded?.width ?? Int(image.size.width)
+                let h = encoded?.height ?? Int(image.size.height)
                 let pct = Int((scale * 100).rounded())
                 appendLog("📎 Attached: \(path) (\(w)x\(h), sending at \(pct)%)")
             }
@@ -226,20 +228,18 @@ extension AgentViewModel {
         // Encode on a background thread to avoid blocking the main thread
         let currentTabId = selectedTabId
         Task {
-            let base64 = await Self.encodeImageToBase64(imageData, userScale: scale)
-            guard let base64 else { return }
+            guard let encoded = await Self.encodeImageToBase64(imageData, userScale: scale) else { return }
             if let image = NSImage(data: imageData) {
                 if let tabId = currentTabId, let tab = self.tab(for: tabId) {
                     tab.attachedImages.append(image)
-                    tab.attachedImagesBase64.append(base64)
+                    tab.attachedImagesBase64.append(encoded.base64)
                 } else {
                     attachedImages.append(image)
-                    attachedImagesBase64.append(base64)
+                    attachedImagesBase64.append(encoded.base64)
                 }
-                if let path = saveHiResAttachment(data: imageData, image: image) {
-                    let w = Int(image.size.width), h = Int(image.size.height)
+                if let path = saveHiResAttachment(data: encoded.pngData, image: image) {
                     let pct = Int((scale * 100).rounded())
-                    appendLog("📎 Attached: \(path) (\(w)x\(h), sending at \(pct)%)")
+                    appendLog("📎 Attached: \(path) (\(encoded.width)x\(encoded.height), sending at \(pct)%)")
                 }
             }
         }
@@ -296,44 +296,61 @@ extension AgentViewModel {
     /// `userScale` multiplies the original dimensions (1.0=full, 0.75, 0.5, 0.25).
     /// Claude's per-image cap is 8000px per side, so we clamp to that when the
     /// user picks full and the source is huge.
-    private static nonisolated func encodeImageToBase64(_ data: Data, userScale: Double = 0.5) async -> String? {
-        guard let bitmap = NSBitmapImageRep(data: data) else { return nil }
+    struct EncodedImage: Sendable {
+        let base64: String
+        let pngData: Data
+        let width: Int
+        let height: Int
+    }
+
+    private static nonisolated func encodeImageToBase64(_ data: Data, userScale: Double = 0.5) async -> EncodedImage? {
+        // Read source dimensions without fully decoding the image.
+        guard let source = CGImageSourceCreateWithData(data as CFData, [kCGImageSourceShouldCache: false] as CFDictionary),
+              let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+              let w = props[kCGImagePropertyPixelWidth] as? Int,
+              let h = props[kCGImagePropertyPixelHeight] as? Int
+        else { return nil }
 
         let maxDim = 8000
-        let w = bitmap.pixelsWide
-        let h = bitmap.pixelsHigh
-
-        // Apply user scale, then clamp to provider cap.
         let targetW = Int((Double(w) * userScale).rounded())
         let targetH = Int((Double(h) * userScale).rounded())
         let scaleClamp = (targetW > maxDim || targetH > maxDim)
             ? min(Double(maxDim) / Double(targetW), Double(maxDim) / Double(targetH))
             : 1.0
-        let newW = Int(Double(targetW) * scaleClamp)
-        let newH = Int(Double(targetH) * scaleClamp)
+        let newW = max(1, Int(Double(targetW) * scaleClamp))
+        let newH = max(1, Int(Double(targetH) * scaleClamp))
 
-        // Skip the resize entirely when the result equals the original.
-        if newW != w || newH != h {
-
-            guard let cgImage = bitmap.cgImage,
-                  let ctx = CGContext(
-                      data: nil, width: newW, height: newH,
-                      bitsPerComponent: 8, bytesPerRow: 0,
-                      space: CGColorSpaceCreateDeviceRGB(),
-                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-                  ) else { return nil }
-
-            ctx.interpolationQuality = .high
-            ctx.draw(cgImage, in: CGRect(x: 0, y: 0, width: newW, height: newH))
-
-            guard let resizedCG = ctx.makeImage() else { return nil }
-            let resizedBitmap = NSBitmapImageRep(cgImage: resizedCG)
-            guard let pngData = resizedBitmap.representation(using: .png, properties: [:]) else { return nil }
-            return pngData.base64EncodedString()
+        // No resize needed — decode at full size and re-encode as PNG.
+        if newW == w && newH == h {
+            guard let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil),
+                  let pngData = pngEncode(cgImage)
+            else { return nil }
+            return EncodedImage(base64: pngData.base64EncodedString(), pngData: pngData, width: w, height: h)
         }
 
-        guard let pngData = bitmap.representation(using: .png, properties: [:]) else { return nil }
-        return pngData.base64EncodedString()
+        // Image I/O thumbnail — Apple's optimized high-quality downscaler.
+        // `kCGImageSourceThumbnailMaxPixelSize` takes the longer-edge target;
+        // Image I/O preserves aspect ratio and applies its own pyramidal filter.
+        let maxEdge = max(newW, newH)
+        let opts: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxEdge,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceShouldCacheImmediately: true
+        ]
+        guard let thumb = CGImageSourceCreateThumbnailAtIndex(source, 0, opts as CFDictionary),
+              let pngData = pngEncode(thumb)
+        else { return nil }
+        return EncodedImage(
+            base64: pngData.base64EncodedString(),
+            pngData: pngData,
+            width: thumb.width,
+            height: thumb.height
+        )
+    }
+
+    private static nonisolated func pngEncode(_ image: CGImage) -> Data? {
+        NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:])
     }
 
     // MARK: - Log Buffering

@@ -1,6 +1,8 @@
 import Foundation
 @preconcurrency import Speech
 import AVFoundation
+import CoreAudio
+import AgentAudit
 
 // MARK: - Speech-to-Text Dictation
 
@@ -15,6 +17,7 @@ extension AgentViewModel {
     }
 
     func startDictation() {
+        isListening = true
         SFSpeechRecognizer.requestAuthorization { @Sendable status in
             Task { @MainActor [weak self] in
                 guard let self else { return }
@@ -22,17 +25,19 @@ extension AgentViewModel {
                 case .authorized:
                     self.beginAudioSession()
                 case .denied, .restricted:
+                    self.isListening = false
                     self.appendLog("⚠️ Speech recognition not authorized. Enable in System Settings > Privacy > Speech Recognition.")
                 case .notDetermined:
+                    self.isListening = false
                     self.appendLog("⚠️ Speech recognition authorization not determined.")
                 @unknown default:
-                    break
+                    self.isListening = false
                 }
             }
         }
     }
 
-    func stopDictation() {
+    private func tearDownSpeech() {
         hotwordSilenceTimer?.invalidate()
         hotwordSilenceTimer = nil
         isHotwordCapturing = false
@@ -44,8 +49,12 @@ extension AgentViewModel {
         speechRecognitionTask = nil
         speechRecognitionRequest = nil
         speechAudioEngine = nil
-        isListening = false
         preDictationTabId = nil
+    }
+
+    func stopDictation() {
+        tearDownSpeech()
+        isListening = false
     }
 
     // MARK: - Hotword Listening
@@ -73,9 +82,17 @@ extension AgentViewModel {
     // MARK: - Private
 
     private func beginAudioSession() {
-        stopDictation()
+        tearDownSpeech()
+
+        guard Self.hasPhysicalDefaultInput() else {
+            isListening = false
+            AuditLog.log(.shell, "Dictation aborted: no physical audio input device (virtual default input on this Mac).")
+            appendLog("⚠️ No microphone detected. Connect an audio input (AirPods, USB mic, etc.) and try again.")
+            return
+        }
 
         guard let recognizer = SFSpeechRecognizer(), recognizer.isAvailable else {
+            isListening = false
             appendLog("⚠️ Speech recognizer not available for current locale.")
             return
         }
@@ -97,6 +114,7 @@ extension AgentViewModel {
         do {
             try engine.start()
         } catch {
+            isListening = false
             appendLog("❌ Audio engine failed: \(error.localizedDescription)")
             return
         }
@@ -273,6 +291,44 @@ extension AgentViewModel {
                 self.startDictation()
             }
         }
+    }
+
+    // MARK: - Audio Input Detection
+
+    private static func getDefaultInputDeviceID() -> AudioDeviceID? {
+        var deviceID = AudioDeviceID(0)
+        var addr = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwarePropertyDefaultInputDevice,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        var size = UInt32(MemoryLayout<AudioDeviceID>.size)
+        let status = AudioObjectGetPropertyData(
+            AudioObjectID(kAudioObjectSystemObject),
+            &addr, 0, nil, &size, &deviceID
+        )
+        return (status == noErr && deviceID != 0) ? deviceID : nil
+    }
+
+    private static func transportType(of deviceID: AudioDeviceID) -> UInt32? {
+        var addr = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyTransportType,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        var transport = UInt32(0)
+        var size = UInt32(MemoryLayout<UInt32>.size)
+        let status = AudioObjectGetPropertyData(deviceID, &addr, 0, nil, &size, &transport)
+        return status == noErr ? transport : nil
+    }
+
+    /// Returns true only when the default input is a real, usable device.
+    /// Mac mini with no mic connected reports a virtual (`'vrtc'`) default
+    /// input that crashes `AVAudioEngine.start()` — filter it out here.
+    static func hasPhysicalDefaultInput() -> Bool {
+        guard let dev = getDefaultInputDeviceID(),
+              let t = transportType(of: dev) else { return false }
+        return t != 0x76727463 // 'vrtc'
     }
 
     private func restartHotwordSession() {
