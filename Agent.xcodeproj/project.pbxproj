@@ -54,6 +54,7 @@
 		AA10000000000000000038 /* UserService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000025 /* UserService.swift */; };
 		AA10000000000000000039 /* UserProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000026 /* UserProtocol.swift */; };
 		AA1000000000000000003A /* OllamaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000028 /* OllamaService.swift */; };
+		AA10000000000000004002 /* LLMRateLimiter.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000004001 /* LLMRateLimiter.swift */; };
 		AA1000000000000000003B /* ScriptService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000029 /* ScriptService.swift */; };
 		AA1000000000000000003D /* XcodeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002B /* XcodeService.swift */; };
 		AA1000000000000000003E /* ScriptingBridge.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA1000000000000000002C /* ScriptingBridge.framework */; };
@@ -315,6 +316,7 @@
 		AA10000000000000000026 /* UserProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProtocol.swift; sourceTree = "<group>"; };
 		AA10000000000000000027 /* Agent.app.toddbruss.user.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Agent.app.toddbruss.user.plist; sourceTree = "<group>"; };
 		AA10000000000000000028 /* OllamaService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaService.swift; sourceTree = "<group>"; };
+		AA10000000000000004001 /* LLMRateLimiter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMRateLimiter.swift; sourceTree = "<group>"; };
 		AA10000000000000000029 /* ScriptService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptService.swift; sourceTree = "<group>"; };
 		AA1000000000000000002B /* XcodeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XcodeService.swift; sourceTree = "<group>"; };
 		AA1000000000000000002C /* ScriptingBridge.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ScriptingBridge.framework; path = System/Library/Frameworks/ScriptingBridge.framework; sourceTree = SDKROOT; };
@@ -882,6 +884,7 @@
 				AA10000000000000002001 /* CodexService.swift */,
 				AA10000000000000000028 /* OllamaService.swift */,
 				AA100000000000000000BA /* OpenAICompatibleService.swift */,
+				AA10000000000000004001 /* LLMRateLimiter.swift */,
 				AA10000000000000000029 /* ScriptService.swift */,
 				SS110000000000000000002 /* ScriptService+Metadata.swift */,
 				SS110000000000000000004 /* ScriptService+Execution.swift */,
@@ -1205,6 +1208,7 @@
 				AA10000000000000000039 /* UserProtocol.swift in Sources */,
 				AA1000000000000000003A /* OllamaService.swift in Sources */,
 				AA100000000000000000BB /* OpenAICompatibleService.swift in Sources */,
+				AA10000000000000004002 /* LLMRateLimiter.swift in Sources */,
 				BB10000000000000000017 /* AppleIntelligencePopover.swift in Sources */,
 				AA100000000000000000C1 /* NewMainTabSheet.swift in Sources */,
 				AA1000000000000000003B /* ScriptService.swift in Sources */,

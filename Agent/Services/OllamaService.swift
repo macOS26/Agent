@@ -16,29 +16,18 @@ final class OllamaService {
     let contextSize: Int
 
     // MARK: - Rate Limit Tracking
-    // Local daemon doesn't rate-limit, but Ollama Cloud/Pro/Max can return 429. Capture Retry-After and pad the next request. Per-provider dict for independent tracking.
-    private static var retryAfterUntil: [APIProvider: CFAbsoluteTime] = [:]
+    // Delegated to LLMRateLimiter actor — see Services/LLMRateLimiter.swift.
 
-    /// Wait if needed to respect Retry-After backoff from a previous 429.
     private func enforceRateLimit() async {
-        let now = CFAbsoluteTimeGetCurrent()
-        if let until = Self.retryAfterUntil[provider], until > now {
-            let wait = until - now
-            try? await Task.sleep(for: .seconds(wait))
-        }
+        await LLMRateLimiter.shared.enforce(provider: provider.rawValue)
     }
 
-    /// Record a Retry-After value from a 429 response.
-    static func recordRetryAfter(_ seconds: Double, for provider: APIProvider) {
-        retryAfterUntil[provider] = CFAbsoluteTimeGetCurrent() + seconds
+    nonisolated static func recordRetryAfter(_ seconds: Double, for provider: APIProvider) async {
+        await LLMRateLimiter.shared.recordRetryAfter(seconds, provider: provider.rawValue)
     }
 
-    /// Parse Retry-After header. Integer seconds per RFC 7231. Returns 0 if missing; capped at 5 min.
     nonisolated static func parseRetryAfter(_ headerValue: String?) -> Double {
-        guard let v = headerValue?.trimmingCharacters(in: .whitespaces),
-              !v.isEmpty,
-              let seconds = Double(v) else { return 0 }
-        return min(seconds, 300)
+        LLMRateLimiter.parseRetryAfter(headerValue)
     }
 
     var onStreamText: (@MainActor @Sendable (String) -> Void)?
@@ -400,9 +389,7 @@ final class OllamaService {
                 let header = httpResponse.value(forHTTPHeaderField: "Retry-After")
                 let parsed = parseRetryAfter(header)
                 let waitSeconds = parsed > 0 ? parsed : 30
-                await MainActor.run {
-                    Self.recordRetryAfter(waitSeconds, for: provider)
-                }
+                await Self.recordRetryAfter(waitSeconds, for: provider)
             }
             let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
             throw AgentError.apiError(statusCode: httpResponse.statusCode, message: errorBody)
@@ -556,9 +543,7 @@ final class OllamaService {
                 let header = httpResponse.value(forHTTPHeaderField: "Retry-After")
                 let parsed = parseRetryAfter(header)
                 let waitSeconds = parsed > 0 ? parsed : 30
-                await MainActor.run {
-                    Self.recordRetryAfter(waitSeconds, for: provider)
-                }
+                await Self.recordRetryAfter(waitSeconds, for: provider)
             }
             var errorData = Data()
             for try await byte in bytes {

@@ -18,29 +18,18 @@ final class ClaudeService {
     private let isLocalhostEndpoint: Bool
 
     // MARK: - Rate Limit Tracking
-    // Anthropic 429/529 → capture Retry-After, pad next request. Mirrors OpenAICompatibleService pattern, separate dict for independent tracking.
-    private static var retryAfterUntil: CFAbsoluteTime = 0
+    // Delegated to LLMRateLimiter actor — see Services/LLMRateLimiter.swift.
 
-    /// Wait if needed to respect Retry-After backoff from a previous 429/529.
-    private static func enforceRateLimit() async {
-        let now = CFAbsoluteTimeGetCurrent()
-        if retryAfterUntil > now {
-            let wait = retryAfterUntil - now
-            try? await Task.sleep(for: .seconds(wait))
-        }
+    nonisolated private static func enforceRateLimit() async {
+        await LLMRateLimiter.shared.enforce(provider: APIProvider.claude.rawValue)
     }
 
-    /// Record Retry-After from 429/529. @MainActor because static var is owned by this @MainActor class; called from nonisolated via `await MainActor.run`.
-    static func recordRetryAfter(_ seconds: Double) {
-        retryAfterUntil = CFAbsoluteTimeGetCurrent() + seconds
+    nonisolated static func recordRetryAfter(_ seconds: Double) async {
+        await LLMRateLimiter.shared.recordRetryAfter(seconds, provider: APIProvider.claude.rawValue)
     }
 
-    /// Parse Retry-After header. Integer seconds per RFC 7231 §7.1.3. Returns 0 if missing/unparseable; capped at 5 min.
     nonisolated static func parseRetryAfter(_ headerValue: String?) -> Double {
-        guard let v = headerValue?.trimmingCharacters(in: .whitespaces),
-              !v.isEmpty,
-              let seconds = Double(v) else { return 0 }
-        return min(seconds, 300)
+        LLMRateLimiter.parseRetryAfter(headerValue)
     }
 
     let historyContext: String
@@ -321,9 +310,7 @@ final class ClaudeService {
                 let header = httpResponse.value(forHTTPHeaderField: "Retry-After")
                 let parsed = Self.parseRetryAfter(header)
                 let waitSeconds = parsed > 0 ? parsed : 30
-                await MainActor.run {
-                    Self.recordRetryAfter(waitSeconds)
-                }
+                await Self.recordRetryAfter(waitSeconds)
             }
             let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
             throw AgentError.apiError(statusCode: httpResponse.statusCode, message: errorBody)
@@ -406,9 +393,7 @@ final class ClaudeService {
                 let header = httpResponse.value(forHTTPHeaderField: "Retry-After")
                 let parsed = Self.parseRetryAfter(header)
                 let waitSeconds = parsed > 0 ? parsed : 30
-                await MainActor.run {
-                    Self.recordRetryAfter(waitSeconds)
-                }
+                await Self.recordRetryAfter(waitSeconds)
             }
             var errorData = Data()
             for try await byte in bytes {

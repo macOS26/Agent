@@ -39,14 +39,11 @@ final class OpenAICompatibleService {
     let maxTokens: Int
 
     // MARK: - Rate Limiting
-    /// Per-provider last request timestamp for rate limiting.
-    private static var lastRequestTime: [APIProvider: CFAbsoluteTime] = [:]
-    private static let rateLimitSeconds: [APIProvider: Double] = [:]
-    private static var retryAfterUntil: [APIProvider: CFAbsoluteTime] = [:]
+    // Delegated to LLMRateLimiter actor — see Services/LLMRateLimiter.swift.
 
     /// Clear stale 429 backoff for a provider so a new task doesn't inherit it.
-    static func clearRetryAfter(for provider: APIProvider) {
-        retryAfterUntil.removeValue(forKey: provider)
+    nonisolated static func clearRetryAfter(for provider: APIProvider) async {
+        await LLMRateLimiter.shared.clearRetryAfter(provider: provider.rawValue)
     }
 
     init(
@@ -388,37 +385,15 @@ final class OpenAICompatibleService {
 
     /// Wait if needed to respect per-provider rate limits and Retry-After backoff.
     private func enforceRateLimit() async {
-        let now = CFAbsoluteTimeGetCurrent()
-        // Honor Retry-After from a previous 429
-        if let until = Self.retryAfterUntil[provider], now < until {
-            let wait = until - now
-            try? await Task.sleep(for: .seconds(wait))
-        }
-        // Enforce minimum gap between requests
-        if let minGap = Self.rateLimitSeconds[provider],
-           let last = Self.lastRequestTime[provider]
-        {
-            let elapsed = CFAbsoluteTimeGetCurrent() - last
-            if elapsed < minGap {
-                let wait = minGap - elapsed
-                try? await Task.sleep(for: .seconds(wait))
-            }
-        }
-        Self.lastRequestTime[provider] = CFAbsoluteTimeGetCurrent()
+        await LLMRateLimiter.shared.enforce(provider: provider.rawValue)
     }
 
-    /// Record Retry-After from 429. @MainActor because retryAfterUntil is a per-class static dict; nonisolated callers hop via Task { @MainActor in ... }.
-    static func recordRetryAfter(_ seconds: Double, for provider: APIProvider) {
-        retryAfterUntil[provider] = CFAbsoluteTimeGetCurrent() + seconds
+    nonisolated static func recordRetryAfter(_ seconds: Double, for provider: APIProvider) async {
+        await LLMRateLimiter.shared.recordRetryAfter(seconds, provider: provider.rawValue)
     }
 
-    /// Parse Retry-After header. Integer seconds per RFC 7231. Returns 0 if missing/unparseable; capped at 5 min.
     nonisolated static func parseRetryAfter(_ headerValue: String?) -> Double {
-        guard let v = headerValue?.trimmingCharacters(in: .whitespaces),
-              !v.isEmpty,
-              let seconds = Double(v) else { return 0 }
-        // Cap at 5 minutes — providers occasionally send absurd values
-        return min(seconds, 300)
+        LLMRateLimiter.parseRetryAfter(headerValue)
     }
 
     func send(
@@ -516,9 +491,7 @@ final class OpenAICompatibleService {
                 let header = httpResponse.value(forHTTPHeaderField: "Retry-After")
                 let parsed = parseRetryAfter(header)
                 let waitSeconds = parsed > 0 ? parsed : 30
-                await MainActor.run {
-                    Self.recordRetryAfter(waitSeconds, for: provider)
-                }
+                await Self.recordRetryAfter(waitSeconds, for: provider)
             }
             let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
             throw AgentError.apiError(statusCode: httpResponse.statusCode, message: errorBody)
@@ -675,9 +648,7 @@ final class OpenAICompatibleService {
                 let header = httpResponse.value(forHTTPHeaderField: "Retry-After")
                 let parsed = parseRetryAfter(header)
                 let waitSeconds = parsed > 0 ? parsed : 30
-                await MainActor.run {
-                    Self.recordRetryAfter(waitSeconds, for: provider)
-                }
+                await Self.recordRetryAfter(waitSeconds, for: provider)
             }
             var errorData = Data()
             for try await byte in bytes {
