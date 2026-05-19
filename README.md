@@ -20,14 +20,22 @@
 <p><b>Thank you for your interest and support!</b></p>
 </div>
 
+Here's the rewrite without any dashes:
+
+---
+
 ## Cadence
 ### Release Schedule
-Approved pull requests are tested and implemented on coresponding weekends. Milestone releases, such as reaching a certain number of stars or downloads, will trigger a new monthly release. For instance, when we reach 500 stars, a new release will be queued. If the current release becomes the #1 download (see https://macos26.app), that will also queue a new release. Early adopters, as bug fixes are created, pull requests are approved, and new features are implemented, the main branch will have the latest code. This summer, Agent! may see reduced updates due to Family Medical Leave and will have limited access to a computer.
+Approved pull requests are tested and implemented on corresponding weekends. Milestone releases are tied to real moments of growth. Reaching 500 stars, for example, will queue a new release. If Agent! becomes the #1 download on [macos26.app](https://macos26.app), that milestone will also trigger a new release. For early adopters: as bug fixes land, pull requests are approved, and new features ship, the main branch will always reflect the latest work. This summer, updates may be a bit slower due to Family Medical Leave and limited computer access. Thanks in advance for your patience.
 
-## What made Agent!
-Agent! is a result of 3 years of creating Agentic AI apps; it is a combination of about a dozen AI apps created during that time. Some of those apps were published under ANIE, Game Changer, BattleScript, XCF MCP Server and Client, D1F, and about 8 original Swift Packages. The missing piece was achieving an intelligent autonomous time loop, which, once figured out, did not take long to bring the best of the best of all my other AI apps. The resulting app is Agent! for macOS 26.4.1 or later. The original goal was to create a Cursor killer. The result is an Agentic AI with legs. Agent! is only limited by your imagination. It can write code, create apps, write poetry, create disk images and attach them to GitHub releases. Agent! can automate most tasks on your Mac. Ask it what you want in plain English or your native language; Agent!, after some initial configuration and user approvals, will do everything it can to carry out your wish. Agent! is relentless, but it is not evil. I have huge plans for the app. It will be improved over time and id quickly stacking wins.
+---
 
-All of Agent!'s IP is original and open source. All of its Swift packages dependencies and the app itself were originally authored by me. This is a very different ecosystem. Most Agentic AI apps like Claude Code rely on 65 NPM open source packages relying solely on third parties. Agent! is 100% native and requires very little RAM. Claude Code, Cursor, and Codex can't match the compactness of Agent! which is is 35.5 MB; ccould have made it smaller, but I wanted to include features such as automating Xcode, a Swift Syntax 6.2 package to help troubleshoot native apps, plus Accessibility, AppleScript, and Safari automation, MCP Server support, and more all out of the box.
+## Backstory and the Tech behind Agent!
+Agent! didn't come together overnight. It's the result of three years of building agentic AI apps, drawing on roughly a dozen projects developed along the way. Some of those were published under ANIE, Game Changer, BattleScript, XCF MCP Server and Client, D1F, and about eight original Swift Packages. The missing piece was achieving an intelligent autonomous time loop. Once that clicked, bringing together the best of everything else didn't take long. The result is Agent! for macOS 26.4.1 or later.
+
+The original goal was to build a Cursor killer. What emerged is something more interesting: an agentic AI with real legs. Agent! is only limited by your imagination. It can write code, create apps, write poetry, generate disk images, and attach them to GitHub releases. It can automate most tasks on your Mac. Ask it what you want in plain English or your native language and, after some initial configuration and user approvals, it will do everything it can to carry out your wish. Agent! is relentless, and the roadmap ahead is full.
+
+All of Agent!'s IP is original and open source. Every Swift package dependency and the app itself were originally authored by the same person. This is a genuinely different ecosystem. Most agentic AI apps like Claude Code rely on 65 NPM packages from third parties. Agent! is 100% native, requires very little RAM, and comes in at 35.5 MB. That footprint includes Xcode automation, a Swift Syntax 6.2 package for troubleshooting native apps, Accessibility, AppleScript, and Safari automation, MCP Server support, and more, all out of the box.
 
 ## What's New 🚀
 
