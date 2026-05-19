@@ -610,6 +610,6 @@ Agent! is a 100% original pure Swift macOS application. It is not a port, fork, 
 >
 > Sincerely,
 > **Todd Bruss**
-> Creator and Founder, 🦾 Agent! for macOS26.4.1
+> Forward Deployed Engineer, 🦾 Agent! for macOS 26.4.1
 > https://agent.macOS26.app
 > https://github.com/macos26/agent
