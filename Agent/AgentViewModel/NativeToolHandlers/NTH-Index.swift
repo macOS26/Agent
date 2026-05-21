@@ -9,7 +9,7 @@ extension AgentViewModel {
     /// Handles index_* tool calls (expanded from `index(action:X)` via
     /// expandConsolidatedTool). Returns `nil` if the name isn't an index tool.
     func handleIndexNativeTool(name: String, input: [String: Any]) async -> String? {
-        let pf = (selectedTabId.flatMap { tab(for: $0) }?.projectFolder ?? projectFolder).trimmingCharacters(in: .whitespaces)
+        let pf = selectedTabId.flatMap { tab(for: $0) }?.projectFolder ?? projectFolder
         guard !pf.isEmpty else {
             // Only answer if this IS an index call — otherwise return nil so the
             // dispatcher continues through other handlers.
