@@ -26,7 +26,7 @@ Here's the rewrite without any dashes:
 
 ## Cadence
 ### Release Schedule
-Approved pull requests are tested and implemented on corresponding weekends. Milestone releases are tied to real moments of growth. Reaching 500 stars, for example, will queue a new release. If Agent! becomes the #1 download on [macos26.app](https://macos26.app), that milestone will also trigger a new release. For early adopters: as bug fixes land, pull requests are approved, and new features ship, the main branch will always reflect the latest work. This summer, updates may be a bit slower due to Family Medical Leave and limited computer access. Thanks in advance for your patience.
+Approved pull requests are tested and implemented on corresponding weekends. Milestone releases are tied to real moments of growth. Reaching 500 stars, for example, will queue a new release. If the latest build becomes the #1 download on [macos26.app](https://macos26.app), that milestone will also trigger a new release. For early adopters: as bug fixes land, pull requests are approved, and new features ship, the main branch will always reflect the latest work. This summer, updates may be a bit slower due to Family Medical Leave and limited computer access. Thanks in advance for your patience.
 
 ---
 
