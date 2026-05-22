@@ -17,6 +17,26 @@ struct LastEditAttempt: @unchecked Sendable {
     let oldString: String
 }
 
+/// Tracks how many times a file has been read per tab. Enforces a limit that resets on edit.
+/// Base limit: 3 reads. Each edit grants additional reads: 1st edit → 2 more, 2nd edit → 1 more.
+/// After that, the file is blocked from further reads until another edit occurs.
+struct FileReadCount: @unchecked Sendable {
+    var readCount: Int = 0
+    var editCount: Int = 0
+
+    /// Maximum reads allowed given the number of edits made to this file.
+    /// 0 edits → 3 reads, 1 edit → 5 reads, 2 edits → 6 reads, N edits → 4 + N reads.
+    /// Every edit grants at least 1 additional read so the LLM can always verify its edit.
+    var maxReads: Int {
+        switch editCount {
+        case 0: return 3
+        case 1: return 5
+        case 2: return 6
+        default: return 4 + editCount
+        }
+    }
+}
+
 extension AgentViewModel {
 
     /// State for duplicate edit detection — keyed by tab UUID string.
@@ -31,6 +51,51 @@ extension AgentViewModel {
         _lastEditAttempts[key] = LastEditAttempt(filePath: filePath, oldString: oldString)
         guard let last else { return false }
         return last.filePath == filePath && last.oldString == oldString
+    }
+
+    /// Read-count tracking per (tab, file) — keyed by "\(tabUUID):\(normalizedPath)"
+    private static var _readCounts: [String: FileReadCount] = [:]
+    private static let _readCountLock = NSLock()
+
+    /// Check if a read is allowed. Increments the counter. Returns nil if allowed, or an error string if blocked.
+    private static func checkAndIncrementReadCount(tabID: UUID, filePath: String) -> String? {
+        _readCountLock.lock()
+        defer { _readCountLock.unlock() }
+        let key = "\(tabID.uuidString):\(filePath)"
+        var entry = _readCounts[key] ?? FileReadCount()
+        if entry.readCount >= entry.maxReads {
+            return """
+                ⛔ Read limit reached for this file (\(entry.readCount) reads, \(entry.editCount) edits). \
+                You have read this file too many times without making progress. \
+                Recovery: edit the file first (edit_file, diff_apply, write_file), then you can read it again. \
+                If you're stuck, explain what you need and ask for help instead of re-reading.
+                """
+        }
+        entry.readCount += 1
+        let remaining = entry.maxReads - entry.readCount
+        _readCounts[key] = entry
+        if remaining <= 1 {
+            return "⚠️ Read limit warning: \(remaining) read(s) remaining for this file before you must edit it. (\(entry.readCount)/\(entry.maxReads))"
+        }
+        return nil // allowed, no warning
+    }
+
+    /// Reset read count for a file when it's edited — grants additional reads.
+    private static func recordFileEdit(tabID: UUID, filePath: String) {
+        _readCountLock.lock()
+        defer { _readCountLock.unlock() }
+        let key = "\(tabID.uuidString):\(filePath)"
+        var entry = _readCounts[key] ?? FileReadCount()
+        entry.editCount += 1
+        _readCounts[key] = entry
+    }
+
+    /// Clear read counts for a tab (called when the tab's conversation resets).
+    static func clearReadCountsForTab(tabID: UUID) {
+        _readCountLock.lock()
+        defer { _readCountLock.unlock() }
+        let prefix = tabID.uuidString + ":"
+        _readCounts = _readCounts.filter { !$0.key.hasPrefix(prefix) }
     }
 
     /// / Handles file CRUD, diff, list/search, backup/restore, symbol search, / and refactor_rename tool calls. Returns
@@ -48,6 +113,11 @@ extension AgentViewModel {
                     Use file_manager(action:"list", path:...) to see \
                     what files exist if you don't know the path.
                     """
+            }
+            let expanded = (path as NSString).expandingTildeInPath
+            let tabID = selectedTabId ?? Self.mainTabID
+            if let blocked = Self.checkAndIncrementReadCount(tabID: tabID, filePath: expanded) {
+                return blocked
             }
             // Delegate to CodingService.readFile which returns line-numbered output and gives a clear 'file not found'
             // error with a list-files suggestion when the path is wrong. Honors offset+limit (1-based offset).
@@ -73,6 +143,7 @@ extension AgentViewModel {
             guard !content.isEmpty else { return "Error: content is required for write_file (empty content would truncate the file). Recovery: pass content:\"...\"." }
             let tabID = selectedTabId ?? Self.mainTabID
             FileBackupService.shared.backup(filePath: path, tabID: tabID)
+            Self.recordFileEdit(tabID: tabID, filePath: (path as NSString).expandingTildeInPath)
             let url = URL(fileURLWithPath: path)
             try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
             do { try content.write(to: url, atomically: true, encoding: .utf8); return "Wrote \(path)" }
@@ -108,6 +179,7 @@ extension AgentViewModel {
                 return "Error: Duplicate edit rejected — you just tried the exact same old_string on this file and it failed. Recovery: re-read the file to get fresh content, then use a different old_string or try diff_and_apply with start_line/end_line instead."
             }
             FileBackupService.shared.backup(filePath: expanded, tabID: tabID)
+            Self.recordFileEdit(tabID: tabID, filePath: expanded)
             return await Self.offMain {
                 CodingService.editFile(path: expanded, oldString: old, newString: new, replaceAll: replaceAll, context: context)
             }
@@ -145,6 +217,7 @@ extension AgentViewModel {
                     throw DiffError.invalidDiff
                 }
                 try patched.write(to: URL(fileURLWithPath: expanded), atomically: true, encoding: .utf8)
+                Self.recordFileEdit(tabID: selectedTabId ?? Self.mainTabID, filePath: expanded)
                 let verifyDiff = MultiLineDiff.createAndDisplayDiff(source: source, destination: patched, format: .ai)
                 return "Applied diff to \(path)\n\n\(verifyDiff)"
             } catch {
@@ -339,6 +412,9 @@ extension AgentViewModel {
             let startLine = input["start_line"] as? Int
             let endLine = input["end_line"] as? Int
             let result = CodingService.diffAndApply(path: fp, source: source, destination: dest, startLine: startLine, endLine: endLine)
+            if !result.output.hasPrefix("Error") && !result.output.hasPrefix("❌") {
+                Self.recordFileEdit(tabID: selectedTabId ?? Self.mainTabID, filePath: (fp as NSString).expandingTildeInPath)
+            }
             return result.output
         default:
             return nil
