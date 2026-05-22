@@ -100,8 +100,7 @@ extension AgentViewModel {
         var entry = _readCounts[key] ?? FileReadCount()
         entry.editCount += 1
         _readCounts[key] = entry
-        let dedupPrefix = "\(tabID.uuidString):\(filePath):"
-        _lastReadEmissions = _lastReadEmissions.filter { !$0.key.hasPrefix(dedupPrefix) }
+        _lastReadEmissions.removeValue(forKey: "\(tabID.uuidString):\(filePath)")
         _readsSinceEditByTab[tabID.uuidString] = 0
     }
 
@@ -147,13 +146,13 @@ extension AgentViewModel {
             """
     }
 
-    /// Dedup cache: keyed by "\(tabUUID):\(expandedPath):\(offset):\(limit)".
-    /// nil offset/limit are encoded as -1 so the whole-file range gets its own slot
-    /// independent of any partial-range reads.
+    /// Dedup cache: keyed by "\(tabUUID):\(expandedPath)". Any second read of the
+    /// same file (regardless of offset/limit) hits this cache as long as the file
+    /// hasn't changed — the rule is "you already read this file."
     private static var _lastReadEmissions: [String: LastReadEmission] = [:]
 
-    private static func dedupKey(tabID: UUID, expandedPath: String, offset: Int?, limit: Int?) -> String {
-        "\(tabID.uuidString):\(expandedPath):\(offset ?? -1):\(limit ?? -1)"
+    private static func dedupKey(tabID: UUID, expandedPath: String) -> String {
+        "\(tabID.uuidString):\(expandedPath)"
     }
 
     private static func fileStat(_ path: String) -> (mtime: Date, size: Int64)? {
@@ -164,39 +163,34 @@ extension AgentViewModel {
         return (mtime, size.int64Value)
     }
 
-    /// If the file's mtime+size are unchanged since the last emission of this exact
-    /// (path, offset, limit), return a stub instructing the model to refer to the
-    /// prior tool_result. Returns nil if there's no cached emission or the file changed.
+    /// If we've already read this file in this conversation AND it hasn't changed
+    /// (mtime+size match), return a stub telling the model exactly that. Applies
+    /// regardless of offset/limit — re-reading any range of an unchanged file is
+    /// redundant. Returns nil on first read or if the file has changed.
     /// Does NOT consume a read-count slot — dedup hits are no-ops.
-    private static func dedupRead(tabID: UUID, expandedPath: String, offset: Int?, limit: Int?) -> String? {
+    private static func dedupRead(tabID: UUID, expandedPath: String) -> String? {
         _readCountLock.lock()
         defer { _readCountLock.unlock() }
-        let key = dedupKey(tabID: tabID, expandedPath: expandedPath, offset: offset, limit: limit)
+        let key = dedupKey(tabID: tabID, expandedPath: expandedPath)
         guard let last = _lastReadEmissions[key],
               let stat = fileStat(expandedPath),
               stat.mtime == last.mtime,
               stat.size == last.size
         else { return nil }
-        let range: String
-        if offset != nil || limit != nil {
-            range = "offset=\(offset.map(String.init) ?? "nil") limit=\(limit.map(String.init) ?? "nil")"
-        } else {
-            range = "full file"
-        }
         return """
-            File unchanged since your last read in this conversation (\(range)). \
-            The earlier read_file tool_result for \(expandedPath) is still current — \
-            refer to it instead of re-reading. If you need different content, request \
-            a different offset/limit range, or edit the file first.
+            You already read this file in this conversation and it has not changed since. \
+            Use the prior read_file tool_result for \(expandedPath) — do not re-read it. \
+            If you need to act on what you read, call edit_file / write_file / apply_diff now. \
+            (This cache is cleared automatically the moment you edit the file.)
             """
     }
 
-    /// Record a successful read emission so subsequent identical requests dedup.
-    private static func recordReadEmission(tabID: UUID, expandedPath: String, offset: Int?, limit: Int?) {
+    /// Record a successful read so the next read of the same file is deduped.
+    private static func recordReadEmission(tabID: UUID, expandedPath: String) {
         _readCountLock.lock()
         defer { _readCountLock.unlock() }
         guard let stat = fileStat(expandedPath) else { return }
-        let key = dedupKey(tabID: tabID, expandedPath: expandedPath, offset: offset, limit: limit)
+        let key = dedupKey(tabID: tabID, expandedPath: expandedPath)
         _lastReadEmissions[key] = LastReadEmission(mtime: stat.mtime, size: stat.size)
     }
 
@@ -220,8 +214,8 @@ extension AgentViewModel {
             let tabID = selectedTabId ?? Self.mainTabID
             let offset = input["offset"] as? Int
             let limit = input["limit"] as? Int
-            // (1) Dedup: same bytes for same (path, offset, limit) → stub, free.
-            if let dedup = Self.dedupRead(tabID: tabID, expandedPath: expanded, offset: offset, limit: limit) {
+            // (1) Dedup: any second read of an unchanged file → stub, free.
+            if let dedup = Self.dedupRead(tabID: tabID, expandedPath: expanded) {
                 return dedup
             }
             // (2) Cross-file loop guard: stop "read 7 different files in a row" pathology.
@@ -239,7 +233,7 @@ extension AgentViewModel {
             }
             // Only record on a real read — not on a "file not found" error path.
             if !result.hasPrefix("Error") {
-                Self.recordReadEmission(tabID: tabID, expandedPath: expanded, offset: offset, limit: limit)
+                Self.recordReadEmission(tabID: tabID, expandedPath: expanded)
             }
             return result
         // copy_image — copy a PNG/JPEG between any of {file path, clipboard, chat attachment}.
