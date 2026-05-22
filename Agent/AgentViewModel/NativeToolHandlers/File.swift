@@ -37,6 +37,15 @@ struct FileReadCount: @unchecked Sendable {
     }
 }
 
+/// Snapshot of the last successful read_file emission for a (tab, path, offset, limit).
+/// Used to dedup: if the file's mtime+size are unchanged since we last emitted bytes for
+/// this exact request, the model has already seen the content in this conversation —
+/// don't re-emit. This is the tool-level cure for the "read the same file 20 times" spiral.
+struct LastReadEmission: @unchecked Sendable {
+    let mtime: Date
+    let size: Int64
+}
+
 extension AgentViewModel {
 
     /// State for duplicate edit detection — keyed by tab UUID string.
@@ -81,6 +90,7 @@ extension AgentViewModel {
     }
 
     /// Reset read count for a file when it's edited — grants additional reads.
+    /// Also clears the dedup cache for this file (content is now stale).
     private static func recordFileEdit(tabID: UUID, filePath: String) {
         _readCountLock.lock()
         defer { _readCountLock.unlock() }
@@ -88,6 +98,8 @@ extension AgentViewModel {
         var entry = _readCounts[key] ?? FileReadCount()
         entry.editCount += 1
         _readCounts[key] = entry
+        let dedupPrefix = "\(tabID.uuidString):\(filePath):"
+        _lastReadEmissions = _lastReadEmissions.filter { !$0.key.hasPrefix(dedupPrefix) }
     }
 
     /// Clear read counts for a tab (called when the tab's conversation resets).
@@ -96,6 +108,60 @@ extension AgentViewModel {
         defer { _readCountLock.unlock() }
         let prefix = tabID.uuidString + ":"
         _readCounts = _readCounts.filter { !$0.key.hasPrefix(prefix) }
+        _lastReadEmissions = _lastReadEmissions.filter { !$0.key.hasPrefix(prefix) }
+    }
+
+    /// Dedup cache: keyed by "\(tabUUID):\(expandedPath):\(offset):\(limit)".
+    /// nil offset/limit are encoded as -1 so the whole-file range gets its own slot
+    /// independent of any partial-range reads.
+    private static var _lastReadEmissions: [String: LastReadEmission] = [:]
+
+    private static func dedupKey(tabID: UUID, expandedPath: String, offset: Int?, limit: Int?) -> String {
+        "\(tabID.uuidString):\(expandedPath):\(offset ?? -1):\(limit ?? -1)"
+    }
+
+    private static func fileStat(_ path: String) -> (mtime: Date, size: Int64)? {
+        guard let attrs = try? FileManager.default.attributesOfItem(atPath: path),
+              let mtime = attrs[.modificationDate] as? Date,
+              let size = attrs[.size] as? NSNumber
+        else { return nil }
+        return (mtime, size.int64Value)
+    }
+
+    /// If the file's mtime+size are unchanged since the last emission of this exact
+    /// (path, offset, limit), return a stub instructing the model to refer to the
+    /// prior tool_result. Returns nil if there's no cached emission or the file changed.
+    /// Does NOT consume a read-count slot — dedup hits are no-ops.
+    private static func dedupRead(tabID: UUID, expandedPath: String, offset: Int?, limit: Int?) -> String? {
+        _readCountLock.lock()
+        defer { _readCountLock.unlock() }
+        let key = dedupKey(tabID: tabID, expandedPath: expandedPath, offset: offset, limit: limit)
+        guard let last = _lastReadEmissions[key],
+              let stat = fileStat(expandedPath),
+              stat.mtime == last.mtime,
+              stat.size == last.size
+        else { return nil }
+        let range: String
+        if offset != nil || limit != nil {
+            range = "offset=\(offset.map(String.init) ?? "nil") limit=\(limit.map(String.init) ?? "nil")"
+        } else {
+            range = "full file"
+        }
+        return """
+            File unchanged since your last read in this conversation (\(range)). \
+            The earlier read_file tool_result for \(expandedPath) is still current — \
+            refer to it instead of re-reading. If you need different content, request \
+            a different offset/limit range, or edit the file first.
+            """
+    }
+
+    /// Record a successful read emission so subsequent identical requests dedup.
+    private static func recordReadEmission(tabID: UUID, expandedPath: String, offset: Int?, limit: Int?) {
+        _readCountLock.lock()
+        defer { _readCountLock.unlock() }
+        guard let stat = fileStat(expandedPath) else { return }
+        let key = dedupKey(tabID: tabID, expandedPath: expandedPath, offset: offset, limit: limit)
+        _lastReadEmissions[key] = LastReadEmission(mtime: stat.mtime, size: stat.size)
     }
 
     /// / Handles file CRUD, diff, list/search, backup/restore, symbol search, / and refactor_rename tool calls. Returns
@@ -116,16 +182,27 @@ extension AgentViewModel {
             }
             let expanded = (path as NSString).expandingTildeInPath
             let tabID = selectedTabId ?? Self.mainTabID
+            let offset = input["offset"] as? Int
+            let limit = input["limit"] as? Int
+            // Dedup BEFORE the read-counter: if the file is byte-identical to what we
+            // emitted on a prior read with this same (offset, limit), the content is
+            // already in the conversation. Return a stub and don't burn a read slot.
+            if let dedup = Self.dedupRead(tabID: tabID, expandedPath: expanded, offset: offset, limit: limit) {
+                return dedup
+            }
             if let blocked = Self.checkAndIncrementReadCount(tabID: tabID, filePath: expanded) {
                 return blocked
             }
             // Delegate to CodingService.readFile which returns line-numbered output and gives a clear 'file not found'
             // error with a list-files suggestion when the path is wrong. Honors offset+limit (1-based offset).
-            let offset = input["offset"] as? Int
-            let limit = input["limit"] as? Int
-            return await Self.offMain {
+            let result = await Self.offMain {
                 CodingService.readFile(path: path, offset: offset, limit: limit)
             }
+            // Only record on a real read — not on a "file not found" error path.
+            if !result.hasPrefix("Error") {
+                Self.recordReadEmission(tabID: tabID, expandedPath: expanded, offset: offset, limit: limit)
+            }
+            return result
         // copy_image — copy a PNG/JPEG between any of {file path, clipboard, chat attachment}.
         //   source: absolute path | "clipboard" | "chat" | "chat:<index>" (0-based)
         //   dest:   absolute path | "clipboard" (default if omitted)

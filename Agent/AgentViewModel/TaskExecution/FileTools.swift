@@ -254,8 +254,6 @@ extension AgentViewModel {
                 let verifyDiff = MultiLineDiff.createDiff(source: source, destination: patched, includeMetadata: true)
                 let verified = MultiLineDiff.verifyDiff(verifyDiff)
                 let display = MultiLineDiff.displayDiff(diff: verifyDiff, source: source, format: .ai)
-                let verified = MultiLineDiff.verifyDiff(verifyDiff)
-                let display = MultiLineDiff.displayDiff(diff: verifyDiff, source: source, format: .ai)
                 appendLog("\n" + display)
                 let newLineCount = patched.components(separatedBy: "\n").count
                 appendLog("📝 Applied diff to \(filePath) [verified: \(verified)] (\(newLineCount) lines)")
