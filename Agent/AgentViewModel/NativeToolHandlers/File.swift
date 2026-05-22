@@ -90,7 +90,9 @@ extension AgentViewModel {
     }
 
     /// Reset read count for a file when it's edited — grants additional reads.
-    /// Also clears the dedup cache for this file (content is now stale).
+    /// Also clears the dedup cache for this file (content is now stale) AND
+    /// resets the cross-file "reads since last edit" counter for this tab —
+    /// editing is the signal that the model is acting on what it's read.
     private static func recordFileEdit(tabID: UUID, filePath: String) {
         _readCountLock.lock()
         defer { _readCountLock.unlock() }
@@ -100,6 +102,7 @@ extension AgentViewModel {
         _readCounts[key] = entry
         let dedupPrefix = "\(tabID.uuidString):\(filePath):"
         _lastReadEmissions = _lastReadEmissions.filter { !$0.key.hasPrefix(dedupPrefix) }
+        _readsSinceEditByTab[tabID.uuidString] = 0
     }
 
     /// Clear read counts for a tab (called when the tab's conversation resets).
@@ -109,6 +112,39 @@ extension AgentViewModel {
         let prefix = tabID.uuidString + ":"
         _readCounts = _readCounts.filter { !$0.key.hasPrefix(prefix) }
         _lastReadEmissions = _lastReadEmissions.filter { !$0.key.hasPrefix(prefix) }
+        _readsSinceEditByTab.removeValue(forKey: tabID.uuidString)
+    }
+
+    /// Cross-file counter: how many distinct content-bearing reads have happened
+    /// in this tab since the last edit. Per-file counter catches "3 reads of the
+    /// same file"; this catches "read 7 different files without acting on any."
+    /// Reset on any edit (recordFileEdit) and on tab reset.
+    private static var _readsSinceEditByTab: [String: Int] = [:]
+
+    /// Threshold for the cross-file read-without-edit guard. Tuned to allow
+    /// genuine orientation (read ~5 files to understand the area) but stop the
+    /// "read everything then read it again" spiral.
+    private static let readsWithoutEditThreshold = 6
+
+    /// Increment the cross-file counter and return a hard-stop message if the
+    /// threshold is exceeded. Call AFTER the dedup check — dedup hits don't
+    /// count (they emit no new content).
+    private static func checkConsecutiveReadsWithoutEdit(tabID: UUID) -> String? {
+        _readCountLock.lock()
+        defer { _readCountLock.unlock() }
+        let key = tabID.uuidString
+        let next = (_readsSinceEditByTab[key] ?? 0) + 1
+        _readsSinceEditByTab[key] = next
+        guard next > readsWithoutEditThreshold else { return nil }
+        return """
+            🛑 STOP — \(next) file reads in a row without a single edit. \
+            Continued reading is forbidden until you ACT. \
+            Recovery: pick the single most likely file and call edit_file, \
+            write_file, apply_diff, or diff_and_apply NOW — or call \
+            task_complete and honestly report what is still unknown. \
+            Another read_file, list_files, or search_files call without an \
+            edit in between is a contract violation.
+            """
     }
 
     /// Dedup cache: keyed by "\(tabUUID):\(expandedPath):\(offset):\(limit)".
@@ -184,12 +220,15 @@ extension AgentViewModel {
             let tabID = selectedTabId ?? Self.mainTabID
             let offset = input["offset"] as? Int
             let limit = input["limit"] as? Int
-            // Dedup BEFORE the read-counter: if the file is byte-identical to what we
-            // emitted on a prior read with this same (offset, limit), the content is
-            // already in the conversation. Return a stub and don't burn a read slot.
+            // (1) Dedup: same bytes for same (path, offset, limit) → stub, free.
             if let dedup = Self.dedupRead(tabID: tabID, expandedPath: expanded, offset: offset, limit: limit) {
                 return dedup
             }
+            // (2) Cross-file loop guard: stop "read 7 different files in a row" pathology.
+            if let stop = Self.checkConsecutiveReadsWithoutEdit(tabID: tabID) {
+                return stop
+            }
+            // (3) Per-file counter: 3 reads of the same file before requiring an edit.
             if let blocked = Self.checkAndIncrementReadCount(tabID: tabID, filePath: expanded) {
                 return blocked
             }
