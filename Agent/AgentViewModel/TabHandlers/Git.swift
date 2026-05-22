@@ -73,8 +73,6 @@ extension AgentViewModel {
             guard !Task.isCancelled else { return TabToolResult(toolResult: nil, isComplete: false) }
             let output = result.output.isEmpty
                 ? "(no output, exit code: \(result.status))" : result.output
-            if !result.output.isEmpty { tab.appendLog(result.output) }
-            tab.flush()
             return TabToolResult(
                 toolResult: ["type": "tool_result", "tool_use_id": toolId, "content": output],
                 isComplete: false

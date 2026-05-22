@@ -136,7 +136,6 @@ extension AgentViewModel {
             let cmd = CodingService.buildGitCommitCommand(path: path, message: message, files: files)
             let result = await executeViaUserAgent(command: cmd, workingDirectory: dir)
             guard !Task.isCancelled else { return true }
-            if !result.output.isEmpty { appendLog(result.output) }
             commandsRun.append("git_commit: \(message)")
             let output = result.output.isEmpty
                 ? "(no output, exit code: \(result.status))"
