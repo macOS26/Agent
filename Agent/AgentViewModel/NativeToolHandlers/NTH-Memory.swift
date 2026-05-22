@@ -54,7 +54,7 @@ extension AgentViewModel {
         case .global:
             return MemoryStore.shared.memoryRoot
         case .project:
-            let pf = projectFolder
+            let pf = projectFolder.trimmingCharacters(in: .whitespaces)
             guard !pf.isEmpty else { return nil }
             return AgentProjectPaths.url(in: pf, .memory)
         }
