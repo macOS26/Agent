@@ -1,6 +1,4 @@
 
-
-<div align="center">
 <img width="256" height="256" alt="agent_icon_256" src="https://github.com/user-attachments/assets/20585d64-ea67-4818-8c6c-3435d9bcbf4c" />
 
 
@@ -18,9 +16,6 @@
 [![Swift 6.2](https://img.shields.io/badge/Swift-6.2-orange?style=for-the-badge)](https://www.swift.org)
 <p><a href="https://www.paypal.com/ncp/payment/9C6RY2UAE5M3S"><img src="https://img.shields.io/badge/Donation-PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white" alt="Tip Jar" /></a>
 <p><b>Thank you for your interest and support!</b></p>
-</div>
-
-Here's the rewrite without any dashes:
 
 ---
 
