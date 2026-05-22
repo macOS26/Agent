@@ -254,7 +254,9 @@ extension AgentViewModel {
                 let verifyDiff = MultiLineDiff.createDiff(source: source, destination: patched, includeMetadata: true)
                 let verified = MultiLineDiff.verifyDiff(verifyDiff)
                 let display = MultiLineDiff.displayDiff(diff: verifyDiff, source: source, format: .ai)
-                appendLog(display)
+                let verified = MultiLineDiff.verifyDiff(verifyDiff)
+                let display = MultiLineDiff.displayDiff(diff: verifyDiff, source: source, format: .ai)
+                appendLog("\n" + display)
                 let newLineCount = patched.components(separatedBy: "\n").count
                 appendLog("📝 Applied diff to \(filePath) [verified: \(verified)] (\(newLineCount) lines)")
                 // Invalidate all pending diffs for this file — line numbers have shifted
@@ -446,7 +448,7 @@ extension AgentViewModel {
                 // Trailing newline on display produces a blank row between the
                 // diff block and the status line below (appendLog's timestamp
                 // wrapping makes a naive appendLog("") look like an orphan stamp).
-                appendLog(display + "\n")
+                appendLog("\n" + display)
                 appendLog("📝 Diff+Apply:\n\(filePath)\(rangeNote) [verified: \(verified)] (\(newLineCount) lines)")
                 // Invalidate all pending diffs for this file — line numbers have shifted
                 DiffStore.shared.invalidateDiffs(for: expanded)
