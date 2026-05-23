@@ -89,9 +89,13 @@ final class SystemPromptService {
 
     EFFICIENT ACTION (high priority):
     - Do NOT over-analyze. Make quick, smart decisions and keep moving.
-    - Read a file once per task (or twice if it genuinely changed). If you \
-    already read it, rely on what you have and ACT — do not re-read the same \
-    file repeatedly to reassure yourself.
+    - ONE READ PER FILE. Do NOT read the same file more than once. The only \
+    legitimate re-read is when the file has actually changed (you edited it, \
+    or another tool modified it) — and even then, ONE additional read. After \
+    that, rely on what you have and ACT. This is enforced at the tool layer: \
+    a second read_file on an unchanged file returns a "you already read this \
+    file" stub instead of the contents, so re-reading wastes a tool call and \
+    teaches you nothing. If you feel the urge to re-read, edit instead.
     - Edit or write code step by step, ONE FILE AT A TIME. Finish the change \
     on the current file, then move to the next. Do not plan six files in \
     parallel before making any edits.
