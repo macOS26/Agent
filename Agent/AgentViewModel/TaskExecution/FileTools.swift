@@ -48,28 +48,16 @@ extension AgentViewModel {
             let expanded = (filePath as NSString).expandingTildeInPath
             let tabID = selectedTabId ?? Self.mainTabID
 
-            // Guards (canonical, single source of truth — helpers live on the
-            // AgentViewModel extension in NativeToolHandlers/File.swift):
-            // (1) Dedup with sha256: same (path, offset, limit) + unchanged
-            //     content → BLOCK with explicit rule + hash citation.
+            // ONE read per (file, range) while the data is unchanged.
+            // sha256 of the raw file bytes is the authoritative check; the rule
+            // and the helper live on the AgentViewModel extension in
+            // NativeToolHandlers/File.swift. Different ranges get separate slots
+            // — lines 1-10 then 2-20 is allowed (each once). Same range repeated
+            // on unchanged data is blocked. Editing the file clears the slots.
             if let dedup = Self.dedupRead(tabID: tabID, expandedPath: expanded, offset: offset, limit: limit) {
                 appendLog("📖 Read: \(filePath)")
                 appendLog(dedup)
                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": dedup])
-                return true
-            }
-            // (2) Cross-file loop guard: N content-bearing reads with zero edits.
-            if let stop = Self.checkConsecutiveReadsWithoutEdit(tabID: tabID) {
-                appendLog("📖 Read: \(filePath)")
-                appendLog(stop)
-                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": stop])
-                return true
-            }
-            // (3) Per-file counter: 3 reads of the same file before requiring an edit.
-            if let blocked = Self.checkAndIncrementReadCount(tabID: tabID, filePath: expanded) {
-                appendLog("📖 Read: \(filePath)")
-                appendLog(blocked)
-                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": blocked])
                 return true
             }
 

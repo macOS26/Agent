@@ -18,26 +18,6 @@ struct LastEditAttempt: @unchecked Sendable {
     let oldString: String
 }
 
-/// Tracks how many times a file has been read per tab. Enforces a limit that resets on edit.
-/// Base limit: 3 reads. Each edit grants additional reads: 1st edit → 2 more, 2nd edit → 1 more.
-/// After that, the file is blocked from further reads until another edit occurs.
-struct FileReadCount: @unchecked Sendable {
-    var readCount: Int = 0
-    var editCount: Int = 0
-
-    /// Maximum reads allowed given the number of edits made to this file.
-    /// 0 edits → 3 reads, 1 edit → 5 reads, 2 edits → 6 reads, N edits → 4 + N reads.
-    /// Every edit grants at least 1 additional read so the LLM can always verify its edit.
-    var maxReads: Int {
-        switch editCount {
-        case 0: return 3
-        case 1: return 5
-        case 2: return 6
-        default: return 4 + editCount
-        }
-    }
-}
-
 /// Snapshot of the last successful read_file emission for a (tab, path, offset, limit).
 /// Stores mtime+size as a fast pre-filter and a sha256 of the file's raw bytes as
 /// the authoritative "data is exactly the same" check. If all three match on a
@@ -65,98 +45,32 @@ extension AgentViewModel {
         return last.filePath == filePath && last.oldString == oldString
     }
 
-    /// Read-count tracking per (tab, file) — keyed by "\(tabUUID):\(normalizedPath)"
-    private static var _readCounts: [String: FileReadCount] = [:]
+    /// Single lock guarding the read-dedup cache below.
     private static let _readCountLock = NSLock()
 
-    /// Check if a read is allowed. Increments the counter. Returns nil if allowed, or an error string if blocked.
-    static func checkAndIncrementReadCount(tabID: UUID, filePath: String) -> String? {
-        _readCountLock.lock()
-        defer { _readCountLock.unlock() }
-        let key = "\(tabID.uuidString):\(filePath)"
-        var entry = _readCounts[key] ?? FileReadCount()
-        if entry.readCount >= entry.maxReads {
-            return """
-                ⛔ Read limit reached for this file (\(entry.readCount) reads, \(entry.editCount) edits). \
-                You have read this file too many times without making progress. \
-                Recovery: edit the file first (edit_file, diff_apply, write_file), then you can read it again. \
-                If you're stuck, explain what you need and ask for help instead of re-reading.
-                """
-        }
-        entry.readCount += 1
-        let remaining = entry.maxReads - entry.readCount
-        _readCounts[key] = entry
-        if remaining <= 1 {
-            return "⚠️ Read limit warning: \(remaining) read(s) remaining for this file before you must edit it. (\(entry.readCount)/\(entry.maxReads))"
-        }
-        return nil // allowed, no warning
-    }
-
-    /// Reset read count for a file when it's edited — grants additional reads.
-    /// Also clears the dedup cache for this file (content is now stale) AND
-    /// resets the cross-file "reads since last edit" counter for this tab —
-    /// editing is the signal that the model is acting on what it's read.
-    /// Callers: every write/edit/apply_diff/diff_and_apply path in FileTools.swift
-    /// MUST call this after a successful write so guards reset correctly.
+    /// Called by every successful write/edit/apply_diff/diff_and_apply/apply_patch
+    /// path in FileTools.swift. Drops all dedup slots for this file — content has
+    /// changed, so the model is allowed exactly one fresh read of each range again.
     static func recordFileEdit(tabID: UUID, filePath: String) {
         _readCountLock.lock()
         defer { _readCountLock.unlock() }
-        let key = "\(tabID.uuidString):\(filePath)"
-        var entry = _readCounts[key] ?? FileReadCount()
-        entry.editCount += 1
-        _readCounts[key] = entry
-        // Drop all dedup slots for this file (all ranges) — content has changed.
         let dedupPrefix = "\(tabID.uuidString):\(filePath):"
         _lastReadEmissions = _lastReadEmissions.filter { !$0.key.hasPrefix(dedupPrefix) }
-        _readsSinceEditByTab[tabID.uuidString] = 0
     }
 
-    /// Clear read counts for a tab (called when the tab's conversation resets).
+    /// Clear all read-dedup state for a tab (called when the tab's conversation resets).
     static func clearReadCountsForTab(tabID: UUID) {
         _readCountLock.lock()
         defer { _readCountLock.unlock() }
         let prefix = tabID.uuidString + ":"
-        _readCounts = _readCounts.filter { !$0.key.hasPrefix(prefix) }
         _lastReadEmissions = _lastReadEmissions.filter { !$0.key.hasPrefix(prefix) }
-        _readsSinceEditByTab.removeValue(forKey: tabID.uuidString)
-    }
-
-    /// Cross-file counter: how many distinct content-bearing reads have happened
-    /// in this tab since the last edit. Per-file counter catches "3 reads of the
-    /// same file"; this catches "read 7 different files without acting on any."
-    /// Reset on any edit (recordFileEdit) and on tab reset.
-    private static var _readsSinceEditByTab: [String: Int] = [:]
-
-    /// Threshold for the cross-file read-without-edit guard. Tuned to allow
-    /// genuine orientation (read ~5 files to understand the area) but stop the
-    /// "read everything then read it again" spiral.
-    private static let readsWithoutEditThreshold = 6
-
-    /// Increment the cross-file counter and return a hard-stop message if the
-    /// threshold is exceeded. Call AFTER the dedup check — dedup hits don't
-    /// count (they emit no new content).
-    static func checkConsecutiveReadsWithoutEdit(tabID: UUID) -> String? {
-        _readCountLock.lock()
-        defer { _readCountLock.unlock() }
-        let key = tabID.uuidString
-        let next = (_readsSinceEditByTab[key] ?? 0) + 1
-        _readsSinceEditByTab[key] = next
-        guard next > readsWithoutEditThreshold else { return nil }
-        return """
-            🛑 STOP — \(next) file reads in a row without a single edit. \
-            Continued reading is forbidden until you ACT. \
-            Recovery: pick the single most likely file and call edit_file, \
-            write_file, apply_diff, or diff_and_apply NOW — or call \
-            task_complete and honestly report what is still unknown. \
-            Another read_file, list_files, or search_files call without an \
-            edit in between is a contract violation.
-            """
     }
 
     /// Dedup cache keyed by "\(tabUUID):\(expandedPath):\(offset):\(limit)". Each
     /// distinct range gets its own slot — partial reads of DIFFERENT line ranges
-    /// are allowed (lines 1–10 then lines 2–20 is fine), but the SAME range
-    /// repeated on an unchanged file is blocked.
+    /// are allowed (lines 1–10 then lines 2–20 is fine, each can be read once),
+    /// but the SAME range repeated on an unchanged file is blocked. The rule:
+    /// ONE read per (file, range) while the data is unchanged.
     static var _lastReadEmissions: [String: LastReadEmission] = [:]
 
     static func dedupKey(tabID: UUID, expandedPath: String, offset: Int?, limit: Int?) -> String {
@@ -201,22 +115,20 @@ extension AgentViewModel {
         else { return nil }
         let rangeDesc: String
         if offset != nil || limit != nil {
-            rangeDesc = "offset=\(offset.map(String.init) ?? "nil") limit=\(limit.map(String.init) ?? "nil")"
+            rangeDesc = "lines offset=\(offset.map(String.init) ?? "nil") limit=\(limit.map(String.init) ?? "nil")"
         } else {
             rangeDesc = "the entire file"
         }
         let hashPrefix = String(currentHash.prefix(12))
         return """
-            🛑 BLOCKED: re-read of unchanged data.
-            You already read \(expandedPath) in this conversation for the same range \
-            (\(rangeDesc)), and the file's content is byte-for-byte identical \
-            (sha256 \(hashPrefix)… matches the prior emission).
-            Reading the same data twice wastes tokens and teaches you nothing. \
-            Recovery:
-              • Act on what you have: call edit_file / write_file / apply_diff / diff_and_apply now.
-              • OR request a DIFFERENT line range (different offset/limit) if you genuinely need other parts of the file.
-              • OR call task_complete if you've finished.
-            This block is automatic and clears the instant the file is edited.
+            🛑 BLOCKED. You can only read each file (or each section of a file) 1 time \
+            unless the data has changed. You already read \(expandedPath) for this same \
+            range (\(rangeDesc)) and the data is byte-for-byte identical \
+            (sha256 \(hashPrefix)…). The data is stale — no read is allowed.
+            Allowed next moves:
+              • Read a DIFFERENT range of this file (different offset/limit) — each unique range gets 1 read.
+              • Edit the file (edit_file / write_file / apply_diff / diff_and_apply) — that changes the data and allows another read.
+              • Act on what you already have, or call task_complete.
             """
     }
 
