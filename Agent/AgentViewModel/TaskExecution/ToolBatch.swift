@@ -32,8 +32,10 @@ extension AgentViewModel {
             for batch in batches {
                 if batch.parallel && batch.tools.count > 1 {
                     // Parallel batch: pre-execute shell tools off MainActor
+                    // read_file is intentionally absent — must route through
+                    // handleFileTool (FileTools.swift) so the dedup/sha256
+                    // guards run. Adding it here re-opens the bypass.
                     let shellTools: Set<String> = [
-                        "read_file",
                         "list_files",
                         "search_files",
                         "read_dir",

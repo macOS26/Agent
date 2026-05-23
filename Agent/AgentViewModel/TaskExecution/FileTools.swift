@@ -45,6 +45,33 @@ extension AgentViewModel {
             }
             let offset = input["offset"] as? Int
             let limit = input["limit"] as? Int
+            let expanded = (filePath as NSString).expandingTildeInPath
+            let tabID = selectedTabId ?? Self.mainTabID
+
+            // Guards (canonical, single source of truth — helpers live on the
+            // AgentViewModel extension in NativeToolHandlers/File.swift):
+            // (1) Dedup with sha256: same (path, offset, limit) + unchanged
+            //     content → BLOCK with explicit rule + hash citation.
+            if let dedup = Self.dedupRead(tabID: tabID, expandedPath: expanded, offset: offset, limit: limit) {
+                appendLog("📖 Read: \(filePath)")
+                appendLog(dedup)
+                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": dedup])
+                return true
+            }
+            // (2) Cross-file loop guard: N content-bearing reads with zero edits.
+            if let stop = Self.checkConsecutiveReadsWithoutEdit(tabID: tabID) {
+                appendLog("📖 Read: \(filePath)")
+                appendLog(stop)
+                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": stop])
+                return true
+            }
+            // (3) Per-file counter: 3 reads of the same file before requiring an edit.
+            if let blocked = Self.checkAndIncrementReadCount(tabID: tabID, filePath: expanded) {
+                appendLog("📖 Read: \(filePath)")
+                appendLog(blocked)
+                toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": blocked])
+                return true
+            }
 
             appendLog("📖 Read: \(filePath)")
             let output = await Self.offMain { CodingService.readFile(path: filePath, offset: offset, limit: limit) }
@@ -57,6 +84,10 @@ extension AgentViewModel {
                 toolResults.append(["type": "tool_result", "tool_use_id": toolId, "content": suggestion])
                 return true
             }
+
+            // Record emission so the next read of this (path, offset, limit) on
+            // an unchanged file is blocked. Captures mtime + size + sha256.
+            Self.recordReadEmission(tabID: tabID, expandedPath: expanded, offset: offset, limit: limit)
 
             let lang = Self.langFromPath(filePath)
             appendLog(Self.codeFence(Self.preview(output, lines: readFilePreviewLines), language: lang))
@@ -85,6 +116,9 @@ extension AgentViewModel {
             }
 
             let output = await Self.offMain { CodingService.writeFile(path: filePath, content: content) }
+            if !output.hasPrefix("Error") {
+                Self.recordFileEdit(tabID: selectedTabId ?? Self.mainTabID, filePath: expandedWrite)
+            }
             FileChangeJournal.shared.log(
                 action: "write",
                 filePath: expandedWrite,
@@ -132,6 +166,7 @@ extension AgentViewModel {
 
             if !output.hasPrefix("Error") && !output.hasPrefix("Warning:") {
                 Self.resetEditFailureCount(filePath: expandedEdit)
+                Self.recordFileEdit(tabID: selectedTabId ?? Self.mainTabID, filePath: expandedEdit)
                 DiffStore.shared.recordEdit(filePath: expandedEdit, originalContent: originalContent)
                 let diff = MultiLineDiff.createDiff(source: oldString, destination: newString, includeMetadata: true)
                 let d1f = MultiLineDiff.displayDiff(diff: diff, source: oldString, format: .ai)
@@ -244,6 +279,7 @@ extension AgentViewModel {
                 // No truncation guard. d1f's structural verification + the applyDiff round-trip already catch malformed diffs. Legitimate refactors that delete most of a section were getting
                 // blocked, and undo_edit is always available if the LLM produces something bad — we'd rather trust the model and give the user undo than second-guess every shrink with a length heuristic.
                 try patched.write(to: URL(fileURLWithPath: expandedPath), atomically: true, encoding: .utf8)
+                Self.recordFileEdit(tabID: selectedTabId ?? Self.mainTabID, filePath: expandedPath)
                 // Track the apply for UUID-based undo
                 if let uuid = UUID(uuidString: diffIdStr) {
                     DiffStore.shared.recordApply(diffId: uuid, filePath: expandedPath, originalContent: source)
@@ -434,6 +470,7 @@ extension AgentViewModel {
                 }
 
                 try finalContent.write(to: URL(fileURLWithPath: expanded), atomically: true, encoding: .utf8)
+                Self.recordFileEdit(tabID: selectedTabId ?? Self.mainTabID, filePath: expanded)
 
                 // Record for UUID-based undo
                 DiffStore.shared.recordApply(diffId: diffId, filePath: expanded, originalContent: fullText)
@@ -485,7 +522,12 @@ extension AgentViewModel {
             if !result.files.isEmpty {
                 appendLog("  files: \(result.files.joined(separator: ", "))")
             }
-            for file in result.files { commandsRun.append("apply_patch: \(file)") }
+            let patchTabID = selectedTabId ?? Self.mainTabID
+            for file in result.files {
+                commandsRun.append("apply_patch: \(file)")
+                let abs = file.hasPrefix("/") ? file : (base as NSString).appendingPathComponent(file)
+                Self.recordFileEdit(tabID: patchTabID, filePath: (abs as NSString).expandingTildeInPath)
+            }
             toolResults.append([
                 "type": "tool_result",
                 "tool_use_id": toolId,

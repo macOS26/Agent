@@ -60,9 +60,12 @@ extension AgentViewModel {
     }
 
     /// Read-only tools safe for parallel execution — no filesystem writes, no UI actions, no state changes.
+    /// NOTE: read_file is intentionally NOT here. It must go through the canonical
+    /// handler in FileTools.swift so the dedup/cross-file/per-file guards run.
+    /// Batching it as a raw `cat` shell bypasses every guard — do not re-add.
     static let readOnlyTools: Set<String> = [
         // File reading
-        "read_file", "list_files", "search_files", "read_dir",
+        "list_files", "search_files", "read_dir",
         // Git reading
         "git_status", "git_diff", "git_log", "git_diff_patch",
         // Accessibility reading
@@ -79,13 +82,10 @@ extension AgentViewModel {
     @MainActor static var precomputedResults: [String: String]?
 
     /// Build a shell command for a read-only tool (runs off MainActor).
+    /// read_file is deliberately not handled here — see readOnlyTools comment.
     nonisolated static func buildReadOnlyCommand(name: String, input: [String: Any], projectFolder: String) -> String {
         let pf = projectFolder.isEmpty ? NSHomeDirectory() : projectFolder
         switch name {
-        case "read_file":
-            let path = input["file_path"] as? String ?? ""
-            guard !path.isEmpty else { return "" }
-            return "cat \(Self.shellEscape(path))"
         case "list_files":
             let pattern = input["pattern"] as? String ?? "*"
             let path = input["path"] as? String ?? pf

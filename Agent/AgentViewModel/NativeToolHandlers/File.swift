@@ -6,6 +6,7 @@ import AgentD1F
 import AgentSwift
 import AgentAccess
 import Cocoa
+import CryptoKit
 
 // MARK: - Native Tool Handler — File Operations
 
@@ -38,12 +39,14 @@ struct FileReadCount: @unchecked Sendable {
 }
 
 /// Snapshot of the last successful read_file emission for a (tab, path, offset, limit).
-/// Used to dedup: if the file's mtime+size are unchanged since we last emitted bytes for
-/// this exact request, the model has already seen the content in this conversation —
-/// don't re-emit. This is the tool-level cure for the "read the same file 20 times" spiral.
+/// Stores mtime+size as a fast pre-filter and a sha256 of the file's raw bytes as
+/// the authoritative "data is exactly the same" check. If all three match on a
+/// repeat request for the same range, the read is BLOCKED — the model has already
+/// seen this exact data in this conversation.
 struct LastReadEmission: @unchecked Sendable {
     let mtime: Date
     let size: Int64
+    let fileHash: String
 }
 
 extension AgentViewModel {
@@ -67,7 +70,7 @@ extension AgentViewModel {
     private static let _readCountLock = NSLock()
 
     /// Check if a read is allowed. Increments the counter. Returns nil if allowed, or an error string if blocked.
-    private static func checkAndIncrementReadCount(tabID: UUID, filePath: String) -> String? {
+    static func checkAndIncrementReadCount(tabID: UUID, filePath: String) -> String? {
         _readCountLock.lock()
         defer { _readCountLock.unlock() }
         let key = "\(tabID.uuidString):\(filePath)"
@@ -93,14 +96,18 @@ extension AgentViewModel {
     /// Also clears the dedup cache for this file (content is now stale) AND
     /// resets the cross-file "reads since last edit" counter for this tab —
     /// editing is the signal that the model is acting on what it's read.
-    private static func recordFileEdit(tabID: UUID, filePath: String) {
+    /// Callers: every write/edit/apply_diff/diff_and_apply path in FileTools.swift
+    /// MUST call this after a successful write so guards reset correctly.
+    static func recordFileEdit(tabID: UUID, filePath: String) {
         _readCountLock.lock()
         defer { _readCountLock.unlock() }
         let key = "\(tabID.uuidString):\(filePath)"
         var entry = _readCounts[key] ?? FileReadCount()
         entry.editCount += 1
         _readCounts[key] = entry
-        _lastReadEmissions.removeValue(forKey: "\(tabID.uuidString):\(filePath)")
+        // Drop all dedup slots for this file (all ranges) — content has changed.
+        let dedupPrefix = "\(tabID.uuidString):\(filePath):"
+        _lastReadEmissions = _lastReadEmissions.filter { !$0.key.hasPrefix(dedupPrefix) }
         _readsSinceEditByTab[tabID.uuidString] = 0
     }
 
@@ -128,7 +135,7 @@ extension AgentViewModel {
     /// Increment the cross-file counter and return a hard-stop message if the
     /// threshold is exceeded. Call AFTER the dedup check — dedup hits don't
     /// count (they emit no new content).
-    private static func checkConsecutiveReadsWithoutEdit(tabID: UUID) -> String? {
+    static func checkConsecutiveReadsWithoutEdit(tabID: UUID) -> String? {
         _readCountLock.lock()
         defer { _readCountLock.unlock() }
         let key = tabID.uuidString
@@ -146,16 +153,17 @@ extension AgentViewModel {
             """
     }
 
-    /// Dedup cache: keyed by "\(tabUUID):\(expandedPath)". Any second read of the
-    /// same file (regardless of offset/limit) hits this cache as long as the file
-    /// hasn't changed — the rule is "you already read this file."
-    private static var _lastReadEmissions: [String: LastReadEmission] = [:]
+    /// Dedup cache keyed by "\(tabUUID):\(expandedPath):\(offset):\(limit)". Each
+    /// distinct range gets its own slot — partial reads of DIFFERENT line ranges
+    /// are allowed (lines 1–10 then lines 2–20 is fine), but the SAME range
+    /// repeated on an unchanged file is blocked.
+    static var _lastReadEmissions: [String: LastReadEmission] = [:]
 
-    private static func dedupKey(tabID: UUID, expandedPath: String) -> String {
-        "\(tabID.uuidString):\(expandedPath)"
+    static func dedupKey(tabID: UUID, expandedPath: String, offset: Int?, limit: Int?) -> String {
+        "\(tabID.uuidString):\(expandedPath):\(offset ?? -1):\(limit ?? -1)"
     }
 
-    private static func fileStat(_ path: String) -> (mtime: Date, size: Int64)? {
+    static func fileStat(_ path: String) -> (mtime: Date, size: Int64)? {
         guard let attrs = try? FileManager.default.attributesOfItem(atPath: path),
               let mtime = attrs[.modificationDate] as? Date,
               let size = attrs[.size] as? NSNumber
@@ -163,35 +171,66 @@ extension AgentViewModel {
         return (mtime, size.int64Value)
     }
 
-    /// If we've already read this file in this conversation AND it hasn't changed
-    /// (mtime+size match), return a stub telling the model exactly that. Applies
-    /// regardless of offset/limit — re-reading any range of an unchanged file is
-    /// redundant. Returns nil on first read or if the file has changed.
-    /// Does NOT consume a read-count slot — dedup hits are no-ops.
-    private static func dedupRead(tabID: UUID, expandedPath: String) -> String? {
+    /// SHA-256 of the file's raw bytes. Returns nil if the file can't be read.
+    /// This is the authoritative "data is exactly the same" check — mtime can
+    /// be touched without content changing, but a hash match means the bytes
+    /// are byte-for-byte identical.
+    static func computeFileHash(path: String) -> String? {
+        guard let data = FileManager.default.contents(atPath: path) else { return nil }
+        let digest = SHA256.hash(data: data)
+        return digest.map { String(format: "%02x", $0) }.joined()
+    }
+
+    /// If we've already emitted bytes for this exact (path, offset, limit) AND
+    /// the file's mtime+size+sha256 all match the prior emission, BLOCK the read
+    /// with an explicit message citing the rule and the hash match. Returns nil
+    /// on first read of this range or if the file has changed.
+    /// Does NOT consume a read-count slot — blocks are no-ops.
+    static func dedupRead(tabID: UUID, expandedPath: String, offset: Int?, limit: Int?) -> String? {
         _readCountLock.lock()
         defer { _readCountLock.unlock() }
-        let key = dedupKey(tabID: tabID, expandedPath: expandedPath)
+        let key = dedupKey(tabID: tabID, expandedPath: expandedPath, offset: offset, limit: limit)
         guard let last = _lastReadEmissions[key],
               let stat = fileStat(expandedPath),
               stat.mtime == last.mtime,
               stat.size == last.size
         else { return nil }
+        // Stat matched — confirm with content hash before blocking.
+        guard let currentHash = computeFileHash(path: expandedPath),
+              currentHash == last.fileHash
+        else { return nil }
+        let rangeDesc: String
+        if offset != nil || limit != nil {
+            rangeDesc = "offset=\(offset.map(String.init) ?? "nil") limit=\(limit.map(String.init) ?? "nil")"
+        } else {
+            rangeDesc = "the entire file"
+        }
+        let hashPrefix = String(currentHash.prefix(12))
         return """
-            You already read this file in this conversation and it has not changed since. \
-            Use the prior read_file tool_result for \(expandedPath) — do not re-read it. \
-            If you need to act on what you read, call edit_file / write_file / apply_diff now. \
-            (This cache is cleared automatically the moment you edit the file.)
+            🛑 BLOCKED: re-read of unchanged data.
+            You already read \(expandedPath) in this conversation for the same range \
+            (\(rangeDesc)), and the file's content is byte-for-byte identical \
+            (sha256 \(hashPrefix)… matches the prior emission).
+            Reading the same data twice wastes tokens and teaches you nothing. \
+            Recovery:
+              • Act on what you have: call edit_file / write_file / apply_diff / diff_and_apply now.
+              • OR request a DIFFERENT line range (different offset/limit) if you genuinely need other parts of the file.
+              • OR call task_complete if you've finished.
+            This block is automatic and clears the instant the file is edited.
             """
     }
 
-    /// Record a successful read so the next read of the same file is deduped.
-    private static func recordReadEmission(tabID: UUID, expandedPath: String) {
+    /// Record a successful read so the next read of the same (path, range) on an
+    /// unchanged file is blocked. Captures mtime, size, and the sha256 of the
+    /// raw file bytes at read time.
+    static func recordReadEmission(tabID: UUID, expandedPath: String, offset: Int?, limit: Int?) {
         _readCountLock.lock()
         defer { _readCountLock.unlock() }
-        guard let stat = fileStat(expandedPath) else { return }
-        let key = dedupKey(tabID: tabID, expandedPath: expandedPath)
-        _lastReadEmissions[key] = LastReadEmission(mtime: stat.mtime, size: stat.size)
+        guard let stat = fileStat(expandedPath),
+              let hash = computeFileHash(path: expandedPath)
+        else { return }
+        let key = dedupKey(tabID: tabID, expandedPath: expandedPath, offset: offset, limit: limit)
+        _lastReadEmissions[key] = LastReadEmission(mtime: stat.mtime, size: stat.size, fileHash: hash)
     }
 
     /// / Handles file CRUD, diff, list/search, backup/restore, symbol search, / and refactor_rename tool calls. Returns
@@ -199,43 +238,11 @@ extension AgentViewModel {
     func handleFileNativeTool(name: String, input: [String: Any]) async -> String? {
         let pf = projectFolder
         switch name {
-        // File operations
-        case "read_file":
-            let path = input["file_path"] as? String ?? ""
-            guard !path.isEmpty else {
-                return """
-                    Error: file_path is required for read_file. \
-                    Pass an absolute path like file_path:"/Users/...". \
-                    Use file_manager(action:"list", path:...) to see \
-                    what files exist if you don't know the path.
-                    """
-            }
-            let expanded = (path as NSString).expandingTildeInPath
-            let tabID = selectedTabId ?? Self.mainTabID
-            let offset = input["offset"] as? Int
-            let limit = input["limit"] as? Int
-            // (1) Dedup: any second read of an unchanged file → stub, free.
-            if let dedup = Self.dedupRead(tabID: tabID, expandedPath: expanded) {
-                return dedup
-            }
-            // (2) Cross-file loop guard: stop "read 7 different files in a row" pathology.
-            if let stop = Self.checkConsecutiveReadsWithoutEdit(tabID: tabID) {
-                return stop
-            }
-            // (3) Per-file counter: 3 reads of the same file before requiring an edit.
-            if let blocked = Self.checkAndIncrementReadCount(tabID: tabID, filePath: expanded) {
-                return blocked
-            }
-            // Delegate to CodingService.readFile which returns line-numbered output and gives a clear 'file not found'
-            // error with a list-files suggestion when the path is wrong. Honors offset+limit (1-based offset).
-            let result = await Self.offMain {
-                CodingService.readFile(path: path, offset: offset, limit: limit)
-            }
-            // Only record on a real read — not on a "file not found" error path.
-            if !result.hasPrefix("Error") {
-                Self.recordReadEmission(tabID: tabID, expandedPath: expanded)
-            }
-            return result
+        // read_file lives in FileTools.swift (handleFileTool) — runs BEFORE this
+        // fallback in ToolDispatch.dispatchTool. Read guards (dedup + sha256,
+        // cross-file loop counter, per-file counter) are helpers on this
+        // extension, called from FileTools.swift. ONE handler — do not add a
+        // case "read_file" here.
         // copy_image — copy a PNG/JPEG between any of {file path, clipboard, chat attachment}.
         //   source: absolute path | "clipboard" | "chat" | "chat:<index>" (0-based)
         //   dest:   absolute path | "clipboard" (default if omitted)
