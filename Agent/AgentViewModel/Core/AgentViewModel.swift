@@ -352,7 +352,7 @@ final class AgentViewModel {
         didSet { KeychainService.shared.setMiniMaxAPIKey(miniMaxAPIKey) }
     }
 
-    var miniMaxModel: String = UserDefaults.standard.string(forKey: "miniMaxModel") ?? "MiniMax-M2.7" {
+    var miniMaxModel: String = UserDefaults.standard.string(forKey: "miniMaxModel") ?? "MiniMax-M3" {
         didSet { UserDefaults.standard.set(miniMaxModel, forKey: "miniMaxModel") }
     }
 
