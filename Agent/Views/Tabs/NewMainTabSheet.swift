@@ -308,7 +308,7 @@ struct NewMainTabSheet: View {
         case .lmStudio: return viewModel.lmStudioModel
         case .zAI: return viewModel.zAIModel
         case .bigModel: return "glm-4.7"
-        case .miniMax: return viewModel.miniMaxModel.isEmpty ? "MiniMax-M2.7" : viewModel.miniMaxModel
+        case .miniMax: return viewModel.miniMaxModel.isEmpty ? "MiniMax-M3" : viewModel.miniMaxModel
         case .openRouter: return viewModel.openRouterModel
         case .qwen: return "qwen-plus"
         case .gemini: return viewModel.geminiModel

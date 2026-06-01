@@ -284,7 +284,7 @@ extension AgentViewModel {
                 miniMaxModels = models.isEmpty ? Self.defaultMiniMaxModels : models
                 let ids = miniMaxModels.map(\.id)
                 if miniMaxModel.isEmpty || (!ids.isEmpty && !ids.contains(miniMaxModel)) {
-                    miniMaxModel = ids.first ?? "MiniMax-M2.7"
+                    miniMaxModel = ids.first ?? "MiniMax-M3"
                 }
             } catch {
                 appendLog("Failed to fetch MiniMax models: \(error.localizedDescription)")
